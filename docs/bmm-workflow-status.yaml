@@ -26,7 +26,7 @@ workflow_status:
   # Phase 0: Discovery (Optional)
   brainstorm-project: skipped
   research: optional
-  product-brief: optional
+  product-brief: "docs/analysis/product-brief.md"
 
   # Phase 1: Planning
   prd: required
