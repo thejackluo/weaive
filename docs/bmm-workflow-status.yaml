@@ -34,7 +34,7 @@ workflow_status:
   design-system: "src/design-system/"
 
   # Phase 2: Solutioning
-  create-architecture: required
+  create-architecture: "docs/architecture.md"
   create-epics-and-stories: required
   test-design: recommended
   validate-architecture: optional

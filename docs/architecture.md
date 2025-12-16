@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 inputDocuments:
   - docs/prd.md
   - docs/ux-design.md
@@ -7,7 +7,9 @@ inputDocuments:
   - docs/idea/backend.md
   - docs/idea/ai.md
 workflowType: 'architecture'
-lastStep: 1
+lastStep: 8
+status: 'complete'
+completedAt: '2025-12-16'
 project_name: 'Weave'
 user_name: 'Jack'
 date: '2025-12-16'
@@ -499,4 +501,434 @@ if (isLoading) return <GoalCardSkeleton />  // Initial load
 - TypeScript strict mode catches naming inconsistencies
 - ESLint rules enforce file naming
 - Database constraints prevent invalid operations
+
+---
+
+## Project Structure & Boundaries
+
+### Epic to Directory Mapping
+
+| Epic | Mobile Location | Backend Location |
+|------|-----------------|------------------|
+| **EP-001: Onboarding** | `app/(auth)/`, `components/features/onboarding/` | `routers/onboarding.py` |
+| **EP-002: Goals** | `app/(tabs)/goals.tsx`, `components/features/goals/` | `routers/goals.py` |
+| **EP-003: Daily Planning** | `app/(tabs)/home.tsx`, `components/features/triad/` | `routers/daily.py` |
+| **EP-004: Captures** | `components/features/captures/` | `routers/captures.py` |
+| **EP-005: Journaling** | `app/(tabs)/journal.tsx`, `components/features/journal/` | `routers/journal.py` |
+| **EP-006: Progress** | `app/(tabs)/progress.tsx`, `components/features/progress/` | `routers/stats.py` |
+| **EP-007: AI Coach** | `app/coach.tsx`, `components/features/coach/` | `routers/ai.py` |
+| **EP-008: Notifications** | `lib/notifications.ts` | `services/notification_service.py` |
+
+### Complete Project Directory Structure
+
+```
+weave/
+├── mobile/                           # Expo React Native iOS App
+│   ├── app/                          # Expo Router (file-based routing)
+│   │   ├── _layout.tsx               # Root layout + providers
+│   │   ├── index.tsx                 # Entry redirect
+│   │   ├── (auth)/                   # Auth group (unauthenticated)
+│   │   │   ├── _layout.tsx
+│   │   │   ├── login.tsx
+│   │   │   ├── signup.tsx
+│   │   │   └── onboarding/
+│   │   │       ├── archetype.tsx
+│   │   │       ├── dream-self.tsx
+│   │   │       └── first-goal.tsx
+│   │   ├── (tabs)/                   # Main tabs (authenticated)
+│   │   │   ├── _layout.tsx
+│   │   │   ├── home.tsx              # Daily triad
+│   │   │   ├── goals.tsx
+│   │   │   ├── journal.tsx
+│   │   │   └── progress.tsx
+│   │   ├── goal/[id].tsx
+│   │   ├── coach.tsx
+│   │   └── settings.tsx
+│   │
+│   ├── components/
+│   │   ├── ui/                       # Generic (Button, Card, Input, Modal)
+│   │   └── features/
+│   │       ├── onboarding/
+│   │       ├── goals/
+│   │       ├── triad/
+│   │       ├── captures/
+│   │       ├── journal/
+│   │       ├── progress/
+│   │       └── coach/
+│   │
+│   ├── lib/
+│   │   ├── supabase.ts
+│   │   ├── api.ts                    # FastAPI client wrapper
+│   │   ├── database.types.ts         # Generated from Supabase
+│   │   └── queryClient.ts            # TanStack Query config
+│   │
+│   ├── hooks/
+│   │   ├── useSession.ts
+│   │   ├── useGoals.ts
+│   │   ├── useJournal.ts
+│   │   ├── useTriad.ts
+│   │   └── useCaptures.ts
+│   │
+│   ├── stores/                       # Zustand (UI state ONLY)
+│   │   ├── uiStore.ts
+│   │   └── README.md                 # State boundaries doc
+│   │
+│   ├── types/                        # TypeScript types (Party Mode add)
+│   │   ├── api.ts                    # Generated from FastAPI OpenAPI
+│   │   ├── domain.ts                 # Goal, Subtask, Journal entities
+│   │   └── navigation.ts             # Expo Router param types
+│   │
+│   ├── utils/
+│   │   ├── dates.ts
+│   │   └── transforms.ts             # snake_case ↔ camelCase
+│   │
+│   ├── __tests__/                    # Mobile tests (Party Mode add)
+│   │   ├── setup.ts                  # Mock Supabase, Expo modules
+│   │   ├── components/
+│   │   └── hooks/
+│   │
+│   ├── app.json
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── tailwind.config.js
+│   ├── babel.config.js
+│   ├── jest.config.js                # Test config (Party Mode add)
+│   └── .env.example                  # Environment template
+│
+├── api/                              # Python FastAPI Backend
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── config.py
+│   │   ├── dependencies.py
+│   │   │
+│   │   ├── routers/                  # Route handlers (business logic inline for MVP)
+│   │   │   ├── __init__.py
+│   │   │   ├── onboarding.py
+│   │   │   ├── goals.py
+│   │   │   ├── daily.py
+│   │   │   ├── captures.py
+│   │   │   ├── journal.py
+│   │   │   ├── stats.py
+│   │   │   └── ai.py
+│   │   │
+│   │   ├── contracts/                # API contracts (Party Mode add)
+│   │   │   └── v1/
+│   │   │       ├── __init__.py
+│   │   │       ├── goal.py           # Pydantic request/response
+│   │   │       ├── journal.py
+│   │   │       └── ai.py
+│   │   │
+│   │   ├── services/                 # Extract when patterns emerge
+│   │   │   ├── __init__.py
+│   │   │   ├── ai_service.py         # AI orchestration only
+│   │   │   └── notification_service.py
+│   │   │
+│   │   └── utils/
+│   │       ├── __init__.py
+│   │       ├── dates.py
+│   │       └── response.py
+│   │
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   ├── conftest.py
+│   │   ├── mocks/                    # AI mocking (Party Mode add)
+│   │   │   └── ai_providers.py
+│   │   ├── test_goals.py
+│   │   ├── test_journal.py
+│   │   └── test_ai.py
+│   │
+│   ├── pyproject.toml
+│   ├── .python-version
+│   ├── Dockerfile
+│   └── .env.example
+│
+├── supabase/
+│   ├── config.toml
+│   ├── migrations/
+│   │   ├── 001_user_profiles.sql
+│   │   ├── 002_identity_docs.sql
+│   │   ├── 003_goals.sql
+│   │   ├── 004_subtasks.sql
+│   │   ├── 005_completions.sql
+│   │   ├── 006_captures.sql
+│   │   ├── 007_journal_entries.sql
+│   │   └── 008_daily_aggregates.sql
+│   └── seed/                         # Test fixtures (Party Mode add)
+│       └── test_data.sql
+│
+├── docs/
+│   ├── architecture.md
+│   ├── prd.md
+│   └── ux-design.md
+│
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+### Architectural Boundaries
+
+#### API Boundaries
+
+| Boundary | Location | Access |
+|----------|----------|--------|
+| **Public Auth** | Supabase Auth | No JWT |
+| **User Data** | Supabase Direct | JWT + RLS |
+| **AI Operations** | FastAPI `/api/*` | JWT required |
+| **File Storage** | Supabase Storage | Signed URLs |
+
+#### Data Flow
+
+```
+Mobile (Expo) ──┬──▶ Supabase (Auth/DB/Storage)
+                │
+                └──▶ FastAPI (Railway) ──▶ OpenAI/Anthropic
+```
+
+#### State Boundaries (Mobile)
+
+| State Type | Owner | Examples |
+|------------|-------|----------|
+| **Server Cache** | TanStack Query | Goals, journal, completions |
+| **Shared UI** | Zustand | Active filter, modal state |
+| **Local** | useState | Form inputs |
+| **Auth** | Supabase SDK | Session |
+
+### Party Mode Enhancements Applied
+
+1. **Added `mobile/types/`** - Central TypeScript types (api, domain, navigation)
+2. **Added `mobile/__tests__/`** - Mobile test structure with setup.ts
+3. **Added `api/app/contracts/v1/`** - Versioned API contracts layer
+4. **Added `api/tests/mocks/`** - AI provider mocking for tests
+5. **Added `supabase/seed/`** - Test data fixtures
+6. **Simplified services/** - Keep minimal, inline logic in routers for MVP
+7. **Deferred Redis/BullMQ** - Use FastAPI BackgroundTasks until latency measured
+
+---
+
+## Architecture Validation Results
+
+### Coherence Validation ✅
+
+**Decision Compatibility:**
+- Expo SDK 53 + React 19 + NativeWind: Compatible, latest stable
+- TanStack Query + Zustand: Complementary state management, no overlap
+- FastAPI + Supabase: Both PostgreSQL-based, seamless integration
+- TypeScript + Python: snake_case ↔ camelCase transform defined at API boundary
+
+**Pattern Consistency:**
+- Naming conventions align across mobile/backend
+- API response format `{data, error, meta}` consistent throughout
+- State boundaries (TanStack/Zustand/useState) clearly delineated
+
+**Structure Alignment:**
+- Project structure supports all architectural decisions
+- Epic-to-directory mapping complete
+- Integration points properly structured
+
+### Requirements Coverage Validation ✅
+
+**Epic Coverage:**
+
+| Epic | Support | Notes |
+|------|---------|-------|
+| EP-001: Onboarding | ✅ Full | Auth group, AI service, identity docs |
+| EP-002: Goals | ✅ Full | Goals router, Supabase tables, hooks |
+| EP-003: Daily Planning | ✅ Full | Triad generation, home screen |
+| EP-004: Captures | ✅ Full | Supabase Storage, captures router |
+| EP-005: Journaling | ✅ Full | Journal router, AI recap |
+| EP-006: Progress | ✅ Full | Stats router, daily_aggregates |
+| EP-007: AI Coach | ✅ Full | AI router, streaming |
+| EP-008: Notifications | ✅ Full | Expo Push, notification service |
+
+**Non-Functional Requirements:**
+
+| NFR | How Addressed |
+|-----|---------------|
+| Performance | TanStack Query caching, precomputed aggregates |
+| Cost Control | GPT-4o-mini (90%), Sonnet (10%) |
+| Security | Supabase RLS (post-MVP), JWT, signed URLs |
+| Scalability | Sync MVP → BackgroundTasks → Redis at scale |
+
+### Implementation Readiness Validation ✅
+
+| Area | Status |
+|------|--------|
+| Versions documented | ✅ Expo 53, FastAPI 0.115+, Python 3.11+ |
+| Patterns comprehensive | ✅ Naming, structure, format, process |
+| Examples provided | ✅ Code snippets for each pattern |
+| Project structure complete | ✅ Full tree with all files |
+| Epic mapping | ✅ Each epic mapped to directories |
+
+### Gap Analysis
+
+| Gap | Priority | Resolution |
+|-----|----------|------------|
+| No scaffolding files | High | First implementation task |
+| RLS policies | Known deferral | Before public launch |
+| Redis/BullMQ | Known deferral | At 1K+ users |
+| PostHog/Sentry | Known deferral | At 500+ users |
+
+**No critical gaps blocking implementation.**
+
+### Party Mode Validation Enhancements
+
+**Issue Identified: Missing Failure Recovery Playbook**
+
+The architecture silently fails when async jobs break. Added:
+
+1. **Job Status Endpoint (MVP)**
+   ```
+   GET /api/ai/runs/{run_id}/status
+   → { status: 'running'|'success'|'failed', error?: "..." }
+   ```
+   Mobile polls every 5s; shows retry option on failure.
+
+2. **Sync Fallback for Triad**
+   - If BackgroundTasks fails at journal time → generate simple triad from existing binds
+   - User sees "simplified plan" vs. empty state
+
+3. **Idempotency Spec**
+   - `POST /api/subtask-completions` with duplicate `idempotency_key`
+   - Returns 200 + existing record (not 409 Conflict)
+
+4. **Notification Provider Locked**
+   - **Expo Push** selected: Simple, works immediately, sufficient for MVP
+
+**Risk Assessment After Party Mode:**
+
+| Dimension | Status | Risk |
+|-----------|--------|------|
+| Coherence | ✅ | Low |
+| Requirements | ✅ | Low |
+| Implementability | ⚠️ | Medium (async complexity) |
+| Testability | ⚠️ | Medium (queue mocking needed) |
+| Failure Recovery | ✅ | Low (playbook added) |
+
+### Architecture Completeness Checklist
+
+**✅ Requirements Analysis**
+- [x] Project context analyzed (8 epics, 238 story points)
+- [x] Scale assessed (MVP: 100 users → Scale: 10K)
+- [x] Technical constraints identified
+- [x] Cross-cutting concerns mapped
+
+**✅ Architectural Decisions**
+- [x] Tech stack specified with versions
+- [x] AI model selection documented
+- [x] State management architecture defined
+- [x] Data access patterns clear
+
+**✅ Implementation Patterns**
+- [x] Naming conventions established
+- [x] API response format defined
+- [x] Test locations specified
+- [x] Error handling patterns documented
+
+**✅ Project Structure**
+- [x] Complete directory tree
+- [x] Epic to directory mapping
+- [x] Party mode enhancements applied
+- [x] Boundaries clearly defined
+
+**✅ Validation**
+- [x] Coherence validated
+- [x] Requirements coverage verified
+- [x] Implementation readiness confirmed
+- [x] Failure recovery playbook added
+
+### Architecture Readiness Assessment
+
+**Overall Status:** 🟢 READY FOR IMPLEMENTATION
+
+**Confidence Level:** High
+
+**Key Strengths:**
+- Clear MVP vs Scale separation
+- Comprehensive patterns prevent AI agent conflicts
+- Event-driven design for auditability
+- Cost-conscious AI model selection
+- Failure recovery story now complete
+
+**Areas for Future Enhancement:**
+- Context builder optimization at scale
+- Queue interface abstraction for testing
+- Personality version tracking in AI artifacts
+
+---
+
+## Architecture Completion Summary
+
+### Workflow Completion
+
+| Metric | Value |
+|--------|-------|
+| **Status** | ✅ COMPLETED |
+| **Steps Completed** | 8/8 |
+| **Date** | 2025-12-16 |
+| **Document** | `docs/architecture.md` |
+
+### Final Deliverables
+
+**📋 Complete Architecture Document**
+- All architectural decisions documented with specific versions
+- Implementation patterns ensuring AI agent consistency
+- Complete project structure with all files and directories
+- Requirements to architecture mapping
+- Validation confirming coherence and completeness
+
+**🏗️ Implementation Ready Foundation**
+- 15+ architectural decisions made
+- 6 pattern categories defined (naming, structure, format, communication, process, enforcement)
+- 8 epics mapped to directories
+- 8/8 requirements fully supported
+
+### Implementation Handoff
+
+**For AI Agents:**
+This architecture document is your complete guide for implementing Weave. Follow all decisions, patterns, and structures exactly as documented.
+
+**First Implementation Priority:**
+```bash
+# Step 1: Initialize mobile app
+npx create-expo-app weave-mobile --template blank-typescript
+cd weave-mobile
+npx expo install expo-router expo-linking expo-constants
+npm install @supabase/supabase-js nativewind @tanstack/react-query zustand
+
+# Step 2: Initialize backend
+mkdir ../weave-api && cd ../weave-api
+uv init
+uv add fastapi "uvicorn[standard]" supabase python-dotenv openai anthropic pydantic-settings
+```
+
+**Development Sequence:**
+1. Initialize projects using commands above
+2. Set up Supabase project + run migrations
+3. Implement auth flow (EP-001)
+4. Build goal management (EP-002)
+5. Continue through epics following architectural decisions
+
+### Quality Assurance Checklist
+
+**✅ Architecture Coherence**
+- [x] All decisions work together without conflicts
+- [x] Technology choices are compatible
+- [x] Patterns support the architectural decisions
+
+**✅ Requirements Coverage**
+- [x] All 8 epics architecturally supported
+- [x] Non-functional requirements addressed
+- [x] Cross-cutting concerns handled
+
+**✅ Implementation Readiness**
+- [x] Decisions are specific and actionable
+- [x] Patterns prevent agent conflicts
+- [x] Structure is complete and unambiguous
+
+---
+
+**Architecture Status:** ✅ READY FOR IMPLEMENTATION
+
+**Next Phase:** Create epics and stories, then begin implementation.
 
