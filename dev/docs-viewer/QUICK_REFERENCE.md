@@ -79,6 +79,43 @@ Edit CSS variables in `index.html` (line ~15):
 
 ---
 
+## 📚 Reading Features
+
+**Reading Time**
+- Auto-calculated for each document (~200 wpm)
+- Displayed as badge (e.g., "5 min read")
+- **NEW**: Dynamic "time left" as you scroll
+
+**Scroll Progress** 🆕
+- Progress bar at top fills as you scroll
+- Time remaining indicator (top-right)
+- Shows "3 min left" based on position
+- Appears after ~5% scroll
+
+**Library Stats** 🆕
+- Total docs, words, lines
+- Combined reading time (e.g., "2h 45m")
+- Shown in sidebar & welcome screen
+- Cached for performance
+
+**Progress Tracking**
+- Click "Mark as Complete" button
+- Progress bar in sidebar footer
+- ✓ checkmark on completed docs
+
+**Text Highlighting**
+1. Select text in document
+2. Choose color from toolbar (bottom-right)
+3. Colors: Yellow, Green, Blue, Pink
+4. Click X to remove highlight
+
+**Storage**
+- All data in localStorage
+- Persists across sessions
+- Per-document tracking
+
+---
+
 ## 🔧 Change Port
 
 Edit server files:
@@ -156,4 +193,4 @@ curl http://localhost:3030/api/docs
 
 ---
 
-**Version 2.0** • **Quick & Simple**
+**Version 3.1** • **Quick & Smart** 📚⚡
