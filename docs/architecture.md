@@ -99,7 +99,7 @@ The PRD defines 8 epics (238 total story points) covering:
 | Component | MVP Implementation | Notes |
 |-----------|-------------------|-------|
 | **Auth** | Supabase Auth (built-in) | OAuth + email/password, zero config |
-| **Database** | Supabase PostgreSQL | Direct queries, RLS can wait |
+| **Database** | Supabase PostgreSQL | Direct queries, RLS required Sprint 1 |
 | **Storage** | Supabase Storage | Signed URLs for proof captures |
 | **Backend API** | Python FastAPI (Railway) | Single monolith, no microservices |
 | **AI - Routine** | GPT-4o-mini ($0.15/$0.60) | Triad, recap - 90% of calls |
@@ -134,7 +134,7 @@ journal_entries     -- Daily reflections
 
 | Component | Add When | Trigger |
 |-----------|----------|---------|
-| RLS Policies | Before public launch | Security requirement |
+| RLS Policies | **Sprint 1 (before alpha)** | Security requirement - CRITICAL |
 | Analytics (PostHog) | 500+ users | Need retention data |
 | Error Tracking (Sentry) | 500+ users | Production bugs |
 | Job Queue (Redis/BullMQ) | 1K+ users | AI calls >5s |
@@ -149,6 +149,200 @@ journal_entries     -- Daily reflections
 - **Complex calls (10%)**: API (Sonnet/GPT-4o) for quality-critical interactions
 
 **Scale Cost Estimate (10K users): ~$2,100/month** (vs. $4K+ all-API)
+
+### AI Failure Recovery Strategy
+
+**Problem:** AI API outages (OpenAI, Anthropic) would break core features (triad, recap, chat).
+
+**Solution:** Implement fallback chain with graceful degradation.
+
+#### Fallback Chain
+
+```
+Primary (OpenAI GPT-4o-mini)
+    ↓ on failure
+Secondary (Anthropic Claude Haiku)
+    ↓ on failure
+Deterministic Fallback (no AI)
+```
+
+#### Implementation
+
+```python
+# api/app/services/ai_fallback.py
+from enum import Enum
+from typing import Optional
+
+class AIProvider(Enum):
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    DETERMINISTIC = "deterministic"
+
+async def generate_with_fallback(
+    prompt: str,
+    user_context: dict,
+    operation: str  # "triad", "recap", "chat"
+) -> tuple[str, AIProvider]:
+    """Generate AI response with automatic fallback."""
+
+    # Try OpenAI first
+    try:
+        response = await call_openai(prompt)
+        return response, AIProvider.OPENAI
+    except OpenAIError as e:
+        log_ai_failure("openai", operation, e)
+
+    # Fallback to Anthropic
+    try:
+        response = await call_anthropic(prompt)
+        return response, AIProvider.ANTHROPIC
+    except AnthropicError as e:
+        log_ai_failure("anthropic", operation, e)
+
+    # Deterministic fallback
+    response = generate_deterministic(operation, user_context)
+    return response, AIProvider.DETERMINISTIC
+```
+
+#### Deterministic Fallbacks
+
+| Operation | Deterministic Behavior |
+|-----------|----------------------|
+| **Triad** | Select top 3 incomplete binds by frequency + recency |
+| **Recap** | Template: "You completed X binds today. Keep going!" |
+| **Chat** | "I'm temporarily unavailable. Try again in a few minutes." |
+
+```python
+# api/app/services/deterministic_fallback.py
+def generate_simple_triad(user_id: str) -> Triad:
+    """Generate triad from existing binds without AI."""
+    binds = get_user_active_binds(user_id)
+
+    # Rank by: incomplete today + high frequency + recent success
+    ranked = sorted(binds, key=lambda b: (
+        not b.completed_today,
+        b.frequency_score,
+        b.recent_completion_rate
+    ), reverse=True)
+
+    return Triad(
+        tasks=ranked[:3],
+        source='deterministic',
+        message="Your AI coach is temporarily unavailable. "
+                "Here are your top priorities based on your patterns."
+    )
+```
+
+#### User Communication
+
+| Scenario | User Message |
+|----------|--------------|
+| OpenAI down, Anthropic works | (silent - no notification) |
+| Both down, deterministic | Toast: "Using simplified recommendations" |
+| Extended outage (>1 hour) | Push: "AI features limited - we're working on it" |
+
+### AI Cost Monitoring
+
+**Problem:** AI costs can spiral without visibility. Budget is $2,500/month at 10K users.
+
+**Solution:** Real-time cost tracking with alerts and auto-throttling.
+
+#### Cost Tracking Implementation
+
+```python
+# api/app/services/ai_cost_tracker.py
+from decimal import Decimal
+from datetime import datetime, timedelta
+
+# Pricing per 1M tokens (December 2025)
+PRICING = {
+    "gpt-4o-mini": {"input": Decimal("0.15"), "output": Decimal("0.60")},
+    "gpt-4o": {"input": Decimal("2.50"), "output": Decimal("10.00")},
+    "claude-3-5-haiku": {"input": Decimal("0.80"), "output": Decimal("4.00")},
+    "claude-3-7-sonnet": {"input": Decimal("3.00"), "output": Decimal("15.00")},
+}
+
+async def track_ai_cost(
+    user_id: str,
+    model: str,
+    input_tokens: int,
+    output_tokens: int,
+    operation: str
+) -> Decimal:
+    """Track AI cost and return cost in USD."""
+    pricing = PRICING.get(model, PRICING["gpt-4o-mini"])
+
+    cost = (
+        (Decimal(input_tokens) / 1_000_000) * pricing["input"] +
+        (Decimal(output_tokens) / 1_000_000) * pricing["output"]
+    )
+
+    await supabase.from_('ai_cost_tracking').insert({
+        'user_id': user_id,
+        'model': model,
+        'operation': operation,
+        'input_tokens': input_tokens,
+        'output_tokens': output_tokens,
+        'cost_usd': float(cost),
+        'created_at': datetime.utcnow().isoformat()
+    })
+
+    return cost
+
+async def get_daily_cost() -> Decimal:
+    """Get total AI cost for today."""
+    today = datetime.utcnow().date()
+    result = await supabase.from_('ai_cost_tracking') \
+        .select('cost_usd') \
+        .gte('created_at', today.isoformat()) \
+        .execute()
+
+    return sum(Decimal(str(r['cost_usd'])) for r in result.data)
+```
+
+#### Alert Thresholds
+
+| Threshold | Action |
+|-----------|--------|
+| 50% of daily budget | Log warning |
+| 80% of daily budget | Alert on-call + Slack notification |
+| 100% of daily budget | Auto-throttle: cache-only mode |
+
+```python
+# api/app/services/ai_throttle.py
+DAILY_BUDGET = Decimal("83.33")  # $2,500 / 30 days
+
+async def check_throttle() -> bool:
+    """Check if AI should be throttled due to cost."""
+    daily_cost = await get_daily_cost()
+
+    if daily_cost >= DAILY_BUDGET:
+        log_alert("AI budget exceeded - throttling enabled")
+        return True
+
+    if daily_cost >= DAILY_BUDGET * Decimal("0.8"):
+        log_warning(f"AI budget at 80%: ${daily_cost}")
+
+    return False
+```
+
+#### Cost Dashboard Query
+
+```sql
+-- Daily cost breakdown by operation
+SELECT
+    DATE(created_at) as date,
+    operation,
+    model,
+    COUNT(*) as calls,
+    SUM(input_tokens) as total_input,
+    SUM(output_tokens) as total_output,
+    SUM(cost_usd) as total_cost
+FROM ai_cost_tracking
+WHERE created_at >= NOW() - INTERVAL '30 days'
+GROUP BY DATE(created_at), operation, model
+ORDER BY date DESC, total_cost DESC;
+```
 
 ---
 
@@ -337,6 +531,190 @@ The following action items were validated by multi-agent review (Winston, Amelia
 3. **Generated DB Types**: Use `supabase gen types typescript` after every schema change
 4. **Supabase vs FastAPI Decision Tree**: Documented above for clear routing decisions
 5. **Append-Only Protection**: `subtask_completions` table must never have UPDATE/DELETE operations
+
+### Offline Strategy
+
+**Requirement:** NFR-C4 specifies "Basic read access" when offline. Users on subway, in elevators, or with poor connectivity must be able to use core features.
+
+#### Offline Capabilities
+
+| Feature | Offline Support | Behavior |
+|---------|-----------------|----------|
+| View today's binds | ✅ Full | Cached data |
+| Complete a bind | ✅ Full | Queue mutation, sync later |
+| Attach proof (photo) | ✅ Full | Store locally, upload later |
+| View dashboard | ✅ Partial | Cached data (may be stale) |
+| AI chat | ❌ None | Show "Requires internet" |
+| Submit journal | ⚠️ Queued | Queue for sync, no AI feedback until online |
+
+#### TanStack Query Persistence
+
+```typescript
+// mobile/lib/queryClient.ts
+import { QueryClient } from '@tanstack/react-query';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { persistQueryClient } from '@tanstack/react-query-persist-client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,           // 5 minutes
+      gcTime: 1000 * 60 * 60 * 24,        // 24 hours (keep in cache)
+      retry: 2,
+      refetchOnWindowFocus: false,
+      networkMode: 'offlineFirst',         // Use cache when offline
+    },
+    mutations: {
+      networkMode: 'offlineFirst',         // Queue mutations when offline
+      retry: 3,
+    },
+  },
+});
+
+// Persist to AsyncStorage
+const asyncStoragePersister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  key: 'weave-query-cache',
+});
+
+persistQueryClient({
+  queryClient,
+  persister: asyncStoragePersister,
+  maxAge: 1000 * 60 * 60 * 24,  // 24 hours
+});
+```
+
+#### Offline Mutation Queue
+
+```typescript
+// mobile/lib/offlineMutations.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { completeBind } from './api';
+
+export function useCompleteBind() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: completeBind,
+    onMutate: async (variables) => {
+      // Cancel in-flight queries
+      await queryClient.cancelQueries({ queryKey: ['binds', 'today'] });
+
+      // Snapshot previous value
+      const previous = queryClient.getQueryData(['binds', 'today']);
+
+      // Optimistic update
+      queryClient.setQueryData(['binds', 'today'], (old: any) => ({
+        ...old,
+        data: old.data.map((b: any) =>
+          b.id === variables.bindId
+            ? { ...b, completed: true, completed_at: new Date().toISOString() }
+            : b
+        ),
+      }));
+
+      return { previous };
+    },
+    onError: (err, variables, context) => {
+      // Revert on error
+      if (context?.previous) {
+        queryClient.setQueryData(['binds', 'today'], context.previous);
+      }
+    },
+    onSettled: () => {
+      // Refetch when back online
+      queryClient.invalidateQueries({ queryKey: ['binds', 'today'] });
+    },
+  });
+}
+```
+
+#### Connectivity Detection
+
+```typescript
+// mobile/hooks/useConnectivity.ts
+import { useEffect, useState } from 'react';
+import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+
+export function useConnectivity() {
+  const [isConnected, setIsConnected] = useState(true);
+  const [isInternetReachable, setIsInternetReachable] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
+      setIsConnected(state.isConnected ?? false);
+      setIsInternetReachable(state.isInternetReachable ?? false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  return {
+    isConnected,
+    isInternetReachable,
+    isOffline: !isConnected || !isInternetReachable,
+  };
+}
+```
+
+#### Offline UI Indicator
+
+```typescript
+// mobile/components/ui/OfflineBanner.tsx
+import { useConnectivity } from '@/hooks/useConnectivity';
+import { View, Text } from 'react-native';
+
+export function OfflineBanner() {
+  const { isOffline } = useConnectivity();
+
+  if (!isOffline) return null;
+
+  return (
+    <View className="bg-amber-500 px-4 py-2">
+      <Text className="text-white text-center text-sm">
+        You're offline. Changes will sync when connected.
+      </Text>
+    </View>
+  );
+}
+```
+
+#### Sync on Reconnect
+
+```typescript
+// mobile/lib/syncManager.ts
+import NetInfo from '@react-native-community/netinfo';
+import { queryClient } from './queryClient';
+
+export function setupSyncManager() {
+  let wasOffline = false;
+
+  NetInfo.addEventListener((state) => {
+    const isOnline = state.isConnected && state.isInternetReachable;
+
+    if (isOnline && wasOffline) {
+      // Just came back online - trigger sync
+      console.log('Back online - syncing...');
+
+      // Invalidate all queries to refresh data
+      queryClient.invalidateQueries();
+
+      // Resume any paused mutations
+      queryClient.resumePausedMutations();
+    }
+
+    wasOffline = !isOnline;
+  });
+}
+```
+
+#### Required Dependencies
+
+```bash
+npm install @react-native-async-storage/async-storage @react-native-community/netinfo
+npm install @tanstack/query-async-storage-persister @tanstack/react-query-persist-client
+```
 
 ---
 
@@ -747,7 +1125,7 @@ Mobile (Expo) ──┬──▶ Supabase (Auth/DB/Storage)
 |-----|---------------|
 | Performance | TanStack Query caching, precomputed aggregates |
 | Cost Control | GPT-4o-mini (90%), Sonnet (10%) |
-| Security | Supabase RLS (post-MVP), JWT, signed URLs |
+| Security | Supabase RLS (Sprint 1), JWT verification, signed URLs |
 | Scalability | Sync MVP → BackgroundTasks → Redis at scale |
 
 ### Implementation Readiness Validation ✅
@@ -765,11 +1143,11 @@ Mobile (Expo) ──┬──▶ Supabase (Auth/DB/Storage)
 | Gap | Priority | Resolution |
 |-----|----------|------------|
 | No scaffolding files | High | First implementation task |
-| RLS policies | Known deferral | Before public launch |
+| RLS policies | **CRITICAL** | **Sprint 1 (before alpha)** |
 | Redis/BullMQ | Known deferral | At 1K+ users |
 | PostHog/Sentry | Known deferral | At 500+ users |
 
-**No critical gaps blocking implementation.**
+**Gaps addressed by validation:** RLS timing clarified, offline strategy added, AI fallback chain added, cost monitoring added.
 
 ### Party Mode Validation Enhancements
 
@@ -837,6 +1215,12 @@ The architecture silently fails when async jobs break. Added:
 - [x] Implementation readiness confirmed
 - [x] Failure recovery playbook added
 
+**✅ Post-Validation Additions (2025-12-16)**
+- [x] Offline strategy with TanStack Query persistence
+- [x] AI failure recovery with fallback chain
+- [x] AI cost monitoring with alerts and throttling
+- [x] RLS timing clarified (Sprint 1, before alpha)
+
 ### Architecture Readiness Assessment
 
 **Overall Status:** 🟢 READY FOR IMPLEMENTATION
@@ -848,12 +1232,15 @@ The architecture silently fails when async jobs break. Added:
 - Comprehensive patterns prevent AI agent conflicts
 - Event-driven design for auditability
 - Cost-conscious AI model selection
-- Failure recovery story now complete
+- Failure recovery with AI fallback chain
+- Offline-first mobile architecture
+- Cost monitoring with auto-throttling
 
 **Areas for Future Enhancement:**
 - Context builder optimization at scale
 - Queue interface abstraction for testing
 - Personality version tracking in AI artifacts
+- Advanced offline conflict resolution
 
 ---
 
