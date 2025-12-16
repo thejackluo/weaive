@@ -2,14 +2,14 @@
   "mcpServers": {
     "ripgrep": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-ripgrep", "/mnt/c/Users/Jack Luo/Desktop/(local) github software/weavelight"]
+      "args": ["-y", "@modelcontextprotocol/server-ripgrep", "C:\\Users\\Jack Luo\\Desktop\\(local) github software\\weavelight"]
     },
     "filesystem": {
       "command": "npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "/mnt/c/Users/Jack Luo/Desktop/(local) github software/weavelight"
+        "C:\\Users\\Jack Luo\\Desktop\\(local) github software\\weavelight"
       ]
     },
     "context7": {
