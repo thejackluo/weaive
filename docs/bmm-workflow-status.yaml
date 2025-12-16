@@ -38,7 +38,7 @@ workflow_status:
   create-epics-and-stories: "docs/epics.md"
   test-design: "docs/test-design.md"
   validate-architecture: "docs/architecture-validation.md"
-  create-security-architecture: required
+  create-security-architecture: "docs/security-architecture.md"
   create-devops-strategy: required
   implementation-readiness: "docs/implementation-readiness.md"
 
