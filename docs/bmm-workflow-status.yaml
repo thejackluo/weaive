@@ -39,7 +39,7 @@ workflow_status:
   test-design: "docs/test-design.md"
   validate-architecture: "docs/architecture-validation.md"
   create-security-architecture: "docs/security-architecture.md"
-  create-devops-strategy: required
+  create-devops-strategy: "docs/devops-strategy.md"
   implementation-readiness: "docs/implementation-readiness.md"
 
   # Phase 3: Implementation
