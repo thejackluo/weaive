@@ -40,7 +40,7 @@ workflow_status:
   validate-architecture: "docs/architecture-validation.md"
   create-security-architecture: required
   create-devops-strategy: required
-  implementation-readiness: required
+  implementation-readiness: "docs/implementation-readiness.md"
 
   # Phase 3: Implementation
   sprint-planning: required
