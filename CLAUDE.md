@@ -179,3 +179,68 @@ This project uses 6 MCP servers for AI-assisted development:
 3. **Cost awareness** - Count AI API calls carefully, use caching with input_hash, batch operations around journal time
 4. **MVP focus** - Don't implement post-MVP features. Real devices + user data matters more than fancy UI
 5. **Use MCP servers** - Ripgrep for finding code, Context7 for current API syntax, Filesystem for reading architecture docs
+
+## Changelog Conventions
+
+**IMPORTANT:** When making significant changes to the project, always document them in the changelog.
+
+### File Location
+- **Single source of truth:** `.cursor/.cursor-changes`
+- **Do NOT create:** duplicate changelog files in root or other locations
+- **Format:** Markdown with structured sections
+
+### When to Add Changelog Entries
+
+Add an entry when you:
+- Complete a major feature or refactoring
+- Fix significant bugs
+- Make architectural decisions
+- Update documentation structure
+- Change tooling or configuration
+- Release a new version
+
+### Entry Format
+
+```markdown
+## [YYYY-MM-DD] Brief Title
+
+### Summary
+One-paragraph overview of what changed and why.
+
+### What Changed
+
+**Prior State:**
+- Bullet points describing the before state
+
+**New State:**
+- Bullet points describing the after state
+
+**Files Modified:**
+- List of modified files
+
+**Files Created:**
+- List of new files
+
+### Impact
+Explain the practical impact of this change on developers, users, or the codebase.
+
+**Version**: X.Y.Z → X.Y.Z+1
+**Status**: ✅ Complete / ⏳ In Progress / ❌ Blocked
+```
+
+### Versioning Guidelines
+
+- **Major (X.0.0):** Breaking changes to architecture or APIs
+- **Minor (0.X.0):** New features, components, or significant functionality added
+- **Patch (0.0.X):** Bug fixes, documentation improvements, minor tweaks
+
+### Best Practices
+
+1. **Write in reverse chronological order** - Newest entries first
+2. **Include context** - Explain WHY, not just WHAT
+3. **Be specific** - Reference file paths, line numbers, specific issues
+4. **Show before/after** - Use comparison tables or code blocks
+5. **Document decisions** - Explain trade-offs and alternatives considered
+6. **Link to related docs** - Reference PRD, architecture docs, or issues
+7. **Add technical details** - Include code snippets, config examples
+8. **Update immediately** - Don't batch changelog entries
