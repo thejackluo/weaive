@@ -37,7 +37,7 @@ workflow_status:
   create-architecture: "docs/architecture.md"
   create-epics-and-stories: required
   test-design: "docs/test-design.md"
-  validate-architecture: optional
+  validate-architecture: "docs/architecture-validation.md"
   implementation-readiness: required
 
   # Phase 3: Implementation
