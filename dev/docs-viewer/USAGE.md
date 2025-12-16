@@ -1,6 +1,6 @@
 # 🚀 Usage Guide
 
-Quick guide to get started with the docs viewer.
+Quick guide for the **dynamic** documentation viewer.
 
 ## Starting the Server
 
@@ -46,12 +46,30 @@ Open your browser to: **http://localhost:3030**
 - Tap outside sidebar to close it
 - All features work on mobile
 
+## Adding Documents
+
+**Just add markdown files to the `docs/` folder!**
+
+```bash
+# Example: Add a new setup guide
+echo "# Database Setup" > docs/setup/database-guide.md
+
+# Refresh browser - it appears automatically!
+```
+
+The viewer will:
+- 🔍 Find it automatically
+- 📁 Categorize it (Setup category)
+- 🎯 Pick an appropriate icon
+- 📝 Generate a friendly title
+
 ## Tips
 
 ✨ **Keyboard Shortcut**: Press `/` anywhere to focus search  
 📱 **Mobile Friendly**: Fully responsive design  
-🔄 **Refresh**: Use browser refresh or top bar button  
-🎨 **Modern UI**: Glassmorphism effects and smooth animations
+🔄 **Dynamic**: Add/remove docs anytime - no config needed  
+🎨 **Minimal UI**: Professional Mintlify-inspired design  
+♻️ **Auto-Updates**: Changes reflect on page refresh
 
 ## Stopping the Server
 

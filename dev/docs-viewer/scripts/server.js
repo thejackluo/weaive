@@ -3,7 +3,7 @@
 /**
  * Weavelight Documentation Viewer Server
  * 
- * Simple HTTP server for viewing project documentation
+ * Dynamic HTTP server with automatic document discovery
  * Run from project root: node dev/docs-viewer/scripts/server.js
  */
 
@@ -14,6 +14,7 @@ const path = require('path');
 const PORT = 3030;
 const PROJECT_ROOT = path.join(__dirname, '../../..');
 const VIEWER_DIR = path.join(__dirname, '..');
+const DOCS_DIR = path.join(PROJECT_ROOT, 'docs');
 
 const mimeTypes = {
     '.html': 'text/html',
@@ -26,23 +27,164 @@ const mimeTypes = {
     '.jpeg': 'image/jpeg',
     '.gif': 'image/gif',
     '.svg': 'image/svg+xml',
-    '.ico': 'image/x-icon',
-    '.woff': 'font/woff',
-    '.woff2': 'font/woff2',
-    '.ttf': 'font/ttf'
+    '.ico': 'image/x-icon'
 };
+
+// Icon mapping based on file path/name
+function getIconForFile(filePath, fileName) {
+    const lower = fileName.toLowerCase();
+    const pathLower = filePath.toLowerCase();
+    
+    // Specific file matches
+    if (lower.includes('prd') || lower.includes('requirements')) return 'file-text';
+    if (lower.includes('design') || lower.includes('ux')) return 'layout';
+    if (lower.includes('brief')) return 'clipboard';
+    if (lower.includes('guide')) return 'book';
+    if (lower.includes('reference')) return 'zap';
+    if (lower.includes('backend')) return 'server';
+    if (lower.includes('mvp')) return 'target';
+    if (lower.includes('ai')) return 'cpu';
+    if (lower.includes('setup')) return 'settings';
+    if (lower.includes('tts') || lower.includes('audio')) return 'volume-2';
+    if (lower.includes('research') || lower.includes('market')) return 'bar-chart-2';
+    if (lower.includes('architecture')) return 'box';
+    if (lower.includes('api')) return 'plug';
+    if (lower.includes('test')) return 'check-circle';
+    
+    // Path-based categorization
+    if (pathLower.includes('setup')) return 'settings';
+    if (pathLower.includes('dev')) return 'code';
+    if (pathLower.includes('idea')) return 'sparkles';
+    if (pathLower.includes('analysis') || pathLower.includes('research')) return 'bar-chart-2';
+    
+    return 'file-text';
+}
+
+// Get category from path
+function getCategoryFromPath(filePath) {
+    const parts = filePath.split(path.sep);
+    const docsIndex = parts.indexOf('docs');
+    
+    if (docsIndex >= 0 && parts.length > docsIndex + 1) {
+        const category = parts[docsIndex + 1];
+        
+        // Map to friendly names
+        if (category === 'dev') return 'Development';
+        if (category === 'setup') return 'Setup';
+        if (category === 'analysis') {
+            if (filePath.includes('research')) return 'Research';
+            return 'Product';
+        }
+        if (category === 'idea') return 'Development';
+        
+        // Capitalize first letter
+        return category.charAt(0).toUpperCase() + category.slice(1);
+    }
+    
+    return 'Documentation';
+}
+
+// Get friendly title from filename
+function getTitleFromFilename(fileName) {
+    return fileName
+        .replace(/\.md$/i, '')
+        .replace(/[-_]/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+// Recursively scan directory for markdown files
+function scanDocsDirectory(dir, basePath = '') {
+    const docs = [];
+    
+    try {
+        const items = fs.readdirSync(dir, { withFileTypes: true });
+        
+        for (const item of items) {
+            const fullPath = path.join(dir, item.name);
+            const relativePath = path.join(basePath, item.name);
+            
+            if (item.isDirectory()) {
+                // Skip hidden directories and node_modules
+                if (!item.name.startsWith('.') && item.name !== 'node_modules') {
+                    docs.push(...scanDocsDirectory(fullPath, relativePath));
+                }
+            } else if (item.isFile() && item.name.endsWith('.md')) {
+                const webPath = path.join('docs', relativePath).replace(/\\/g, '/');
+                docs.push({
+                    path: webPath,
+                    title: getTitleFromFilename(item.name),
+                    category: getCategoryFromPath(fullPath),
+                    icon: getIconForFile(fullPath, item.name)
+                });
+            }
+        }
+    } catch (error) {
+        console.error(`Error scanning directory ${dir}:`, error.message);
+    }
+    
+    return docs;
+}
+
+// Organize docs by category
+function organizeDocs(docs) {
+    const organized = {};
+    
+    docs.forEach(doc => {
+        if (!organized[doc.category]) {
+            organized[doc.category] = [];
+        }
+        organized[doc.category].push(doc);
+    });
+    
+    // Sort categories
+    const sortOrder = ['Product', 'Development', 'Setup', 'Research', 'Documentation'];
+    const sorted = {};
+    
+    sortOrder.forEach(cat => {
+        if (organized[cat]) {
+            sorted[cat] = organized[cat].sort((a, b) => 
+                a.title.localeCompare(b.title)
+            );
+        }
+    });
+    
+    // Add any remaining categories
+    Object.keys(organized).forEach(cat => {
+        if (!sorted[cat]) {
+            sorted[cat] = organized[cat].sort((a, b) => 
+                a.title.localeCompare(b.title)
+            );
+        }
+    });
+    
+    return sorted;
+}
 
 const server = http.createServer((req, res) => {
     console.log(`${req.method} ${req.url}`);
 
+    // API endpoint for dynamic document discovery
+    if (req.url === '/api/docs') {
+        res.writeHead(200, { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        });
+        
+        const allDocs = scanDocsDirectory(DOCS_DIR);
+        const organized = organizeDocs(allDocs);
+        
+        res.end(JSON.stringify(organized, null, 2));
+        return;
+    }
+
+    // Static file serving
     let filePath;
     
-    // Root serves the index.html from viewer directory
     if (req.url === '/' || req.url === '/index.html') {
         filePath = path.join(VIEWER_DIR, 'index.html');
-    } 
-    // Other requests are resolved relative to project root
-    else {
+    } else {
         filePath = path.join(PROJECT_ROOT, req.url);
     }
 
@@ -113,11 +255,16 @@ server.listen(PORT, () => {
     console.log('└──────────────────────────────────────────┘\n');
     console.log(`🌐 Server:      http://localhost:${PORT}`);
     console.log(`📂 Project:     ${PROJECT_ROOT}`);
-    console.log(`📁 Viewer:      ${VIEWER_DIR}`);
-    console.log('\n💡 Tips:');
+    console.log(`📁 Docs:        ${DOCS_DIR}`);
+    console.log('\n💡 Features:');
+    console.log('   • Dynamic document discovery');
+    console.log('   • Auto-categorization');
     console.log('   • Press "/" in browser to search');
-    console.log('   • Press Ctrl+C to stop server');
-    console.log('   • Modern UI with glassmorphism\n');
+    console.log('   • Press Ctrl+C to stop\n');
+    
+    // Show discovered docs count
+    const allDocs = scanDocsDirectory(DOCS_DIR);
+    console.log(`📄 Discovered: ${allDocs.length} documents\n`);
 });
 
 // Graceful shutdown

@@ -41,19 +41,20 @@ dev/docs-viewer/
 
 ## ➕ Add Documents
 
-Edit `index.html` (line ~421):
+**Just create a markdown file in `docs/`:**
 
-```javascript
-const docs = {
-    'Category': [
-        { 
-            path: 'docs/file.md',
-            title: 'Title',
-            icon: '📄'
-        }
-    ]
-};
+```bash
+# That's it! No config needed.
+echo "# My Doc" > docs/new-file.md
+
+# Refresh browser - appears automatically
 ```
+
+**Auto-categorization by folder:**
+- `docs/dev/` → Development
+- `docs/setup/` → Setup
+- `docs/analysis/` → Product/Research
+- `docs/idea/` → Development
 
 ---
 
@@ -126,19 +127,23 @@ Text:       #f8fafc
 
 ---
 
-## 📝 Common Tasks
+## 🔍 API Endpoint
 
-**Add category:**
-```javascript
-'New Category': [
-    { path: 'docs/new.md', title: 'New', icon: '📝' }
-]
+**`/api/docs`** - Returns dynamic document list
+
+```bash
+curl http://localhost:3030/api/docs
+# Returns JSON with all discovered docs
 ```
 
-**Change title:**
+---
+
+## 📝 Common Tasks
+
+**Change logo:**
 ```html
-<!-- Line 395 -->
-<h1>Your Title</h1>
+<!-- dev/docs-viewer/index.html, line ~300 -->
+<span class="logo-text">Your Name</span>
 ```
 
 ---
