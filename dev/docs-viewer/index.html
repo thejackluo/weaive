@@ -240,6 +240,40 @@
             display: none;
         }
 
+        /* Folder Structure */
+        .nav-folder {
+            margin: 2px 0;
+        }
+
+        .nav-folder-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .nav-folder-header:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .folder-chevron {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+            transition: transform 0.15s;
+        }
+
+        .folder-contents {
+            margin-top: 2px;
+        }
+
         /* Main Content */
         .main-content {
             flex: 1;
@@ -686,15 +720,9 @@
 
     <script>
         // Dynamic documentation structure - loaded from server
-        let docs = {};
+        let docsStructure = {};
         let allDocs = [];
-        const categoryIcons = {
-            'Product': 'package',
-            'Development': 'code',
-            'Setup': 'wrench',
-            'Research': 'search',
-            'Documentation': 'book-open'
-        };
+        let expandedFolders = new Set(['root']); // Track expanded folders
 
         // Fetch documents dynamically from server
         async function loadDocuments() {
@@ -702,14 +730,10 @@
                 const response = await fetch('/api/docs');
                 if (!response.ok) throw new Error('Failed to load documents');
                 
-                docs = await response.json();
+                docsStructure = await response.json();
                 
                 // Flatten for search
-                Object.keys(docs).forEach(category => {
-                    docs[category].forEach(doc => {
-                        allDocs.push({ ...doc, category });
-                    });
-                });
+                flattenStructure(docsStructure, 'docs');
                 
                 // Render UI
                 renderNav();
@@ -729,60 +753,145 @@
             }
         }
 
-        // Render navigation
+        // Flatten structure for search
+        function flattenStructure(structure, folderPath) {
+            if (structure.files) {
+                structure.files.forEach(file => {
+                    allDocs.push({ ...file, folderPath });
+                });
+            }
+            if (structure.folders) {
+                Object.keys(structure.folders).forEach(folderName => {
+                    flattenStructure(structure.folders[folderName], `${folderPath}/${folderName}`);
+                });
+            }
+        }
+
+        // Render navigation with folder structure
         function renderNav() {
             const nav = document.getElementById('nav');
             nav.innerHTML = '';
 
-            Object.keys(docs).forEach(category => {
-                const section = document.createElement('div');
-                section.className = 'nav-section';
-
-                const header = document.createElement('div');
-                header.className = 'nav-section-header';
-                header.innerHTML = `
-                    <div class="nav-section-title">${category}</div>
-                    <div class="nav-section-count">${docs[category].length}</div>
-                `;
-                section.appendChild(header);
-
-                docs[category].forEach(doc => {
-                    const item = document.createElement('div');
-                    item.className = 'nav-item';
-                    item.dataset.path = doc.path;
-                    item.innerHTML = `
-                        <i data-lucide="${doc.icon}" class="nav-item-icon"></i>
-                        <span>${doc.title}</span>
-                    `;
-                    item.onclick = () => {
-                        loadDoc(doc.path);
-                        if (window.innerWidth <= 968) toggleSidebar();
-                    };
-                    section.appendChild(item);
-                });
-
-                nav.appendChild(section);
-            });
+            // Render root level
+            renderFolderContents(nav, docsStructure, 'root', 0);
 
             lucide.createIcons();
+        }
+
+        // Recursively render folder contents
+        function renderFolderContents(container, structure, folderId, level) {
+            // Render subfolders
+            if (structure.folders) {
+                Object.keys(structure.folders).sort().forEach(folderName => {
+                    const folderDiv = document.createElement('div');
+                    folderDiv.className = 'nav-folder';
+                    folderDiv.style.paddingLeft = `${level * 12}px`;
+                    
+                    const subFolderId = `${folderId}-${folderName}`;
+                    const isExpanded = expandedFolders.has(subFolderId);
+                    
+                    // Folder header
+                    const folderHeader = document.createElement('div');
+                    folderHeader.className = 'nav-folder-header';
+                    folderHeader.innerHTML = `
+                        <i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="folder-chevron"></i>
+                        <i data-lucide="folder" class="nav-item-icon"></i>
+                        <span>${folderName}</span>
+                    `;
+                    folderHeader.onclick = () => toggleFolder(subFolderId);
+                    
+                    folderDiv.appendChild(folderHeader);
+                    
+                    // Folder contents (if expanded)
+                    if (isExpanded) {
+                        const contentsDiv = document.createElement('div');
+                        contentsDiv.className = 'folder-contents';
+                        contentsDiv.id = subFolderId;
+                        renderFolderContents(contentsDiv, structure.folders[folderName], subFolderId, level + 1);
+                        folderDiv.appendChild(contentsDiv);
+                    }
+                    
+                    container.appendChild(folderDiv);
+                });
+            }
+            
+            // Render files
+            if (structure.files && structure.files.length > 0) {
+                structure.files.forEach(file => {
+                    const item = document.createElement('div');
+                    item.className = 'nav-item';
+                    item.dataset.path = file.path;
+                    item.style.paddingLeft = `${(level * 12) + 24}px`; // Extra indent for files
+                    item.innerHTML = `
+                        <i data-lucide="${file.icon}" class="nav-item-icon"></i>
+                        <span>${file.title}</span>
+                    `;
+                    item.onclick = () => {
+                        loadDoc(file.path);
+                        if (window.innerWidth <= 968) toggleSidebar();
+                    };
+                    container.appendChild(item);
+                });
+            }
+        }
+
+        // Toggle folder expand/collapse
+        function toggleFolder(folderId) {
+            if (expandedFolders.has(folderId)) {
+                expandedFolders.delete(folderId);
+            } else {
+                expandedFolders.add(folderId);
+            }
+            renderNav();
         }
 
         // Render welcome
         function renderWelcome() {
             const grid = document.getElementById('welcome-grid');
             
-            Object.keys(docs).forEach(category => {
-                const card = document.createElement('div');
-                card.className = 'welcome-card';
-                card.innerHTML = `
-                    <i data-lucide="${categoryIcons[category]}" class="welcome-card-icon"></i>
-                    <h3>${category}</h3>
-                    <p>${docs[category].length} ${docs[category].length === 1 ? 'doc' : 'docs'}</p>
+            // Count folders and files
+            const stats = countStructure(docsStructure);
+            
+            // Total documents card
+            const totalCard = document.createElement('div');
+            totalCard.className = 'welcome-card';
+            totalCard.innerHTML = `
+                <i data-lucide="file-text" class="welcome-card-icon"></i>
+                <h3>Total Documents</h3>
+                <p>${stats.files} files</p>
+            `;
+            grid.appendChild(totalCard);
+            
+            // Folders card
+            if (stats.folders > 0) {
+                const foldersCard = document.createElement('div');
+                foldersCard.className = 'welcome-card';
+                foldersCard.innerHTML = `
+                    <i data-lucide="folder" class="welcome-card-icon"></i>
+                    <h3>Folders</h3>
+                    <p>${stats.folders} folders</p>
                 `;
-                grid.appendChild(card);
-            });
+                grid.appendChild(foldersCard);
+            }
 
             lucide.createIcons();
+        }
+
+        // Count folders and files recursively
+        function countStructure(structure) {
+            let folders = 0;
+            let files = structure.files ? structure.files.length : 0;
+            
+            if (structure.folders) {
+                folders = Object.keys(structure.folders).length;
+                Object.keys(structure.folders).forEach(folderName => {
+                    const subStats = countStructure(structure.folders[folderName]);
+                    folders += subStats.folders;
+                    files += subStats.files;
+                });
+            }
+            
+            return { folders, files };
         }
 
         // Load document
@@ -856,16 +965,42 @@
         document.getElementById('search').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
             
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.toggle('hidden', 
-                    !item.textContent.toLowerCase().includes(query));
-            });
-
-            document.querySelectorAll('.nav-section').forEach(section => {
-                const hasVisible = Array.from(section.querySelectorAll('.nav-item'))
-                    .some(item => !item.classList.contains('hidden'));
-                section.style.display = hasVisible ? 'block' : 'none';
-            });
+            if (query === '') {
+                // Reset to normal view
+                renderNav();
+                return;
+            }
+            
+            // Filter documents
+            const filtered = allDocs.filter(doc => 
+                doc.title.toLowerCase().includes(query) ||
+                doc.folderPath.toLowerCase().includes(query)
+            );
+            
+            // Render filtered results
+            const nav = document.getElementById('nav');
+            nav.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                nav.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-tertiary);">No results found</div>';
+            } else {
+                filtered.forEach(doc => {
+                    const item = document.createElement('div');
+                    item.className = 'nav-item';
+                    item.dataset.path = doc.path;
+                    item.innerHTML = `
+                        <i data-lucide="${doc.icon}" class="nav-item-icon"></i>
+                        <span>${doc.title}</span>
+                    `;
+                    item.onclick = () => {
+                        loadDoc(doc.path);
+                        if (window.innerWidth <= 968) toggleSidebar();
+                    };
+                    nav.appendChild(item);
+                });
+            }
+            
+            lucide.createIcons();
         });
 
         // Toggle sidebar
