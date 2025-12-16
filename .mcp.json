@@ -1,69 +1,49 @@
 {
   "mcpServers": {
-    "agentvibes": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "--package=agentvibes",
-        "agentvibes-mcp-server"
-      ]
-    },
-    "context7": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp"
-      ],
-      "env": {
-        "CONTEXT7_API_KEY": "get_from_https://console.upstash.com/"
-      }
-    },
     "ripgrep": {
       "command": "npx",
-      "args": [
-        "-y",
-        "mcp-server-ripgrep"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-everything"]
     },
     "filesystem": {
       "command": "npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "PATH_TO_YOUR_PROJECT_ROOT",
-        "PATH_TO_YOUR_DOCS_FOLDER"
+        "C:\\Users\\Jack Luo\\Desktop\\(local) github software\\weavelight"
       ]
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "disabled": false
     },
     "github": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-github"],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "get_from_https://github.com/settings/tokens"
-      }
-    },
-    "browserstack": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@browserstack/mcp-server-browserstack"
-      ],
-      "env": {
-        "BROWSERSTACK_USERNAME": "your_browserstack_username",
-        "BROWSERSTACK_ACCESS_KEY": "get_from_browserstack_account_settings"
-      }
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      },
+      "disabled": false
     },
     "notion": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@notionhq/mcp-server-notion"
-      ],
+      "args": ["-y", "@notionhq/mcp-server-notion"],
       "env": {
-        "NOTION_API_KEY": "get_from_https://www.notion.so/my-integrations"
-      }
+        "NOTION_API_KEY": "${NOTION_API_KEY}"
+      },
+      "disabled": true
+    },
+    "browserstack": {
+      "command": "npx",
+      "args": ["-y", "@browserstack/mcp-server-browserstack"],
+      "env": {
+        "BROWSERSTACK_USERNAME": "${BROWSERSTACK_USERNAME}",
+        "BROWSERSTACK_ACCESS_KEY": "${BROWSERSTACK_ACCESS_KEY}"
+      },
+      "disabled": true
     }
   }
 }
