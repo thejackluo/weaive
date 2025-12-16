@@ -65,6 +65,7 @@ This Product Requirements Document defines the complete requirements for Weave M
 1. [Product Vision](#product-vision)
 2. [User Personas](#user-personas)
 3. [Functional Requirements](#functional-requirements)
+   - [Epic 0: Foundation](#epic-0-foundation)
    - [Epic 1: Onboarding & Identity](#epic-1-onboarding--identity)
    - [Epic 2: Goal Management](#epic-2-goal-management)
    - [Epic 3: Daily Actions & Proof](#epic-3-daily-actions--proof)
@@ -183,6 +184,164 @@ This Product Requirements Document defines the complete requirements for Weave M
 - **S** = Should Have (important but can defer)
 - **C** = Could Have (nice to have)
 - **W** = Won't Have (explicitly excluded from MVP)
+
+---
+
+## Epic 0: Foundation
+
+### Overview
+
+Before any user-facing features can be built, the development team must have a fully scaffolded, secure, and testable codebase with authentication, database, and AI infrastructure ready.
+
+### User Stories
+
+#### US-0.1: Project Scaffolding
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want to** have a properly initialized Expo and FastAPI project
+**So that** I can begin implementing features with the correct tech stack
+
+**Acceptance Criteria:**
+- [ ] Initialize Expo app using `npx create-expo-app` with blank-typescript template
+- [ ] Use Expo SDK 53, React Native 0.79, React 19, Expo Router v5
+- [ ] Initialize backend using `uv init` with FastAPI, uvicorn
+- [ ] Use Python 3.11+, FastAPI 0.115+
+- [ ] Configure NativeWind (Tailwind CSS for React Native) for styling
+- [ ] Set up TanStack Query with `networkMode: 'offlineFirst'`
+- [ ] Configure Zustand for shared UI state
+
+**Story Points:** 5
+
+---
+
+#### US-0.2: Supabase Setup
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want to** have Supabase configured with the database schema
+**So that** authentication and data persistence work correctly
+
+**Acceptance Criteria:**
+- [ ] Create Supabase project with PostgreSQL database
+- [ ] Run initial migrations for 8 core tables:
+  - user_profiles, identity_docs, goals, subtask_templates
+  - subtask_instances, subtask_completions, captures, journal_entries
+- [ ] Configure Supabase Storage for user uploads
+- [ ] Set up critical indexes on frequently queried columns
+- [ ] Implement snake_case for database columns
+
+**Story Points:** 5
+
+---
+
+#### US-0.3: Authentication Flow
+
+**Priority:** M (Must Have)
+
+**As a** user
+**I want to** be able to sign up and log in securely
+**So that** my data is protected and associated with my account
+
+**Acceptance Criteria:**
+- [ ] Implement Supabase Auth with email + OAuth (Google, Apple)
+- [ ] JWT token expiration set to 7 days
+- [ ] Implement refresh token rotation
+- [ ] Session management with secure storage
+- [ ] Logout functionality clears local session
+
+**Story Points:** 3
+
+---
+
+#### US-0.4: Row Level Security (RLS)
+
+**Priority:** M (Must Have) - **CRITICAL: Must complete before alpha release**
+
+**As a** user
+**I want to** know my data is secure from other users
+**So that** I can trust the app with my personal reflections and goals
+
+**Acceptance Criteria:**
+- [ ] RLS policies on ALL user-owned tables (CRITICAL)
+- [ ] Users can only SELECT/INSERT/UPDATE/DELETE own data
+- [ ] API endpoint authorization validates user ownership
+- [ ] Test RLS policies with multiple test users
+- [ ] Document RLS policies in security documentation
+
+**Story Points:** 5
+
+---
+
+#### US-0.5: CI/CD Pipeline
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want to** have automated testing and deployment
+**So that** code quality is maintained and releases are consistent
+
+**Acceptance Criteria:**
+- [ ] GitHub Actions for linting (ESLint, Black)
+- [ ] GitHub Actions for type checking (TypeScript, mypy)
+- [ ] GitHub Actions for running tests
+- [ ] Expo EAS Build configured for iOS
+- [ ] Railway deployment configured for FastAPI backend
+- [ ] Environment variable management for staging/production
+
+**Story Points:** 3
+
+---
+
+#### US-0.6: AI Service Abstraction
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want to** have an abstracted AI provider layer
+**So that** we can switch providers and implement fallbacks without changing business logic
+
+**Acceptance Criteria:**
+- [ ] Abstract AI provider interface supporting OpenAI and Anthropic
+- [ ] Implement fallback chain: OpenAI → Anthropic → Deterministic
+- [ ] Cost tracking with `input_tokens`, `output_tokens`, `model`, `cost_usd`
+- [ ] Daily budget alerts at $83.33/day threshold
+- [ ] Auto-throttle to cache-only mode at 100% daily budget
+- [ ] Rate limiting: 10 AI calls/hour per user
+
+**Story Points:** 3
+
+---
+
+#### US-0.7: Test Infrastructure
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want to** have testing infrastructure set up
+**So that** I can write and run tests for new features
+
+**Acceptance Criteria:**
+- [ ] Jest configured for React Native mobile testing
+- [ ] pytest configured for FastAPI backend testing
+- [ ] Test fixture factories for common entities (user, goal, subtask)
+- [ ] Test database seeding scripts
+- [ ] Minimum 1 integration test demonstrating the pattern
+
+**Story Points:** 1
+
+---
+
+### Epic 0 Summary
+
+| Metric | Value |
+|--------|-------|
+| Total Story Points | 25 |
+| Priority M (Must Have) | 7 |
+| Priority S (Should Have) | 0 |
+| Dependencies | None (True Foundation) |
 
 ---
 
