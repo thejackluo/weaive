@@ -443,14 +443,109 @@ All API responses must follow this format:
 { "data": [...], "meta": { "total": 42, "page": 1, "per_page": 20 } }
 ```
 
+## BMAD Methodology
+
+This project uses **BMAD (Better Methodology for AI Development)** - a structured workflow system optimized for AI-assisted software development.
+
+### What is BMAD?
+
+BMAD is a methodology that provides:
+- **Specialized AI Agents** - Role-based agents (PM, Architect, Developer, UX Designer, etc.)
+- **Structured Workflows** - Step-by-step processes for planning, design, and implementation
+- **Collaborative Processes** - Multi-agent discussions and validations
+- **Quality Assurance** - Built-in validation and review workflows
+
+### BMAD Directory Structure
+
+```
+.bmad/
+├── core/                    # Core BMAD system
+│   ├── agents/             # Core agents (bmad-master)
+│   └── workflows/          # Core workflows (brainstorming, party-mode)
+│
+├── bmb/                     # BMAD Builder module
+│   ├── agents/             # Builder agents
+│   ├── workflows/          # Creation workflows
+│   ├── docs/               # BMAD documentation
+│   └── reference/          # Example agents and workflows
+│
+└── _cfg/                    # Configuration
+    ├── agents/             # Custom agent configurations
+    ├── task-manifest.csv   # Available tasks
+    └── workflow-manifest.csv # Available workflows
+
+.claude/                     # Claude Code configuration
+├── hooks/                   # Event hooks
+├── personalities/           # Claude personalities
+├── plugins/                 # Claude plugins
+└── settings.json           # Claude settings
+```
+
+### Available BMAD Agents
+
+| Agent | Purpose | When to Use |
+|-------|---------|-------------|
+| **bmad-master** | Master orchestrator, task execution | Start workflows, list tasks |
+| **bmm-pm** | Product Manager | PRD creation, requirement gathering |
+| **bmm-architect** | Software Architect | Architecture decisions, tech stack |
+| **bmm-dev** | Developer | Code implementation, refactoring |
+| **bmm-ux-designer** | UX Designer | User flows, wireframes, design system |
+| **bmm-tech-writer** | Technical Writer | Documentation, guides, API docs |
+| **bmm-analyst** | Business Analyst | Market research, competitive analysis |
+| **bmm-tea** | Technical Engineering Advisor | Technical validation, code review |
+| **bmm-sm** | Scrum Master | Sprint planning, agile processes |
+| **bmb-bmad-builder** | BMAD Builder | Create custom agents and workflows |
+
+### BMAD Workflow Types
+
+**Planning Phase:**
+- `brainstorm-project` - Initial ideation and concept development
+- `research` - Market research and competitive analysis
+- `product-brief` - Executive summary and vision
+- `prd` - Product requirements document
+- `create-ux-design` - User experience design
+- `design-system` - Design system creation
+
+**Solutioning Phase:**
+- `create-architecture` - System architecture and tech stack
+- `create-epics-and-stories` - Break down features into epics and stories
+- `test-design` - Testing strategy and test plans
+- `validate-architecture` - Architecture review and validation
+- `create-security-architecture` - Security design and threat model
+- `create-devops-strategy` - CI/CD, deployment, monitoring
+
+**Implementation Phase:**
+- `sprint-planning` - Plan sprints and allocate work
+- `code-review` - Review code quality and standards
+
+**Collaboration:**
+- `party-mode` - Multi-agent discussion and brainstorming
+
+### How to Use BMAD Agents
+
+BMAD agents are typically invoked through cursor rules or slash commands. For standard Claude Code usage:
+
+1. **Follow the workflow status** - Check `docs/bmm-workflow-status.yaml` to see where you are
+2. **Complete workflows in order** - Each phase builds on the previous
+3. **Document decisions** - Update architecture docs and changelog as you go
+4. **Use party-mode for validation** - When you need multiple perspectives
+
+### Current Workflow Status
+
+Check `docs/bmm-workflow-status.yaml` to see:
+- Which workflows are complete (✅)
+- Which workflows are required next
+- Which workflows are optional or can be skipped
+
 ## Changelog Conventions
 
 **IMPORTANT:** When making significant changes to the project, always document them in the changelog.
 
 ### File Location
 - **Single source of truth:** `.cursor/.cursor-changes`
-- **Do NOT create:** duplicate changelog files in root or other locations
+- **Do NOT create:** duplicate changelog files in root, docs/, or other locations
 - **Format:** Markdown with structured sections
+- **Note:** This is `.cursor/.cursor-changes` (no `.md` extension)
 
 ### When to Add Changelog Entries
 
