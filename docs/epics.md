@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2]
+stepsCompleted: [1, 2, 3]
 inputDocuments:
   - docs/prd.md
   - docs/architecture.md
@@ -7,8 +7,10 @@ inputDocuments:
 workflowType: 'create-epics-and-stories'
 project_name: 'Weave'
 created: '2025-12-16'
-status: 'in_progress'
+status: 'complete'
 last_updated: '2025-12-16'
+party_mode_review: true
+party_mode_feedback_integrated: true
 ---
 
 # Weave - Epic Breakdown
@@ -278,6 +280,13 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 | FR | Epic | Description |
 |----|------|-------------|
+| FR-0.1 | Epic 0 | Project Scaffolding (Mobile + API) |
+| FR-0.2 | Epic 0 | Supabase Setup + Database Migrations |
+| FR-0.3 | Epic 0 | Authentication Flow (Supabase Auth) |
+| FR-0.4 | Epic 0 | Row Level Security (RLS) Policies |
+| FR-0.5 | Epic 0 | CI/CD Pipeline Setup |
+| FR-0.6 | Epic 0 | AI Service Abstraction Layer |
+| FR-0.7 | Epic 0 | Test Infrastructure Setup |
 | FR-1.1 | Epic 1 | Welcome Screen |
 | FR-1.2 | Epic 1 | Demographics Collection |
 | FR-1.3 | Epic 1 | Archetype Assessment |
@@ -330,11 +339,29 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | FR-8.5 | Epic 8 | Help and Support |
 | FR-8.6 | Epic 8 | Logout and Security |
 
-**Coverage Summary:** 51 FRs → 8 Epics (100% coverage)
+**Coverage Summary:** 58 FRs → 9 Epics (100% coverage)
 
 ---
 
 ## Epic List
+
+### Epic 0: Foundation (25 pts)
+**User Outcome:** Development team has a fully scaffolded, secure, and testable codebase with authentication, database, and AI infrastructure ready for feature development.
+
+**FRs Covered:** FR-0.1, FR-0.2, FR-0.3, FR-0.4, FR-0.5, FR-0.6, FR-0.7
+
+**Why This Epic First:** No features can be built without project scaffolding, database setup, authentication, and security policies. This is the true foundation that enables all other epics.
+
+**Stories:**
+- **Story 0.1: Project Scaffolding** (5 pts) - Initialize Expo app (SDK 53, React Native 0.79) and FastAPI backend (Python 3.11+, uv init)
+- **Story 0.2: Supabase Setup** (5 pts) - Configure Supabase project, create database schema (8 core tables), run initial migrations
+- **Story 0.3: Authentication Flow** (3 pts) - Implement Supabase Auth with email + OAuth, JWT handling, session management
+- **Story 0.4: Row Level Security (RLS)** (5 pts) - Implement RLS policies on ALL user-owned tables before alpha release (CRITICAL)
+- **Story 0.5: CI/CD Pipeline** (3 pts) - GitHub Actions for linting, type checking, tests; Expo EAS Build for iOS; Railway deploy for API
+- **Story 0.6: AI Service Abstraction** (3 pts) - Abstract AI provider layer with fallback chain (OpenAI → Anthropic → Deterministic), cost tracking
+- **Story 0.7: Test Infrastructure** (1 pt) - Jest setup for mobile, pytest for API, fixture factories, test database seeding
+
+---
 
 ### Epic 1: Onboarding & Identity (35 pts)
 **User Outcome:** New users can set up their identity profile, complete their first Needle (goal) with AI assistance, and start their 10-day journey.
@@ -342,6 +369,19 @@ This document provides the complete epic and story breakdown for Weave, decompos
 **FRs Covered:** FR-1.1, FR-1.2, FR-1.3, FR-1.4, FR-1.5, FR-1.6, FR-1.7, FR-1.8, FR-1.9
 
 **Why This Epic First:** Users cannot do anything without completing onboarding. This establishes identity, first goal, and payment - the foundation for everything else.
+
+**Stories:**
+- **Story 1.1: Welcome Screen** (2 pts) - FR-1.1: Display engaging welcome with Weave logo, slogan, value proposition, Get Started CTA
+- **Story 1.2: Demographics Collection** (3 pts) - FR-1.2: Collect user type, timezone (auto-detect), preferred working hours with progress indicator
+- **Story 1.3: Archetype Assessment** (5 pts) - FR-1.3: Present 6-8 questions, categorize into archetype, display result with description, allow retake
+- **Story 1.4: Dream Self Definition** (3 pts) - FR-1.4: Text input for ideal future self (200-500 chars), prompt suggestions, editable later
+- **Story 1.5: Motivation and Constraints** (3 pts) - FR-1.5: Select motivation drivers, failure mode, optional constraints
+- **Story 1.6a: Goal Input Flow** (3 pts) - FR-1.6 Part 1: Goal text input with character limit, probing question display
+- **Story 1.6b: AI Goal Analysis** (5 pts) - FR-1.6 Part 2: AI processes goal with probing answers, generates breakdown
+- **Story 1.6c: Bind Suggestions & Editing** (3 pts) - FR-1.6 Part 3: Display AI-generated Binds, allow user editing, confirm selections
+- **Story 1.7: First Commitment** (3 pts) - FR-1.7: Display summary, hold-to-commit interaction, trigger push permission
+- **Story 1.8: App Tutorial** (2 pts) - FR-1.8: 3-4 screen tutorial showing core features, skippable
+- **Story 1.9: Soft Paywall** (3 pts) - FR-1.9: Present subscription options, value proposition, allow skip to free tier
 
 ---
 
@@ -352,6 +392,15 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **Why This Order:** After onboarding, users need to manage their goals before they can complete daily actions.
 
+**Stories:**
+- **Story 2.1: Needles List View** (3 pts) - FR-2.1: Display up to 3 active Needles with status, consistency %, Bind count
+- **Story 2.2: Needle Detail View** (5 pts) - FR-2.2: Full Needle info with Binds, stats, edit/archive/add bind actions
+- **Story 2.3a: New Needle Input** (3 pts) - FR-2.3 Part 1: Text input, enforce max 3 active Needles, probing questions
+- **Story 2.3b: AI Bind Generation** (5 pts) - FR-2.3 Part 2: AI-generated Bind suggestions, user can accept/edit/dismiss
+- **Story 2.4: Edit Needle** (5 pts) - FR-2.4: Edit title, description, add/remove Binds with thoughtful change warning
+- **Story 2.5: Archive Needle** (3 pts) - FR-2.5: Confirmation dialog, archive status, reactivate option
+- **Story 2.6: Change Strictness Settings** (3 pts) - FR-2.6: Normal/Strict/None modes configurable in settings
+
 ---
 
 ### Epic 3: Daily Actions & Proof (38 pts)
@@ -360,6 +409,16 @@ This document provides the complete epic and story breakdown for Weave, decompos
 **FRs Covered:** FR-3.1, FR-3.2, FR-3.3, FR-3.4, FR-3.5, FR-3.6, FR-3.7
 
 **Why This Order:** The daily action loop is the heart of the product. Users need this to make progress toward their Needles.
+
+**Stories:**
+- **Story 3.1: Thread Home (Today's Binds)** (5 pts) - FR-3.1: Today's Binds grouped by Needle, collapsible, completion status. Answer "What should I do?" in <10s
+- **Story 3.2: Triad Display** (5 pts) - FR-3.2: AI-recommended top 3 Binds with rationale, editable/dismissible
+- **Story 3.3a: Bind Screen** (3 pts) - FR-3.3 Part 1: Needle context, Bind details, Start Bind button
+- **Story 3.3b: Bind Completion** (5 pts) - FR-3.3 Part 2: Complete flow with magical confetti animation, <30s total
+- **Story 3.4: Attach Proof** (5 pts) - FR-3.4: Photo capture, quick note, optional skip, <10s creation
+- **Story 3.5: Quick Capture** (5 pts) - FR-3.5: Floating menu, fast capture sheet, optional Bind linking
+- **Story 3.6: Pomodoro Timer** (5 pts) - FR-3.6: Set duration upfront, focus mode UI, satisfying completion moment
+- **Story 3.7: Dual Path Visualization** (5 pts) - FR-3.7: Visual animated paths + AI text from Tech Context Engine
 
 ---
 
@@ -370,6 +429,14 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **Why This Order:** Reflection closes the daily loop and generates tomorrow's plan. Depends on having Binds to reflect on.
 
+**Stories:**
+- **Story 4.1a: Reflection Questions** (3 pts) - FR-4.1 Part 1: Default 2 questions + fulfillment slider (1-10)
+- **Story 4.1b: Custom Questions** (3 pts) - FR-4.1 Part 2: User can add/edit/remove custom tracking questions
+- **Story 4.2: Recap Before Reflection** (3 pts) - FR-4.2: Summary of completed Binds, Captures, time tracked
+- **Story 4.3: AI Feedback Generation** (8 pts) - FR-4.3: Loading state, generate within 20s, display as 3 stacked cards
+- **Story 4.4: Edit AI Feedback** (5 pts) - FR-4.4: Edit and "Not true" actions, corrections stored for AI improvement
+- **Story 4.5: Journal History** (6 pts) - FR-4.5: List by date, view full reflection + feedback, filter by timeframe
+
 ---
 
 ### Epic 5: Progress Visualization (Weave Dashboard) (39 pts)
@@ -378,6 +445,15 @@ This document provides the complete epic and story breakdown for Weave, decompos
 **FRs Covered:** FR-5.1, FR-5.2, FR-5.3, FR-5.4, FR-5.5, FR-5.6, FR-5.7
 
 **Why This Order:** Visualization requires accumulated data from daily actions and reflections.
+
+**Stories:**
+- **Story 5.1: Dashboard Overview** (5 pts) - FR-5.1: Emotional Mirror (top) + Data Mirror (bottom), AI weekly insights
+- **Story 5.2: Consistency Heat Map** (8 pts) - FR-5.2: GitHub-style graph, color intensity by %, filters, tap to navigate
+- **Story 5.3: Fulfillment Trend Chart** (5 pts) - FR-5.3: Line chart with 7-day rolling average, tap to navigate
+- **Story 5.4: Weave Character** (8 pts) - FR-5.4: Mathematical curve visualization, complexity increases with progress
+- **Story 5.5: Streak Tracking** (5 pts) - FR-5.5: Current/longest streak, resilience metric, streak freeze logic
+- **Story 5.6: Badge System** (5 pts) - FR-5.6: Milestone triggers, display in profile, shareable badge cards
+- **Story 5.7: Day 10 Snapshot** (3 pts) - FR-5.7: Before vs After summary, shareable card format
 
 ---
 
@@ -388,6 +464,13 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **Why This Order:** AI coaching benefits from having user context (completions, reflections, patterns) to provide personalized responses.
 
+**Stories:**
+- **Story 6.1: AI Chat Interface** (5 pts) - FR-6.1: Chat interface, contextual opening prompt, quick action chips
+- **Story 6.2: Contextual AI Engine** (8 pts) - FR-6.2: AI references user context, Dream Self voice, evidence-based, rate limited
+- **Story 6.3: Edit AI Responses** (3 pts) - FR-6.3: Long-press to edit or mark unhelpful, regenerate option
+- **Story 6.4: Weekly Insights** (8 pts) - FR-6.4: Generated weekly, pattern insights, success correlations, dismissible
+- **Story 6.5: AI Needle Suggestions** (5 pts) - FR-6.5: After archiving, suggest related Needles based on patterns
+
 ---
 
 ### Epic 7: Notifications & Engagement (28 pts)
@@ -396,6 +479,14 @@ This document provides the complete epic and story breakdown for Weave, decompos
 **FRs Covered:** FR-7.1, FR-7.2, FR-7.3, FR-7.4, FR-7.5, FR-7.6
 
 **Why This Order:** Notifications are engagement layer on top of core functionality. Can be developed in parallel with other epics.
+
+**Stories:**
+- **Story 7.1: Morning Intention** (5 pts) - FR-7.1: Today's Triad, yesterday recap, Dream Self voice, deep link
+- **Story 7.2: Bind Reminders** (5 pts) - FR-7.2: Escalation strategy (gentle → contextual → accountability), max 3/day
+- **Story 7.3: Evening Reflection Prompt** (3 pts) - FR-7.3: Sent at wind-down time if journal not submitted
+- **Story 7.4: Streak Recovery** (5 pts) - FR-7.4: After 24-48h inactivity, compassionate, reference past wins
+- **Story 7.5: Milestone Celebration** (5 pts) - FR-7.5: At 10/30/60/90 days, badge unlocks, share option
+- **Story 7.6: Notification Preferences** (5 pts) - FR-7.6: Intensity slider, quiet hours, per-notification toggles, max 5/day
 
 ---
 
@@ -406,42 +497,404 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **Why This Order:** Settings and profile management are supporting features that enhance the core experience.
 
+**Stories:**
+- **Story 8.1: Profile Overview** (3 pts) - FR-8.1: Name, email, photo, quick links to settings sections
+- **Story 8.2: Edit Identity Document** (5 pts) - FR-8.2: View/edit archetype, Dream Self, motivations, coaching preference
+- **Story 8.3: General Settings** (5 pts) - FR-8.3: Timezone, working hours, change strictness, data export, delete account
+- **Story 8.4: Subscription Management** (5 pts) - FR-8.4: Current plan, tier features, upgrade CTA, App Store link
+- **Story 8.5: Help and Support** (2 pts) - FR-8.5: FAQ, contact support, rate app prompt, version number
+- **Story 8.6: Logout and Security** (3 pts) - FR-8.6: Logout with confirmation, re-auth for sensitive actions
+
 ---
 
 ## Epic Summary Table
 
 | Epic | Name | Story Points | Priority FRs (M) | Dependencies |
 |------|------|--------------|------------------|--------------|
-| 1 | Onboarding & Identity | 35 | 8 | None (Foundation) |
-| 2 | Needle/Goal Management | 27 | 5 | Epic 1 |
-| 3 | Daily Actions & Proof | 38 | 5 | Epic 1, 2 |
-| 4 | Reflection & Journaling | 28 | 3 | Epic 1, 2, 3 |
-| 5 | Progress Visualization | 39 | 3 | Epic 1, 2, 3, 4 |
-| 6 | AI Coaching | 29 | 2 | Epic 1, 2, 3, 4 |
-| 7 | Notifications | 28 | 5 | Epic 1, 2, 3 |
-| 8 | Settings & Profile | 23 | 5 | Epic 1 |
+| 0 | Foundation | 25 | 7 | None (True Foundation) |
+| 1 | Onboarding & Identity | 35 | 8 | Epic 0 |
+| 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1 |
+| 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 2 |
+| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 2, 3 |
+| 5 | Progress Visualization | 39 | 3 | Epic 0, 1, 2, 3, 4 |
+| 6 | AI Coaching | 29 | 2 | Epic 0, 1, 2, 3, 4 |
+| 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3 |
+| 8 | Settings & Profile | 23 | 5 | Epic 0, 1 |
 
-**Total:** 247 story points across 51 FRs
+**Total:** 272 story points across 58 FRs
 
 ---
 
 ## Epic Dependency Flow
 
 ```
-Epic 1 (Onboarding) ─────┬──────────────────────────────────────────┐
-                         │                                          │
-                         ▼                                          ▼
-                    Epic 2 (Goals)                            Epic 8 (Settings)
-                         │
-                         ▼
-                    Epic 3 (Daily Actions) ◄───── Epic 7 (Notifications)
-                         │                              (can parallel)
-                         ▼
-                    Epic 4 (Reflection)
-                         │
-                         ├──────────────────┐
-                         ▼                  ▼
-                    Epic 5 (Progress)  Epic 6 (AI Coach)
+                    Epic 0 (Foundation)
+                           │
+          ┌────────────────┼────────────────┐
+          │                │                │
+          ▼                ▼                ▼
+     Epic 1 (Onboarding)   │          Epic 8 (Settings)
+          │                │
+          ▼                │
+     Epic 2 (Goals) ◄──────┘
+          │
+          ▼
+     Epic 3 (Daily Actions) ◄───── Epic 7 (Notifications)
+          │                              (can parallel)
+          ▼
+     Epic 4 (Reflection)
+          │
+          ├──────────────────┐
+          ▼                  ▼
+     Epic 5 (Progress)  Epic 6 (AI Coach)
 ```
 
-**Key Principle:** Each epic is standalone and enables future epics without requiring them to function.
+**Key Principles:**
+- Epic 0 is the TRUE foundation - scaffolding, database, auth, RLS, CI/CD, AI abstraction
+- Each epic is standalone and enables future epics without requiring them to function
+- Cross-cutting concerns (empty states, error handling, delight) are woven through each epic
+
+---
+
+## Cross-Cutting Concerns
+
+These concerns apply across ALL epics and should be addressed within each feature implementation rather than as separate epics.
+
+### Empty States (UX-E)
+Every screen that can be empty must have a thoughtful, encouraging empty state.
+
+| ID | Screen | Empty State Message | CTA |
+|----|--------|---------------------|-----|
+| UX-E1 | Thread (Today's Binds) | "No binds yet for today. Let's set up your first Needle!" | Create Needle |
+| UX-E2 | Needles List | "You haven't set any goals yet. What do you want to achieve?" | Create First Needle |
+| UX-E3 | Captures Gallery | "No memories captured yet. Document your wins!" | Quick Capture |
+| UX-E4 | Journal History | "Your reflection journey starts today" | Start Reflection |
+| UX-E5 | Heat Map (new user) | "Complete your first bind to start building your weave" | View Today's Binds |
+| UX-E6 | AI Chat | "I'm here to help. Ask me anything about your goals" | Suggested chips |
+
+**Implementation:** Each story with a list view MUST include acceptance criteria for empty state handling.
+
+### Error & Fallback UX (UX-F)
+Graceful degradation for all failure scenarios.
+
+| ID | Scenario | User Message | Fallback Behavior |
+|----|----------|--------------|-------------------|
+| UX-F1 | Network offline | "You're offline. Some features are limited." | Show cached data, disable mutations |
+| UX-F2 | AI service down | "Weave is thinking... Taking longer than usual." | Retry 3x, then show deterministic fallback |
+| UX-F3 | AI rate limited | "Let's take a breather. More AI help in X minutes." | Show countdown, suggest manual actions |
+| UX-F4 | Upload failed | "Couldn't save your photo. Retry?" | Queue for retry, allow skip |
+| UX-F5 | Auth token expired | Silent refresh; if fails: "Please sign in again" | Redirect to login |
+| UX-F6 | Server 500 | "Something went wrong. We're on it!" | Log to Sentry, show retry button |
+
+**AI Fallback Chain:**
+1. Primary: GPT-4o-mini (or Claude for complex ops)
+2. Secondary: Alternative provider
+3. Tertiary: Deterministic/template-based response
+
+**Implementation:** All API calls must have error boundaries with appropriate fallback UI.
+
+### Delight Moments (UX-D)
+Purposeful animations that create moments of joy and reinforce positive behavior.
+
+| ID | Trigger | Animation | Purpose |
+|----|---------|-----------|---------|
+| UX-D1 | Bind completed | Confetti burst (classy, not overwhelming) | Celebrate completion |
+| UX-D2 | Streak milestone (7, 30, 60, 90 days) | Special celebration animation | Reinforce consistency |
+| UX-D3 | Badge unlocked | Badge reveal with shine effect | Acknowledge achievement |
+| UX-D4 | Weave level up | Character evolution animation | Show growth |
+| UX-D5 | First Needle set | Welcome animation with Dream Self | Celebrate commitment |
+| UX-D6 | Reflection submitted | Gentle wave/weave animation | Close daily loop |
+| UX-D7 | Timer completed | Satisfying completion sound + visual | Pomodoro finish |
+
+**Guidelines:**
+- Animations should feel **magical and delightful**, not generic
+- Keep animations short (<1.5s) and skippable
+- Use haptic feedback on iOS for tactile reinforcement
+- Respect reduced motion accessibility settings
+
+### Loading States (UX-L)
+Every async operation needs a thoughtful loading state.
+
+| ID | Operation | Loading UI | Max Duration |
+|----|-----------|-----------|--------------|
+| UX-L1 | App launch | Splash with Weave logo | <3s |
+| UX-L2 | AI generating response | "Weave is thinking..." with animation | <30s |
+| UX-L3 | Image uploading | Progress bar with percentage | <5s |
+| UX-L4 | Data syncing | Subtle spinner in nav bar | <2s |
+| UX-L5 | Screen transition | Skeleton loaders | <1s |
+
+**Implementation:** Use skeleton loaders for data-heavy screens. Show progress for operations >2s.
+
+### Return States (UX-R) ⭐ NEW
+How we handle users returning after absence - **THIS IS OUR DIFFERENTIATOR**.
+
+**Core Principle:** Never lead with shame. Lead with warmth. Lower the bar.
+
+| ID | Time Away | Experience | AI Behavior |
+|----|-----------|------------|-------------|
+| UX-R1 | <24h | Normal home screen | No special messaging |
+| UX-R2 | 24-48h | Warm welcome banner | 'Hey, you're back! 💙 Ready to pick up where you left off?' |
+| UX-R3 | 48h-7d | AI-initiated chat | Proactive: 'I noticed you've been away. Everything okay? Just ONE bind is a win.' |
+| UX-R4 | >7d | Special welcome animation | 'Welcome back, [Name]! Your Dream Self is still here. Let's restart together.' |
+
+**Return Chat Flow (UX-R3):**
+1. App detects `hours_since_active > 48`
+2. AI Chat opens automatically with contextual greeting
+3. Quick response chips: 'Life got busy', 'Feeling overwhelmed', 'Ready to restart'
+4. AI responds with empathy and ONE small action
+5. Always reference their Dream Self and past wins
+
+**What We DON'T Do:**
+- ❌ Show broken streak prominently
+- ❌ Guilt-trip with sad mascots
+- ❌ Require catching up on missed days
+- ❌ Send shame-based notifications
+
+**What We DO:**
+- ✅ Lead with warmth and genuine care
+- ✅ Lower the bar: 'Just ONE bind today'
+- ✅ Reference their WHY (Dream Self)
+- ✅ Celebrate their return as a WIN
+- ✅ Let AI Chat be the re-entry point
+
+**Implementation:** Store `last_active_at` in user_profiles. Calculate on app launch. Trigger appropriate UX-R state.
+
+---
+
+## Sprint 1 Prioritization (2-Week MVP)
+
+### Sprint 1 Theme: 'Core Loop + AI Companion'
+
+**Goal:** Prove ONE thing - users will complete binds AND engage with AI over 10 days.
+
+### Critical Path Visualization
+
+```
+WEEK 1: Foundation + Identity
+═══════════════════════════════════════════════════════════════════
+Day 1-2: Project Setup
+┌──────────────────┐
+│ 0.1 Scaffolding  │──► UNBLOCKS ALL
+│     (5 pts)      │
+└────────┬─────────┘
+         │
+    ┌────┴────┐
+    ▼         ▼
+┌────────┐  ┌────────┐
+│0.2 DB  │  │0.6 AI  │
+│(5 pts) │  │(3 pts) │
+└───┬────┘  └───┬────┘
+    │           │
+    ▼           │
+┌────────┐      │
+│0.3 Auth│      │
+│(3 pts) │      │
+└───┬────┘      │
+    │           │
+    ▼           │
+┌────────┐      │
+│0.4 RLS │      │ ← CRITICAL: Must complete before alpha
+│(5 pts) │      │
+└────────┘      │
+                │
+Day 3-5: Onboarding Core         │
+┌──────────────────────┐         │
+│ 1.1 Welcome (2 pts)  │         │
+│ 1.4 Dream Self (3pt) │         │
+│ 1.6a Goal Input (3p) │         │
+└─────────┬────────────┘         │
+          │                      │
+          ▼                      │
+┌──────────────────────┐         │
+│ 1.6b AI Analysis     │◄────────┘
+│     (5 pts)          │
+└─────────┬────────────┘
+          │
+          ▼
+┌──────────────────────┐
+│ 1.6c Bind Suggestions│
+│ 1.7 First Commitment │
+│     (6 pts)          │
+└──────────────────────┘
+
+WEEK 2: Core Action Loop + AI Chat
+═══════════════════════════════════════════════════════════════════
+Day 6-8: Daily Actions
+┌──────────────────────┐
+│ 3.1 Thread Home      │
+│     (5 pts)          │
+└─────────┬────────────┘
+          │
+          ▼
+┌──────────────────────┐
+│ 3.3a Bind Screen     │
+│     (3 pts)          │
+└─────────┬────────────┘
+          │
+          ▼
+┌──────────────────────┐
+│ 3.3b Bind Completion │ ← CONFETTI MOMENT! ✨
+│     (5 pts)          │
+└──────────────────────┘
+
+Day 9-10: AI Companion (CRUCIAL)
+┌──────────────────────┐
+│ 6.1 AI Chat UI       │
+│     (5 pts)          │
+└─────────┬────────────┘
+          │
+          ▼
+┌──────────────────────┐
+│ 6.2 Contextual AI    │ ← THE DIFFERENTIATOR
+│     (8 pts)          │
+│ Includes: Return UX  │
+│ 'I'm Stuck' Flow     │
+│ Dream Self Voice     │
+└──────────────────────┘
+```
+
+### Sprint 1 Story List
+
+| Priority | Story | Points | Blocker | Rationale |
+|----------|-------|--------|---------|-----------|
+| **P0** | 0.1 Project Scaffolding | 5 | None | Blocks everything |
+| **P0** | 0.2 Supabase Setup | 5 | 0.1 | Data foundation |
+| **P0** | 0.3 Authentication | 3 | 0.1, 0.2 | User identity |
+| **P0** | 0.4 RLS | 5 | 0.2, 0.3 | Security (CRITICAL) |
+| **P0** | 0.6 AI Service Abstraction | 3 | 0.1 | Enables AI features |
+| **P1** | 1.1 Welcome Screen | 2 | 0.3 | First impression |
+| **P1** | 1.4 Dream Self Definition | 3 | 0.3 | Personalization core |
+| **P1** | 1.6a Goal Input Flow | 3 | 1.4 | Core onboarding |
+| **P1** | 1.6b AI Goal Analysis | 5 | 0.6, 1.6a | AI-powered breakdown |
+| **P1** | 1.6c Bind Suggestions | 3 | 1.6b | Editable binds |
+| **P1** | 1.7 First Commitment | 3 | 1.6c | Psychological commitment |
+| **P2** | 3.1 Thread Home | 5 | 1.6c | Daily view |
+| **P2** | 3.3a Bind Screen | 3 | 3.1 | Bind details |
+| **P2** | 3.3b Bind Completion | 5 | 3.3a | Core action + CONFETTI |
+| **P2** | 6.1 AI Chat Interface | 5 | 0.6 | Chat UI |
+| **P2** | 6.2 Contextual AI Engine | 8 | 6.1, 0.6 | AI brain + Return UX |
+
+**Sprint 1 Total: 66 points**
+
+### Sprint 1 Deferrals
+
+| Story | Reason for Deferral |
+|-------|---------------------|
+| 1.2 Demographics | Hardcode timezone detection for Sprint 1 |
+| 1.3 Archetype Assessment | Hardcode initial archetype, add later |
+| 1.5 Motivation/Constraints | Nice-to-have, AI can infer from behavior |
+| 1.8 App Tutorial | Users can explore; add after core proven |
+| 1.9 Soft Paywall | No payment until retention proven |
+| 3.4-3.7 | Proof, Capture, Timer, Dual Path - Sprint 2 |
+| Epic 4 | Reflection - Sprint 2 |
+| Epic 5 | Progress Visualization - Sprint 2 |
+| Epic 7 | Notifications - Sprint 2 |
+| Epic 8 | Settings - Sprint 2 (except minimal logout) |
+
+### Why AI Chat is CRUCIAL (Not Optional)
+
+| Without AI Chat | With AI Chat |
+|-----------------|--------------|
+| 'Here are your tasks' | 'Based on your energy today, here's what I'd focus on' |
+| User gets stuck → closes app | User gets stuck → asks 'I'm stuck' → gets help |
+| Generic productivity app | Personal coach that knows their Dream Self |
+| Competes with Todoist, Streaks | Competes with $200/session life coaches |
+| 77% churn at Day 3 | Re-engagement through compassionate AI |
+
+**The AI Chat is our moat.** It's what makes Weave "Weave" and not "Yet Another Habit Tracker."
+
+---
+
+## Story Blocking Dependencies
+
+### Complete Blocking Map
+
+```
+LEGEND: A ──► B means "A blocks B" (B cannot start until A is complete)
+
+Epic 0 (Foundation) - Blocks Everything
+═══════════════════════════════════════
+0.1 ──► 0.2, 0.3, 0.5, 0.6, 0.7, ALL Epic 1-8 stories
+0.2 ──► 0.3, 0.4, ALL data-dependent stories
+0.3 ──► 0.4, ALL user-facing features
+0.4 ──► Alpha Release (HARD BLOCK)
+0.6 ──► ALL AI-powered features (1.6b, 2.3b, 3.2, 4.3, 6.1-6.5)
+
+Epic 1 (Onboarding) - Sequential Flow
+═════════════════════════════════════
+1.1 ──► 1.2 (linear onboarding)
+1.2 ──► 1.3
+1.3 ──► 1.4
+1.4 ──► 1.5
+1.5 ──► 1.6a
+1.6a ──► 1.6b (needs goal text)
+1.6b ──► 1.6c (needs AI breakdown)
+1.6c ──► 1.7 (needs binds to commit to)
+1.7 ──► 3.1 (onboarding complete, can see Thread)
+
+Epic 2 (Goal Management) - Depends on Onboarding
+════════════════════════════════════════════════
+1.7 ──► 2.1 (user must have first goal)
+2.1 ──► 2.2, 2.3a
+2.3a ──► 2.3b (needs goal input for AI)
+2.2 ──► 2.4, 2.5
+
+Epic 3 (Daily Actions) - Depends on Goals
+═════════════════════════════════════════
+1.6c ──► 3.1 (needs binds to display)
+3.1 ──► 3.2, 3.3a
+3.3a ──► 3.3b (screen before completion)
+3.3b ──► 3.4 (completion before proof)
+3.1 ──► 3.5 (can capture once home exists)
+3.3a ──► 3.6 (timer on bind screen)
+
+Epic 4 (Reflection) - Depends on Actions
+════════════════════════════════════════
+3.3b ──► 4.1 (needs completions to reflect on)
+4.1 ──► 4.2, 4.3
+4.3 ──► 4.4
+4.1 ──► 4.5 (needs entries to view history)
+
+Epic 5 (Progress) - Depends on Data
+═══════════════════════════════════
+3.3b ──► 5.1 (needs completion data)
+4.1 ──► 5.3 (needs fulfillment data)
+5.1 ──► 5.2, 5.4, 5.5
+5.5 ──► 5.6 (badges depend on streaks)
+5.6 ──► 5.7 (snapshot includes badges)
+
+Epic 6 (AI Coaching) - Depends on AI Service
+════════════════════════════════════════════
+0.6 ──► 6.1 (needs AI abstraction)
+6.1 ──► 6.2 (UI before context engine)
+6.2 ──► 6.3, 6.4, 6.5
+
+Epic 7 (Notifications) - Depends on Core Loop
+═════════════════════════════════════════════
+3.1 ──► 7.1 (morning notification needs binds)
+3.3a ──► 7.2 (reminders need bind screens)
+4.1 ──► 7.3 (evening prompt needs reflection)
+5.5 ──► 7.4 (streak recovery needs streak data)
+5.6 ──► 7.5 (milestone celebration needs badges)
+7.1 ──► 7.6 (preferences need notifications to exist)
+
+Epic 8 (Settings) - Minimal Dependencies
+════════════════════════════════════════
+0.3 ──► 8.1 (profile needs auth)
+1.4 ──► 8.2 (identity edit needs identity)
+0.3 ──► 8.6 (logout needs auth)
+```
+
+### Dependency Matrix (Simplified)
+
+| Epic | Hard Blockers | Can Run In Parallel With |
+|------|---------------|--------------------------|
+| **0** | None | Nothing (must be first) |
+| **1** | Epic 0 | Nothing (sequential onboarding) |
+| **2** | Epic 0, 1 | Epic 7, 8 (partially) |
+| **3** | Epic 0, 1, 2 | Epic 6, 7 |
+| **4** | Epic 0, 1, 2, 3 | Epic 5, 6 |
+| **5** | Epic 0, 1, 2, 3, 4 | Epic 6 |
+| **6** | Epic 0 | Epic 2, 3, 4 (AI service needed early) |
+| **7** | Epic 0, 1, 2, 3 | Epic 5, 6 |
+| **8** | Epic 0, 1 | Epic 2, 3, 4, 5, 6, 7 |
