@@ -1,0 +1,10 @@
+# agentic tools
+.bmad/
+.claude/
+.codex/
+.cursor/
+
+# bmad custom modules
+bmad-custom-modules-src/
+bmad-custom-src/
+.agentvibes/
