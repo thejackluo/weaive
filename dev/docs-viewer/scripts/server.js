@@ -3,7 +3,7 @@
 /**
  * Weavelight Documentation Viewer Server
  * 
- * Dynamic HTTP server with automatic document discovery
+ * Dynamic HTTP server with folder-structure-based organization
  * Run from project root: node dev/docs-viewer/scripts/server.js
  */
 
@@ -33,7 +33,6 @@ const mimeTypes = {
 // Icon mapping based on file path/name
 function getIconForFile(filePath, fileName) {
     const lower = fileName.toLowerCase();
-    const pathLower = filePath.toLowerCase();
     
     // Specific file matches
     if (lower.includes('prd') || lower.includes('requirements')) return 'file-text';
@@ -51,37 +50,7 @@ function getIconForFile(filePath, fileName) {
     if (lower.includes('api')) return 'plug';
     if (lower.includes('test')) return 'check-circle';
     
-    // Path-based categorization
-    if (pathLower.includes('setup')) return 'settings';
-    if (pathLower.includes('dev')) return 'code';
-    if (pathLower.includes('idea')) return 'sparkles';
-    if (pathLower.includes('analysis') || pathLower.includes('research')) return 'bar-chart-2';
-    
     return 'file-text';
-}
-
-// Get category from path
-function getCategoryFromPath(filePath) {
-    const parts = filePath.split(path.sep);
-    const docsIndex = parts.indexOf('docs');
-    
-    if (docsIndex >= 0 && parts.length > docsIndex + 1) {
-        const category = parts[docsIndex + 1];
-        
-        // Map to friendly names
-        if (category === 'dev') return 'Development';
-        if (category === 'setup') return 'Setup';
-        if (category === 'analysis') {
-            if (filePath.includes('research')) return 'Research';
-            return 'Product';
-        }
-        if (category === 'idea') return 'Development';
-        
-        // Capitalize first letter
-        return category.charAt(0).toUpperCase() + category.slice(1);
-    }
-    
-    return 'Documentation';
 }
 
 // Get friendly title from filename
@@ -94,88 +63,61 @@ function getTitleFromFilename(fileName) {
         .join(' ');
 }
 
-// Recursively scan directory for markdown files
-function scanDocsDirectory(dir, basePath = '') {
-    const docs = [];
+// Build nested folder structure
+function buildFolderStructure(dir, basePath = '', level = 0) {
+    const structure = {
+        folders: {},
+        files: []
+    };
     
     try {
         const items = fs.readdirSync(dir, { withFileTypes: true });
         
         for (const item of items) {
+            // Skip hidden items and node_modules
+            if (item.name.startsWith('.') || item.name === 'node_modules') {
+                continue;
+            }
+            
             const fullPath = path.join(dir, item.name);
             const relativePath = path.join(basePath, item.name);
             
             if (item.isDirectory()) {
-                // Skip hidden directories and node_modules
-                if (!item.name.startsWith('.') && item.name !== 'node_modules') {
-                    docs.push(...scanDocsDirectory(fullPath, relativePath));
-                }
+                // Recursively build folder structure
+                structure.folders[item.name] = buildFolderStructure(fullPath, relativePath, level + 1);
             } else if (item.isFile() && item.name.endsWith('.md')) {
                 const webPath = path.join('docs', relativePath).replace(/\\/g, '/');
-                docs.push({
+                structure.files.push({
                     path: webPath,
                     title: getTitleFromFilename(item.name),
-                    category: getCategoryFromPath(fullPath),
-                    icon: getIconForFile(fullPath, item.name)
+                    icon: getIconForFile(fullPath, item.name),
+                    name: item.name
                 });
             }
         }
+        
+        // Sort folders and files alphabetically
+        structure.files.sort((a, b) => a.title.localeCompare(b.title));
+        
     } catch (error) {
         console.error(`Error scanning directory ${dir}:`, error.message);
     }
     
-    return docs;
-}
-
-// Organize docs by category
-function organizeDocs(docs) {
-    const organized = {};
-    
-    docs.forEach(doc => {
-        if (!organized[doc.category]) {
-            organized[doc.category] = [];
-        }
-        organized[doc.category].push(doc);
-    });
-    
-    // Sort categories
-    const sortOrder = ['Product', 'Development', 'Setup', 'Research', 'Documentation'];
-    const sorted = {};
-    
-    sortOrder.forEach(cat => {
-        if (organized[cat]) {
-            sorted[cat] = organized[cat].sort((a, b) => 
-                a.title.localeCompare(b.title)
-            );
-        }
-    });
-    
-    // Add any remaining categories
-    Object.keys(organized).forEach(cat => {
-        if (!sorted[cat]) {
-            sorted[cat] = organized[cat].sort((a, b) => 
-                a.title.localeCompare(b.title)
-            );
-        }
-    });
-    
-    return sorted;
+    return structure;
 }
 
 const server = http.createServer((req, res) => {
     console.log(`${req.method} ${req.url}`);
 
-    // API endpoint for dynamic document discovery
+    // API endpoint for folder structure
     if (req.url === '/api/docs') {
         res.writeHead(200, { 
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
         });
         
-        const allDocs = scanDocsDirectory(DOCS_DIR);
-        const organized = organizeDocs(allDocs);
-        
-        res.end(JSON.stringify(organized, null, 2));
+        const structure = buildFolderStructure(DOCS_DIR);
+        res.end(JSON.stringify(structure, null, 2));
         return;
     }
 
@@ -249,6 +191,15 @@ const server = http.createServer((req, res) => {
     });
 });
 
+// Count total docs recursively
+function countDocs(structure) {
+    let count = structure.files.length;
+    for (const folder in structure.folders) {
+        count += countDocs(structure.folders[folder]);
+    }
+    return count;
+}
+
 server.listen(PORT, () => {
     console.log('\n┌──────────────────────────────────────────┐');
     console.log('│  📚 Weavelight Documentation Viewer     │');
@@ -257,14 +208,15 @@ server.listen(PORT, () => {
     console.log(`📂 Project:     ${PROJECT_ROOT}`);
     console.log(`📁 Docs:        ${DOCS_DIR}`);
     console.log('\n💡 Features:');
-    console.log('   • Dynamic document discovery');
-    console.log('   • Auto-categorization');
+    console.log('   • Dynamic folder structure');
+    console.log('   • Nested navigation');
     console.log('   • Press "/" in browser to search');
     console.log('   • Press Ctrl+C to stop\n');
     
     // Show discovered docs count
-    const allDocs = scanDocsDirectory(DOCS_DIR);
-    console.log(`📄 Discovered: ${allDocs.length} documents\n`);
+    const structure = buildFolderStructure(DOCS_DIR);
+    const totalDocs = countDocs(structure);
+    console.log(`📄 Discovered: ${totalDocs} documents\n`);
 });
 
 // Graceful shutdown

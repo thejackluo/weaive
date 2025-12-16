@@ -2,7 +2,7 @@
 """
 Weavelight Documentation Viewer Server
 
-Dynamic HTTP server with automatic document discovery
+Dynamic HTTP server with folder-structure-based organization
 Run from project root: python dev/docs-viewer/scripts/server.py
 """
 
@@ -19,7 +19,6 @@ PORT = 3030
 def get_icon_for_file(file_path, file_name):
     """Determine icon based on file path and name"""
     lower = file_name.lower()
-    path_lower = str(file_path).lower()
     
     # Specific file matches
     if 'prd' in lower or 'requirements' in lower:
@@ -51,100 +50,60 @@ def get_icon_for_file(file_path, file_name):
     if 'test' in lower:
         return 'check-circle'
     
-    # Path-based categorization
-    if 'setup' in path_lower:
-        return 'settings'
-    if 'dev' in path_lower:
-        return 'code'
-    if 'idea' in path_lower:
-        return 'sparkles'
-    if 'analysis' in path_lower or 'research' in path_lower:
-        return 'bar-chart-2'
-    
     return 'file-text'
-
-def get_category_from_path(file_path):
-    """Extract category from file path"""
-    parts = Path(file_path).parts
-    
-    try:
-        docs_index = parts.index('docs')
-        if len(parts) > docs_index + 1:
-            category = parts[docs_index + 1]
-            
-            # Map to friendly names
-            if category == 'dev':
-                return 'Development'
-            if category == 'setup':
-                return 'Setup'
-            if category == 'analysis':
-                if 'research' in str(file_path).lower():
-                    return 'Research'
-                return 'Product'
-            if category == 'idea':
-                return 'Development'
-            
-            return category.capitalize()
-    except (ValueError, IndexError):
-        pass
-    
-    return 'Documentation'
 
 def get_title_from_filename(file_name):
     """Convert filename to friendly title"""
     title = file_name.replace('.md', '').replace('-', ' ').replace('_', ' ')
     return ' '.join(word.capitalize() for word in title.split())
 
-def scan_docs_directory(docs_dir):
-    """Recursively scan directory for markdown files"""
-    docs = []
+def build_folder_structure(docs_dir, base_path=''):
+    """Build nested folder structure"""
+    structure = {
+        'folders': {},
+        'files': []
+    }
     
     try:
-        for root, dirs, files in os.walk(docs_dir):
-            # Skip hidden directories
-            dirs[:] = [d for d in dirs if not d.startswith('.') and d != 'node_modules']
+        items = sorted(os.listdir(docs_dir))
+        
+        for item in items:
+            # Skip hidden items and node_modules
+            if item.startswith('.') or item == 'node_modules':
+                continue
             
-            for file in files:
-                if file.endswith('.md'):
-                    full_path = Path(root) / file
-                    relative_path = full_path.relative_to(docs_dir.parent)
-                    web_path = str(relative_path).replace('\\', '/')
-                    
-                    docs.append({
-                        'path': web_path,
-                        'title': get_title_from_filename(file),
-                        'category': get_category_from_path(full_path),
-                        'icon': get_icon_for_file(full_path, file)
-                    })
+            full_path = os.path.join(docs_dir, item)
+            relative_path = os.path.join(base_path, item) if base_path else item
+            
+            if os.path.isdir(full_path):
+                # Recursively build folder structure
+                structure['folders'][item] = build_folder_structure(
+                    full_path, 
+                    relative_path
+                )
+            elif os.path.isfile(full_path) and item.endswith('.md'):
+                web_path = os.path.join('docs', relative_path).replace('\\', '/')
+                structure['files'].append({
+                    'path': web_path,
+                    'title': get_title_from_filename(item),
+                    'icon': get_icon_for_file(full_path, item),
+                    'name': item
+                })
+        
+        # Sort files by title
+        structure['files'].sort(key=lambda x: x['title'])
+        
     except Exception as e:
         print(f"Error scanning directory: {e}", file=sys.stderr)
     
-    return docs
+    return structure
 
-def organize_docs(docs):
-    """Organize docs by category"""
-    organized = {}
-    
-    for doc in docs:
-        category = doc['category']
-        if category not in organized:
-            organized[category] = []
-        organized[category].append(doc)
-    
-    # Sort categories
-    sort_order = ['Product', 'Development', 'Setup', 'Research', 'Documentation']
-    sorted_dict = {}
-    
-    for cat in sort_order:
-        if cat in organized:
-            sorted_dict[cat] = sorted(organized[cat], key=lambda x: x['title'])
-    
-    # Add remaining categories
-    for cat in sorted(organized.keys()):
-        if cat not in sorted_dict:
-            sorted_dict[cat] = sorted(organized[cat], key=lambda x: x['title'])
-    
-    return sorted_dict
+def count_docs(structure):
+    """Count total documents recursively"""
+    count = len(structure.get('files', []))
+    for folder in structure.get('folders', {}).values():
+        count += count_docs(folder)
+    return count
 
 class DocsViewerHandler(http.server.SimpleHTTPRequestHandler):
     """Custom handler for documentation viewer"""
@@ -163,16 +122,15 @@ class DocsViewerHandler(http.server.SimpleHTTPRequestHandler):
         """Handle GET requests"""
         parsed_path = urlparse(self.path)
         
-        # API endpoint for dynamic document discovery
+        # API endpoint for folder structure
         if parsed_path.path == '/api/docs':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
             
-            all_docs = scan_docs_directory(self.docs_dir)
-            organized = organize_docs(all_docs)
+            structure = build_folder_structure(self.docs_dir)
             
-            self.wfile.write(json.dumps(organized, indent=2).encode())
+            self.wfile.write(json.dumps(structure, indent=2).encode())
             return
         
         # Root serves the viewer index.html
@@ -203,19 +161,20 @@ def main():
         print(f"Project:     {project_root}")
         print(f"Docs:        {docs_dir}")
         print("\nFeatures:")
-        print("   - Dynamic document discovery")
-        print("   - Auto-categorization")
+        print("   - Dynamic folder structure")
+        print("   - Nested navigation")
         print("   - Press / in browser to search")
         print("   - Press Ctrl+C to stop\n")
         
         # Show discovered docs count
-        all_docs = scan_docs_directory(docs_dir)
-        print(f"Discovered: {len(all_docs)} documents\n")
+        structure = build_folder_structure(docs_dir)
+        total_docs = count_docs(structure)
+        print(f"Discovered: {total_docs} documents\n")
         
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
-            print("\n\n✨ Server stopped. Goodbye!\n")
+            print("\n\nServer stopped. Goodbye!\n")
             sys.exit(0)
 
 if __name__ == "__main__":
