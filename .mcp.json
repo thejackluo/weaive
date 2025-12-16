@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "ripgrep": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-ripgrep", "/mnt/c/Users/Jack Luo/Desktop/(local) github software/weavelight"]
-    },
     "filesystem": {
       "command": "npx",
       "args": [
@@ -14,37 +10,44 @@
     },
     "context7": {
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"],
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
       "env": {
         "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
-      },
-      "disabled": false
+      }
     },
     "github": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
-      },
-      "disabled": false
+      }
     },
     "notion": {
       "command": "npx",
-      "args": ["-y", "@notionhq/mcp-server-notion"],
+      "args": [
+        "-y",
+        "@notionhq/mcp-server-notion"
+      ],
       "env": {
         "NOTION_API_KEY": "${NOTION_API_KEY}"
-      },
-      "disabled": true
+      }
     },
     "browserstack": {
       "command": "npx",
-      "args": ["-y", "@browserstack/mcp-server-browserstack"],
+      "args": [
+        "-y",
+        "@browserstack/mcp-server-browserstack"
+      ],
       "env": {
         "BROWSERSTACK_USERNAME": "${BROWSERSTACK_USERNAME}",
         "BROWSERSTACK_ACCESS_KEY": "${BROWSERSTACK_ACCESS_KEY}"
-      },
-      "disabled": true
+      }
     }
   }
 }
-
