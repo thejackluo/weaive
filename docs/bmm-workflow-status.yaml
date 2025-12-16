@@ -29,7 +29,7 @@ workflow_status:
   product-brief: "docs/analysis/product-brief.md"
 
   # Phase 1: Planning
-  prd: required
+  prd: "docs/prd.md"
   create-ux-design: conditional
 
   # Phase 2: Solutioning
