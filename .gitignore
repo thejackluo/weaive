@@ -8,3 +8,7 @@
 bmad-custom-modules-src/
 bmad-custom-src/
 .agentvibes/
+
+# MCP configuration with sensitive API keys
+.mcp.json
+.env
