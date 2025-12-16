@@ -1,0 +1,25 @@
+# WeaveLight - Environment Variables Template
+# Copy this content to .env in your project root
+
+# ============================================
+# MCP SERVERS - API KEYS
+# ============================================
+
+# Context7 - Up-to-date library documentation
+# Sign up: https://console.upstash.com/
+CONTEXT7_API_KEY=
+
+# GitHub - Repository management
+# Get token: https://github.com/settings/tokens
+# Required scopes: repo, read:org
+GITHUB_PERSONAL_ACCESS_TOKEN=
+
+# Notion - Product documentation (OPTIONAL)
+# Create integration: https://www.notion.so/my-integrations
+NOTION_API_KEY=
+
+# BrowserStack - Device testing (OPTIONAL)
+# Get credentials: https://www.browserstack.com/accounts/settings
+BROWSERSTACK_USERNAME=
+BROWSERSTACK_ACCESS_KEY=
+

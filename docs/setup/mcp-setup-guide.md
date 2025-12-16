@@ -1,260 +1,319 @@
-# MCP Servers Setup Guide
+# MCP Servers Setup Guide (Optimized for Windows)
 
-This guide will walk you through setting up all 6 MCP servers for the WeaveLight project.
+## 🎯 Quick Overview
 
-## Overview
+This guide sets up 6 MCP servers for WeaveLight with **minimal configuration** and **maximum security**.
 
-Your `.mcp.json` has been configured with the following servers:
-
-1. **Context7** - Up-to-date library documentation
-2. **Ripgrep** - Fast local codebase search
-3. **Filesystem** - Scoped read access to your repo
-4. **GitHub** - Repository operations (PRs, issues, diffs)
-5. **BrowserStack** - Real-device testing
-6. **Notion** - Product specs and documentation
-
-## Quick Start Checklist
-
-- [ ] Context7 API Key
-- [ ] GitHub Personal Access Token
-- [ ] BrowserStack credentials
-- [ ] Notion Integration Token
-- [ ] Restart Cursor after configuration
+**Time Required:** 20-30 minutes  
+**Difficulty:** Easy  
+**Prerequisites:** Node.js installed (check with `node --version`)
 
 ---
 
-## 1. Context7 Setup
+## 📋 What You're Setting Up
 
-**Purpose:** Access up-to-date documentation for React Native, Expo, Supabase, etc.
-
-### Steps:
-
-1. Visit [Context7 website](https://context7.com) or [Upstash Console](https://console.upstash.com/)
-2. Sign up/login and create an API key
-3. Copy your API key
-4. In `.mcp.json`, replace `YOUR_CONTEXT7_API_KEY_HERE` with your actual key
-
-**Test it:** Ask the AI "What's the latest React Navigation v6 deep linking syntax?"
+| Server | What It Does | Setup Time | Required? |
+|--------|--------------|------------|-----------|
+| **Ripgrep** | Fast code search | 0 min (works instantly) | ✅ Essential |
+| **Filesystem** | Read project files | 0 min (works instantly) | ✅ Essential |
+| **Context7** | Up-to-date docs | 3 min | ⭐ Highly Recommended |
+| **GitHub** | Manage issues/PRs | 5 min | ⭐ Highly Recommended |
+| **Notion** | Product docs | 5 min | 🔄 Optional |
+| **BrowserStack** | Device testing | 5 min | 🔄 Optional |
 
 ---
 
-## 2. Ripgrep MCP Setup
+## 🚀 Quick Start (3 Steps)
 
-**Purpose:** Lightning-fast codebase search using ripgrep.
+### Step 1: Create Environment File
 
-### Steps:
+Copy the template file to `.env` in your project root:
 
-**No configuration needed!** This server works out of the box.
-
-**Test it:** Ask the AI "Search for all useState hooks in the codebase"
-
-**Note:** Ripgrep must be installed on your system. If not:
-- Windows: `choco install ripgrep` or download from [GitHub releases](https://github.com/BurntSushi/ripgrep/releases)
-- Or use `npx` which handles it automatically
-
----
-
-## 3. Filesystem MCP Setup
-
-**Purpose:** Give AI scoped read-only access to your repo and docs.
-
-### Steps:
-
-**Already configured!** The server has access to:
-- Your project root: `C:\Users\Jack Luo\Desktop\(local) github software\weavelight`
-- Your docs folder: `C:\Users\Jack Luo\Desktop\(local) github software\weavelight\docs`
-
-**Security Note:** Only the specified folders are accessible. Your entire machine is NOT exposed.
-
-**Test it:** Ask the AI "Read my mvp.md file and summarize the core features"
-
----
-
-## 4. GitHub MCP Setup
-
-**Purpose:** Create PRs, manage issues, review diffs, automate repo workflows.
-
-### Steps:
-
-1. Go to [GitHub Settings > Developer Settings > Personal Access Tokens > Tokens (classic)](https://github.com/settings/tokens)
-2. Click "Generate new token (classic)"
-3. Give it a descriptive name: "MCP Server - WeaveLight"
-4. Select scopes:
-   - `repo` (full control of private repositories)
-   - `read:org` (if you're using an organization)
-   - `workflow` (if you want to trigger GitHub Actions)
-5. Generate token and **copy it immediately** (you won't see it again!)
-6. In `.mcp.json`, replace `YOUR_GITHUB_PAT_HERE` with your token
-
-**Security:** Never commit your `.mcp.json` with real tokens. Add it to `.gitignore` if needed.
-
-**Test it:** Ask the AI "List all open issues in this repository"
-
----
-
-## 5. BrowserStack MCP Setup
-
-**Purpose:** Run real-device tests and get screenshots without living in dashboards.
-
-### Steps:
-
-1. Sign up at [BrowserStack](https://www.browserstack.com/users/sign_up)
-2. Go to [Account Settings > Access Key](https://www.browserstack.com/accounts/settings)
-3. Copy your **Username** and **Access Key**
-4. In `.mcp.json`, replace:
-   - `YOUR_BROWSERSTACK_USERNAME` with your username
-   - `YOUR_BROWSERSTACK_ACCESS_KEY` with your access key
-
-**Use Case Example:** "Run smoke tests on iPhone 15 Pro and Pixel 9, show me failures with screenshots"
-
-**Test it:** Ask the AI "List available BrowserStack devices for iOS"
-
----
-
-## 6. Notion MCP Setup
-
-**Purpose:** Access product specs, decisions, prompts, and launch notes from Notion.
-
-### Steps:
-
-1. Go to [Notion Integrations](https://www.notion.so/my-integrations)
-2. Click "New integration"
-3. Name it: "MCP Server - WeaveLight"
-4. Select your workspace
-5. Set capabilities:
-   - Read content: ✅
-   - Update content: ✅ (if you want AI to update pages)
-   - Insert content: ✅ (if needed)
-6. Submit and copy the "Internal Integration Token"
-7. **Important:** Share your Notion pages/databases with this integration:
-   - Open the page in Notion
-   - Click "..." → "Add connections" → Select your integration
-8. In `.mcp.json`, replace `YOUR_NOTION_INTEGRATION_TOKEN` with your token
-
-**Test it:** Ask the AI "Search Notion for product roadmap updates"
-
----
-
-## Security Best Practices
-
-### Option 1: Environment Variables (Recommended)
-
-Instead of hardcoding keys in `.mcp.json`, use environment variables:
-
-1. Create a `.env` file in your project root (add to `.gitignore`)
-2. Add your secrets:
-
-```env
-CONTEXT7_API_KEY=your_actual_key
-GITHUB_PERSONAL_ACCESS_TOKEN=your_actual_token
-BROWSERSTACK_USERNAME=your_username
-BROWSERSTACK_ACCESS_KEY=your_key
-NOTION_API_KEY=your_token
+```bash
+# In PowerShell, run:
+cp docs/setup/env-example.txt .env
+notepad .env
 ```
 
-3. Update `.mcp.json` to reference env vars (syntax depends on your shell)
+Or manually create `.env` and copy the contents from `docs/setup/env-example.txt`.
 
-### Option 2: Git Ignore .mcp.json
+Save the file (empty values are fine for now - we'll fill them in next).
 
-If you must keep keys in `.mcp.json`:
+---
 
-1. Add to `.gitignore`:
-```
-.mcp.json
-```
+### Step 2: Update `.mcp.json`
 
-2. Create `.mcp.json.example` with placeholder values for team members:
+Replace your entire `.mcp.json` with this optimized version:
+
 ```json
 {
   "mcpServers": {
+    "ripgrep": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-ripgrep"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\Jack Luo\\Desktop\\(local) github software\\weavelight"
+      ]
+    },
     "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
       "env": {
-        "CONTEXT7_API_KEY": "get_from_context7_console"
-      }
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "disabled": false
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      },
+      "disabled": false
+    },
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/mcp-server-notion"],
+      "env": {
+        "NOTION_API_KEY": "${NOTION_API_KEY}"
+      },
+      "disabled": true
+    },
+    "browserstack": {
+      "command": "npx",
+      "args": ["-y", "@browserstack/mcp-server-browserstack"],
+      "env": {
+        "BROWSERSTACK_USERNAME": "${BROWSERSTACK_USERNAME}",
+        "BROWSERSTACK_ACCESS_KEY": "${BROWSERSTACK_ACCESS_KEY}"
+      },
+      "disabled": true
     }
   }
 }
 ```
 
+**Note:** `ripgrep` and `filesystem` work immediately! Others need API keys.
+
 ---
 
-## Troubleshooting
+### Step 3: Get API Keys (Do This As You Need Them)
 
-### Server not appearing in Cursor
+You don't need all keys at once. Start with these two:
 
+#### A. Context7 (5 minutes) - For Library Docs
+
+1. Go to https://console.upstash.com/
+2. Sign up/login (free tier available)
+3. Create a new Vector Database
+4. Copy the API key
+5. Paste into `.env` file: `CONTEXT7_API_KEY=your_key_here`
+6. In `.mcp.json`, change `"disabled": false` to `"disabled": false` for context7
+
+#### B. GitHub (3 minutes) - For Repo Management
+
+1. Go to https://github.com/settings/tokens
+2. Click "Generate new token (classic)"
+3. Name it: `WeaveLight MCP`
+4. Select scopes:
+   - ✅ `repo` (all)
+   - ✅ `read:org`
+5. Generate and copy token
+6. Paste into `.env` file: `GITHUB_PERSONAL_ACCESS_TOKEN=your_token_here`
+
+---
+
+## ✅ Test Your Setup
+
+Restart Cursor completely, then try these commands:
+
+### Test Ripgrep (Should Work Immediately)
+```
+Ask AI: "Use ripgrep to find all files with 'supabase' in them"
+```
+
+### Test Filesystem (Should Work Immediately)
+```
+Ask AI: "Read the README.md file and summarize it"
+```
+
+### Test Context7 (After Adding API Key)
+```
+Ask AI: "What's the latest React Native navigation best practice?"
+```
+
+### Test GitHub (After Adding Token)
+```
+Ask AI: "List all branches in this repository"
+```
+
+---
+
+## 🎨 Optional Servers (Set Up Later)
+
+### Notion Setup (5 minutes)
+
+**When to use:** If you store product specs in Notion
+
+1. Go to https://www.notion.so/my-integrations
+2. Click "+ New integration"
+3. Name: `WeaveLight MCP`
+4. Select workspace → Submit
+5. Copy "Internal Integration Token"
+6. Paste into `.env`: `NOTION_API_KEY=your_token`
+7. **Important:** Share your Notion pages with this integration:
+   - Open page in Notion
+   - Click "..." → "Add connections" → Select "WeaveLight MCP"
+8. In `.mcp.json`, change notion's `"disabled": true` to `"disabled": false`
+
+### BrowserStack Setup (5 minutes)
+
+**When to use:** If you need real device testing
+
+1. Sign up at https://www.browserstack.com/ (has free trial)
+2. Go to https://www.browserstack.com/accounts/settings
+3. Copy Username and Access Key
+4. Paste into `.env`:
+   ```
+   BROWSERSTACK_USERNAME=your_username
+   BROWSERSTACK_ACCESS_KEY=your_access_key
+   ```
+5. In `.mcp.json`, change browserstack's `"disabled": true` to `"disabled": false`
+
+---
+
+## 🔒 Security Checklist
+
+- ✅ `.env` is in `.gitignore` (already done)
+- ✅ `.mcp.json` is in `.gitignore` (already done)
+- ✅ Never commit API keys to GitHub
+- ✅ Use `.mcp.json.example` for team sharing (already created)
+
+---
+
+## 🐛 Troubleshooting
+
+### "Server not appearing in Cursor"
 1. **Restart Cursor completely** (close all windows)
-2. Check `.mcp.json` syntax with a JSON validator
-3. Open Cursor DevTools (Help > Toggle Developer Tools) and check Console for errors
+2. Check `.mcp.json` is valid JSON (use a validator)
+3. Check Cursor Developer Tools: Help → Toggle Developer Tools → Console
 
-### "Command not found" errors
+### "Command 'npx' not found"
+- Install Node.js: https://nodejs.org/ (LTS version)
+- Restart PowerShell after installation
+- Verify: `node --version` and `npx --version`
 
-- Make sure `npx` is available: `npx --version`
-- If not, install Node.js from [nodejs.org](https://nodejs.org/)
+### "Context7/GitHub not working"
+- Verify API key is in `.env` (no quotes, no spaces)
+- Verify `"disabled": false` in `.mcp.json`
+- Check that `.env` is in the project root
+- Restart Cursor
 
-### Rate limiting issues
-
-- Context7, GitHub, BrowserStack, and Notion all have rate limits
-- For heavier usage, consider upgrading to paid tiers
-- Use HF_TOKEN for Hugging Face tools to avoid anonymous rate limits
-
-### Ripgrep not working
-
-- Install ripgrep: `choco install ripgrep` (Windows)
-- Or download from [GitHub releases](https://github.com/BurntSushi/ripgrep/releases)
-
----
-
-## Next Steps
-
-1. ✅ Get all API keys and tokens
-2. ✅ Update `.mcp.json` with real credentials
-3. ✅ Add `.mcp.json` to `.gitignore` (or use env vars)
-4. ✅ Restart Cursor
-5. ✅ Test each server with simple queries
-6. 🚀 Start building with AI that actually knows your codebase and tools!
+### "Filesystem can't find files"
+- Check the path in `.mcp.json` matches your actual project path
+- Use double backslashes: `C:\\Users\\...`
+- Make sure path has no typos
 
 ---
 
-## Useful Commands to Test
+## 📊 What's Enabled Right Now
 
-Once everything is set up, try these:
-
-**Ripgrep:**
-- "Find all TODO comments in the codebase"
-- "Search for Supabase client initialization"
-
-**Filesystem:**
-- "Read backend.md and list all API endpoints"
-- "Show me the structure of the docs folder"
-
-**GitHub:**
-- "Create an issue: Add user authentication flow"
-- "Show me the last 5 commits on main branch"
-
-**Context7:**
-- "What's the latest Expo Router navigation syntax?"
-- "Show me Supabase real-time subscription examples"
-
-**BrowserStack:**
-- "List available Android devices for testing"
-- "Run app on iPhone 14 and capture screenshot"
-
-**Notion:**
-- "Get the latest product roadmap from Notion"
-- "Update sprint status in Notion database"
+After following Steps 1-2:
+- ✅ **Ripgrep**: Ready to search code
+- ✅ **Filesystem**: Ready to read files
+- ⏳ **Context7**: Needs API key
+- ⏳ **GitHub**: Needs token
+- 💤 **Notion**: Disabled (enable when needed)
+- 💤 **BrowserStack**: Disabled (enable when needed)
 
 ---
 
-## Resources
+## 🎯 Recommended Setup Order
 
-- [MCP Registry](https://registry.mcp.run/) - Official server directory
-- [Context7 Docs](https://context7.com/docs)
-- [GitHub MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/github)
-- [Filesystem MCP](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem)
-- [Notion API](https://developers.notion.com/)
-- [BrowserStack API](https://www.browserstack.com/docs/automate/api-reference)
+**Day 1** (Right now):
+1. ✅ Ripgrep (works instantly)
+2. ✅ Filesystem (works instantly)
+
+**When you need library docs:**
+3. 📚 Context7 (5 min setup)
+
+**When you start using GitHub issues/PRs:**
+4. 🐙 GitHub (3 min setup)
+
+**When you have product specs in Notion:**
+5. 📓 Notion (5 min setup)
+
+**When you need device testing:**
+6. 📱 BrowserStack (5 min setup)
 
 ---
 
-**Questions?** Check the MCP documentation or ask in the Cursor Discord community.
+## 🔄 Updating Servers
 
+To update all servers to latest versions:
+
+```powershell
+# Clear npx cache
+npx clear-npx-cache
+
+# Or manually clear cache
+npm cache clean --force
+```
+
+Servers auto-update on next use thanks to `npx -y` flag.
+
+---
+
+## 💡 Pro Tips
+
+1. **Start with 2 servers** (ripgrep + filesystem) and add others as needed
+2. **Context7 is a game-changer** for React Native development
+3. **GitHub server** saves tons of time managing issues
+4. **Use environment variables** - never hardcode keys
+5. **Disable unused servers** - keeps Cursor fast
+
+---
+
+## 📚 Quick Command Reference
+
+```bash
+# Create .env file
+notepad .env
+
+# Edit .mcp.json
+notepad .mcp.json
+
+# Check Node.js version
+node --version
+
+# Check if npx works
+npx --version
+
+# View Cursor logs (for debugging)
+# Help → Toggle Developer Tools → Console
+```
+
+---
+
+## 🆘 Still Having Issues?
+
+1. Check the [MCP Registry](https://registry.mcp.run/) for official servers
+2. Verify package names haven't changed
+3. Check Cursor Discord for community help
+4. Review Cursor DevTools console for errors
+
+---
+
+## ✨ What's Next?
+
+Once your servers are running:
+
+1. Try the test commands above
+2. Read `docs/mcp-quick-reference.md` for daily usage tips
+3. Experiment with combining servers (e.g., "Search code with ripgrep, then explain using Context7")
+
+**Remember:** You only need ripgrep and filesystem to start. Add others when you need them!
