@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3]
+stepsCompleted: [1, 2, 3, 4]
 inputDocuments:
   - docs/prd.md
   - docs/ux-design.md
@@ -241,4 +241,98 @@ weave/
 | **Monorepo** | No (separate directories) | Simpler for 2-3 person team |
 
 **Note:** Project initialization using these commands should be the first implementation task
+
+---
+
+## Core Architectural Decisions
+
+### Styling Framework
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| **Primary Styling** | NativeWind (Tailwind CSS for RN) | Familiar Tailwind syntax, smaller bundle than Tamagui |
+| **Alternative** | Tamagui (post-MVP) | Consider if web support or complex theming needed |
+
+**NativeWind Setup:**
+```bash
+npm install nativewind
+npx pod-install
+```
+
+### State Management Architecture
+
+**Three-Layer Strategy:**
+
+| Layer | Library | Purpose | Examples |
+|-------|---------|---------|----------|
+| **Server State** | TanStack Query | Remote data, caching, sync | Goals, completions, user profile |
+| **Shared UI State** | Zustand | Cross-component state | Active filters, modal state |
+| **Local State** | useState | Component-scoped | Form inputs, toggles |
+
+**Why This Works:**
+- TanStack Query handles 80% of state (server cache + mutations)
+- Zustand for rare shared UI state (minimal stores)
+- useState for everything component-local
+- Clear boundaries = no state management debates
+
+**TanStack Query Configuration:**
+```tsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 2,
+      refetchOnWindowFocus: false, // Important for mobile
+    },
+  },
+});
+```
+
+### Data Access Patterns
+
+**Hybrid Approach:**
+
+| Access Pattern | When to Use | Examples |
+|----------------|-------------|----------|
+| **Supabase Direct** | Auth, storage, simple CRUD | Login, file uploads, read user profile |
+| **FastAPI Backend** | AI operations, complex business logic | Triad generation, onboarding, Dream Self chat |
+
+**Decision Tree:**
+1. Auth or file storage? → Supabase direct
+2. Simple read/write with no business logic? → Supabase direct
+3. AI involvement? → FastAPI
+4. Complex validation or multi-table transactions? → FastAPI
+
+### Type Safety
+
+| Tool | Purpose |
+|------|---------|
+| **supabase gen types typescript** | Generate DB types from schema |
+| **Zod** | Runtime validation at API boundaries |
+| **TypeScript strict mode** | Compile-time type checking |
+
+**Type Generation Command:**
+```bash
+npx supabase gen types typescript --project-id <project-ref> > lib/database.types.ts
+```
+
+### Data Integrity Rules
+
+**Immutable Tables (Append-Only):**
+- `subtask_completions` - Never UPDATE or DELETE, only INSERT
+- Completions are canonical truth; stats derived from these events
+
+**Soft Delete Pattern:**
+- Use `deleted_at` timestamp instead of hard DELETE
+- Preserves audit trail, enables undo
+
+### Party Mode Review Enhancements
+
+The following action items were validated by multi-agent review (Winston, Amelia, Barry, Murat):
+
+1. **TanStack Query Mobile Defaults**: `refetchOnWindowFocus: false` configured to prevent unnecessary refetches on app foreground
+2. **Typed Zustand Stores**: All stores must be typed from day one - no `any` types
+3. **Generated DB Types**: Use `supabase gen types typescript` after every schema change
+4. **Supabase vs FastAPI Decision Tree**: Documented above for clear routing decisions
+5. **Append-Only Protection**: `subtask_completions` table must never have UPDATE/DELETE operations
 
