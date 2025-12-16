@@ -345,21 +345,119 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ## Epic List
 
-### Epic 0: Foundation (25 pts)
+### Epic 0: Foundation (38 pts)
 **User Outcome:** Development team has a fully scaffolded, secure, and testable codebase with authentication, database, and AI infrastructure ready for feature development.
 
-**FRs Covered:** FR-0.1, FR-0.2, FR-0.3, FR-0.4, FR-0.5, FR-0.6, FR-0.7
+**FRs Covered:** FR-0.1, FR-0.2, FR-0.3, FR-0.4, FR-0.5, FR-0.6, FR-0.7, FR-0.8, FR-0.9
 
-**Why This Epic First:** No features can be built without project scaffolding, database setup, authentication, and security policies. This is the true foundation that enables all other epics.
+**Why This Epic First:** No features can be built without project scaffolding, database setup, authentication, and security policies. This is the true foundation that enables all other epics. Implementation readiness assessment revealed critical gaps that must be addressed here.
 
 **Stories:**
-- **Story 0.1: Project Scaffolding** (5 pts) - Initialize Expo app (SDK 53, React Native 0.79) and FastAPI backend (Python 3.11+, uv init)
-- **Story 0.2: Supabase Setup** (5 pts) - Configure Supabase project, create database schema (8 core tables), run initial migrations
-- **Story 0.3: Authentication Flow** (3 pts) - Implement Supabase Auth with email + OAuth, JWT handling, session management
-- **Story 0.4: Row Level Security (RLS)** (5 pts) - Implement RLS policies on ALL user-owned tables before alpha release (CRITICAL)
-- **Story 0.5: CI/CD Pipeline** (3 pts) - GitHub Actions for linting, type checking, tests; Expo EAS Build for iOS; Railway deploy for API
-- **Story 0.6: AI Service Abstraction** (3 pts) - Abstract AI provider layer with fallback chain (OpenAI → Anthropic → Deterministic), cost tracking
-- **Story 0.7: Test Infrastructure** (1 pt) - Jest setup for mobile, pytest for API, fixture factories, test database seeding
+
+- **Story 0.1: Project Scaffolding** (5 pts)
+  - Initialize Expo app (SDK 53, React Native 0.79, blank-typescript template)
+  - Initialize FastAPI backend (Python 3.11+, uv package manager)
+  - Create folder structure: `src/screens/`, `src/hooks/`, `src/services/`, `app/api/`, `app/core/`
+  - Configure TypeScript (strict mode), ESLint, Prettier
+  - Set up environment variables template (`.env.example` with Supabase, AI API keys placeholders)
+  - **AC:** Both mobile and backend projects can be cloned and run in <15 minutes
+  - **DoD:** `package.json`, `tsconfig.json`, `pyproject.toml` exist; `npm install` and `uv sync` succeed
+
+- **Story 0.2a: Database Schema (Core Tables)** (3 pts)
+  - Create Supabase project (staging + production environments)
+  - Write migration files for 8 core tables:
+    - `001_user_profiles.sql`
+    - `002_goals.sql` (max 3 active constraint)
+    - `003_subtask_templates.sql`
+    - `004_subtask_instances.sql`
+    - `005_subtask_completions.sql` (IMMUTABLE - no UPDATE/DELETE triggers)
+    - `006_captures.sql` (image upload metadata)
+    - `007_journal_entries.sql`
+    - `008_daily_aggregates.sql` (pre-computed stats)
+  - Add essential indexes on foreign keys and query patterns
+  - **AC:** Migrations run successfully on staging; rollback works; seed data loads
+  - **DoD:** All tables exist with proper constraints, indexes documented
+
+- **Story 0.2b: Database Schema Refinement** (2 pts)
+  - Review and optimize schema based on architecture doc
+  - Add missing constraints (CHECK, NOT NULL, DEFAULT)
+  - Create composite indexes for common query patterns (user_id + local_date)
+  - Document data classification (canonical vs. derived)
+  - **AC:** Schema supports all Sprint 1 queries efficiently; no N+1 query patterns
+  - **DoD:** Schema validation checklist complete; performance baseline established
+
+- **Story 0.3: Authentication Flow** (3 pts)
+  - Implement Supabase Auth with email + OAuth providers
+  - JWT handling: token storage (react-native-keychain), refresh logic, expiry handling
+  - Session management: AuthContext in mobile, JWT verification middleware in backend
+  - Protected routes in Expo Router
+  - **AC:** User can sign up, log in, log out; expired tokens refresh automatically
+  - **DoD:** End-to-end auth flow tested; security checklist verified
+
+- **Story 0.4: Row Level Security (RLS)** (5 pts) **[CRITICAL]**
+  - Implement RLS policies on ALL user-owned tables
+  - Policy: Users can only SELECT/INSERT/UPDATE/DELETE their own data
+  - Special policy: `subtask_completions` is INSERT-only (immutable)
+  - Test cross-user access attempts (should return 403)
+  - **AC:** User A cannot access User B's data; policy tests pass
+  - **DoD:** RLS enabled on all tables before alpha release; penetration test passed
+
+- **Story 0.5: CI/CD Pipeline** (3 pts)
+  - GitHub Actions workflows:
+    - Lint: ESLint (mobile), Ruff (backend)
+    - Type check: TypeScript, mypy (optional for Python)
+    - Tests: Jest, pytest with coverage reporting
+    - Block merge if any step fails
+  - Expo EAS Build configuration for iOS
+  - Railway deployment pipeline for backend
+  - **AC:** PR triggers full CI pipeline; failed tests block merge
+  - **DoD:** CI runs on every commit; deployment is one-click
+
+- **Story 0.6: AI Service Abstraction** (3 pts)
+  - Create AI provider interface with fallback chain
+  - Implement providers: OpenAI (GPT-4o-mini), Anthropic (Claude 3.7 Sonnet)
+  - Deterministic fallback: Template-based responses for common operations
+  - Cost tracking: Log tokens, calculate cost per request, daily budget alerts
+  - **AC:** AI call succeeds with primary provider; falls back on timeout/error
+  - **DoD:** All 3 fallback levels tested; cost tracking dashboard ready
+
+- **Story 0.7: Test Infrastructure** (3 pts)
+  - **Mobile:** Jest + React Native Testing Library configuration
+  - **Backend:** pytest + pytest-asyncio + httpx (FastAPI TestClient)
+  - **AI Mocking:** LiteLLM mock mode for deterministic AI tests
+  - Test database: Separate Supabase project or local PostgreSQL
+  - Fixture factories: Create test users, goals, binds
+  - **AC:** Sample test passes for mobile component and backend endpoint
+  - **DoD:** Coverage reporting works; 0% baseline established
+
+- **Story 0.8: Error Handling Framework** (3 pts) **[NEW - Implementation Readiness Gap]**
+  - Define error response standard: `{error: {code, message, retryable, retryAfter?}}`
+  - HTTP status codes: 400 (validation), 401 (auth), 429 (rate limit), 500 (server), 503 (AI down)
+  - Create error response utilities for backend
+  - Create error handling hooks for mobile (API errors, network errors, AI errors)
+  - Document error codes in `/docs/api-error-codes.md`
+  - **AC:** All API endpoints return consistent error format; mobile handles gracefully
+  - **DoD:** Error handling smoke tests pass; user-facing messages are friendly
+
+- **Story 0.9: Image Upload Error Handling** (3 pts) **[NEW - Implementation Readiness Gap]**
+  - Implement file validation: Max 10MB, JPEG/PNG only, min 100x100px
+  - Error scenarios: File too large, invalid format, storage quota exceeded, upload timeout
+  - Progress UI: Upload progress bar with cancel button
+  - Retry logic: 3 attempts with exponential backoff
+  - Store failed uploads locally for retry when online
+  - **AC:** User sees clear error messages; failed uploads queue for retry
+  - **DoD:** All error scenarios tested; Supabase Storage integration complete
+
+- **Story 0.10: Memory System Architecture Decision** (2 pts) **[NEW - Implementation Readiness Gap]**
+  - **Decision:** Simple approach, no fancy vector DB for MVP
+  - Use PostgreSQL with `TEXT[]` arrays for storing key memories
+  - Implement basic keyword search (no semantic/vector search yet)
+  - Memory lifecycle: Created on journal submit, pruned at 100 memories per user
+  - Document memory schema and retrieval strategy
+  - **AC:** Memory storage works; retrieval returns relevant memories for AI context
+  - **DoD:** Decision documented; schema ready for Sprint 2 implementation
+
+**Epic 0 Total: 38 points** (increased from 25 to capture complexity)
 
 ---
 
@@ -377,7 +475,18 @@ This document provides the complete epic and story breakdown for Weave, decompos
 - **Story 1.4: Dream Self Definition** (3 pts) - FR-1.4: Text input for ideal future self (200-500 chars), prompt suggestions, editable later
 - **Story 1.5: Motivation and Constraints** (3 pts) - FR-1.5: Select motivation drivers, failure mode, optional constraints
 - **Story 1.6a: Goal Input Flow** (3 pts) - FR-1.6 Part 1: Goal text input with character limit, probing question display
+
 - **Story 1.6b: AI Goal Analysis** (5 pts) - FR-1.6 Part 2: AI processes goal with probing answers, generates breakdown
+  - **AI Fallback Chain:**
+    1. **Primary:** GPT-4o-mini (90% of calls) - Fast, cost-effective ($0.15/$0.60 per MTok)
+    2. **Secondary:** Anthropic Claude Sonnet - If OpenAI times out (>5s) or returns error
+    3. **Deterministic Template:** If both AI providers fail, use goal category templates (fitness → exercise binds, learning → study binds)
+    4. **Static Fallback:** Generic starter binds ("Define your goal", "Research first step", "Create a plan")
+  - **Error Handling:** Show user-friendly message: "AI is taking a break. Here are some starter suggestions based on your goal type."
+  - **Cost Control:** Track cost per breakdown, alert if >$0.10 per user per goal
+  - **AC:** AI succeeds with primary; falls back gracefully on timeout; template fallback works
+  - **DoD:** All 4 fallback levels tested; cost tracking integrated; user sees helpful response always
+
 - **Story 1.6c: Bind Suggestions & Editing** (3 pts) - FR-1.6 Part 3: Display AI-generated Binds, allow user editing, confirm selections
 - **Story 1.7: First Commitment** (3 pts) - FR-1.7: Display summary, hold-to-commit interaction, trigger push permission
 - **Story 1.8: App Tutorial** (2 pts) - FR-1.8: 3-4 screen tutorial showing core features, skippable
@@ -396,7 +505,16 @@ This document provides the complete epic and story breakdown for Weave, decompos
 - **Story 2.1: Needles List View** (3 pts) - FR-2.1: Display up to 3 active Needles with status, consistency %, Bind count
 - **Story 2.2: Needle Detail View** (5 pts) - FR-2.2: Full Needle info with Binds, stats, edit/archive/add bind actions
 - **Story 2.3a: New Needle Input** (3 pts) - FR-2.3 Part 1: Text input, enforce max 3 active Needles, probing questions
+
 - **Story 2.3b: AI Bind Generation** (5 pts) - FR-2.3 Part 2: AI-generated Bind suggestions, user can accept/edit/dismiss
+  - **AI Fallback Chain:**
+    1. **Primary:** GPT-4o-mini for Bind suggestions
+    2. **Secondary:** Claude Sonnet if OpenAI fails
+    3. **Template Fallback:** Category-based bind templates
+    4. **User Override:** Always allow manual bind creation regardless of AI status
+  - **Error Handling:** "AI suggestions unavailable. Create your own binds or try again later."
+  - **AC:** AI suggestions work; manual creation always available; templates work when AI fails
+  - **DoD:** User never blocked by AI failure; all paths tested
 - **Story 2.4: Edit Needle** (5 pts) - FR-2.4: Edit title, description, add/remove Binds with thoughtful change warning
 - **Story 2.5: Archive Needle** (3 pts) - FR-2.5: Confirmation dialog, archive status, reactivate option
 - **Story 2.6: Change Strictness Settings** (3 pts) - FR-2.6: Normal/Strict/None modes configurable in settings
@@ -412,7 +530,15 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **Stories:**
 - **Story 3.1: Thread Home (Today's Binds)** (5 pts) - FR-3.1: Today's Binds grouped by Needle, collapsible, completion status. Answer "What should I do?" in <10s
+
 - **Story 3.2: Triad Display** (5 pts) - FR-3.2: AI-recommended top 3 Binds with rationale, editable/dismissible
+  - **AI Fallback Chain:**
+    1. **Primary:** GPT-4o-mini generates Triad based on user context (completions, fulfillment, identity)
+    2. **Deterministic Fallback:** Rank binds by: incomplete today + high frequency + recent completion rate
+    3. **Simple Fallback:** Show next 3 incomplete binds from today's list
+  - **Error Handling:** Silent fallback (user sees Triad, doesn't know it's deterministic vs. AI)
+  - **AC:** AI Triad shows reasoning; deterministic ranking works; simple fallback never empty
+  - **DoD:** User always sees 3 prioritized binds; all fallback paths tested
 - **Story 3.3a: Bind Screen** (3 pts) - FR-3.3 Part 1: Needle context, Bind details, Start Bind button
 - **Story 3.3b: Bind Completion** (5 pts) - FR-3.3 Part 2: Complete flow with magical confetti animation, <30s total
 - **Story 3.4: Attach Proof** (5 pts) - FR-3.4: Photo capture, quick note, optional skip, <10s creation
@@ -433,7 +559,17 @@ This document provides the complete epic and story breakdown for Weave, decompos
 - **Story 4.1a: Reflection Questions** (3 pts) - FR-4.1 Part 1: Default 2 questions + fulfillment slider (1-10)
 - **Story 4.1b: Custom Questions** (3 pts) - FR-4.1 Part 2: User can add/edit/remove custom tracking questions
 - **Story 4.2: Recap Before Reflection** (3 pts) - FR-4.2: Summary of completed Binds, Captures, time tracked
+
 - **Story 4.3: AI Feedback Generation** (8 pts) - FR-4.3: Loading state, generate within 20s, display as 3 stacked cards
+  - **AI Fallback Chain:**
+    1. **Primary:** GPT-4o-mini generates 3 insights (Affirming, Blocker if detected, Next-day Triad)
+    2. **Secondary:** Claude Sonnet if OpenAI fails
+    3. **Template Fallback:** Pattern-based insights ("You completed X binds today - that's Y% more than last week!")
+    4. **Static Fallback:** Simple encouragement ("Great work today! Keep building your Weave.")
+  - **Timeout Handling:** If >20s, show template response immediately + regenerate in background
+  - **Error Handling:** "Generating your insights... This is taking longer than usual." → template after 20s
+  - **AC:** AI insights within 20s; template fallback <1s; Triad always generated
+  - **DoD:** 95% of reflections get AI feedback; users never blocked waiting >20s
 - **Story 4.4: Edit AI Feedback** (5 pts) - FR-4.4: Edit and "Not true" actions, corrections stored for AI improvement
 - **Story 4.5: Journal History** (6 pts) - FR-4.5: List by date, view full reflection + feedback, filter by timeframe
 
@@ -465,8 +601,29 @@ This document provides the complete epic and story breakdown for Weave, decompos
 **Why This Order:** AI coaching benefits from having user context (completions, reflections, patterns) to provide personalized responses.
 
 **Stories:**
+
 - **Story 6.1: AI Chat Interface** (5 pts) - FR-6.1: Chat interface, contextual opening prompt, quick action chips
+  - **AI Fallback Chain:**
+    1. **Primary:** GPT-4o-mini with streaming for real-time feel
+    2. **Secondary:** Claude Sonnet if OpenAI fails (also streaming)
+    3. **Quick Chips Fallback:** Pre-written responses for common quick chip actions ("Plan my day" → show Triad)
+    4. **Offline Fallback:** "I need an internet connection to chat. Try again when you're online."
+  - **Rate Limiting:** 10 messages/hour; show friendly limit message with countdown timer
+  - **Error Handling:** Network timeout → "Connection lost. Your message is saved. I'll respond when you're back online."
+  - **AC:** Streaming works; rate limit enforced gracefully; offline mode shows helpful message
+  - **DoD:** Chat never crashes; users understand why they can't send message; messages queue for retry
+
 - **Story 6.2: Contextual AI Engine** (8 pts) - FR-6.2: AI references user context, Dream Self voice, evidence-based, rate limited
+  - **Context Assembly:** Load user's current Needles, recent completions (7 days), fulfillment trend, Identity doc, top 3 past wins
+  - **AI Fallback Chain:**
+    1. **Primary:** GPT-4o-mini with full user context (up to 8K tokens)
+    2. **Secondary:** Claude Sonnet with same context
+    3. **Reduced Context:** If context >8K tokens, summarize to 4K (recent wins + current goals only)
+    4. **Generic Fallback:** Contextless encouraging responses ("I'm here to help! Tell me what you're working on.")
+  - **Cost Control:** Cache user context for 24h; only update when new completion/journal; reuse across chat session
+  - **Error Handling:** "I'm having trouble remembering your context. Let me know what you're working on right now!"
+  - **AC:** 90% of responses reference user-specific data; Dream Self voice consistent; no hallucinated facts
+  - **DoD:** Context caching works; AI never invents goals/completions user didn't do
 - **Story 6.3: Edit AI Responses** (3 pts) - FR-6.3: Long-press to edit or mark unhelpful, regenerate option
 - **Story 6.4: Weekly Insights** (8 pts) - FR-6.4: Generated weekly, pattern insights, success correlations, dismissible
 - **Story 6.5: AI Needle Suggestions** (5 pts) - FR-6.5: After archiving, suggest related Needles based on patterns
