@@ -24,12 +24,14 @@ Then open: **http://localhost:3030**
 
 ## Features
 
+- **Dynamic Discovery** - Automatically finds all markdown files in `docs/` folder
+- **Auto-Categorization** - Smart categorization based on folder structure
+- **No Configuration** - Add/remove docs, changes reflect immediately
 - **Minimal Design** - Mintlify-inspired clean, professional aesthetic
-- **Professional Icons** - Lucide icon library (no emoji clutter)
+- **Professional Icons** - Lucide icon library with smart icon detection
 - **Monochrome Palette** - Pure black with strategic blue accent
 - **Smart Search** - Real-time filtering (press `/` to search)
 - **Responsive** - Works on desktop and mobile
-- **Markdown** - Full markdown rendering with proper styling
 - **Fast** - No build process, instant startup
 
 ## Project Structure
@@ -49,24 +51,30 @@ dev/docs-viewer/
 
 ## Adding Documents
 
-Edit the `docs` object in `index.html` (around line 421):
+**Just add markdown files to the `docs/` folder!** The viewer automatically discovers them.
 
-```javascript
-const docs = {
-    'Category Name': [
-        { 
-            path: 'docs/path/to/file.md',
-            title: 'Document Title',
-            icon: '📄'
-        }
-    ]
-};
+The server will:
+- 🔍 Scan all subdirectories recursively
+- 📁 Auto-categorize based on folder structure
+- 🎯 Detect appropriate icons from filenames/paths
+- 📝 Generate friendly titles from filenames
+- ♻️ Refresh on every page load
+
+**Folder Structure:**
+```
+docs/
+├── prd.md              → Product category
+├── analysis/
+│   └── product-brief.md → Product category
+├── dev/
+│   └── guide.md         → Development category
+├── setup/
+│   └── mcp-setup.md     → Setup category
+└── idea/
+    └── features.md      → Development category
 ```
 
-**Path Rules:**
-- Relative to project root
-- Use forward slashes `/`
-- Must be `.md` files
+**That's it!** No configuration needed.
 
 ## Customization
 
@@ -127,7 +135,8 @@ const PORT = 3030;  // Change to your preferred port
 - **Frontend**: Vanilla HTML/CSS/JavaScript
 - **Icons**: Lucide Icons library (via CDN)
 - **Markdown**: marked.js (v11.1.1 via CDN)
-- **Server**: Node.js http module or Python http.server
+- **Server**: Node.js or Python with dynamic API endpoint
+- **API**: `/api/docs` endpoint for document discovery
 - **Design**: Minimal monochrome with Mintlify-inspired aesthetic
 
 ## Security

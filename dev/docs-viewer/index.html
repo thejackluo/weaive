@@ -629,44 +629,49 @@
     </div>
 
     <script>
-        // Documentation structure with Lucide icons
-        const docs = {
-            'Product': [
-                { path: 'docs/prd.md', title: 'Product Requirements', icon: 'file-text' },
-                { path: 'docs/ux-design.md', title: 'UX Design', icon: 'layout' },
-                { path: 'docs/analysis/product-brief.md', title: 'Product Brief', icon: 'clipboard' },
-            ],
-            'Development': [
-                { path: 'docs/dev/docs-viewer-guide.md', title: 'Docs Viewer Guide', icon: 'book' },
-                { path: 'docs/dev/mcp-quick-reference.md', title: 'MCP Quick Reference', icon: 'zap' },
-                { path: 'docs/idea/backend.md', title: 'Backend Ideas', icon: 'server' },
-                { path: 'docs/idea/mvp.md', title: 'MVP Ideas', icon: 'target' },
-                { path: 'docs/idea/ai.md', title: 'AI Ideas', icon: 'cpu' },
-                { path: 'docs/idea/ux.md', title: 'UX Ideas', icon: 'sparkles' },
-            ],
-            'Setup': [
-                { path: 'docs/setup/mcp-setup-guide.md', title: 'MCP Setup Guide', icon: 'settings' },
-                { path: 'docs/setup/tts-setup-guide.md', title: 'TTS Setup Guide', icon: 'volume-2' },
-            ],
-            'Research': [
-                { path: 'docs/analysis/research/market-ai-habit-productivity-apps-research-2025-12-16.md', title: 'Market Research', icon: 'bar-chart-2' },
-            ]
-        };
-
+        // Dynamic documentation structure - loaded from server
+        let docs = {};
         let allDocs = [];
         const categoryIcons = {
             'Product': 'package',
             'Development': 'code',
             'Setup': 'wrench',
-            'Research': 'search'
+            'Research': 'search',
+            'Documentation': 'book-open'
         };
 
-        // Flatten docs
-        Object.keys(docs).forEach(category => {
-            docs[category].forEach(doc => {
-                allDocs.push({ ...doc, category });
-            });
-        });
+        // Fetch documents dynamically from server
+        async function loadDocuments() {
+            try {
+                const response = await fetch('/api/docs');
+                if (!response.ok) throw new Error('Failed to load documents');
+                
+                docs = await response.json();
+                
+                // Flatten for search
+                Object.keys(docs).forEach(category => {
+                    docs[category].forEach(doc => {
+                        allDocs.push({ ...doc, category });
+                    });
+                });
+                
+                // Render UI
+                renderNav();
+                renderWelcome();
+                
+                console.log(`📄 Loaded ${allDocs.length} documents dynamically`);
+            } catch (error) {
+                console.error('Error loading documents:', error);
+                document.getElementById('content').innerHTML = `
+                    <div class="welcome">
+                        <i data-lucide="alert-circle" class="welcome-icon"></i>
+                        <h2>Error Loading Documents</h2>
+                        <p>Could not fetch document list from server</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
 
         // Render navigation
         function renderNav() {
@@ -800,9 +805,8 @@
             document.getElementById('sidebar').classList.toggle('open');
         }
 
-        // Init
-        renderNav();
-        renderWelcome();
+        // Init - load documents dynamically
+        loadDocuments();
 
         // Keyboard
         document.addEventListener('keydown', (e) => {
