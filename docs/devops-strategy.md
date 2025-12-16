@@ -1096,6 +1096,746 @@ async def get_daily_aggregate(user_id: str, local_date: date) -> dict:
 
 ---
 
+## Disaster Recovery Plan
+
+### Recovery Objectives
+
+| Metric | Target | Description |
+|--------|--------|-------------|
+| **RTO** (Recovery Time Objective) | < 4 hours | Max time to restore service |
+| **RPO** (Recovery Point Objective) | < 1 hour | Max acceptable data loss |
+| **MTTR** (Mean Time To Recovery) | < 4 hours | Average time to fix issues |
+
+### Disaster Scenarios & Runbooks
+
+#### Scenario 1: Railway Outage (Backend Down)
+
+**Symptoms:**
+- API health checks failing
+- Mobile app showing "Cannot connect to server"
+- Railway dashboard shows service down
+
+**Recovery Steps:**
+
+```bash
+# 1. Verify outage scope
+curl https://api.weave.app/health  # Fails
+curl https://railway.app/status    # Check Railway status page
+
+# 2. If Railway platform issue:
+# - Wait for Railway resolution (check status.railway.app)
+# - Communicate with users via status page
+# - ETA: 15-60 minutes (Railway SLA)
+
+# 3. If deployment issue:
+railway logs --tail 100  # Check for errors
+railway rollback         # Roll back to last working deployment
+
+# 4. If database connection issue:
+# Check Supabase status
+# Verify DATABASE_URL environment variable
+railway variables get SUPABASE_URL
+
+# 5. Verify recovery
+curl https://api.weave.app/health
+# Expected: {"status": "healthy"}
+```
+
+**Data Loss:** None (stateless API, database unaffected)
+**User Impact:** Cannot create/update goals, journal entries, completions
+**Mitigation:** Add status page (status.weave.app) to communicate downtime
+
+#### Scenario 2: Supabase Outage (Database Down)
+
+**Symptoms:**
+- API returns 500 errors
+- "Database connection failed" in logs
+- Supabase dashboard inaccessible
+
+**Recovery Steps:**
+
+```bash
+# 1. Verify Supabase status
+curl https://status.supabase.com
+# Check if it's a platform outage or our project
+
+# 2. If platform outage:
+# - Wait for Supabase resolution
+# - Enable "offline mode" in mobile app (read-only cached data)
+# - ETA: 15-60 minutes (Supabase SLA)
+
+# 3. If our project issue:
+# Check connection limits
+SELECT count(*) FROM pg_stat_activity;
+# If > 60 connections (Free tier limit):
+# Kill idle connections
+SELECT pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE state = 'idle' AND state_change < NOW() - INTERVAL '10 minutes';
+
+# 4. If data corruption:
+# Restore from backup (Supabase dashboard → Backups)
+# Select most recent backup (< 1 hour old for RPO)
+
+# 5. Verify recovery
+psql $SUPABASE_URL -c "SELECT NOW();"
+```
+
+**Data Loss:** Up to 1 hour (last backup)
+**User Impact:** App unusable (all data access blocked)
+**Mitigation:** Upgrade to Supabase Pro (better SLA, more connections)
+
+#### Scenario 3: AI Provider Outage (OpenAI/Anthropic Down)
+
+**Symptoms:**
+- Triad generation fails
+- Dream Self chat returns errors
+- "AI service unavailable" in logs
+
+**Recovery Steps:**
+
+```python
+# 1. Automatic fallback chain (already implemented)
+# OpenAI fails → Try Anthropic
+# Anthropic fails → Use template response
+
+# 2. Manual intervention (if both fail)
+# Enable "graceful degradation" mode
+# api/app/services/ai_service.py
+
+DEGRADATION_MODE = True  # Set via environment variable
+
+if DEGRADATION_MODE:
+    # Return template responses for all AI operations
+    return get_template_response(operation_type)
+
+# 3. Communicate with users
+# Push notification: "AI features temporarily unavailable.
+#                     Your progress is saved and will sync when service resumes."
+
+# 4. Monitor provider status
+# https://status.openai.com
+# https://status.anthropic.com
+```
+
+**Data Loss:** None (AI outputs are optional)
+**User Impact:** No AI-generated triads, recaps, or chat responses
+**Mitigation:** Pre-generate fallback templates for common scenarios
+
+#### Scenario 4: Complete Platform Failure (Railway + Supabase Both Down)
+
+**Probability:** Extremely low (< 0.01% chance)
+**User Impact:** App completely unusable
+
+**Recovery Steps:**
+
+```bash
+# 1. Activate disaster recovery plan
+# Deploy backend to backup platform (e.g., Vercel, Fly.io)
+# Use pre-configured backup deployment (Month 4+)
+
+# 2. Point DNS to backup infrastructure
+# Update api.weave.app CNAME → backup-api.weave.app
+
+# 3. Restore database from backup
+# Download latest Supabase backup
+# Deploy to backup PostgreSQL instance
+
+# 4. Update mobile app via OTA
+eas update --branch production --message "Switched to backup infrastructure"
+
+# ETA: 2-4 hours (manual process)
+```
+
+**Mitigation (Month 4+):**
+- Pre-configure backup Railway project
+- Weekly full database backups to S3
+- Documented recovery procedures
+
+### Backup Verification
+
+**Monthly Drill (starts Month 2):**
+
+```bash
+# Test database restore
+# 1. Download latest backup
+supabase db dump --db-url $SUPABASE_PROD_URL > backup_test.sql
+
+# 2. Restore to staging
+psql $SUPABASE_STAGING_URL < backup_test.sql
+
+# 3. Verify data integrity
+psql $SUPABASE_STAGING_URL -c "SELECT COUNT(*) FROM user_profiles;"
+psql $SUPABASE_STAGING_URL -c "SELECT COUNT(*) FROM goals;"
+
+# 4. Document results
+echo "Backup restore successful: $(date)" >> docs/backup-tests.log
+```
+
+### Data Loss Prevention
+
+**Critical Tables (Zero Data Loss Acceptable):**
+- `user_profiles` - User accounts
+- `goals` - User goals
+- `subtask_completions` - Immutable event log
+- `journal_entries` - User reflections
+
+**Strategy:**
+- Daily automated backups (Supabase)
+- Pre-deployment manual backups (critical migrations)
+- Immutable event logs (never UPDATE/DELETE completions)
+- Write-ahead logging (PostgreSQL built-in)
+
+---
+
+## API Versioning Strategy
+
+### Why Versioning Matters for Mobile Apps
+
+Mobile apps are long-lived and users don't always update immediately. API versioning prevents breaking changes from crashing old app versions.
+
+**Problem Without Versioning:**
+```
+Day 1: Deploy API change (rename "goal_title" → "title")
+Day 2: Old mobile app users crash (looking for "goal_title")
+Day 3: 1-star App Store reviews pour in
+```
+
+### Versioning Scheme
+
+**URL-Based Versioning:**
+
+```
+Current API:   https://api.weave.app/api/goals
+Versioned API: https://api.weave.app/api/v1/goals
+```
+
+**Version Format:** `/api/v{major}`
+- `v1` = Initial production API
+- `v2` = Breaking changes (removed fields, changed behavior)
+- No minor versions (use feature flags for non-breaking changes)
+
+### Backward Compatibility Policy
+
+**Breaking Changes (require new version):**
+- Removing a field from response
+- Renaming a field
+- Changing field type (string → number)
+- Changing endpoint URL
+- Removing an endpoint
+
+**Non-Breaking Changes (no new version):**
+- Adding a new field to response (old apps ignore it)
+- Adding a new endpoint
+- Adding optional request parameters
+- Bug fixes
+
+### Version Lifecycle
+
+```
+v1 Launch:        2025-01 (MVP)
+v1 Deprecation:   2026-01 (12 months notice)
+v1 Sunset:        2026-07 (18 months total)
+```
+
+**Deprecation Process:**
+
+1. **Month 0:** Announce v2 in release notes
+2. **Month 1:** Add deprecation headers to v1 responses
+   ```http
+   Deprecated: true
+   Sunset: 2026-07-01
+   Link: <https://docs.weave.app/api/v2>; rel="successor"
+   ```
+3. **Month 3:** Show in-app migration notice (update required)
+4. **Month 6:** Block old app versions from accessing API
+5. **Month 12:** Remove v1 endpoints
+
+### Mobile App Minimum Version Enforcement
+
+**API Gateway Check:**
+
+```python
+# api/app/middleware/version_check.py
+from fastapi import Request, HTTPException
+
+MIN_SUPPORTED_APP_VERSION = "1.0.0"  # Update when deprecating old APIs
+
+async def check_app_version(request: Request):
+    """Block old app versions from accessing deprecated APIs."""
+
+    app_version = request.headers.get("X-App-Version", "0.0.0")
+
+    if compare_versions(app_version, MIN_SUPPORTED_APP_VERSION) < 0:
+        raise HTTPException(
+            status_code=426,  # Upgrade Required
+            detail={
+                "code": "APP_UPDATE_REQUIRED",
+                "message": "Please update Weave to the latest version",
+                "min_version": MIN_SUPPORTED_APP_VERSION,
+                "download_url": "https://apps.apple.com/app/weave"
+            }
+        )
+```
+
+**Mobile App Header:**
+
+```typescript
+// mobile/lib/apiClient.ts
+const API_VERSION = "v1";
+const APP_VERSION = Constants.expoConfig?.version || "1.0.0";
+
+const apiClient = axios.create({
+  baseURL: `https://api.weave.app/api/${API_VERSION}`,
+  headers: {
+    "X-App-Version": APP_VERSION,
+    "X-Platform": Platform.OS,  // ios or android
+  },
+});
+```
+
+### Implementation Timeline
+
+| Milestone | Date | Action |
+|-----------|------|--------|
+| **MVP** | Week 0 | No versioning (rapid iteration OK) |
+| **Alpha** | Month 1 | Add version headers (`X-App-Version`) |
+| **Beta** | Month 2 | Implement `/api/v1/` endpoints |
+| **Production** | Month 3 | Enforce minimum version checks |
+
+**Note:** Start with `/api/goals` (unversioned) for MVP speed. Add `/api/v1/goals` when stabilizing for beta.
+
+---
+
+## Push Notification Deployment
+
+### Architecture Overview
+
+```
+Mobile App → Expo Push Token → Backend API → Expo Push Service → APNs → iOS Device
+```
+
+### Setup Steps
+
+#### 1. Configure Expo Push Notifications
+
+**expo app.json:**
+
+```json
+{
+  "expo": {
+    "name": "Weave",
+    "slug": "weave",
+    "ios": {
+      "bundleIdentifier": "com.weave.app",
+      "supportsTabletOnly": false,
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6366F1",
+          "sounds": ["./assets/notification-sound.wav"]
+        }
+      ]
+    ]
+  }
+}
+```
+
+#### 2. Request Push Permissions (Mobile App)
+
+```typescript
+// mobile/lib/notifications.ts
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+
+export async function registerForPushNotifications(): Promise<string | null> {
+  // Only real devices support push notifications
+  if (!Device.isDevice) {
+    console.warn('Push notifications only work on physical devices');
+    return null;
+  }
+
+  // Request permission
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+
+  if (finalStatus !== 'granted') {
+    return null;
+  }
+
+  // Get Expo Push Token
+  const token = await Notifications.getExpoPushTokenAsync({
+    projectId: 'your-expo-project-id',  // From expo.dev dashboard
+  });
+
+  return token.data;
+}
+
+// Configure notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+```
+
+#### 3. Store Push Tokens (Backend)
+
+```python
+# api/app/routers/users.py
+from fastapi import APIRouter, Depends
+
+router = APIRouter(prefix="/api/users", tags=["users"])
+
+@router.post("/push-token")
+async def register_push_token(
+    token: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Store user's Expo Push Token for sending notifications.
+    Called when user logs in or grants push permission.
+    """
+
+    await supabase.from_('user_profiles').update({
+        'expo_push_token': token,
+        'push_enabled': True,
+        'push_registered_at': datetime.utcnow().isoformat()
+    }).eq('id', current_user['id']).execute()
+
+    return {"status": "registered", "token": token}
+```
+
+#### 4. Send Push Notifications (Backend)
+
+```python
+# api/app/services/notification_service.py
+import httpx
+from typing import List, Dict
+
+EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send"
+
+async def send_push_notification(
+    expo_push_tokens: List[str],
+    title: str,
+    body: str,
+    data: Dict = None
+) -> dict:
+    """
+    Send push notification via Expo Push Service.
+    """
+
+    messages = []
+    for token in expo_push_tokens:
+        messages.append({
+            "to": token,
+            "sound": "default",
+            "title": title,
+            "body": body,
+            "data": data or {},
+            "priority": "high",
+            "channelId": "default",
+        })
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            EXPO_PUSH_URL,
+            json=messages,
+            headers={"Content-Type": "application/json"}
+        )
+
+        return response.json()
+
+# Example usage: Send triad reminder
+async def send_triad_reminder(user_id: str):
+    """Send daily triad reminder at 8 AM user's local time."""
+
+    user = await get_user_profile(user_id)
+
+    if not user['expo_push_token'] or not user['push_enabled']:
+        return
+
+    await send_push_notification(
+        expo_push_tokens=[user['expo_push_token']],
+        title="Your daily triad is ready ✨",
+        body="3 tasks to move you closer to your goals today",
+        data={"screen": "today", "type": "triad_reminder"}
+    )
+```
+
+#### 5. Schedule Notifications (Redis + Cron)
+
+**Post-MVP: Use Redis + BullMQ for scheduled notifications**
+
+```python
+# api/app/jobs/notification_scheduler.py
+from datetime import datetime, timedelta
+
+async def schedule_daily_notifications():
+    """
+    Cron job: Runs every hour to send scheduled notifications.
+    """
+
+    current_hour = datetime.utcnow().hour
+
+    # Get users who should receive triad reminders this hour
+    users = await supabase.from_('user_profiles') \
+        .select('id, expo_push_token, timezone') \
+        .eq('push_enabled', True) \
+        .execute()
+
+    for user in users.data:
+        # Calculate if it's 8 AM in user's timezone
+        user_hour = convert_to_user_timezone(current_hour, user['timezone'])
+
+        if user_hour == 8:  # 8 AM local time
+            await send_triad_reminder(user['id'])
+```
+
+**MVP: Manual notifications via Railway cron**
+
+```bash
+# railway.json (Month 2+)
+{
+  "build": {
+    "builder": "nixpacks"
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "restartPolicyType": "on-failure"
+  },
+  "cron": [
+    {
+      "schedule": "0 * * * *",
+      "command": "python -m app.jobs.notification_scheduler"
+    }
+  ]
+}
+```
+
+### Notification Types
+
+| Type | Trigger | Example |
+|------|---------|---------|
+| **Triad Ready** | Daily 8 AM | "Your daily triad is ready ✨" |
+| **Streak Warning** | 10 PM if no completions | "Don't break your 5-day streak! Complete 1 bind today" |
+| **Journal Reminder** | Daily 9 PM | "How was today? Reflect on your progress" |
+| **Goal Milestone** | Goal completion | "🎉 You completed 'Learn React Native'!" |
+
+### Testing Push Notifications
+
+```bash
+# 1. Get test Expo Push Token from mobile app
+# Log it in app: console.log('Push token:', token);
+
+# 2. Send test notification via Expo Push Tool
+curl -H "Content-Type: application/json" \
+  -X POST https://exp.host/--/api/v2/push/send \
+  -d '{
+    "to": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]",
+    "title": "Test Notification",
+    "body": "This is a test from DevOps setup!"
+  }'
+
+# 3. Verify notification appears on iOS device
+```
+
+### Implementation Timeline
+
+| Phase | Timeline | Status |
+|-------|----------|--------|
+| **Setup Expo notifications** | Week 0 | During mobile app setup |
+| **Store push tokens** | Week 2 | After auth flow complete |
+| **Manual test notifications** | Week 3 | Test on real devices |
+| **Triad reminders** | Month 2 | After journal flow complete |
+| **Scheduled notifications (cron)** | Month 3 | Add Redis + BullMQ |
+
+---
+
+## Future Enhancements
+
+### Deferred to Month 2+ (Post-MVP)
+
+The following enhancements are important for scale but NOT required for MVP launch. They are documented here for future reference.
+
+#### 1. Load Testing Strategy 📊
+
+**Why Deferred:** MVP will have < 100 users. Load testing is premature optimization.
+
+**When to Add:** Month 2, before scaling to 1,000+ users
+
+**Approach:**
+
+```yaml
+Tool: k6 (open-source load testing)
+
+Test Scenarios:
+  - API health check: 1000 req/sec
+  - Goal creation: 100 req/sec
+  - Journal submission: 50 req/sec
+  - Triad generation (AI): 10 req/sec
+
+Target Metrics:
+  - p95 latency < 500ms
+  - Error rate < 1%
+  - Database connections < 80% of limit
+
+Script Example (k6):
+  # k6 run --vus 100 --duration 5m load-test.js
+```
+
+#### 2. Infrastructure as Code (IaC) 🏗️
+
+**Why Deferred:** Railway and Supabase are managed services with dashboards. IaC adds complexity without immediate benefit.
+
+**When to Add:** Month 4, when multi-environment complexity grows
+
+**Approach:**
+
+```yaml
+Tool: Terraform or Pulumi
+
+What to Codify:
+  - Railway projects (staging + production)
+  - Supabase projects configuration
+  - DNS records (api.weave.app)
+  - Environment variables (templated)
+
+Benefit:
+  - Reproducible infrastructure
+  - Version-controlled config
+  - Easy disaster recovery
+```
+
+#### 3. Complete CI/CD Configuration Files 📝
+
+**Why Deferred:** GitHub Actions workflow provided is 80% complete. Remaining 20% is project-specific (secrets, repo structure).
+
+**When to Add:** Week 0, during repository setup
+
+**What's Needed:**
+
+```yaml
+Files to Create:
+  - .github/workflows/ci.yml (provided in doc, needs secrets)
+  - .github/workflows/mobile-build.yml (Expo EAS builds)
+  - railway.json (optional, for advanced Railway config)
+  - .env.example (template for local development)
+
+GitHub Secrets to Configure:
+  - RAILWAY_TOKEN
+  - RAILWAY_TOKEN_STAGING
+  - EXPO_TOKEN
+  - CODECOV_TOKEN (optional)
+```
+
+#### 4. Database Migration SQL Files 📄
+
+**Why Deferred:** Migration files require finalized schema. Implementation-readiness doc lists what's needed.
+
+**When to Add:** Week 0, Day 2 (after schema finalized)
+
+**What's Needed:**
+
+```sql
+supabase/migrations/
+  001_user_profiles.sql
+  002_goals.sql
+  003_subtask_templates.sql
+  004_subtask_instances.sql
+  005_subtask_completions.sql
+  006_captures.sql
+  007_journal_entries.sql
+  008_daily_aggregates.sql
+  009_rls_policies.sql
+  010_ai_runs.sql
+  011_ai_artifacts.sql
+  012_event_log.sql
+
+Reference: docs/idea/backend.md (complete schema)
+```
+
+#### 5. Blue-Green Deployment Implementation 🔄
+
+**Why Deferred:** Railway provides instant rollback. Blue-green adds complexity without clear MVP benefit.
+
+**When to Add:** Month 3, for zero-downtime deployments
+
+**Approach:**
+
+```yaml
+Strategy:
+  - Deploy new version to "green" environment
+  - Run smoke tests on green
+  - Switch traffic from blue → green
+  - Keep blue running for 1 hour (rollback buffer)
+  - Decommission blue if stable
+
+Railway Support:
+  - Use Railway's built-in deployment history
+  - Manual switch via DNS or load balancer
+```
+
+#### 6. Multi-Region Deployment 🌍
+
+**Why Deferred:** All initial users likely US-based. Multi-region is premature optimization.
+
+**When to Add:** Month 6+, if international users > 20%
+
+**Approach:**
+
+```yaml
+Regions:
+  - US East (primary): Virginia
+  - Europe: Frankfurt
+  - Asia: Singapore
+
+Strategy:
+  - Read-heavy: Route to nearest region
+  - Write operations: Route to primary (eventual consistency)
+  - Database: Supabase multi-region (Enterprise tier)
+```
+
+#### 7. Advanced Monitoring & Observability 📈
+
+**Why Deferred:** Basic Railway logs + Sentry sufficient for MVP.
+
+**When to Add:** Month 3, for deep performance insights
+
+**Tools:**
+
+```yaml
+Distributed Tracing: OpenTelemetry + Jaeger
+  - Trace API requests across services
+  - Identify slow database queries
+  - Track AI API latency
+
+Custom Dashboards: Grafana
+  - Real-time metrics visualization
+  - Alert management
+  - Business metrics (DAU, goal completions)
+
+APM: New Relic or DataDog (if budget allows)
+  - Automatic instrumentation
+  - Error tracking with context
+  - Performance profiling
+```
+
+---
+
 ## Appendix: Quick Reference Commands
 
 ### Railway CLI
@@ -1157,7 +1897,14 @@ eas build:list
 
 ---
 
-**Document Status:** Complete
-**Last Updated:** 2025-12-16
+**Document Status:** ✅ Complete (Enterprise-Ready)
+**Last Updated:** 2025-12-16 (Enhanced with critical sections)
+**Version:** 2.0
 **Next Review:** After Week 0 completion
 **Owner:** Engineering Team
+
+**Enhancements Added:**
+- Disaster Recovery Plan (RTO/RPO: <4hrs, <1hr)
+- API Versioning Strategy (mobile app compatibility)
+- Push Notification Deployment (Expo Push)
+- Future Enhancements section (load testing, IaC, etc.)
