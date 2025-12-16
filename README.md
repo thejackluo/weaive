@@ -2,6 +2,14 @@
 
 Turn vague goals into daily wins, proof, and a stronger identity in 10 days.
 
+## Tech Stack
+
+- **Frontend:** React Native mobile app (iOS App Store)
+- **Backend:** Python FastAPI (deployed on Railway)
+- **Database:** Supabase (Postgres + Auth + Storage)
+- **Push Notifications:** iOS APNs
+- **Analytics:** PostHog
+
 ## Project Structure
 
 - `docs/` - Product and technical documentation

@@ -2,27 +2,457 @@
 
 ## Table of Contents
 
-1. [Core Principles](#core-principles)
-2. [Tech Stack](#tech-stack)
-3. [Service Architecture](#service-architecture)
-4. [Data Model](#data-model)
-   - [Users & Identity](#users--identity)
-   - [Goals & Planning](#goals--planning)
-   - [Subtasks](#subtasks)
-   - [Captures & Proof](#captures--proof)
-   - [Journal & Triad](#journal--triad)
-   - [Stats & Aggregates](#stats--aggregates)
-   - [AI System](#ai-system)
-   - [Events](#events)
-5. [API Surface](#api-surface)
-6. [Event-Driven Workflows](#event-driven-workflows)
-7. [Security Model](#security-model)
-8. [Performance & Indexing](#performance--indexing)
-9. [MVP Scope](#mvp-scope)
+1. [Architecture Overview](#architecture-overview)
+2. [System Diagrams](#system-diagrams)
+   - [Flowchart: Backend Components](#flowchart-backend-components)
+   - [Sequence: AI-Heavy Requests](#sequence-ai-heavy-requests)
+3. [Architecture Description](#architecture-description)
+4. [Component Responsibilities](#component-responsibilities)
+5. [Request Flow Patterns](#request-flow-patterns)
+6. [Architecture Decisions](#architecture-decisions)
 
 ---
 
-# Core Principles
+## Terminology Mapping
+
+### MVP Product Terms → Technical Database Terms
+
+To maintain consistency between product specification and technical implementation:
+
+| **MVP Term** | **Technical Term** | **Database Table** | **Description** |
+|--------------|-------------------|-------------------|-----------------|
+| **Needle** | Goal | `goals` | Top-level user goals (max 3 active) |
+| **Bind** | Subtask | `subtask_templates`, `subtask_instances` | Consistent actions/habits toward goals |
+| **Thread** | User/Identity | `user_profiles`, `identity_docs` | User's starting state and identity |
+| **Weave** | Progress/Stats | `user_stats`, `daily_aggregates` | User's evolved state, consistency metrics |
+| **Q-Goal** | Quantifiable Goal | `qgoals` | Measurable subgoals with metrics and cadence |
+| **Proof** | Capture + Completion | `captures`, `subtask_completions` | Evidence of bind completion |
+| **Triad** | Daily Plan | `triad_tasks` | AI-generated 3 tasks for next day |
+| **Reflection** | Journal Entry | `journal_entries` | Daily check-in with fulfillment score |
+| **Dream Self** | AI Personality | `identity_docs.json.dream_self` | Ideal future version, informs AI coaching |
+| **Consistency** | Aggregate Stats | `daily_aggregates`, `user_stats` | % completion metrics, streak tracking |
+
+**Usage in Code:** Use technical terms in code/database. Use MVP terms in API responses, UI, and user-facing documentation.
+
+---
+
+## Architecture Overview
+
+**Platform:** React Native mobile app (iOS App Store) with Python FastAPI backend
+
+**Backend Architecture V2** is a FastAPI-centered backend (deployed on Railway) with a Master API Router that fronts all business endpoints. It relies on Supabase Authentication (OAuth) for identity and session validation, and a Supabase-backed data layer split into:
+
+- **(a) Static Text Database** - Demographics, stable profile fields
+- **(b) Dynamic Text Database (Artifact Store)** - Goals, Q-goals, subtasks, journals, triad outputs, computed stats, plus analytics hooks (PostHog)
+- **(c) Image Storage** - User images, proof captures, identity visuals
+
+For expensive operations (external API calls, GPU jobs, long-running AI generation), the router hands off to a Queue Scheduler that dispatches Workers. Workers write results back to the artifact store and can trigger iOS push notifications. An Edge Function exists specifically to reduce latency for endpoints that benefit from being closer to the user or from lightweight edge execution.
+
+**Deployment Strategy:** FastAPI + Python backend on Railway. May use BaaS initially, with potential migration to AWS later.
+
+---
+
+## System Diagrams
+
+### Flowchart: Backend Components
+
+```mermaid
+flowchart LR
+  %% Backend Architecture V2 (official mirror)
+
+  subgraph Backend["Backend Architecture V2"]
+    subgraph DataModels["Data Models"]
+      Schemas["Data Models & Schemas<br/>• Users and identity<br/>• Goal, Q Goal, Subtasks<br/>• Captures and proof<br/>• Journal and triad<br/>• Stats computed, not hand-edited"]
+    end
+
+    subgraph MasterRouter["Master API Router"]
+      APIRouter{{"API Router"}}
+    end
+
+    subgraph SupaAuth["Supabase Authentication"]
+      Auth["Supabase Authentication<br/>(Include OAuth)"]
+    end
+
+    subgraph SupaDB["Supabase Database Architecture"]
+      StaticDB[("STATIC TEXT Database<br/>(Demographic, Static Data)")]
+      ImageDB[("IMAGE DATABASE / Storage<br/>User storage with Images")]
+      DynamicDB[("DYNAMIC TEXT Database (Artifact Store)<br/>• Goals, Subgoals, Tasks Database<br/>• Analytics (PostHog)")]
+    end
+
+    subgraph APIProvider["API Provider"]
+      LocalFastAPI["Local FastAPI"]
+      ExternalAPI["External API Provider"]
+      LocalFastAPI --> ExternalAPI
+    end
+
+    subgraph QueueMgr["Queue & Schedule Manager"]
+      Scheduler["Queue Scheduler<br/>Manage workers for API calls on the server side"]
+      Workers["Workers<br/>Computing processes that can do API calls<br/>and GPU calls"]
+      Scheduler <--> Workers
+    end
+
+    subgraph Push["Push Notification Provider"]
+      PushIOS(("Push Notification Provider for iOS"))
+    end
+
+    subgraph Edge["Edge Function"]
+      EdgeFn{{"Edge Function<br/>The goal is to reduce latency"}}
+    end
+
+    Note["Deployment note (from diagram):<br/>FastAPI + Python backend on Railway.<br/>Might use a BaaS initially, switch to AWS later."]
+
+    %% Core connections
+    Schemas <--> APIRouter
+    APIRouter <--> Auth
+
+    APIRouter --> StaticDB
+    APIRouter --> ImageDB
+    APIRouter --> DynamicDB
+
+    APIRouter --> LocalFastAPI
+
+    %% Async / compute
+    APIRouter --> Scheduler
+    Workers --> ExternalAPI
+    Workers --> DynamicDB
+    Workers --> ImageDB
+
+    %% Notifications + edge
+    Workers <--> PushIOS
+    APIRouter --> EdgeFn
+    Workers --> EdgeFn
+
+    %% Deployment note association
+    Note -.-> LocalFastAPI
+  end
+```
+
+### Sequence: AI-Heavy Requests
+
+This sequence diagram illustrates the async request pattern, making the "sync vs async" decision explicit.
+
+```mermaid
+sequenceDiagram
+  participant App as Mobile App (React Native - iOS)
+  participant Router as Master API Router (Python FastAPI)
+  participant Auth as Supabase Auth
+  participant DB as Supabase DB (Dynamic/Static/Image)
+  participant Q as Queue Scheduler
+  participant W as Workers (API + GPU)
+  participant Ext as External API Provider
+  participant Push as iOS Push Provider
+
+  App->>Router: Request (ex: generate triad tasks)
+  Router->>Auth: Verify session/JWT (OAuth)
+  Auth-->>Router: OK
+  Router->>DB: Read inputs (goals, journal, history)
+  Router->>Q: Enqueue job (async)
+  Router-->>App: 202 Accepted + job_id
+
+  Q->>W: Dispatch job
+  W->>Ext: Call model / external API(s)
+  Ext-->>W: Result
+  W->>DB: Write artifacts + computed stats
+  W->>Push: Send notification (job complete)
+  Push-->>App: Push delivered
+  App->>Router: Fetch job result
+  Router->>DB: Read artifacts
+  DB-->>Router: Return result
+  Router-->>App: Triad tasks + recap
+```
+
+---
+
+## Architecture Description
+
+### What This Backend Is
+
+Backend Architecture V2 is a FastAPI-centered backend with a Master API Router that fronts all business endpoints. It relies on Supabase Authentication (OAuth) for identity and session validation, and a Supabase-backed data layer split into:
+
+- **Static Text** - Demographics, stable profile fields
+- **Dynamic Text / Artifact Store** - Goals, Q-goals, subtasks, journals, triad outputs, computed stats, plus analytics hooks like PostHog
+- **Image Storage** - User images, proof captures, identity visuals
+
+For expensive work (external API calls, GPU jobs, long-running AI generation), the router hands off to a Queue Scheduler that dispatches Workers, which write results back to the artifact store and can trigger iOS push notifications. An Edge Function exists specifically to reduce latency for endpoints that benefit from being closer to the user or from lightweight edge execution.
+
+---
+
+## Component Responsibilities
+
+### Data Models & Schemas
+
+**Purpose:** Define canonical shapes for core entities
+
+**Entities:**
+- User/identity information
+- Goals → Q-goals → Subtasks (needle → bind structure)
+- Journal entries + triad reflections
+- Captures/proof (photos, notes, voice memos)
+- Computed statistics
+
+**Key Principle:** "Stats computed, not hand-edited" - Users can edit raw entries, but metrics are derived, reproducible, and not freeform fields.
+
+### Master API Router
+
+**Role:** Gatekeeper and traffic cop
+
+**Responsibilities:**
+- Routes requests to the correct handler (CRUD, journaling, planning, uploads)
+- Enforces authentication via Supabase
+- Validates payloads against schemas
+- Decides: handle synchronously vs enqueue
+
+### Supabase Authentication (OAuth)
+
+**Purpose:** Identity and session management
+
+**Functions:**
+- Login and OAuth flows
+- Session management
+- JWT issuance and validation
+- The router trusts requests only after Supabase session verification
+
+### Supabase Database Architecture
+
+**Three-layer data structure:**
+
+1. **Static Text DB**
+   - Demographic and stable user profile fields
+   - Low churn, high read frequency
+   - Identity document (archetype, dream self, motivations, constraints)
+
+2. **Dynamic Text DB (Artifact Store)**
+   - High-churn objects: goals (needles), subgoals, tasks (binds)
+   - Journal entries and triad reflections
+   - AI-generated outputs and insights
+   - Computed stats (consistency %, fulfillment scores, etc.)
+   - Analytics event hooks (PostHog integration)
+
+3. **Image DB / Storage**
+   - Blob storage for user uploads
+   - Proof images from completed binds
+   - Identity visuals and captured memories
+   - Metadata tables linking to dynamic DB
+
+### API Provider (Local FastAPI + External API Provider)
+
+**Local FastAPI:**
+- Server implementation surface area
+- Handles business logic and request processing
+
+**External API Provider:**
+- Abstraction point for third-party services
+- LLMs (AI coaching, planning, insights)
+- Embeddings and search
+- Verification services
+
+**Benefit:** Can swap vendors without rewriting business logic
+
+### Queue & Schedule Manager
+
+**Queue Scheduler:**
+- Decides when jobs run
+- Manages worker allocation
+- Handles retry logic and job prioritization
+
+**Workers:**
+- Execute heavy lifting operations:
+  - External API calls (AI generation)
+  - GPU compute tasks
+  - Batch jobs
+  - Scheduled jobs (daily summaries, streak recomputes, weekly recaps)
+- Write results back to artifact store
+- Trigger notifications upon completion
+
+### Push Notification Provider (iOS)
+
+**Purpose:** Async communication with users
+
+**Use Cases:**
+- Async job completion ("Your plan is ready")
+- Bind reminders throughout the day
+- Streak nudges and recovery prompts
+- Daily reflection reminders
+
+**Architecture Note:** Workers trigger push notifications because they complete async jobs
+
+### Edge Function
+
+**Purpose:** Reduce latency for specific operations
+
+**Common Uses:**
+- Caching layer
+- Lightweight reads
+- Token validation checks
+- Feature flags
+- "Is there an update ready?" queries
+- Fast fanout routing
+
+**Constraint:** Does not handle DB writes or heavy compute
+
+---
+
+## Request Flow Patterns
+
+### Pattern A: Auth + Basic Read/Write (Fast Path)
+
+**Use Cases:** Simple CRUD operations, reading user data, updating settings
+
+**Flow:**
+1. App calls Master API Router with user session
+2. Router validates with Supabase Auth
+3. Router reads/writes to Supabase DB (static/dynamic/image depending on endpoint)
+4. Router returns response synchronously
+
+**Examples:**
+- Fetch today's binds
+- Update user profile
+- Mark bind as complete
+- Read consistency stats
+
+### Pattern B: AI-Heavy or Long-Running Generation (Async Path)
+
+**Use Cases:** AI-powered features that take time to compute
+
+**Flow:**
+1. App calls router (example: "generate tomorrow's triad")
+2. Router validates auth and reads required context from Dynamic DB
+3. Router enqueues a job to Queue Scheduler
+4. Router returns 202 Accepted + job_id to app
+5. Workers execute: call external APIs, run GPU tasks, compute outputs
+6. Workers persist artifacts + computed stats back into Dynamic DB
+7. Workers optionally send iOS push ("Your plan is ready")
+8. App fetches results via router when ready
+
+**Examples:**
+- Daily reflection AI insights
+- Goal breakdown (goal → Q-goals → binds)
+- Weekly recap generation
+- Pattern detection and recommendations
+
+### Pattern C: Media / Proof Uploads
+
+**Use Cases:** User captures proof of bind completion
+
+**Flow:**
+1. App calls router for upload intent (auth + metadata)
+2. Router validates and generates signed upload URL
+3. App uploads directly to Image Storage
+4. Router writes metadata to Dynamic DB
+5. Reference stored as "proof" or attachment to bind
+
+**Examples:**
+- Photo proof of workout
+- Voice memo capture
+- Daily memory photos
+
+### Pattern D: Latency-Critical Endpoints
+
+**Use Cases:** Operations requiring instant response
+
+**Flow:**
+1. Request routed through Edge Function for fast initial response
+2. Edge returns cached or lightweight data immediately
+3. Falls back to main router/workers when heavier work is required
+4. Background updates happen via async pattern
+
+**Examples:**
+- Health check / app status
+- Feature flag queries
+- Quick validation checks
+
+---
+
+## Architecture Decisions
+
+### Critical Decisions This Architecture Forces
+
+**1. Sync vs Async Endpoints**
+- **Decision Required:** Which operations are synchronous vs asynchronous?
+- **UX Impact:** What does "job pending" look like for users?
+- **MVP Guideline:** 
+  - Sync: Simple reads, marking binds complete, basic CRUD
+  - Async: AI generation, goal breakdown, daily insights, pattern detection
+
+**2. Computed Stats Management**
+- **Decision Required:** Where and when do you compute stats?
+- **Options:**
+  - Write-time compute (calculate on each update)
+  - Scheduled recompute (batch process nightly)
+  - Hybrid (write-time for simple, scheduled for complex)
+- **Consistency:** Stats are derived and reproducible, never hand-edited
+
+**3. Edge Function Scope**
+- **Decision Required:** What truly belongs on the edge?
+- **Guideline:** If it needs DB writes or heavy compute, it probably doesn't belong on edge
+- **Edge-Appropriate:**
+  - Token validation
+  - Feature flags
+  - Lightweight caching
+  - Health checks
+
+**4. Cost Control for AI Operations**
+- **Decision Required:** How to minimize AI API costs?
+- **Strategies:**
+  - Batch AI calls around journal time and onboarding
+  - Cache outputs and only regenerate when user changes inputs
+  - Most screens should NOT call the model
+  - Use deterministic logic where possible
+
+**5. Queue Priority and Retry Logic**
+- **Decision Required:** How to handle failed jobs and prioritization?
+- **Considerations:**
+  - User-initiated requests (high priority)
+  - Scheduled summaries (medium priority)
+  - Background analytics (low priority)
+  - Retry failed AI calls with exponential backoff
+
+---
+
+## MVP Feature Mapping
+
+### Alignment with MVP Specification
+
+This backend architecture directly supports all MVP features defined in the product specification:
+
+**1. Goal Breakdown Engine (Needles & Binds)**
+- Goals table → User's needles (max 3 active)
+- QGoals table → Quantifiable subgoals
+- SubtaskTemplates/Instances → Binds (consistent actions)
+- AI modules → Goldilocks principle (~70% completion probability)
+
+**2. Identity Document**
+- IdentityDoc table → Versioned user identity profiles
+- Supports: archetype, dream self, motivations, constraints
+- Editable and evolves with user
+- Informs all AI behavior and coaching style
+
+**3. Action + Memory Capture**
+- SubtaskCompletions → Proof of completed binds
+- Captures table → Photos, notes, voice memos, timer proof
+- SubtaskProofs → Link captures to completed tasks
+- Storage integration for media files
+
+**4. Daily Reflection (Journaling Session)**
+- JournalEntries → Daily reflections with fulfillment scores
+- TriadTasks → AI-generated next-day plan
+- AI modules → Generate insights and feedback
+
+**5. Progress Visualization**
+- DailyAggregates → Consistency % heat map data
+- UserStats → Current streak, longest streak, consistency metrics
+- Badges → Achievement system for consistency thresholds
+- "Weave character" progression tracked through consistency metrics
+
+**6. AI Coach**
+- AiRun/AiArtifact → Structured, editable AI outputs
+- DreamSelf advisor personality based on identity document
+- Deterministic personality using versioned identity docs
+- Cost control via caching (input_hash) and batching
+
+---
+
+## Core Principles
 
 ## Data Classification
 
@@ -123,10 +553,14 @@ Clerk is great, but it's "more backend" for no user-visible gain in V1.
 
 ## MVP Architecture: Single Backend + Worker
 
+**Frontend:** React Native mobile app (iOS App Store)  
+**Backend:** Python FastAPI on Railway
+
 ```
 ┌─────────────────────┐
 │  Mobile App          │
 │  (React Native)     │
+│  iOS App Store      │
 └──────────┬──────────┘
            │
            ├─────────────────┐
@@ -168,8 +602,8 @@ Clerk is great, but it's "more backend" for no user-visible gain in V1.
 
 ```mermaid
 flowchart TB
-  App[Mobile App] --> Auth[Auth]
-  App --> API[API Layer]
+  App[Mobile App<br/>React Native<br/>iOS App Store] --> Auth[Auth]
+  App --> API[API Layer<br/>Python FastAPI]
   API --> DB[(Postgres)]
   App -->|signed upload| Store[(Object Storage)]
   
@@ -241,9 +675,9 @@ CREATE INDEX idx_identity_docs_user_version ON identity_docs(user_id, version DE
 
 ## Goals & Planning
 
-### Goal
+### Goal (aka "Needle" in MVP)
 
-Top-level user goals (max 3 active at a time).
+Top-level user goals (max 3 active at a time). In the MVP product language, these are called **"Needles"** — the direction the user wants to weave toward.
 
 ```sql
 CREATE TYPE goal_status AS ENUM ('active', 'paused', 'completed', 'archived');
@@ -296,11 +730,13 @@ CREATE INDEX idx_qgoals_goal_id ON qgoals(goal_id);
 
 ---
 
-## Subtasks
+## Subtasks (aka "Binds" in MVP)
+
+In the MVP product language, subtasks are called **"Binds"** — the consistent actions that bind the user to their needles (goals). Each bind strengthens the weave (user's progress).
 
 ### SubtaskTemplate
 
-Reusable task templates that can generate instances.
+Reusable task templates that can generate instances. These are the base definitions for recurring binds.
 
 ```sql
 CREATE TYPE created_by_type AS ENUM ('user', 'ai');
@@ -350,11 +786,17 @@ CREATE INDEX idx_subtask_instances_user_date ON subtask_instances(user_id, sched
 CREATE INDEX idx_subtask_instances_status ON subtask_instances(status);
 ```
 
-### SubtaskCompletion
+### SubtaskCompletion (Bind Completion Event)
 
-**Immutable event log** for task completions. This is canonical truth.
+**Immutable event log** for bind completions. This is canonical truth.
 
-**Why separate completion table:** It's your immutable event log for "truth." SubtaskInstance status can be edited; completion events should not.
+**Why separate completion table:** It's your immutable event log for "truth." SubtaskInstance status can be edited; completion events should not. Each completion event represents a "bind" being strengthened in the user's weave.
+
+**MVP Context:** Each bind completion contributes to:
+- Daily consistency metrics
+- Weave progression/leveling
+- Streak calculations
+- Active Day With Proof determination
 
 ```sql
 CREATE TABLE subtask_completions (
@@ -375,11 +817,13 @@ CREATE INDEX idx_subtask_completions_instance ON subtask_completions(subtask_ins
 
 ---
 
-## Captures & Proof
+## Captures & Proof (Action + Memory Capture)
+
+Part of the MVP's "Document" feature — users capture proof of bind completion and daily memories.
 
 ### Capture
 
-User-created content (photos, notes, audio, timers) that can serve as proof.
+User-created content (photos, notes, audio, timers) that can serve as proof. These captures power the "Active Day With Proof" metric and provide evidence for the weave progression system.
 
 ```sql
 CREATE TYPE capture_type AS ENUM ('text', 'photo', 'audio', 'timer', 'link');
@@ -421,11 +865,13 @@ CREATE TABLE subtask_proofs (
 
 ---
 
-## Journal & Triad
+## Journal & Triad (Daily Reflection Flow)
 
-### JournalEntry
+The **Thread** feature in MVP — users reflect on their day and receive AI-generated insights and plans.
 
-Daily reflection and fulfillment tracking. One per user per day.
+### JournalEntry (Daily Reflection)
+
+Daily reflection and fulfillment tracking. One per user per day. Part of the core user loop described in MVP as "Thread (Reflection)".
 
 ```sql
 CREATE TABLE journal_entries (
@@ -465,13 +911,15 @@ CREATE INDEX idx_triad_tasks_user_date ON triad_tasks(user_id, date_for);
 
 ---
 
-## Stats & Aggregates
+## Stats & Aggregates (The "Weave" Visualization)
+
+In MVP terms, this is where the user's **"Weave"** is computed — the visual representation of their progress and consistency. The weave grows stronger and more complex with each completed bind.
 
 ### DailyAggregate
 
 **Pre-computed daily stats** for fast dashboard queries. Updated by worker.
 
-**Purpose:** Pre-computed daily stats for fast dashboard queries.
+**Purpose:** Pre-computed daily stats for fast dashboard queries. Powers the consistency heat map and weave progression metrics.
 
 ```sql
 CREATE TABLE daily_aggregates (
@@ -491,11 +939,11 @@ CREATE TABLE daily_aggregates (
 - Journal is submitted
 - Capture is created
 
-### UserStats
+### UserStats (Weave Progression State)
 
-User-level aggregated stats, computed by worker nightly.
+User-level aggregated stats, computed by worker nightly. Represents the user's **weave level** and progression from "thread" to complex, beautiful weave pattern.
 
-**Purpose:** User-level aggregated stats, computed by worker.
+**Purpose:** User-level aggregated stats that track overall weave progression.
 
 ```sql
 CREATE TABLE user_stats (
@@ -503,12 +951,19 @@ CREATE TABLE user_stats (
   current_streak INT DEFAULT 0,            -- Current active day streak
   longest_streak INT DEFAULT 0,            -- Longest streak ever
   consistency_30d NUMERIC DEFAULT 0,       -- Consistency % over last 30 days
-  rank_level INT DEFAULT 0,                -- User's rank/level
+  rank_level INT DEFAULT 0,                -- User's weave level/rank (visual complexity)
+  total_binds_completed INT DEFAULT 0,     -- Total bind completions (weave strength)
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
 **Computation:** Worker updates this nightly per timezone.
+
+**MVP Mapping:** `rank_level` determines the visual complexity of the user's weave character:
+- Level 0-10: Simple thread
+- Level 11-25: Basic weave pattern
+- Level 26-50: Complex weave pattern
+- Level 51+: Master weave (most visually impressive)
 
 ### Badges
 
@@ -535,9 +990,18 @@ CREATE INDEX idx_user_badges_user ON user_badges(user_id);
 
 ---
 
-## AI System
+## AI System (The Dream Self Advisor)
 
 **Purpose:** If AI outputs are editable, you need persistent artifacts and run tracking.
+
+**MVP Context:** The AI system powers multiple modules:
+- **Onboarding Coach** - Identity discovery and goal breakdown
+- **Triad Planner** - Daily task generation using Goldilocks principle
+- **Dream Self Advisor** - Coaching in the voice of user's ideal future self
+- **Insights Engine** - Pattern detection and behavioral analysis
+- **Daily Recap Generator** - Synthesizes journal, completions, and captures
+
+All AI interactions are deterministic and based on the user's identity document to ensure consistent, personalized coaching.
 
 ### AiRun
 
