@@ -172,7 +172,7 @@ This Product Requirements Document defines the complete requirements for Weave M
 | **Bind** | Subtask | Consistent daily action toward a goal |
 | **Thread** | User/Identity | User's starting state and identity |
 | **Weave** | Progress/Stats | User's evolved state, consistency metrics |
-| **Q-Goal** | Quantifiable Goal | Measurable subgoal with metrics |
+| **Q-Goal** | Quantifiable Goal | *Internal only* - Measurable subgoal with metrics (not shown in user edit UI) |
 | **Proof** | Capture | Evidence of bind completion |
 | **Triad** | Daily Plan | AI-generated 3 tasks for next day |
 | **Reflection** | Journal Entry | Daily check-in with fulfillment score |
@@ -318,6 +318,8 @@ New users must be able to set up their identity profile and first goal within 5 
 - Write to `identity_docs.json.failure_mode`
 - Write to `identity_docs.json.constraints`
 
+**Note:** This is both direct user input AND an ongoing AI observation. The AI will observe and refine these insights over time based on user behavior patterns (e.g., detecting that user consistently skips evening binds may update energy pattern inference).
+
 ---
 
 #### US-1.6: First Goal Setup (AI-Assisted)
@@ -381,23 +383,57 @@ New users must be able to set up their identity profile and first goal within 5 
 
 ---
 
-#### US-1.8: App Tutorial (Optional)
+#### US-1.8: App Tutorial
 
-**Priority:** C (Could Have)
+**Priority:** M (Must Have)
 
 **As a** new user
 **I want to** see a brief tutorial
-**So that** I understand how to use core features
+**So that** I understand how to use core features and recognize this is a differentiated experience
 
 **Acceptance Criteria:**
 - [ ] 3-4 screens showing: Thread, Bind completion, Daily check-in, Weave dashboard
-- [ ] "Skip tutorial" option
-- [ ] Coach tips highlighting key features
+- [ ] **Important:** Emphasize this is NOT just another habit tracker - it's an identity transformation companion
+- [ ] Show how Weave learns your patterns and speaks in your Dream Self voice
+- [ ] "Skip tutorial" option available but tutorial is encouraged
+- [ ] Coach tips highlighting key differentiating features
 - [ ] Complete in <1 minute
 
 **Technical Notes:**
 - Only show once (persisted flag)
 - Can be re-accessed from Settings
+- Track tutorial completion vs skip for analytics
+
+---
+
+#### US-1.9: Soft Paywall
+
+**Priority:** M (Must Have)
+
+**As a** new user who has completed onboarding
+**I want to** see subscription options before entering the main app
+**So that** I understand the value tiers and can choose to upgrade
+
+**Acceptance Criteria:**
+- [ ] Display after onboarding completion, before entering main app
+- [ ] Show clear value proposition for each tier:
+  - **Free:** 1 Needle, limited AI (5 chats/day), basic analytics
+  - **Pro ($12/mo):** 3 Needles, unlimited AI, full analytics, priority support
+  - **Max ($24/mo):** 5 Needles, advanced insights, early features
+- [ ] Prominent "Continue with Free" option (not hidden)
+- [ ] "Start 7-day free trial" for Pro tier
+- [ ] Payment integration with App Store (StoreKit 2)
+- [ ] Track paywall shown, tier selected, skip rate
+
+**Data Requirements:**
+- Write to `user_profiles.subscription_tier`
+- Store `subscription_started_at`, `trial_ends_at`
+- Track `paywall_presented` and `paywall_action` events
+
+**Technical Notes:**
+- Use RevenueCat or native StoreKit 2 for subscription management
+- Restore purchases functionality required
+- Soft paywall = always allows skip to free tier
 
 ---
 
@@ -412,9 +448,10 @@ New users must be able to set up their identity profile and first goal within 5 
 | US-1.5 | Motivation and Constraints | S | 3 pts |
 | US-1.6 | First Goal Setup (AI) | M | 8 pts |
 | US-1.7 | First Commitment | M | 3 pts |
-| US-1.8 | App Tutorial | C | 3 pts |
+| US-1.8 | App Tutorial | M | 3 pts |
+| US-1.9 | Soft Paywall | M | 5 pts |
 
-**Epic Total:** 30 story points
+**Epic Total:** 35 story points
 
 ---
 
@@ -502,29 +539,36 @@ Users can create, view, edit, and archive goals (needles), with AI assistance fo
 
 ---
 
-#### US-2.4: Edit Goal
+#### US-2.4: Edit Needle
 
 **Priority:** M (Must Have)
 
 **As a** user
-**I want to** edit my goal details
+**I want to** edit my Needle (goal) details
 **So that** I can refine my approach as I learn
 
 **Acceptance Criteria:**
-- [ ] Edit goal title and description
+- [ ] Edit Needle title and description
 - [ ] Edit "Why it matters"
-- [ ] Add/remove/edit Q-goals
-- [ ] Add/remove/edit binds
+- [ ] Add/remove/edit Binds (subtasks)
+- [ ] Q-goals are internal only - not shown in user edit UI
 - [ ] Confirm changes and save
-- [ ] Show warning if reducing scope significantly
+- [ ] **Change Warning (Thoughtfully Balanced):**
+  - Not too easy to change (prevents impulsive pivots)
+  - Not too hard (doesn't create friction for legitimate refinement)
+  - Options based on strictness mode:
+    - Show impact summary: "This will affect your 12-day streak tracking"
+    - Require brief justification text: "Why are you making this change?"
+    - Visual friction: hold-to-confirm interaction
 
 **Data Requirements:**
-- Update `goals`, `qgoals`, `subtask_templates`
+- Update `goals`, `subtask_templates`
 - Track edit history (version chain)
+- Store change justification if required
 
 **Technical Notes:**
 - Editing a goal may invalidate cached AI outputs
-- Consider goal change strictness modes (Normal, Strict, None)
+- Change warning respects user's strictness mode setting (Normal/Strict/None)
 
 ---
 
@@ -626,15 +670,16 @@ Users complete daily binds (habits/actions) and document proof. This is the core
 **Priority:** M (Must Have)
 
 **As a** user
-**I want to** see AI-recommended top 3 tasks
+**I want to** see AI-recommended top 3 Binds
 **So that** I focus on what matters most
 
 **Acceptance Criteria:**
-- [ ] Display triad tasks at top of Thread (Home)
+- [ ] Display Triad at top of Thread (Home)
+- [ ] **Note:** Triad IS the prioritized subset of Binds - same entity type, just AI-ranked
 - [ ] Show yesterday's insight/intention summary (from AI)
-- [ ] Triad tasks ranked: Easy win, Medium challenge, Important/difficult
-- [ ] Each task shows rationale ("Why this task")
-- [ ] User can edit or dismiss triad tasks
+- [ ] Triad Binds ranked: Easy win, Medium challenge, Important/difficult
+- [ ] Each Bind shows rationale ("Why this bind")
+- [ ] User can edit or dismiss Triad Binds
 
 **AI Module:** Triad Planner
 
@@ -645,6 +690,7 @@ Users complete daily binds (habits/actions) and document proof. This is the core
 **Technical Notes:**
 - Triad generated after journal submission (evening)
 - No model call on Thread load (reads cache)
+- Triad tasks reference existing `subtask_instances` - they are the same Binds, just highlighted
 
 ---
 
@@ -653,21 +699,22 @@ Users complete daily binds (habits/actions) and document proof. This is the core
 **Priority:** M (Must Have)
 
 **As a** user
-**I want to** mark a bind as started/completed
-**So that** I track my progress toward goals
+**I want to** mark a Bind as started/completed
+**So that** I track my progress toward my Needle (goal)
 
 **Acceptance Criteria:**
-- [ ] Tap bind → Opens Bind Screen
+- [ ] Tap Bind → Opens Bind Screen
 - [ ] Bind Screen shows:
   - Needle context (why this matters)
   - Bind title and description
   - "Start Bind" primary button
   - Timer option (one tap start/stop)
   - Estimated duration
-- [ ] Tap "Complete" → Mark bind as done
-- [ ] Show brief confetti (classy, short)
+- [ ] Tap "Complete" → Mark Bind as done
+- [ ] **Magical, delightful confetti animation** (classy, celebratory, makes user feel accomplished)
 - [ ] Return to Thread with updated status
 - [ ] Completion time: <30 seconds from open to done
+- [ ] **Design Principle:** The entire experience should feel magical and delightful, not transactional
 
 **Data Requirements:**
 - Write to `subtask_completions` (immutable event log)
@@ -742,24 +789,33 @@ Users complete daily binds (habits/actions) and document proof. This is the core
 
 ---
 
-#### US-3.6: Timer Tracking
+#### US-3.6: Timer Tracking (Pomodoro-Style)
 
 **Priority:** S (Should Have)
 
 **As a** user
-**I want to** track time spent on binds
-**So that** I have accurate records of my effort
+**I want to** track time spent on Binds with a focused timer experience
+**So that** I have accurate records of my effort and stay in flow
 
 **Acceptance Criteria:**
+- [ ] **Pomodoro-feel timer experience:**
+  - Set duration upfront (25 min default, customizable: 15/25/45/60 min options)
+  - Focus mode UI (minimal distractions, clean visual)
+  - Subtle but satisfying progress visualization (circle fill, progress bar)
+  - Satisfying completion moment with sound/haptic feedback
 - [ ] One-tap start timer from Bind Screen
-- [ ] Running timer displays in app
-- [ ] One-tap stop timer
-- [ ] Timer duration attached to completion as proof
-- [ ] Optional: Set timer duration upfront (e.g., "25 min focus")
+- [ ] Running timer displays prominently
+- [ ] Option to pause (with confirmation) or extend
+- [ ] Timer duration auto-attached to completion as Proof
+- [ ] Break reminder after completion (optional)
 
 **Data Requirements:**
 - Store timer data in `captures` (type: 'timer')
-- Fields: `duration_seconds`, `started_at`, `ended_at`
+- Fields: `duration_seconds`, `started_at`, `ended_at`, `preset_duration`
+
+**Technical Notes:**
+- Timer should work even when app is backgrounded
+- Local notifications for timer completion
 
 ---
 
@@ -769,16 +825,26 @@ Users complete daily binds (habits/actions) and document proof. This is the core
 
 **As a** user
 **I want to** see positive/negative trajectories
-**So that** I'm motivated to stay on track
+**So that** I'm motivated to stay on track when I'm feeling doubt
 
 **Acceptance Criteria:**
-- [ ] Show "positive trajectory" when user feels difficulty
-- [ ] Show "negative trajectory" if user expresses doubt
-- [ ] Visual representation of where consistent action leads
+- [ ] Triggered when user expresses difficulty or doubt (in chat/reflection)
+- [ ] **Two components:**
+  1. **Visual representation:** Animated paths diverging - one upward (growth), one downward (stagnation)
+  2. **AI-generated personalized text:** From Tech Context Engine describing where each path leads based on user's specific Needles and patterns
+- [ ] Example positive path: "In 30 days, you'll have completed 45 gym sessions and be 15% closer to your goal weight"
+- [ ] Example negative path: "Without consistency, you'll be in the same place as last month"
+- [ ] Dismissible but impactful
+
+**AI Module:** Tech Context Engine (trajectory prediction)
+
+**Data Requirements:**
+- Read from user's completion history, Needle progress, fulfillment trends
+- Generate personalized trajectory predictions
 
 **Technical Notes:**
-- Post-MVP enhancement for motivation
-- Requires sentiment detection in chat/reflection
+- Requires sentiment detection in chat/reflection to trigger
+- AI generates text based on user's specific context, not generic
 
 ---
 
@@ -811,28 +877,35 @@ Users complete daily reflections that generate AI feedback and next-day plans. T
 **Priority:** M (Must Have)
 
 **As a** user
-**I want to** reflect on my day
-**So that** I process what happened and plan for tomorrow
+**I want to** reflect on my day with personalized questions
+**So that** I process what happened and track what matters to me
 
 **Acceptance Criteria:**
 - [ ] Access via Thread → "Daily Check-in" CTA
-- [ ] Two reflection questions:
-  - "How do you feel about today? What worked well and didn't?"
-  - "What is the one thing you want to get done tomorrow?"
+- [ ] **Default 2 reflection questions:**
+  - "How do you feel about today? What worked well and what didn't?"
+  - "What is the one thing you want to accomplish tomorrow?"
+- [ ] **User-customizable questions:**
+  - User can add/edit/remove custom tracking questions
+  - Examples: "Did I stick to my diet?", "How many pages did I read?", "Rate my energy level"
+  - Custom questions can be numeric (1-10), yes/no, or free text
+  - Manage custom questions in Settings or inline "Add question" button
 - [ ] Fulfillment score slider (1-10)
 - [ ] "Skip" allowed for text fields (not encouraged)
 - [ ] Submit button triggers AI batch
-- [ ] One screen, minimal scrolling
+- [ ] One screen, minimal scrolling (custom questions expand if added)
 
 **Data Requirements:**
 - Write to `journal_entries` table
-- Fields: `user_id`, `local_date`, `fulfillment_score`, `question_1_response`, `question_2_response`
+- Fields: `user_id`, `local_date`, `fulfillment_score`, `default_responses`, `custom_responses`
+- Store custom question definitions in `user_profiles.preferences.custom_reflection_questions`
 - Trigger `event_log`: `journal_submitted`
 - Update `daily_aggregates.has_journal` = true
 
 **Technical Notes:**
 - Journal submission is the primary AI batch trigger
 - Only one journal entry per day per user
+- Custom question responses available to AI for pattern detection
 
 ---
 
@@ -1050,14 +1123,19 @@ Users view their progress through the Weave Dashboard, including consistency met
 **So that** I feel my progress is tangible
 
 **Acceptance Criteria:**
+- [ ] **Mathematical curve visualization** that increases in complexity and intricacy as user progresses
+  - Starts simple (single thread line)
+  - Becomes more intertwined and beautiful over time (weave pattern)
+  - Visual complexity directly tied to progress metrics
 - [ ] Character visualization evolves based on:
-  - Total binds completed
+  - Total Binds completed
   - Current streak
   - Consistency percentage
-- [ ] Milestone-based progression (not daily changes)
+- [ ] Milestone-based progression (not daily changes - feels earned)
 - [ ] Levels/ranks: Thread → Strand → Cord → Braid → Weave
-- [ ] Each level has distinct visual (e.g., complexity of pattern)
+- [ ] Each level has distinctly more complex mathematical curve pattern
 - [ ] Show current level and progress to next
+- [ ] Animation when leveling up (special moment)
 
 **Data Requirements:**
 - Read from `user_stats.total_binds_completed`
@@ -1065,13 +1143,17 @@ Users view their progress through the Weave Dashboard, including consistency met
 - Compute rank from thresholds
 
 **Rank Thresholds:**
-| Rank | Binds Required | Consistency Req |
-|------|---------------|-----------------|
-| Thread | 0 | - |
-| Strand | 20 | 30% |
-| Cord | 50 | 50% |
-| Braid | 100 | 65% |
-| Weave | 200 | 80% |
+| Rank | Binds Required | Consistency Req | Visual Complexity |
+|------|---------------|-----------------|-------------------|
+| Thread | 0 | - | Single line |
+| Strand | 20 | 30% | 2-3 intertwined lines |
+| Cord | 50 | 50% | 4-5 intertwined lines |
+| Braid | 100 | 65% | Complex weave pattern |
+| Weave | 200 | 80% | Intricate, beautiful weave |
+
+**Technical Notes:**
+- Mathematical curves can be generated using parametric equations
+- Consider using SVG or Lottie animations for smooth rendering
 
 ---
 
@@ -1453,8 +1535,8 @@ Easy re-entry: Just log ONE bind today. That's the thread holding.
 **Priority:** M (Must Have)
 
 **As a** user
-**I want to** control notification frequency
-**So that** I'm not overwhelmed
+**I want to** control notification frequency and channels
+**So that** I'm not overwhelmed and receive notifications where I want them
 
 **Acceptance Criteria:**
 - [ ] Nudging intensity slider (1-10)
@@ -1469,6 +1551,8 @@ Easy re-entry: Just log ONE bind today. That's the thread holding.
 
 **Data Requirements:**
 - Store in `user_profiles.preferences.notifications`
+
+**Note:** MVP uses push notifications via Expo Push → APNs. **Future roadmap:** SMS/text messaging integration for users who prefer text-based accountability (requires Twilio or similar).
 
 ---
 
