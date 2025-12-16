@@ -74,15 +74,16 @@ This Product Requirements Document defines the complete requirements for Weave M
    - [Epic 6: AI Coaching](#epic-6-ai-coaching)
    - [Epic 7: Notifications](#epic-7-notifications)
    - [Epic 8: Settings & Profile](#epic-8-settings--profile)
-4. [Non-Functional Requirements](#non-functional-requirements)
-5. [Data Requirements](#data-requirements)
-6. [AI System Requirements](#ai-system-requirements)
-7. [Security & Privacy Requirements](#security--privacy-requirements)
-8. [Analytics & Success Metrics](#analytics--success-metrics)
-9. [Constraints & Assumptions](#constraints--assumptions)
-10. [Dependencies & Risks](#dependencies--risks)
-11. [Release Plan](#release-plan)
-12. [Appendices](#appendices)
+4. [Cross-Cutting UX Concerns](#cross-cutting-ux-concerns)
+5. [Non-Functional Requirements](#non-functional-requirements)
+6. [Data Requirements](#data-requirements)
+7. [AI System Requirements](#ai-system-requirements)
+8. [Security & Privacy Requirements](#security--privacy-requirements)
+9. [Analytics & Success Metrics](#analytics--success-metrics)
+10. [Constraints & Assumptions](#constraints--assumptions)
+11. [Dependencies & Risks](#dependencies--risks)
+12. [Release Plan](#release-plan)
+13. [Appendices](#appendices)
 
 ---
 
@@ -1647,24 +1648,38 @@ Proactive push notifications keep users engaged without becoming spam. Notificat
 **I want to** be encouraged after missing days
 **So that** I can recover without shame
 
+**Related:** See [Return States (UX-R)](#return-states-ux-r---differentiator) for comprehensive return experience framework.
+
 **Acceptance Criteria:**
-- [ ] Triggered after 24-48 hours of inactivity
+- [ ] Works in conjunction with Return States framework (UX-R2, UX-R3, UX-R4)
+- [ ] Triggered after 24-48 hours of inactivity (UX-R2/R3 threshold)
 - [ ] Compassionate, not shame-based messaging
 - [ ] Reference specific goals and past wins
 - [ ] Offer easy re-entry: "Just log ONE bind today"
 - [ ] Uses Dream Self voice
+- [ ] For 48h-7d absence: Notification deep-links to AI Chat (UX-R3 flow)
+- [ ] For >7d absence: Notification triggers special welcome animation (UX-R4)
 
-**Example:**
+**Example (24-48h - UX-R2):**
 ```
-48 hours since your last bind. I get it—life happens.
-But streaks are built on comebacks, not perfection.
+Hey, you're back! 💙
+Ready to pick up where you left off?
+Just ONE bind keeps the thread going.
+```
 
-Easy re-entry: Just log ONE bind today. That's the thread holding.
+**Example (48h-7d - UX-R3):**
+```
+I noticed you've been away. Everything okay?
+Life gets busy—no judgment here.
+Tap to chat with Weave about getting back on track.
+[Opens AI Chat with return context]
 ```
 
 **Data Requirements:**
-- Read from `user_stats.last_active_at`
+- Read from `user_profiles.last_active_at`
 - Read from `goals` for context
+- Calculate time_away_hours on notification trigger
+- Route to appropriate UX-R experience based on absence duration
 
 ---
 
@@ -1920,6 +1935,122 @@ Users manage their account settings, identity document, and app preferences.
 **Total Must Have Points:** 163 story points
 
 **Estimated Duration:** 8-10 sprints (assuming 15-20 points/sprint with 2-person team)
+
+---
+
+## Cross-Cutting UX Concerns
+
+These concerns apply across ALL epics and must be addressed within each feature implementation.
+
+### Empty States (UX-E)
+
+Every screen that can be empty must have a thoughtful, encouraging empty state.
+
+| ID | Screen | Empty State Message | CTA |
+|----|--------|---------------------|-----|
+| UX-E1 | Thread (Today's Binds) | "No binds yet for today. Let's set up your first Needle!" | Create Needle |
+| UX-E2 | Needles List | "You haven't set any goals yet. What do you want to achieve?" | Create First Needle |
+| UX-E3 | Captures Gallery | "No memories captured yet. Document your wins!" | Quick Capture |
+| UX-E4 | Journal History | "Your reflection journey starts today" | Start Reflection |
+| UX-E5 | Heat Map (new user) | "Complete your first bind to start building your weave" | View Today's Binds |
+| UX-E6 | AI Chat | "I'm here to help. Ask me anything about your goals" | Suggested chips |
+
+**Implementation Requirement:** Each story with a list view MUST include acceptance criteria for empty state handling.
+
+### Error & Fallback UX (UX-F)
+
+Graceful degradation for all failure scenarios.
+
+| ID | Scenario | User Message | Fallback Behavior |
+|----|----------|--------------|-------------------|
+| UX-F1 | Network offline | "You're offline. Some features are limited." | Show cached data, disable mutations |
+| UX-F2 | AI service down | "Weave is thinking... Taking longer than usual." | Retry 3x, then show deterministic fallback |
+| UX-F3 | AI rate limited | "Let's take a breather. More AI help in X minutes." | Show countdown, suggest manual actions |
+| UX-F4 | Upload failed | "Couldn't save your photo. Retry?" | Queue for retry, allow skip |
+| UX-F5 | Auth token expired | Silent refresh; if fails: "Please sign in again" | Redirect to login |
+| UX-F6 | Server 500 | "Something went wrong. We're on it!" | Log to Sentry, show retry button |
+
+**AI Fallback Chain:**
+1. Primary: GPT-4o-mini (or Claude for complex ops)
+2. Secondary: Alternative provider
+3. Tertiary: Deterministic/template-based response
+
+**Implementation Requirement:** All API calls must have error boundaries with appropriate fallback UI.
+
+### Delight Moments (UX-D)
+
+Purposeful animations that create moments of joy and reinforce positive behavior.
+
+| ID | Trigger | Animation | Purpose |
+|----|---------|-----------|---------|
+| UX-D1 | Bind completed | Confetti burst (classy, not overwhelming) | Celebrate completion |
+| UX-D2 | Streak milestone (7, 30, 60, 90 days) | Special celebration animation | Reinforce consistency |
+| UX-D3 | Badge unlocked | Badge reveal with shine effect | Acknowledge achievement |
+| UX-D4 | Weave level up | Character evolution animation | Show growth |
+| UX-D5 | First Needle set | Welcome animation with Dream Self | Celebrate commitment |
+| UX-D6 | Reflection submitted | Gentle wave/weave animation | Close daily loop |
+| UX-D7 | Timer completed | Satisfying completion sound + visual | Pomodoro finish |
+
+**Guidelines:**
+- Animations should feel **magical and delightful**, not generic
+- Keep animations short (<1.5s) and skippable
+- Use haptic feedback on iOS for tactile reinforcement
+- Respect reduced motion accessibility settings
+
+### Loading States (UX-L)
+
+Every async operation needs a thoughtful loading state.
+
+| ID | Operation | Loading UI | Max Duration |
+|----|-----------|-----------|--------------|
+| UX-L1 | App launch | Splash with Weave logo | <3s |
+| UX-L2 | AI generating response | "Weave is thinking..." with animation | <30s |
+| UX-L3 | Image uploading | Progress bar with percentage | <5s |
+| UX-L4 | Data syncing | Subtle spinner in nav bar | <2s |
+| UX-L5 | Screen transition | Skeleton loaders | <1s |
+
+**Implementation Requirement:** Use skeleton loaders for data-heavy screens. Show progress for operations >2s.
+
+### Return States (UX-R) - DIFFERENTIATOR
+
+How we handle users returning after absence. **This is what sets Weave apart from shame-based habit apps.**
+
+| ID | Time Away | Experience | AI Behavior |
+|----|-----------|------------|-------------|
+| UX-R1 | <24h | Normal home screen | No special messaging |
+| UX-R2 | 24-48h | Warm welcome banner | "Hey, you're back! 💙 Ready to pick up where you left off?" |
+| UX-R3 | 48h-7d | AI-initiated chat | Proactive: "I noticed you've been away. Everything okay? Just ONE bind is a win." |
+| UX-R4 | >7d | Special welcome animation | "Welcome back, [Name]! Your Dream Self is still here. Let's restart together." |
+
+**Return Chat Flow (UX-R3):**
+1. App detects `hours_since_active > 48`
+2. AI Chat opens automatically with contextual greeting
+3. Quick response chips: "Life got busy", "Feeling overwhelmed", "Ready to restart"
+4. AI responds with empathy and ONE small action
+5. Always reference their Dream Self and past wins
+
+**Core Principles:**
+- ❌ NEVER show broken streak prominently
+- ❌ NEVER guilt-trip with sad mascots
+- ❌ NEVER require catching up on missed days
+- ✅ ALWAYS lead with warmth and genuine care
+- ✅ ALWAYS lower the bar: "Just ONE bind today"
+- ✅ ALWAYS reference their WHY (Dream Self)
+- ✅ ALWAYS celebrate their return as a WIN
+- ✅ ALWAYS let AI Chat be the re-entry point
+
+**Technical Implementation:**
+- Store `last_active_at` in `user_profiles` table
+- Calculate return state on app launch
+- Trigger appropriate UX-R experience based on time away
+
+**Competitive Advantage:**
+| What Competitors Do | What Weave Does |
+|---------------------|-----------------|
+| Duolingo: Guilt-trips with sad owl | Warm AI welcome, no judgment |
+| Streaks: Shows broken chain prominently | Celebrates return as a win |
+| Habitica: Character dies/loses HP | Lower the bar, reference past wins |
+| Most apps: 77% churn at Day 3 | Re-engagement through compassionate AI |
 
 ---
 
