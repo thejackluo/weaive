@@ -10,5 +10,9 @@ bmad-custom-src/
 .agentvibes/
 
 # MCP configuration with sensitive API keys
-.mcp.json
+.mcp.json      # Active config (has API keys)
 .env
+
+# MCP platform-specific configs (tracked in git - no keys hardcoded)
+# .mcp.json.windows - Windows PowerShell version (safe to commit)
+# .mcp.json.wsl     - WSL/Linux version (safe to commit)
