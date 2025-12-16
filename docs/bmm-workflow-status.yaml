@@ -43,4 +43,4 @@ workflow_status:
   implementation-readiness: "docs/implementation-readiness.md"
 
   # Phase 3: Implementation
-  sprint-planning: required
+  sprint-planning: "docs/sprint-plan.md"
