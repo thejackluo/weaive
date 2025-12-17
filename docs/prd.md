@@ -1094,14 +1094,17 @@ Users complete daily binds (habits/actions) and document proof. This is the core
 | ID | Story | Priority | Estimate |
 |----|-------|----------|----------|
 | US-3.1 | View Today's Binds | M | 5 pts |
-| US-3.2 | View Triad | M | 3 pts |
-| US-3.3 | Start and Complete Bind | M | 5 pts |
+| US-3.2 | View Triad (AI-recommended) | M | 5 pts |
+| US-3.3a | Bind Screen | M | 3 pts |
+| US-3.3b | Bind Completion | M | 5 pts |
 | US-3.4 | Attach Proof to Bind | M | 5 pts |
 | US-3.5 | Quick Capture | M | 5 pts |
 | US-3.6 | Timer Tracking | S | 5 pts |
-| US-3.7 | Dual Path Visualization | C | 8 pts |
+| US-3.7 | Dual Path Visualization | C | 5 pts |
 
-**Epic Total:** 36 story points
+**Epic Total:** 38 story points
+
+**Note:** US-3.2 increased to 5 pts to account for AI fallback chain complexity. US-3.3 split into 3.3a (Bind Screen) and 3.3b (Completion with confetti animation) for implementation clarity. US-3.7 revised down to 5 pts based on implementation assessment.
 
 ---
 
@@ -1257,13 +1260,16 @@ Users complete daily reflections that generate AI feedback and next-day plans. T
 
 | ID | Story | Priority | Estimate |
 |----|-------|----------|----------|
-| US-4.1 | Daily Reflection Entry | M | 5 pts |
+| US-4.1a | Reflection Questions (Default) | M | 3 pts |
+| US-4.1b | Custom Questions | M | 3 pts |
 | US-4.2 | Recap Before Reflection | S | 3 pts |
 | US-4.3 | AI Feedback Generation | M | 8 pts |
 | US-4.4 | Edit AI Feedback | M | 5 pts |
-| US-4.5 | View Past Journals | S | 5 pts |
+| US-4.5 | View Past Journals | S | 6 pts |
 
-**Epic Total:** 26 story points
+**Epic Total:** 28 story points
+
+**Note:** US-4.1 split into 4.1a (Default 2 questions) and 4.1b (User-customizable questions) for clearer implementation scope. US-4.5 increased to 6 pts to account for filtering, search, and navigation complexity.
 
 ---
 
@@ -2001,21 +2007,26 @@ Users manage their account settings, identity document, and app preferences.
 
 | Epic | Description | M Points | S Points | C Points | Total |
 |------|-------------|----------|----------|----------|-------|
-| E1 | Onboarding & Identity | 24 | 3 | 3 | 30 |
+| E0 | Foundation | 38 | 0 | 0 | 38 |
+| E1 | Onboarding & Identity | 32 | 3 | 0 | 35 |
 | E2 | Goal Management | 24 | 3 | 0 | 27 |
-| E3 | Daily Actions & Proof | 23 | 5 | 8 | 36 |
-| E4 | Reflection & Journaling | 18 | 8 | 0 | 26 |
+| E3 | Daily Actions & Proof | 28 | 5 | 5 | 38 |
+| E4 | Reflection & Journaling | 19 | 9 | 0 | 28 |
 | E5 | Progress Visualization | 18 | 21 | 0 | 39 |
 | E6 | AI Coaching | 13 | 11 | 5 | 29 |
 | E7 | Notifications | 23 | 5 | 0 | 28 |
 | E8 | Settings & Profile | 20 | 3 | 0 | 23 |
-| **Total** | | **163** | **59** | **16** | **238** |
+| **Total** | | **207** | **60** | **10** | **285** |
+
+**Note:** Epic 0 (Foundation) added - includes infrastructure, auth, RLS, CI/CD, and AI service abstraction (38 pts). Epics 1, 3, 4 updated based on implementation complexity assessment and story splitting for clarity.
 
 ### MVP Scope (Must Have)
 
-**Total Must Have Points:** 163 story points
+**Total Must Have Points:** 207 story points (includes Epic 0 Foundation: 38 pts)
 
-**Estimated Duration:** 8-10 sprints (assuming 15-20 points/sprint with 2-person team)
+**Estimated Duration:** 10-14 sprints (assuming 15-20 points/sprint with 2-person team)
+
+**Note:** Sprint 1 (2-week MVP) focuses on Epic 0 foundation + core loop: 66 points per implementation plan in epics.md
 
 ---
 

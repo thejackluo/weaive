@@ -708,7 +708,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3 | `[v1.2]` |
 | 8 | Settings & Profile | 23 | 5 | Epic 0, 1 | `[v1.2]` |
 
-**Total:** 272 story points across 58 FRs
+**Total:** 285 story points across 58 FRs
 
 **Phase Breakdown:**
 - **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~66 pts (Sprint 1)
