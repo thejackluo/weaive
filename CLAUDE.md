@@ -396,6 +396,7 @@ api/                             # Python FastAPI backend
 - `docs/dev/design-system-guide.md` - How to use the Weave design system
 - `docs/dev/docs-viewer-guide.md` - How to use and customize the docs viewer
 - `docs/dev/mcp-quick-reference.md` - Daily MCP usage cheat sheet
+- `docs/dev/bmad-implementation-guide.md` - Non-technical guide to BMAD implementation workflow
 
 ### Setup Guides
 - `docs/setup/mcp-setup-guide.md` - MCP servers configuration (6 servers)
