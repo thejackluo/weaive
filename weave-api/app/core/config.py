@@ -5,6 +5,12 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings from environment variables"""
 
+    # Environment Configuration
+    ENV: str = Field(
+        default="development",
+        description="Environment: development, staging, production",
+    )
+
     # Supabase (optional for Week 0, required for Story 0.2+)
     SUPABASE_URL: str = Field(default="", description="Supabase project URL")
     SUPABASE_SERVICE_KEY: str = Field(
