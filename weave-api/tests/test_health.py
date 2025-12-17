@@ -1,7 +1,5 @@
 """Placeholder test for health endpoint."""
 
-import pytest
-from fastapi.testclient import TestClient
 
 # Future: Import app and create test client
 # from app.main import app
