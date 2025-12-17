@@ -35,6 +35,7 @@ export default [
       'dist',
       'build',
       '.vscode',
+      'tailwind.config.js',  // CommonJS config file
     ],
   },
 ];
