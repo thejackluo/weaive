@@ -11,6 +11,7 @@ app = FastAPI(
 )
 
 # CORS - Environment-based configuration
+# ⚠️ SECURITY WARNING: NEVER use ALLOWED_ORIGINS="*" in production!
 # Set ALLOWED_ORIGINS in .env to specific domains in production
 # Example: ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
 allowed_origins = (
@@ -18,6 +19,14 @@ allowed_origins = (
     if settings.ALLOWED_ORIGINS != "*"
     else ["*"]
 )
+
+# Runtime check: Warn if using wildcard CORS in production-like environments
+if allowed_origins == ["*"] and settings.ENV in ["production", "prod", "staging"]:
+    import logging
+    logging.warning(
+        "⚠️  SECURITY RISK: CORS is set to allow all origins (*) in a production-like environment! "
+        "This should NEVER be used in production. Set ALLOWED_ORIGINS to specific domains."
+    )
 
 app.add_middleware(
     CORSMiddleware,
