@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import health
+from app.core.config import settings
 
 app = FastAPI(
     title="Weave API",
@@ -9,10 +10,18 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# CORS - Allow all for local dev (restrict in production)
+# CORS - Environment-based configuration
+# Set ALLOWED_ORIGINS in .env to specific domains in production
+# Example: ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
+allowed_origins = (
+    settings.ALLOWED_ORIGINS.split(",")
+    if settings.ALLOWED_ORIGINS != "*"
+    else ["*"]
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Restrict in production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
