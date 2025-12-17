@@ -141,6 +141,16 @@ function startServer(port, docsDir) {
 
         // Serve markdown files from docs directory
         const filePath = path.join(DOCS_DIR, req.url);
+        
+        // Security: Prevent directory traversal attacks
+        const resolvedPath = path.resolve(filePath);
+        const docsRoot = path.resolve(DOCS_DIR);
+        if (!resolvedPath.startsWith(docsRoot)) {
+            res.writeHead(403, { 'Content-Type': 'text/plain' });
+            res.end('Forbidden');
+            return;
+        }
+        
         const extname = String(path.extname(filePath)).toLowerCase();
         const contentType = mimeTypes[extname] || 'application/octet-stream';
 
