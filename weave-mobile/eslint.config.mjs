@@ -29,6 +29,21 @@ export default [
     },
   },
   {
+    files: ['**/*.js'],
+    languageOptions: {
+      globals: {
+        module: 'readonly',
+        require: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        process: 'readonly',
+        console: 'readonly',
+      },
+      ecmaVersion: 2021,
+      sourceType: 'module',
+    },
+  },
+  {
     ignores: [
       'node_modules',
       '.expo',
