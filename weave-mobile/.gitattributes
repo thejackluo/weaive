@@ -1,0 +1,27 @@
+# Normalize line endings for all text files
+* text=auto
+
+# Force LF for specific files that should always use Unix line endings
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Let git handle line endings for these files naturally
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+*.json text
+*.md text
+*.yaml text
+*.yml text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+
