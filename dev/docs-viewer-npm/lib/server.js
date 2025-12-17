@@ -1,5 +1,5 @@
 /**
- * @jackluo/docs-viewer
+ * @thejackluo/docs-viewer
  * HTTP server for documentation viewer
  */
 

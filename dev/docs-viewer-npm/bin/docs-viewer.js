@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * @jackluo/docs-viewer
+ * @thejackluo/docs-viewer
  * CLI entry point for documentation viewer
  */
 

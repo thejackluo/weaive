@@ -1,4 +1,4 @@
-# 📚 @jackluo/docs-viewer
+# 📚 @thejackluo/docs-viewer
 
 A lightweight, beautiful documentation viewer for markdown files with dark mode, syntax highlighting, folder navigation, and reading progress tracking.
 
@@ -19,13 +19,13 @@ A lightweight, beautiful documentation viewer for markdown files with dark mode,
 ### Global Installation (Recommended)
 
 ```bash
-npm install -g @jackluo/docs-viewer
+npm install -g @thejackluo/docs-viewer
 ```
 
 ### One-Time Usage with npx
 
 ```bash
-npx @jackluo/docs-viewer
+npx @thejackluo/docs-viewer
 ```
 
 ## 🚀 Usage
@@ -85,7 +85,7 @@ Run `docs-viewer` from `my-project/` and all your docs will be beautifully rende
 You can also use the viewer programmatically in your Node.js applications:
 
 ```javascript
-const { startServer } = require('@jackluo/docs-viewer');
+const { startServer } = require('@thejackluo/docs-viewer');
 
 // Start server on port 3030 with docs in ./docs
 startServer(3030, './docs');
@@ -112,7 +112,7 @@ MIT © Jack Luo
 
 - [GitHub Repository](https://github.com/jackluo/weavelight)
 - [Report Issues](https://github.com/jackluo/weavelight/issues)
-- [npm Package](https://www.npmjs.com/package/@jackluo/docs-viewer)
+- [npm Package](https://www.npmjs.com/package/@thejackluo/docs-viewer)
 
 ---
 
