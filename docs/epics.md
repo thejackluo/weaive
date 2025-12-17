@@ -521,7 +521,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
-### Epic 3: Daily Actions & Proof (38 pts)
+### Epic 3: Daily Actions & Proof (38 pts) `[MVP]` (basic) + `[v1.1]` (enhanced)
 **User Outcome:** Users can complete daily Binds (tasks), capture proof, and use the Pomodoro timer. This is the core action loop driving the North Star metric.
 
 **FRs Covered:** FR-3.1, FR-3.2, FR-3.3, FR-3.4, FR-3.5, FR-3.6, FR-3.7
@@ -529,9 +529,11 @@ This document provides the complete epic and story breakdown for Weave, decompos
 **Why This Order:** The daily action loop is the heart of the product. Users need this to make progress toward their Needles.
 
 **Stories:**
-- **Story 3.1: Thread Home (Today's Binds)** (5 pts) - FR-3.1: Today's Binds grouped by Needle, collapsible, completion status. Answer "What should I do?" in <10s
+- **Story 3.1: Thread Home (Today's Binds)** (5 pts) `[MVP]` → `[v1.1]` - FR-3.1: Today's Binds grouped by Needle, collapsible, completion status. Answer "What should I do?" in <10s
+  - **v1.1 Enhancement:** Add calendar component showing week/month check-in completion status
+  - **AC (v1.1):** Calendar displays daily completion status; tap date navigates to that day's details
 
-- **Story 3.2: Triad Display** (5 pts) - FR-3.2: AI-recommended top 3 Binds with rationale, editable/dismissible
+- **Story 3.2: Triad Display** (5 pts) `[MVP]` - FR-3.2: AI-recommended top 3 Binds with rationale, editable/dismissible
   - **AI Fallback Chain:**
     1. **Primary:** GPT-4o-mini generates Triad based on user context (completions, fulfillment, identity)
     2. **Deterministic Fallback:** Rank binds by: incomplete today + high frequency + recent completion rate
@@ -539,16 +541,26 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **Error Handling:** Silent fallback (user sees Triad, doesn't know it's deterministic vs. AI)
   - **AC:** AI Triad shows reasoning; deterministic ranking works; simple fallback never empty
   - **DoD:** User always sees 3 prioritized binds; all fallback paths tested
-- **Story 3.3a: Bind Screen** (3 pts) - FR-3.3 Part 1: Needle context, Bind details, Start Bind button
-- **Story 3.3b: Bind Completion** (5 pts) - FR-3.3 Part 2: Complete flow with magical confetti animation, <30s total
-- **Story 3.4: Attach Proof** (5 pts) - FR-3.4: Photo capture, quick note, optional skip, <10s creation
-- **Story 3.5: Quick Capture** (5 pts) - FR-3.5: Floating menu, fast capture sheet, optional Bind linking
-- **Story 3.6: Pomodoro Timer** (5 pts) - FR-3.6: Set duration upfront, focus mode UI, satisfying completion moment
-- **Story 3.7: Dual Path Visualization** (5 pts) - FR-3.7: Visual animated paths + AI text from Tech Context Engine
+
+- **Story 3.3a: Bind Screen** (3 pts) `[MVP]` - FR-3.3 Part 1: Needle context, Bind details, Start Bind button
+
+- **Story 3.3b: Bind Completion** (5 pts) `[MVP]` → `[v1.1]` - FR-3.3 Part 2: Complete flow with magical confetti animation, <30s total
+  - **v1.1 Enhancement:** Updated post-action flow: Complete → Optional reflection → Confetti → Insight
+  - **AC (v1.1):** Insight provided regardless of reflection completion; immediate insight if reflection completed
+
+- **Story 3.4: Attach Proof** (5 pts) `[v1.2]` - FR-3.4: Photo capture, quick note, optional skip, <10s creation
+
+- **Story 3.5: Quick Capture (Document)** (5 pts) `[MVP]` → `[v1.1]` - FR-3.5: Floating menu, fast capture sheet, optional Bind linking
+  - **v1.1 Enhancement:** 3-item minimum for weave level-up; progress tracking "2 out of 3 documented today"
+  - **AC (v1.1):** Real-time counter displays progress; accepts pictures, notes, videos, voice memos; not tied to specific binds
+
+- **Story 3.6: Pomodoro Timer** (5 pts) `[v1.2]` - FR-3.6: Set duration upfront, focus mode UI, satisfying completion moment
+
+- **Story 3.7: Dual Path Visualization** (5 pts) `[v1.2]` - FR-3.7: Visual animated paths + AI text from Tech Context Engine
 
 ---
 
-### Epic 4: Reflection & Journaling (28 pts)
+### Epic 4: Reflection & Journaling (28 pts) `[v1.1]`
 **User Outcome:** Users can complete daily reflections, receive AI feedback, and get their next day's Triad. This triggers the AI batch operations.
 
 **FRs Covered:** FR-4.1, FR-4.2, FR-4.3, FR-4.4, FR-4.5
@@ -556,9 +568,15 @@ This document provides the complete epic and story breakdown for Weave, decompos
 **Why This Order:** Reflection closes the daily loop and generates tomorrow's plan. Depends on having Binds to reflect on.
 
 **Stories:**
-- **Story 4.1a: Reflection Questions** (3 pts) - FR-4.1 Part 1: Default 2 questions + fulfillment slider (1-10)
-- **Story 4.1b: Custom Questions** (3 pts) - FR-4.1 Part 2: User can add/edit/remove custom tracking questions
-- **Story 4.2: Recap Before Reflection** (3 pts) - FR-4.2: Summary of completed Binds, Captures, time tracked
+- **Story 4.1a: Reflection Questions** (3 pts) `[v1.1]` - FR-4.1 Part 1: Default 2 questions + fulfillment slider (1-10)
+  - **v1.1 Enhancement:** Add 24-hour countdown timer for end-of-day task
+  - **AC (v1.1):** Countdown timer visible on home screen; encourages completion before day resets
+
+- **Story 4.1b: Custom Questions** (3 pts) `[v1.2]` - FR-4.1 Part 2: User can add/edit/remove custom tracking questions
+
+- **Story 4.2: Recap Before Reflection** (3 pts) `[v1.1]` - FR-4.2: Summary of completed Binds, Captures, time tracked
+  - **v1.1 Enhancement:** Swipeable interface through day's activities; visual timeline of progress
+  - **AC (v1.1):** Recap shows daily documents + bind completion; swipeable carousel for easy review
 
 - **Story 4.3: AI Feedback Generation** (8 pts) - FR-4.3: Loading state, generate within 20s, display as 3 stacked cards
   - **AI Fallback Chain:**
@@ -575,7 +593,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
-### Epic 5: Progress Visualization (Weave Dashboard) (39 pts)
+### Epic 5: Progress Visualization (Weave Dashboard) (39 pts) `[v1.1]` (basic) + `[v1.2]` (advanced)
 **User Outcome:** Users can see their progress through the Weave Dashboard, including heat map, fulfillment trends, streak tracking, and the Weave character evolution.
 
 **FRs Covered:** FR-5.1, FR-5.2, FR-5.3, FR-5.4, FR-5.5, FR-5.6, FR-5.7
@@ -583,17 +601,27 @@ This document provides the complete epic and story breakdown for Weave, decompos
 **Why This Order:** Visualization requires accumulated data from daily actions and reflections.
 
 **Stories:**
-- **Story 5.1: Dashboard Overview** (5 pts) - FR-5.1: Emotional Mirror (top) + Data Mirror (bottom), AI weekly insights
-- **Story 5.2: Consistency Heat Map** (8 pts) - FR-5.2: GitHub-style graph, color intensity by %, filters, tap to navigate
-- **Story 5.3: Fulfillment Trend Chart** (5 pts) - FR-5.3: Line chart with 7-day rolling average, tap to navigate
-- **Story 5.4: Weave Character** (8 pts) - FR-5.4: Mathematical curve visualization, complexity increases with progress
-- **Story 5.5: Streak Tracking** (5 pts) - FR-5.5: Current/longest streak, resilience metric, streak freeze logic
-- **Story 5.6: Badge System** (5 pts) - FR-5.6: Milestone triggers, display in profile, shareable badge cards
-- **Story 5.7: Day 10 Snapshot** (3 pts) - FR-5.7: Before vs After summary, shareable card format
+- **Story 5.1: Dashboard Overview** (5 pts) `[v1.1]` - FR-5.1: Emotional Mirror (top) + Data Mirror (bottom), AI weekly insights
+  - **v1.1 Enhancement:** Include calendar component for quick history visualization
+  - **AC (v1.1):** Calendar displays on dashboard; shows completion status for recent days
+
+- **Story 5.2: Consistency Heat Map** (8 pts) `[v1.2]` - FR-5.2: GitHub-style graph, color intensity by %, filters, tap to navigate
+
+- **Story 5.3: Fulfillment Trend Chart** (5 pts) `[v1.2]` - FR-5.3: Line chart with 7-day rolling average, tap to navigate
+
+- **Story 5.4: Weave Character** (8 pts) `[v1.2]` - FR-5.4: Mathematical curve visualization, complexity increases with progress
+
+- **Story 5.5: Streak Tracking** (5 pts) `[v1.1]` - FR-5.5: Current/longest streak, resilience metric, streak freeze logic
+  - **v1.1 Enhancement:** Streak recovery mechanism - 3 consecutive check-ins after missing a day prevents streak loss
+  - **AC (v1.1):** Streak resilience metric displayed; shows "You're 2/3 days to recovering your streak!"; visual progress bar
+
+- **Story 5.6: Badge System** (5 pts) `[v1.2]` - FR-5.6: Milestone triggers, display in profile, shareable badge cards
+
+- **Story 5.7: Day 10 Snapshot** (3 pts) `[v1.2]` - FR-5.7: Before vs After summary, shareable card format
 
 ---
 
-### Epic 6: AI Coaching (Dream Self Advisor) (29 pts)
+### Epic 6: AI Coaching (Dream Self Advisor) (29 pts) `[MVP]` (basic) + `[v1.2]` (advanced)
 **User Outcome:** Users can chat with their AI coach (Dream Self Advisor) for personalized guidance, receive weekly insights, and get goal suggestions.
 
 **FRs Covered:** FR-6.1, FR-6.2, FR-6.3, FR-6.4, FR-6.5
@@ -602,7 +630,9 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **Stories:**
 
-- **Story 6.1: AI Chat Interface** (5 pts) - FR-6.1: Chat interface, contextual opening prompt, quick action chips
+- **Story 6.1: AI Chat Interface** (5 pts) `[MVP]` → `[v1.1]` - FR-6.1: Chat interface, contextual opening prompt, quick action chips
+  - **v1.1 Enhancement:** Move chat from floating button to navigation bar item; add animated speaking effect
+  - **AC (v1.1):** Chat accessible from navigation bar (not floating button); animated text appearance as AI responds
   - **AI Fallback Chain:**
     1. **Primary:** GPT-4o-mini with streaming for real-time feel
     2. **Secondary:** Claude Sonnet if OpenAI fails (also streaming)
@@ -666,19 +696,24 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ## Epic Summary Table
 
-| Epic | Name | Story Points | Priority FRs (M) | Dependencies |
-|------|------|--------------|------------------|--------------|
-| 0 | Foundation | 25 | 7 | None (True Foundation) |
-| 1 | Onboarding & Identity | 35 | 8 | Epic 0 |
-| 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1 |
-| 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 2 |
-| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 2, 3 |
-| 5 | Progress Visualization | 39 | 3 | Epic 0, 1, 2, 3, 4 |
-| 6 | AI Coaching | 29 | 2 | Epic 0, 1, 2, 3, 4 |
-| 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3 |
-| 8 | Settings & Profile | 23 | 5 | Epic 0, 1 |
+| Epic | Name | Story Points | Priority FRs (M) | Dependencies | Phase |
+|------|------|--------------|------------------|--------------|-------|
+| 0 | Foundation | 38 | 7 | None (True Foundation) | `[MVP]` |
+| 1 | Onboarding & Identity | 35 | 8 | Epic 0 | `[MVP]` (core) + `[v1.2]` (full) |
+| 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1 | `[v1.2]` |
+| 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 2 | `[MVP]` (basic) + `[v1.1]` (enhanced) |
+| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 2, 3 | `[v1.1]` |
+| 5 | Progress Visualization | 39 | 3 | Epic 0, 1, 2, 3, 4 | `[v1.1]` (basic) + `[v1.2]` (advanced) |
+| 6 | AI Coaching | 29 | 2 | Epic 0, 1, 2, 3, 4 | `[MVP]` (basic chat) + `[v1.2]` (advanced) |
+| 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3 | `[v1.2]` |
+| 8 | Settings & Profile | 23 | 5 | Epic 0, 1 | `[v1.2]` |
 
 **Total:** 272 story points across 58 FRs
+
+**Phase Breakdown:**
+- **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~66 pts (Sprint 1)
+- **v1.1:** Epic 3 (enhanced features), Epic 4 (all), Epic 5 (basic dashboard) = ~75 pts (Sprint 2-4)
+- **v1.2:** Epic 1 (full onboarding), Epic 2 (all), Epic 5 (advanced), Epic 6 (advanced), Epic 7 (all), Epic 8 (all) = ~131 pts (Sprint 5+)
 
 ---
 
