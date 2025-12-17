@@ -1,5 +1,5 @@
 {
-  "name": "@jackluo/docs-viewer",
+  "name": "@thejackluo/docs-viewer",
   "version": "0.1.0",
   "description": "A lightweight, beautiful documentation viewer for markdown files with dark mode, syntax highlighting, and folder navigation",
   "author": "Jack Luo",

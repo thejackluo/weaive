@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-@jackluo/docs-viewer
+@thejackluo/docs-viewer
 Python HTTP server for documentation viewer (alternative to Node.js server)
 
 Usage: python lib/server.py [docs_directory]

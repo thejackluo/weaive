@@ -1,5 +1,5 @@
 /**
- * Basic smoke test for @jackluo/docs-viewer
+ * Basic smoke test for @thejackluo/docs-viewer
  *
  * Tests:
  * 1. Server module can be required
@@ -13,7 +13,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 
-console.log('🧪 Running basic tests for @jackluo/docs-viewer\n');
+console.log('🧪 Running basic tests for @thejackluo/docs-viewer\n');
 
 // Test 1: Module can be loaded
 console.log('Test 1: Loading server module...');
