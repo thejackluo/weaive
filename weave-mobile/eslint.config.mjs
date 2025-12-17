@@ -24,7 +24,12 @@ export default [
       prettier: prettierPlugin,
     },
     rules: {
-      'prettier/prettier': 'error',
+      'prettier/prettier': [
+        'error',
+        {
+          endOfLine: 'auto', // Allow both CRLF and LF
+        },
+      ],
       '@typescript-eslint/no-unused-vars': 'warn',
     },
   },
