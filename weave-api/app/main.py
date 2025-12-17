@@ -28,10 +28,15 @@ if allowed_origins == ["*"] and settings.ENV in ["production", "prod", "staging"
         "This should NEVER be used in production. Set ALLOWED_ORIGINS to specific domains."
     )
 
+# SECURITY: Disable credentials when using wildcard origins
+# allow_credentials=True with origins=["*"] is a security vulnerability
+# Credentials (cookies, auth headers) should only be allowed with specific origins
+allow_credentials = allowed_origins != ["*"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_credentials=allow_credentials,  # Only true when origins are restricted
     allow_methods=["*"],
     allow_headers=["*"],
 )
