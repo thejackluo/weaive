@@ -18,6 +18,21 @@ export default [
           jsx: true,
         },
       },
+      globals: {
+        // React Native globals
+        __DEV__: 'readonly',
+        console: 'readonly',
+        // Node.js globals
+        module: 'readonly',
+        require: 'readonly',
+        process: 'readonly',
+        // Browser-like globals in React Native
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        fetch: 'readonly',
+      },
     },
     plugins: {
       '@typescript-eslint': typescript,
