@@ -1,0 +1,39 @@
+{
+  "name": "@jackluo/docs-viewer",
+  "version": "0.1.0",
+  "description": "A lightweight, beautiful documentation viewer for markdown files with dark mode, syntax highlighting, and folder navigation",
+  "author": "Jack Luo",
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "markdown",
+    "viewer",
+    "docs",
+    "static-site",
+    "documentation-tool",
+    "markdown-viewer",
+    "dark-mode"
+  ],
+  "bin": {
+    "docs-viewer": "./bin/docs-viewer.js"
+  },
+  "main": "./lib/server.js",
+  "files": [
+    "bin",
+    "lib",
+    "public",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jackluo/weavelight.git",
+    "directory": "dev/docs-viewer-npm"
+  },
+  "bugs": {
+    "url": "https://github.com/jackluo/weavelight/issues"
+  },
+  "homepage": "https://github.com/jackluo/weavelight#readme"
+}
