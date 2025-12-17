@@ -397,6 +397,7 @@ api/                             # Python FastAPI backend
 - `docs/dev/docs-viewer-guide.md` - How to use and customize the docs viewer
 - `docs/dev/mcp-quick-reference.md` - Daily MCP usage cheat sheet
 - `docs/dev/bmad-implementation-guide.md` - Non-technical guide to BMAD implementation workflow
+- `docs/dev/git-workflow-guide.md` - Complete guide to Git, branching, PRs, and debugging
 
 ### Setup Guides
 - `docs/setup/mcp-setup-guide.md` - MCP servers configuration (6 servers)
