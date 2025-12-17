@@ -335,12 +335,93 @@ Before any user-facing features can be built, the development team must have a f
 
 ---
 
+#### US-0.8: Error Handling Framework
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want to** have a consistent error handling framework
+**So that** users receive helpful error messages and errors are properly logged
+
+**Acceptance Criteria:**
+- [ ] Define standard error response format: `{error: {code, message, retryable, retryAfter?}}`
+- [ ] Establish HTTP status codes for each error type:
+  - 400 for validation errors
+  - 401 for authentication errors
+  - 429 for rate limiting
+  - 500 for server errors
+  - 503 for AI service unavailable
+- [ ] Create error response utilities for backend
+- [ ] Create error handling hooks for mobile (API errors, network errors, AI errors)
+- [ ] Document all error codes in `/docs/api-error-codes.md`
+
+**Technical Notes:**
+- All API endpoints must return consistent error format
+- Mobile should handle errors gracefully with user-friendly messages
+- Error handling smoke tests must pass
+
+**Story Points:** 3
+
+---
+
+#### US-0.9: Image Upload Error Handling
+
+**Priority:** M (Must Have)
+
+**As a** user
+**I want to** understand what went wrong when image uploads fail
+**So that** I can take corrective action
+
+**Acceptance Criteria:**
+- [ ] Implement file validation: Max 10MB, JPEG/PNG only, minimum 100x100px
+- [ ] Handle error scenarios:
+  - File too large
+  - Invalid file format
+  - Storage quota exceeded
+  - Upload timeout
+- [ ] Display progress UI with upload progress bar and cancel button
+- [ ] Implement retry logic with 3 attempts using exponential backoff
+- [ ] Queue failed uploads locally for retry when connection returns
+
+**Technical Notes:**
+- User sees clear, actionable error messages
+- Failed uploads automatically retry when online
+- Supabase Storage integration with signed URLs
+
+**Story Points:** 3
+
+---
+
+#### US-0.10: Memory System Architecture Decision
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want to** have a clear memory storage architecture
+**So that** AI can recall user context without over-engineering
+
+**Acceptance Criteria:**
+- [ ] Decision documented: Simple PostgreSQL TEXT[] arrays (no vector DB for MVP)
+- [ ] Implement basic keyword search (no semantic/vector search yet)
+- [ ] Define memory lifecycle: Created on journal submit, pruned at 100 memories per user
+- [ ] Document memory schema in architecture docs
+- [ ] Implement memory retrieval strategy for AI context
+
+**Technical Notes:**
+- Keep it simple for MVP - no fancy vector embeddings
+- Memory storage works and retrieval returns relevant memories
+- Can be enhanced with vector search post-MVP if needed
+
+**Story Points:** 2
+
+---
+
 ### Epic 0 Summary
 
 | Metric | Value |
 |--------|-------|
-| Total Story Points | 25 |
-| Priority M (Must Have) | 7 |
+| Total Story Points | 38 |
+| Priority M (Must Have) | 10 |
 | Priority S (Should Have) | 0 |
 | Dependencies | None (True Foundation) |
 
