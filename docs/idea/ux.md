@@ -2,18 +2,125 @@
 
 ## Table of Contents
 
-1. [Architecture Overview](#architecture-overview)
-2. [System Diagrams](#system-diagrams)
+1. [Design Changelog](#design-changelog) ⭐ NEW
+2. [Architecture Overview](#architecture-overview)
+3. [System Diagrams](#system-diagrams)
    - [Flowchart: UX Navigation Model](#flowchart-ux-navigation-model)
    - [Flowchart: Core User Loop](#flowchart-core-user-loop)
-3. [Architecture Description](#architecture-description)
-4. [Product Intent & North Star](#product-intent--north-star)
-5. [Navigation Model](#navigation-model)
-6. [Screen Specifications](#screen-specifications)
-7. [User Flow Patterns](#user-flow-patterns)
-8. [Design System](#design-system)
-9. [UX Principles](#ux-principles)
-10. [Architecture Decisions](#architecture-decisions)
+4. [Architecture Description](#architecture-description)
+5. [Product Intent & North Star](#product-intent--north-star)
+6. [Navigation Model](#navigation-model)
+7. [Screen Specifications](#screen-specifications)
+8. [User Flow Patterns](#user-flow-patterns)
+9. [Design System](#design-system)
+10. [UX Principles](#ux-principles)
+11. [Architecture Decisions](#architecture-decisions)
+
+---
+
+## Design Changelog
+
+*Track all UX/UI design changes with version numbers, dates, rationale, and impacted areas.*
+
+### v2 - 2025-12-17 - Home Screen & Navigation Redesign
+
+**Changes Made:**
+
+1. **Calendar Component Added to Home Screen** `[v1.1]`
+   - Added calendar view for daily check-in visibility
+   - Shows at-a-glance completion status for the week/month
+   - Replaces scrolling through history for recent activity
+
+2. **Streak System Enhanced with Recovery Mechanism** `[v1.1]`
+   - **Old:** Streak resets to 0 on any missed day
+   - **New:** 3 consecutive check-ins after missing a day prevents streak loss
+   - Shows "streak resilience" metric instead of harsh resets
+   - Reduces anxiety about missing a single day
+
+3. **Navigation Architecture Changed** `[v1.1]`
+   - **Old:** Floating button for Weave chat access
+   - **New:** Weave chat moved to navigation bar item
+   - Simplifies UI by removing floating button complexity
+   - Makes chat more discoverable as primary feature
+
+4. **Document System Refined** `[v1.1]`
+   - Daily documentation requires 3-item minimum for weave level-up
+   - Progress tracking shows "2 out of 3" completion status
+   - Accepts: pictures, notes, videos, voice memos
+   - Not tied to specific binds - general life recording
+   - No maximum limit but rewards cap at 3 items
+
+5. **Bind Workflow Updated** `[v1.1]`
+   - Post-action flow: Complete → Optional reflection → Confetti → Insight
+   - Insight provided regardless of reflection completion
+   - Immediate insight if reflection completed
+   - Accountability measure includes "strengthening your weave" incentive
+
+6. **Daily Check-in Process Enhanced** `[v1.1]`
+   - 24-hour countdown timer for end-of-day task
+   - Recap feature shows daily documents + bind completion
+   - Swipeable interface through day's activities
+   - Includes all documented items plus completed binds
+
+7. **Weave Chat Repositioned** `[v1.1]`
+   - Chat serves as content engine and entertainment tool
+   - Animated speaking effect as text appears
+   - Replaces traditional social media feeds for engagement
+   - Accessible from navigation bar, not floating button
+
+**Rationale:**
+
+- **Calendar visibility:** Users need quick check-in history without navigation
+- **Streak recovery:** Prevents shame spirals, encourages comeback behavior
+- **Navigation simplification:** Reduces UI complexity, makes chat discoverable
+- **Document minimum:** Creates clear daily goal (3 items) for progression
+- **Enhanced workflow:** Better accountability and immediate feedback loop
+
+**Impacted Screens:**
+
+- Thread (Home) - Calendar + 3 needles overview
+- Navigation Bar - Added Weave chat item, removed floating button
+- Bind Screen - Updated post-completion flow
+- Document Screen - Progress tracking (X out of 3)
+- Daily Check-in - Recap + swipeable interface
+- Weave Dashboard - Streak resilience display
+
+**Impacted Stories:**
+
+- **Epic 1:** Onboarding & Identity (1.6 - goal breakdown may need calendar context)
+- **Epic 3:** Daily Actions
+  - 3.1: View Today's Binds (calendar integration)
+  - 3.3: Complete Bind (new post-action flow)
+  - 3.5: Quick Note Capture (document system changes)
+- **Epic 4:** Reflection & Journaling
+  - 4.1: Daily Reflection Entry (check-in flow updates)
+  - 4.2: Recap Before Reflection (swipeable recap)
+- **Epic 5:** Progress Dashboard
+  - 5.5: Streak Display (recovery mechanism)
+  - 5.1: Dashboard Overview (calendar component)
+- **Epic 6:** AI Coaching
+  - 6.1: Access AI Chat (navigation bar placement)
+
+**Implementation Notes:**
+
+- Calendar component needs read access to `daily_aggregates` table
+- Streak recovery logic requires updating streak calculation algorithm
+- Navigation bar needs design update in design system
+- Document progress tracking needs real-time counter component
+- Check-in recap needs swipeable carousel component
+
+---
+
+### v1 - 2025-12-16 - Initial UX Architecture `[MVP]`
+
+**Initial Design:**
+- Two-screen navigation (Thread + Weave) `[MVP]`
+- Floating menu for secondary actions `[MVP]`
+- Basic streak system (reset on miss) `[MVP]`
+- Document screen without minimum requirements `[MVP]`
+- Standard bind completion flow `[MVP]`
+
+**Reference:** Original architecture decisions in sections below represent MVP baseline
 
 ---
 
@@ -158,25 +265,42 @@ At any point, the user can see their progress in the dashboard, where logged act
 
 ## Navigation Model
 
+**Version:** v2 (Updated 2025-12-17)
+
 ### Primary Tabs (MVP)
 
-**Two main screens:**
+**Three main navigation items:**
 
 1. **Thread (Home)**
    - Today's plan + daily check-in
    - Quick entry into binds and documenting
    - Primary execution surface
+   - Calendar component for activity visibility
 
-2. **Weave (Dashboard)**
+2. **Weave Chat** ⭐ MOVED TO NAV BAR (v2)
+   - **Changed:** Previously floating button, now navigation bar item
+   - Chat interface for coaching and clarification
+   - Content engine and entertainment tool
+   - Animated speaking effect as text appears
+   - Replaces traditional social media feeds for engagement
+   - More discoverable as primary feature
+
+3. **Weave (Dashboard)**
    - Emotional mirror (identity + progress)
    - Data mirror (consistency + fulfillment charts)
    - History drilldown
 
-### Floating Menu Button
+### Navigation Architecture Change (v2)
 
-Available on both screens:
-- **Talk to Weave** - Chat interface
-- **Document** - Capture screen
+**Old (v1):**
+- Two-tab navigation (Thread + Weave)
+- Floating menu button for Talk to Weave and Document
+
+**New (v2):**
+- Three-item navigation bar (Thread + Weave Chat + Weave Dashboard)
+- **Removed:** Floating menu button
+- **Document** access moved to Thread screen action buttons
+- **Rationale:** Simplifies UI, makes chat more discoverable, reduces clutter
 
 ### Secondary Screens
 
@@ -194,6 +318,8 @@ Available on both screens:
 
 ### 1. Thread (Home)
 
+**Version:** v2 (Updated 2025-12-17)
+
 **Job:** "What should I do today?" + "Did I do it?" in under 10 seconds. This is the execution surface.
 
 **Information Architecture:**
@@ -203,12 +329,29 @@ Available on both screens:
 - Profile button (leads to Profile/Settings)
 - Compact "yesterday insight / daily intention summary" (also used for notification copy)
 
+**Calendar Component (NEW in v2):**
+- Week/month view showing daily check-in completion status
+- At-a-glance visibility of recent activity patterns
+- Visual indicator: completed days vs. missed days
+- Tap on date to view that day's details
+- Shows streak resilience (3-day recovery) visually
+
+**Streak Counter (ENHANCED in v2):**
+- Displays consecutive daily check-in days with weave symbol
+- **Recovery Mechanism:** 3 consecutive check-ins after missing a day prevents streak loss
+- Shows "streak resilience" metric instead of harsh resets
+- Visual: progress bar or counter showing recovery progress if applicable
+- Reduces anxiety messaging ("You're 2/3 days to recovering your streak!")
+
 **Middle: "3 Needles" Dropdown Stack**
 - Each needle expands to show its binds for today
 - Empty checkbox cards that open the Bind Screen
 - Visual affordance: "Opal-like" elegant expansion, feels like "unfolding thread"
+- May increase size or use symbols instead of text (design decision pending)
 
-**Bottom: Daily Check-in CTA**
+**Two Main Action Buttons:**
+- **Thread Document:** Access identity document and daily documentation
+- **Daily Check-in:** Primary CTA for end-of-day reflection flow
 - Copy explicitly connects to North Star: "log moments + reflect with Weave"
 - Tap takes user into Document → Recap → Reflection → AI Feedback flow
 
@@ -259,17 +402,29 @@ Available on both screens:
 
 ### 3. Bind Screen (Action + Proof)
 
+**Version:** v2 (Updated 2025-12-17)
+
 **Job:** "Do the thing" moment. This is where users complete binds and leave proof.
 
 **Must-Have Content:**
 - **Needle Context:** Why, start state, dream state (small, skimmable)
+- **Workout Completion Status by Day:** Shows which days bind was completed
+- **Accountability Measure:** "Strengthening your weave" incentive messaging (NEW in v2)
 - **Accountability Options:** Photo, timer, gallery upload
 - **Start Bind Button:** Primary action
 - **Optional Reflection Prompt:** 1 question max
 
+**Post-Action Flow (UPDATED in v2):**
+1. Complete the action
+2. Optional reflection (triggers immediate insight if completed)
+3. Confetti celebration (short, classy)
+4. **Insight provided regardless of reflection completion** (NEW in v2)
+   - If reflection completed: immediate insight
+   - If skipped: insight still provided after completion
+
 **Success Criteria:**
 - Completing a bind should take <30 seconds to log if user wants "trust-based proof"
-- Confetti is fine, but keep it classy and short
+- Insight delivery within 5 seconds of completion
 
 **UI Notes:**
 - One primary action. Everything else is secondary
@@ -288,16 +443,31 @@ Available on both screens:
 
 ### 4. Document (Daily Media to Remember)
 
-**Job:** Capture proof and memories with almost no friction.
+**Version:** v2 (Updated 2025-12-17)
 
-**MVP Requirements:**
-- Part of core loop: notes/memos/photos that user wants to carry with them
+**Job:** Capture proof and memories with almost no friction. Daily documentation for weave progression.
+
+**MVP Requirements (ENHANCED in v2):**
+- **3-item minimum for weave level-up** (NEW in v2)
+- Progress tracking shows "X out of 3" completion status
+- Accepts: pictures, notes, videos, voice memos
+- **Not tied to specific binds** - general life recording
+- **No maximum limit** but rewards cap at 3 items
+- Provides insights/comments after uploads
 - If there's nothing yet, UI should prompt: "what's one thing you want to remember today?"
+
+**Progress Tracking (NEW in v2):**
+- Real-time counter: "2 out of 3 documented today"
+- Visual progress bar or indicator
+- Clear messaging: "1 more to strengthen your weave today!"
+- After 3 items: "Daily goal reached! Keep documenting if you'd like."
 
 **UI Notes:**
 - Think "fast capture sheet" more than "notes app"
 - Default input should be voice-first available (later), but MVP can be text + photo
-- Minimal fields: type (text/photo/audio), content, optional link to bind
+- Minimal fields: type (text/photo/audio/video), content, optional link to bind
+- Progress indicator always visible
+- Quick action buttons for each media type
 
 **Data Requirements (From Backend):**
 - Writes to `captures` table
@@ -307,18 +477,38 @@ Available on both screens:
 
 ---
 
-### 5. Daily Reflection
+### 5. Daily Reflection & Check-in
+
+**Version:** v2 (Updated 2025-12-17)
 
 **Job:** Turn the day into signal: what worked, what didn't, and a fulfillment score.
+
+**Check-in Flow (ENHANCED in v2):**
+1. **24-Hour Countdown Timer** (NEW in v2)
+   - End-of-day task timer visible on home screen
+   - Encourages completion before day resets
+
+2. **Recap Feature** (NEW in v2)
+   - Shows daily documents uploaded
+   - Shows bind completion status
+   - **Swipeable interface** through day's activities
+   - Includes all documented items plus completed binds
+   - Visual timeline of the day's progress
+
+3. **Reflection Questions**
+   - Two open-ended questions + rate fulfillment 1-10
+   - Questions: "How do you feel about today? (What worked well and didn't?)" + "What is the one thing you want to get done for tomorrow?"
 
 **Spec Alignment:**
 - Reflection is explicitly "two open-ended questions + rate fulfillment 1-10"
 - MVP calls out fulfillment score intake
+- **Recap before reflection** ensures user reviews their day first
 
 **UI Notes:**
-- One screen, no scrolling if possible
+- Swipeable carousel for recap (horizontal scrolling)
+- One screen for reflection, no scrolling if possible
 - Slider for 1-10, and two short text fields (with "skip" allowed, but not encouraged)
-- Questions: "How do you feel about today? (What worked well and didn't?)" + "What is the one thing you want to get done for tomorrow?"
+- Countdown timer shows "X hours until check-in resets"
 
 **Data Requirements (From Backend):**
 - Writes to `journal_entries` table
