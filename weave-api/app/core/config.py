@@ -1,9 +1,11 @@
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings from environment variables"""
+
+    model_config = SettingsConfigDict(env_file=".env")
 
     # Environment Configuration
     ENV: str = Field(
@@ -26,9 +28,6 @@ class Settings(BaseSettings):
         default="*",
         description="Comma-separated list of allowed origins, '*' for all (dev only)",
     )
-
-    class Config:
-        env_file = ".env"
 
 
 settings = Settings()

@@ -32,7 +32,11 @@ This will create a virtual environment in `.venv/` and install all dependencies.
 Copy the example environment file:
 
 ```bash
+# macOS/Linux
 cp .env.example .env
+
+# Windows PowerShell
+Copy-Item .env.example .env
 ```
 
 Then edit `.env` and add your actual credentials.
@@ -60,7 +64,8 @@ All commands should be run with `uv run` to use the virtual environment:
 - `uv sync` - Install/update dependencies
 - `uv run ruff check .` - Run linter
 - `uv run ruff check . --fix` - Run linter and auto-fix issues
-- `uv run pytest` - Run tests (when tests are added)
+- `uv run pytest` - Run tests
+- `uv run pytest -v` - Run tests with verbose output
 
 **Important:** When using `uv`, always prefix commands with `uv run` to ensure they execute in the correct virtual environment. Direct commands like `uvicorn` or `ruff` won't work unless they're installed globally.
 
