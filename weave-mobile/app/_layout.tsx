@@ -1,17 +1,15 @@
-import { Slot, ErrorBoundary, ErrorBoundaryProps } from 'expo-router';
+import { Slot } from 'expo-router';
 import { Text, View, TouchableOpacity } from 'react-native';
 import '../global.css'; // Import NativeWind styles
 
 /**
- * Custom error fallback component
- * Displays a user-friendly error message when the app crashes
+ * Custom error fallback component for expo-router ErrorBoundary
+ * Automatically used when errors occur in the app
  */
-function ErrorFallback({ error, retry }: { error: Error; retry: () => void }) {
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (
     <View className="flex-1 items-center justify-center bg-white p-4">
-      <Text className="text-2xl font-bold text-red-600 mb-4">
-        Oops! Something went wrong
-      </Text>
+      <Text className="text-2xl font-bold text-red-600 mb-4">Oops! Something went wrong</Text>
       <Text className="text-gray-600 text-center mb-2">
         {error.message || 'An unexpected error occurred'}
       </Text>
@@ -32,26 +30,17 @@ function ErrorFallback({ error, retry }: { error: Error; retry: () => void }) {
  *
  * This component:
  * - Imports global.css for NativeWind/Tailwind CSS support
- * - Sets up navigation structure with Slot
- * - Wraps app in ErrorBoundary for better debugging
- * - Provides the foundation for all app screens
+ * - Renders all child routes via Slot
+ * - ErrorBoundary is exported separately and used automatically by expo-router
  */
 export default function RootLayout() {
-  return (
-    <ErrorBoundary
-      catch={ErrorFallback}
-      onError={(error: Error) => {
-        // Log errors to console in development
-        if (__DEV__) {
-          console.error('App Error:', error);
-        }
-        // In production, you would send this to an error tracking service (Sentry, etc.)
-      }}
-    >
-      <Slot />
-    </ErrorBoundary>
-  );
-}
+  // Log global errors in development
+  if (__DEV__) {
+    const originalError = console.error;
+    console.error = (...args) => {
+      originalError(...args);
+    };
+  }
 
-// Export ErrorBoundary for use in other parts of the app
-export { ErrorBoundary };
+  return <Slot />;
+}
