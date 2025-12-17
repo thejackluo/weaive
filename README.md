@@ -202,6 +202,18 @@ View all project documentation in a **modern, beautiful interface** with smart s
 
 ### Quick Start
 
+**Option 1: Using the npm package (Recommended)**
+
+Navigate to your project directory that contains a `docs/` folder, then run:
+
+```bash
+npx @thejackluo/docs-viewer
+```
+
+The server will start at `http://localhost:3030` and automatically discover all markdown files in your `docs/` directory.
+
+**Option 2: Using local scripts**
+
 ```bash
 # Windows (PowerShell)
 .\dev\docs-viewer\scripts\serve.ps1
@@ -216,6 +228,8 @@ python dev/docs-viewer/scripts/server.py
 
 Then open: **http://localhost:3030**
 
+**Important:** Make sure you're in a directory that contains a `docs/` folder. The viewer will automatically scan for all `.md` files in that folder and its subdirectories.
+
 ### Features
 
 - ✨ Glassmorphism UI with Mintlify-inspired design
@@ -225,6 +239,7 @@ Then open: **http://localhost:3030**
 - 📱 Fully responsive (desktop and mobile)
 - ⚡ Instant startup (no build process)
 
+📦 **npm Package:** [`@thejackluo/docs-viewer`](https://www.npmjs.com/package/@thejackluo/docs-viewer)  
 📖 **Full documentation:** [`dev/docs-viewer/README.md`](dev/docs-viewer/README.md)
 
 ---
