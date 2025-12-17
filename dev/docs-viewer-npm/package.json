@@ -29,11 +29,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jackluo/weavelight.git",
+    "url": "https://github.com/thejackluo/weavelight.git",
     "directory": "dev/docs-viewer-npm"
   },
   "bugs": {
-    "url": "https://github.com/jackluo/weavelight/issues"
+    "url": "https://github.com/thejackluo/weavelight/issues"
   },
-  "homepage": "https://github.com/jackluo/weavelight#readme"
+  "homepage": "https://github.com/thejackluo/weavelight#readme"
 }
