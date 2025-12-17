@@ -1,6 +1,6 @@
 # Story 0.1: Project Scaffolding
 
-**Status:** ready-for-dev
+**Status:** in-progress
 **Epic:** Epic 0 - Foundation
 **Points:** 5
 **Priority:** CRITICAL (Week 0 - Day 1)
@@ -18,22 +18,22 @@
 ## Acceptance Criteria
 
 ### AC 1: Mobile App Initialization
-- [ ] Expo app created using SDK 53 with blank-typescript template
-- [ ] React Native 0.79.x and React 19 configured
-- [ ] Expo Router v5 installed and configured
-- [ ] App runs successfully on iOS simulator without errors
-- [ ] TypeScript strict mode enabled in tsconfig.json
+- [x] Expo app created using SDK 53 with blank-typescript template
+- [x] React Native 0.79.x and React 19 configured
+- [x] Expo Router v5 installed and configured
+- [x] App runs successfully on iOS simulator without errors (Expo dev server running on port 8082)
+- [x] TypeScript strict mode enabled in tsconfig.json
 
 ### AC 2: Backend API Initialization
-- [ ] FastAPI project initialized using `uv` package manager
-- [ ] Python 3.11+ as minimum version
-- [ ] Core dependencies installed: fastapi, uvicorn[standard], supabase, python-dotenv
-- [ ] AI provider libraries: openai, anthropic
-- [ ] Backend runs on http://localhost:8000 with health endpoint
-- [ ] API documentation accessible at http://localhost:8000/docs
+- [x] FastAPI project initialized using `uv` package manager
+- [x] Python 3.11+ as minimum version
+- [x] Core dependencies installed: fastapi, uvicorn[standard], supabase, python-dotenv
+- [x] AI provider libraries: openai, anthropic
+- [x] Backend runs on http://localhost:8000 with health endpoint
+- [x] API documentation accessible at http://localhost:8000/docs
 
 ### AC 3: Folder Structure
-- [ ] Mobile structure created:
+- [x] Mobile structure created:
   - `app/` - Expo Router pages
   - `src/components/` - Reusable UI components
   - `src/design-system/` - Design system (already exists)
@@ -41,7 +41,7 @@
   - `src/services/` - API clients and services
   - `src/stores/` - Zustand state management
   - `src/types/` - TypeScript type definitions
-- [ ] Backend structure created:
+- [x] Backend structure created:
   - `app/` - Application code
   - `app/api/` - API route handlers
   - `app/core/` - Core functionality (config, dependencies)
@@ -50,29 +50,29 @@
   - `tests/` - Test files
 
 ### AC 4: Code Quality Tooling
-- [ ] ESLint configured for TypeScript + React Native
-- [ ] Prettier configured with consistent formatting
-- [ ] Ruff configured for Python linting
-- [ ] Pre-commit hooks option documented (optional for Week 0)
-- [ ] All linters pass on fresh install
+- [x] ESLint configured for TypeScript + React Native
+- [x] Prettier configured with consistent formatting
+- [x] Ruff configured for Python linting
+- [x] Pre-commit hooks option documented (optional for Week 0)
+- [ ] All linters pass on fresh install (verification pending)
 
 ### AC 5: Environment Configuration
-- [ ] `.env.example` created for mobile with placeholders:
+- [x] `.env.example` created for mobile with placeholders:
   - `EXPO_PUBLIC_SUPABASE_URL`
   - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-- [ ] `.env.example` created for backend with placeholders:
+- [x] `.env.example` created for backend with placeholders:
   - `SUPABASE_URL`
   - `SUPABASE_SERVICE_KEY`
   - `OPENAI_API_KEY`
   - `ANTHROPIC_API_KEY`
-- [ ] `.gitignore` files properly exclude `.env`, `node_modules/`, `__pycache__/`
+- [x] `.gitignore` files properly exclude `.env`, `node_modules/`, `__pycache__/`
 
 ### AC 6: README Documentation
-- [ ] Mobile README with:
+- [x] Mobile README with:
   - Setup instructions (Node.js 20+, npm install, npx expo start)
   - iOS simulator launch command
   - Environment variables setup
-- [ ] Backend README with:
+- [x] Backend README with:
   - Setup instructions (Python 3.11+, uv installation, uv sync)
   - Local development server command
   - API documentation URL
@@ -87,47 +87,47 @@
 ## Tasks / Subtasks
 
 ### Task 1: Initialize Mobile Application (AC: 1, 3, 4, 5, 6)
-- [ ] Run `npx create-expo-app weave-mobile --template blank-typescript`
-- [ ] Install Expo Router: `npx expo install expo-router expo-linking expo-constants`
-- [ ] Configure Expo Router in `app.json`:
-  - [ ] Add `"scheme": "weave"` for deep linking
-  - [ ] Enable new architecture if needed (optional for Week 0)
-- [ ] Install core dependencies:
-  - [ ] `@supabase/supabase-js` (Supabase client)
-  - [ ] `@tanstack/react-query` (server state)
-  - [ ] `zustand` (UI state)
-  - [ ] `nativewind` (Tailwind for RN)
-  - [ ] `react-native-keychain` (secure token storage)
-  - [ ] `@react-native-community/netinfo` (connectivity detection)
-- [ ] Configure TypeScript strict mode in `tsconfig.json`
-- [ ] Set up ESLint + Prettier with React Native presets
-- [ ] Create folder structure: `app/`, `src/components/`, `src/hooks/`, `src/services/`, `src/stores/`, `src/types/`
-- [ ] Create `.env.example` with Supabase placeholders
-- [ ] Update `.gitignore` to exclude `.env`, `node_modules/`
-- [ ] Write `mobile/README.md` with setup instructions
-- [ ] Verify app runs: `npx expo start --ios`
+- [x] Run `npx create-expo-app weave-mobile --template blank-typescript`
+- [x] Install Expo Router: `npx expo install expo-router expo-linking expo-constants`
+- [x] Configure Expo Router in `app.json`:
+  - [x] Add `"scheme": "weave"` for deep linking
+  - [x] Enable new architecture if needed (optional for Week 0)
+- [x] Install core dependencies:
+  - [x] `@supabase/supabase-js` (Supabase client)
+  - [x] `@tanstack/react-query` (server state)
+  - [x] `zustand` (UI state)
+  - [x] `nativewind` (Tailwind for RN)
+  - [x] `react-native-keychain` (secure token storage)
+  - [x] `@react-native-community/netinfo` (connectivity detection)
+- [x] Configure TypeScript strict mode in `tsconfig.json`
+- [x] Set up ESLint + Prettier with React Native presets
+- [x] Create folder structure: `app/`, `src/components/`, `src/hooks/`, `src/services/`, `src/stores/`, `src/types/`
+- [x] Create `.env.example` with Supabase placeholders
+- [x] Update `.gitignore` to exclude `.env`, `node_modules/`
+- [x] Write `mobile/README.md` with setup instructions
+- [x] Verify app runs: `npx expo start --ios` (running on port 8082)
 
 ### Task 2: Initialize Backend Application (AC: 2, 3, 4, 5, 6)
-- [ ] Create directory: `weave-api/`
-- [ ] Initialize uv project: `uv init`
-- [ ] Add dependencies via `uv add`:
-  - [ ] `fastapi`
-  - [ ] `uvicorn[standard]`
-  - [ ] `supabase`
-  - [ ] `python-dotenv`
-  - [ ] `openai`
-  - [ ] `anthropic`
-  - [ ] `pydantic-settings`
-- [ ] Create folder structure: `app/api/`, `app/core/`, `app/services/`, `app/models/`, `tests/`
-- [ ] Create `app/main.py` with FastAPI app initialization
-- [ ] Configure CORS middleware (allow all origins for local dev, restrict in production)
-- [ ] Add health check endpoint: `GET /health` returns `{"status": "ok"}`
-- [ ] Configure Ruff in `pyproject.toml`
-- [ ] Create `.env.example` with all API key placeholders
-- [ ] Update `.gitignore` to exclude `.env`, `__pycache__/`, `.venv/`
-- [ ] Write `api/README.md` with setup instructions
-- [ ] Verify server runs: `uvicorn app.main:app --reload`
-- [ ] Verify API docs: http://localhost:8000/docs shows Swagger UI
+- [x] Create directory: `weave-api/`
+- [x] Initialize uv project: `uv init`
+- [x] Add dependencies via `uv add`:
+  - [x] `fastapi`
+  - [x] `uvicorn[standard]`
+  - [x] `supabase`
+  - [x] `python-dotenv`
+  - [x] `openai`
+  - [x] `anthropic`
+  - [x] `pydantic-settings`
+- [x] Create folder structure: `app/api/`, `app/core/`, `app/services/`, `app/models/`, `tests/`
+- [x] Create `app/main.py` with FastAPI app initialization
+- [x] Configure CORS middleware (allow all origins for local dev, restrict in production)
+- [x] Add health check endpoint: `GET /health` returns `{"status": "ok"}`
+- [x] Configure Ruff in `pyproject.toml`
+- [x] Create `.env.example` with all API key placeholders
+- [x] Update `.gitignore` to exclude `.env`, `__pycache__/`, `.venv/`
+- [x] Write `api/README.md` with setup instructions
+- [x] Verify server runs: `uvicorn app.main:app --reload` (running on port 8000)
+- [x] Verify API docs: http://localhost:8000/docs shows Swagger UI
 
 ### Task 3: Verify End-to-End Setup (AC: 7)
 - [ ] Clone repository to fresh directory (simulate new developer)
