@@ -1,339 +1,424 @@
-# Idea-Sync Workflow Hooks System Design
+# Idea-Sync Workflow Claude Hook
 
-**Purpose:** Simple, exploratory Claude hooks to remind when docs/idea/ needs syncing
-**Approach:** Claude hooks (not git hooks) - minimal, non-intrusive
-**Status:** Exploratory implementation
+**Purpose:** Claude Code session-start hook that reminds about uncommitted docs/idea/ changes
+**Type:** Claude Code Hook (session-start)
+**Status:** Implemented and functional
 **Last Updated:** 2025-12-17
 
 ---
 
 ## Overview
 
-A lightweight Claude hook that checks for uncommitted changes in `docs/idea/` and displays a friendly reminder to run the sync workflow. This is an exploratory approach focused on simplicity rather than full automation.
+A Claude Code hook that automatically checks for uncommitted changes in `docs/idea/` at session start and injects reminder protocol into the conversation context. This makes Claude aware of pending sync needs without manual intervention.
 
-### Design Goals
+### How Claude Hooks Work
 
-1. **Simple & Lightweight** - Single bash script, minimal complexity
-2. **Non-Intrusive** - Reminder shown once per session only
-3. **Easy to Disable** - Simple opt-out mechanism
-4. **No Dependencies** - Uses only git and bash
-5. **Exploratory** - Proof-of-concept, not production-grade
+Claude Code supports hooks that run at specific trigger points (like `session-start`). These hooks:
+1. Run automatically when the trigger event occurs
+2. Output protocol instructions to stdout
+3. Claude Code injects this output into the conversation context
+4. Claude then follows the protocol instructions throughout the session
+
+This is **much simpler** than git hooks or file watchers - it's just contextual awareness.
 
 ---
 
-## Implementation: Claude Hook
+## Implementation
 
-### Hook File: `.claude/hooks/idea-sync-check.sh`
+### Hook File: `.claude/hooks/session-start-idea-sync.sh`
 
-**Location:** `.claude/hooks/idea-sync-check.sh`
-**Type:** Claude session hook
-**Trigger:** Can be called manually or integrated into Claude workflows
+**Full path:** `.claude/hooks/session-start-idea-sync.sh`
+**Trigger:** Runs automatically at the start of each Claude Code session
+**Output:** Protocol instructions injected into conversation context
 
-**What it does:**
-1. Checks if `docs/idea/` has uncommitted changes (git status)
-2. Shows a friendly reminder with file count
-3. Provides the sync workflow command
-4. Only shows once per session (using PID tracking)
-5. Can be disabled by user preference
+### What It Does
 
-**Example output:**
+1. **Checks git status** for `docs/idea/` directory
+2. **Counts uncommitted files** (modified, added, untracked)
+3. **Outputs protocol instructions** if changes detected:
+   - Status summary (file count)
+   - Reminder to run sync workflow
+   - List of affected files
+   - Behavioral guidance for Claude
+
+### Example Output
+
+When there are 2 uncommitted files in `docs/idea/`, the hook outputs:
+
+```markdown
+# Idea Sync Reminder
+
+**Status:** You have 2 uncommitted file(s) in `docs/idea/`
+
+**Protocol:** When the user makes changes to official documentation or asks about syncing ideas:
+
+1. **Remind them** about the sync workflow:
+   ```
+   You have 2 uncommitted changes in docs/idea/ that may need to be synced.
+
+   Run: claude workflows sync-ideas-to-docs
+   ```
+
+2. **Offer to help**:
+   - Check if changes have phasing tags ([MVP], [v1.1], [v1.2])
+   - Suggest running the sync workflow if appropriate
+   - Don't be pushy - just a gentle reminder
+
+3. **Don't spam**:
+   - Only mention this if contextually relevant
+   - Don't repeat if user declines
+   - They can disable with: touch .claude/idea-sync-reminder-disabled.flag
+
+**Files affected:**
+- M docs/idea/ai.md
+- M docs/idea/ux.md
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 Idea Sync Reminder
 
-   You have 3 uncommitted change(s) in docs/idea/
-
-   Consider running the sync workflow to propagate changes to
-   official documentation:
-
-   Command:
-   $ claude workflows sync-ideas-to-docs
-
-   💡 Tips:
-   • Add phasing tags: [MVP], [v1.1], [v1.2]
-   • Workflow is resumable if interrupted
-   • Review mode available at each step
-
-   To disable these reminders:
-   echo "disabled" > .claude/idea-sync-reminder.txt
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-### State Files
-
-**Reminder State:** `.claude/idea-sync-reminder.txt`
-- Stores current session PID
-- Used to prevent showing reminder multiple times per session
-- Write "disabled" to this file to opt out
-
-**Disable Flag:** `.claude/idea-sync-reminder-disabled.flag`
-- Create this file to permanently disable reminders
-- Empty file, just needs to exist
+This gets injected into the conversation context, so Claude knows about it throughout the session.
 
 ---
 
 ## Usage
 
-### Manual Invocation
+### Automatic Operation
+
+**The hook runs automatically** - nothing to do! When you start a new Claude Code session:
+1. Hook runs automatically
+2. Checks for docs/idea/ changes
+3. Injects protocol if changes found
+4. Claude becomes aware and can remind you when appropriate
+
+### Disabling the Hook
+
+If you find the reminders annoying:
 
 ```bash
-# Run the hook manually to check status
-./.claude/hooks/idea-sync-check.sh
-```
-
-### Disable Reminders
-
-```bash
-# Temporary (current session only)
-echo "disabled" > .claude/idea-sync-reminder.txt
-
-# Permanent
+# Create disable flag
 touch .claude/idea-sync-reminder-disabled.flag
 
-# Or
-echo "disabled" > .claude/idea-sync-reminder.txt
+# Hook will detect this and not inject protocol
 ```
 
-### Re-enable Reminders
+### Re-enabling the Hook
 
 ```bash
-# Remove disable files
+# Remove disable flag
 rm .claude/idea-sync-reminder-disabled.flag
-rm .claude/idea-sync-reminder.txt
+
+# Start a new session - hook will run again
+```
+
+### Manual Testing
+
+You can test what the hook outputs without starting a new session:
+
+```bash
+# Run the hook manually to see output
+bash .claude/hooks/session-start-idea-sync.sh
+
+# If no changes: No output (exit 0)
+# If changes detected: Protocol instructions printed
 ```
 
 ---
 
-## How It Works
+## Behavior
 
-### Detection Logic
+### When Hook Triggers
 
-```bash
-# 1. Check if disabled
-if [[ -f .claude/idea-sync-reminder-disabled.flag ]]; then
-    exit 0
-fi
+The hook **only injects protocol** if:
+- ✅ Running in a git repository
+- ✅ `docs/idea/` directory exists
+- ✅ Uncommitted changes detected in `docs/idea/`
+- ✅ Not disabled via flag file
 
-# 2. Check for uncommitted changes
-git status --porcelain -- docs/idea/
+### When Hook Stays Silent
 
-# 3. Check if already shown this session
-current_session="$$"  # Current process ID
-last_session=$(cat .claude/idea-sync-reminder.txt 2>/dev/null)
+The hook **does not inject protocol** if:
+- ❌ No uncommitted changes in `docs/idea/`
+- ❌ Not in a git repository
+- ❌ Disable flag exists
+- ❌ `docs/idea/` directory doesn't exist
 
-if [[ "$last_session" == "$current_session" ]]; then
-    exit 0  # Already shown this session
-fi
+### Claude's Behavior
 
-# 4. Show reminder and record session
-echo "$$" > .claude/idea-sync-reminder.txt
-```
+Once the protocol is injected, Claude will:
+- Be aware of pending sync needs
+- Mention it when contextually appropriate
+- Not spam or repeat if user declines
+- Offer to help with sync workflow
 
-### Session-Based Rate Limiting
-
-The hook uses the current process ID (`$$`) to track sessions:
-- First time running in a session: Shows reminder
-- Subsequent runs in same session: Silent
-- New session (new PID): Shows reminder again
-
-This prevents spam while still being helpful.
+**Claude won't:**
+- Interrupt unrelated work
+- Force you to run the workflow
+- Repeat after you decline once
+- Mention it in every message
 
 ---
 
-## Integration Possibilities (Future)
+## Technical Details
 
-These are **optional future extensions** if the simple approach proves useful:
+### File Structure
 
-### Option 1: Claude Personality Hook
-Integrate into Claude personality to auto-check on session start:
-```bash
-# In .claude/personalities/default.md
-# Add to session initialization:
-source .claude/hooks/idea-sync-check.sh
+```
+.claude/
+├── hooks/
+│   └── session-start-idea-sync.sh        # The hook (executable)
+└── idea-sync-reminder-disabled.flag      # Opt-out flag (optional, user-created)
+
+docs/
+└── idea/                                  # Watched directory
+    ├── ai.md
+    ├── ux.md
+    └── ...
 ```
 
-### Option 2: Workflow Integration
-Call from sync workflow to remind about uncommitted changes:
-```yaml
-# In workflow.md or step file
-## Pre-Workflow Check
-Run: .claude/hooks/idea-sync-check.sh
+### Hook Lifecycle
+
+```
+┌─────────────────────────────┐
+│ User starts Claude session  │
+└──────────┬──────────────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│ Claude Code runs all        │
+│ session-start-*.sh hooks    │
+└──────────┬──────────────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│ session-start-idea-sync.sh  │
+│ checks git status           │
+└──────────┬──────────────────┘
+           │
+           ├─────NO CHANGES────► Exit silently (no injection)
+           │
+           └─────HAS CHANGES───► Output protocol to stdout
+                                  │
+                                  ▼
+                            ┌──────────────────────┐
+                            │ Claude Code captures │
+                            │ output and injects   │
+                            │ into conversation    │
+                            └──────────────────────┘
 ```
 
-### Option 3: Git Hook (If Needed)
-If git integration becomes necessary, add simple pre-commit:
-```bash
-# .git/hooks/pre-commit
-#!/bin/bash
-idea_changes=$(git diff --cached --name-only | grep "^docs/idea/")
-if [ ! -z "$idea_changes" ]; then
-    echo "📋 docs/idea/ changes detected"
-    echo "Consider running: claude workflows sync-ideas-to-docs"
-fi
-exit 0  # Always allow commit
-```
+### Dependencies
 
----
+- **bash** - Shell interpreter
+- **git** - For status checking
+- **wc, head, sed** - Unix text utilities
 
-## Comparison: Claude Hooks vs Git Hooks
-
-| Feature | Claude Hook | Git Hook |
-|---------|------------|----------|
-| **Complexity** | Very simple | More complex |
-| **Trigger** | Manual/session | Automatic (git commit) |
-| **Intrusiveness** | Minimal | Can slow commits |
-| **Setup** | Already done | Needs installation |
-| **Bypassable** | Always | With --no-verify |
-| **Best For** | Exploratory, reminders | Enforcement, automation |
-
-**Current choice:** Claude hooks (simple, exploratory)
-
----
-
-## Configuration
-
-No configuration file needed for the basic hook. It has sensible defaults:
-- Session-based rate limiting (once per session)
-- Checks `docs/idea/` directory
-- Simple opt-out mechanism
-
-If you need more control, you can modify the hook script directly:
-```bash
-# Edit the hook
-nano .claude/hooks/idea-sync-check.sh
-
-# Example changes:
-# - Change watched directory
-# - Add ignore patterns
-# - Customize reminder message
-# - Change rate limiting logic
-```
+All standard on Unix/Linux/WSL/macOS.
 
 ---
 
 ## Testing
 
-### Test the Hook
+### Test 1: Hook Detects Changes
 
 ```bash
 # 1. Make a change in docs/idea/
-echo "test change" >> docs/idea/ux.md
+echo "# Test change" >> docs/idea/ux.md
 
-# 2. Run the hook
-./.claude/hooks/idea-sync-check.sh
+# 2. Run hook manually to see output
+bash .claude/hooks/session-start-idea-sync.sh
 
-# Expected: Shows reminder
+# Expected: Protocol instructions printed showing 1+ files
 
-# 3. Run again immediately
-./.claude/hooks/idea-sync-check.sh
-
-# Expected: Silent (already shown this session)
-
-# 4. Clean up
+# 3. Clean up
 git checkout docs/idea/ux.md
 ```
 
-### Test Disable Mechanism
+### Test 2: Hook Silent When No Changes
 
 ```bash
-# 1. Disable reminders
-echo "disabled" > .claude/idea-sync-reminder.txt
+# 1. Ensure docs/idea/ is clean
+git status docs/idea/
+
+# 2. Run hook
+bash .claude/hooks/session-start-idea-sync.sh
+
+# Expected: No output (silent exit)
+```
+
+### Test 3: Disable Mechanism
+
+```bash
+# 1. Create disable flag
+touch .claude/idea-sync-reminder-disabled.flag
 
 # 2. Make a change
-echo "test" >> docs/idea/ux.md
+echo "test" >> docs/idea/ai.md
 
 # 3. Run hook
-./.claude/hooks/idea-sync-check.sh
+bash .claude/hooks/session-start-idea-sync.sh
 
-# Expected: Silent (disabled)
+# Expected: No output (disabled)
 
-# 4. Re-enable
-rm .claude/idea-sync-reminder.txt
+# 4. Re-enable and test
+rm .claude/idea-sync-reminder-disabled.flag
+bash .claude/hooks/session-start-idea-sync.sh
 
-# 5. Run hook again
-./.claude/hooks/idea-sync-check.sh
+# Expected: Protocol instructions shown
 
-# Expected: Shows reminder
+# 5. Clean up
+git checkout docs/idea/ai.md
 ```
 
 ---
 
-## File Structure
+## Comparison: This vs Other Approaches
 
-```
-.claude/
-├── hooks/
-│   └── idea-sync-check.sh              # The hook script
-├── idea-sync-reminder.txt              # Session tracking (auto-created)
-└── idea-sync-reminder-disabled.flag    # Opt-out flag (user-created)
+| Approach | Complexity | Automatic | Intrusive | Best For |
+|----------|-----------|-----------|-----------|----------|
+| **Claude session-start hook** | Very Low | ✅ Yes | ❌ No | Gentle awareness |
+| Git pre-commit hook | Medium | ✅ Yes | ⚠️ Can block commits | Enforcement |
+| Git post-commit hook | Low | ✅ Yes | ❌ No | After-commit reminders |
+| File watcher (chokidar) | High | ✅ Yes | ⚠️ Desktop notifications | Real-time detection |
+| Cron/scheduled | Medium | ✅ Yes | ❌ No | Weekly check-ins |
+| Manual check | Very Low | ❌ No | ❌ No | Full user control |
 
-docs/
-└── dev/
-    ├── idea-sync-hooks-design.md       # This document
-    └── idea-sync-workflow-guide.md     # Workflow usage guide
-```
-
----
-
-## Limitations & Trade-offs
-
-### What This Approach Does Well
-✅ Simple and easy to understand
-✅ Non-intrusive (user control)
-✅ No installation or setup needed
-✅ Easy to disable/remove
-✅ Good for solo developers
-
-### What This Approach Doesn't Do
-❌ Automatic triggering (must run manually)
-❌ Real-time file watching
-❌ Team notifications
-❌ CI/CD integration
-❌ Scheduled checks
-
-**Philosophy:** Start simple, add complexity only if needed.
+**Current implementation:** Claude session-start hook (best balance of simplicity + automation)
 
 ---
 
 ## When to Upgrade
 
-Consider more complex automation if:
-- You frequently forget to sync
-- Multiple team members need coordination
-- You want CI/CD validation
-- Manual checks become annoying
+The current Claude hook is sufficient for most solo development. Consider alternatives if:
 
-Potential upgrades:
-1. **Git hooks** - Automatic on commit
-2. **File watcher** - Real-time detection (Node.js chokidar)
-3. **Scheduled checks** - Cron job for weekly reminders
-4. **CI/CD** - GitHub Actions for team visibility
+- **You want enforcement:** Use git pre-commit hook (blocks commits until sync)
+- **You want real-time:** Use file watcher (immediate notifications)
+- **You want team alerts:** Use git hooks + Slack integration
+- **You want scheduled:** Use cron job for weekly reminders
 
-But for now, the simple Claude hook is sufficient for exploratory use.
+But for exploratory use and gentle reminders, the Claude hook is perfect.
 
 ---
 
-## Feedback & Iteration
+## Troubleshooting
 
-This is an **exploratory implementation**. Feedback welcome:
+### Hook Not Running
 
-**Questions to consider:**
-- Is the reminder helpful or annoying?
-- Should it trigger more/less frequently?
-- Is the opt-out mechanism clear enough?
-- Do we need git hook integration?
+**Problem:** Hook doesn't seem to inject protocol at session start
 
-**Next steps if positive:**
-- Monitor usage and adjust rate limiting
-- Consider git pre-commit integration if needed
-- Add more context to reminder (which files changed)
-- Maybe integrate into Claude personality hooks
+**Solutions:**
+1. Check if hook is executable: `ls -l .claude/hooks/session-start-idea-sync.sh`
+2. Make executable if needed: `chmod +x .claude/hooks/session-start-idea-sync.sh`
+3. Check for Windows line endings: `dos2unix .claude/hooks/session-start-idea-sync.sh`
+4. Test manually: `bash .claude/hooks/session-start-idea-sync.sh`
 
-**Next steps if not useful:**
-- Document lessons learned
-- Remove hook
-- Keep workflow manual-only
+### Hook Outputs Errors
+
+**Problem:** Hook runs but shows errors
+
+**Solutions:**
+1. Check you're in a git repository: `git status`
+2. Check `docs/idea/` exists: `ls -la docs/idea/`
+3. Check git is in PATH: `which git`
+
+### Claude Mentions It Too Much
+
+**Problem:** Claude brings up the sync reminder too often
+
+**Solutions:**
+1. Disable temporarily: `touch .claude/idea-sync-reminder-disabled.flag`
+2. Commit or stash changes: `git add docs/idea/ && git commit -m "docs: update ideas"`
+3. Edit hook to be more restrictive (e.g., only show if 5+ files changed)
+
+### Want to See Injected Context
+
+**Problem:** Want to verify what Claude sees
+
+**Solution:**
+```bash
+# Run all session-start hooks to see their output
+for hook in .claude/hooks/session-start-*.sh; do
+    echo "=== $(basename $hook) ==="
+    bash "$hook"
+    echo ""
+done
+```
 
 ---
 
-*This is an exploratory design focused on simplicity. Implementation complete but subject to change based on usage feedback.*
+## Customization
+
+### Change File Count Threshold
+
+Only show reminder if 3+ files changed:
+
+```bash
+# Edit .claude/hooks/session-start-idea-sync.sh
+# Add after FILE_COUNT calculation:
+if [[ $FILE_COUNT -lt 3 ]]; then
+  exit 0
+fi
+```
+
+### Add Ignore Patterns
+
+Skip certain files (e.g., scratch notes):
+
+```bash
+# Edit the hook file
+# Modify the git status line:
+IDEA_CHANGES=$(git -C "$PROJECT_ROOT" status --porcelain -- docs/idea/ 2>/dev/null | grep -v "scratch")
+```
+
+### Change Reminder Tone
+
+Edit the protocol output in the hook file to be more/less assertive, add emojis, etc.
+
+---
+
+## Design Rationale
+
+### Why Claude Hooks?
+
+1. **Native integration** - Works with Claude Code's existing hook system
+2. **Zero installation** - Just create the file, no setup needed
+3. **Non-blocking** - Doesn't interrupt commits or file saves
+4. **Context-aware** - Claude has full context to decide when to mention it
+5. **User control** - Easy to disable, doesn't force actions
+
+### Why Not Git Hooks?
+
+Git hooks are more invasive:
+- Can slow down commits
+- May annoy users who want quick WIP commits
+- Require installation step
+- Can be bypassed with `--no-verify`
+
+Claude hooks are gentler and work better for exploratory workflows.
+
+### Why Session-Start?
+
+Other trigger points considered:
+- **user-prompt-submit** - Too frequent (every message)
+- **tool-execution** - Not relevant to this use case
+- **file-change** - Would need file watcher (complex)
+
+**Session-start** is perfect because:
+- Runs once per session (not spammy)
+- Gives Claude awareness throughout session
+- User can ignore if not relevant
+
+---
+
+## Future Enhancements (Optional)
+
+Possible improvements if the basic hook proves useful:
+
+1. **Phasing tag detection** - Only remind if changes have [MVP] tags
+2. **Last sync date** - Show "synced 7 days ago" context
+3. **Impact estimation** - "3 docs will need updates"
+4. **Integration with workflow** - Pre-check before workflow starts
+5. **Team version** - Post to Slack if changes accumulate
+
+But these are **not needed now** - keep it simple for exploratory use.
+
+---
+
+*This is a simple, functional Claude Code hook. It does one thing well: make Claude aware of pending sync needs. No over-engineering, just awareness.*
