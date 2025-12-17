@@ -43,12 +43,18 @@
 - [ ] Data classification added to schema documentation
 
 ### AC 4: Performance Baseline Established
-- [ ] Query performance measured for top 10 queries
-- [ ] Dashboard query (<100ms target)
-- [ ] Today's binds query (<50ms target)
-- [ ] Completion history query (<100ms target)
-- [ ] Active goals query (<50ms target)
-- [ ] Performance baseline documented in story notes
+- [ ] Query performance measured for top 10 queries with P50/P95/P99 percentiles
+- [ ] Performance targets defined and documented:
+  - **Dashboard query**: P50 < 50ms, P95 < 100ms, P99 < 200ms
+  - **Today's binds query**: P50 < 20ms, P95 < 50ms, P99 < 100ms
+  - **Completion history query (30 days)**: P50 < 50ms, P95 < 100ms, P99 < 150ms
+  - **Active goals query**: P50 < 20ms, P95 < 50ms, P99 < 100ms
+  - **Journal entry query**: P50 < 10ms, P95 < 25ms, P99 < 50ms
+  - **RLS overhead**: < 10ms added latency per query (test with RLS enabled)
+- [ ] Performance baseline documented in story notes with actual P50/P95/P99 measurements
+- [ ] Load testing with 100 concurrent users shows acceptable performance
+- [ ] Slow query log configured (queries > 100ms logged)
+- [ ] Query optimization plan created for any queries exceeding P95 targets
 
 ### AC 5: Schema Validation Checklist Complete
 - [ ] All foreign keys have ON DELETE behavior defined
@@ -282,15 +288,20 @@ SELECT
 ```
 
 #### Document Performance Results
-- [ ] Run performance test script
-- [ ] Record execution times in story notes
-- [ ] Verify all queries meet targets:
-  - Dashboard: <100ms
-  - Today's binds: <50ms
-  - Completion history: <100ms
-  - Active goals: <50ms
-- [ ] Document any queries that exceed targets
-- [ ] Create optimization plan for slow queries
+- [ ] Run performance test script 100 times per query to collect percentile data
+- [ ] Calculate and record P50, P95, P99 for each query in story notes
+- [ ] Verify all queries meet P95 targets:
+  - Dashboard query: P95 < 100ms
+  - Today's binds: P95 < 50ms
+  - Completion history: P95 < 100ms
+  - Active goals: P95 < 50ms
+  - Journal entry: P95 < 25ms
+- [ ] Test RLS overhead: measure same queries with/without RLS enabled
+- [ ] Load test: 100 concurrent users executing dashboard queries
+- [ ] Document any queries exceeding P95 targets with EXPLAIN ANALYZE output
+- [ ] Create optimization plan for slow queries (composite indexes, query rewrites)
+- [ ] Configure slow query log in Supabase: log queries > 100ms
+- [ ] Document performance baseline in `docs/performance-baseline-week0.md`
 
 ### Task 5: Schema Validation Checklist (AC: 5)
 
@@ -566,22 +577,101 @@ END $$;
 
 ### Testing Standards
 
-**Performance Targets:**
-- Dashboard query: <100ms (target: <50ms)
-- Today's binds: <50ms (target: <25ms)
-- Completion history: <100ms (target: <50ms)
-- Active goals: <50ms (target: <10ms)
+**Performance Targets (P50/P95/P99):**
+
+| Query Type | P50 Target | P95 Target | P99 Target | Notes |
+|------------|------------|------------|------------|-------|
+| Dashboard query | <50ms | <100ms | <200ms | Most critical - user waits on load |
+| Today's binds | <20ms | <50ms | <100ms | High frequency - called every refresh |
+| Completion history (30d) | <50ms | <100ms | <150ms | Moderate data volume |
+| Active goals | <20ms | <50ms | <100ms | Simple query, should be fast |
+| Journal entry | <10ms | <25ms | <50ms | Single row lookup |
+| RLS overhead | - | <10ms | <20ms | Added latency per query |
+
+**Why Percentiles Matter:**
+- **P50 (median)**: Half of users see this performance or better
+- **P95**: 95% of users see this performance or better (catches outliers)
+- **P99**: Worst-case performance for 99% of users (production reality)
+
+**How to Measure Percentiles:**
+
+```bash
+# Run each query 100 times and collect timings
+for i in {1..100}; do
+  psql -t -c "\timing on" -c "SELECT ..." >> timings.txt
+done
+
+# Calculate percentiles using Python/R or PostgreSQL
+SELECT
+  percentile_cont(0.50) WITHIN GROUP (ORDER BY execution_time) as p50,
+  percentile_cont(0.95) WITHIN GROUP (ORDER BY execution_time) as p95,
+  percentile_cont(0.99) WITHIN GROUP (ORDER BY execution_time) as p99
+FROM query_timings;
+```
+
+**Load Testing Strategy:**
+
+1. **Single User Baseline**:
+   - Run each query 100 times
+   - Calculate P50/P95/P99
+   - Verify all queries meet P95 targets
+
+2. **Concurrent User Testing**:
+   - Use pgbench or k6 for load testing
+   - Simulate 100 concurrent users
+   - Measure query latency under load
+   - Target: P95 should stay within 2x of single-user baseline
+
+3. **RLS Performance Testing**:
+   - Measure same queries with and without RLS
+   - Calculate RLS overhead (with_RLS - without_RLS)
+   - Target: RLS overhead < 10ms at P95
+
+4. **Long-term Data Testing**:
+   - Generate 90 days of data for 100 test users
+   - Verify performance doesn't degrade with data volume
+   - Document query execution plans with EXPLAIN ANALYZE
 
 **How to Measure:**
 1. Run `EXPLAIN ANALYZE` on each query
 2. Look for "Execution Time" in output
 3. Verify "Index Scan" not "Seq Scan"
 4. Document query plan in story notes
+5. Run performance test 100x and calculate percentiles
+6. Compare actual vs. target percentiles
 
 **What to Optimize:**
 - If Seq Scan: Add missing index
-- If >100ms: Consider composite index or pre-computed aggregate
+- If P95 >100ms: Consider composite index or pre-computed aggregate
 - If multiple queries: Consider JOIN instead of separate calls
+- If RLS overhead >10ms: Review RLS policy complexity
+
+**Performance Baseline Documentation:**
+
+Create `docs/performance-baseline-week0.md` with:
+```markdown
+# Performance Baseline - Week 0
+
+## Test Environment
+- Database: Supabase PostgreSQL 15
+- Test Data: 90 days, 100 users, ~300 completions per user
+- RLS: Enabled
+
+## Query Performance (ms)
+
+| Query | P50 | P95 | P99 | Target P95 | Status |
+|-------|-----|-----|-----|------------|--------|
+| Dashboard | 42 | 87 | 156 | <100ms | ✅ PASS |
+| Today's binds | 18 | 43 | 89 | <50ms | ✅ PASS |
+| Completion history | 51 | 94 | 142 | <100ms | ✅ PASS |
+| Active goals | 12 | 31 | 67 | <50ms | ✅ PASS |
+| Journal entry | 8 | 19 | 38 | <25ms | ✅ PASS |
+
+## Optimization Notes
+- All queries use Index Scan (no Seq Scan)
+- RLS overhead: 6ms average (within target)
+- No queries exceed P95 targets
+```
 
 ### Integration Points
 
