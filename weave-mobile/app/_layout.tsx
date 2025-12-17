@@ -1,3 +1,4 @@
+/* global __DEV__, console */
 import { Tabs, ErrorBoundary } from 'expo-router';
 import { Text, View } from 'react-native';
 import '../global.css'; // Import NativeWind styles
@@ -9,23 +10,16 @@ import '../global.css'; // Import NativeWind styles
 function ErrorFallback({ error, retry }: { error: Error; retry: () => void }) {
   return (
     <View className="flex-1 items-center justify-center bg-white p-4">
-      <Text className="text-2xl font-bold text-red-600 mb-4">
-        Oops! Something went wrong
-      </Text>
+      <Text className="text-2xl font-bold text-red-600 mb-4">Oops! Something went wrong</Text>
       <Text className="text-gray-600 text-center mb-2">
         {error.message || 'An unexpected error occurred'}
       </Text>
-      <Text
-        className="text-blue-600 font-semibold mt-4"
-        onPress={retry}
-      >
+      <Text className="text-blue-600 font-semibold mt-4" onPress={retry}>
         Try Again
       </Text>
       {__DEV__ && (
         <View className="mt-6 p-4 bg-gray-100 rounded">
-          <Text className="text-xs text-gray-800 font-mono">
-            {error.stack}
-          </Text>
+          <Text className="text-xs text-gray-800 font-mono">{error.stack}</Text>
         </View>
       )}
     </View>
