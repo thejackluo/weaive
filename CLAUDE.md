@@ -396,6 +396,7 @@ api/                             # Python FastAPI backend
 - `docs/dev/design-system-guide.md` - How to use the Weave design system
 - `docs/dev/docs-viewer-guide.md` - How to use and customize the docs viewer
 - `docs/dev/mcp-quick-reference.md` - Daily MCP usage cheat sheet
+- `docs/dev/notification-hooks-guide.md` - Claude Code notification chimes setup and customization
 - `docs/dev/bmad-implementation-guide.md` - Non-technical guide to BMAD implementation workflow
 - `docs/dev/git-workflow-guide.md` - Complete guide to Git, branching, PRs, and debugging
 
