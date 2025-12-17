@@ -155,7 +155,7 @@ def main():
     # Create server
     with socketserver.TCPServer(("", PORT), DocsViewerHandler) as httpd:
         print("\n" + "="*44)
-        print(" Weavelight Documentation Viewer")
+        print(" Documentation Viewer")
         print("="*44 + "\n")
         print(f"Server:      http://localhost:{PORT}")
         print(f"Project:     {project_root}")
