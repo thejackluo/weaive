@@ -89,6 +89,9 @@
 ### Task 1: Initialize Mobile Application (AC: 1, 3, 4, 5, 6)
 - [ ] Run `npx create-expo-app weave-mobile --template blank-typescript`
 - [ ] Install Expo Router: `npx expo install expo-router expo-linking expo-constants`
+- [ ] Configure Expo Router in `app.json`:
+  - [ ] Add `"scheme": "weave"` for deep linking
+  - [ ] Enable new architecture if needed (optional for Week 0)
 - [ ] Install core dependencies:
   - [ ] `@supabase/supabase-js` (Supabase client)
   - [ ] `@tanstack/react-query` (server state)
@@ -117,6 +120,7 @@
   - [ ] `pydantic-settings`
 - [ ] Create folder structure: `app/api/`, `app/core/`, `app/services/`, `app/models/`, `tests/`
 - [ ] Create `app/main.py` with FastAPI app initialization
+- [ ] Configure CORS middleware (allow all origins for local dev, restrict in production)
 - [ ] Add health check endpoint: `GET /health` returns `{"status": "ok"}`
 - [ ] Configure Ruff in `pyproject.toml`
 - [ ] Create `.env.example` with all API key placeholders
@@ -258,6 +262,67 @@ dependencies = [
 - No database yet (Story 0.2)
 - No tests yet (Story 0.7)
 - Health endpoint is a placeholder (no business logic)
+
+### Quick Verification Code Snippets
+
+**Mobile - Placeholder Home Screen (`app/(tabs)/index.tsx`):**
+```typescript
+import { View, Text } from 'react-native';
+
+export default function HomeScreen() {
+  return (
+    <View className="flex-1 items-center justify-center bg-white">
+      <Text className="text-2xl font-bold">Weave MVP</Text>
+      <Text className="mt-2 text-gray-600">Foundation Setup Complete ✅</Text>
+    </View>
+  );
+}
+```
+
+**Backend - Health Check (`app/api/health.py`):**
+```python
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring."""
+    return {
+        "status": "ok",
+        "service": "weave-api",
+        "version": "0.1.0"
+    }
+```
+
+**Backend - Main App (`app/main.py`):**
+```python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.api import health
+
+app = FastAPI(
+    title="Weave API",
+    description="Backend API for Weave MVP",
+    version="0.1.0"
+)
+
+# CORS - Allow all for local dev (restrict in production)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # TODO: Restrict in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(health.router, tags=["health"])
+
+@app.get("/")
+async def root():
+    return {"message": "Weave API - Foundation Ready"}
+```
 
 ### References
 
