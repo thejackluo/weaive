@@ -12,7 +12,7 @@ module.exports = function (api) {
           root: ['./'],
           alias: {
             '@': './src',
-            'app': './app',
+            app: './app',
           },
         },
       ],
