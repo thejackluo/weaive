@@ -27,6 +27,12 @@ yarn-error.log*
 .npm/
 .yarn/
 
+# Expo/React Native
+.expo/
+.expo-shared/
+dist/
+web-build/
+
 # Python
 __pycache__/
 *.py[cod]
