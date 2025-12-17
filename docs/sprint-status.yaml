@@ -43,8 +43,8 @@ current_velocity: 50
 week-0-status: planned
 
 week-0-stories:
-  epic-0: backlog
-  0-1-project-scaffolding: backlog              # 5 pts
+  epic-0: in-progress
+  0-1-project-scaffolding: done                 # 5 pts ✅
   0-2a-database-schema-core: backlog            # 3 pts
   0-2b-database-schema-refinement: backlog      # 2 pts
   0-3-authentication-flow: backlog              # 3 pts
