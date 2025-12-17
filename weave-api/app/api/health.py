@@ -8,5 +8,5 @@ async def health_check():
     return {
         "status": "ok",
         "service": "weave-api",
-        "version": "0.0.1"
+        "version": "0.1.0"
     }
