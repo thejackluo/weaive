@@ -419,11 +419,133 @@ CREATE INDEX idx_journal_entries_user_date ON journal_entries(user_id, local_dat
 
 ### Security Considerations
 
-**RLS Policies (Story 0.4 - CRITICAL):**
-- **NOT implemented in this story** - Story 0.4 will add RLS policies
-- All user-owned tables need RLS: users can only access their own data
-- Special policy for `subtask_completions`: INSERT-only (no UPDATE/DELETE)
-- Cross-user access tests must pass before alpha release
+**RLS Policy Specifications (Implementation: Story 0.4):**
+
+This section provides the complete RLS policy blueprint. **These policies will be implemented in Story 0.4** but are specified here for completeness.
+
+#### Core RLS Principles
+1. **Default Deny**: Enable RLS on all tables, deny access by default
+2. **User Isolation**: Users can only access their own data (`user_id = auth.uid()`)
+3. **Immutability Protection**: `subtask_completions` is INSERT-only (no UPDATE/DELETE)
+4. **Service Role Bypass**: Backend API with service_role key can bypass RLS for admin operations
+
+#### RLS Policy Definitions
+
+```sql
+-- user_profiles: Users can read/update their own profile
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY user_profiles_select ON user_profiles
+  FOR SELECT USING (auth_user_id = auth.uid());
+
+CREATE POLICY user_profiles_update ON user_profiles
+  FOR UPDATE USING (auth_user_id = auth.uid());
+
+-- identity_docs: Users can CRUD their own identity documents
+ALTER TABLE identity_docs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY identity_docs_select ON identity_docs
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY identity_docs_insert ON identity_docs
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY identity_docs_update ON identity_docs
+  FOR UPDATE USING (user_id = auth.uid());
+
+-- goals: Users can CRUD their own goals
+ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY goals_select ON goals
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY goals_insert ON goals
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY goals_update ON goals
+  FOR UPDATE USING (user_id = auth.uid());
+
+CREATE POLICY goals_delete ON goals
+  FOR DELETE USING (user_id = auth.uid());
+
+-- subtask_templates: Users can CRUD their own templates
+ALTER TABLE subtask_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY subtask_templates_select ON subtask_templates
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY subtask_templates_insert ON subtask_templates
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY subtask_templates_update ON subtask_templates
+  FOR UPDATE USING (user_id = auth.uid());
+
+CREATE POLICY subtask_templates_delete ON subtask_templates
+  FOR DELETE USING (user_id = auth.uid());
+
+-- subtask_instances: Users can CRUD their own instances
+ALTER TABLE subtask_instances ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY subtask_instances_select ON subtask_instances
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY subtask_instances_insert ON subtask_instances
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY subtask_instances_update ON subtask_instances
+  FOR UPDATE USING (user_id = auth.uid());
+
+CREATE POLICY subtask_instances_delete ON subtask_instances
+  FOR DELETE USING (user_id = auth.uid());
+
+-- subtask_completions: INSERT ONLY (immutable event log)
+ALTER TABLE subtask_completions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY subtask_completions_select ON subtask_completions
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY subtask_completions_insert ON subtask_completions
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- NO UPDATE/DELETE POLICIES - Enforced by triggers
+
+-- captures: Users can CRUD their own captures
+ALTER TABLE captures ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY captures_select ON captures
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY captures_insert ON captures
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY captures_update ON captures
+  FOR UPDATE USING (user_id = auth.uid());
+
+CREATE POLICY captures_delete ON captures
+  FOR DELETE USING (user_id = auth.uid());
+
+-- journal_entries: Users can CRUD their own journal entries
+ALTER TABLE journal_entries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY journal_entries_select ON journal_entries
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY journal_entries_insert ON journal_entries
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY journal_entries_update ON journal_entries
+  FOR UPDATE USING (user_id = auth.uid());
+
+CREATE POLICY journal_entries_delete ON journal_entries
+  FOR DELETE USING (user_id = auth.uid());
+```
+
+#### RLS Testing Requirements (Story 0.4)
+- [ ] Test user A cannot read user B's data on ALL tables
+- [ ] Test user cannot UPDATE/DELETE subtask_completions (even with service role)
+- [ ] Test unauthenticated requests are denied (no auth.uid())
+- [ ] Test service_role key can bypass RLS for admin operations
+- [ ] Performance test: RLS should add <10ms overhead to queries
 
 **Current State (Week 0):**
 - No RLS policies yet - OK for local development
