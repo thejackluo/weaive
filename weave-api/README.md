@@ -40,10 +40,12 @@ Then edit `.env` and add your actual credentials.
 ### 3. Run Development Server
 
 ```bash
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
 The API will be available at: http://localhost:8000
+
+**Note:** Always use `uv run` to execute commands in the virtual environment. This ensures you're using the correct Python version and dependencies.
 
 ### 4. View API Documentation
 
@@ -52,9 +54,15 @@ The API will be available at: http://localhost:8000
 
 ## Available Commands
 
-- `uvicorn app.main:app --reload` - Start development server
+All commands should be run with `uv run` to use the virtual environment:
+
+- `uv run uvicorn app.main:app --reload` - Start development server
 - `uv sync` - Install/update dependencies
-- `ruff check .` - Run linter
+- `uv run ruff check .` - Run linter
+- `uv run ruff check . --fix` - Run linter and auto-fix issues
+- `uv run pytest` - Run tests (when tests are added)
+
+**Important:** When using `uv`, always prefix commands with `uv run` to ensure they execute in the correct virtual environment. Direct commands like `uvicorn` or `ruff` won't work unless they're installed globally.
 
 ## API Endpoints
 
