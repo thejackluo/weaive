@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -6,33 +6,48 @@ import * as Haptics from 'expo-haptics';
 /**
  * Welcome Screen - Story 1.1
  *
- * First screen users see when opening the app
- * Displays inspiring vision and "Get Started" CTA
+ * First screen users see when opening the app for the first time.
+ * Provides an inspiring vision of Weave and a clear call-to-action.
  *
- * AC1: Visual Layout & Branding ✓
- * AC2: Performance (<2s load) ✓
- * AC3: Navigation & Haptics ✓
- * AC4: Error Handling (via root ErrorBoundary) ✓
- * AC5: Accessibility ✓
+ * Acceptance Criteria:
+ * - AC1: Visual Layout & Branding (logo, tagline, value prop, CTA button)
+ * - AC2: Performance (<2s load, no network calls)
+ * - AC3: Navigation with haptic feedback to emotional state selection
+ * - AC4: Error handling via Expo Router default
+ * - AC5: Accessibility (screen reader support, touch targets)
+ *
+ * Technical Implementation:
+ * - Uses StyleSheet for styling (NativeWind migration deferred)
+ * - Haptic feedback on button press (iOS)
+ * - SafeAreaView for notch/status bar handling
+ * - Expo Router for navigation
+ *
+ * @returns Welcome screen component
  */
 export default function WelcomeScreen() {
   const router = useRouter();
 
+  /**
+   * Handles the "Get Started" button press
+   *
+   * Triggers haptic feedback and navigates to the next onboarding screen.
+   * Route target will be implemented in Story 1.2.
+   */
   const handleGetStarted = async () => {
-    // Haptic feedback for button press
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    // Navigate to next onboarding screen (Story 1.2)
-    // Note: Route will be created in Story 1.2
     router.push('/(onboarding)/emotional-state-selection');
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        {/* Logo - TODO: Add WeaveLogo component or Image when asset is available */}
-        {/* Placeholder: 96x96 space for logo */}
-        <View style={styles.logoPlaceholder} />
+        {/* Weave Logo - AC1 */}
+        <Image
+          source={require('../../assets/icon.png')}
+          style={styles.logo}
+          accessibilityLabel="Weave"
+          resizeMode="contain"
+        />
 
         {/* Tagline - AC1 */}
         <Text style={styles.heading}>
@@ -44,7 +59,7 @@ export default function WelcomeScreen() {
           Turn vague goals into daily wins, proof, and a stronger identity in 10 days.
         </Text>
 
-        {/* CTA Button - AC1, AC3 */}
+        {/* CTA Button - AC1, AC3, AC5 */}
         <Pressable
           style={({ pressed }) => [
             styles.button,
@@ -52,7 +67,7 @@ export default function WelcomeScreen() {
           ]}
           onPress={handleGetStarted}
           accessibilityRole="button"
-          accessibilityLabel="Get Started"
+          accessible={true}
         >
           <Text style={styles.buttonText}>Get Started</Text>
         </Pressable>
@@ -72,9 +87,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
   },
-  logoPlaceholder: {
-    width: 96,
-    height: 96,
+  logo: {
+    width: 64,
+    height: 64,
     marginBottom: 32,
   },
   heading: {
