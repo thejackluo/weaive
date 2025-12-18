@@ -1,9 +1,10 @@
 /**
  * Emotional State Selection Screen
  *
- * Step 1.2 of Onboarding: User selects 1-2 emotional painpoints
- * Stores selection in zustand onboarding store
- * NativeWind v5 styling
+ * Step 1.2 of Onboarding: User selects emotional painpoint
+ * PRD US-1.2: Painpoint Identification
+ *
+ * TODO: Add error boundary wrapper (global error handling story)
  */
 
 import React, { useState, useCallback } from 'react';
@@ -15,32 +16,32 @@ import { PainpointCard, Painpoint } from '@/components/onboarding/PainpointCard'
 import { useOnboardingStore } from '@/stores/onboardingStore';
 
 // =============================================================================
-// DATA
+// DATA - From PRD US-1.2
 // =============================================================================
 
 const PAINPOINTS: Painpoint[] = [
   {
     id: 'clarity',
     title: 'Clarity',
-    description: 'I know what I want but struggle to define clear goals',
+    description: "I'm figuring out my direction",
     icon: 'lightbulb.fill',
   },
   {
     id: 'action',
     title: 'Action',
-    description: 'I have goals but struggle to take consistent action',
+    description: "I think a lot but don't start",
     icon: 'figure.walk',
   },
   {
     id: 'consistency',
     title: 'Consistency',
-    description: 'I start strong but lose momentum over time',
+    description: 'I start strong but fall off',
     icon: 'arrow.triangle.2.circlepath',
   },
   {
     id: 'alignment',
     title: 'Alignment',
-    description: "My actions don't reflect who I want to become",
+    description: 'I feel ambitious but isolated',
     icon: 'person.badge.key.fill',
   },
 ];
@@ -51,31 +52,36 @@ const PAINPOINTS: Painpoint[] = [
 
 export default function EmotionalStateScreen() {
   // Get selection from zustand store
+  // Note: PRD specifies storing in user_profiles.json - will be handled by backend
   const { selectedPainpoints, setSelectedPainpoints } = useOnboardingStore();
 
-  // Local state for validation message
-  const [showValidation, setShowValidation] = useState(false);
+  // Local state for confirmation flow
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
-  // Handle card press with multi-select logic (max 2)
+  // Handle card press with PRD logic:
+  // - User selects 1, sees confirmation
+  // - Can optionally add second after confirmation
   const handleCardPress = useCallback(
     (id: string) => {
       const isCurrentlySelected = selectedPainpoints.includes(id);
 
       if (isCurrentlySelected) {
-        // Deselect: Remove from array
+        // Deselect
         setSelectedPainpoints(selectedPainpoints.filter((p) => p !== id));
-        setShowValidation(false);
-      } else {
-        // Select: Check if we can add more
-        if (selectedPainpoints.length >= 2) {
-          // Show validation message
-          setShowValidation(true);
-          return;
+        if (selectedPainpoints.length === 1) {
+          setShowConfirmation(false);
         }
-
-        // Add to array
-        setSelectedPainpoints([...selectedPainpoints, id]);
-        setShowValidation(false);
+      } else {
+        // Select
+        if (selectedPainpoints.length === 0) {
+          // First selection - show confirmation
+          setSelectedPainpoints([id]);
+          setShowConfirmation(true);
+        } else if (selectedPainpoints.length === 1) {
+          // Second selection - allow it
+          setSelectedPainpoints([...selectedPainpoints, id]);
+        }
+        // Max 2 selections
       }
     },
     [selectedPainpoints, setSelectedPainpoints]
@@ -83,12 +89,10 @@ export default function EmotionalStateScreen() {
 
   // Handle continue button
   const handleContinue = useCallback(() => {
-    // Navigate to next screen (Story 1.3: Insight Reflection)
+    // Navigate to next screen (US-1.3: Insight Reflection)
+    // TODO: Send selected_painpoints to backend (lightweight API call)
     router.push('/onboarding/insight-reflection');
   }, []);
-
-  // Check if continue button should be enabled
-  const canContinue = selectedPainpoints.length >= 1 && selectedPainpoints.length <= 2;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -102,7 +106,7 @@ export default function EmotionalStateScreen() {
             What's holding you back?
           </Text>
           <Text className="text-center text-base text-neutral-600">
-            Choose 1-2 areas you want to improve
+            Pick 1-2 that you're struggling with most right now
           </Text>
         </View>
 
@@ -118,11 +122,11 @@ export default function EmotionalStateScreen() {
           ))}
         </View>
 
-        {/* Validation Message */}
-        {showValidation && (
-          <View className="items-center mt-3">
-            <Text className="text-center font-medium text-sm text-red-600">
-              Choose up to 2
+        {/* Confirmation Message */}
+        {showConfirmation && selectedPainpoints.length === 1 && (
+          <View className="items-center mt-6">
+            <Text className="text-center text-sm text-neutral-600 mb-3">
+              You can optionally add one more
             </Text>
           </View>
         )}
@@ -131,15 +135,21 @@ export default function EmotionalStateScreen() {
         <View className="w-full mt-6">
           <Pressable
             className={`h-12 rounded-lg w-full justify-center items-center ${
-              canContinue ? 'bg-blue-500' : 'bg-gray-200 opacity-50'
+              selectedPainpoints.length >= 1
+                ? 'bg-blue-500'
+                : 'bg-gray-300'
             }`}
-            disabled={!canContinue}
             onPress={handleContinue}
+            disabled={selectedPainpoints.length === 0}
             accessibilityLabel="Continue to next step"
             accessibilityRole="button"
-            accessibilityState={{ disabled: !canContinue }}
+            accessibilityState={{ disabled: selectedPainpoints.length === 0 }}
           >
-            <Text className="text-white text-base font-semibold">
+            <Text
+              className={`text-base font-semibold ${
+                selectedPainpoints.length >= 1 ? 'text-white' : 'text-gray-500'
+              }`}
+            >
               Continue
             </Text>
           </Pressable>
