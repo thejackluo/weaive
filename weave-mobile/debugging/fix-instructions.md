@@ -9,14 +9,14 @@
 
 Your current setup is **OFFICIALLY SUPPORTED** and working correctly:
 
-| Package | Version | Status |
-|---------|---------|--------|
-| **React** | 19.1.0 | ✅ Required by RN 0.81+ |
-| **React Native** | 0.81.5 | ✅ Latest stable |
-| **Expo SDK** | 54.0.30 | ✅ Latest patch |
-| **NativeWind** | 4.2.1 | ✅ Compatible with React 19 |
-| **Tailwind CSS** | 3.4.19 | ✅ Required by NativeWind v4 |
-| **Node.js** | 20.19.4+ | ✅ Minimum required |
+| Package          | Version  | Status                       |
+| ---------------- | -------- | ---------------------------- |
+| **React**        | 19.1.0   | ✅ Required by RN 0.81+      |
+| **React Native** | 0.81.5   | ✅ Latest stable             |
+| **Expo SDK**     | 54.0.30  | ✅ Latest patch              |
+| **NativeWind**   | 4.2.1    | ✅ Compatible with React 19  |
+| **Tailwind CSS** | 3.4.19   | ✅ Required by NativeWind v4 |
+| **Node.js**      | 20.19.4+ | ✅ Minimum required          |
 
 **DO NOT DOWNGRADE REACT!** React 19 is required and supported.
 
@@ -85,6 +85,7 @@ To update all packages to their latest compatible versions:
 ### **Step 1: Close Everything**
 
 Before starting:
+
 - ✅ Close VS Code
 - ✅ Stop Metro bundler (Ctrl+C in terminal)
 - ✅ Close Android Studio / Xcode
@@ -95,12 +96,14 @@ Before starting:
 ### **Step 2: Run Upgrade Command**
 
 **From Windows PowerShell:**
+
 ```powershell
 cd "C:\Users\Jack Luo\Desktop\(local) github software\weavelight\weave-mobile"
 npx expo install expo@latest --fix
 ```
 
 **From WSL:**
+
 ```bash
 cd /mnt/c/Users/Jack\ Luo/Desktop/\(local\)\ github\ software/weavelight/weave-mobile
 npx expo install expo@latest --fix
@@ -113,6 +116,7 @@ npx expo-doctor
 ```
 
 **Expected Output:**
+
 ```
 ✔ Check Expo config for common issues
 ✔ Check package.json for common issues
@@ -141,6 +145,7 @@ If your installation is broken, follow these steps:
 ### **Option 1: Nuclear Clean Install** (Most Reliable)
 
 **From Windows PowerShell:**
+
 ```powershell
 cd "C:\Users\Jack Luo\Desktop\(local) github software\weavelight\weave-mobile"
 
@@ -160,6 +165,7 @@ npx expo start --clear
 ```
 
 **From WSL:**
+
 ```bash
 cd weave-mobile
 
@@ -198,6 +204,7 @@ npx expo start --clear
 ### **Issue: Permission Denied (EACCES)**
 
 **Error Message:**
+
 ```
 npm error code EACCES
 npm error syscall rename
@@ -209,6 +216,7 @@ npm error Error: EACCES: permission denied
 WSL can't rename files on Windows filesystem (NTFS) due to file locking.
 
 **Solution 1: Use PowerShell** (Recommended)
+
 ```powershell
 # Open Windows PowerShell (NOT WSL)
 cd "C:\Users\Jack Luo\Desktop\(local) github software\weavelight\weave-mobile"
@@ -221,12 +229,14 @@ npx expo install expo@latest --fix
 ```
 
 **Solution 2: Run PowerShell as Administrator**
+
 1. Press `Windows + X`
 2. Select **"Windows PowerShell (Admin)"**
 3. Click "Yes" when prompted
 4. Run the commands above
 
 **Solution 3: Fix from WSL**
+
 ```bash
 # Delete everything
 cd weave-mobile
@@ -243,14 +253,12 @@ npx expo install expo@latest --fix
 ### **babel.config.js** ✅
 
 **Current Configuration (NativeWind v4):**
+
 ```javascript
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: [
-      ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
-      'nativewind/babel',
-    ],
+    presets: [['babel-preset-expo', { jsxImportSource: 'nativewind' }], 'nativewind/babel'],
     plugins: [
       [
         'module-resolver',
@@ -269,6 +277,7 @@ module.exports = function (api) {
 ```
 
 **Important:**
+
 - ✅ Include `jsxImportSource: 'nativewind'` for React 19
 - ✅ Include `'nativewind/babel'` preset
 - ✅ Keep `module-resolver` for path aliases
@@ -286,24 +295,27 @@ module.exports = withNativeWind(config, { input: './global.css' });
 ### **global.css** ✅
 
 **NativeWind v4 Format:**
+
 ```css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import "nativewind/theme";
+@import 'nativewind/theme';
 ```
 
 **Alternative (Tailwind v4 Format):**
+
 ```css
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/preflight.css" layer(base);
-@import "tailwindcss/utilities.css";
-@import "nativewind/theme";
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+@import 'nativewind/theme';
 ```
 
 ### **package.json** ✅
 
 **Key Dependencies:**
+
 ```json
 {
   "dependencies": {
@@ -374,6 +386,7 @@ npx expo start --clear
 This usually means your `babel.config.js` is malformed.
 
 **Solution:**
+
 1. Check for syntax errors (missing commas, brackets)
 2. Verify the file matches the example above
 3. Restart Metro after fixing
@@ -383,12 +396,14 @@ This usually means your `babel.config.js` is malformed.
 **Symptoms:** Tailwind classes don't apply visually
 
 **Checklist:**
+
 - [ ] Is `@import "nativewind/theme"` in `global.css`?
 - [ ] Is `withNativeWind` wrapping config in `metro.config.js`?
 - [ ] Is `jsxImportSource: 'nativewind'` in `babel.config.js`?
 - [ ] Did you restart Metro after config changes?
 
 **Fix:**
+
 ```bash
 # Verify config files match examples above
 # Then:
@@ -400,6 +415,7 @@ npx expo start --clear
 **Error:** `WorkletsError: Mismatch between JavaScript and native`
 
 **Solution:**
+
 ```bash
 # Explicitly install worklets
 npx expo install react-native-worklets-core
@@ -416,6 +432,7 @@ npx expo start --clear
 **Warning:** `npm WARN peer dependency...`
 
 **Solution:**
+
 ```bash
 # Let Expo fix it automatically
 npx expo install --fix
@@ -429,6 +446,7 @@ npx expo-doctor
 **Question:** "Should I downgrade to React 18?"
 
 **Answer:** **NO!** React 19 is required and officially supported by:
+
 - React Native 0.81+ ✅
 - Expo SDK 54 ✅
 - NativeWind 4.x ✅
@@ -479,6 +497,7 @@ of Worklets (0.7.1 vs 0.5.1)]
 ### **How to Detect JS vs Native Mismatch**
 
 **Method 1: Read the error message**
+
 ```
 WorkletsError: Mismatch between JavaScript (0.7.1) and native (0.5.1)
 ```
@@ -504,6 +523,7 @@ npx expo-doctor
 ```
 
 If you see warnings like:
+
 ```
 ⚠ Package react-native-worklets-core has mismatched versions
 ```
@@ -518,6 +538,7 @@ npx expo install react-native-worklets-core
 ```
 
 **What this does:**
+
 1. ✅ Checks your Expo SDK version
 2. ✅ Determines compatible version for your SDK
 3. ✅ Updates JavaScript (node_modules)
@@ -532,6 +553,7 @@ npx expo install react-native-worklets-core
 If you want to do it manually:
 
 **For iOS:**
+
 ```bash
 # Step 1: Check current versions
 npm ls react-native-worklets-core  # JavaScript version
@@ -547,6 +569,7 @@ npx expo start --clear
 ```
 
 **For Android:**
+
 ```bash
 # Step 1: Clean Android build
 cd android
@@ -558,6 +581,7 @@ npx expo run:android
 ```
 
 **Why manual rebuild works:**
+
 - `pod install` reads version from `node_modules` (e.g., 0.7.1)
 - Downloads matching iOS native library (0.7.1)
 - Now both JS and native are 0.7.1 ✅
@@ -589,15 +613,16 @@ npx expo start --clear
 
 **You MUST rebuild native modules when:**
 
-| You ran... | What it updates | What you need to do |
-|------------|----------------|---------------------|
-| `npm install` | ✅ JavaScript only | ⚠️ Rebuild native (iOS/Android) |
-| `npm update` | ✅ JavaScript only | ⚠️ Rebuild native (iOS/Android) |
-| `npm install <pkg>` | ✅ JavaScript only | ⚠️ Rebuild native (iOS/Android) |
-| `npx expo install <pkg>` | ✅ JavaScript + Native | ✅ No rebuild needed! |
-| `pod install` (iOS) | ✅ Native only | Already rebuilt ✅ |
+| You ran...               | What it updates        | What you need to do             |
+| ------------------------ | ---------------------- | ------------------------------- |
+| `npm install`            | ✅ JavaScript only     | ⚠️ Rebuild native (iOS/Android) |
+| `npm update`             | ✅ JavaScript only     | ⚠️ Rebuild native (iOS/Android) |
+| `npm install <pkg>`      | ✅ JavaScript only     | ⚠️ Rebuild native (iOS/Android) |
+| `npx expo install <pkg>` | ✅ JavaScript + Native | ✅ No rebuild needed!           |
+| `pod install` (iOS)      | ✅ Native only         | Already rebuilt ✅              |
 
 **Rule of thumb:**
+
 - ❌ **Never** use `npm install` for packages with native code
 - ✅ **Always** use `npx expo install` for native packages
 - ✅ If you used npm, manually run `pod install` after
@@ -621,14 +646,15 @@ Which depends on: react-native-worklets-core ← You never installed this!
 ```json
 {
   "dependencies": {
-    "expo-router": "~6.0.21",         // ← You installed this
-    "react-native-reanimated": "~4.2.1",  // ← Add explicitly
-    "react-native-worklets-core": "^1.6.2"  // ← Add explicitly
+    "expo-router": "~6.0.21", // ← You installed this
+    "react-native-reanimated": "~4.2.1", // ← Add explicitly
+    "react-native-worklets-core": "^1.6.2" // ← Add explicitly
   }
 }
 ```
 
 **Benefits:**
+
 - ✅ Version visible in package.json
 - ✅ You control when it updates
 - ✅ Prevents silent version changes
@@ -695,6 +721,7 @@ git commit -m "chore: lock dependency versions"
 ### **Real-World Example: Worklets 0.7.1 vs 0.5.1**
 
 **Initial state:**
+
 ```json
 // package.json
 {
@@ -706,24 +733,27 @@ git commit -m "chore: lock dependency versions"
 ```
 
 **What happened:**
+
 1. `expo-router` installed `worklets` 0.5.1 (both JS + native)
 2. Later, `npm update` updated JS to 0.7.1
 3. iOS Pods stayed at 0.5.1
 4. **Crash:** JS called methods that don't exist in native 0.5.1
 
 **The fix:**
+
 ```bash
 # Explicit install syncs both layers
 npx expo install react-native-worklets-core
 ```
 
 **Result:**
+
 ```json
 // package.json (now explicit)
 {
   "dependencies": {
     "expo-router": "~6.0.21",
-    "react-native-worklets-core": "^1.6.2"  // ← Now controlled
+    "react-native-worklets-core": "^1.6.2" // ← Now controlled
   }
 }
 ```
@@ -774,24 +804,25 @@ npx expo start --clear
 
 Running `npx expo install expo@latest --fix` updates:
 
-| Package | From | To | Change Type |
-|---------|------|----|----|
-| expo | 54.0.29 | 54.0.30 | Patch (bug fixes) |
-| expo-router | 6.0.20 | 6.0.21 | Patch |
-| react-native-reanimated | 4.1.1 | 4.2.1 | Minor (new features) |
-| + related packages | - | Latest | Auto-updated |
+| Package                 | From    | To      | Change Type          |
+| ----------------------- | ------- | ------- | -------------------- |
+| expo                    | 54.0.29 | 54.0.30 | Patch (bug fixes)    |
+| expo-router             | 6.0.20  | 6.0.21  | Patch                |
+| react-native-reanimated | 4.1.1   | 4.2.1   | Minor (new features) |
+| + related packages      | -       | Latest  | Auto-updated         |
 
 **Total:** ~15 packages updated
 
 ### **Semver Ranges Explained**
 
-| Prefix | Meaning | Example | Allows |
-|--------|---------|---------|--------|
-| **~** | Patch updates only | ~54.0.29 | 54.0.30, 54.0.31 |
-| **^** | Minor + Patch | ^4.2.1 | 4.2.2, 4.3.0 |
-| **(none)** | Exact version | 19.1.0 | Only 19.1.0 |
+| Prefix     | Meaning            | Example  | Allows           |
+| ---------- | ------------------ | -------- | ---------------- |
+| **~**      | Patch updates only | ~54.0.29 | 54.0.30, 54.0.31 |
+| **^**      | Minor + Patch      | ^4.2.1   | 4.2.2, 4.3.0     |
+| **(none)** | Exact version      | 19.1.0   | Only 19.1.0      |
 
 **Expo convention:**
+
 - Core packages (expo, expo-router): Use **~** (safe, patch-only)
 - Community packages: Use **^** (more flexible)
 - React/React Native: Use **exact** (critical dependencies)
@@ -817,16 +848,19 @@ Running `npx expo install expo@latest --fix` updates:
 ### **Resolved Issues**
 
 ✅ **React 19 "Incompatibility"** (2025-12-17)
+
 - **Myth:** React 19 doesn't work with React Native
 - **Truth:** React Native 0.81+ requires React 19
 - **Status:** Working correctly
 
 ✅ **Worklets Version Mismatch** (2025-12-18)
+
 - **Issue:** JS 0.7.1 vs Native 0.5.1 mismatch
 - **Fix:** Explicit install via `npx expo install`
 - **Status:** Resolved
 
 ✅ **NativeWind v4 Configuration** (2025-12-17)
+
 - **Issue:** Incorrect Babel/Metro config
 - **Fix:** Added proper `jsxImportSource` and preset
 - **Status:** Working correctly
@@ -834,11 +868,13 @@ Running `npx expo install expo@latest --fix` updates:
 ### **Known Limitations**
 
 ⚠️ **NativeWind v5** (Preview)
+
 - Requires Tailwind CSS v4.1.11+
 - Breaking changes from v4
 - **Recommendation:** Stay on v4 until v5 is stable
 
 ⚠️ **WSL File Permissions**
+
 - npm may fail with EACCES on Windows filesystem
 - **Workaround:** Use PowerShell or delete node_modules first
 
@@ -981,6 +1017,7 @@ npm --version
 If you're still stuck after trying these steps:
 
 1. **Run diagnostics:**
+
    ```bash
    npx expo-doctor
    node check-versions.js  # Custom diagnostic script
