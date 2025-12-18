@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -17,7 +17,7 @@ import * as Haptics from 'expo-haptics';
  * - AC5: Accessibility (screen reader support, touch targets)
  *
  * Technical Implementation:
- * - Uses StyleSheet for styling (NativeWind migration deferred)
+ * - Uses NativeWind for styling (Tailwind CSS classes)
  * - Haptic feedback on button press (iOS)
  * - SafeAreaView for notch/status bar handling
  * - Expo Router for navigation
@@ -39,85 +39,44 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+    <SafeAreaView className="flex-1 bg-white" style={{ flex: 1, backgroundColor: '#ffffff' }}>
+      <View className="flex-1 justify-center items-center px-4" style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 }}>
         {/* Weave Logo - AC1 */}
         <Image
           source={require('../../assets/icon.png')}
-          style={styles.logo}
+          className="w-16 h-16 mb-8"
           accessibilityLabel="Weave"
           resizeMode="contain"
+          style={{ width: 64, height: 64, marginBottom: 32 }}
         />
 
         {/* Tagline - AC1 */}
-        <Text style={styles.heading}>Weave</Text>
+        <Text className="text-2xl font-semibold text-center text-neutral-800 mb-4" style={{ fontSize: 24, fontWeight: '600', textAlign: 'center', color: '#000000', marginBottom: 16 }}>
+          Weave
+        </Text>
 
         {/* Value Proposition - AC1 */}
-        <Text style={styles.valueProposition}>See your transformation as you create it</Text>
+        <Text className="text-base text-center text-neutral-600 px-8 mb-12 leading-6" style={{ fontSize: 16, textAlign: 'center', color: '#000000', paddingHorizontal: 32, marginBottom: 48, lineHeight: 24 }}>
+          See your transformation as you create it
+        </Text>
 
         {/* CTA Button - AC1, AC3, AC5 */}
         <Pressable
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+          className={({ pressed }) =>
+            `bg-primary-500 h-11 rounded-lg w-full justify-center items-center ${
+              pressed ? 'bg-primary-600 scale-[0.98]' : ''
+            }`
+          }
           onPress={handleGetStarted}
           accessibilityRole="button"
           accessible={true}
+          style={{ backgroundColor: '#3b72f6', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center' }}
         >
-          <Text style={styles.buttonText}>Get Started</Text>
+          <Text className="text-white text-sm font-medium tracking-wider" style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}>
+            Get Started
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  logo: {
-    width: 64,
-    height: 64,
-    marginBottom: 32,
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: '600',
-    textAlign: 'center',
-    color: '#262626',
-    marginBottom: 16,
-    letterSpacing: -0.5,
-  },
-  valueProposition: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#525252',
-    paddingHorizontal: 32,
-    marginBottom: 48,
-    lineHeight: 24,
-  },
-  button: {
-    backgroundColor: '#3B72F6',
-    height: 44,
-    borderRadius: 8,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: 44,
-  },
-  buttonPressed: {
-    backgroundColor: '#2858E8',
-    transform: [{ scale: 0.98 }],
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-});
