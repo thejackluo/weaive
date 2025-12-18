@@ -5,7 +5,7 @@ Jack's workspace
 
 Whiteboard:
 [-]: Babel Plugin Issue cannot put things there
-[]: Design System components are not working and have lots of issues there
+[-]: Design System components are not working and have lots of issues there
 
 Eddie's computer
 [X]: React Fabric Dev Error
