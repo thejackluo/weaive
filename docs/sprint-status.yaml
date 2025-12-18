@@ -72,7 +72,7 @@ sprint-1-stories:
   # Epic 1: Onboarding (Hybrid Flow) - Phases 1-5 (33 pts)
   epic-1: in-progress
   # Phase 1: Emotional Hook (Pre-Auth)
-  1-1-welcome-vision-hook: review               # 2 pts (front-end complete, analytics deferred)
+  1-1-welcome-vision-hook: done                 # 2 pts (front-end done, follow-ups documented)
   1-2-emotional-state-selection: backlog        # 3 pts
   1-3-insight-reflection: backlog               # 2 pts
   1-4-weave-solution: backlog                   # 2 pts
