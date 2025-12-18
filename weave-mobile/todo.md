@@ -1,5 +1,5 @@
 Jack's workspace
-[]: @App.tsx has some errors with the stylesheet, and it's using the regular styles, but we want to use Tailwind. Also, should @App.tsx be deleted
+[x]: @App.tsx is using the stylesheet, and it's using the regular styles, but we want to use NativeWind. Also, should @App.tsx be deleted or should it just redirect to the index.tsx? → Deleted App.tsx (not used with Expo Router) and updated tailwind.config.js to scan app/ directory
 []: Migrate stylesheet to nativewind 5.0
 []: Path Alias decide one place to do it
 
