@@ -1,0 +1,25 @@
+{
+  "workflow_name": "figma-to-prd-sync",
+  "started_date": "2025-12-17T00:00:00.000Z",
+  "last_updated": "2025-12-17T00:00:00.000Z",
+  "status": "in_progress",
+  "processed_wireframes": [
+    {
+      "name": "thread-home",
+      "processed_date": "2025-12-17T00:00:00.000Z",
+      "mapped_stories": [
+        "US-3.1: View Today's Binds (Thread Home)",
+        "US-3.2: View Triad (AI Daily Plan)",
+        "US-5.5: Streak Tracking",
+        "US-4.1: Daily Reflection Entry",
+        "US-3.5: Quick Capture (Document)",
+        "US-6.1: Access AI Chat",
+        "US-2.1: View Goals List",
+        "US-5.1: Weave Dashboard Overview"
+      ],
+      "file_path": "docs/figma/thread-home.md"
+    }
+  ],
+  "prd_path": "/Users/eddielou/weavelight/docs/prd.md",
+  "figma_output_path": "/Users/eddielou/weavelight/docs/figma"
+}
