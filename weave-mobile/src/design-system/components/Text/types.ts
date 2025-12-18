@@ -1,10 +1,30 @@
 /**
- * Text Component Types
+ * Text Component Types - NativeWind v5
  */
 
 import { TextProps as RNTextProps } from 'react-native';
-import { TypographyVariant } from '../../tokens/typography';
-import { TextColor } from '../../tokens/colors';
+
+export type TypographyVariant =
+  | 'display2xl'
+  | 'displayXl'
+  | 'displayLg'
+  | 'displayMd'
+  | 'textLg'
+  | 'textBase'
+  | 'textSm'
+  | 'textXs'
+  | 'labelBase'
+  | 'monoBase';
+
+export type TextColor =
+  | 'primary'
+  | 'secondary'
+  | 'muted'
+  | 'disabled'
+  | 'ai'
+  | 'success'
+  | 'error'
+  | 'warning';
 
 export interface TextProps extends Omit<RNTextProps, 'style'> {
   /**
@@ -16,24 +36,21 @@ export interface TextProps extends Omit<RNTextProps, 'style'> {
   /**
    * Text color from theme
    * Use this for semantic colors (primary, secondary, muted, etc.)
+   * For custom colors, use className prop (e.g., className="text-rose-500")
+   * @default 'primary'
    */
   color?: TextColor;
 
   /**
-   * Custom hex color (overrides color prop)
-   * Use sparingly - prefer semantic colors
-   */
-  customColor?: string;
-
-  /**
    * Text alignment
+   * @default 'left'
    */
   align?: 'left' | 'center' | 'right';
 
   /**
    * Font weight override
    */
-  weight?: 'regular' | 'medium' | 'semibold' | 'bold';
+  weight?: 'light' | 'regular' | 'medium' | 'semibold' | 'bold';
 
   /**
    * Transform text to uppercase
@@ -41,7 +58,9 @@ export interface TextProps extends Omit<RNTextProps, 'style'> {
   uppercase?: boolean;
 
   /**
-   * Additional React Native style
+   * NativeWind className for additional styling
+   * Merged with variant styles
+   * @example className="text-rose-500 font-bold"
    */
-  style?: RNTextProps['style'];
+  className?: string;
 }
