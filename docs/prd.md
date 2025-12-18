@@ -487,43 +487,168 @@ New users experience a streamlined onboarding that gets them to their first "win
 
 ---
 
-#### US-1.3: Insight Reflection (Painpoint Mirror)
+#### US-1.3: Symptom Insight Screen (Dynamic Mirror)
 
 **Priority:** M (Must Have)
 
 **As a** new user
-**I want to** feel deeply understood
-**So that** I trust the app and continue
+**I want to** see a short, powerful reflection of the symptoms I'm experiencing based on the option(s) I selected
+**So that** I feel deeply understood and motivated to continue
 
 **Acceptance Criteria:**
-- [ ] Show 1-2 lines explaining why this struggle feels hard (copy varies by painpoint)
-- [ ] No scrolling, no walls of text
-- [ ] Single CTA: "Next"
-- [ ] Completion time <7 seconds
+- [ ] Displays 1–2 short, high-impact paragraphs describing the user's symptom(s)
+- [ ] If user selected two painpoints, show both symptom cards stacked with soft separation
+- [ ] No solutions appear here (solutions are in US-1.4)
+- [ ] Visual elements must enhance emotional impact (not plain text)
+- [ ] Completion time < 10 seconds
+- [ ] CTA: Next →
+- [ ] Track event: `symptom_insight_shown` with selected categories
+
+**Dynamic Copy (Final, Improved Versions):**
+
+**1. Clarity**
+
+*Symptoms*
+You want direction, but nothing feels aligned. You've reflected, journaled, thought deeply — yet you're still on autopilot.
+Deep down, you do have an idea of the life you want.
+You're just scared to start, because choosing a direction feels like closing every other door.
+
+**2. Action**
+
+*Symptoms*
+Your mind runs laps while your actions stay still.
+You overthink, perfect, plan, and wait for the "right moment" — but the moment never arrives.
+Starting feels overwhelming, so hesitation becomes your default.
+
+**3. Consistency**
+
+*Symptoms*
+You start strong, fall off, and repeat the cycle again and again.
+It's not that "life gets in the way" — it's that you don't see progress fast enough to believe it's working.
+One missed day breaks everything, and motivation collapses with it.
+
+**4. Community**
+
+*Symptoms*
+You're ambitious in a place that isn't.
+You feel misunderstood, unsupported, and tired of pushing alone.
+You've tried getting others to grow with you, but they didn't get it — and shrinking yourself to match them feels wrong.
+
+**If User Selected Two Painpoints:**
+- Display both cards, each in a rounded glass panel
+- **Animations:**
+  - Card 1 fades in
+  - Card 2 slides upward after a 200ms delay
+  - CTA appears only after both cards appear
+
+**Design Specification:**
+
+*Layout:*
+- Title at top: **"Why this feels so hard"**
+- Below title: one or two glass-paneled cards containing symptom text
+- Cards have:
+  - Soft shadow
+  - Subtle animated thread-lines in the background (very faint)
+  - Light vertical gradient (transparent → subtle highlight)
+- Page transitions: fade-in + slight upward drift (150–200ms)
+
+*Typography:*
+- Title: Semi-bold
+- Body: Medium; 90% opacity for clean minimalism
+
+*CTA Button:*
+- Text: "Next →"
+- Full-width, floating above safe area
 
 **Technical Notes:**
-- Static content
-- Track `painpoint_insight_viewed`
+- All content is local/static; no API call needed
+- Deterministic mapping based on selected painpoints
+- Gracefully handle 1 or 2 selected painpoints (never more)
+- Store data in `user_profiles.json.initial_symptoms`
 
 ---
 
-#### US-1.4: High-Level Weave Solution
+#### US-1.4: Weave Solution Screen (Dynamic "Here's What Changes Now")
 
 **Priority:** M (Must Have)
 
 **As a** new user
-**I want to** understand at a high level how Weave helps me
-**So that** I'm motivated to sign up
+**I want to** understand how Weave solves the struggle I'm experiencing
+**So that** I feel hopeful, supported, and motivated to proceed into the app
 
 **Acceptance Criteria:**
-- [ ] Show 1 sentence solution matched to user's painpoint
-- [ ] Subtle animation showing a weave forming
-- [ ] CTA: "Continue"
-- [ ] Completion time <5 seconds
+- [ ] Display one short "solution" paragraph for each selected painpoint
+- [ ] Content must be brief, actionable, and benefits-focused
+- [ ] Screen remains visually clean and minimal — no long explanations
+- [ ] If two painpoints selected, show two solution cards, matching the style of US-1.3
+- [ ] CTA: Show me →
+- [ ] Completion time < 8 seconds
+- [ ] Track event: `solution_screen_shown`
+
+**Dynamic Copy (Final, Improved Solutions):**
+
+**1. Clarity — Solution**
+
+*How Weave fixes this:*
+We turn vague feelings into clear direction.
+Through small daily reflections and pattern insights, Weave reveals where your motivation naturally points — and turns that into a path you can follow.
+
+*(Visual cue: reflection spark + weave insight glowing thread)*
+
+**2. Action — Solution**
+
+*How Weave fixes this:*
+We make starting easy.
+We break your goal into simple, doable steps and nudge you into motion — so action replaces hesitation, and momentum replaces overthinking.
+
+*(Visual cue: needle guiding a thread into motion)*
+
+**3. Consistency — Solution**
+
+*How Weave fixes this:*
+We make consistency feel meaningful.
+Every time you follow through, Weave turns that action into visible proof of who you're becoming — making discipline feel natural instead of forced.
+
+*(Visual cue: weave pattern gaining structure as binds complete)*
+
+**4. Community — Solution**
+
+*How Weave fixes this:*
+We become the environment that supports your ambition.
+The more you use the app, the better it understands how you grow — and eventually, Weave will connect you with others moving in the same direction.
+
+*(Visual cue: two threads beginning to intertwine — "coming soon" subtly noted)*
+
+**If User Selected Two Painpoints:**
+- Display both solutions in two separate glass cards
+- Layout mirrors US-1.3 for visual continuity
+- **Soft stacking animation:**
+  - Card 1 fades in
+  - Card 2 slides up (150–200ms delay)
+
+**Design Specification:**
+
+*Layout:*
+- Title at top: **"How Weave helps"**
+- Cards below containing solution statements
+- Subtle background animation: threads gently converging behind the card(s)
+- CTA button fixed bottom: **"Show me →"**
+
+*Visual Style:*
+- Liquid-glass cards
+- Light pulse animation on key words (optional): *clear, easy, visible proof, support*
+- Exactly 3–5 lines of text per card (no scrolling)
+
+*Typography:*
+- Header: Semi-bold
+- Body: Medium, 90% opacity
+- Keywords bolded for emotional anchors
 
 **Technical Notes:**
-- Static; no backend calls
-- Track `solution_screen_viewed`
+- Static content, no API
+- Deterministic mapping from earlier selections
+- Store `initial_solution_categories` for future personalization
+- Must support 1 or 2 cards, never more
 
 ---
 
