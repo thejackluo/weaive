@@ -1,8 +1,8 @@
 /**
  * Design System Showcase Screen
  *
- * Interactive preview of all design system components, tokens, and styles
- * Use this to test and visualize the design system during development
+ * Interactive preview of NativeWind v5 design system
+ * Built with Tailwind CSS v4 and tailwind-variants
  */
 
 import React from 'react';
@@ -17,37 +17,22 @@ import {
   Label,
   Mono,
   GlassView,
-  useTheme,
 } from '../../src/design-system';
 
 export default function DesignSystemShowcase() {
-  const { colors, spacing, radius } = useTheme();
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background.primary }}>
-      <ScrollView
-        contentContainerStyle={{
-          padding: spacing[4],
-          gap: spacing[6],
-        }}
-      >
+    <SafeAreaView className="flex-1 bg-background-primary">
+      <ScrollView contentContainerClassName="p-4 gap-6">
         {/* Header */}
-        <View style={{ gap: spacing[2] }}>
+        <View className="gap-2">
           <Heading variant="display2xl">Design System</Heading>
-          <Caption color="muted">React Native-First • NativeWind v5 • Liquid Glass UI</Caption>
+          <Caption>React Native-First • NativeWind v5 • Liquid Glass UI</Caption>
         </View>
 
         {/* Typography Section */}
-        <View style={{ gap: spacing[4] }}>
+        <View className="gap-4">
           <Title>Typography</Title>
-          <View
-            style={{
-              backgroundColor: colors.background.secondary,
-              borderRadius: radius.lg,
-              padding: spacing[4],
-              gap: spacing[3],
-            }}
-          >
+          <View className="bg-background-secondary rounded-lg p-4 gap-3">
             <Heading variant="display2xl">Display 2XL</Heading>
             <Heading variant="displayXl">Display XL</Heading>
             <Heading variant="displayLg">Display LG</Heading>
@@ -61,183 +46,109 @@ export default function DesignSystemShowcase() {
           </View>
         </View>
 
-        {/* Colors Section */}
-        <View style={{ gap: spacing[4] }}>
+        {/* Color Palette Section */}
+        <View className="gap-4">
           <Title>Color Palette</Title>
 
           {/* Background Colors */}
-          <View style={{ gap: spacing[2] }}>
+          <View className="gap-2">
             <Label>Background</Label>
-            <View style={{ flexDirection: 'row', gap: spacing[2], flexWrap: 'wrap' }}>
-              <View
-                style={{
-                  backgroundColor: colors.background.primary,
-                  width: 60,
-                  height: 60,
-                  borderRadius: radius.md,
-                  borderWidth: 1,
-                  borderColor: colors.border.muted,
-                }}
-              />
-              <View
-                style={{
-                  backgroundColor: colors.background.secondary,
-                  width: 60,
-                  height: 60,
-                  borderRadius: radius.md,
-                  borderWidth: 1,
-                  borderColor: colors.border.muted,
-                }}
-              />
-              <View
-                style={{
-                  backgroundColor: colors.background.elevated,
-                  width: 60,
-                  height: 60,
-                  borderRadius: radius.md,
-                  borderWidth: 1,
-                  borderColor: colors.border.muted,
-                }}
-              />
+            <View className="flex-row gap-2 flex-wrap">
+              <View className="w-15 h-15 rounded-md border border-border-muted bg-background-primary" />
+              <View className="w-15 h-15 rounded-md border border-border-muted bg-background-secondary" />
+              <View className="w-15 h-15 rounded-md border border-border-muted bg-background-elevated" />
             </View>
           </View>
 
           {/* Accent Colors */}
-          <View style={{ gap: spacing[2] }}>
+          <View className="gap-2">
             <Label>Accent Colors</Label>
-            <View style={{ flexDirection: 'row', gap: spacing[2], flexWrap: 'wrap' }}>
-              <View
-                style={{
-                  backgroundColor: colors.accent[500],
-                  width: 60,
-                  height: 60,
-                  borderRadius: radius.md,
-                }}
-              />
-              <View
-                style={{
-                  backgroundColor: colors.violet[500],
-                  width: 60,
-                  height: 60,
-                  borderRadius: radius.md,
-                }}
-              />
-              <View
-                style={{
-                  backgroundColor: colors.amber[500],
-                  width: 60,
-                  height: 60,
-                  borderRadius: radius.md,
-                }}
-              />
-              <View
-                style={{
-                  backgroundColor: colors.emerald[500],
-                  width: 60,
-                  height: 60,
-                  borderRadius: radius.md,
-                }}
-              />
-              <View
-                style={{
-                  backgroundColor: colors.rose[500],
-                  width: 60,
-                  height: 60,
-                  borderRadius: radius.md,
-                }}
-              />
+            <View className="flex-row gap-2 flex-wrap">
+              <View className="w-15 h-15 rounded-md bg-accent-500" />
+              <View className="w-15 h-15 rounded-md bg-violet-500" />
+              <View className="w-15 h-15 rounded-md bg-amber-500" />
+              <View className="w-15 h-15 rounded-md bg-emerald-500" />
+              <View className="w-15 h-15 rounded-md bg-rose-500" />
             </View>
           </View>
         </View>
 
         {/* Glassmorphism Section */}
-        <View style={{ gap: spacing[4] }}>
+        <View className="gap-4">
           <Title>Glassmorphism Effects</Title>
-          <Caption color="muted">
+          <Caption>
             {Platform.OS === 'web'
               ? 'Blur effects not available on web (fallback rendering)'
-              : 'Install @react-native-community/blur for full blur effects'}
+              : '@react-native-community/blur provides native blur effects'}
           </Caption>
 
           {/* Glass Card */}
-          <GlassView variant="card" style={{ padding: spacing[4], gap: spacing[2] }}>
+          <GlassView variant="card" className="p-4 gap-2">
             <Label>Glass Card</Label>
             <Body>Standard glass effect with subtle blur</Body>
-            <Caption color="muted">blur: 20 | variant: card</Caption>
+            <Caption>blur: 20 | variant: card</Caption>
           </GlassView>
 
           {/* Glass Elevated */}
-          <GlassView variant="elevated" style={{ padding: spacing[4], gap: spacing[2] }}>
+          <GlassView variant="elevated" className="p-4 gap-2">
             <Label>Glass Elevated</Label>
             <Body>More prominent blur with shadow</Body>
-            <Caption color="muted">blur: 30 | variant: elevated</Caption>
+            <Caption>blur: 30 | variant: elevated</Caption>
           </GlassView>
 
           {/* Glass AI */}
-          <GlassView variant="ai" style={{ padding: spacing[4], gap: spacing[2] }}>
-            <Label>Glass AI</Label>
+          <GlassView variant="ai" className="p-4 gap-2">
+            <Label className="text-text-ai">Glass AI</Label>
             <Body>Violet-tinted glass for AI content</Body>
-            <Caption color="muted">blur: 25 | variant: ai</Caption>
+            <Caption>blur: 25 | variant: ai</Caption>
           </GlassView>
 
           {/* Glass Success */}
-          <GlassView variant="success" style={{ padding: spacing[4], gap: spacing[2] }}>
-            <Label>Glass Success</Label>
+          <GlassView variant="success" className="p-4 gap-2">
+            <Label className="text-text-success">Glass Success</Label>
             <Body>Emerald-tinted glass for success states</Body>
-            <Caption color="muted">blur: 25 | variant: success</Caption>
+            <Caption>blur: 25 | variant: success</Caption>
           </GlassView>
 
           {/* Glass Subtle */}
-          <GlassView variant="subtle" style={{ padding: spacing[4], gap: spacing[2] }}>
+          <GlassView variant="subtle" className="p-4 gap-2">
             <Label>Glass Subtle</Label>
             <Body>Minimal glass effect</Body>
-            <Caption color="muted">blur: 10 | variant: subtle</Caption>
+            <Caption>blur: 10 | variant: subtle</Caption>
           </GlassView>
         </View>
 
-        {/* Spacing Section */}
-        <View style={{ gap: spacing[4] }}>
+        {/* Spacing Scale Section */}
+        <View className="gap-4">
           <Title>Spacing Scale</Title>
-          <View
-            style={{
-              backgroundColor: colors.background.secondary,
-              borderRadius: radius.lg,
-              padding: spacing[4],
-              gap: spacing[2],
-            }}
-          >
-            {[1, 2, 3, 4, 6, 8, 12, 16].map((size) => (
-              <View key={size} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
-                <Text variant="textSm" style={{ width: 60 }}>
-                  {spacing[size as keyof typeof spacing]}px
+          <View className="bg-background-secondary rounded-lg p-4 gap-2">
+            {[
+              { size: '1', px: '4px' },
+              { size: '2', px: '8px' },
+              { size: '3', px: '12px' },
+              { size: '4', px: '16px' },
+              { size: '6', px: '24px' },
+              { size: '8', px: '32px' },
+              { size: '12', px: '48px' },
+              { size: '16', px: '64px' },
+            ].map(({ size, px }) => (
+              <View key={size} className="flex-row items-center gap-2">
+                <Text variant="textSm" className="w-15">
+                  {px}
                 </Text>
-                <View
-                  style={{
-                    height: spacing[size as keyof typeof spacing],
-                    backgroundColor: colors.accent[500],
-                    borderRadius: radius.sm,
-                    flex: 1,
-                  }}
-                />
+                <View className={`h-${size} bg-accent-500 rounded-sm flex-1`} />
               </View>
             ))}
           </View>
         </View>
 
         {/* Border Radius Section */}
-        <View style={{ gap: spacing[4] }}>
+        <View className="gap-4">
           <Title>Border Radius</Title>
-          <View style={{ flexDirection: 'row', gap: spacing[3], flexWrap: 'wrap' }}>
-            {(['sm', 'md', 'lg', 'xl', '2xl', 'full'] as const).map((size) => (
-              <View key={size} style={{ alignItems: 'center', gap: spacing[1] }}>
-                <View
-                  style={{
-                    width: 60,
-                    height: 60,
-                    backgroundColor: colors.accent[500],
-                    borderRadius: radius[size],
-                  }}
-                />
+          <View className="flex-row gap-3 flex-wrap">
+            {['sm', 'md', 'lg', 'xl', '2xl', 'full'].map((size) => (
+              <View key={size} className="items-center gap-1">
+                <View className={`w-15 h-15 bg-accent-500 rounded-${size}`} />
                 <Caption>{size}</Caption>
               </View>
             ))}
@@ -245,16 +156,9 @@ export default function DesignSystemShowcase() {
         </View>
 
         {/* Text Colors Section */}
-        <View style={{ gap: spacing[4] }}>
+        <View className="gap-4">
           <Title>Text Colors</Title>
-          <View
-            style={{
-              backgroundColor: colors.background.secondary,
-              borderRadius: radius.lg,
-              padding: spacing[4],
-              gap: spacing[2],
-            }}
-          >
+          <View className="bg-background-secondary rounded-lg p-4 gap-2">
             <Text color="primary">Primary Text</Text>
             <Text color="secondary">Secondary Text</Text>
             <Text color="muted">Muted Text</Text>
@@ -266,38 +170,35 @@ export default function DesignSystemShowcase() {
           </View>
         </View>
 
-        {/* Status Section */}
-        <View style={{ gap: spacing[4] }}>
+        {/* System Status Section */}
+        <View className="gap-4">
           <Title>System Status</Title>
-          <View
-            style={{
-              backgroundColor: colors.background.secondary,
-              borderRadius: radius.lg,
-              padding: spacing[4],
-              gap: spacing[2],
-            }}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Caption color="muted">Design Tokens</Caption>
+          <View className="bg-background-secondary rounded-lg p-4 gap-2">
+            <View className="flex-row justify-between">
+              <Caption color="muted">Design Tokens (Tailwind v4)</Caption>
               <Caption color="success">✅ Complete</Caption>
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Caption color="muted">Theme System</Caption>
+            <View className="flex-row justify-between">
+              <Caption color="muted">NativeWind v5 Setup</Caption>
               <Caption color="success">✅ Complete</Caption>
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View className="flex-row justify-between">
               <Caption color="muted">Text Components</Caption>
               <Caption color="success">✅ Complete</Caption>
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Caption color="muted">GlassView</Caption>
+            <View className="flex-row justify-between">
+              <Caption color="muted">GlassView (Liquid Glass)</Caption>
               <Caption color="success">✅ Complete</Caption>
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View className="flex-row justify-between">
+              <Caption color="muted">tailwind-variants Integration</Caption>
+              <Caption color="success">✅ Complete</Caption>
+            </View>
+            <View className="flex-row justify-between">
               <Caption color="muted">Button Components</Caption>
               <Caption color="warning">⏳ Pending</Caption>
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View className="flex-row justify-between">
               <Caption color="muted">Card Components</Caption>
               <Caption color="warning">⏳ Pending</Caption>
             </View>
@@ -305,9 +206,9 @@ export default function DesignSystemShowcase() {
         </View>
 
         {/* Footer */}
-        <View style={{ alignItems: 'center', paddingVertical: spacing[8] }}>
-          <Caption color="muted">Weave Design System v0.2.0</Caption>
-          <Caption color="muted">Built with React Native + NativeWind v5</Caption>
+        <View className="items-center py-8">
+          <Caption color="muted">Weave Design System v0.3.0</Caption>
+          <Caption color="muted">Built with NativeWind v5 + Tailwind CSS v4</Caption>
         </View>
       </ScrollView>
     </SafeAreaView>

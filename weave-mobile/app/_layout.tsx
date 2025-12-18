@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
+import { ThemeProvider } from '../src/design-system';
 import '../global.css';
 
 /**
@@ -11,15 +12,18 @@ import '../global.css';
  * - Stack-based navigation (supports both (onboarding) and (tabs) route groups)
  * - Global CSS imported for NativeWind/Tailwind support
  * - Headers hidden by default (screens can override if needed)
+ * - Wrapped with ThemeProvider for design system support
  *
- * @returns Stack navigation component
+ * @returns Stack navigation component wrapped with ThemeProvider
  */
 export default function RootLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    />
+    <ThemeProvider initialMode="dark">
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      />
+    </ThemeProvider>
   );
 }
