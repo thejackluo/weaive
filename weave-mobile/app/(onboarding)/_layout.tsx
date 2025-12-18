@@ -14,7 +14,7 @@ import { Stack } from 'expo-router';
  *
  * Navigation Configuration:
  * - Headers hidden (each screen handles its own header if needed)
- * - Slide from right animation for forward navigation
+ * - Default Stack animations (slide transitions)
  *
  * @returns Stack navigator configured for onboarding
  */
@@ -23,7 +23,6 @@ export default function OnboardingLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        animation: 'slide_from_right',
       }}
     />
   );
