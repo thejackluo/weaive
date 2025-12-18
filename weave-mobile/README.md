@@ -16,6 +16,11 @@ React Native mobile application for Weave MVP built with Expo.
 npm install
 ```
 
+> **⚠️ IMPORTANT:** When adding new packages to this Expo project, always use `npx expo install <package>` instead of `npm install <package>`. This ensures SDK-compatible versions are installed and prevents peer dependency conflicts.
+>
+> **Good:** `npx expo install react-native-screens`  
+> **Bad:** `npm install react-native-screens`
+
 ### 2. Configure Environment Variables
 
 Copy the example environment file:
@@ -98,6 +103,7 @@ weave-mobile/
 - **Environment Variables:** Never commit `.env` file
 - **State Management:** Use TanStack Query for server state, Zustand for UI state, useState for local state
 - **Styling:** Use NativeWind (Tailwind) classes
+- **Adding Packages:** Always use `npx expo install <package>` to ensure SDK compatibility
 
 ## Troubleshooting
 
@@ -121,6 +127,17 @@ rm -rf node_modules
 npm install
 npx expo start --clear
 ```
+
+### NativeWind Styles Not Working
+
+If Tailwind classes aren't applying:
+
+1. Verify `tailwindcss` is installed: `npm list tailwindcss`
+2. Check `metro.config.js` has `withNativeWind()` wrapper
+3. Clear Metro cache: `npx expo start -c`
+4. See full troubleshooting: `docs/bugs/nativewind-styling-not-working.md`
+
+**Prevention:** Always use `npx expo install` when adding packages to avoid missing peer dependencies.
 
 ## Next Steps
 

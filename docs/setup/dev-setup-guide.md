@@ -289,6 +289,24 @@ npm --version
 
 If you see version numbers, you're good! ✅
 
+### Step 5.4: Important Note About Package Installation
+
+When working with the Expo mobile app (`weave-mobile/`), always use `npx expo install` instead of `npm install` for adding new packages:
+
+**✅ Correct:**
+```bash
+cd weave-mobile
+npx expo install react-native-screens
+```
+
+**❌ Incorrect:**
+```bash
+cd weave-mobile
+npm install react-native-screens
+```
+
+**Why?** `npx expo install` automatically installs SDK-compatible versions and prevents dependency conflicts that can cause hard-to-debug issues.
+
 ---
 
 ## 6. Install Python
