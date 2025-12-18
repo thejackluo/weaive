@@ -15,6 +15,14 @@ import '../global.css';
  * @returns Stack navigation component
  */
 export default function RootLayout() {
+  useEffect(() => {
+    // Log React version on mount for debugging
+    if (__DEV__) {
+      console.log(`[Weave] React version: ${React.version}`);
+      console.log('[Weave] App mounted successfully');
+    }
+  }, []);
+
   return (
     <Stack
       screenOptions={{
