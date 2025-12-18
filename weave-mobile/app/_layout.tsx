@@ -1,5 +1,5 @@
 /* global __DEV__, console */
-import { Tabs, ErrorBoundary } from 'expo-router';
+import { Stack, ErrorBoundary } from 'expo-router';
 import { Text, View } from 'react-native';
 import '../global.css'; // Import NativeWind styles
 
@@ -31,7 +31,7 @@ function ErrorFallback({ error, retry }: { error: Error; retry: () => void }) {
  *
  * This component:
  * - Imports global.css for NativeWind/Tailwind CSS support
- * - Sets up tab-based navigation structure
+ * - Sets up stack-based navigation structure
  * - Wraps app in ErrorBoundary for better debugging
  * - Provides the foundation for all app screens
  */
@@ -47,14 +47,15 @@ export default function RootLayout() {
         // In production, you would send this to an error tracking service (Sentry, etc.)
       }}
     >
-      <Tabs>
-        <Tabs.Screen
-          name="(tabs)"
-          options={{
-            headerShown: false,
-          }}
-        />
-      </Tabs>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(onboarding)" />
+        <Stack.Screen name="(tabs)" />
+      </Stack>
     </ErrorBoundary>
   );
 }
