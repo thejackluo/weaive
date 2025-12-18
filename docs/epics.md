@@ -42,16 +42,23 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ### Functional Requirements
 
-**Epic 1: Onboarding & Identity (33 pts)**
-- FR-1.1: Welcome Screen - Display engaging welcome with Weave logo, slogan ("See who you're becoming"), value proposition, and Get Started CTA (M)
-- FR-1.2: Demographics Collection - Collect user type, timezone (auto-detect), preferred working hours with progress indicator (M)
-- FR-1.3: Archetype Assessment - Present 6-8 questions, categorize into archetype, display result with description, allow retake (M)
-- FR-1.4: Dream Self Definition - Text input for ideal future self (200-500 chars), prompt suggestions, editable later in profile (M)
-- FR-1.5: Motivation and Constraints - Select motivation drivers, failure mode, optional time/energy constraints. **Note:** Initial direct input PLUS AI observes and refines these over time based on user behavior patterns (S)
-- FR-1.6: First Needle/Goal Setup (AI-Assisted) - Input goal (Needle), probing questions ("Why is this important?"), AI generates goal breakdown with suggested Binds (subtasks), all editable. Q-Goals are internal and not shown in edit UI (M)
-- FR-1.7: First Commitment - Display summary of Needle + first 3 Binds, hold-to-commit interaction, trigger push permission request, complete onboarding (M)
-- FR-1.8: App Tutorial - 3-4 screen tutorial showing core features (Thread, Bind completion, Daily check-in, Weave dashboard). **Important:** Emphasizes this is a differentiated experience, not just another habit app. Skippable but encouraged (M - upgraded from C)
-- FR-1.9: Soft Paywall - Present subscription options after onboarding completion, before entering main app. Show value proposition, allow skip to free tier. Payment integration with App Store (M - NEW)
+**Epic 1: Onboarding (Optimized Hybrid Flow) (48 pts)**
+- FR-1.1: Welcome & Vision Hook - Display Weave logo + tagline ("See who you're becoming"), short value prop (1 sentence), Get Started CTA. Loads <2s (M)
+- FR-1.2: Emotional State Selection (Painpoint) - Display 4 cards: Clarity, Action, Consistency, Alignment. User selects 1-2. Sends `selected_painpoints` to backend (M)
+- FR-1.3: Insight Reflection (Painpoint Mirror) - Show 1-2 lines explaining why this struggle feels hard (copy varies by painpoint). Completion <7s (M)
+- FR-1.4: High-Level Weave Solution - Show 1 sentence solution matched to painpoint, subtle animation showing weave forming. Completion <5s (M)
+- FR-1.5: Authentication - Quick account creation: Sign in with Apple/Google/Email. Show "7-day free trial. No commitment." Fast auth <3s (M)
+- FR-1.6: Identity Traits Selection - Display 12 selectable traits (chips), user selects 3-5. Stored immediately. Completion <15s (M)
+- FR-1.7: First Needle (Goal Definition – Simple) - Input field: "What's one thing you want to achieve first?" Suggestion chips based on painpoint. Completion <10s (M)
+- FR-1.8: Weave Path Generation (AI-Assisted) - Loading animation: "Shaping your path…" (1-3s delay). AI generates: goal title & summary, 2-3 milestones, 2-4 binds. User can accept or edit. AI Module: Onboarding Coach (M)
+- FR-1.9: First Commitment Ritual (Bind #1) - Display: "Today is [date]. Mark this as the start of your transformation." User taps "Complete my first Bind". Accept any input type. Show micro-animation of thread tightening. Display: "Day 1 complete." (M)
+- FR-1.10: App Mini-Tutorial (Tooltip Style) - 3 tooltips: Weave avatar, Binds, Reflection button. Each dismissible with "Got it". Duration <20s (M)
+- FR-1.11: Welcome Into 7-Day Journey - Banner at top: "You're on Day 1 of your 7-day transformation." No paywall. User enters Thread (Home) (M)
+- FR-1.12: Dream Self (Day 1 Evening Prompt) - **Deferred personalization.** Triggered inside nightly reflection. Text input: "Describe the person you're becoming" (200 char min). Stored in identity_docs (S)
+- FR-1.13: Archetype Micro-Assessment (Day 2) - **Deferred personalization.** 3-4 quick questions delivered in chat or reflection. Deterministic archetype mapping (S)
+- FR-1.14: Motivations & Failure Modes (Day 2-3) - **Deferred personalization.** Select 2-3 motivation drivers, failure mode, optional constraints. Inserted contextually into reflection flow (S)
+- FR-1.15: Constraints & Demographics (Day 3) - **Deferred personalization.** Optional "Improve your recommendations" modal. Collect: timezone, preferred hours, user type (S)
+- FR-1.16: Soft Paywall (Day 3-4 Trigger) - Triggered after 3 consecutive days of bind completion OR when user tries to add second Needle. Show Free vs Pro vs Max. Always show "Continue free" option. Track `paywall_presented` and `paywall_action` events (M)
 
 **Epic 2: Needle/Goal Management (27 pts)**
 - FR-2.1: View Needles List - Display up to 3 active Needles (goals) with status, consistency %, Bind count, tap to expand (M)
@@ -461,22 +468,31 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
-### Epic 1: Onboarding & Identity (35 pts)
-**User Outcome:** New users can set up their identity profile, complete their first Needle (goal) with AI assistance, and start their 10-day journey.
+### Epic 1: Onboarding (Optimized Hybrid Flow) (48 pts)
+**User Outcome:** New users experience streamlined onboarding that gets them to their first "win" within 3 minutes, then progressively gathers deeper personalization over Days 1-3 of actual usage. Maximizes completion → emotional resonance → early activation.
 
-**FRs Covered:** FR-1.1, FR-1.2, FR-1.3, FR-1.4, FR-1.5, FR-1.6, FR-1.7, FR-1.8, FR-1.9
+**FRs Covered:** FR-1.1, FR-1.2, FR-1.3, FR-1.4, FR-1.5, FR-1.6, FR-1.7, FR-1.8, FR-1.9, FR-1.10, FR-1.11, FR-1.12, FR-1.13, FR-1.14, FR-1.15, FR-1.16
 
-**Why This Epic First:** Users cannot do anything without completing onboarding. This establishes identity, first goal, and payment - the foundation for everything else.
+**Why This Epic First:** Users cannot do anything without completing onboarding. This establishes emotional connection, first goal, and trial activation - the foundation for everything else. The hybrid approach front-loads value delivery while deferring heavy personalization.
+
+**Architecture:** 7 progressive phases (Pre-Auth Emotional Hook → Light Identity Bootup → Early Value Proof → Lightweight Orientation → Trial Activation → Deferred Personalization → Monetization)
 
 **Stories:**
-- **Story 1.1: Welcome Screen** (2 pts) - FR-1.1: Display engaging welcome with Weave logo, slogan, value proposition, Get Started CTA
-- **Story 1.2: Demographics Collection** (3 pts) - FR-1.2: Collect user type, timezone (auto-detect), preferred working hours with progress indicator
-- **Story 1.3: Archetype Assessment** (5 pts) - FR-1.3: Present 6-8 questions, categorize into archetype, display result with description, allow retake
-- **Story 1.4: Dream Self Definition** (3 pts) - FR-1.4: Text input for ideal future self (200-500 chars), prompt suggestions, editable later
-- **Story 1.5: Motivation and Constraints** (3 pts) - FR-1.5: Select motivation drivers, failure mode, optional constraints
-- **Story 1.6a: Goal Input Flow** (3 pts) - FR-1.6 Part 1: Goal text input with character limit, probing question display
 
-- **Story 1.6b: AI Goal Analysis** (5 pts) - FR-1.6 Part 2: AI processes goal with probing answers, generates breakdown
+**PHASE 1: Emotional Hook (Pre-Auth, 45s max)**
+- **Story 1.1: Welcome & Vision Hook** (2 pts) - FR-1.1: Display Weave logo + tagline ("See who you're becoming"), short value prop (1 sentence), Get Started CTA. Loads <2s. Track `onboarding_started`
+- **Story 1.2: Emotional State Selection** (3 pts) - FR-1.2: Display 4 painpoint cards (Clarity, Action, Consistency, Alignment). User selects 1-2. Smooth transitions with micro-animations. Sends `selected_painpoints` to backend
+- **Story 1.3: Insight Reflection** (2 pts) - FR-1.3: Show 1-2 lines explaining why this struggle feels hard (static content varies by painpoint). Completion <7s. Track `painpoint_insight_viewed`
+- **Story 1.4: High-Level Weave Solution** (2 pts) - FR-1.4: Show 1 sentence solution matched to painpoint, subtle weave forming animation. Completion <5s. Track `solution_screen_viewed`
+- **Story 1.5: Authentication** (3 pts) - FR-1.5: Quick account creation with Apple/Google/Email. Show "7-day free trial. No commitment." Fast auth <3s. Store user in `user_profiles`. Track `auth_completed`
+
+**PHASE 2: Light Identity Bootup (In-App, Fast)**
+- **Story 1.6: Identity Traits Selection** (3 pts) - FR-1.6: Display 12 selectable traits (chips), user selects 3-5. Stored immediately to `identity_docs.json`. Completion <15s
+- **Story 1.7: First Needle (Simple)** (3 pts) - FR-1.7: Input field: "What's one thing you want to achieve first?" Suggestion chips based on earlier painpoint. Store in temporary onboarding state. Completion <10s
+
+**PHASE 3: Early Value Proof ("Wow Moment")**
+- **Story 1.8a: Weave Path Generation UI** (3 pts) - FR-1.8 Part 1: Loading animation: "Shaping your path…" (1-3s UX pacing). Display AI-generated goal breakdown: title, summary, 2-3 milestones, 2-4 binds. User can accept or edit each item
+- **Story 1.8b: AI Goal Breakdown** (5 pts) - FR-1.8 Part 2: AI processes goal, generates breakdown. AI Module: Onboarding Coach (deterministic constraints, ~70% success probability)
   - **AI Fallback Chain:**
     1. **Primary:** GPT-4o-mini (90% of calls) - Fast, cost-effective ($0.15/$0.60 per MTok)
     2. **Secondary:** Anthropic Claude Sonnet - If OpenAI times out (>5s) or returns error
@@ -484,13 +500,25 @@ This document provides the complete epic and story breakdown for Weave, decompos
     4. **Static Fallback:** Generic starter binds ("Define your goal", "Research first step", "Create a plan")
   - **Error Handling:** Show user-friendly message: "AI is taking a break. Here are some starter suggestions based on your goal type."
   - **Cost Control:** Track cost per breakdown, alert if >$0.10 per user per goal
+  - **Data:** Write to `goals`, `qgoals`, `subtask_templates`, create `ai_runs` record
   - **AC:** AI succeeds with primary; falls back gracefully on timeout; template fallback works
   - **DoD:** All 4 fallback levels tested; cost tracking integrated; user sees helpful response always
+- **Story 1.9: First Commitment Ritual** (3 pts) - FR-1.9: Display: "Today is [date]. Mark this as the start of your transformation." User taps "Complete my first Bind". Accept any input type (text/photo/audio/checkmark). Show micro-animation of thread tightening. Display: "Day 1 complete." Create first `subtask_instance`, write `bind_completed` event, set `onboarding_first_bind_completed_at`
 
-- **Story 1.6c: Bind Suggestions & Editing** (3 pts) - FR-1.6 Part 3: Display AI-generated Binds, allow user editing, confirm selections
-- **Story 1.7: First Commitment** (3 pts) - FR-1.7: Display summary, hold-to-commit interaction, trigger push permission
-- **Story 1.8: App Tutorial** (2 pts) - FR-1.8: 3-4 screen tutorial showing core features, skippable
-- **Story 1.9: Soft Paywall** (3 pts) - FR-1.9: Present subscription options, value proposition, allow skip to free tier
+**PHASE 4: Lightweight Orientation**
+- **Story 1.10: App Mini-Tutorial** (3 pts) - FR-1.10: 3 tooltip-style callouts: (1) Highlight Weave avatar → "This grows with your consistency", (2) Highlight Binds → "These are your identity-building actions", (3) Highlight Reflection button → "Reflect nightly for deeper insights". Each dismissible with "Got it". Duration <20s. Track tutorial completed vs skipped
+
+**PHASE 5: Trial Activation**
+- **Story 1.11: Welcome Into 7-Day Journey** (1 pt) - FR-1.11: Banner at top: "You're on Day 1 of your 7-day transformation." No paywall. User enters Thread (Home)
+
+**PHASE 6: Deferred Deep Personalization (Days 1-3)**
+- **Story 1.12: Dream Self (Day 1 Evening)** (3 pts) - FR-1.12: **Deferred personalization.** Triggered inside first evening reflection. Text input: "Describe the person you're becoming" (200 char min). Stored in `identity_docs.json.dream_self`
+- **Story 1.13: Archetype Micro-Assessment (Day 2)** (3 pts) - FR-1.13: **Deferred personalization.** 3-4 quick questions delivered in chat or reflection (not a psych test). Deterministic archetype mapping. Stored in `identity_docs.archetype`
+- **Story 1.14: Motivations & Failure Modes (Day 2-3)** (3 pts) - FR-1.14: **Deferred personalization.** Select 2-3 motivation drivers, failure mode, optional constraints. Inserted contextually into reflection flow. Stored in `identity_docs.json`
+- **Story 1.15: Constraints & Demographics (Day 3)** (2 pts) - FR-1.15: **Deferred personalization.** Optional "Improve your recommendations" modal after Day 3 reflection. Collect: timezone, preferred hours, user type. Stored in `user_profiles`
+
+**PHASE 7: Monetization**
+- **Story 1.16: Soft Paywall (Day 3-4 Trigger)** (5 pts) - FR-1.16: Triggered after 3 consecutive days of bind completion OR when user tries to add second Needle. Show Free vs Pro vs Max with clear value prop. Always show "Continue free" option. Track `paywall_presented` and `paywall_action` events. Store in `user_profiles.subscription_tier`
 
 ---
 

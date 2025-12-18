@@ -1,8 +1,8 @@
 # Weave Sprint Plan
 
-**Generated:** 2025-12-16
+**Generated:** 2025-12-16 (Updated: 2025-12-17 for Epic 1 Hybrid Flow)
 **Project:** Weave MVP
-**Total Scope:** 272 story points across 9 epics
+**Total Scope:** 298 story points across 9 epics (+26 pts from Epic 1 hybrid flow)
 **Target Delivery:** 12-14 weeks (3 months)
 **Team Size:** 1-2 developers
 
@@ -81,20 +81,30 @@ Day 4-5: Error handling (NEW - from gaps)
 ## Sprint 1: Core User Journey (Weeks 1-2)
 
 **Duration:** 2 weeks (10 work days)
-**Capacity:** 48-50 story points (realistic estimate)
-**Goal:** User can complete onboarding, set first goal, complete first bind, and see progress
+**Capacity:** 57 story points (updated for Epic 1 Hybrid Flow)
+**Goal:** User can complete onboarding (Phases 1-5), set first goal, complete first bind, and see progress
 
-### Sprint 1 Scope (Revised from 66 pts → 48 pts)
+### Sprint 1 Scope (Revised: 57 pts)
 
-**Epic 1: Onboarding & Identity (24 pts)** - Reduced from 33 pts
-- ✅ 1.1: Welcome Screen (3 pts)
-- ✅ 1.2: Demographics Collection (3 pts)
-- ✅ 1.3: Archetype Assessment (5 pts)
-- ✅ 1.4: Dream Self Definition (3 pts)
-- ✅ 1.5: Motivation and Constraints (3 pts)
-- ✅ 1.6a: Goal Input & Probing Questions (3 pts)
-- ✅ 1.7: First Commitment (2 pts)
-- ⏭️ **DEFERRED:** 1.6b (AI goal breakdown - 5 pts), 1.6c (Bind generation - 3 pts), 1.8 (Tutorial - 2 pts), 1.9 (Soft paywall - 3 pts)
+**Epic 1: Onboarding (Hybrid Flow) - Phases 1-5 (33 pts)**
+- **Phase 1: Emotional Hook (Pre-Auth, 45s max)**
+  - 1.1: Welcome & Vision Hook (2 pts)
+  - 1.2: Emotional State Selection (Painpoint) (3 pts)
+  - 1.3: Insight Reflection (Painpoint Mirror) (2 pts)
+  - 1.4: High-Level Weave Solution (2 pts)
+  - 1.5: Authentication (3 pts)
+- **Phase 2: Light Identity Bootup (In-App, Fast)**
+  - 1.6: Identity Traits Selection (3 pts)
+  - 1.7: First Needle (Simple) (3 pts)
+- **Phase 3: Early Value Proof ("Wow Moment")**
+  - 1.8a: Weave Path Generation UI (3 pts)
+  - 1.8b: AI Goal Breakdown (5 pts)
+  - 1.9: First Commitment Ritual (3 pts)
+- **Phase 4: Lightweight Orientation**
+  - 1.10: App Mini-Tutorial (Tooltip Style) (3 pts)
+- **Phase 5: Trial Activation**
+  - 1.11: Welcome Into 7-Day Journey (1 pt)
+- ⏭️ **DEFERRED Phases 6-7 → Sprint 2:** 1.12 Dream Self (3 pts), 1.13 Archetype (3 pts), 1.14 Motivations (3 pts), 1.15 Constraints (2 pts), 1.16 Soft Paywall (5 pts)
 
 **Epic 3: Daily Actions (Simplified) (16 pts)** - Reduced from 38 pts
 - ✅ 3.1a: View Today's Binds (basic list) (5 pts)
@@ -132,19 +142,22 @@ Day 4-5: Error handling (NEW - from gaps)
 
 ---
 
-## Sprint 2: AI Features & Polish (Weeks 3-4)
+## Sprint 2: AI Features & Deferred Personalization (Weeks 3-4)
 
 **Duration:** 2 weeks
-**Capacity:** 50-52 story points
-**Goal:** Add AI-powered goal breakdown, daily plans (Triad), and journaling with feedback
+**Capacity:** 57 story points (updated for Epic 1 Hybrid Flow)
+**Goal:** Complete deferred onboarding (Phases 6-7), add daily plans (Triad), and journaling with feedback
 
-### Sprint 2 Scope
+### Sprint 2 Scope (Revised: 57 pts)
 
-**Epic 1 (Continued): AI Onboarding (11 pts)**
-- 1.6b: AI Goal Breakdown (5 pts)
-- 1.6c: AI Bind Generation (3 pts)
-- 1.8: App Tutorial (2 pts)
-- 1.9: Soft Paywall (deferred to Sprint 3)
+**Epic 1 (Continued): Hybrid Flow Phases 6-7 (15 pts)**
+- **Phase 6: Deferred Deep Personalization (Days 1-3)**
+  - 1.12: Dream Self (Day 1 Evening Prompt) (3 pts)
+  - 1.13: Archetype Micro-Assessment (Day 2) (3 pts)
+  - 1.14: Motivations & Failure Modes (Day 2-3) (3 pts)
+  - 1.15: Constraints & Demographics (Day 3) (2 pts)
+- **Phase 7: Monetization**
+  - 1.16: Soft Paywall (Day 3-4 Trigger) (5 pts)
 
 **Epic 3 (Continued): AI Daily Plan (14 pts)**
 - 3.2a: View Triad (AI daily plan) (5 pts)

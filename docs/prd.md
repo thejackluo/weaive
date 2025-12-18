@@ -427,272 +427,387 @@ Before any user-facing features can be built, the development team must have a f
 
 ---
 
-## Epic 1: Onboarding & Identity
+## Epic 1: Onboarding (Optimized Hybrid Flow)
 
 ### Overview
 
-New users must be able to set up their identity profile and first goal within 5 minutes, with AI assistance for goal breakdown.
+**Goal:** Maximize completion → emotional resonance → early activation → set up the 7-day retention loop → gather deep personalization incrementally.
 
-### User Stories
-
-#### US-1.1: Welcome Screen
-
-**Priority:** M (Must Have)
-
-**As a** new user
-**I want to** see an engaging welcome screen
-**So that** I understand what Weave offers and am motivated to continue
-
-**Acceptance Criteria:**
-- [ ] Display Weave logo and slogan ("See who you're becoming")
-- [ ] Show "Get Started" CTA button
-- [ ] Display value proposition in 1-2 sentences
-- [ ] Screen loads in <2 seconds
-
-**Technical Notes:**
-- Static screen, no API calls
-- Track `onboarding_started` event
+New users experience a streamlined onboarding that gets them to their first "win" within 3 minutes, then progressively gathers deeper personalization over the first 3-4 days of actual usage.
 
 ---
 
-#### US-1.2: Demographics Collection
+### PHASE 1 — Emotional Hook (PRE-AUTH, 45s max)
+
+#### US-1.1: Welcome & Vision Hook
 
 **Priority:** M (Must Have)
 
 **As a** new user
-**I want to** provide basic information about myself
-**So that** the AI can personalize my experience
+**I want to** see a simple, motivating welcome screen
+**So that** I feel emotionally drawn into the experience and choose to start
 
 **Acceptance Criteria:**
-- [ ] Collect user type (student, professional, entrepreneur, creative, other)
-- [ ] Collect timezone (auto-detect with manual override)
-- [ ] Collect preferred working hours (morning/afternoon/evening/flexible)
-- [ ] Optional: Screen time access permission (not required for MVP)
-- [ ] Progress indicator shows step 1 of 4
-- [ ] "Skip" option for optional fields
+- [ ] Show Weave logo + tagline: "See who you're becoming."
+- [ ] Short value prop (1 sentence): "Weave helps you turn daily actions into visible transformation."
+- [ ] Display Get Started CTA button
+- [ ] Loads under 2 seconds
+- [ ] Tracks `onboarding_started` event
+
+**Technical Notes:**
+- No API calls; static assets only
+- Event logged to analytics
+
+---
+
+#### US-1.2: Emotional State Selection (Painpoint Identification)
+
+**Priority:** M (Must Have)
+
+**As a** new user
+**I want to** pick what I'm struggling with right now
+**So that** the app feels personalized immediately without asking for heavy data
+
+**Acceptance Criteria:**
+- [ ] Display 4 cards:
+  - **Clarity** → "I'm figuring out my direction"
+  - **Action** → "I think a lot but don't start"
+  - **Consistency** → "I start strong but fall off"
+  - **Alignment** → "I feel ambitious but isolated"
+- [ ] User selects 1; can optionally add a second after confirmation
+- [ ] Smooth transitions; each card has micro-animation on select
+- [ ] Sends `selected_painpoints` to backend (lightweight)
 
 **Data Requirements:**
-- Write to `user_profiles` table
-- Fields: `user_type`, `timezone`, `preferred_hours`
+- Store `initial_painpoints` in `user_profiles.json`
 
 **Technical Notes:**
-- Auto-detect timezone using device settings
-- Validate timezone is valid IANA timezone
+- Deterministic mapping → no AI call
+- Used later to adjust early prompts and tone
 
 ---
 
-#### US-1.3: Archetype Assessment
+#### US-1.3: Insight Reflection (Painpoint Mirror)
 
 **Priority:** M (Must Have)
 
 **As a** new user
-**I want to** answer questions that define my personality type
-**So that** the AI can adapt its coaching style to me
+**I want to** feel deeply understood
+**So that** I trust the app and continue
 
 **Acceptance Criteria:**
-- [ ] Present 6-8 questions (multiple choice)
-- [ ] Each question has 2-4 options
-- [ ] Questions feel relevant, not generic psych test
-- [ ] AI categorizes user into one of 6-8 archetypes
-- [ ] Display archetype result with 1-sentence description
-- [ ] User can retake assessment if desired
-- [ ] Total assessment time <2 minutes
-
-**Data Requirements:**
-- Write to `identity_docs` table
-- Store raw responses and computed archetype
-
-**Archetypes (Example):**
-1. **The Achiever** - Driven by visible accomplishments
-2. **The Builder** - Creates things, ships products
-3. **The Learner** - Knowledge acquisition, skill building
-4. **The Connector** - Relationships, networking, community
-5. **The Explorer** - New experiences, growth through variety
-6. **The Optimizer** - Systems, efficiency, improvement
+- [ ] Show 1-2 lines explaining why this struggle feels hard (copy varies by painpoint)
+- [ ] No scrolling, no walls of text
+- [ ] Single CTA: "Next"
+- [ ] Completion time <7 seconds
 
 **Technical Notes:**
-- Archetype mapping is deterministic (not AI call)
-- Store responses for future ML improvement
+- Static content
+- Track `painpoint_insight_viewed`
 
 ---
 
-#### US-1.4: Dream Self Definition
+#### US-1.4: High-Level Weave Solution
 
 **Priority:** M (Must Have)
 
 **As a** new user
-**I want to** define my ideal future self
-**So that** the AI can use this vision to motivate and guide me
+**I want to** understand at a high level how Weave helps me
+**So that** I'm motivated to sign up
 
 **Acceptance Criteria:**
-- [ ] Text input: "Describe the person you want to become" (200 char min, 500 char max)
-- [ ] Provide 2-3 prompt suggestions to help (e.g., "Confident, consistent, follows through")
-- [ ] Display: "This becomes your AI coach's voice"
-- [ ] Validation: Non-empty, meets length requirements
-- [ ] User can edit this later in Profile
-
-**Data Requirements:**
-- Write to `identity_docs.json.dream_self`
+- [ ] Show 1 sentence solution matched to user's painpoint
+- [ ] Subtle animation showing a weave forming
+- [ ] CTA: "Continue"
+- [ ] Completion time <5 seconds
 
 **Technical Notes:**
-- This text is used in AI personality document
-- Critical for Dream Self Advisor voice
+- Static; no backend calls
+- Track `solution_screen_viewed`
 
 ---
 
-#### US-1.5: Motivation and Constraints
+#### US-1.5: Authentication
+
+**Priority:** M (Must Have)
+
+**As a** new user
+**I want to** quickly create an account
+**So that** I can start my transformation
+
+**Acceptance Criteria:**
+- [ ] Buttons: Sign in with Apple, Sign in with Google, Email
+- [ ] Show: "7-day free trial. No commitment."
+- [ ] Fast authentication (<3 seconds)
+- [ ] Store user row in `user_profiles`
+
+**Technical Notes:**
+- Use Supabase Auth
+- Track `auth_completed`
+
+---
+
+### PHASE 2 — Light Identity Bootup (IN-APP, FAST)
+
+#### US-1.6: Identity Traits Selection
+
+**Priority:** M (Must Have)
+
+**As a** new user
+**I want to** choose traits I want to grow into
+**So that** the app can anchor my early journey to identity
+
+**Acceptance Criteria:**
+- [ ] Display 12 selectable traits (chips)
+- [ ] User selects 3-5
+- [ ] Stored immediately after selection
+- [ ] CTA: "Continue"
+- [ ] Completion time <15 seconds
+
+**Data Requirements:**
+- Write `identity_traits` → `identity_docs.json`
+
+---
+
+#### US-1.7: First Needle (Goal Definition – Simple)
+
+**Priority:** M (Must Have)
+
+**As a** new user
+**I want to** define one goal
+**So that** Weave can break it down into actionable steps
+
+**Acceptance Criteria:**
+- [ ] Input field: "What's one thing you want to achieve first?"
+- [ ] Suggestion chips based on painpoint chosen earlier
+- [ ] User must input or tap a suggestion
+- [ ] CTA: "Continue"
+- [ ] Completion time <10 seconds
+
+**Data Requirements:**
+- Store basic goal text in temporary onboarding state
+- Later transformed into tables during AI breakdown
+
+---
+
+### PHASE 3 — Early Value Proof ("Wow Moment")
+
+#### US-1.8: Weave Path Generation (AI-Assisted)
+
+**Priority:** M (Must Have)
+
+**As a** new user
+**I want to** see a clear, AI-generated breakdown of my goal
+**So that** I understand exactly how to begin
+
+**Acceptance Criteria:**
+- [ ] Loading animation: "Shaping your path…"
+- [ ] 1-3 second delay (UX pacing)
+- [ ] AI generates:
+  - Goal title & summary
+  - 2-3 milestones
+  - 2-4 binds (actions/habits)
+- [ ] User can accept or edit each item
+- [ ] CTA: "Looks good" → or "Edit"
+
+**AI Module:** Onboarding Coach (deterministic constraints, ~70% success probability)
+
+**Data Requirements:**
+- Write outputs to:
+  - `goals`
+  - `qgoals`
+  - `subtask_templates`
+- Create `ai_runs` record
+
+---
+
+#### US-1.9: First Commitment Ritual (Bind #1)
+
+**Priority:** M (Must Have)
+
+**As a** new user
+**I want to** complete a symbolic first action
+**So that** I feel emotionally invested and committed
+
+**Acceptance Criteria:**
+- [ ] Display: "Today is [date]. Mark this as the start of your transformation."
+- [ ] User must tap "Complete my first Bind"
+- [ ] Accept any input type: text, photo, audio, or checkmark
+- [ ] Show micro-animation of thread tightening
+- [ ] Display: "Day 1 complete."
+
+**Data Requirements:**
+- Create first `subtask_instance`
+- Write `bind_completed` event
+- Set `onboarding_first_bind_completed_at`
+
+---
+
+### PHASE 4 — Lightweight Orientation
+
+#### US-1.10: App Mini-Tutorial (Tooltip Style)
+
+**Priority:** M (Must Have)
+
+**As a** new user
+**I want to** see a quick, digestible tour
+**So that** I understand the core structure without feeling overwhelmed
+
+**Acceptance Criteria:**
+- [ ] 3 tooltips:
+  - Highlight Weave avatar → "This grows with your consistency."
+  - Highlight Binds → "These are your identity-building actions."
+  - Highlight Reflection button → "Reflect nightly for deeper insights."
+- [ ] Each tooltip dismissible with "Got it"
+- [ ] Tutorial duration <20 seconds
+- [ ] Track tutorial completed vs skipped
+
+---
+
+### PHASE 5 — Trial Activation
+
+#### US-1.11: Welcome Into the 7-Day Journey
+
+**Priority:** M (Must Have)
+
+**As a** new user
+**I want to** understand I'm beginning a guided 7-day experience
+**So that** I'm motivated to continue
+
+**Acceptance Criteria:**
+- [ ] Banner at top: "You're on Day 1 of your 7-day transformation."
+- [ ] No paywall
+- [ ] User enters Thread (Home)
+
+---
+
+### PHASE 6 — Deferred Deep Personalization (Post-Activation)
+
+These replace the earlier heavy pre-auth screens and are delivered contextually during Days 1-3.
+
+#### US-1.12: Dream Self (Day 1 Evening Prompt)
 
 **Priority:** S (Should Have)
 
+**Triggered inside nightly reflection.**
+
 **As a** new user
-**I want to** specify what drives me and what limits me
-**So that** the AI creates realistic, personalized plans
+**I want to** describe my future self when I'm emotionally primed
+**So that** the AI can personalize my philosophy and tone
 
 **Acceptance Criteria:**
-- [ ] Select 2-3 motivation drivers from list (prove to self, external recognition, fear of missing out, etc.)
-- [ ] Select "failure mode" from list (procrastination, overcommitment, avoidance, perfectionism)
-- [ ] Optional: Add time constraints (e.g., "only free evenings", "weekends busy")
-- [ ] Optional: Add energy patterns (e.g., "morning person", "night owl")
-
-**Data Requirements:**
-- Write to `identity_docs.json.motivations`
-- Write to `identity_docs.json.failure_mode`
-- Write to `identity_docs.json.constraints`
-
-**Note:** This is both direct user input AND an ongoing AI observation. The AI will observe and refine these insights over time based on user behavior patterns (e.g., detecting that user consistently skips evening binds may update energy pattern inference).
+- [ ] Prompt during first evening reflection
+- [ ] Text input: "Describe the person you're becoming" (200 char min)
+- [ ] Stored in `identity_docs.json.dream_self`
 
 ---
 
-#### US-1.6: First Goal Setup (AI-Assisted)
+#### US-1.13: Archetype Micro-Assessment (Day 2)
 
-**Priority:** M (Must Have)
+**Priority:** S (Should Have)
+
+**Delivered as conversational micro-questions (not a psych test).**
 
 **As a** new user
-**I want to** input a goal and have AI break it down
-**So that** I immediately have actionable daily habits
+**I want to** answer quick questions about my style
+**So that** the AI can adapt its coaching approach
 
 **Acceptance Criteria:**
-- [ ] Text input for goal (e.g., "Get fit", "Learn Spanish", "Ship my side project")
-- [ ] Display probing questions: "Why is this important to you?"
-- [ ] Show loading state: "Building your roadmap..." (30s max)
-- [ ] AI generates:
-  - Goal title and description
-  - 2-3 Q-goals (quantifiable milestones)
-  - 2-4 suggested binds (daily habits)
-  - Estimated difficulty and time per bind
-- [ ] User can edit/accept/reject each item
-- [ ] All AI outputs are editable
-- [ ] Completion unlocks "first commitment" screen
-
-**AI Module:** Onboarding Coach
-
-**Data Requirements:**
-- Write to `goals` table
-- Write to `qgoals` table
-- Write to `subtask_templates` table
-- Create `ai_runs` record with input_hash
-
-**Technical Notes:**
-- Async AI call (202 Accepted pattern)
-- Use Goldilocks principle: ~70% completion probability for suggested binds
-- Max 2 minutes reading time for user
+- [ ] 3-4 quick questions delivered in chat or reflection
+- [ ] Deterministic archetype mapping
+- [ ] Stored in `identity_docs.archetype`
 
 ---
 
-#### US-1.7: First Commitment
+#### US-1.14: Motivations & Failure Modes (Day 2-3)
 
-**Priority:** M (Must Have)
+**Priority:** S (Should Have)
 
-**As a** new user
-**I want to** make a commitment to my first goal
-**So that** I feel invested before starting
+**Inserted contextually into reflection flow.**
+
+**As a** user on Day 2-3
+**I want to** specify what motivates me and what blocks me
+**So that** the AI creates realistic plans
 
 **Acceptance Criteria:**
-- [ ] Display summary: goal + first 3 binds for today
-- [ ] "Hold to commit" interaction (inspired by Fabulous)
-- [ ] Show: "Day 1 of your 10-day journey begins now"
-- [ ] Trigger first push notification permission request
-- [ ] Complete onboarding, navigate to Thread (Home)
-
-**Data Requirements:**
-- Update `user_profiles.onboarding_completed_at`
-- Create first `subtask_instances` for today
-
-**Technical Notes:**
-- Track `onboarding_completed` event
-- Schedule first morning notification
+- [ ] Select 2-3 motivation drivers
+- [ ] Select failure mode
+- [ ] Optional: time constraints, energy patterns
+- [ ] Stored in `identity_docs.json`
 
 ---
 
-#### US-1.8: App Tutorial
+#### US-1.15: Constraints & Demographics (Day 3)
 
-**Priority:** M (Must Have)
+**Priority:** S (Should Have)
 
-**As a** new user
-**I want to** see a brief tutorial
-**So that** I understand how to use core features and recognize this is a differentiated experience
+**Optional "Improve your recommendations" modal.**
+
+**As a** user on Day 3
+**I want to** provide additional context
+**So that** recommendations become more accurate
 
 **Acceptance Criteria:**
-- [ ] 3-4 screens showing: Thread, Bind completion, Daily check-in, Weave dashboard
-- [ ] **Important:** Emphasize this is NOT just another habit tracker - it's an identity transformation companion
-- [ ] Show how Weave learns your patterns and speaks in your Dream Self voice
-- [ ] "Skip tutorial" option available but tutorial is encouraged
-- [ ] Coach tips highlighting key differentiating features
-- [ ] Complete in <1 minute
-
-**Technical Notes:**
-- Only show once (persisted flag)
-- Can be re-accessed from Settings
-- Track tutorial completion vs skip for analytics
+- [ ] Optional prompt after Day 3 reflection
+- [ ] Collect: timezone, preferred hours, user type
+- [ ] Stored in `user_profiles`
 
 ---
 
-#### US-1.9: Soft Paywall
+### PHASE 7 — Monetization
+
+#### US-1.16: Soft Paywall (Day 3-4 Trigger)
 
 **Priority:** M (Must Have)
 
-**As a** new user who has completed onboarding
-**I want to** see subscription options before entering the main app
-**So that** I understand the value tiers and can choose to upgrade
+**As a** trialing user
+**I want to** understand the tiers after I've had value
+**So that** upgrading feels natural and earned
+
+**Trigger:**
+- After 3 consecutive days of bind completion
+- OR when user tries to add a second Needle
 
 **Acceptance Criteria:**
-- [ ] Display after onboarding completion, before entering main app
-- [ ] Show clear value proposition for each tier:
-  - **Free:** 1 Needle, limited AI (5 chats/day), basic analytics
-  - **Pro ($12/mo):** 3 Needles, unlimited AI, full analytics, priority support
-  - **Max ($24/mo):** 5 Needles, advanced insights, early features
-- [ ] Prominent "Continue with Free" option (not hidden)
-- [ ] "Start 7-day free trial" for Pro tier
-- [ ] Payment integration with App Store (StoreKit 2)
-- [ ] Track paywall shown, tier selected, skip rate
+- [ ] Show Free vs Pro vs Max
+- [ ] Clear CTA: "Start 7-day free trial" (if applicable)
+- [ ] Always show "Continue free" option
+- [ ] Track `paywall_presented` and `paywall_action` events
 
 **Data Requirements:**
 - Write to `user_profiles.subscription_tier`
 - Store `subscription_started_at`, `trial_ends_at`
-- Track `paywall_presented` and `paywall_action` events
 
 **Technical Notes:**
 - Use RevenueCat or native StoreKit 2 for subscription management
-- Restore purchases functionality required
 - Soft paywall = always allows skip to free tier
 
 ---
 
-### Epic 1 Summary
+### Epic 1 Summary (Hybrid Flow)
 
 | ID | Story | Priority | Estimate |
 |----|-------|----------|----------|
-| US-1.1 | Welcome Screen | M | 2 pts |
-| US-1.2 | Demographics Collection | M | 3 pts |
-| US-1.3 | Archetype Assessment | M | 5 pts |
-| US-1.4 | Dream Self Definition | M | 3 pts |
-| US-1.5 | Motivation and Constraints | S | 3 pts |
-| US-1.6 | First Goal Setup (AI) | M | 8 pts |
-| US-1.7 | First Commitment | M | 3 pts |
-| US-1.8 | App Tutorial | M | 3 pts |
-| US-1.9 | Soft Paywall | M | 5 pts |
+| US-1.1 | Welcome | M | 2 pts |
+| US-1.2 | Painpoint Selection | M | 3 pts |
+| US-1.3 | Insight Mirror | M | 2 pts |
+| US-1.4 | Weave Solution | M | 2 pts |
+| US-1.5 | Auth | M | 3 pts |
+| US-1.6 | Identity Traits | M | 3 pts |
+| US-1.7 | First Needle | M | 3 pts |
+| US-1.8 | AI Path | M | 8 pts |
+| US-1.9 | First Commitment | M | 3 pts |
+| US-1.10 | Mini Tutorial | M | 3 pts |
+| US-1.11 | Trial Activation | M | 1 pt |
+| US-1.12 | Dream Self (Deferred) | S | 3 pts |
+| US-1.13 | Micro-Archetype (Deferred) | S | 3 pts |
+| US-1.14 | Motivations & Failure Modes | S | 3 pts |
+| US-1.15 | Constraints & Demographics | S | 2 pts |
+| US-1.16 | Soft Paywall (Day 3-4) | M | 5 pts |
 
-**Epic Total:** 35 story points
+**Epic Total:** 48 story points
+
+**Note:** This hybrid flow increases story points from 35 to 48, but distributes complexity across the user journey, resulting in higher activation rates and lower drop-off. The deferred personalization (US-1.12 through US-1.15) can be implemented incrementally without blocking the core onboarding flow.
 
 ---
 
@@ -2008,7 +2123,7 @@ Users manage their account settings, identity document, and app preferences.
 | Epic | Description | M Points | S Points | C Points | Total |
 |------|-------------|----------|----------|----------|-------|
 | E0 | Foundation | 38 | 0 | 0 | 38 |
-| E1 | Onboarding & Identity | 32 | 3 | 0 | 35 |
+| E1 | Onboarding (Hybrid Flow) | 38 | 10 | 0 | 48 |
 | E2 | Goal Management | 24 | 3 | 0 | 27 |
 | E3 | Daily Actions & Proof | 28 | 5 | 5 | 38 |
 | E4 | Reflection & Journaling | 19 | 9 | 0 | 28 |
@@ -2016,13 +2131,13 @@ Users manage their account settings, identity document, and app preferences.
 | E6 | AI Coaching | 13 | 11 | 5 | 29 |
 | E7 | Notifications | 23 | 5 | 0 | 28 |
 | E8 | Settings & Profile | 20 | 3 | 0 | 23 |
-| **Total** | | **207** | **60** | **10** | **285** |
+| **Total** | | **213** | **67** | **10** | **298** |
 
-**Note:** Epic 0 (Foundation) added - includes infrastructure, auth, RLS, CI/CD, and AI service abstraction (38 pts). Epics 1, 3, 4 updated based on implementation complexity assessment and story splitting for clarity.
+**Note:** Epic 0 (Foundation) added - includes infrastructure, auth, RLS, CI/CD, and AI service abstraction (38 pts). Epic 1 updated with optimized hybrid flow (+13 pts) that distributes personalization across Days 1-3 for higher activation. Epics 3, 4 also updated based on implementation complexity assessment and story splitting for clarity.
 
 ### MVP Scope (Must Have)
 
-**Total Must Have Points:** 207 story points (includes Epic 0 Foundation: 38 pts)
+**Total Must Have Points:** 213 story points (includes Epic 0 Foundation: 38 pts, Epic 1 Hybrid Flow: 38 pts M)
 
 **Estimated Duration:** 10-14 sprints (assuming 15-20 points/sprint with 2-person team)
 
