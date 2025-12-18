@@ -5,20 +5,46 @@
 @import "nativewind/theme";
 
 @theme {
-  /* Primary Blue (Action) */
-  --color-primary-50: #eef4ff;
-  --color-primary-100: #d9e5ff;
-  --color-primary-200: #bcd4ff;
-  --color-primary-300: #8ebaff;
-  --color-primary-400: #5994ff;
-  --color-primary-500: #3b72f6;
-  --color-primary-600: #2858e8;
-  --color-primary-700: #1e44d5;
-  --color-primary-800: #1f38ac;
-  --color-primary-900: #1e3388;
-  --color-primary-950: #172154;
+  /* ============================================================================
+   * COLOR TOKENS - Dark-First Opal Design System
+   * ============================================================================ */
 
-  /* Neutral Gray (Text & Backgrounds) */
+  /* Background Colors - Dark Mode (Default) */
+  --color-background-primary: #09090B;       /* Main app background - Deep black */
+  --color-background-secondary: #0F0F12;     /* Card backgrounds - Slightly lighter */
+  --color-background-elevated: #1A1A1F;      /* Floating elements, modals */
+  --color-background-glass: rgba(26, 26, 31, 0.7);  /* Glass effect background */
+  --color-background-overlay: rgba(9, 9, 11, 0.8);  /* Modal overlays */
+
+  /* Text Colors - Dark Mode (Default) */
+  --color-text-primary: #ECECF1;             /* Primary text - High contrast */
+  --color-text-secondary: #D4D4DC;           /* Secondary text - Medium contrast */
+  --color-text-muted: #71717F;               /* Muted text - Low contrast */
+  --color-text-disabled: #52525F;            /* Disabled state */
+  --color-text-ai: #9D71E8;                  /* AI-related text */
+  --color-text-success: #10D87E;             /* Success messages */
+  --color-text-error: #E85A7E;               /* Error messages */
+  --color-text-warning: #F59E0B;             /* Warning messages */
+
+  /* Border Colors */
+  --color-border-default: rgba(255, 255, 255, 0.15);
+  --color-border-muted: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.25);
+
+  /* Accent Color - Primary Blue (Action) */
+  --color-accent-50: #eef4ff;
+  --color-accent-100: #d9e5ff;
+  --color-accent-200: #bcd4ff;
+  --color-accent-300: #8ebaff;
+  --color-accent-400: #5994ff;
+  --color-accent-500: #3b72f6;
+  --color-accent-600: #2858e8;
+  --color-accent-700: #1e44d5;
+  --color-accent-800: #1f38ac;
+  --color-accent-900: #1e3388;
+  --color-accent-950: #172154;
+
+  /* Neutral Gray (Text & Backgrounds) - Legacy Support */
   --color-neutral-0: #ffffff;
   --color-neutral-50: #fafafa;
   --color-neutral-100: #f5f5f5;
@@ -32,7 +58,19 @@
   --color-neutral-900: #171717;
   --color-neutral-950: #0a0a0a;
 
-  /* Warm Amber (Progress/Success) */
+  /* Violet (AI/Dream Self) */
+  --color-violet-50: #f5f3ff;
+  --color-violet-100: #ede9fe;
+  --color-violet-200: #ddd6fe;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7c3aed;
+  --color-violet-700: #6d28d9;
+  --color-violet-800: #5b21b6;
+  --color-violet-900: #4c1d95;
+
+  /* Amber (Progress/Success) */
   --color-amber-50: #fffbeb;
   --color-amber-100: #fef3c7;
   --color-amber-200: #fde68a;
@@ -44,15 +82,145 @@
   --color-amber-800: #92400e;
   --color-amber-900: #78350f;
 
-  /* Soft Violet (AI/Dream Self) */
-  --color-violet-50: #f5f3ff;
-  --color-violet-100: #ede9fe;
-  --color-violet-200: #ddd6fe;
-  --color-violet-300: #c4b5fd;
-  --color-violet-400: #a78bfa;
-  --color-violet-500: #8b5cf6;
-  --color-violet-600: #7c3aed;
-  --color-violet-700: #6d28d9;
-  --color-violet-800: #5b21b6;
-  --color-violet-900: #4c1d95;
+  /* Emerald (Success States) */
+  --color-emerald-50: #ECFDF5;
+  --color-emerald-100: #D1FAE5;
+  --color-emerald-200: #A7F3D0;
+  --color-emerald-300: #6EE7B7;
+  --color-emerald-400: #34D399;
+  --color-emerald-500: #10D87E;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-emerald-800: #065F46;
+  --color-emerald-900: #064E3B;
+
+  /* Rose (Error States) */
+  --color-rose-50: #FFF1F2;
+  --color-rose-100: #FFE4E6;
+  --color-rose-200: #FECDD3;
+  --color-rose-300: #FDA4AF;
+  --color-rose-400: #FB7185;
+  --color-rose-500: #E85A7E;
+  --color-rose-600: #E11D48;
+  --color-rose-700: #BE123C;
+  --color-rose-800: #9F1239;
+  --color-rose-900: #881337;
+
+  /* Dark Shades (for dark mode UI elements) */
+  --color-dark-50: #ECECF1;
+  --color-dark-100: #D4D4DC;
+  --color-dark-200: #A1A1B0;
+  --color-dark-300: #71717F;
+  --color-dark-400: #52525F;
+  --color-dark-500: #3F3F4B;
+  --color-dark-600: #2D2D37;
+  --color-dark-700: #1A1A1F;
+  --color-dark-800: #0F0F12;
+  --color-dark-900: #09090B;
+
+  /* ============================================================================
+   * TYPOGRAPHY - San Francisco Pro / Inter fallback
+   * ============================================================================ */
+
+  --font-family-base: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+  --font-family-mono: "SF Mono", "Menlo", "Monaco", monospace;
+
+  /* Font Sizes */
+  --font-size-display-2xl: 72px;
+  --font-size-display-xl: 60px;
+  --font-size-display-lg: 48px;
+  --font-size-display-md: 36px;
+  --font-size-text-lg: 18px;
+  --font-size-text-base: 16px;
+  --font-size-text-sm: 14px;
+  --font-size-text-xs: 12px;
+  --font-size-label-base: 14px;
+  --font-size-mono-base: 13px;
+
+  /* Line Heights */
+  --line-height-display-2xl: 1.1;
+  --line-height-display-xl: 1.15;
+  --line-height-display-lg: 1.2;
+  --line-height-display-md: 1.25;
+  --line-height-text-lg: 1.5;
+  --line-height-text-base: 1.5;
+  --line-height-text-sm: 1.45;
+  --line-height-text-xs: 1.4;
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.02em;
+  --letter-spacing-wider: 0.05em;
+
+  /* ============================================================================
+   * SPACING SCALE - 4px base unit
+   * ============================================================================ */
+
+  --spacing-0: 0px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-7: 28px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+
+  /* ============================================================================
+   * BORDER RADIUS
+   * ============================================================================ */
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
+
+  /* ============================================================================
+   * SHADOWS & EFFECTS
+   * ============================================================================ */
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+
+  /* Glass/Blur Effects - For reference (applied via BlurView component) */
+  --blur-subtle: 10;
+  --blur-card: 20;
+  --blur-elevated: 30;
+  --blur-ai: 25;
+  --blur-success: 25;
+  --blur-nav: 40;
+  --blur-overlay: 50;
+
+  /* ============================================================================
+   * ANIMATION TIMING
+   * ============================================================================ */
+
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
+
+  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --easing-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --easing-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
