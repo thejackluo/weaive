@@ -90,8 +90,8 @@ Day 4-5: Error handling (NEW - from gaps)
 - **Phase 1: Emotional Hook (Pre-Auth, 45s max)**
   - 1.1: Welcome & Vision Hook (2 pts)
   - 1.2: Emotional State Selection (Painpoint) (3 pts)
-  - 1.3: Insight Reflection (Painpoint Mirror) (2 pts)
-  - 1.4: High-Level Weave Solution (2 pts)
+  - 1.3: Symptom Insight Screen (Dynamic Mirror) (2 pts)
+  - 1.4: Weave Solution Screen (Dynamic "Here's What Changes Now") (2 pts)
   - 1.5: Authentication (3 pts)
 - **Phase 2: Light Identity Bootup (In-App, Fast)**
   - 1.6: Identity Traits Selection (3 pts)
