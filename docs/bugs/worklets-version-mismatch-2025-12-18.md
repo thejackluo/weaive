@@ -38,13 +38,14 @@ ERROR  [WorkletsError: [Worklets] Mismatch between JavaScript part and native pa
 ## Environment
 
 - **OS**: macOS (iOS Simulator), Windows 11 (WSL2)
-- **Node.js**: Latest
+- **Node.js**: Latest (⚠️ version TBD - see Node Version Investigation)
 - **Package Manager**: npm
 - **Expo SDK**: ~54.0.29
 - **React Native**: 0.81.5
 - **Expo Router**: ~6.0.20
 - **React Native Worklets**: 0.7.1 (JS) / 0.5.1 (Native)
 - **Platform**: iOS Simulator (error also affects Android)
+- **Metro Bundler**: Default Expo configuration (see Path Alias Investigation)
 
 ---
 
@@ -167,6 +168,312 @@ When versions mismatch:
 - JSI binding signatures don't match
 - Native methods called with incompatible parameters
 - Runtime crash on first worklet initialization
+
+---
+
+## Extended Investigation: Node Version and Path Alias Issues
+
+**Note:** While the primary issue was resolved through explicit installation, additional investigation was conducted to rule out other potential causes of version mismatches.
+
+### Node.js Version Compatibility Investigation
+
+**Potential Issue:** Node.js version mismatch between development environment and expected versions could cause native module compilation issues.
+
+#### Questions to Investigate
+
+1. **What Node.js version is currently active?**
+   ```bash
+   node --version
+   # Expected: v18.x or v20.x (LTS)
+   # Avoid: v16.x (EOL), v21.x+ (not yet stable for RN)
+   ```
+
+2. **Is the project using a version manager?**
+   ```bash
+   # Check for version files
+   cat .nvmrc          # nvm
+   cat .node-version   # fnm, asdf
+   cat .tool-versions  # asdf
+   ```
+
+3. **Are native modules compiled with the correct Node version?**
+   - Native addon modules (like worklets) are compiled against specific Node.js versions
+   - Upgrading/downgrading Node without rebuilding can cause ABI mismatches
+   - React Native 0.81.5 officially supports Node 18.x and 20.x LTS
+
+#### Expected Node.js Versions
+
+| React Native Version | Recommended Node | Also Supported | Avoid |
+|---------------------|------------------|----------------|-------|
+| 0.81.5 (current) | 18.x LTS | 20.x LTS | 16.x (EOL), 21.x+ |
+| 0.76.x | 18.x LTS | 20.x LTS | 16.x (EOL) |
+| 0.73.x | 18.x LTS | 16.x | 14.x (EOL) |
+
+#### Testing Node Version Compatibility
+
+```bash
+# 1. Check current Node version
+node --version
+npm --version
+
+# 2. Verify Node headers are available (required for native compilation)
+node -p "process.versions"
+
+# 3. Check if native modules need rebuilding
+cd weave-mobile
+rm -rf node_modules package-lock.json
+npm install
+
+# 4. Look for node-gyp compilation errors during install
+# Errors like "node-gyp rebuild" failing indicate Node version issues
+```
+
+#### Common Node Version Problems
+
+**Problem 1: Node version too old**
+- **Symptom:** Native module compilation fails with C++ errors
+- **Cause:** React Native 0.81 uses modern C++ features (C++17)
+- **Fix:** Upgrade to Node 18.x or 20.x LTS
+
+**Problem 2: Node version too new**
+- **Symptom:** Hermes crashes or native modules fail to load
+- **Cause:** React Native native modules not yet tested with cutting-edge Node
+- **Fix:** Downgrade to Node 18.x or 20.x LTS
+
+**Problem 3: Multiple Node versions in environment**
+- **Symptom:** Different Node version between `node --version` and build tools
+- **Cause:** Multiple Node installations (system, nvm, fnm, etc.)
+- **Fix:** Use single version manager (nvm recommended)
+
+#### Recommended Setup
+
+**Create `.nvmrc` file:**
+```bash
+# weave-mobile/.nvmrc
+18.20.0
+```
+
+**Create `.node-version` file (fnm compatible):**
+```bash
+# weave-mobile/.node-version
+18.20.0
+```
+
+**Usage:**
+```bash
+# With nvm
+cd weave-mobile
+nvm use
+
+# With fnm
+cd weave-mobile
+fnm use
+
+# Verify correct version activated
+node --version  # Should show 18.20.0
+```
+
+---
+
+### Metro Path Alias Configuration Investigation
+
+**Potential Issue:** Metro bundler's path alias configuration could be resolving `react-native-worklets` from unexpected locations or cached versions.
+
+#### Current Configuration Analysis
+
+**Babel Config (`babel.config.js`):**
+```javascript
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: [
+      ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
+      'nativewind/babel',
+    ],
+    plugins: [
+      [
+        'module-resolver',
+        {
+          root: ['./'],
+          alias: {
+            '@': './src',  // ⚠️ Could interfere with node_modules resolution
+          },
+          extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
+        },
+      ],
+      'react-native-reanimated/plugin', // ✅ Correctly placed last
+    ],
+  };
+};
+```
+
+**Metro Config (`metro.config.js`):**
+```javascript
+const { getDefaultConfig } = require('expo/metro-config');
+
+const config = getDefaultConfig(__dirname);
+
+config.resolver.sourceExts.push('css');  // For NativeWind
+
+module.exports = config;
+```
+
+#### Potential Path Resolution Problems
+
+**Problem 1: Alias Interference**
+- **Issue:** `@/` alias might be catching imports of `node_modules/`
+- **Likelihood:** Low - Metro prioritizes `node_modules` over aliases
+- **Test:** Add console.log to check resolved paths
+
+**Problem 2: Missing Explicit node_modules Resolution**
+- **Issue:** Metro doesn't have explicit `node_modules` path rules
+- **Likelihood:** Medium - Could cause issues in monorepo setups
+- **Test:** Add `extraNodeModules` configuration
+
+**Problem 3: Module Resolution Cache Stale**
+- **Issue:** Metro cache contains old worklets paths
+- **Likelihood:** High - Common after dependency updates
+- **Test:** Clear cache with `--clear` flag
+
+#### Enhanced Metro Configuration (Proposed)
+
+```javascript
+// metro.config.js (proposed fix)
+const path = require('path');
+const { getDefaultConfig } = require('expo/metro-config');
+
+const config = getDefaultConfig(__dirname);
+
+// Add CSS support for NativeWind
+config.resolver.sourceExts.push('css');
+
+// Explicitly resolve node_modules to prevent path confusion
+config.resolver.nodeModulesPaths = [
+  path.resolve(__dirname, 'node_modules'),
+];
+
+// Debug resolver (optional - remove in production)
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // Log worklets resolution for debugging
+  if (moduleName.includes('worklets')) {
+    console.log('🔍 Resolving:', moduleName);
+    console.log('   Platform:', platform);
+    console.log('   From:', context.originModulePath);
+  }
+
+  // Use default resolver
+  return context.resolveRequest(context, moduleName, platform);
+};
+
+module.exports = config;
+```
+
+#### Testing Path Resolution
+
+**Test 1: Verify worklets path resolution**
+```bash
+cd weave-mobile
+
+# Create diagnostic script
+cat > test-resolve.js << 'EOF'
+const path = require('path');
+const resolve = require('resolve');
+
+console.log('🔍 Resolving react-native-worklets-core from:', __dirname);
+
+try {
+  const resolved = resolve.sync('react-native-worklets-core', {
+    basedir: __dirname,
+    preserveSymlinks: false
+  });
+  console.log('✅ Resolved to:', resolved);
+
+  const pkg = require(path.join(path.dirname(resolved), 'package.json'));
+  console.log('✅ Version:', pkg.version);
+} catch (err) {
+  console.error('❌ Failed to resolve:', err.message);
+}
+EOF
+
+node test-resolve.js
+```
+
+**Test 2: Check Metro bundler resolution logs**
+```bash
+# Start Metro with verbose logging
+npx expo start --clear
+
+# Look for resolution logs in Metro output
+# Should see: "Resolving: react-native-worklets-core"
+# Should NOT see multiple different paths
+```
+
+**Test 3: Verify babel-plugin-module-resolver isn't interfering**
+```javascript
+// Temporarily disable module-resolver to test
+// Edit babel.config.js:
+plugins: [
+  // ['module-resolver', { ... }],  // Commented out
+  'react-native-reanimated/plugin',
+]
+
+// Restart Metro
+npx expo start --clear
+
+// If error disappears, module-resolver was interfering
+```
+
+#### Path Alias Best Practices
+
+**1. Avoid overly broad aliases:**
+```javascript
+// ❌ Bad - too broad, could catch unintended imports
+alias: {
+  '@': './',
+}
+
+// ✅ Good - specific to source directory
+alias: {
+  '@': './src',
+  '@components': './src/components',
+  '@hooks': './src/hooks',
+}
+```
+
+**2. Don't alias node_modules paths:**
+```javascript
+// ❌ Bad - never do this
+alias: {
+  'react-native-worklets-core': './custom-worklets',
+}
+
+// ✅ Good - use Metro's extraNodeModules for overrides
+extraNodeModules: {
+  'react-native-worklets-core': path.resolve(__dirname, 'node_modules/react-native-worklets-core'),
+}
+```
+
+**3. Always put reanimated plugin last:**
+```javascript
+// ✅ Correct plugin order
+plugins: [
+  'babel-plugin-module-resolver',    // Module paths
+  'react-native-reanimated/plugin',   // Must be LAST
+]
+```
+
+#### Diagnostic Checklist
+
+- [ ] Check Node.js version: `node --version` (expect 18.x or 20.x)
+- [ ] Verify no multiple Node installations interfering
+- [ ] Create `.nvmrc` file to lock Node version
+- [ ] Clear Metro cache: `npx expo start --clear`
+- [ ] Test without module-resolver plugin (temporarily disable)
+- [ ] Check Metro logs for resolution paths
+- [ ] Verify `node_modules/react-native-worklets-core` exists and is correct version
+- [ ] Run test-resolve.js script to verify Node resolution
+- [ ] Check for multiple `node_modules/` directories in project tree
+- [ ] Verify babel.config.js has reanimated plugin last
 
 ---
 
