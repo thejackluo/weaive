@@ -50,21 +50,14 @@ export default function WelcomeScreen() {
         />
 
         {/* Tagline - AC1 */}
-        <Text style={styles.heading}>
-          Weave
-        </Text>
+        <Text style={styles.heading}>Weave</Text>
 
         {/* Value Proposition - AC1 */}
-        <Text style={styles.valueProposition}>
-          See your transformation as you create it
-        </Text>
+        <Text style={styles.valueProposition}>See your transformation as you create it</Text>
 
         {/* CTA Button - AC1, AC3, AC5 */}
         <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed
-          ]}
+          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
           onPress={handleGetStarted}
           accessibilityRole="button"
           accessible={true}
