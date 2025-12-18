@@ -51,12 +51,12 @@ export default function WelcomeScreen() {
 
         {/* Tagline - AC1 */}
         <Text style={styles.heading}>
-          See who you're becoming
+          Weave
         </Text>
 
         {/* Value Proposition - AC1 */}
         <Text style={styles.valueProposition}>
-          Turn vague goals into daily wins, proof, and a stronger identity in 10 days.
+          See your transformation as you create it
         </Text>
 
         {/* CTA Button - AC1, AC3, AC5 */}
