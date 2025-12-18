@@ -35,7 +35,7 @@ export default function WelcomeScreen() {
    */
   const handleGetStarted = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/(onboarding)/emotional-state-selection');
+    router.push('/(onboarding)/emotional-state');
   };
 
   return (
