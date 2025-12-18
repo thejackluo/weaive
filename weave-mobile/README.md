@@ -108,6 +108,16 @@ weave-mobile/
 npx kill-port 8081
 ```
 
+### Babel Configuration Error
+
+If you see an error like `.plugins is not a valid Plugin property`, the Metro bundler cache is out of sync with `babel.config.js`:
+
+```bash
+npx expo start --clear
+```
+
+This typically happens after changes to `babel.config.js` (e.g., adding NativeWind or design system imports). The `--clear` flag rebuilds the bundler cache from scratch.
+
 ### Clear Cache
 
 ```bash
