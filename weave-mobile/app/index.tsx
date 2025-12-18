@@ -2,13 +2,17 @@ import { Redirect } from 'expo-router';
 
 /**
  * Root index route
- * Redirects to onboarding welcome screen
  *
- * TODO: Add auth check here when authentication is implemented
- * - If authenticated → redirect to /(tabs)
+ * Entry point that redirects users to the appropriate screen based on auth state.
+ * Currently redirects all users to onboarding flow.
+ *
+ * Future Enhancement (Story 1.5 - Authentication):
+ * - Check authentication state using Supabase
+ * - If authenticated → redirect to /(tabs) (main app)
  * - If not authenticated → redirect to /(onboarding)/welcome
+ *
+ * @returns Redirect component to welcome screen
  */
 export default function Index() {
-  // For now, always redirect to onboarding
   return <Redirect href="/(onboarding)/welcome" />;
 }
