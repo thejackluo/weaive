@@ -50,46 +50,24 @@ export type { TextProps } from './components/Text/types';
 // ============================================================================
 // Button Components
 // ============================================================================
-// TODO: Implement Button components
-// export { Button } from './components/Button/Button';
-// export { PrimaryButton } from './components/Button/PrimaryButton';
-// export { SecondaryButton } from './components/Button/SecondaryButton';
-// export { GhostButton } from './components/Button/GhostButton';
-// export { DestructiveButton } from './components/Button/DestructiveButton';
-// export { AIButton } from './components/Button/AIButton';
-// export { SuccessButton } from './components/Button/SuccessButton';
-// export { IconButton } from './components/Button/IconButton';
-// export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button/types';
+export { Button } from './components/Button/Button';
+export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button/types';
 
 // ============================================================================
 // Card Components
 // ============================================================================
-// TODO: Implement Card components
-// export { Card } from './components/Card/Card';
-// export { GlassCard } from './components/Card/GlassCard';
-// export { ElevatedCard } from './components/Card/ElevatedCard';
-// export { AICard } from './components/Card/AICard';
-// export { SuccessCard } from './components/Card/SuccessCard';
-// export { NeedleCard } from './components/Card/NeedleCard';
-// export { InsightCard } from './components/Card/InsightCard';
-// export type { CardProps, CardVariant, CardPadding } from './components/Card/types';
-
-// ============================================================================
-// Input Components
-// ============================================================================
-// TODO: Implement Input components
-// export { Input } from './components/Input/Input';
-// export { TextArea } from './components/Input/TextArea';
-// export { SearchInput } from './components/Input/SearchInput';
-// export type { InputProps, TextAreaProps, SearchInputProps } from './components/Input/types';
+export { Card } from './components/Card/Card';
+export type { CardProps, CardVariant, CardPadding } from './components/Card/types';
 
 // ============================================================================
 // Checkbox Components
 // ============================================================================
-// TODO: Implement Checkbox components
-// export { Checkbox } from './components/Checkbox/Checkbox';
-// export { BindCheckbox } from './components/Checkbox/BindCheckbox';
-// export type { CheckboxProps, BindCheckboxProps } from './components/Checkbox/types';
+export { Checkbox } from './components/Checkbox/Checkbox';
+
+// ============================================================================
+// Specialized Components (Weave-Specific)
+// ============================================================================
+export { WeaveCharacter } from './components/WeaveCharacter/WeaveCharacter';
 
 // ============================================================================
 // Badge Components
