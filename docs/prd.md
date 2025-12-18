@@ -647,6 +647,8 @@ Users can create, view, edit, and archive goals (needles), with AI assistance fo
 - No AI call on this screen
 - Enforce max 3 active goals at UI and API level
 
+[Figma: thread-home.md]
+
 ---
 
 #### US-2.2: View Goal Details
@@ -823,6 +825,8 @@ Users complete daily binds (habits/actions) and document proof. This is the core
 - No AI call on this screen
 - Use user's timezone for local_date
 
+[Figma: thread-home.md]
+
 ---
 
 #### US-3.2: View Triad (AI Daily Plan)
@@ -851,6 +855,8 @@ Users complete daily binds (habits/actions) and document proof. This is the core
 - Triad generated after journal submission (evening)
 - No model call on Thread load (reads cache)
 - Triad tasks reference existing `subtask_instances` - they are the same Binds, just highlighted
+
+[Figma: thread-home.md]
 
 ---
 
@@ -947,9 +953,11 @@ Users complete daily binds (habits/actions) and document proof. This is the core
 - Voice recording stored as audio file, transcription optional
 - Captures contribute to "Active Day with Proof"
 
+[Figma: thread-home.md]
+
 ---
 
-#### US-3.6: Timer Tracking (Pomodoro-Style)
+#### US-3.6: Timer Tracking (Pomodoro-Style) (Figma: Weave Home)
 
 **Priority:** S (Should Have)
 
@@ -1066,6 +1074,8 @@ Users complete daily reflections that generate AI feedback and next-day plans. T
 - Journal submission is the primary AI batch trigger
 - Only one journal entry per day per user
 - Custom question responses available to AI for pattern detection
+
+[Figma: thread-home.md]
 
 ---
 
@@ -1225,6 +1235,8 @@ Users view their progress through the Weave Dashboard, including consistency met
 - All data pre-computed by workers
 - Dashboard is read-only (no mutations)
 
+[Figma: thread-home.md]
+
 ---
 
 #### US-5.2: Consistency Heat Map
@@ -1341,6 +1353,8 @@ Users view their progress through the Weave Dashboard, including consistency met
 - Streak calculated by worker on completion events
 - Streak resilience = (streaks recovered / streaks broken)
 
+[Figma: thread-home.md]
+
 ---
 
 #### US-5.6: Badge System
@@ -1444,6 +1458,8 @@ Users interact with the Dream Self Advisor for personalized coaching, clarificat
 **Technical Notes:**
 - Rate limited: 10 AI chat messages per hour
 - Uses Dream Self Advisor module
+
+[Figma: thread-home.md]
 
 ---
 
