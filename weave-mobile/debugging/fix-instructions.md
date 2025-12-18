@@ -29,6 +29,7 @@ Your current setup is **OFFICIALLY SUPPORTED** and working correctly:
 - [Fix Broken Installation](#fix-broken-installation)
 - [WSL/Windows Issues](#wslwindows-specific-issues)
 - [Troubleshooting](#troubleshooting)
+- [Understanding JS vs Native Version Mismatches](#understanding-js-vs-native-version-mismatches) ⭐ NEW
 
 ---
 
@@ -437,6 +438,336 @@ Downgrading will break your app.
 
 ---
 
+## Understanding JS vs Native Version Mismatches
+
+### **What is a JS vs Native Mismatch?**
+
+React Native has **two separate layers** that must stay synchronized:
+
+```
+JavaScript Layer:              Native Layer:
+node_modules/                  iOS: Pods/ (CocoaPods)
+├─ Installed by npm            ├─ Installed by pod install
+├─ Version: 0.7.1             ├─ Version: 0.5.1 ← STUCK!
+└─ Updates instantly          └─ Doesn't auto-update
+```
+
+**When these versions don't match, you get runtime crashes.**
+
+### **Common Error Pattern**
+
+```
+ERROR [WorkletsError: Mismatch between JavaScript part and native part
+of Worklets (0.7.1 vs 0.5.1)]
+           ↑         ↑
+          JS      Native
+```
+
+**This error tells you exactly which versions are mismatched.**
+
+### **Why This Happens**
+
+**Scenario that causes mismatch:**
+
+1. You install `expo-router` → installs worklets 0.5.1 (both JS + native)
+2. Later, you run `npm update` → updates JS to 0.7.1
+3. **BUT** iOS Pods/Android libs still have 0.5.1 (they don't auto-update!)
+4. App crashes: JS expects 0.7.1 methods, native has 0.5.1 methods
+
+**Root cause:** npm only updates JavaScript files, not native modules.
+
+### **How to Detect JS vs Native Mismatch**
+
+**Method 1: Read the error message**
+```
+WorkletsError: Mismatch between JavaScript (0.7.1) and native (0.5.1)
+```
+
+**Method 2: Check versions manually**
+
+```powershell
+# Check JavaScript version (node_modules)
+npm ls react-native-worklets-core
+# Output: react-native-worklets-core@0.7.1
+
+# Check iOS native version (Pods)
+cat ios/Podfile.lock | Select-String "react-native-worklets-core"
+# Output: - RNWorklets (0.5.1)
+
+# If these don't match → You have a mismatch!
+```
+
+**Method 3: Check during install**
+
+```bash
+npx expo-doctor
+```
+
+If you see warnings like:
+```
+⚠ Package react-native-worklets-core has mismatched versions
+```
+
+### **How to Fix JS vs Native Mismatch**
+
+#### **Option 1: Automatic Fix** (Recommended - Easiest)
+
+```powershell
+# This command syncs BOTH JavaScript and native automatically
+npx expo install react-native-worklets-core
+```
+
+**What this does:**
+1. ✅ Checks your Expo SDK version
+2. ✅ Determines compatible version for your SDK
+3. ✅ Updates JavaScript (node_modules)
+4. ✅ **Automatically updates iOS Pods**
+5. ✅ **Automatically triggers Android rebuild**
+6. ✅ Ensures both layers match
+
+**Result:** Both JS and native are now the same version ✅
+
+#### **Option 2: Manual Native Rebuild**
+
+If you want to do it manually:
+
+**For iOS:**
+```bash
+# Step 1: Check current versions
+npm ls react-native-worklets-core  # JavaScript version
+cat ios/Podfile.lock | grep -A 2 worklets  # Native version
+
+# Step 2: Rebuild iOS native modules
+cd ios
+pod install    # ← This syncs native to match JavaScript version
+cd ..
+
+# Step 3: Clear Metro cache and restart
+npx expo start --clear
+```
+
+**For Android:**
+```bash
+# Step 1: Clean Android build
+cd android
+./gradlew clean
+cd ..
+
+# Step 2: Rebuild with new version
+npx expo run:android
+```
+
+**Why manual rebuild works:**
+- `pod install` reads version from `node_modules` (e.g., 0.7.1)
+- Downloads matching iOS native library (0.7.1)
+- Now both JS and native are 0.7.1 ✅
+
+#### **Option 3: Nuclear Clean Install**
+
+If nothing else works:
+
+```powershell
+# Step 1: Delete EVERYTHING
+Remove-Item -Path node_modules -Recurse -Force
+Remove-Item -Path package-lock.json -Force
+Remove-Item -Path ios/Pods -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path ios/Podfile.lock -Force -ErrorAction SilentlyContinue
+
+# Step 2: Fresh install (installs matching versions)
+npm install
+
+# Step 3: Rebuild iOS native
+cd ios
+pod install
+cd ..
+
+# Step 4: Start clean
+npx expo start --clear
+```
+
+### **When to Rebuild Native Modules**
+
+**You MUST rebuild native modules when:**
+
+| You ran... | What it updates | What you need to do |
+|------------|----------------|---------------------|
+| `npm install` | ✅ JavaScript only | ⚠️ Rebuild native (iOS/Android) |
+| `npm update` | ✅ JavaScript only | ⚠️ Rebuild native (iOS/Android) |
+| `npm install <pkg>` | ✅ JavaScript only | ⚠️ Rebuild native (iOS/Android) |
+| `npx expo install <pkg>` | ✅ JavaScript + Native | ✅ No rebuild needed! |
+| `pod install` (iOS) | ✅ Native only | Already rebuilt ✅ |
+
+**Rule of thumb:**
+- ❌ **Never** use `npm install` for packages with native code
+- ✅ **Always** use `npx expo install` for native packages
+- ✅ If you used npm, manually run `pod install` after
+
+### **Understanding Transitive Dependencies**
+
+**What are transitive dependencies?**
+
+Dependencies you didn't install directly:
+
+```
+You install:     expo-router
+Which depends on: react-native-reanimated
+Which depends on: react-native-worklets-core ← You never installed this!
+```
+
+**Problem:** You don't control transitive dependency versions.
+
+**Solution:** Explicitly install critical native dependencies:
+
+```json
+{
+  "dependencies": {
+    "expo-router": "~6.0.21",         // ← You installed this
+    "react-native-reanimated": "~4.2.1",  // ← Add explicitly
+    "react-native-worklets-core": "^1.6.2"  // ← Add explicitly
+  }
+}
+```
+
+**Benefits:**
+- ✅ Version visible in package.json
+- ✅ You control when it updates
+- ✅ Prevents silent version changes
+- ✅ Easier to debug mismatches
+
+### **Prevention: Avoid Mismatches in the Future**
+
+#### **1. Always use `npx expo install` for native packages**
+
+```bash
+# ✅ GOOD - Syncs both JS and native automatically
+npx expo install react-native-maps
+npx expo install react-native-camera
+npx expo install react-native-worklets-core
+
+# ❌ BAD - Only updates JS, native stays old
+npm install react-native-maps
+npm install react-native-camera
+```
+
+#### **2. After any npm operation, rebuild native**
+
+```bash
+# If you used npm (not expo install):
+npm install some-package
+
+# Then IMMEDIATELY rebuild:
+cd ios && pod install && cd ..  # iOS
+# OR
+npx expo run:android  # Android
+```
+
+#### **3. Explicitly declare native dependencies**
+
+```json
+{
+  "dependencies": {
+    // Even if these are transitive, add them explicitly:
+    "react-native-worklets-core": "^1.6.2",
+    "react-native-reanimated": "~4.2.1",
+    "react-native-gesture-handler": "~2.18.0"
+  }
+}
+```
+
+#### **4. Run expo-doctor regularly**
+
+```bash
+# After every package install/update:
+npx expo-doctor
+
+# Look for warnings like:
+# ⚠ Mismatched versions detected
+```
+
+#### **5. Use version lock files**
+
+```bash
+# Always commit package-lock.json
+git add package-lock.json
+git commit -m "chore: lock dependency versions"
+```
+
+### **Real-World Example: Worklets 0.7.1 vs 0.5.1**
+
+**Initial state:**
+```json
+// package.json
+{
+  "dependencies": {
+    "expo-router": "~6.0.20"
+    // worklets not listed (transitive dependency)
+  }
+}
+```
+
+**What happened:**
+1. `expo-router` installed `worklets` 0.5.1 (both JS + native)
+2. Later, `npm update` updated JS to 0.7.1
+3. iOS Pods stayed at 0.5.1
+4. **Crash:** JS called methods that don't exist in native 0.5.1
+
+**The fix:**
+```bash
+# Explicit install syncs both layers
+npx expo install react-native-worklets-core
+```
+
+**Result:**
+```json
+// package.json (now explicit)
+{
+  "dependencies": {
+    "expo-router": "~6.0.21",
+    "react-native-worklets-core": "^1.6.2"  // ← Now controlled
+  }
+}
+```
+
+**Both JS and native are now 1.6.2 ✅**
+
+### **Debugging Checklist**
+
+When you see version mismatch errors:
+
+- [ ] Read error message - note JS version and native version
+- [ ] Check if package is in package.json (if not, it's transitive)
+- [ ] Run `npm ls <package>` to see JavaScript version
+- [ ] Check `ios/Podfile.lock` to see iOS native version
+- [ ] Run `npx expo install <package>` to sync both
+- [ ] Run `npx expo-doctor` to verify fix
+- [ ] Restart Metro with `--clear` flag
+- [ ] If still broken, try nuclear clean install
+
+### **Quick Reference: Fix Commands**
+
+```bash
+# Automatic fix (recommended)
+npx expo install <package-name>
+
+# Manual iOS rebuild
+cd ios && pod install && cd ..
+
+# Manual Android rebuild
+cd android && ./gradlew clean && cd ..
+npx expo run:android
+
+# Nuclear option
+rm -rf node_modules package-lock.json ios/Pods ios/Podfile.lock
+npm install
+cd ios && pod install && cd ..
+
+# Verify fix
+npx expo-doctor
+npx expo start --clear
+```
+
+---
+
 ## Package Upgrade Reference
 
 ### **What Gets Updated**
@@ -673,5 +1004,5 @@ If you're still stuck after trying these steps:
 
 ---
 
-**Last Updated:** 2025-12-18
+**Last Updated:** 2025-12-18 (Added JS vs Native Version Mismatch section)
 **Verified Working:** ✅ Windows 11 + WSL2 + PowerShell
