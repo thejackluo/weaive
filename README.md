@@ -264,13 +264,15 @@ Then open: **http://localhost:3030**
 npx create-expo-app weave-mobile --template blank-typescript
 cd weave-mobile
 
-# Install dependencies
-npx expo install expo-router expo-linking expo-constants
+# Install dependencies (use npx expo install for Expo packages!)
+npx expo install expo-router expo-linking expo-constants react-native-screens
 npm install @supabase/supabase-js
 
 # Start development server
 npx expo start
 ```
+
+> **📌 Best Practice:** Always use `npx expo install <package>` instead of `npm install` for React Native packages in Expo projects. This automatically resolves SDK-compatible versions and prevents dependency conflicts.
 
 #### 2. Backend API
 
