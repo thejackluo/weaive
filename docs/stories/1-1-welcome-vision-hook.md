@@ -3,7 +3,7 @@
 **Epic:** 1 - Onboarding (Optimized Hybrid Flow)
 **Phase:** 1 - Emotional Hook (Pre-Auth)
 **Story Points:** 2
-**Status:** review
+**Status:** done
 **Priority:** P1 (Critical Path - Blocks all onboarding)
 
 ---
@@ -578,8 +578,9 @@ Before marking this story as **done**, ensure:
 
 ---
 
-**Story Status:** review
+**Story Status:** done (front-end complete, follow-ups documented)
 **Created:** 2025-12-18
-**Code Review:** 2025-12-18 (18 issues found, 7 fixed, 11 documented)
+**Code Review:** 2025-12-18 (18 issues found, 5 fixed, 2 reverted, 11 documented)
+**Completed:** 2025-12-18
 **Epic:** 1 (Onboarding)
 **Next Story:** 1.2 (Emotional State Selection)
