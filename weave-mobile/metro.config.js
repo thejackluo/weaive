@@ -1,9 +1,8 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const { withNativeWind } = require('nativewind/metro');
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-// NativeWind v4 is configured via babel.config.js (nativewind/babel plugin)
-// No additional metro configuration needed
-
-module.exports = config;
+// NativeWind v4 Metro configuration
+module.exports = withNativeWind(config, { input: './global.css' });
