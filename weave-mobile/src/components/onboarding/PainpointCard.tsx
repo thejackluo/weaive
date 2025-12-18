@@ -2,11 +2,11 @@
  * PainpointCard Component
  *
  * Selectable card for emotional state selection
- * Native implementation without design system dependencies
+ * NativeWind v5 styling
  */
 
 import React, { useEffect, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Pressable, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -94,8 +94,8 @@ export function PainpointCard({
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      className="min-h-[160px] mb-3 rounded-2xl overflow-hidden"
       style={[
-        styles.card,
         {
           width: cardWidth,
           borderWidth: isSelected ? 2 : 1,
@@ -112,37 +112,32 @@ export function PainpointCard({
       accessibilityState={{ selected: isSelected }}
     >
       {/* Content Container */}
-      <View style={styles.content}>
+      <View className="flex-1 items-center justify-center py-4 px-3">
         {/* Icon */}
-        <View style={styles.iconContainer}>
+        <View className="mb-3">
           <SymbolView
             name={painpoint.icon as any}
             size={32}
             tintColor={isSelected ? '#3B72F6' : '#A3A3A3'}
-            style={styles.icon}
           />
         </View>
 
         {/* Title */}
         <Text
-          style={[
-            styles.title,
-            {
-              color: isSelected ? '#262626' : '#171717',
-            },
-          ]}
+          className="text-center mb-2 text-lg font-semibold"
+          style={{
+            color: isSelected ? '#262626' : '#171717',
+          }}
         >
           {painpoint.title}
         </Text>
 
         {/* Description */}
         <Text
-          style={[
-            styles.description,
-            {
-              color: isSelected ? '#525252' : '#737373',
-            },
-          ]}
+          className="text-center text-sm leading-5"
+          style={{
+            color: isSelected ? '#525252' : '#737373',
+          }}
         >
           {painpoint.description}
         </Text>
@@ -150,7 +145,8 @@ export function PainpointCard({
         {/* Check Icon Overlay */}
         {isSelected && (
           <Animated.View
-            style={[styles.checkIconContainer, checkAnimatedStyle]}
+            className="absolute top-2 right-2"
+            style={checkAnimatedStyle}
           >
             <Ionicons
               name="checkmark-circle"
@@ -163,45 +159,3 @@ export function PainpointCard({
     </AnimatedPressable>
   );
 }
-
-// =============================================================================
-// STYLES
-// =============================================================================
-
-const styles = StyleSheet.create({
-  card: {
-    minHeight: 160,
-    marginBottom: 12,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-  },
-  iconContainer: {
-    marginBottom: 12,
-  },
-  icon: {
-    // Icon styling handled by SymbolView props
-  },
-  title: {
-    textAlign: 'center',
-    marginBottom: 8,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  description: {
-    textAlign: 'center',
-    lineHeight: 20,
-    fontSize: 14,
-  },
-  checkIconContainer: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-  },
-});

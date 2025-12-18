@@ -3,10 +3,11 @@
  *
  * Step 1.2 of Onboarding: User selects 1-2 emotional painpoints
  * Stores selection in zustand onboarding store
+ * NativeWind v5 styling
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
@@ -90,23 +91,23 @@ export default function EmotionalStateScreen() {
   const canContinue = selectedPainpoints.length >= 1 && selectedPainpoints.length <= 2;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        className="py-6 px-4 pb-10"
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>
+        <View className="items-center mb-6">
+          <Text className="text-center text-[28px] font-semibold text-neutral-800 mb-2 tracking-tight">
             What's holding you back?
           </Text>
-          <Text style={styles.subtitle}>
+          <Text className="text-center text-base text-neutral-600">
             Choose 1-2 areas you want to improve
           </Text>
         </View>
 
         {/* Painpoint Grid */}
-        <View style={styles.grid}>
+        <View className="flex-row flex-wrap justify-between gap-3">
           {PAINPOINTS.map((painpoint) => (
             <PainpointCard
               key={painpoint.id}
@@ -119,100 +120,31 @@ export default function EmotionalStateScreen() {
 
         {/* Validation Message */}
         {showValidation && (
-          <View style={styles.validationContainer}>
-            <Text style={styles.validationText}>
+          <View className="items-center mt-3">
+            <Text className="text-center font-medium text-sm text-red-600">
               Choose up to 2
             </Text>
           </View>
         )}
 
         {/* Continue Button */}
-        <View style={styles.buttonContainer}>
+        <View className="w-full mt-6">
           <Pressable
-            style={[
-              styles.button,
-              !canContinue && styles.buttonDisabled,
-            ]}
+            className={`h-12 rounded-lg w-full justify-center items-center ${
+              canContinue ? 'bg-blue-500' : 'bg-gray-200 opacity-50'
+            }`}
             disabled={!canContinue}
             onPress={handleContinue}
             accessibilityLabel="Continue to next step"
             accessibilityRole="button"
             accessibilityState={{ disabled: !canContinue }}
           >
-            <Text style={styles.buttonText}>Continue</Text>
+            <Text className="text-white text-base font-semibold">
+              Continue
+            </Text>
           </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-// =============================================================================
-// STYLES
-// =============================================================================
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  scrollContent: {
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    textAlign: 'center',
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#262626',
-    marginBottom: 8,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#525252',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  validationContainer: {
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  validationText: {
-    textAlign: 'center',
-    fontWeight: '500',
-    fontSize: 14,
-    color: '#DC2626',
-  },
-  buttonContainer: {
-    width: '100%',
-    marginTop: 24,
-  },
-  button: {
-    backgroundColor: '#3B72F6',
-    height: 48,
-    borderRadius: 8,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    backgroundColor: '#E5E5E5',
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
