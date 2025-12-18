@@ -49,6 +49,7 @@ Remove-Item -Path .expo -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -Path package-lock.json -Force -ErrorAction SilentlyContinue
 
 # 3. Install latest packages
+npm install expo@latest
 npx expo install expo@latest --fix
 
 # 4. Verify installation
@@ -67,6 +68,7 @@ cd weave-mobile
 rm -rf node_modules .expo package-lock.json
 
 # Install latest packages
+npm install expo@latest
 npx expo install expo@latest --fix
 
 # Verify
