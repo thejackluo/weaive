@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useCallback } from 'react';
-import { View, Text, Pressable, Dimensions } from 'react-native';
+import { View, Text, Pressable, Dimensions, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -32,7 +32,7 @@ export interface PainpointCardProps {
   painpoint: Painpoint;
   isSelected: boolean;
   onPress: (id: string) => void;
-  style?: any;
+  style?: ViewStyle | ViewStyle[];
 }
 
 // =============================================================================
@@ -41,7 +41,7 @@ export interface PainpointCardProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function PainpointCard({
+function PainpointCardComponent({
   painpoint,
   isSelected,
   onPress,
@@ -159,3 +159,6 @@ export function PainpointCard({
     </AnimatedPressable>
   );
 }
+
+// Memoize to prevent unnecessary re-renders (4 cards = 4x performance impact)
+export const PainpointCard = React.memo(PainpointCardComponent);
