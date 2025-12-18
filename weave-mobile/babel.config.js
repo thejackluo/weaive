@@ -18,6 +18,8 @@ module.exports = function (api) {
           },
         },
       ],
+      // React Native Reanimated plugin - MUST BE LAST!
+      'react-native-reanimated/plugin',
     ],
   };
 };
