@@ -38,11 +38,12 @@
     "react-native-web": "^0.21.0",
     "react-native-worklets": "0.5.1",
     "react-native-worklets-core": "^1.6.2",
+    "tailwind-variants": "^3.2.2",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/postcss": "^4.1.16",
     "@types/react": "~19.1.0",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
@@ -54,7 +55,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "postcss": "^8.5.6",
     "prettier": "^3.7.4",
-    "tailwindcss": "^4.1.18",
+    "tailwindcss": "^4.1.16",
     "typescript": "~5.9.2"
   },
   "overrides": {
