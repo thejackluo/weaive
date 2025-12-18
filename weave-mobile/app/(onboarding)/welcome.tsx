@@ -38,6 +38,16 @@ export default function WelcomeScreen() {
     router.push('/(onboarding)/emotional-state');
   };
 
+  /**
+   * Handles the "View Design System" button press
+   *
+   * Navigates to the design system showcase screen for previewing components
+   */
+  const handleViewDesignSystem = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/design-system-showcase');
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white" style={{ flex: 1, backgroundColor: '#ffffff' }}>
       <View className="flex-1 justify-center items-center px-4" style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 }}>
@@ -70,10 +80,27 @@ export default function WelcomeScreen() {
           onPress={handleGetStarted}
           accessibilityRole="button"
           accessible={true}
-          style={{ backgroundColor: '#3b72f6', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center' }}
+          style={{ backgroundColor: '#3b72f6', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}
         >
           <Text className="text-white text-sm font-medium tracking-wider" style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}>
             Get Started
+          </Text>
+        </Pressable>
+
+        {/* Design System Preview Button - Dev Tool */}
+        <Pressable
+          className={({ pressed }) =>
+            `bg-neutral-200 h-11 rounded-lg w-full justify-center items-center ${
+              pressed ? 'bg-neutral-300 scale-[0.98]' : ''
+            }`
+          }
+          onPress={handleViewDesignSystem}
+          accessibilityRole="button"
+          accessible={true}
+          style={{ backgroundColor: '#e5e5e5', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Text className="text-neutral-800 text-sm font-medium tracking-wider" style={{ color: '#262626', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}>
+            View Design System
           </Text>
         </Pressable>
       </View>
