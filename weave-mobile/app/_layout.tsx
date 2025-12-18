@@ -1,7 +1,9 @@
 /* global __DEV__, console */
-import { Tabs, ErrorBoundary } from 'expo-router';
+import { Stack, type ErrorBoundaryProps } from 'expo-router';
 import { Text, View } from 'react-native';
-import '../global.css'; // Import NativeWind styles
+import '../global.css';
+import { useEffect } from 'react';
+import * as React from 'react';
 
 /**
  * Custom error fallback component
@@ -27,37 +29,42 @@ function ErrorFallback({ error, retry }: { error: Error; retry: () => void }) {
 }
 
 /**
+ * Expo Router Error Boundary
+ * Automatically catches errors in any route and displays the ErrorFallback component
+ */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  useEffect(() => {
+    // Log errors to console in development
+    if (__DEV__) {
+      console.error('[Weave] Error Boundary caught error:', error);
+    }
+    // In production, you would send this to an error tracking service (Sentry, etc.)
+  }, [error]);
+
+  return <ErrorFallback error={error} retry={retry} />;
+}
+
+/**
  * Root layout for Expo Router
  *
  * This component:
  * - Imports global.css for NativeWind/Tailwind CSS support
- * - Sets up tab-based navigation structure
- * - Wraps app in ErrorBoundary for better debugging
- * - Provides the foundation for all app screens
+ * - Sets up navigation structure with Stack
+ * - Provides error boundary protection (via exported ErrorBoundary above)
+ * - Serves as the foundation for all app screens
  */
 export default function RootLayout() {
+  useEffect(() => {
+    // Log React version on mount for debugging
+    if (__DEV__) {
+      console.log(`[Weave] React version: ${React.version}`);
+      console.log('[Weave] App mounted successfully');
+    }
+  }, []);
+
   return (
-    <ErrorBoundary
-      errorComponent={ErrorFallback}
-      onError={(error) => {
-        // Log errors to console in development
-        if (__DEV__) {
-          console.error('App Error:', error);
-        }
-        // In production, you would send this to an error tracking service (Sentry, etc.)
-      }}
-    >
-      <Tabs>
-        <Tabs.Screen
-          name="(tabs)"
-          options={{
-            headerShown: false,
-          }}
-        />
-      </Tabs>
-    </ErrorBoundary>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+    </Stack>
   );
 }
-
-// Export ErrorBoundary for use in other parts of the app
-export { ErrorBoundary };
