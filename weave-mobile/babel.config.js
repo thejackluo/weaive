@@ -3,8 +3,6 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // NativeWind support for Tailwind CSS in React Native
-      'nativewind/babel',
       // Module resolver for path aliases (@/*, app/*)
       [
         'module-resolver',
