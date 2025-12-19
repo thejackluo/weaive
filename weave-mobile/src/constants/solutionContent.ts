@@ -29,12 +29,12 @@ export const SOLUTION_TEXT: Record<PainpointId, SolutionContent> = {
   clarity: {
     id: 'clarity',
     title: 'Clarity',
-    text: "We turn vague feelings into clear direction. Through small daily reflections and pattern insights, Weave reveals where your motivation naturally points — and turns that into a path you can follow.",
+    text: 'We turn vague feelings into clear direction. Through small daily reflections and pattern insights, Weave reveals where your motivation naturally points — and turns that into a path you can follow.',
   },
   action: {
     id: 'action',
     title: 'Action',
-    text: "We make starting easy. We break your goal into simple, doable steps and nudge you into motion — so action replaces hesitation, and momentum replaces overthinking.",
+    text: 'We make starting easy. We break your goal into simple, doable steps and nudge you into motion — so action replaces hesitation, and momentum replaces overthinking.',
   },
   consistency: {
     id: 'consistency',
@@ -44,7 +44,7 @@ export const SOLUTION_TEXT: Record<PainpointId, SolutionContent> = {
   alignment: {
     id: 'alignment',
     title: 'Alignment',
-    text: "We become the environment that supports your ambition. The more you use the app, the better it understands how you grow — and eventually, Weave will connect you with others moving in the same direction.",
+    text: 'We become the environment that supports your ambition. The more you use the app, the better it understands how you grow — and eventually, Weave will connect you with others moving in the same direction.',
   },
 };
 
@@ -65,5 +65,5 @@ export function getSolutionContent(painpointIds: string[]): SolutionContent[] {
 export const FALLBACK_SOLUTION: SolutionContent = {
   id: 'clarity',
   title: 'How Weave helps',
-  text: "We help you turn vague goals into consistent action and visible progress.",
+  text: 'We help you turn vague goals into consistent action and visible progress.',
 };

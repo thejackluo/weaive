@@ -30,7 +30,7 @@ export type IdentityTrait =
 export const IDENTITY_TRAITS: IdentityTrait[][] = [
   ['Disciplined', 'Creative', 'Confident', 'Calm'],
   ['Focused', 'Energetic', 'Organized', 'Patient'],
-  ['Resilient', 'Balanced', 'Intentional', 'Present']
+  ['Resilient', 'Balanced', 'Intentional', 'Present'],
 ];
 
 /**
