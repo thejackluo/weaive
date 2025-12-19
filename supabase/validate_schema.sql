@@ -2,10 +2,8 @@
 -- SCHEMA VALIDATION SCRIPT for Story 0.2
 -- Purpose: Verify all database objects from migrations 001-013 exist and are correct
 -- Story: 0.2b - Database Schema Refinement + Critical Tables (AC5)
--- Usage: psql <connection-string> -f validate_schema.sql
+-- Usage: Run via Supabase Dashboard SQL Editor or psql
 -- ═══════════════════════════════════════════════════════════════════════
-
-\set ON_ERROR_STOP on
 
 -- Create temporary table for validation results
 CREATE TEMP TABLE validation_results (
@@ -482,12 +480,16 @@ END $$;
 -- FINAL REPORT
 -- ═══════════════════════════════════════════════════════════════════════
 
-\echo ''
-\echo '═══════════════════════════════════════════════════════════════════════'
-\echo 'WEAVE DATABASE SCHEMA VALIDATION REPORT'
-\echo 'Story 0.2: Database Schema Core + Refinement (Migrations 001-013)'
-\echo '═══════════════════════════════════════════════════════════════════════'
-\echo ''
+-- Print header
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════════════════';
+  RAISE NOTICE 'WEAVE DATABASE SCHEMA VALIDATION REPORT';
+  RAISE NOTICE 'Story 0.2: Database Schema Core + Refinement (Migrations 001-013)';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════════════════';
+  RAISE NOTICE '';
+END $$;
 
 -- Print results grouped by category
 SELECT
@@ -508,10 +510,14 @@ ORDER BY
   END,
   check_name;
 
-\echo ''
-\echo '─────────────────────────────────────────────────────────────────────'
-\echo 'SUMMARY'
-\echo '─────────────────────────────────────────────────────────────────────'
+-- Print summary header
+DO $$
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '─────────────────────────────────────────────────────────────────────';
+  RAISE NOTICE 'SUMMARY';
+  RAISE NOTICE '─────────────────────────────────────────────────────────────────────';
+END $$;
 
 -- Summary statistics
 SELECT
@@ -532,8 +538,6 @@ ORDER BY
     WHEN 'FOREIGN_KEYS' THEN 7
   END;
 
-\echo ''
-
 -- Overall status
 DO $$
 DECLARE
@@ -543,6 +547,7 @@ BEGIN
   SELECT COUNT(*) INTO total_checks FROM validation_results;
   SELECT COUNT(*) INTO failed_checks FROM validation_results WHERE status LIKE '❌%';
 
+  RAISE NOTICE '';
   IF failed_checks = 0 THEN
     RAISE NOTICE '✅ ALL VALIDATION CHECKS PASSED (%/%)', total_checks, total_checks;
     RAISE NOTICE 'Schema is ready for Story 0.2 completion.';
@@ -550,10 +555,9 @@ BEGIN
     RAISE WARNING '❌ % CHECKS FAILED (%/%)', failed_checks, total_checks - failed_checks, total_checks;
     RAISE WARNING 'Please review failed checks above and fix migrations.';
   END IF;
+  RAISE NOTICE '';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════════════════';
 END $$;
-
-\echo ''
-\echo '═══════════════════════════════════════════════════════════════════════'
 
 -- Clean up
 DROP TABLE validation_results;

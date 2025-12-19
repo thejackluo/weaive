@@ -39,154 +39,143 @@ INSERT INTO user_profiles (id, auth_user_id, display_name, timezone, locale, cre
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's identity (2 versions - user edited)
-INSERT INTO identity_docs (id, user_id, version, archetype, dream_self, motivations, constraints, created_at) VALUES
-('1d111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 1, 'The Optimizer',
- 'I want to be a senior engineer at a top tech company, leading projects that impact millions of users. I see myself mentoring junior developers and contributing to open source.',
- ARRAY['Career growth', 'Technical excellence', 'Work-life balance', 'Financial independence'],
- ARRAY['Full-time job (40hrs/week)', 'Family time on weekends', 'Limited budget for courses'],
+INSERT INTO identity_docs (id, user_id, version, json, created_at) VALUES
+('1d111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 1,
+ '{"archetype": "The Optimizer", "dream_self": "I want to be a senior engineer at a top tech company, leading projects that impact millions of users. I see myself mentoring junior developers and contributing to open source.", "motivations": ["Career growth", "Technical excellence", "Work-life balance", "Financial independence"], "constraints": ["Full-time job (40hrs/week)", "Family time on weekends", "Limited budget for courses"]}'::jsonb,
  NOW() - INTERVAL '30 days');
 
-INSERT INTO identity_docs (id, user_id, version, archetype, dream_self, motivations, constraints, created_at) VALUES
-('1d111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 2, 'The Optimizer',
- 'I want to be a senior engineer at a FAANG company, leading projects that impact millions of users. I see myself mentoring junior developers and contributing to open source. Most importantly, I want to build products that solve real problems.',
- ARRAY['Career growth', 'Technical excellence', 'Work-life balance', 'Financial independence', 'Impact'],
- ARRAY['Full-time job (40hrs/week)', 'Family time on weekends', 'Limited budget for courses'],
+INSERT INTO identity_docs (id, user_id, version, json, created_at) VALUES
+('1d111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 2,
+ '{"archetype": "The Optimizer", "dream_self": "I want to be a senior engineer at a FAANG company, leading projects that impact millions of users. I see myself mentoring junior developers and contributing to open source. Most importantly, I want to build products that solve real problems.", "motivations": ["Career growth", "Technical excellence", "Work-life balance", "Financial independence", "Impact"], "constraints": ["Full-time job (40hrs/week)", "Family time on weekends", "Limited budget for courses"]}'::jsonb,
  NOW() - INTERVAL '20 days');
 
 -- Jordan's identity (1 version - initial)
-INSERT INTO identity_docs (id, user_id, version, archetype, dream_self, motivations, constraints, created_at) VALUES
-('2d222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', 1, 'The Explorer',
- 'I want to build my own startup and create a product people love. I want financial freedom and the ability to work from anywhere.',
- ARRAY['Entrepreneurship', 'Financial freedom', 'Creative expression', 'Independence'],
- ARRAY['Solo founder - limited help', 'Inconsistent schedule', 'Distractions from social media'],
+INSERT INTO identity_docs (id, user_id, version, json, created_at) VALUES
+('2d222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', 1,
+ '{"archetype": "The Explorer", "dream_self": "I want to build my own startup and create a product people love. I want financial freedom and the ability to work from anywhere.", "motivations": ["Entrepreneurship", "Financial freedom", "Creative expression", "Independence"], "constraints": ["Solo founder - limited help", "Inconsistent schedule", "Distractions from social media"]}'::jsonb,
  NOW() - INTERVAL '15 days');
 
 -- Sam's identity (1 version - initial)
-INSERT INTO identity_docs (id, user_id, version, archetype, dream_self, motivations, constraints, created_at) VALUES
-('3d333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', 1, 'The Builder',
- 'I want to master machine learning and build AI products that help people be more productive.',
- ARRAY['Learning', 'Building', 'Problem-solving', 'Recognition'],
- ARRAY['Student schedule - 20hrs/week available', 'No income yet', 'Learning curve'],
+INSERT INTO identity_docs (id, user_id, version, json, created_at) VALUES
+('3d333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', 1,
+ '{"archetype": "The Builder", "dream_self": "I want to master machine learning and build AI products that help people be more productive.", "motivations": ["Learning", "Building", "Problem-solving", "Recognition"], "constraints": ["Student schedule - 20hrs/week available", "No income yet", "Learning curve"]}'::jsonb,
  NOW() - INTERVAL '2 days');
 
 -- ═══════════════════════════════════════════════════════════════════════
 -- GOALS (Alex has 3 active - max allowed, Jordan has 2, Sam has 1)
 -- ═══════════════════════════════════════════════════════════════════════
 
--- Alex's Goals (3 active)
+-- Alex's Goals (3 active - using hex-valid UUIDs starting with 16)
 INSERT INTO goals (id, user_id, title, description, status, priority, target_date, created_at) VALUES
-('1g111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
+('16111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
  'Get promoted to Senior Engineer',
  'Demonstrate technical leadership, mentor juniors, lead 2 major projects, contribute to architecture decisions.',
  'active', 'high', '2026-06-01', NOW() - INTERVAL '30 days');
 
 INSERT INTO goals (id, user_id, title, description, status, priority, target_date, created_at) VALUES
-('1g111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
+('16111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
  'Build strong daily exercise habit',
  'Exercise 5 days per week (30 min minimum). Improve energy levels and health.',
  'active', 'medium', '2026-03-01', NOW() - INTERVAL '25 days');
 
 INSERT INTO goals (id, user_id, title, description, status, priority, target_date, created_at) VALUES
-('1g111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
+('16111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
  'Read 24 technical books this year',
  'Read 2 books per month to expand knowledge. Focus on systems design, leadership, and emerging tech.',
  'active', 'low', '2025-12-31', NOW() - INTERVAL '20 days');
 
 -- Jordan's Goals (2 active)
 INSERT INTO goals (id, user_id, title, description, status, priority, target_date, created_at) VALUES
-('2g222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
+('26222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
  'Launch MVP in 90 days',
  'Ship a working product with core features. Get first 100 users.',
  'active', 'high', '2026-03-15', NOW() - INTERVAL '15 days');
 
 INSERT INTO goals (id, user_id, title, description, status, priority, target_date, created_at) VALUES
-('2g222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
+('26222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
  'Build consistent coding habit',
  'Code every day, even if just 30 minutes. Ship features regularly.',
  'active', 'high', '2026-02-01', NOW() - INTERVAL '10 days');
 
 -- Sam's Goals (1 active)
 INSERT INTO goals (id, user_id, title, description, status, priority, target_date, created_at) VALUES
-('3g333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
+('36333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
  'Complete ML course and build 3 projects',
  'Finish Andrew Ng''s course, build practical projects, understand fundamentals.',
  'active', 'high', '2026-05-01', NOW() - INTERVAL '2 days');
 
 -- ═══════════════════════════════════════════════════════════════════════
--- SUBTASK TEMPLATES (Binds) - Reusable habits
+-- SUBTASK TEMPLATES (Binds) - Reusable habits (17 = templates)
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's Binds
 INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_pattern, estimated_duration_minutes, is_archived, created_at) VALUES
-('1t111111-1111-1111-1111-111111111111', '1g111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
+('17111111-1111-1111-1111-111111111111', '16111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
  'Code review 2+ PRs', 'daily', 30, FALSE, NOW() - INTERVAL '30 days'),
-('1t111112-1111-1111-1111-111111111111', '1g111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
+('17111112-1111-1111-1111-111111111111', '16111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
  'Lead daily standup', 'weekly:mon,wed,fri', 15, FALSE, NOW() - INTERVAL '30 days'),
-('1t111113-1111-1111-1111-111111111111', '1g111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
+('17111113-1111-1111-1111-111111111111', '16111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
  'Morning run (30 min)', 'daily', 30, FALSE, NOW() - INTERVAL '25 days'),
-('1t111114-1111-1111-1111-111111111111', '1g111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
+('17111114-1111-1111-1111-111111111111', '16111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
  'Read technical book (30 pages)', 'daily', 45, FALSE, NOW() - INTERVAL '20 days');
 
 -- Jordan's Binds
 INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_pattern, estimated_duration_minutes, is_archived, created_at) VALUES
-('2t222221-2222-2222-2222-222222222222', '2g222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
+('27222221-2222-2222-2222-222222222222', '26222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
  'Ship 1 feature or fix 3 bugs', 'daily', 120, FALSE, NOW() - INTERVAL '15 days'),
-('2t222222-2222-2222-2222-222222222222', '2g222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
+('27222222-2222-2222-2222-222222222222', '26222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
  'Talk to 2 potential users', 'weekly:mon,thu', 30, FALSE, NOW() - INTERVAL '15 days'),
-('2t222223-2222-2222-2222-222222222222', '2g222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
+('27222223-2222-2222-2222-222222222222', '26222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
  'Code for 30 minutes', 'daily', 30, FALSE, NOW() - INTERVAL '10 days');
 
 -- Sam's Binds
 INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_pattern, estimated_duration_minutes, is_archived, created_at) VALUES
-('3t333331-3333-3333-3333-333333333333', '3g333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
+('37333331-3333-3333-3333-333333333333', '36333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
  'Complete 1 ML course module', 'daily', 60, FALSE, NOW() - INTERVAL '2 days'),
-('3t333332-3333-3333-3333-333333333333', '3g333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
+('37333332-3333-3333-3333-333333333333', '36333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
  'Code ML exercises', 'daily', 45, FALSE, NOW() - INTERVAL '2 days');
 
 -- ═══════════════════════════════════════════════════════════════════════
--- SUBTASK INSTANCES (Scheduled binds for specific dates)
+-- SUBTASK INSTANCES (Scheduled binds - 11 = instances)
 -- ═══════════════════════════════════════════════════════════════════════
 
--- Alex's instances (today + yesterday + past 7 days) - High consistency
--- Yesterday (all completed)
-INSERT INTO subtask_instances (id, template_id, user_id, scheduled_for_date, status, created_at) VALUES
-('1i111111-1111-1111-1111-111111111111', '1t111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 'completed', NOW() - INTERVAL '1 day'),
-('1i111112-1111-1111-1111-111111111111', '1t111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 'completed', NOW() - INTERVAL '1 day'),
-('1i111113-1111-1111-1111-111111111111', '1t111114-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 'completed', NOW() - INTERVAL '1 day');
+-- Alex's instances - Yesterday (all done)
+INSERT INTO subtask_instances (id, template_id, user_id, goal_id, scheduled_for_date, status, estimated_minutes, completed_at, created_at) VALUES
+('11111111-1111-1111-1111-111111111111', '17111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 'done', 30, NOW() - INTERVAL '1 day' + INTERVAL '9 hours', NOW() - INTERVAL '1 day'),
+('11111112-1111-1111-1111-111111111111', '17111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111112-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 'done', 30, NOW() - INTERVAL '1 day' + INTERVAL '6 hours', NOW() - INTERVAL '1 day'),
+('11111113-1111-1111-1111-111111111111', '17111114-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111113-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 'done', 45, NOW() - INTERVAL '1 day' + INTERVAL '21 hours', NOW() - INTERVAL '1 day');
 
--- Today (planned)
-INSERT INTO subtask_instances (id, template_id, user_id, scheduled_for_date, status, created_at) VALUES
-('1i111121-1111-1111-1111-111111111111', '1t111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE, 'planned', NOW()),
-('1i111122-1111-1111-1111-111111111111', '1t111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE, 'planned', NOW()),
-('1i111123-1111-1111-1111-111111111111', '1t111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE, 'planned', NOW()),
-('1i111124-1111-1111-1111-111111111111', '1t111114-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE, 'planned', NOW());
+-- Alex's instances - Today (planned)
+INSERT INTO subtask_instances (id, template_id, user_id, goal_id, scheduled_for_date, status, estimated_minutes, created_at) VALUES
+('11111121-1111-1111-1111-111111111111', '17111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111111-1111-1111-1111-111111111111', CURRENT_DATE, 'planned', 30, NOW()),
+('11111122-1111-1111-1111-111111111111', '17111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111111-1111-1111-1111-111111111111', CURRENT_DATE, 'planned', 15, NOW()),
+('11111123-1111-1111-1111-111111111111', '17111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111112-1111-1111-1111-111111111111', CURRENT_DATE, 'planned', 30, NOW()),
+('11111124-1111-1111-1111-111111111111', '17111114-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111113-1111-1111-1111-111111111111', CURRENT_DATE, 'planned', 45, NOW());
 
--- Jordan's instances (inconsistent pattern)
--- Yesterday (only 1 completed, 2 skipped)
-INSERT INTO subtask_instances (id, template_id, user_id, scheduled_for_date, status, created_at) VALUES
-('2i222211-2222-2222-2222-222222222222', '2t222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '1 day', 'completed', NOW() - INTERVAL '1 day'),
-('2i222212-2222-2222-2222-222222222222', '2t222223-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '1 day', 'skipped', NOW() - INTERVAL '1 day');
+-- Jordan's instances - Yesterday (1 done, 1 skipped)
+INSERT INTO subtask_instances (id, template_id, user_id, goal_id, scheduled_for_date, status, estimated_minutes, completed_at, created_at) VALUES
+('21222211-2222-2222-2222-222222222222', '27222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', '26222221-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '1 day', 'done', 120, NOW() - INTERVAL '1 day' + INTERVAL '14 hours', NOW() - INTERVAL '1 day'),
+('21222212-2222-2222-2222-222222222222', '27222223-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', '26222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '1 day', 'skipped', 30, NULL, NOW() - INTERVAL '1 day');
 
--- Today (planned)
-INSERT INTO subtask_instances (id, template_id, user_id, scheduled_for_date, status, created_at) VALUES
-('2i222221-2222-2222-2222-222222222222', '2t222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE, 'planned', NOW()),
-('2i222222-2222-2222-2222-222222222222', '2t222223-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE, 'planned', NOW());
+-- Jordan's instances - Today (planned)
+INSERT INTO subtask_instances (id, template_id, user_id, goal_id, scheduled_for_date, status, estimated_minutes, created_at) VALUES
+('21222221-2222-2222-2222-222222222222', '27222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', '26222221-2222-2222-2222-222222222222', CURRENT_DATE, 'planned', 120, NOW()),
+('21222222-2222-2222-2222-222222222222', '27222223-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', '26222222-2222-2222-2222-222222222222', CURRENT_DATE, 'planned', 30, NOW());
 
--- Sam's instances (new user)
--- Today (planned)
-INSERT INTO subtask_instances (id, template_id, user_id, scheduled_for_date, status, created_at) VALUES
-('3i333331-3333-3333-3333-333333333333', '3t333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', CURRENT_DATE, 'planned', NOW()),
-('3i333332-3333-3333-3333-333333333333', '3t333332-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', CURRENT_DATE, 'planned', NOW());
+-- Sam's instances - Today (planned)
+INSERT INTO subtask_instances (id, template_id, user_id, goal_id, scheduled_for_date, status, estimated_minutes, created_at) VALUES
+('31333331-3333-3333-3333-333333333333', '37333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', '36333331-3333-3333-3333-333333333333', CURRENT_DATE, 'planned', 60, NOW()),
+('31333332-3333-3333-3333-333333333333', '37333332-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', '36333331-3333-3333-3333-333333333333', CURRENT_DATE, 'planned', 45, NOW());
 
 -- ═══════════════════════════════════════════════════════════════════════
--- SUBTASK COMPLETIONS (IMMUTABLE) - Canonical truth
+-- SUBTASK COMPLETIONS (IMMUTABLE) - Canonical truth (1c = completions)
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's completions (yesterday - 3 binds completed)
 INSERT INTO subtask_completions (id, user_id, instance_id, local_date, duration_minutes, completed_at) VALUES
-('1c111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '1i111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 35, NOW() - INTERVAL '1 day' + INTERVAL '9 hours'),
-('1c111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '1i111112-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 32, NOW() - INTERVAL '1 day' + INTERVAL '6 hours'),
-('1c111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '1i111113-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 50, NOW() - INTERVAL '1 day' + INTERVAL '21 hours');
+('1c111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 35, NOW() - INTERVAL '1 day' + INTERVAL '9 hours'),
+('1c111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111112-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 32, NOW() - INTERVAL '1 day' + INTERVAL '6 hours'),
+('1c111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111113-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 50, NOW() - INTERVAL '1 day' + INTERVAL '21 hours');
 
 -- Alex's completions (2 days ago - 4 binds completed - perfect day)
 INSERT INTO subtask_completions (id, user_id, instance_id, local_date, duration_minutes, completed_at) VALUES
@@ -197,45 +186,45 @@ INSERT INTO subtask_completions (id, user_id, instance_id, local_date, duration_
 
 -- Jordan's completions (yesterday - only 1 bind completed)
 INSERT INTO subtask_completions (id, user_id, instance_id, local_date, duration_minutes, completed_at) VALUES
-('2c222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', '2i222211-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '1 day', 90, NOW() - INTERVAL '1 day' + INTERVAL '14 hours');
+('2c222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', '21222211-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '1 day', 90, NOW() - INTERVAL '1 day' + INTERVAL '14 hours');
 
 -- ═══════════════════════════════════════════════════════════════════════
--- CAPTURES (Proof and memory)
+-- CAPTURES (Proof and memory - 19 = captures)
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's captures (proof-linked and standalone)
 INSERT INTO captures (id, user_id, subtask_instance_id, local_date, type, content_text, storage_path, created_at) VALUES
-('1p111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '1i111112-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 'photo',
+('19111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111112-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 'photo',
  'Post-run selfie - feeling great!', 'captures/alex/2025-12-17/morning-run.jpg', NOW() - INTERVAL '1 day' + INTERVAL '6 hours 5 minutes'),
-('1p111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '1 day', 'note',
+('19111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '1 day', 'note',
  'Great insight from the book: "Systems thinking is about seeing patterns, not just events."', NULL, NOW() - INTERVAL '1 day' + INTERVAL '21 hours 30 minutes');
 
 -- Jordan's captures (standalone note)
 INSERT INTO captures (id, user_id, subtask_instance_id, local_date, type, content_text, storage_path, created_at) VALUES
-('2p222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', NULL, CURRENT_DATE - INTERVAL '1 day', 'note',
+('29222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', NULL, CURRENT_DATE - INTERVAL '1 day', 'note',
  'Had a breakthrough on the authentication flow. Users need passwordless login.', NULL, NOW() - INTERVAL '1 day' + INTERVAL '16 hours');
 
 -- ═══════════════════════════════════════════════════════════════════════
--- JOURNAL ENTRIES (Daily reflection)
+-- JOURNAL ENTRIES (Daily reflection - 14 = journals)
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's journals (consistent reflections)
 INSERT INTO journal_entries (id, user_id, local_date, text, fulfillment_score, created_at) VALUES
-('1j111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day',
+('14111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day',
  'Solid day. Completed morning run and code reviews. The book on systems design is fascinating. Feeling 8/10 fulfilled. Tomorrow I want to focus on leading the standup with more clarity.',
  8, NOW() - INTERVAL '1 day' + INTERVAL '22 hours'),
-('1j111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days',
+('14111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days',
  'Amazing day! Hit all my binds. Morning energy was high. Led standup well, team seemed engaged. Book insights are clicking. 9/10 fulfilled.',
  9, NOW() - INTERVAL '2 days' + INTERVAL '23 hours');
 
 -- Jordan's journal (inconsistent - skipped yesterday)
 INSERT INTO journal_entries (id, user_id, local_date, text, fulfillment_score, created_at) VALUES
-('2j222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '2 days',
+('24222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '2 days',
  'Finally shipped a feature! Feels good to see progress. Need to be more consistent with coding daily. Got distracted by social media again. 6/10 fulfilled.',
  6, NOW() - INTERVAL '2 days' + INTERVAL '21 hours');
 
 -- ═══════════════════════════════════════════════════════════════════════
--- DAILY AGGREGATES (Pre-computed stats)
+-- DAILY AGGREGATES (Pre-computed stats - 1a = aggregates)
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's aggregates (high consistency)
@@ -255,61 +244,61 @@ INSERT INTO daily_aggregates (user_id, local_date, completed_count, planned_coun
 ('33333333-3333-3333-3333-333333333333', CURRENT_DATE, 0, 2, 0, FALSE, FALSE, FALSE, NOW());
 
 -- ═══════════════════════════════════════════════════════════════════════
--- TRIAD TASKS (AI-generated daily plan)
+-- TRIAD TASKS (AI-generated daily plan - 13 = triad)
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's Triad for today
 INSERT INTO triad_tasks (id, user_id, date_for, rank, title, rationale, is_user_edited, created_at) VALUES
-('1r111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE, 1,
+('13111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE, 1,
  'Morning run (30 min)', 'You have a 95% completion rate for morning runs. Starting the day with exercise sets a positive tone.', FALSE, NOW() - INTERVAL '1 day' + INTERVAL '22 hours'),
-('1r111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE, 2,
+('13111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE, 2,
  'Code review 2+ PRs', 'Critical for your promotion goal. You consistently complete this and it demonstrates technical leadership.', FALSE, NOW() - INTERVAL '1 day' + INTERVAL '22 hours'),
-('1r111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE, 3,
+('13111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE, 3,
  'Lead daily standup', 'Scheduled for today (Mon/Wed/Fri pattern). Great opportunity to practice leadership.', FALSE, NOW() - INTERVAL '1 day' + INTERVAL '22 hours');
 
 -- Jordan's Triad for today
 INSERT INTO triad_tasks (id, user_id, date_for, rank, title, rationale, is_user_edited, created_at) VALUES
-('2r222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE, 1,
+('23222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE, 1,
  'Ship 1 feature or fix 3 bugs', 'You completed this yesterday! Building momentum. Your MVP deadline is approaching.', FALSE, NOW() - INTERVAL '2 days' + INTERVAL '21 hours'),
-('2r222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE, 2,
+('23222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE, 2,
  'Code for 30 minutes', 'You skipped this yesterday. Even 30 minutes builds the habit. Start small and build consistency.', FALSE, NOW() - INTERVAL '2 days' + INTERVAL '21 hours'),
-('2r222223-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE, 3,
+('23222223-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE, 3,
  'Journal for 5 minutes', 'You skipped yesterday. Reflection helps you stay on track and identify patterns.', TRUE, NOW() - INTERVAL '2 days' + INTERVAL '21 hours 15 minutes');
 
 -- Sam's Triad for today (first day)
 INSERT INTO triad_tasks (id, user_id, date_for, rank, title, rationale, is_user_edited, created_at) VALUES
-('3r333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', CURRENT_DATE, 1,
+('33333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', CURRENT_DATE, 1,
  'Complete 1 ML course module', 'Your top goal is ML mastery. Start with your first module to build momentum.', FALSE, NOW() - INTERVAL '1 hour'),
-('3r333332-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', CURRENT_DATE, 2,
+('33333332-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', CURRENT_DATE, 2,
  'Code ML exercises', 'Hands-on practice reinforces learning. Even 30 minutes makes a difference.', FALSE, NOW() - INTERVAL '1 hour'),
-('3r333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', CURRENT_DATE, 3,
+('33333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', CURRENT_DATE, 3,
  'Journal - reflect on what you learned', 'Capture insights early. Helps with retention and builds the habit.', FALSE, NOW() - INTERVAL '1 hour');
 
 -- ═══════════════════════════════════════════════════════════════════════
--- AI RUNS (Cost tracking and caching)
+-- AI RUNS (Cost tracking and caching - 1a = ai_runs)
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's AI runs (Triad generation)
-INSERT INTO ai_runs (id, user_id, operation, model_used, input_hash, status, cost_estimate, response_tokens, created_at, completed_at) VALUES
+INSERT INTO ai_runs (id, user_id, module, model, prompt_version, input_hash, status, cost_estimate, tokens_input, tokens_output, execution_time_ms, created_at, completed_at) VALUES
 ('1a111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
- 'triad_generation', 'gpt-4o-mini', 'hash_alex_day1_completions_3_journal_yes', 'success', 0.015, 450, NOW() - INTERVAL '1 day' + INTERVAL '22 hours', NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '3 seconds'),
+ 'triad', 'gpt-4o-mini', 'triad-v1.0', 'hash_alex_day1_completions_3_journal_yes', 'success', 0.015, 1200, 450, 3000, NOW() - INTERVAL '1 day' + INTERVAL '22 hours', NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '3 seconds'),
 ('1a111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
- 'daily_recap', 'gpt-4o-mini', 'hash_alex_day1_journal_8', 'success', 0.012, 380, NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '5 minutes', NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '5 minutes' + INTERVAL '2 seconds');
+ 'recap', 'gpt-4o-mini', 'recap-v1.0', 'hash_alex_day1_journal_8', 'success', 0.012, 1000, 380, 2000, NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '5 minutes', NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '5 minutes' + INTERVAL '2 seconds');
 
 -- Jordan's AI runs (Triad generation - reused cached result)
-INSERT INTO ai_runs (id, user_id, operation, model_used, input_hash, status, cost_estimate, response_tokens, created_at, completed_at) VALUES
+INSERT INTO ai_runs (id, user_id, module, model, prompt_version, input_hash, status, cost_estimate, tokens_input, tokens_output, execution_time_ms, created_at, completed_at) VALUES
 ('2a222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
- 'triad_generation', 'gpt-4o-mini', 'hash_jordan_day2_completions_1_journal_no', 'success', 0.016, 470, NOW() - INTERVAL '2 days' + INTERVAL '21 hours', NOW() - INTERVAL '2 days' + INTERVAL '21 hours' + INTERVAL '3 seconds');
+ 'triad', 'gpt-4o-mini', 'triad-v1.0', 'hash_jordan_day2_completions_1_journal_no', 'success', 0.016, 1300, 470, 3000, NOW() - INTERVAL '2 days' + INTERVAL '21 hours', NOW() - INTERVAL '2 days' + INTERVAL '21 hours' + INTERVAL '3 seconds');
 
 -- Sam's AI runs (Onboarding - Claude Sonnet for quality)
-INSERT INTO ai_runs (id, user_id, operation, model_used, input_hash, status, cost_estimate, response_tokens, created_at, completed_at) VALUES
+INSERT INTO ai_runs (id, user_id, module, model, prompt_version, input_hash, status, cost_estimate, tokens_input, tokens_output, execution_time_ms, created_at, completed_at) VALUES
 ('3a333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
- 'onboarding_goal_breakdown', 'claude-3-7-sonnet', 'hash_sam_onboarding_ml_goal', 'success', 0.085, 1200, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days' + INTERVAL '5 seconds'),
+ 'goal_breakdown', 'claude-3.7-sonnet', 'goal-breakdown-v1.0', 'hash_sam_onboarding_ml_goal', 'success', 0.085, 2000, 1200, 5000, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days' + INTERVAL '5 seconds'),
 ('3a333332-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
- 'triad_generation', 'gpt-4o-mini', 'hash_sam_day1_new_user', 'success', 0.014, 420, NOW() - INTERVAL '1 hour', NOW() - INTERVAL '1 hour' + INTERVAL '3 seconds');
+ 'triad', 'gpt-4o-mini', 'triad-v1.0', 'hash_sam_day1_new_user', 'success', 0.014, 1100, 420, 3000, NOW() - INTERVAL '1 hour', NOW() - INTERVAL '1 hour' + INTERVAL '3 seconds');
 
 -- ═══════════════════════════════════════════════════════════════════════
--- AI ARTIFACTS (Editable AI outputs)
+-- AI ARTIFACTS (Editable AI outputs - 1f = artifacts)
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's artifacts (Triad + Recap)
@@ -345,28 +334,21 @@ INSERT INTO ai_artifacts (id, run_id, user_id, type, json, is_user_edited, edit_
 -- VALIDATION QUERIES (Run these to verify seed data)
 -- ═══════════════════════════════════════════════════════════════════════
 
--- Verify all users have identity docs
 DO $$
 BEGIN
+  RAISE NOTICE 'Running validation checks...';
+
+  -- Verify all users have identity docs
   IF (SELECT COUNT(*) FROM user_profiles) != (SELECT COUNT(DISTINCT user_id) FROM identity_docs) THEN
     RAISE EXCEPTION 'Mismatch: Not all users have identity docs';
   END IF;
-END $$;
 
--- Verify max 3 active goals constraint
-DO $$
-BEGIN
+  -- Verify max 3 active goals constraint
   IF EXISTS (SELECT user_id FROM goals WHERE status = 'active' GROUP BY user_id HAVING COUNT(*) > 3) THEN
     RAISE EXCEPTION 'Constraint violation: User has more than 3 active goals';
   END IF;
-END $$;
 
--- Verify completion events are immutable (no UPDATE/DELETE operations possible)
--- This is enforced by triggers, so seed data is automatically protected
-
--- Output summary
-DO $$
-BEGIN
+  -- Output summary
   RAISE NOTICE '✅ Seed data loaded successfully!';
   RAISE NOTICE 'Users: %', (SELECT COUNT(*) FROM user_profiles);
   RAISE NOTICE 'Goals: %', (SELECT COUNT(*) FROM goals);
