@@ -184,7 +184,7 @@ export default function AuthenticationScreen() {
   const handleBack = () => {
     try {
       router.back();
-    } catch (err) {
+    } catch (_err) {
       // Fallback to solution screen if back navigation fails
       router.push('/(onboarding)/weave-solution' as any);
     }
