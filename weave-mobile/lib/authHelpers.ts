@@ -49,6 +49,13 @@ export async function navigateAfterAuth(userId: string, fromOnboarding: boolean 
       fromOnboarding,
     });
 
+    // Validate userId
+    if (!userId) {
+      console.error('[AUTH_HELPERS] No userId provided, cannot navigate');
+      showSimpleToast('Unable to navigate. Please try signing in again.', 'error');
+      return;
+    }
+
     const onboardingComplete = await hasCompletedOnboarding(userId);
 
     console.log('[AUTH_HELPERS] Onboarding status:', onboardingComplete);
@@ -56,16 +63,32 @@ export async function navigateAfterAuth(userId: string, fromOnboarding: boolean 
     if (!onboardingComplete) {
       // User hasn't completed onboarding → continue onboarding flow
       console.log('[AUTH_HELPERS] Redirecting to onboarding...');
-      router.replace('/(onboarding)/identity-bootup' as any);
+      try {
+        router.replace('/(onboarding)/identity-bootup' as any);
+      } catch (navError) {
+        console.error('[AUTH_HELPERS] Navigation to onboarding failed, trying push:', navError);
+        router.push('/(onboarding)/identity-bootup' as any);
+      }
     } else {
       // User has completed onboarding → go to main app
       console.log('[AUTH_HELPERS] Redirecting to main app...');
-      router.replace('/(tabs)' as any);
+      try {
+        router.replace('/(tabs)' as any);
+      } catch (navError) {
+        console.error('[AUTH_HELPERS] Navigation to tabs failed, trying push:', navError);
+        router.push('/(tabs)' as any);
+      }
     }
   } catch (err) {
     console.error('[AUTH_HELPERS] Navigation error:', err);
+    showSimpleToast('Navigation failed. Redirecting to main app...', 'error');
     // Fallback: go to tabs if error occurs
-    router.replace('/(tabs)' as any);
+    try {
+      router.replace('/(tabs)' as any);
+    } catch (fallbackError) {
+      console.error('[AUTH_HELPERS] Fallback navigation also failed:', fallbackError);
+      router.push('/(tabs)' as any);
+    }
   }
 }
 
@@ -76,14 +99,17 @@ export async function navigateAfterAuth(userId: string, fromOnboarding: boolean 
  *
  * @param email - Test email (optional, defaults to test@weavelight.dev)
  * @param password - Test password (optional, defaults to testpass123)
+ * @param skipNavigation - If true, doesn't navigate after auth (caller handles navigation)
+ * @returns Promise<boolean> - true if successful, false otherwise
  */
 export async function bypassAuthForDev(
   email: string = 'test@weavelight.dev',
-  password: string = 'testpass123'
-): Promise<void> {
+  password: string = 'testpass123',
+  skipNavigation: boolean = false
+): Promise<boolean> {
   if (!__DEV__) {
     console.warn('[AUTH_HELPERS] Development bypass is only available in DEV mode');
-    return;
+    return false;
   }
 
   try {
@@ -115,14 +141,18 @@ export async function bypassAuthForDev(
       console.log('[AUTH_HELPERS] ✅ Signed in with existing test account');
     }
 
-    // Show success toast
-    showSimpleToast('🔧 Dev bypass: Signed in with test account', 'success');
+    // Show success toast (only if not skipping navigation, caller will show their own)
+    if (!skipNavigation) {
+      showSimpleToast('🔧 Dev bypass: Signed in with test account', 'success');
+      // Navigate to main app (bypass onboarding for dev)
+      router.replace('/(tabs)' as any);
+    }
 
-    // Navigate to main app (bypass onboarding for dev)
-    router.replace('/(tabs)' as any);
+    return true;
   } catch (err: any) {
     console.error('[AUTH_HELPERS] Development bypass failed:', err);
     showSimpleToast(`Dev bypass failed: ${err.message}`, 'error');
+    return false;
   }
 }
 
