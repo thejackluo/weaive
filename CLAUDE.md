@@ -88,6 +88,34 @@ bash scripts/verify-mcp-setup.sh      # Mac/Linux
 .\scripts\verify-mcp-setup.ps1        # Windows
 ```
 
+### CI/CD Commands
+
+```bash
+# View all workflows
+gh workflow list
+
+# View workflow runs
+gh run list --workflow=mobile-lint
+gh run list --status=failure    # Failed runs only
+
+# Re-run failed workflow
+gh run rerun <run-id>
+
+# Trigger manual EAS Build
+gh workflow run eas-build.yml --ref main --field platform=ios
+
+# View GitHub Actions caches
+gh cache list
+
+# Clear specific cache
+gh cache delete <cache-id>
+
+# Clear all caches (if corruption suspected)
+gh cache list | awk '{print $1}' | xargs -I {} gh cache delete {}
+```
+
+**Troubleshooting:** See `docs/dev/ci-cd-setup.md` for detailed guide on secrets setup, common failures, and fixes.
+
 ## Development Workflow
 
 ### Story-Based Development
