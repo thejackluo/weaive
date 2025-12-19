@@ -320,7 +320,8 @@ npx supabase db reset
 # 2. Paste into SQL Editor
 # 3. Click "Run"
 
-# Option 2: Via psql
+# Option 2: Via psql (for automation)
+# See docs/dev/psql-setup-guide.md for installation and setup
 psql $DATABASE_URL -f supabase/seed.sql
 ```
 
@@ -515,10 +516,15 @@ SELECT * FROM goals WHERE user_id = '11111111-1111-1111-1111-111111111111';
 
 ```bash
 # Local (Docker)
+# See docs/dev/psql-setup-guide.md for psql installation
 psql postgresql://postgres:postgres@localhost:54322/postgres -f supabase/validate_schema.sql
 
 # Cloud
-# Copy contents into Supabase Dashboard SQL Editor
+# Option 1: Via psql (automation-friendly)
+psql $DATABASE_URL -f supabase/validate_schema.sql
+
+# Option 2: Via Supabase Dashboard SQL Editor
+# Copy contents into SQL Editor and run
 ```
 
 **Expected output:**
@@ -921,6 +927,13 @@ npx supabase db push    # Deploy to cloud
 **Testing workflow:**
 ```bash
 npx supabase db reset   # Fresh state
+
+# Option 1: Use automation script (recommended)
+.\scripts\validate-database.ps1   # Windows PowerShell
+./scripts/validate-database.sh    # Linux/macOS
+
+# Option 2: Manual psql commands
+# See docs/dev/psql-setup-guide.md for installation
 psql postgresql://postgres:postgres@localhost:54322/postgres -f supabase/validate_schema.sql
 psql postgresql://postgres:postgres@localhost:54322/postgres -f supabase/performance_baseline.sql
 ```
@@ -942,6 +955,7 @@ psql postgresql://postgres:postgres@localhost:54322/postgres -f supabase/perform
 - **Story 0.4 (RLS):** `docs/stories/0-4-row-level-security.md`
 
 ### Related Guides
+- **psql Setup & Automation:** `docs/dev/psql-setup-guide.md` - Install and use psql for automation
 - **Architecture Decisions:** `docs/architecture.md`
 - **Security Model:** `docs/security-architecture.md`
 - **Git Workflow:** `docs/dev/git-workflow-guide.md`
