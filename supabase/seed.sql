@@ -76,7 +76,7 @@ INSERT INTO goals (id, user_id, title, description, status, priority, target_dat
 ('16111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
  'Build strong daily exercise habit',
  'Exercise 5 days per week (30 min minimum). Improve energy levels and health.',
- 'active', 'medium', '2026-03-01', NOW() - INTERVAL '25 days');
+ 'active', 'med', '2026-03-01', NOW() - INTERVAL '25 days');
 
 INSERT INTO goals (id, user_id, title, description, status, priority, target_date, created_at) VALUES
 ('16111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
@@ -109,7 +109,7 @@ INSERT INTO goals (id, user_id, title, description, status, priority, target_dat
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's Binds
-INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_pattern, estimated_duration_minutes, is_archived, created_at) VALUES
+INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_rule, default_estimated_minutes, is_archived, created_at) VALUES
 ('17111111-1111-1111-1111-111111111111', '16111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
  'Code review 2+ PRs', 'daily', 30, FALSE, NOW() - INTERVAL '30 days'),
 ('17111112-1111-1111-1111-111111111111', '16111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
@@ -120,7 +120,7 @@ INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_pattern, 
  'Read technical book (30 pages)', 'daily', 45, FALSE, NOW() - INTERVAL '20 days');
 
 -- Jordan's Binds
-INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_pattern, estimated_duration_minutes, is_archived, created_at) VALUES
+INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_rule, default_estimated_minutes, is_archived, created_at) VALUES
 ('27222221-2222-2222-2222-222222222222', '26222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
  'Ship 1 feature or fix 3 bugs', 'daily', 120, FALSE, NOW() - INTERVAL '15 days'),
 ('27222222-2222-2222-2222-222222222222', '26222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
@@ -129,7 +129,7 @@ INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_pattern, 
  'Code for 30 minutes', 'daily', 30, FALSE, NOW() - INTERVAL '10 days');
 
 -- Sam's Binds
-INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_pattern, estimated_duration_minutes, is_archived, created_at) VALUES
+INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_rule, default_estimated_minutes, is_archived, created_at) VALUES
 ('37333331-3333-3333-3333-333333333333', '36333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
  'Complete 1 ML course module', 'daily', 60, FALSE, NOW() - INTERVAL '2 days'),
 ('37333332-3333-3333-3333-333333333333', '36333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
@@ -172,20 +172,20 @@ INSERT INTO subtask_instances (id, template_id, user_id, goal_id, scheduled_for_
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's completions (yesterday - 3 binds completed)
-INSERT INTO subtask_completions (id, user_id, instance_id, local_date, duration_minutes, completed_at) VALUES
+INSERT INTO subtask_completions (id, user_id, subtask_instance_id, local_date, duration_minutes, completed_at) VALUES
 ('1c111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 35, NOW() - INTERVAL '1 day' + INTERVAL '9 hours'),
 ('1c111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111112-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 32, NOW() - INTERVAL '1 day' + INTERVAL '6 hours'),
 ('1c111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111113-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 50, NOW() - INTERVAL '1 day' + INTERVAL '21 hours');
 
 -- Alex's completions (2 days ago - 4 binds completed - perfect day)
-INSERT INTO subtask_completions (id, user_id, instance_id, local_date, duration_minutes, completed_at) VALUES
+INSERT INTO subtask_completions (id, user_id, subtask_instance_id, local_date, duration_minutes, completed_at) VALUES
 ('1c111121-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '2 days', 30, NOW() - INTERVAL '2 days' + INTERVAL '10 hours'),
 ('1c111122-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '2 days', 15, NOW() - INTERVAL '2 days' + INTERVAL '14 hours'),
 ('1c111123-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '2 days', 30, NOW() - INTERVAL '2 days' + INTERVAL '7 hours'),
 ('1c111124-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '2 days', 45, NOW() - INTERVAL '2 days' + INTERVAL '22 hours');
 
 -- Jordan's completions (yesterday - only 1 bind completed)
-INSERT INTO subtask_completions (id, user_id, instance_id, local_date, duration_minutes, completed_at) VALUES
+INSERT INTO subtask_completions (id, user_id, subtask_instance_id, local_date, duration_minutes, completed_at) VALUES
 ('2c222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', '21222211-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '1 day', 90, NOW() - INTERVAL '1 day' + INTERVAL '14 hours');
 
 -- ═══════════════════════════════════════════════════════════════════════
@@ -193,15 +193,15 @@ INSERT INTO subtask_completions (id, user_id, instance_id, local_date, duration_
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's captures (proof-linked and standalone)
-INSERT INTO captures (id, user_id, subtask_instance_id, local_date, type, content_text, storage_path, created_at) VALUES
+INSERT INTO captures (id, user_id, subtask_instance_id, local_date, type, content_text, storage_key, created_at) VALUES
 ('19111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111112-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 'photo',
  'Post-run selfie - feeling great!', 'captures/alex/2025-12-17/morning-run.jpg', NOW() - INTERVAL '1 day' + INTERVAL '6 hours 5 minutes'),
-('19111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '1 day', 'note',
+('19111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '1 day', 'text',
  'Great insight from the book: "Systems thinking is about seeing patterns, not just events."', NULL, NOW() - INTERVAL '1 day' + INTERVAL '21 hours 30 minutes');
 
 -- Jordan's captures (standalone note)
-INSERT INTO captures (id, user_id, subtask_instance_id, local_date, type, content_text, storage_path, created_at) VALUES
-('29222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', NULL, CURRENT_DATE - INTERVAL '1 day', 'note',
+INSERT INTO captures (id, user_id, subtask_instance_id, local_date, type, content_text, storage_key, created_at) VALUES
+('29222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', NULL, CURRENT_DATE - INTERVAL '1 day', 'text',
  'Had a breakthrough on the authentication flow. Users need passwordless login.', NULL, NOW() - INTERVAL '1 day' + INTERVAL '16 hours');
 
 -- ═══════════════════════════════════════════════════════════════════════
