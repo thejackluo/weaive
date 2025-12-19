@@ -2,7 +2,7 @@
  * Text Component Types - NativeWind v5
  */
 
-import { TextProps as RNTextProps } from 'react-native';
+import { TextProps as RNTextProps, StyleProp, TextStyle } from 'react-native';
 
 export type TypographyVariant =
   | 'display2xl'
@@ -63,4 +63,10 @@ export interface TextProps extends Omit<RNTextProps, 'style'> {
    * @example className="text-rose-500 font-bold"
    */
   className?: string;
+
+  /**
+   * Inline style prop (fallback for cases where className isn't sufficient)
+   * Prefer using className for consistency with NativeWind patterns
+   */
+  style?: StyleProp<TextStyle>;
 }
