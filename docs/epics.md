@@ -42,14 +42,14 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ### Functional Requirements
 
-**Epic 1: Onboarding (Optimized Hybrid Flow) (50 pts)**
+**Epic 1: Onboarding (Optimized Hybrid Flow) (52 pts)**
 - FR-1.1: Welcome & Vision Hook - Display Weave logo + tagline ("See who you're becoming"), short value prop (1 sentence), Get Started CTA. Loads <2s (M)
 - FR-1.2: Emotional State Selection (Painpoint) - Display 4 cards: Clarity, Action, Consistency, Alignment. User selects 1-2. Sends `selected_painpoints` to backend (M)
 - FR-1.3: Symptom Insight Screen (Dynamic Mirror) - Display 1-2 short, high-impact paragraphs describing user's symptom(s). If two painpoints selected, show both symptom cards stacked in glass panels. Title: "Why this feels so hard". Design: glass-paneled cards with animations, soft shadows, thread-lines background. Completion <10s (M)
 - FR-1.4: Weave Solution Screen (Dynamic "Here's What Changes Now") - Display one short "solution" paragraph for each selected painpoint. If two painpoints selected, show two solution cards with soft stacking animation. Title: "How Weave helps". Design: liquid-glass cards with background animation (threads converging). Completion <8s (M)
 - FR-1.5: Authentication - Quick account creation: Sign in with Apple/Google/Email. Show "7-day free trial. No commitment." Fast auth <3s (M)
 - FR-1.6: Identity Traits Selection - Display 12 selectable traits (chips), user selects 3-5. Stored immediately. Completion <15s (M)
-- FR-1.7: First Needle (Goal Definition – Simple) - Input field: "What's one thing you want to achieve first?" Suggestion chips based on painpoint. Completion <10s (M)
+- FR-1.7: Choose Your First Needle (Suggested Starting Goals) - Display 10 selectable goal options. Framing: "What do you want to work on first?" Optional custom goal input (escape hatch). Optional light customization. Confirmation screen. Maps to predefined templates. Completion ≤30s (M)
 - FR-1.8: Weave Path Generation (AI-Assisted) - Loading animation: "Shaping your path…" (1-3s delay). AI generates: goal title & summary, 2-3 milestones, 2-4 binds. User can accept or edit. AI Module: Onboarding Coach (M)
 - FR-1.9: First Commitment Ritual (Bind #1) - Display: "Today is [date]. Mark this as the start of your transformation." User taps "Complete my first Bind". Accept any input type. Show micro-animation of thread tightening. Display: "Day 1 complete." (M)
 - FR-1.10: App Mini-Tutorial (Tooltip Style) - 3 tooltips: Weave avatar, Binds, Reflection button. Each dismissible with "Got it". Duration <20s (M)
@@ -469,7 +469,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
-### Epic 1: Onboarding (Optimized Hybrid Flow) (50 pts)
+### Epic 1: Onboarding (Optimized Hybrid Flow) (52 pts)
 **User Outcome:** New users experience streamlined onboarding that gets them to their first "win" within 3 minutes, then progressively gathers deeper personalization over Days 1-3 of actual usage. Maximizes completion → emotional resonance → early activation.
 
 **FRs Covered:** FR-1.1, FR-1.2, FR-1.3, FR-1.4, FR-1.5, FR-1.6, FR-1.7, FR-1.8, FR-1.9, FR-1.10, FR-1.11, FR-1.12, FR-1.13, FR-1.14, FR-1.15, FR-1.16
@@ -489,7 +489,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **PHASE 2: Light Identity Bootup (In-App, Fast)**
 - **Story 1.6: Name Entry, Weave Personality Selection & Identity Traits** (5 pts) - FR-1.6: Three-step flow: (1) Name entry with validation (2) Swipeable Weave personality selection (Supportive but Direct vs Tough but Warm) with liquid-glass card design, example lines, and subtle animations (3) 12 selectable identity traits (chips), user selects 3-5. Stores `preferred_name`, `core_personality`, and `identity_traits`. Total completion <45s. All content static, no AI calls
-- **Story 1.7: First Needle (Simple)** (3 pts) - FR-1.7: Input field: "What's one thing you want to achieve first?" Suggestion chips based on earlier painpoint. Store in temporary onboarding state. Completion <10s
+- **Story 1.7: Choose Your First Needle (Suggested Starting Goals)** (5 pts) - FR-1.7: Display 10 selectable goal buttons/cards (all visible at once, no pagination). Framing: "What do you want to work on first?" with subtext "This doesn't have to be perfect — it's just a starting point." Suggested options: Build fitness routine, Improve sleep/energy, Reduce stress, Get back into healthy rhythm, Improve focus/productivity, Make progress in school, Work on project, Rebuild creative habit, Prepare for opportunity, Build work discipline. Optional custom goal input (escape hatch, 80 char max). Optional light customization post-selection. Confirmation screen with CTA: "This will be my first Needle". Maps to predefined templates with ~70% success probability. Completion ≤30s. Track `first_needle_suggestion_selected`, `first_needle_custom_entered`, `first_needle_confirmed`. Store `needle_template_id`, `needle_display_text`, `needle_customization_text`
 
 **PHASE 3: Early Value Proof ("Wow Moment")**
 - **Story 1.8a: Weave Path Generation UI** (3 pts) - FR-1.8 Part 1: Loading animation: "Shaping your path…" (1-3s UX pacing). Display AI-generated goal breakdown: title, summary, 2-3 milestones, 2-4 binds. User can accept or edit each item
@@ -728,7 +728,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | Epic | Name | Story Points | Priority FRs (M) | Dependencies | Phase |
 |------|------|--------------|------------------|--------------|-------|
 | 0 | Foundation | 40 | 7 | None (True Foundation) | `[MVP]` |
-| 1 | Onboarding & Identity | 35 | 8 | Epic 0 | `[MVP]` (core) + `[v1.2]` (full) |
+| 1 | Onboarding & Identity | 52 | 8 | Epic 0 | `[MVP]` (core) + `[v1.2]` (full) |
 | 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1 | `[v1.2]` |
 | 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 2 | `[MVP]` (basic) + `[v1.1]` (enhanced) |
 | 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 2, 3 | `[v1.1]` |
@@ -737,10 +737,10 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3 | `[v1.2]` |
 | 8 | Settings & Profile | 23 | 5 | Epic 0, 1 | `[v1.2]` |
 
-**Total:** 287 story points across 58 FRs
+**Total:** 304 story points across 58 FRs
 
 **Phase Breakdown:**
-- **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~68 pts (Sprint 1)
+- **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~70 pts (Sprint 1)
 - **v1.1:** Epic 3 (enhanced features), Epic 4 (all), Epic 5 (basic dashboard) = ~75 pts (Sprint 2-4)
 - **v1.2:** Epic 1 (full onboarding), Epic 2 (all), Epic 5 (advanced), Epic 6 (advanced), Epic 7 (all), Epic 8 (all) = ~131 pts (Sprint 5+)
 
@@ -995,7 +995,7 @@ Day 9-10: AI Companion (CRUCIAL)
 | **P2** | 6.1 AI Chat Interface | 5 | 0.6 | Chat UI |
 | **P2** | 6.2 Contextual AI Engine | 8 | 6.1, 0.6 | AI brain + Return UX |
 
-**Sprint 1 Total: 68 points**
+**Sprint 1 Total: 70 points**
 
 ### Sprint 1 Deferrals
 

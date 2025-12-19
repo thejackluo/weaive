@@ -81,12 +81,12 @@ Day 4-5: Error handling (NEW - from gaps)
 ## Sprint 1: Core User Journey (Weeks 1-2)
 
 **Duration:** 2 weeks (10 work days)
-**Capacity:** 57 story points (updated for Epic 1 Hybrid Flow)
+**Capacity:** 59 story points (updated for Epic 1 Hybrid Flow with suggested goals)
 **Goal:** User can complete onboarding (Phases 1-5), set first goal, complete first bind, and see progress
 
-### Sprint 1 Scope (Revised: 57 pts)
+### Sprint 1 Scope (Revised: 59 pts)
 
-**Epic 1: Onboarding (Hybrid Flow) - Phases 1-5 (33 pts)**
+**Epic 1: Onboarding (Hybrid Flow) - Phases 1-5 (35 pts)**
 - **Phase 1: Emotional Hook (Pre-Auth, 45s max)**
   - 1.1: Welcome & Vision Hook (2 pts)
   - 1.2: Emotional State Selection (Painpoint) (3 pts)
@@ -95,7 +95,7 @@ Day 4-5: Error handling (NEW - from gaps)
   - 1.5: Authentication (3 pts)
 - **Phase 2: Light Identity Bootup (In-App, Fast)**
   - 1.6: Identity Traits Selection (3 pts)
-  - 1.7: First Needle (Simple) (3 pts)
+  - 1.7: Choose Your First Needle (Suggested Goals) (5 pts)
 - **Phase 3: Early Value Proof ("Wow Moment")**
   - 1.8a: Weave Path Generation UI (3 pts)
   - 1.8b: AI Goal Breakdown (5 pts)
