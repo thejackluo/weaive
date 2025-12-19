@@ -444,7 +444,7 @@ export default function SignupScreen() {
             <View style={styles.termsCheckbox}>
               <Checkbox
                 checked={agreedToTerms}
-                onCheckedChange={setAgreedToTerms}
+                onChange={setAgreedToTerms}
                 disabled={isLoading}
                 accessibilityLabel="Agree to Terms of Service and Privacy Policy"
               />
