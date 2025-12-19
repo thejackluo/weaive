@@ -527,7 +527,7 @@ You start strong, fall off, and repeat the cycle again and again.
 It's not that "life gets in the way" — it's that you don't see progress fast enough to believe it's working.
 One missed day breaks everything, and motivation collapses with it.
 
-**4. Community**
+**4. Alignment**
 
 *Symptoms*
 You're ambitious in a place that isn't.
@@ -611,7 +611,7 @@ Every time you follow through, Weave turns that action into visible proof of who
 
 *(Visual cue: weave pattern gaining structure as binds complete)*
 
-**4. Community — Solution**
+**4. Alignment — Solution**
 
 *How Weave fixes this:*
 We become the environment that supports your ambition.
