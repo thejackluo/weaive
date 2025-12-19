@@ -17,13 +17,13 @@ SELECT plan(48); -- Total number of tests
 -- For local testing, we'll create user_profiles with test auth_user_ids
 
 -- Clean up any existing test data
-DELETE FROM user_profiles WHERE auth_user_id IN ('test-user-a', 'test-user-b');
+DELETE FROM user_profiles WHERE auth_user_id IN ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b');
 
 -- Create test User A
 INSERT INTO user_profiles (id, auth_user_id, display_name, timezone)
 VALUES (
   '00000000-0000-0000-0000-000000000001'::uuid,
-  'test-user-a',
+  '00000000-0000-0000-0000-00000000000a',  -- UUID for test user A
   'Test User A',
   'America/Los_Angeles'
 );
@@ -32,7 +32,7 @@ VALUES (
 INSERT INTO user_profiles (id, auth_user_id, display_name, timezone)
 VALUES (
   '00000000-0000-0000-0000-000000000002'::uuid,
-  'test-user-b',
+  '00000000-0000-0000-0000-00000000000b',  -- UUID for test user B
   'Test User B',
   'America/New_York'
 );
@@ -43,7 +43,7 @@ VALUES (
 
 -- Simulate User A session
 SET LOCAL role = 'authenticated';
-SET LOCAL request.jwt.claims = '{"sub": "test-user-a"}';
+SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-00000000000a"}';
 
 -- Test: User A can INSERT their own goal
 INSERT INTO goals (id, user_id, title, status)
@@ -117,7 +117,7 @@ RESET request.jwt.claims;
 
 -- Simulate User A session
 SET LOCAL role = 'authenticated';
-SET LOCAL request.jwt.claims = '{"sub": "test-user-a"}';
+SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-00000000000a"}';
 
 -- Test: User A can INSERT completion
 INSERT INTO subtask_completions (
@@ -181,7 +181,7 @@ VALUES (
 
 -- Simulate User A session
 SET LOCAL role = 'authenticated';
-SET LOCAL request.jwt.claims = '{"sub": "test-user-a"}';
+SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-00000000000a"}';
 
 -- Test: User A CANNOT SELECT User B's goal
 SELECT is(
@@ -213,7 +213,7 @@ RESET request.jwt.claims;
 
 -- Simulate User A session
 SET LOCAL role = 'authenticated';
-SET LOCAL request.jwt.claims = '{"sub": "test-user-a"}';
+SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-00000000000a"}';
 
 -- Test: User A attempts to INSERT goal with User B's user_id (should fail)
 -- pgTAP doesn't have throws_ok for policies, so we check row count after attempt
@@ -247,7 +247,7 @@ RESET request.jwt.claims;
 
 -- Simulate User A session
 SET LOCAL role = 'authenticated';
-SET LOCAL request.jwt.claims = '{"sub": "test-user-a"}';
+SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-00000000000a"}';
 
 -- Test: User A attempts to UPDATE User B's goal (should affect 0 rows)
 UPDATE goals SET title = 'Hacked Goal'
@@ -269,7 +269,7 @@ SELECT is(
 
 -- Simulate User A session
 SET LOCAL role = 'authenticated';
-SET LOCAL request.jwt.claims = '{"sub": "test-user-a"}';
+SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-00000000000a"}';
 
 -- Test: User A attempts to DELETE User B's journal (should affect 0 rows)
 DELETE FROM journal_entries WHERE id = '20000000-0000-0000-0000-000000000002'::uuid;
@@ -445,7 +445,7 @@ SELECT is(
 
 -- Test: User B can see their own data but not User A's
 SET LOCAL role = 'authenticated';
-SET LOCAL request.jwt.claims = '{"sub": "test-user-b"}';
+SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-00000000000b"}';
 
 SELECT is(
   (SELECT COUNT(*) FROM goals),
