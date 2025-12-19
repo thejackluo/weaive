@@ -20,7 +20,7 @@ pip install uv
 ## Setup Instructions
 
 ### 1. Install Dependencies
-
+uv venv
 ```bash
 uv sync
 ```

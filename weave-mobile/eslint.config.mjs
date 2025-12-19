@@ -24,6 +24,24 @@ export default [
         __dirname: 'readonly',
         __filename: 'readonly',
         process: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        setImmediate: 'readonly',
+        clearImmediate: 'readonly',
+        __DEV__: 'readonly',
+        // Jest/testing globals
+        jest: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
       },
     },
     plugins: {
@@ -32,7 +50,16 @@ export default [
     },
     rules: {
       'prettier/prettier': 'error',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      'no-unused-vars': 'off', // Turn off base rule for TypeScript
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_', // Ignore parameters starting with _
+          varsIgnorePattern: '^_', // Ignore variables starting with _
+          args: 'after-used', // Allow unused parameters before used ones
+          ignoreRestSiblings: true,
+        },
+      ],
     },
   },
   {

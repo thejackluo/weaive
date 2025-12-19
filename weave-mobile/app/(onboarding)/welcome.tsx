@@ -50,7 +50,10 @@ export default function WelcomeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" style={{ flex: 1, backgroundColor: '#ffffff' }}>
-      <View className="flex-1 justify-center items-center px-4" style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 }}>
+      <View
+        className="flex-1 justify-center items-center px-4"
+        style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 }}
+      >
         {/* Weave Logo - AC1 */}
         <Image
           source={require('../../assets/icon.png')}
@@ -61,12 +64,31 @@ export default function WelcomeScreen() {
         />
 
         {/* Tagline - AC1 */}
-        <Text className="text-2xl font-semibold text-center text-neutral-800 mb-4" style={{ fontSize: 24, fontWeight: '600', textAlign: 'center', color: '#000000', marginBottom: 16 }}>
+        <Text
+          className="text-2xl font-semibold text-center text-neutral-800 mb-4"
+          style={{
+            fontSize: 24,
+            fontWeight: '600',
+            textAlign: 'center',
+            color: '#000000',
+            marginBottom: 16,
+          }}
+        >
           Weave
         </Text>
 
         {/* Value Proposition - AC1 */}
-        <Text className="text-base text-center text-neutral-600 px-8 mb-12 leading-6" style={{ fontSize: 16, textAlign: 'center', color: '#000000', paddingHorizontal: 32, marginBottom: 48, lineHeight: 24 }}>
+        <Text
+          className="text-base text-center text-neutral-600 px-8 mb-12 leading-6"
+          style={{
+            fontSize: 16,
+            textAlign: 'center',
+            color: '#000000',
+            paddingHorizontal: 32,
+            marginBottom: 48,
+            lineHeight: 24,
+          }}
+        >
           See your transformation as you create it
         </Text>
 
@@ -80,9 +102,20 @@ export default function WelcomeScreen() {
           onPress={handleGetStarted}
           accessibilityRole="button"
           accessible={true}
-          style={{ backgroundColor: '#3b72f6', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}
+          style={{
+            backgroundColor: '#3b72f6',
+            height: 44,
+            borderRadius: 8,
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 12,
+          }}
         >
-          <Text className="text-white text-sm font-medium tracking-wider" style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}>
+          <Text
+            className="text-white text-sm font-medium tracking-wider"
+            style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
+          >
             Get Started
           </Text>
         </Pressable>
@@ -97,9 +130,19 @@ export default function WelcomeScreen() {
           onPress={handleViewDesignSystem}
           accessibilityRole="button"
           accessible={true}
-          style={{ backgroundColor: '#e5e5e5', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center' }}
+          style={{
+            backgroundColor: '#e5e5e5',
+            height: 44,
+            borderRadius: 8,
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
         >
-          <Text className="text-neutral-800 text-sm font-medium tracking-wider" style={{ color: '#262626', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}>
+          <Text
+            className="text-neutral-800 text-sm font-medium tracking-wider"
+            style={{ color: '#262626', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
+          >
             View Design System
           </Text>
         </Pressable>

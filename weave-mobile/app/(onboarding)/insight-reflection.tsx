@@ -28,7 +28,7 @@ import { useOnboardingStore } from '@/stores/onboardingStore';
 import {
   getSymptomContent,
   FALLBACK_SYMPTOM,
-  type SymptomContent
+  type SymptomContent,
 } from '@/constants/symptomContent';
 
 // =============================================================================
@@ -53,10 +53,15 @@ function SymptomCard({ content, index, reduceMotion }: SymptomCardProps) {
   const entering = reduceMotion
     ? undefined
     : index === 0
-    ? FadeIn.duration(400)
-    : SlideInUp.duration(400).delay(200);
+      ? FadeIn.duration(400)
+      : SlideInUp.duration(400).delay(200);
 
-  console.log('[CARD] Animation config for card', index, ':', entering ? 'animated' : 'no animation');
+  console.log(
+    '[CARD] Animation config for card',
+    index,
+    ':',
+    entering ? 'animated' : 'no animation'
+  );
 
   return (
     <Animated.View
@@ -117,9 +122,7 @@ interface CTAButtonProps {
 }
 
 function CTAButton({ onPress, reduceMotion, delayMs }: CTAButtonProps) {
-  const entering = reduceMotion
-    ? undefined
-    : FadeInDown.duration(300).delay(delayMs);
+  const entering = reduceMotion ? undefined : FadeInDown.duration(300).delay(delayMs);
 
   return (
     <Animated.View entering={entering} style={{ paddingHorizontal: 16, paddingBottom: 24 }}>
@@ -135,9 +138,7 @@ function CTAButton({ onPress, reduceMotion, delayMs }: CTAButtonProps) {
         accessibilityLabel="Continue to next step"
         accessibilityRole="button"
       >
-        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
-          Next →
-        </Text>
+        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Next →</Text>
       </Pressable>
     </Animated.View>
   );
@@ -168,9 +169,8 @@ export default function InsightReflectionScreen() {
   // Get symptom content based on selected painpoints
   // Implements AC #2: Dynamic copy mapping
   // Implements AC #7: Edge case handling (fallback for missing selection)
-  const symptomContents = selectedPainpoints.length > 0
-    ? getSymptomContent(selectedPainpoints)
-    : [FALLBACK_SYMPTOM];
+  const symptomContents =
+    selectedPainpoints.length > 0 ? getSymptomContent(selectedPainpoints) : [FALLBACK_SYMPTOM];
 
   console.log('[RENDER] Symptom contents to render:', symptomContents);
   console.log('[RENDER] Number of cards:', symptomContents.length);
@@ -236,11 +236,7 @@ export default function InsightReflectionScreen() {
         </ScrollView>
 
         {/* Continue Button */}
-        <CTAButton
-          onPress={handleContinue}
-          reduceMotion={reduceMotion}
-          delayMs={ctaDelay}
-        />
+        <CTAButton onPress={handleContinue} reduceMotion={reduceMotion} delayMs={ctaDelay} />
       </View>
     </SafeAreaView>
   );

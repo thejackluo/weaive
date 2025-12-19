@@ -5,9 +5,11 @@
  * Built with Tailwind CSS v4 and tailwind-variants
  */
 
-import React from 'react';
-import { View, ScrollView, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, ScrollView, Platform, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Text,
   Heading,
@@ -17,11 +19,84 @@ import {
   Label,
   Mono,
   GlassView,
+  Button,
+  showSimpleToast,
 } from '../../src/design-system';
 
 export default function DesignSystemShowcase() {
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleSignOut = async () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setIsLoggingOut(true);
+            await signOut();
+            showSimpleToast('Signed out successfully 👋', 'success');
+          } catch (error) {
+            console.error('[SHOWCASE] Logout error:', error);
+            Alert.alert('Error', 'Failed to sign out. Please try again.');
+          } finally {
+            setIsLoggingOut(false);
+            setShowUserMenu(false);
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background-primary">
+      {/* Header with Back Button + User Avatar */}
+      <View className="flex-row items-center justify-between px-4 py-3 border-b border-border-muted">
+        {/* Back Button */}
+        <Pressable
+          onPress={() => router.back()}
+          className="flex-row items-center gap-2 active:opacity-70"
+        >
+          <Text className="text-text-primary text-2xl">←</Text>
+          <Text className="text-text-primary font-medium">Back</Text>
+        </Pressable>
+
+        {/* User Avatar + Menu */}
+        <View className="relative">
+          <Pressable
+            onPress={() => setShowUserMenu(!showUserMenu)}
+            className="w-10 h-10 rounded-full bg-accent-500 items-center justify-center active:opacity-80"
+          >
+            <Text className="text-white font-bold text-lg">
+              {user?.email?.charAt(0).toUpperCase() || 'U'}
+            </Text>
+          </Pressable>
+
+          {/* User Menu Dropdown */}
+          {showUserMenu && (
+            <View className="absolute top-12 right-0 bg-background-elevated rounded-lg shadow-lg border border-border-muted min-w-48 overflow-hidden z-50">
+              <View className="p-3 border-b border-border-muted">
+                <Caption className="text-text-muted">Signed in as</Caption>
+                <Text className="text-text-primary text-sm font-medium mt-1">{user?.email}</Text>
+              </View>
+              <Pressable
+                onPress={handleSignOut}
+                disabled={isLoggingOut}
+                className="p-3 active:bg-background-secondary"
+              >
+                <Text className="text-error-base font-medium">
+                  {isLoggingOut ? 'Signing out...' : 'Sign Out'}
+                </Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      </View>
+
       <ScrollView contentContainerClassName="p-4 gap-6">
         {/* Header */}
         <View className="gap-2">
