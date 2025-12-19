@@ -674,23 +674,94 @@ The more you use the app, the better it understands how you grow — and eventua
 
 ### PHASE 2 — Light Identity Bootup (IN-APP, FAST)
 
-#### US-1.6: Identity Traits Selection
+#### US-1.6: Name Entry, Weave Personality Selection & Identity Traits
 
 **Priority:** M (Must Have)
 
 **As a** new user
-**I want to** choose traits I want to grow into
-**So that** the app can anchor my early journey to identity
+**I want to** enter my name, choose how my Weave interacts with me, and select traits I want to grow into
+**So that** the experience feels personally motivating and aligned with my communication style
 
 **Acceptance Criteria:**
-- [ ] Display 12 selectable traits (chips)
-- [ ] User selects 3-5
-- [ ] Stored immediately after selection
-- [ ] CTA: "Continue"
+
+**Step 1: Name Entry**
+- [ ] Display welcoming header: "Let's get to know you"
+- [ ] Input field: "What should we call you?" (single line text input)
+- [ ] Placeholder: "Your first name or nickname"
+- [ ] Validation: Required field, 1-50 characters, no special characters
+- [ ] CTA: "Continue" (disabled until valid name entered)
+- [ ] Completion time <10 seconds
+
+**Step 2: Weave Personality Selection**
+- [ ] Display title: "I'm your Weave — your future self in thread form. How do you want me to interact with you?"
+- [ ] Display subheading: "You can change this anytime. This sets my core personality — and I'll adapt as I understand you better."
+- [ ] Display one persona card at a time (swipeable left ↔ right)
+- [ ] Pagination dots (2 total)
+- [ ] Each persona card includes:
+  - Weave icon (animated subtly)
+  - Persona title
+  - Three example lines demonstrating tone
+- [ ] **Persona 1: Supportive but Direct**
+  - Tone: grounded, honest, steady, confidence-building without coddling
+  - Example lines:
+    - "You don't need motivation — just one clear step. Let's choose it."
+    - "You're capable. More than you think. Let's act on it."
+    - "If you slipped, just reset. One small restart changes everything."
+- [ ] **Persona 2: Tough but Warm**
+  - Tone: Gen Z-coded, playful, dry humor, gently confrontational, gender-neutral
+  - Example lines:
+    - "alright, lock in. you said you wanted this."
+    - "nice. that was actually clean. keep the pace."
+    - "bro… where'd you go 💀 let's get back to it."
+- [ ] Users must swipe to view both personas before continuing
+- [ ] CTA: "Continue" (enabled after viewing both)
+- [ ] Selection saved to `user_profiles.core_personality`
+- [ ] Liquid-glass card aesthetic with subtle thread animation
+- [ ] Supportive persona in proper casing; Tough persona in lowercase + emoji support
+- [ ] Completion time <20 seconds
+
+**Step 3: Identity Traits Selection**
+- [ ] Display header: "Who do you want to become?"
+- [ ] Display personalized subtext: "Choose 3-5 traits, [Name]"
+- [ ] Display 12 selectable traits (chips):
+  - Disciplined, Creative, Confident, Calm
+  - Focused, Energetic, Organized, Patient
+  - Resilient, Balanced, Intentional, Present
+- [ ] User selects 3-5 traits (enforce min/max)
+- [ ] Selected traits highlight with green border
+- [ ] Show counter: "X of 3-5 selected"
+- [ ] CTA: "Continue" (enabled when 3-5 selected)
 - [ ] Completion time <15 seconds
 
 **Data Requirements:**
-- Write `identity_traits` → `identity_docs.json`
+- Write `preferred_name` → `user_profiles.preferred_name` (VARCHAR 50)
+- Write `core_personality` → `user_profiles.core_personality` (ENUM: "supportive_direct" | "tough_warm")
+- Write `personality_selected_at` → `user_profiles.personality_selected_at` (TIMESTAMPTZ)
+- Write `identity_traits` → `user_profiles.identity_traits` (JSONB array)
+
+**Event Tracking:**
+- `name_entered` (existing)
+- `weave_personality_shown`
+- `weave_personality_swiped`
+- `weave_personality_selected` (with value: "supportive_direct" | "tough_warm")
+- `identity_traits_selected` (existing)
+
+**Usage of Personality Selection:**
+- Tone of push notifications and reminders
+- Voice during daily reflections
+- Encouragement messages during bind completion
+- AI commentary and coaching style
+- Long-term personalization as user data accumulates
+
+**Technical Notes:**
+- All content static; no AI calls required
+- Ensure smooth swipe performance (60fps)
+- Emoji compatibility across iOS/Android
+- Use fallback arrows for accessibility if swipe isn't detected
+- Should be dismissible via swipe but not skippable
+- Transition to US-1.7 upon Step 3 completion
+
+**Total Flow Time:** <45 seconds
 
 ---
 
@@ -918,7 +989,7 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 | US-1.3 | Insight Mirror | M | 2 pts |
 | US-1.4 | Weave Solution | M | 2 pts |
 | US-1.5 | Auth | M | 3 pts |
-| US-1.6 | Identity Traits | M | 3 pts |
+| US-1.6 | Name Entry, Weave Personality & Identity Traits | M | 5 pts |
 | US-1.7 | First Needle | M | 3 pts |
 | US-1.8 | AI Path | M | 8 pts |
 | US-1.9 | First Commitment | M | 3 pts |
@@ -930,9 +1001,9 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 | US-1.15 | Constraints & Demographics | S | 2 pts |
 | US-1.16 | Soft Paywall (Day 3-4) | M | 5 pts |
 
-**Epic Total:** 48 story points
+**Epic Total:** 50 story points (includes name entry + Weave Personality Selection in US-1.6)
 
-**Note:** This hybrid flow increases story points from 35 to 48, but distributes complexity across the user journey, resulting in higher activation rates and lower drop-off. The deferred personalization (US-1.12 through US-1.15) can be implemented incrementally without blocking the core onboarding flow.
+**Note:** This hybrid flow increases story points from 35 to 50, but distributes complexity across the user journey, resulting in higher activation rates and lower drop-off. The deferred personalization (US-1.12 through US-1.15) can be implemented incrementally without blocking the core onboarding flow. The additional points account for name entry and Weave personality selection in US-1.6.
 
 ---
 
