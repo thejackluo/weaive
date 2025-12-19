@@ -693,7 +693,7 @@ The more you use the app, the better it understands how you grow — and eventua
 - [ ] Completion time <10 seconds
 
 **Step 2: Weave Personality Selection**
-- [ ] Display title: "I'm your Weave — your future self in thread form. How do you want me to interact with you?"
+- [ ] Display title: "I'm your Weave, your future self that we create together. How should I engage with you?"
 - [ ] Display subheading: "You can change this anytime. This sets my core personality — and I'll adapt as I understand you better."
 - [ ] Display one persona card at a time (swipeable left ↔ right)
 - [ ] Pagination dots (2 total)
@@ -713,25 +713,80 @@ The more you use the app, the better it understands how you grow — and eventua
     - "alright, lock in. you said you wanted this."
     - "nice. that was actually clean. keep the pace."
     - "bro… where'd you go 💀 let's get back to it."
-- [ ] Users must swipe to view both personas before continuing
-- [ ] CTA: "Continue" (enabled after viewing both)
+- [ ] PanResponder-based swipe gestures (both directions supported)
+- [ ] CTA: "Continue" (enabled immediately after selection)
 - [ ] Selection saved to `user_profiles.core_personality`
 - [ ] Liquid-glass card aesthetic with subtle thread animation
 - [ ] Supportive persona in proper casing; Tough persona in lowercase + emoji support
+- [ ] No "✓ Selected" text indicator (card border shows selection)
+- [ ] No arrow navigation buttons (swipe-only with pagination dots)
+- [ ] Proper spacing between card and Continue button (24px)
 - [ ] Completion time <20 seconds
 
-**Step 3: Identity Traits Selection**
-- [ ] Display header: "Who do you want to become?"
-- [ ] Display personalized subtext: "Choose 3-5 traits, [Name]"
-- [ ] Display 12 selectable traits (chips):
-  - Disciplined, Creative, Confident, Calm
-  - Focused, Energetic, Organized, Patient
-  - Resilient, Balanced, Intentional, Present
-- [ ] User selects 3-5 traits (enforce min/max)
-- [ ] Selected traits highlight with green border
-- [ ] Show counter: "X of 3-5 selected"
-- [ ] CTA: "Continue" (enabled when 3-5 selected)
-- [ ] Completion time <15 seconds
+**Step 3: Identity Traits (Aspirational Focus)**
+
+**User-Facing Copy:**
+- [ ] Display title: "What are you trying to build right now?"
+- [ ] Display subtext: "Choose 3."
+
+**Acceptance Criteria:**
+- [ ] Display 8 total trait options as selectable chips
+- [ ] User must select exactly 3 traits to continue
+- [ ] No scrolling required on standard mobile screen
+- [ ] No explanatory paragraphs shown (keep copy minimal)
+- [ ] Completion time target: <10 seconds
+- [ ] Traits are framed as aspirational (who the user is becoming), not fixed personality
+- [ ] User can edit selections later in Profile
+
+**Trait Options (Final):**
+- [ ] Clear about my direction
+- [ ] Intentional with my time
+- [ ] Takes action even when unsure
+- [ ] Shows up consistently
+- [ ] Strives for excellence
+- [ ] Always improving
+- [ ] Self-aware
+- [ ] Emotionally grounded
+
+**Selection Requirements:**
+- [ ] Exactly 3 traits required
+- [ ] Traits are weighted equally on selection
+- [ ] Behavioral data takes precedence after onboarding
+- [ ] Hard validation: must select exactly 3
+- [ ] Track analytics event: `identity_traits_selected` with selected traits + completion time
+
+**Behavioral & AI Impact (Non-User Facing):**
+Selected traits are used as primary personalization signals that influence:
+- Weave's tone (gentle vs direct vs challenging)
+- Bind difficulty and pacing
+- Reminder frequency and urgency
+- Reflection depth and prompt style
+- Insight framing (performance-oriented vs introspective)
+- Traits represent initial intent, not fixed identity
+- Observed behavior can override trait assumptions over time
+
+**Data Requirements:**
+- [ ] Persist selected traits to: `identity_docs.json.active_traits` (array of 3 strings)
+- [ ] Persist immediately upon completion
+
+**Technical Notes:**
+- [ ] Deterministic selection (no AI call)
+- [ ] Hard validation: must select exactly 3
+- [ ] Track analytics event: `identity_traits_selected`
+  - Include selected traits + completion time
+
+**Success Metrics:**
+- [ ] 95% completion rate
+- [ ] Median completion time <10 seconds
+- [ ] Low hesitation/back-navigation rate (<5%)
+- [ ] Positive correlation with Day 1–3 bind completion
+
+**Why This Step Exists:**
+This step:
+- Captures values + inner orientation that are hard to infer early
+- Avoids redundant signals that Weave can learn from behavior
+- Gives the AI enough context to meaningfully change tone and structure
+- Keeps onboarding fast, intuitive, and emotionally resonant
 
 **Data Requirements:**
 - Write `preferred_name` → `user_profiles.preferred_name` (VARCHAR 50)

@@ -3,7 +3,7 @@
  *
  * Step 1: Name Entry (<10s)
  * Step 2: Weave Personality Selection (<20s)
- * Step 3: Identity Traits Selection (<15s)
+ * Step 3: Identity Traits (Aspirational Focus) (<10s)
  *
  * Total target time: <45 seconds
  *
@@ -23,14 +23,14 @@ import {
   useWindowDimensions,
   Alert,
   AccessibilityInfo,
-  Platform
+  Platform,
+  PanResponder
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { PERSONAS, PersonalityType } from '@/constants/personalityContent';
 import {
   IDENTITY_TRAITS,
-  MIN_TRAITS,
-  MAX_TRAITS,
+  REQUIRED_TRAITS,
   IdentityTrait,
   isValidTraitCount
 } from '@/constants/identityTraits';
@@ -160,6 +160,29 @@ export default function IdentityBootupScreen() {
   //================================
 
   /**
+   * PanResponder for swipe gestures on persona cards
+   */
+  const panResponder = useMemo(
+    () => PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Activate when horizontal movement exceeds vertical and threshold is met
+        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        // Swipe left (next card) if moved more than 50px to the left
+        if (gestureState.dx < -50) {
+          handleSwipe('left');
+        }
+        // Swipe right (previous card) if moved more than 50px to the right
+        else if (gestureState.dx > 50) {
+          handleSwipe('right');
+        }
+      }
+    }),
+    [currentPersonaIndex]
+  );
+
+  /**
    * Handle swipe to next/previous persona
    */
   const handleSwipe = (direction: 'left' | 'right') => {
@@ -235,7 +258,7 @@ export default function IdentityBootupScreen() {
     }
   };
 
-  const canContinueStep2 = formData.core_personality !== null && viewedPersonas.every(v => v);
+  const canContinueStep2 = formData.core_personality !== null;
 
   // Mark first persona as viewed on load
   useEffect(() => {
@@ -265,13 +288,13 @@ export default function IdentityBootupScreen() {
         // Deselect
         newTraits = currentTraits.filter(t => t !== trait);
         setMaxTraitsError(undefined);
-      } else if (currentTraits.length < MAX_TRAITS) {
-        // Select (if under max)
+      } else if (currentTraits.length < REQUIRED_TRAITS) {
+        // Select (if under required count)
         newTraits = [...currentTraits, trait];
         setMaxTraitsError(undefined);
       } else {
         // At max, show inline error
-        setMaxTraitsError(`Maximum ${MAX_TRAITS} traits allowed`);
+        setMaxTraitsError(`Choose exactly ${REQUIRED_TRAITS} traits`);
         return;
       }
 
@@ -290,7 +313,7 @@ export default function IdentityBootupScreen() {
   const handleStep3Continue = () => {
     try {
       if (!isValidTraitCount(formData.identity_traits.length)) {
-        Alert.alert('Selection Required', `Please select ${MIN_TRAITS}-${MAX_TRAITS} traits before continuing.`);
+        Alert.alert('Selection Required', `Please select exactly ${REQUIRED_TRAITS} traits before continuing.`);
         return;
       }
 
@@ -468,8 +491,7 @@ export default function IdentityBootupScreen() {
               lineHeight: 32
             }}
           >
-            I'm your Weave — your future self in thread form.{'\n'}
-            How do you want me to interact with you?
+            I'm your Weave, your future self that we create together. How should I engage with you?
           </Text>
           <Text
             style={{
@@ -486,7 +508,10 @@ export default function IdentityBootupScreen() {
 
         {/* Swipeable Persona Cards */}
         <View style={{ flex: 1, alignItems: 'center', marginBottom: 24 }}>
-          <View style={{ width: SCREEN_WIDTH * CARD_WIDTH_RATIO, height: PERSONA_CARD_MIN_HEIGHT, position: 'relative' }}>
+          <View
+            style={{ width: SCREEN_WIDTH * CARD_WIDTH_RATIO, height: PERSONA_CARD_MIN_HEIGHT, position: 'relative' }}
+            {...panResponder.panHandlers}
+          >
             <Animated.View
               style={{
                 flexDirection: 'row',
@@ -589,58 +614,10 @@ export default function IdentityBootupScreen() {
                         </View>
                       ))}
                     </View>
-
-                    {/* Selected Indicator */}
-                    {formData.core_personality === persona.id && (
-                      <View
-                        style={{
-                          marginTop: 16,
-                          alignItems: 'center'
-                        }}
-                      >
-                        <Text style={{ color: '#4CAF50', fontWeight: '600', fontSize: 16 }}>
-                          ✓ Selected
-                        </Text>
-                      </View>
-                    )}
                   </View>
                 </TouchableOpacity>
               ))}
             </Animated.View>
-          </View>
-
-          {/* Navigation Arrows (Accessibility Fallback) */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 16 }}>
-            <TouchableOpacity
-              onPress={() => handleSwipe('right')}
-              disabled={currentPersonaIndex === 0}
-              style={{
-                opacity: currentPersonaIndex === 0 ? 0.3 : 1,
-                padding: 16,
-                minHeight: MIN_TOUCH_TARGET
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Previous personality"
-              accessibilityHint="Navigate to the previous personality option"
-              accessibilityState={{ disabled: currentPersonaIndex === 0 }}
-            >
-              <Text style={{ fontSize: 24 }}>←</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleSwipe('left')}
-              disabled={currentPersonaIndex === PERSONAS.length - 1}
-              style={{
-                opacity: currentPersonaIndex === PERSONAS.length - 1 ? 0.3 : 1,
-                padding: 16,
-                minHeight: MIN_TOUCH_TARGET
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Next personality"
-              accessibilityHint="Navigate to the next personality option"
-              accessibilityState={{ disabled: currentPersonaIndex === PERSONAS.length - 1 }}
-            >
-              <Text style={{ fontSize: 24 }}>→</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Pagination Dots */}
@@ -671,7 +648,8 @@ export default function IdentityBootupScreen() {
             minHeight: MIN_TOUCH_TARGET,
             justifyContent: 'center',
             alignItems: 'center',
-            opacity: canContinueStep2 ? 1 : 0.5
+            opacity: canContinueStep2 ? 1 : 0.5,
+            marginTop: 24
           }}
           accessibilityRole="button"
           accessibilityLabel="Continue to identity traits"
@@ -718,7 +696,7 @@ export default function IdentityBootupScreen() {
               marginBottom: 8
             }}
           >
-            Who do you want to become?
+            What are you trying to build right now?
           </Text>
           <Text
             style={{
@@ -728,7 +706,7 @@ export default function IdentityBootupScreen() {
               textAlign: 'center'
             }}
           >
-            Choose {MIN_TRAITS}-{MAX_TRAITS} traits, {formData.preferred_name}
+            Choose 3.
           </Text>
         </View>
 
@@ -746,7 +724,7 @@ export default function IdentityBootupScreen() {
             >
               {row.map((trait) => {
                 const isSelected = formData.identity_traits.includes(trait);
-                const isDisabled = !isSelected && formData.identity_traits.length >= MAX_TRAITS;
+                const isDisabled = !isSelected && formData.identity_traits.length >= REQUIRED_TRAITS;
                 return (
                   <TouchableOpacity
                     key={trait}
@@ -804,7 +782,7 @@ export default function IdentityBootupScreen() {
               color: canContinueStep3 ? '#4CAF50' : '#666'
             }}
           >
-            {formData.identity_traits.length} of {MIN_TRAITS}-{MAX_TRAITS} selected
+            {formData.identity_traits.length} of {REQUIRED_TRAITS} selected
           </Text>
         </View>
 
