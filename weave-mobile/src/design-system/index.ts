@@ -70,6 +70,11 @@ export { Checkbox } from './components/Checkbox/Checkbox';
 export { WeaveCharacter } from './components/WeaveCharacter/WeaveCharacter';
 
 // ============================================================================
+// Showcase Components
+// ============================================================================
+export { DesignSystemShowcase } from './DesignSystemShowcase';
+
+// ============================================================================
 // Badge Components
 // ============================================================================
 // TODO: Implement Badge components
