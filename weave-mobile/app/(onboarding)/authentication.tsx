@@ -1,462 +1,246 @@
 /**
- * Authentication Screen
+ * Authentication Screen - NativeWind + Design System
  *
- * Story 1.5: User Authentication
- * PRD US-1.5: OAuth Authentication Flow
+ * Story 0.3: OAuth Authentication
  *
  * Features:
- * - Apple Sign In (iOS native button styling)
- * - Google Sign In
- * - Email Sign In
- * - Trial messaging: "7-day free trial. No commitment."
- * - Loading states during authentication
- * - Error handling with user-friendly messages
+ * - Google Sign In (primary) using Supabase OAuth
+ * - Apple Sign In (optional) using Supabase OAuth
+ * - Email Sign In (coming soon)
+ * - Uses existing design system Button component (has built-in glass effects!)
+ * - NativeWind for all layout and styling
  *
- * FRONT-END ONLY: Backend integration (user profile creation, analytics)
- * deferred to Story 0-4.
+ * Pattern (following welcome.tsx):
+ * - className prop for NativeWind classes
+ * - style prop as fallback
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-  AccessibilityInfo,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-
-// TODO: Uncomment when Supabase client is configured
-// import { supabase } from '@/lib/supabase';
-// import { signInWithApple, signInWithGoogle, signInWithEmail } from '@/lib/auth';
-
-// =============================================================================
-// TYPES
-// =============================================================================
+import { Button } from '@/design-system';
+import { signInWithApple, signInWithGoogle } from '@lib/auth';
 
 type AuthProvider = 'apple' | 'google' | 'email';
-
-// =============================================================================
-// MAIN COMPONENT
-// =============================================================================
 
 export default function AuthenticationScreen() {
   const [loading, setLoading] = useState(false);
   const [activeProvider, setActiveProvider] = useState<AuthProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
 
-  // Check for reduced motion preference (accessibility)
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      setReduceMotion(enabled);
-    });
-  }, []);
-
-  // =============================================================================
-  // AUTH HANDLERS
-  // =============================================================================
-
-  /**
-   * Handle Apple Sign In
-   * AC #3: <3 seconds auth completion
-   * AC #4: DEFERRED - User profile creation in Story 0-4
-   */
-  const handleAppleSignIn = async () => {
-    try {
-      setLoading(true);
-      setActiveProvider('apple');
-      setError(null);
-
-      // TODO: Implement Supabase Apple Sign In (Story 0-4)
-      // const { data, error } = await supabase.auth.signInWithOAuth({
-      //   provider: 'apple',
-      //   options: {
-      //     redirectTo: 'weavelight://auth/callback',
-      //     scopes: 'email name',
-      //   },
-      // });
-      //
-      // if (error) throw error;
-
-      // TEMPORARY: Simulate auth for front-end testing
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // On success: Navigate to Story 1.6 (Identity Traits Selection)
-      // TODO: Backend integration in Story 0-4 will:
-      // - Create user row in user_profiles table
-      // - Store selected_painpoints from onboarding
-      // - Track auth_completed analytics event
-      router.push('/(onboarding)/identity-bootup' as any);
-    } catch (err: any) {
-      setError(err.message || 'Unable to sign in with Apple. Please try again.');
-      Alert.alert(
-        'Authentication Error',
-        err.message || 'Unable to sign in with Apple. Please try again.'
-      );
-    } finally {
-      setLoading(false);
-      setActiveProvider(null);
-    }
-  };
-
-  /**
-   * Handle Google Sign In
-   * AC #3: <3 seconds auth completion
-   */
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
       setActiveProvider('google');
       setError(null);
 
-      // TODO: Implement Supabase Google Sign In (Story 0-4)
-      // const { data, error } = await supabase.auth.signInWithOAuth({
-      //   provider: 'google',
-      //   options: {
-      //     redirectTo: 'weavelight://auth/callback',
-      //     queryParams: {
-      //       access_type: 'offline',
-      //       prompt: 'consent',
-      //     },
-      //   },
-      // });
-      //
-      // if (error) throw error;
+      const result = await signInWithGoogle();
 
-      // TEMPORARY: Simulate auth for front-end testing
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to sign in with Google');
+      }
 
-      // On success: Navigate to Story 1.6
+      // Success - navigate to next onboarding step
       router.push('/(onboarding)/identity-bootup' as any);
     } catch (err: any) {
-      setError(err.message || 'Unable to sign in with Google. Please try again.');
-      Alert.alert(
-        'Authentication Error',
-        err.message || 'Unable to sign in with Google. Please try again.'
-      );
+      const errorMessage = err.message || 'Unable to sign in with Google. Please try again.';
+      setError(errorMessage);
+      Alert.alert('Authentication Error', errorMessage);
     } finally {
       setLoading(false);
       setActiveProvider(null);
     }
   };
 
-  /**
-   * Handle Email Sign In
-   * AC #3: <3 seconds auth completion
-   */
-  const handleEmailSignIn = async () => {
+  const handleAppleSignIn = async () => {
     try {
       setLoading(true);
-      setActiveProvider('email');
+      setActiveProvider('apple');
       setError(null);
 
-      // TODO: Implement Email Sign In (Story 0-4)
-      // Could use magic link or password-based auth
-      // For now, show alert that this is not implemented yet
-      Alert.alert(
-        'Coming Soon',
-        'Email authentication will be available soon. Please use Apple or Google Sign In for now.'
-      );
+      const result = await signInWithApple();
 
-      setLoading(false);
-      setActiveProvider(null);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to sign in with Apple');
+      }
+
+      // Success - navigate to next onboarding step
+      router.push('/(onboarding)/identity-bootup' as any);
     } catch (err: any) {
-      setError(err.message || 'Unable to sign in with email. Please try again.');
-      Alert.alert(
-        'Authentication Error',
-        err.message || 'Unable to sign in with email. Please try again.'
-      );
+      const errorMessage = err.message || 'Unable to sign in with Apple. Please try again.';
+      setError(errorMessage);
+      Alert.alert('Authentication Error', errorMessage);
     } finally {
       setLoading(false);
       setActiveProvider(null);
     }
   };
 
-  /**
-   * Handle back navigation to Story 1.4 (Solution Screen)
-   * AC #6: Allow user to return to previous screen
-   */
+  const handleEmailSignIn = async () => {
+    Alert.alert(
+      'Coming Soon',
+      'Email authentication will be available soon. Please use Google or Apple Sign In for now.'
+    );
+  };
+
   const handleBack = () => {
     try {
       router.back();
-    } catch (_err) {
-      // Fallback to solution screen if back navigation fails
+    } catch {
       router.push('/(onboarding)/weave-solution' as any);
     }
   };
 
-  // =============================================================================
-  // RENDER
-  // =============================================================================
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <SafeAreaView className="flex-1 bg-white" style={{ flex: 1, backgroundColor: '#ffffff' }}>
       <ScrollView
+        className="flex-1"
+        contentContainerClassName="flex-grow justify-center px-6 py-6"
+        showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
         contentContainerStyle={{
           flexGrow: 1,
-          paddingVertical: 24,
+          justifyContent: 'center',
           paddingHorizontal: 24,
+          paddingVertical: 24,
         }}
-        showsVerticalScrollIndicator={false}
       >
-        {/* Header Section */}
-        <Animated.View
-          entering={reduceMotion ? undefined : FadeIn.duration(400)}
-          style={{ marginBottom: 32, marginTop: 40 }}
-        >
-          {/* Title */}
+        {/* Header */}
+        <View className="mb-8 mt-10" style={{ marginBottom: 32, marginTop: 40 }}>
           <Text
+            className="text-3xl font-bold text-center text-neutral-900 mb-3"
             style={{
-              fontSize: 28,
+              fontSize: 32,
               fontWeight: '700',
-              color: '#171717',
-              marginBottom: 12,
               textAlign: 'center',
+              color: '#1a1a1a',
+              marginBottom: 12,
             }}
-            accessibilityRole="header"
           >
             Get Started
           </Text>
 
-          {/* Subtitle */}
           <Text
+            className="text-base text-center text-neutral-600 mb-6"
             style={{
               fontSize: 16,
-              lineHeight: 24,
-              color: '#6b7280',
               textAlign: 'center',
+              color: '#6b7280',
               marginBottom: 24,
+              lineHeight: 24,
             }}
           >
             Create your account to begin your transformation journey
           </Text>
 
-          {/* Trial Messaging (AC #2) */}
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: '500',
-              color: '#10b981',
-              textAlign: 'center',
-            }}
-          >
-            7-day free trial. No commitment.
-          </Text>
-        </Animated.View>
-
-        {/* Authentication Buttons (AC #1) */}
-        <Animated.View
-          entering={reduceMotion ? undefined : FadeInDown.duration(400).delay(200)}
-          style={{ flex: 1, justifyContent: 'center', minHeight: 300 }}
-        >
-          {/* Apple Sign In Button (Priority 1) */}
-          <Pressable
-            onPress={handleAppleSignIn}
-            disabled={loading}
-            style={({ pressed }) => ({
-              width: '100%',
-              minHeight: 56,
-              backgroundColor: '#000000',
-              borderRadius: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 16,
-              opacity: pressed ? 0.8 : loading ? 0.6 : 1,
-            })}
-            accessibilityRole="button"
-            accessibilityLabel="Sign in with Apple"
-            accessibilityHint="Authenticate using your Apple ID"
-          >
-            {loading && activeProvider === 'apple' ? (
-              <ActivityIndicator color="#ffffff" size="small" />
-            ) : (
-              <>
-                {/* Apple Icon Placeholder */}
-                <Text style={{ fontSize: 20, marginRight: 12, color: '#ffffff' }}></Text>
-                <Text
-                  style={{
-                    fontSize: 17,
-                    fontWeight: '600',
-                    color: '#ffffff',
-                  }}
-                >
-                  Sign in with Apple
-                </Text>
-              </>
-            )}
-          </Pressable>
-
-          {/* Google Sign In Button (Priority 2) */}
-          <Pressable
-            onPress={handleGoogleSignIn}
-            disabled={loading}
-            style={({ pressed }) => ({
-              width: '100%',
-              minHeight: 56,
-              backgroundColor: '#ffffff',
-              borderWidth: 1.5,
-              borderColor: '#e5e7eb',
-              borderRadius: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 16,
-              opacity: pressed ? 0.8 : loading ? 0.6 : 1,
-            })}
-            accessibilityRole="button"
-            accessibilityLabel="Sign in with Google"
-            accessibilityHint="Authenticate using your Google account"
-          >
-            {loading && activeProvider === 'google' ? (
-              <ActivityIndicator color="#171717" size="small" />
-            ) : (
-              <>
-                {/* Google Icon Placeholder */}
-                <Text style={{ fontSize: 20, marginRight: 12 }}>G</Text>
-                <Text
-                  style={{
-                    fontSize: 17,
-                    fontWeight: '600',
-                    color: '#171717',
-                  }}
-                >
-                  Sign in with Google
-                </Text>
-              </>
-            )}
-          </Pressable>
-
-          {/* Email Sign In Button (Priority 3) */}
-          <Pressable
-            onPress={handleEmailSignIn}
-            disabled={loading}
-            style={({ pressed }) => ({
-              width: '100%',
-              minHeight: 56,
-              backgroundColor: '#f9fafb',
-              borderWidth: 1.5,
-              borderColor: '#e5e7eb',
-              borderRadius: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 24,
-              opacity: pressed ? 0.8 : loading ? 0.6 : 1,
-            })}
-            accessibilityRole="button"
-            accessibilityLabel="Continue with Email"
-            accessibilityHint="Authenticate using your email address"
-          >
-            {loading && activeProvider === 'email' ? (
-              <ActivityIndicator color="#171717" size="small" />
-            ) : (
-              <>
-                {/* Email Icon Placeholder */}
-                <Text style={{ fontSize: 20, marginRight: 12 }}>✉️</Text>
-                <Text
-                  style={{
-                    fontSize: 17,
-                    fontWeight: '600',
-                    color: '#171717',
-                  }}
-                >
-                  Continue with Email
-                </Text>
-              </>
-            )}
-          </Pressable>
-
-          {/* Error Message */}
-          {error && (
-            <Text
+          <View className="items-center" style={{ alignItems: 'center' }}>
+            <View
+              className="bg-emerald-50 px-6 py-3 rounded-xl"
               style={{
-                fontSize: 14,
-                color: '#ef4444',
-                textAlign: 'center',
-                marginTop: 16,
-                paddingHorizontal: 16,
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+                borderRadius: 12,
               }}
+            >
+              <Text
+                className="text-emerald-600 font-semibold text-sm"
+                style={{ color: '#10b981', fontWeight: '600', fontSize: 15 }}
+              >
+                ✨ 7-day free trial. No commitment.
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Auth Buttons - Using Design System Button Component */}
+        <View
+          className="flex-1 justify-center mb-6"
+          style={{ flex: 1, justifyContent: 'center', marginBottom: 24 }}
+        >
+          <View className="mb-4" style={{ marginBottom: 16 }}>
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              onPress={handleGoogleSignIn}
+              disabled={loading}
+              loading={loading && activeProvider === 'google'}
+              leftIcon={<Text style={{ fontSize: 20 }}>G</Text>}
+            >
+              Continue with Google
+            </Button>
+          </View>
+
+          <View className="mb-4" style={{ marginBottom: 16 }}>
+            <Button
+              variant="secondary"
+              size="lg"
+              fullWidth
+              onPress={handleAppleSignIn}
+              disabled={loading}
+              loading={loading && activeProvider === 'apple'}
+              leftIcon={<Text style={{ fontSize: 20 }}></Text>}
+            >
+              Sign in with Apple
+            </Button>
+          </View>
+
+          <View
+            className="flex-row items-center my-6"
+            style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 24 }}
+          >
+            <View
+              className="flex-1 h-px bg-neutral-200"
+              style={{ flex: 1, height: 1, backgroundColor: '#e5e7eb' }}
+            />
+            <Text
+              className="mx-4 text-sm text-neutral-400 font-medium"
+              style={{ marginHorizontal: 16, fontSize: 14, color: '#9ca3af', fontWeight: '500' }}
+            >
+              or
+            </Text>
+            <View
+              className="flex-1 h-px bg-neutral-200"
+              style={{ flex: 1, height: 1, backgroundColor: '#e5e7eb' }}
+            />
+          </View>
+
+          <View className="mb-4" style={{ marginBottom: 16 }}>
+            <Button
+              variant="ghost"
+              size="lg"
+              fullWidth
+              onPress={handleEmailSignIn}
+              disabled={loading}
+              leftIcon={<Text style={{ fontSize: 20 }}>✉️</Text>}
+            >
+              Continue with Email
+            </Button>
+          </View>
+        </View>
+
+        {error && (
+          <View className="mt-4 px-4" style={{ marginTop: 16, paddingHorizontal: 16 }}>
+            <Text
+              className="text-red-500 text-sm text-center leading-5"
+              style={{ color: '#ef4444', fontSize: 14, textAlign: 'center', lineHeight: 20 }}
             >
               {error}
             </Text>
-          )}
-        </Animated.View>
-
-        {/* Back Button */}
-        <Animated.View
-          entering={reduceMotion ? undefined : FadeInDown.duration(400).delay(400)}
-          style={{ marginTop: 'auto', paddingTop: 24 }}
-        >
-          <Pressable
-            onPress={handleBack}
-            disabled={loading}
-            style={({ pressed }) => ({
-              width: '100%',
-              minHeight: 48,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.6 : 1,
-            })}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            accessibilityHint="Return to previous screen"
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: '500',
-                color: '#6b7280',
-              }}
-            >
-              Back
-            </Text>
-          </Pressable>
-        </Animated.View>
-      </ScrollView>
-
-      {/* Loading Overlay (AC #3) */}
-      {loading && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: 16,
-              padding: 24,
-              alignItems: 'center',
-              minWidth: 150,
-            }}
-          >
-            <ActivityIndicator size="large" color="#10b981" />
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: '500',
-                color: '#171717',
-                marginTop: 16,
-              }}
-            >
-              Signing in...
-            </Text>
           </View>
+        )}
+
+        <View
+          className="mt-auto pt-6 items-center"
+          style={{ marginTop: 'auto', paddingTop: 24, alignItems: 'center' }}
+        >
+          <Button variant="ghost" size="md" onPress={handleBack} disabled={loading}>
+            Back
+          </Button>
         </View>
-      )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
