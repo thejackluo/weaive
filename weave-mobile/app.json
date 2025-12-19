@@ -16,7 +16,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.weavelight.app",
-      "associatedDomains": ["applinks:weavelight.app"]
+      "associatedDomains": [
+        "applinks:weavelight.app"
+      ]
     },
     "android": {
       "package": "com.weavelight.app",
@@ -32,5 +34,11 @@
       "bundler": "metro"
     },
     "plugins": ["expo-router", "expo-web-browser"]
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "958e77af-47be-49ec-a7e6-bbfa14552734"
+      }
+    }
   }
 }
