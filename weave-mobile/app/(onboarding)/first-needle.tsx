@@ -289,7 +289,7 @@ export default function FirstNeedleScreen() {
 
   /**
    * Handle final confirmation
-   * - TODO: Navigate to Story 1.8 (AI Path Generation)
+   * - Navigate to Story 1.8a (Weave Path Generation)
    * - Passes goalData via route params
    */
   const handleFinalConfirmation = () => {
@@ -301,35 +301,23 @@ export default function FirstNeedleScreen() {
     //   is_custom: goalData.is_custom
     // });
 
-    // TODO (Story 1.8): Navigate to AI Path Generation screen
-    // When Story 1.8 is implemented, uncomment:
-    // router.push({
-    //   pathname: '/(onboarding)/weave-path-generation',
-    //   params: {
-    //     template_id: goalData.template_id,
-    //     display_text: goalData.display_text,
-    //     customization_text: goalData.customization_text || '',
-    //     is_custom: goalData.is_custom.toString(),
-    //   },
-    // });
+    // Navigate to Story 1.8a (AI Path Generation screen)
+    router.push({
+      pathname: '/(onboarding)/weave-path-generation',
+      params: {
+        template_id: goalData.template_id?.toString() || '',
+        display_text: goalData.display_text,
+        customization_text: goalData.customization_text || '',
+        is_custom: goalData.is_custom.toString(),
+      },
+    });
 
-    // Temporary: Show accessible confirmation (Story 1.8 not implemented)
-    const confirmationMessage =
-      `Goal Confirmed!\n\n` +
-      `Your first Needle: "${goalData.display_text}"${goalData.customization_text ? ` — ${goalData.customization_text}` : ''}\n\n` +
-      `✅ Story 1.7 complete!\n\n` +
-      `[Story 1.8 (AI Path Generation) not yet implemented]`;
-
-    // Show alert (accessible on both iOS VoiceOver and visual)
-    // TODO: Replace with custom modal in Story 1.8
-    alert(confirmationMessage);
-
-    // Accessible announcement for screen readers (redundant with alert, but explicit)
-    AccessibilityInfo.announceForAccessibility(`Goal confirmed: ${goalData.display_text}`);
+    // Accessible announcement for screen readers
+    AccessibilityInfo.announceForAccessibility(`Goal confirmed: ${goalData.display_text}. Loading your personalized path.`);
 
     // Dev logging
     if (__DEV__) {
-      console.log('[ONBOARDING] Goal confirmed:', {
+      console.log('[ONBOARDING] Goal confirmed, navigating to Story 1.8a:', {
         template_id: goalData.template_id,
         display_text: goalData.display_text,
         customization_text: goalData.customization_text,
