@@ -75,7 +75,7 @@ sprint-1-stories:
   1-1-welcome-vision-hook: done                 # 2 pts (front-end done, follow-ups documented)
   1-2-emotional-state-selection: done           # 3 pts
   1-3-insight-reflection: review                # 2 pts
-  1-4-weave-solution: backlog                   # 2 pts
+  1-4-weave-solution: review                    # 2 pts (code review complete, tests created)
   1-5-authentication: backlog                   # 3 pts
   # Phase 2: Light Identity Bootup
   1-6-identity-traits-selection: backlog        # 3 pts
