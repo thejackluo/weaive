@@ -15,17 +15,13 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Pressable, AccessibilityInfo } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import Animated, {
-  FadeIn,
-  SlideInUp,
-  FadeInDown,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, SlideInUp, FadeInDown } from 'react-native-reanimated';
 
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import {
   getSolutionContent,
   FALLBACK_SOLUTION,
-  type SolutionContent
+  type SolutionContent,
 } from '@/constants/solutionContent';
 
 // =============================================================================
@@ -48,8 +44,8 @@ function SolutionCard({ content, index, reduceMotion }: SolutionCardProps) {
   const entering = reduceMotion
     ? undefined
     : index === 0
-    ? FadeIn.duration(400)
-    : SlideInUp.duration(400).delay(200);
+      ? FadeIn.duration(400)
+      : SlideInUp.duration(400).delay(200);
 
   return (
     <Animated.View
@@ -111,9 +107,7 @@ interface CTAButtonProps {
 }
 
 function CTAButton({ onPress, reduceMotion, delayMs }: CTAButtonProps) {
-  const entering = reduceMotion
-    ? undefined
-    : FadeInDown.duration(300).delay(delayMs);
+  const entering = reduceMotion ? undefined : FadeInDown.duration(300).delay(delayMs);
 
   return (
     <Animated.View entering={entering} style={{ paddingHorizontal: 16, paddingBottom: 24 }}>
@@ -129,9 +123,7 @@ function CTAButton({ onPress, reduceMotion, delayMs }: CTAButtonProps) {
         accessibilityLabel="Show me the app"
         accessibilityRole="button"
       >
-        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
-          Show me →
-        </Text>
+        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Show me →</Text>
       </Pressable>
     </Animated.View>
   );
@@ -159,9 +151,8 @@ export default function WeaveSolutionScreen() {
   // Implements AC #7: Edge case handling (fallback for missing selection)
   let solutionContents: SolutionContent[];
   try {
-    solutionContents = selectedPainpoints.length > 0
-      ? getSolutionContent(selectedPainpoints)
-      : [FALLBACK_SOLUTION];
+    solutionContents =
+      selectedPainpoints.length > 0 ? getSolutionContent(selectedPainpoints) : [FALLBACK_SOLUTION];
   } catch (error) {
     console.error('Error getting solution content:', error);
     // Fallback to default solution if error occurs
@@ -241,11 +232,7 @@ export default function WeaveSolutionScreen() {
         </ScrollView>
 
         {/* Continue Button */}
-        <CTAButton
-          onPress={handleContinue}
-          reduceMotion={reduceMotion}
-          delayMs={ctaDelay}
-        />
+        <CTAButton onPress={handleContinue} reduceMotion={reduceMotion} delayMs={ctaDelay} />
       </View>
     </SafeAreaView>
   );
