@@ -40,6 +40,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import { supabase } from '@lib/supabase';
+import { ensureUserProfile } from '@lib/auth';
 
 // CRITICAL: Initialize WebBrowser for OAuth (required for web, doesn't hurt on mobile)
 WebBrowser.maybeCompleteAuthSession();
@@ -259,6 +260,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         session: !!data.session,
       });
 
+      // Ensure user profile exists
+      if (data.user) {
+        console.log('[AUTH] Ensuring user profile exists...');
+        await ensureUserProfile(data.user.id);
+      }
+
       // State will be updated automatically via onAuthStateChange
     } catch (err) {
       console.error('[AUTH] Sign in exception:', err);
@@ -296,6 +303,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         session: !!data.session,
         needsConfirmation: !data.session && !!data.user,
       });
+
+      // Ensure user profile exists
+      if (data.user) {
+        console.log('[AUTH] Ensuring user profile exists...');
+        await ensureUserProfile(data.user.id);
+      }
 
       // State will be updated automatically via onAuthStateChange
       // Note: User may need to verify email before session is active
@@ -436,7 +449,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         console.log('[AUTH_CONTEXT] Setting session from OAuth tokens...');
 
-        const { error: sessionError } = await supabase.auth.setSession({
+        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
           access_token,
           refresh_token,
         });
@@ -447,6 +460,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         console.log('[AUTH_CONTEXT] ✅ OAuth Sign In successful!');
+
+        // Ensure user profile exists (safety fallback if trigger didn't fire)
+        if (sessionData?.user) {
+          console.log('[AUTH_CONTEXT] Ensuring user profile exists...');
+          const profileResult = await ensureUserProfile(sessionData.user.id);
+
+          if (!profileResult.success) {
+            console.error('[AUTH_CONTEXT] ⚠️ Failed to ensure user profile:', profileResult.error);
+            // Don't throw error - user can still proceed, we'll retry later
+          } else {
+            console.log('[AUTH_CONTEXT] ✅ User profile confirmed');
+          }
+        }
 
         // State will be updated automatically via onAuthStateChange
       } catch (browserError: any) {

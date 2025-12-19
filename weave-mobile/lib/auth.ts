@@ -316,41 +316,86 @@ export async function signInWithEmail(email: string): Promise<AuthResult> {
 }
 
 /**
- * Create user profile after successful authentication
- * TODO (Story 0-4): Implement user profile creation
+ * Ensure user profile exists after authentication
+ * Creates profile if it doesn't exist (idempotent)
+ *
+ * This is a safety fallback - the database trigger should handle this automatically,
+ * but we check here to ensure profile exists before proceeding with onboarding.
  *
  * @param authUserId - User ID from auth.users table
- * @param painpoints - Selected painpoints from onboarding (Story 1.2)
+ * @param painpoints - Selected painpoints from onboarding (optional)
  */
-export async function createUserProfile(
+export async function ensureUserProfile(
   authUserId: string,
-  painpoints: string[]
+  painpoints?: string[]
 ): Promise<AuthResult> {
   try {
-    // TODO (Story 0-4): Insert user profile
-    // const { data, error } = await supabase
-    //   .from('user_profiles')
-    //   .insert({
-    //     auth_user_id: authUserId,
-    //     selected_painpoints: painpoints,
-    //     onboarding_completed: false,
-    //     created_at: new Date().toISOString(),
-    //   });
-    //
-    // if (error) throw error;
+    console.log('[AUTH] Checking if user profile exists for:', authUserId);
+
+    // Check if profile already exists
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('user_profiles')
+      .select('id, onboarding_completed')
+      .eq('auth_user_id', authUserId)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      // PGRST116 = no rows returned (expected if profile doesn't exist)
+      console.error('[AUTH] Error checking existing profile:', fetchError);
+      throw fetchError;
+    }
+
+    if (existingProfile) {
+      console.log('[AUTH] ✅ User profile already exists');
+      return { success: true };
+    }
+
+    console.log('[AUTH] Creating new user profile...');
+
+    // Auto-detect timezone
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const locale = 'en-US'; // TODO: Detect from device settings
+
+    // Create new profile
+    const { data: newProfile, error: insertError } = await supabase
+      .from('user_profiles')
+      .insert({
+        auth_user_id: authUserId,
+        timezone,
+        locale,
+        selected_painpoints: painpoints || [],
+        onboarding_completed: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      // If error is duplicate key (profile was created by trigger), that's OK
+      if (insertError.code === '23505') {
+        console.log('[AUTH] ✅ Profile was created by database trigger (expected)');
+        return { success: true };
+      }
+      console.error('[AUTH] Error creating profile:', insertError);
+      throw insertError;
+    }
+
+    console.log('[AUTH] ✅ User profile created successfully:', newProfile.id);
 
     // TODO (Story 0-4): Track analytics event
-    // trackEvent('auth_completed', {
-    //   provider: 'apple' | 'google' | 'email',
+    // trackEvent('profile_created', {
+    //   user_id: authUserId,
     //   painpoints,
+    //   timezone,
     // });
 
     return { success: true };
   } catch (err: any) {
-    console.error('[AUTH] User profile creation failed:', err);
+    console.error('[AUTH] User profile check/creation failed:', err);
     return {
       success: false,
-      error: err.message || 'Unable to create user profile.',
+      error: err.message || 'Unable to ensure user profile exists.',
     };
   }
 }
