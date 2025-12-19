@@ -2,6 +2,7 @@
  * Button Component Types
  */
 
+import React from 'react';
 import { PressableProps, StyleProp, ViewStyle } from 'react-native';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'ai' | 'success';
