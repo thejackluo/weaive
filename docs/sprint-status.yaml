@@ -46,12 +46,12 @@ week-0-stories:
   epic-0: in-progress
   0-1-project-scaffolding: done                 # 5 pts ✅
   0-2a-database-schema-core: done               # 3 pts ✅ (SQL tested and working)
-  0-2b-database-schema-refinement: done         # 2 pts ✅ (SQL tested and working)
-  0-3-authentication-flow: review               # 3 pts (partially done, pending production testing)
+  0-2b-database-schema-refinement: done pending testing        # 2 pts ✅ (SQL tested and working)
+  0-3-authentication-flow: done pending testing               # 3 pts (partially done, pending production testing)
   0-4-row-level-security: ready-for-dev         # 5 pts [CRITICAL]
-  0-5-cicd-pipeline: backlog                    # 3 pts
+  0-5-cicd-pipeline: ready-for-dev                    # 3 pts
   0-6-ai-service-abstraction: ready-for-dev     # 3 pts (next story to implement)
-  0-7-test-infrastructure: backlog              # 3 pts
+  0-7-test-infrastructure: ready-for-dev        # 3 pts
   0-8-error-handling-framework: backlog         # 3 pts
   0-9-image-upload-error-handling: backlog      # 3 pts
   0-10-ai-failure-handling: backlog             # 3 pts
