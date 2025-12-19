@@ -13,7 +13,7 @@ export const radius = {
   xl: 16,
   '2xl': 20,
   '3xl': 24,
-  full: 9999,  // Perfect circles and pills
+  full: 9999, // Perfect circles and pills
 } as const;
 
 // ============================================================================

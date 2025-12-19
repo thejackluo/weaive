@@ -17,7 +17,7 @@ export const shadows = {
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-    elevation: 1,  // Android shadow
+    elevation: 1, // Android shadow
   } as ViewStyle,
 
   // Medium shadow for floating elements
@@ -50,7 +50,7 @@ export const shadows = {
   // Colored shadows for specific contexts
   colored: {
     accent: {
-      shadowColor: '#5B8DEF',  // Primary blue
+      shadowColor: '#5B8DEF', // Primary blue
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.3,
       shadowRadius: 12,
@@ -58,7 +58,7 @@ export const shadows = {
     } as ViewStyle,
 
     violet: {
-      shadowColor: '#9D71E8',  // AI violet
+      shadowColor: '#9D71E8', // AI violet
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.3,
       shadowRadius: 12,
@@ -66,7 +66,7 @@ export const shadows = {
     } as ViewStyle,
 
     success: {
-      shadowColor: '#10D87E',  // Success emerald
+      shadowColor: '#10D87E', // Success emerald
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.3,
       shadowRadius: 12,
@@ -96,13 +96,13 @@ export const shadows = {
 export const glass = {
   // Standard glass card effect
   card: {
-    blurType: 'dark' as const,  // 'light' | 'dark' | 'regular'
-    blurAmount: 20,              // 0-100, higher = more blur
+    blurType: 'dark' as const, // 'light' | 'dark' | 'regular'
+    blurAmount: 20, // 0-100, higher = more blur
     style: {
-      backgroundColor: 'rgba(26, 26, 31, 0.7)',  // background.glass
+      backgroundColor: 'rgba(26, 26, 31, 0.7)', // background.glass
       borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.15)',  // border.glass
-      backdropFilter: 'blur(20px)',  // Web fallback (not supported on native)
+      borderColor: 'rgba(255, 255, 255, 0.15)', // border.glass
+      backdropFilter: 'blur(20px)', // Web fallback (not supported on native)
     } as ViewStyle,
   },
 
@@ -123,7 +123,7 @@ export const glass = {
     blurType: 'dark' as const,
     blurAmount: 25,
     style: {
-      backgroundColor: 'rgba(157, 113, 232, 0.15)',  // Violet tint
+      backgroundColor: 'rgba(157, 113, 232, 0.15)', // Violet tint
       borderWidth: 1,
       borderColor: 'rgba(157, 113, 232, 0.3)',
       ...shadows.colored.violet,
@@ -135,7 +135,7 @@ export const glass = {
     blurType: 'dark' as const,
     blurAmount: 25,
     style: {
-      backgroundColor: 'rgba(16, 216, 126, 0.15)',  // Emerald tint
+      backgroundColor: 'rgba(16, 216, 126, 0.15)', // Emerald tint
       borderWidth: 1,
       borderColor: 'rgba(16, 216, 126, 0.3)',
       ...shadows.colored.success,
@@ -158,7 +158,7 @@ export const glass = {
     blurType: 'dark' as const,
     blurAmount: 40,
     style: {
-      backgroundColor: 'rgba(9, 9, 11, 0.9)',  // More opaque for navigation
+      backgroundColor: 'rgba(9, 9, 11, 0.9)', // More opaque for navigation
       borderTopWidth: 1,
       borderTopColor: 'rgba(255, 255, 255, 0.1)',
       ...shadows.sm,

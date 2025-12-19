@@ -25,7 +25,7 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 // ============================================================================
 const createTheme = (mode: ThemeMode, systemColorScheme?: 'light' | 'dark'): Theme => {
   // Determine actual mode (resolve 'system')
-  const resolvedMode = mode === 'system' ? (systemColorScheme || 'dark') : mode;
+  const resolvedMode = mode === 'system' ? systemColorScheme || 'dark' : mode;
 
   // Currently, we only support dark mode
   // TODO: Implement light mode colors when needed
@@ -56,7 +56,9 @@ export interface ThemeProviderProps {
 export function ThemeProvider({ children, initialMode = 'dark' }: ThemeProviderProps) {
   const systemColorScheme = useColorScheme();
   const [mode, setMode] = useState<ThemeMode>(initialMode);
-  const [theme, setTheme] = useState<Theme>(() => createTheme(mode, systemColorScheme || undefined));
+  const [theme, setTheme] = useState<Theme>(() =>
+    createTheme(mode, systemColorScheme || undefined)
+  );
 
   // Update theme when mode or system color scheme changes
   useEffect(() => {

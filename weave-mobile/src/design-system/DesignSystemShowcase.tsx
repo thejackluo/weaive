@@ -52,8 +52,8 @@ function ShowcaseContent() {
         <Card variant="glass" padding="spacious" style={{ marginBottom: spacing[6] }}>
           <Title style={{ marginBottom: spacing[4] }}>WeaveCharacter</Title>
           <Body color="secondary" style={{ marginBottom: spacing[6] }}>
-            Mathematically complex curves that evolve with user progress. Uses parametric
-            equations (Lissajous curves) that become more intricate as level increases.
+            Mathematically complex curves that evolve with user progress. Uses parametric equations
+            (Lissajous curves) that become more intricate as level increases.
           </Body>
 
           <View style={styles.showcaseRow}>
@@ -287,7 +287,15 @@ function ShowcaseContent() {
 }
 
 // Helper components
-function ColorSwatch({ color, label, sublabel }: { color: string; label: string; sublabel: string }) {
+function ColorSwatch({
+  color,
+  label,
+  sublabel,
+}: {
+  color: string;
+  label: string;
+  sublabel: string;
+}) {
   const { spacing } = useTheme();
 
   return (

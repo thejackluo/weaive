@@ -16,14 +16,14 @@ export default function HomeScreen() {
         onPress={() => router.push('/(tabs)/design-system-showcase')}
         className="bg-accent-500 px-6 py-4 rounded-lg active:opacity-80 active:scale-98"
       >
-        <Text className="text-dark-900 text-sm font-medium tracking-wide">
-          View Design System
-        </Text>
+        <Text className="text-dark-900 text-sm font-medium tracking-wide">View Design System</Text>
       </Pressable>
 
       <View className="absolute bottom-8 items-center">
         <Text className="text-text-muted text-xs">React Native-First Design System</Text>
-        <Text className="text-text-muted text-xs">NativeWind v5 • Tailwind v4 • Liquid Glass UI</Text>
+        <Text className="text-text-muted text-xs">
+          NativeWind v5 • Tailwind v4 • Liquid Glass UI
+        </Text>
       </View>
     </View>
   );

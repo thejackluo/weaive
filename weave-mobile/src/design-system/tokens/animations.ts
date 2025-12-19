@@ -78,11 +78,11 @@ export const springs = {
 // ============================================================================
 export const durations = {
   instant: 0,
-  fast: 150,       // Quick UI feedback
-  normal: 200,     // Standard animations
-  moderate: 300,   // Modal transitions
-  slow: 500,       // Page transitions
-  verySlow: 800,   // Special effects
+  fast: 150, // Quick UI feedback
+  normal: 200, // Standard animations
+  moderate: 300, // Modal transitions
+  slow: 500, // Page transitions
+  verySlow: 800, // Special effects
 } as const;
 
 // ============================================================================

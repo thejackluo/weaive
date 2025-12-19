@@ -41,12 +41,7 @@ export interface PainpointCardProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-function PainpointCardComponent({
-  painpoint,
-  isSelected,
-  onPress,
-  style,
-}: PainpointCardProps) {
+function PainpointCardComponent({ painpoint, isSelected, onPress, style }: PainpointCardProps) {
   const screenWidth = Dimensions.get('window').width;
 
   // Press animation
@@ -144,15 +139,8 @@ function PainpointCardComponent({
 
         {/* Check Icon Overlay */}
         {isSelected && (
-          <Animated.View
-            className="absolute top-2 right-2"
-            style={checkAnimatedStyle}
-          >
-            <Ionicons
-              name="checkmark-circle"
-              size={24}
-              color="#3B72F6"
-            />
+          <Animated.View className="absolute top-2 right-2" style={checkAnimatedStyle}>
+            <Ionicons name="checkmark-circle" size={24} color="#3B72F6" />
           </Animated.View>
         )}
       </View>

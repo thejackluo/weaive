@@ -96,10 +96,7 @@ export default function EmotionalStateScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScrollView
-        className="py-6 px-4 pb-10"
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView className="py-6 px-4 pb-10" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="items-center mb-6">
           <Text className="text-center text-[28px] font-semibold text-neutral-800 mb-2 tracking-tight">
@@ -135,9 +132,7 @@ export default function EmotionalStateScreen() {
         <View className="w-full mt-6">
           <Pressable
             className={`h-12 rounded-lg w-full justify-center items-center ${
-              selectedPainpoints.length >= 1
-                ? 'bg-blue-500'
-                : 'bg-gray-300'
+              selectedPainpoints.length >= 1 ? 'bg-blue-500' : 'bg-gray-300'
             }`}
             onPress={handleContinue}
             disabled={selectedPainpoints.length === 0}

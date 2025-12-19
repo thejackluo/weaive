@@ -19,9 +19,7 @@ interface OnboardingStore {
 export const useOnboardingStore = create<OnboardingStore>((set) => ({
   selectedPainpoints: [],
 
-  setSelectedPainpoints: (painpoints) =>
-    set({ selectedPainpoints: painpoints }),
+  setSelectedPainpoints: (painpoints) => set({ selectedPainpoints: painpoints }),
 
-  resetOnboarding: () =>
-    set({ selectedPainpoints: [] }),
+  resetOnboarding: () => set({ selectedPainpoints: [] }),
 }));
