@@ -81,6 +81,7 @@ export default function IdentityBootupScreen() {
     Array(PERSONAS.length).fill(false)
   );
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const iconPulseAnim = useRef(new Animated.Value(1)).current;
 
   // Step 3: Identity Traits State
   const [maxTraitsError, setMaxTraitsError] = useState<string | undefined>();
@@ -153,34 +154,30 @@ export default function IdentityBootupScreen() {
     }
   };
 
-  const isNameValid = nameValidation.valid;
-
   //================================
   // STEP 2: PERSONALITY SELECTION
   //================================
 
   /**
    * PanResponder for swipe gestures on persona cards
+   * Note: Not memoized to avoid stale closure bugs with handleSwipe
    */
-  const panResponder = useMemo(
-    () => PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Activate when horizontal movement exceeds vertical and threshold is met
-        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        // Swipe left (next card) if moved more than 50px to the left
-        if (gestureState.dx < -50) {
-          handleSwipe('left');
-        }
-        // Swipe right (previous card) if moved more than 50px to the right
-        else if (gestureState.dx > 50) {
-          handleSwipe('right');
-        }
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      // Activate when horizontal movement exceeds vertical and threshold is met
+      return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      // Swipe left (next card) if moved more than 50px to the left
+      if (gestureState.dx < -50) {
+        handleSwipe('left');
       }
-    }),
-    [currentPersonaIndex]
-  );
+      // Swipe right (previous card) if moved more than 50px to the right
+      else if (gestureState.dx > 50) {
+        handleSwipe('right');
+      }
+    }
+  });
 
   /**
    * Handle swipe to next/previous persona
@@ -270,7 +267,27 @@ export default function IdentityBootupScreen() {
       // TODO (Story 0-4): Track analytics event
       // trackEvent('weave_personality_shown');
     }
-  }, [currentStep, viewedPersonas]);
+  }, [currentStep]);
+
+  // Animate Weave icon pulse on Step 2
+  useEffect(() => {
+    if (currentStep === 2) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(iconPulseAnim, {
+            toValue: 1.08,
+            duration: 1400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(iconPulseAnim, {
+            toValue: 1,
+            duration: 1400,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [currentStep, iconPulseAnim]);
 
   //==================================
   // STEP 3: IDENTITY TRAITS SELECTION
@@ -327,10 +344,6 @@ export default function IdentityBootupScreen() {
 
       // TODO (Story 0-4): Track analytics event
       // trackEvent('identity_traits_selected', { traits: formData.identity_traits });
-
-      if (__DEV__) {
-        console.log('[ONBOARDING] All data collected:', formData);
-      }
 
       // Navigate to Story 1.7 (First Needle / Goal Input)
       // TODO: Implement Story 1.7 and replace with actual route
@@ -434,20 +447,20 @@ export default function IdentityBootupScreen() {
       {/* Continue Button */}
       <TouchableOpacity
         onPress={handleStep1Continue}
-        disabled={!isNameValid}
+        disabled={!nameValidation.valid}
         style={{
-          backgroundColor: isNameValid ? '#4CAF50' : '#CCCCCC',
+          backgroundColor: nameValidation.valid ? '#4CAF50' : '#CCCCCC',
           borderRadius: 12,
           padding: 16,
           minHeight: MIN_TOUCH_TARGET,
           justifyContent: 'center',
           alignItems: 'center',
-          opacity: isNameValid ? 1 : 0.5
+          opacity: nameValidation.valid ? 1 : 0.5
         }}
         accessibilityRole="button"
         accessibilityLabel="Continue to personality selection"
         accessibilityHint="Proceeds to step 2 where you'll choose your Weave's interaction style"
-        accessibilityState={{ disabled: !isNameValid }}
+        accessibilityState={{ disabled: !nameValidation.valid }}
       >
         <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
           Continue
@@ -548,8 +561,8 @@ export default function IdentityBootupScreen() {
                       minHeight: PERSONA_CARD_MIN_HEIGHT
                     }}
                   >
-                    {/* Weave Icon Placeholder (TODO: Add actual icon) */}
-                    <View
+                    {/* Weave Icon with Pulse Animation */}
+                    <Animated.View
                       style={{
                         width: 60,
                         height: 60,
@@ -558,11 +571,12 @@ export default function IdentityBootupScreen() {
                         alignSelf: 'center',
                         marginBottom: 16,
                         justifyContent: 'center',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        transform: [{ scale: iconPulseAnim }]
                       }}
                     >
                       <Text style={{ fontSize: 24 }}>🧵</Text>
-                    </View>
+                    </Animated.View>
 
                     {/* Title */}
                     <Text
@@ -622,9 +636,12 @@ export default function IdentityBootupScreen() {
 
           {/* Pagination Dots */}
           <View style={{ flexDirection: 'row', marginTop: 16 }} accessibilityRole="adjustable" accessibilityLabel={`Personality ${currentPersonaIndex + 1} of ${PERSONAS.length}`}>
-            {PERSONAS.map((_, index) => (
+            {PERSONAS.map((persona, index) => (
               <View
                 key={index}
+                accessible={true}
+                accessibilityLabel={`${persona.title}, page ${index + 1} of ${PERSONAS.length}`}
+                accessibilityState={{ selected: index === currentPersonaIndex }}
                 style={{
                   width: 8,
                   height: 8,
