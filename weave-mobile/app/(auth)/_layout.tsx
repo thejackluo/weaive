@@ -20,11 +20,12 @@
  * - /(auth)/signup - New user registration
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { ActivityIndicator, View } from 'react-native';
 import { useTheme } from '@/design-system';
+import { hasCompletedOnboarding } from '@lib/authHelpers';
 
 /**
  * Auth Layout Component
@@ -35,15 +36,18 @@ export default function AuthLayout() {
   const router = useRouter();
   const segments = useSegments();
   const { colors } = useTheme();
+  const [checkingOnboarding, setCheckingOnboarding] = useState(false);
 
   /**
    * Redirect Logic:
-   * - If user is authenticated and on auth screens → redirect to tabs
+   * - If user is authenticated and on auth screens → check onboarding status
+   * - If onboarding incomplete → redirect to onboarding
+   * - If onboarding complete → redirect to tabs
    * - If user is not authenticated → stay on auth screens
    */
   useEffect(() => {
-    if (isLoading) {
-      console.log('[AUTH_LAYOUT] ⏳ Waiting for auth state to load...');
+    if (isLoading || checkingOnboarding) {
+      console.log('[AUTH_LAYOUT] ⏳ Waiting for auth/onboarding state to load...');
       return; // Wait for auth state to load
     }
 
@@ -57,18 +61,34 @@ export default function AuthLayout() {
     });
 
     if (user && inAuthGroup) {
-      // User is authenticated but on auth screens → redirect to tabs
-      console.log('[AUTH_LAYOUT] ✅ User authenticated, redirecting to tabs...');
-      router.replace('/(tabs)');
+      // User is authenticated but on auth screens → check onboarding status
+      console.log('[AUTH_LAYOUT] ✅ User authenticated, checking onboarding status...');
+      setCheckingOnboarding(true);
+
+      hasCompletedOnboarding(user.id).then((completed) => {
+        setCheckingOnboarding(false);
+        if (completed) {
+          console.log('[AUTH_LAYOUT] ✅ Onboarding complete, redirecting to tabs...');
+          router.replace('/(tabs)' as any);
+        } else {
+          console.log('[AUTH_LAYOUT] ⚠️ Onboarding incomplete, redirecting to onboarding...');
+          router.replace('/(onboarding)/identity-bootup' as any);
+        }
+      }).catch((err) => {
+        console.error('[AUTH_LAYOUT] Error checking onboarding status:', err);
+        setCheckingOnboarding(false);
+        // Default to tabs on error
+        router.replace('/(tabs)' as any);
+      });
     } else if (!user && !inAuthGroup) {
       console.log('[AUTH_LAYOUT] ℹ️ User not authenticated, staying on current screen');
     }
-  }, [user, isLoading, segments, router]);
+  }, [user, isLoading, segments, router, checkingOnboarding]);
 
   /**
-   * Show loading screen while checking auth state
+   * Show loading screen while checking auth state or onboarding status
    */
-  if (isLoading) {
+  if (isLoading || checkingOnboarding) {
     return (
       <View
         style={{
