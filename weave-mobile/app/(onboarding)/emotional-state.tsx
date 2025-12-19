@@ -91,7 +91,7 @@ export default function EmotionalStateScreen() {
   const handleContinue = useCallback(() => {
     // Navigate to next screen (US-1.3: Insight Reflection)
     // TODO: Send selected_painpoints to backend (lightweight API call)
-    router.push('/onboarding/insight-reflection');
+    router.push('/(onboarding)/insight-reflection');
   }, []);
 
   return (
