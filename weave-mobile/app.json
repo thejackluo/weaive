@@ -32,13 +32,7 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router",
-      [
-        "react-native-keychain",
-        {
-          "service": "weave-auth-tokens"
-        }
-      ]
+      "expo-router"
     ]
   }
 }
