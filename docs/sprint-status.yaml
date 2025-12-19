@@ -50,7 +50,7 @@ week-0-stories:
   0-3-authentication-flow: done pending testing               # 3 pts (partially done, pending production testing)
   0-4-row-level-security: ready-for-dev         # 5 pts [CRITICAL]
   0-5-cicd-pipeline: ready-for-dev                    # 3 pts
-  0-6-ai-service-abstraction: ready-for-dev     # 3 pts (next story to implement)
+  0-6-ai-service-abstraction: ready-for-dev     # 3 pts ✅ (includes AWS Bedrock primary, dual cost tracking, role-based limits)
   0-7-test-infrastructure: ready-for-dev        # 3 pts
   0-8-error-handling-framework: backlog         # 3 pts
   0-9-image-upload-error-handling: backlog      # 3 pts
