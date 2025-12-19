@@ -717,7 +717,6 @@ export default function IdentityBootupScreen() {
               key={rowIndex}
               style={{
                 flexDirection: 'row',
-                flexWrap: 'wrap',
                 justifyContent: 'center',
                 marginBottom: 12
               }}
