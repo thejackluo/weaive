@@ -77,11 +77,9 @@ export default function AuthenticationScreen() {
     }
   };
 
-  const handleEmailSignIn = async () => {
-    Alert.alert(
-      'Coming Soon',
-      'Email authentication will be available soon. Please use Google or Apple Sign In for now.'
-    );
+  const handleEmailSignIn = () => {
+    // Navigate to the email login screen
+    router.push('/(auth)/login' as any);
   };
 
   const handleBack = () => {
@@ -209,14 +207,14 @@ export default function AuthenticationScreen() {
 
           <View className="mb-4" style={{ marginBottom: 16 }}>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="lg"
               fullWidth
               onPress={handleEmailSignIn}
               disabled={loading}
               leftIcon={<Text style={{ fontSize: 20 }}>✉️</Text>}
             >
-              Continue with Email
+              Sign in with Email
             </Button>
           </View>
         </View>
