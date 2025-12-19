@@ -47,4 +47,4 @@ CREATE TRIGGER enforce_max_active_goals
 -- Comments for documentation
 COMMENT ON TABLE goals IS 'User goals (called Needles in UI). Max 3 active enforced via trigger.';
 COMMENT ON COLUMN goals.status IS 'active (max 3), paused, completed, archived. Users primarily interact with active goals.';
-COMMENT ON CONSTRAINT check_max_active_goals ON goals IS 'CRITICAL BUSINESS RULE: Users can only have 3 active goals maximum to maintain focus.';
+COMMENT ON TRIGGER enforce_max_active_goals ON goals IS 'CRITICAL BUSINESS RULE: Users can only have 3 active goals maximum to maintain focus.';
