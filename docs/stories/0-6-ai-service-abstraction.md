@@ -75,14 +75,17 @@ Before starting this story, ensure:
 
 **AI Cost Control Strategy** (from PRD + Product Requirements):
 - **Daily budget:** $83.33/day total application-wide ($2,500/month ÷ 30 days)
-- **Per-user budget:** $0.10/month for free users (~$0.003/day), higher for paid tiers
+- **Per-user budget:**
+  - **Free users:** $0.02/day (~$0.60/month)
+  - **Paid users:** $0.10/day (~$3.00/month)
 - **Budget enforcement:** Auto-throttle to cache-only mode at 100% budget (both total + per-user)
 - **Dual cost tracking:**
   - **Application-wide:** Total daily/monthly spend across all users
-  - **Per-user:** Individual user spend for quota management
+  - **Per-user:** Individual user spend for quota management and tier enforcement
 - **Role-based rate limits:**
   - **Admin users (developers):** Unlimited AI calls (for testing, support)
-  - **Regular users:** 10 AI calls/hour strict limit
+  - **Paid users:** 10 AI messages/hour
+  - **Free users:** 10 AI messages/day (stricter for cost control)
 - **Model routing (primary: AWS Bedrock):**
   - 90% calls use Bedrock Claude 3.5 Haiku (~$0.25/$1.25 per MTok) for routine operations
   - 10% calls use Bedrock Claude 3.7 Sonnet ($3.00/$15.00 per MTok) for complex reasoning
@@ -140,7 +143,18 @@ Before starting this story, ensure:
      - `estimate_cost(input_tokens: int, output_tokens: int, model: str) -> float`
    - Define `AIResponse` dataclass: `content: str`, `input_tokens: int`, `output_tokens: int`, `model: str`, `cost_usd: float`, `provider: str`
 
-2. **Implement OpenAI provider** (0.5 SP)
+2. **Implement AWS Bedrock provider (PRIMARY)** (0.75 SP)
+   - File: `weave-api/app/services/ai/bedrock_provider.py`
+   - Implement `BedrockProvider(AIProvider)` using `boto3` library
+   - Models:
+     - `anthropic.claude-3-5-haiku-20241022-v1:0` (default for routine)
+     - `anthropic.claude-3-7-sonnet-20250219-v2:0` (complex reasoning)
+   - Pricing: Haiku ~$0.25/$1.25, Sonnet $3.00/$15.00 per MTok
+   - Authentication: AWS IAM credentials from environment
+   - Manual retry with exponential backoff (boto3 has built-in retries but customize for our needs)
+   - Handle errors: `ClientError`, `ValidationException`, `ThrottlingException`
+
+3. **Implement OpenAI provider (fallback)** (0.5 SP)
    - File: `weave-api/app/services/ai/openai_provider.py`
    - Implement `OpenAIProvider(AIProvider)` using `openai` Python SDK
    - Models: `gpt-4o-mini` (default), `gpt-4o` (complex)
@@ -148,7 +162,7 @@ Before starting this story, ensure:
    - Auto-retry with exponential backoff (SDK built-in)
    - Handle errors: `RateLimitError`, `APIError`, `APIConnectionError`
 
-3. **Implement Anthropic provider** (0.5 SP)
+4. **Implement Anthropic provider (fallback)** (0.5 SP)
    - File: `weave-api/app/services/ai/anthropic_provider.py`
    - Implement `AnthropicProvider(AIProvider)` using `anthropic` Python SDK
    - Models: `claude-3-7-sonnet-20250219` (default), `claude-4-5-haiku-20250514` (fast)
@@ -156,61 +170,84 @@ Before starting this story, ensure:
    - Manual retry logic (no built-in SDK retry)
    - Handle errors: `APIError`, `RateLimitError`
 
-4. **Implement deterministic fallback** (0.25 SP)
+5. **Implement extensible deterministic fallback** (0.5 SP)
    - File: `weave-api/app/services/ai/deterministic_provider.py`
-   - Implement `DeterministicProvider(AIProvider)` with template-based responses
+   - Implement `DeterministicProvider(AIProvider)` with **extensible template system**
+   - File: `weave-api/app/services/ai/templates.py` - Template registry (dict keyed by module)
    - No API calls, zero cost, always succeeds
-   - Templates for each `ai_module`:
+   - **Extensible templates** for each `ai_module`:
      - `onboarding`: "Let's break down your goal into actionable steps..."
      - `triad`: "Focus on [most urgent subtask] tomorrow."
      - `recap`: "You completed [X] tasks today. Keep building momentum!"
      - `dream_self`: "That's a great question. Let's think about..."
+   - **Scaffolding for future templates:**
+     - `TEMPLATES` dict in `templates.py` - easy to add new modules/messages
+     - Template variables: `{user_name}`, `{task_count}`, `{goal_title}` etc.
+     - Simple `.format()` for variable substitution
 
-5. **Create AI service orchestrator with fallback chain** (0.75 SP)
+6. **Create AI service orchestrator with 4-tier fallback chain** (0.75 SP)
    - File: `weave-api/app/services/ai/ai_service.py`
    - Implement `AIService` class with:
-     - `generate(user_id, module, prompt, **kwargs) -> AIResponse`
-     - Fallback chain: OpenAI → Anthropic → Deterministic
-     - Log each attempt to `ai_runs` table with `status` and error details
+     - `generate(user_id, user_role, module, prompt, **kwargs) -> AIResponse`
+     - **Fallback chain: Bedrock → OpenAI → Anthropic → Deterministic**
+     - Log each attempt to `ai_runs` table with `status`, `provider`, error details
      - Cache check: Query `ai_runs` for matching `input_hash` within 24 hours
      - Return cached result if available (skip API call)
+     - Provider selection logic: Bedrock first, fallback on error
 
-6. **Implement cost tracking and budget enforcement** (0.5 SP)
+7. **Implement dual cost tracking (total + per-user) and budget enforcement** (0.75 SP)
    - File: `weave-api/app/services/ai/cost_tracker.py`
    - Implement `CostTracker` class:
-     - `get_daily_cost() -> float` (sum `ai_runs.cost_estimate` for today)
-     - `is_budget_exceeded() -> bool` (daily cost >= $83.33)
+     - **`get_total_daily_cost() -> float`** (sum ALL `ai_runs.cost_estimate` for today)
+     - **`get_user_daily_cost(user_id) -> float`** (sum for specific user today)
+     - **`is_total_budget_exceeded() -> bool`** (total daily cost >= $83.33)
+     - **`is_user_budget_exceeded(user_id, user_tier) -> bool`**
+       - Free tier: daily cost >= $0.02
+       - Paid tier: daily cost >= $0.10
      - `record_cost(run_id, input_tokens, output_tokens, model, cost_usd)` (update `ai_runs`)
-   - Budget alert: Log warning at 80% ($66.66), error at 100% ($83.33)
-   - Throttle logic: If budget exceeded, skip OpenAI/Anthropic, use cache or deterministic only
+   - Budget alerts:
+     - Total: Log warning at 80% ($66.66), error at 100% ($83.33)
+     - Per-user: Log warning at 80% of user tier limit
+   - Throttle logic: If EITHER budget exceeded, skip paid providers, use cache or deterministic only
 
-7. **Implement rate limiting per user** (0.25 SP)
+8. **Implement tier-based rate limiting (admin unlimited, paid hourly, free daily)** (0.5 SP)
    - File: `weave-api/app/services/ai/rate_limiter.py`
    - Implement `RateLimiter` class:
-     - `check_user_limit(user_id, module) -> bool` (10 AI calls/hour per user)
-     - Use in-memory cache (Redis optional for production)
-     - Query `ai_runs` table: `COUNT(*) WHERE user_id = X AND created_at > NOW() - INTERVAL '1 hour'`
-     - Raise `RateLimitError` if limit exceeded
+     - **`check_user_limit(user_id, user_role, user_tier, module) -> bool`**
+     - **Admin users (`role = 'admin'`):** Return `True` always (unlimited)
+     - **Paid users (`tier = 'paid'`):** 10 AI calls/hour limit
+     - **Free users (`tier = 'free'`):** 10 AI calls/day limit (stricter)
+   - Use in-memory cache (Redis optional for production)
+   - Query `ai_runs` table:
+     - Paid: `COUNT(*) WHERE user_id = X AND created_at > NOW() - INTERVAL '1 hour'`
+     - Free: `COUNT(*) WHERE user_id = X AND DATE(created_at) = CURRENT_DATE`
+   - Raise `RateLimitError` if limit exceeded for non-admin users
 
-8. **Write comprehensive unit tests** (0.25 SP)
+9. **Write comprehensive unit tests** (0.25 SP)
    - File: `weave-api/tests/test_ai_service.py`
    - Test scenarios:
-     - OpenAI success → returns response, logs cost
-     - OpenAI failure → falls back to Anthropic
-     - Both fail → falls back to Deterministic
+     - Bedrock success → returns response, logs cost
+     - Bedrock failure → falls back to OpenAI
+     - Bedrock + OpenAI fail → falls back to Anthropic
+     - All paid providers fail → falls back to Deterministic
      - Cache hit → skips API call, returns cached response
-     - Budget exceeded → skips paid providers, uses Deterministic
-     - Rate limit exceeded → raises error
+     - Total budget exceeded → skips paid providers, uses Deterministic
+     - Free user budget exceeded ($0.02/day) → throttle that user
+     - Paid user budget exceeded ($0.10/day) → throttle that user
+     - Admin rate limit → unlimited (no error, can call 100x/hour)
+     - Paid user rate limit → 11th call in 1 hour raises error
+     - Free user rate limit → 11th call in same day raises error
 
-9. **Create AI service documentation** (0.25 SP)
+10. **Create AI service documentation** (0.25 SP)
    - File: `docs/dev/ai-service-guide.md`
    - Document:
-     - How to call `AIService.generate()`
-     - Fallback chain behavior
-     - Cost tracking queries
+     - How to call `AIService.generate()` with Bedrock
+     - 4-tier fallback chain behavior
+     - Dual cost tracking queries (total + per-user)
      - Budget alert thresholds
-     - Rate limiting rules
-     - Adding new AI modules
+     - Role-based rate limiting rules
+     - Adding new AI modules and templates
+     - AWS Bedrock setup instructions
 
 ### Technical Decisions
 
@@ -294,29 +331,36 @@ Before starting this story, ensure:
 
 **File:** `weave-api/tests/integration/test_ai_service_integration.py`
 **Prerequisites:**
+- AWS Bedrock credentials in `.env.test`
 - OpenAI API key in `.env.test`
 - Anthropic API key in `.env.test`
 - Test database with `ai_runs` table
 
 **Test Scenarios:**
 
-1. ✅ **Real OpenAI API call**
+1. ✅ **Real Bedrock API call (primary)**
    - Call `AIService.generate()` with simple prompt: "Say 'Hello World' in one word"
    - Verify response content is short (1-2 words)
-   - Verify `ai_runs` row created with actual token counts
+   - Verify `ai_runs` row created with actual token counts, `provider='bedrock'`
    - Verify cost > 0
 
-2. ✅ **Real Anthropic API call**
-   - Mock OpenAI to fail
+2. ✅ **Real OpenAI API call (fallback)**
+   - Mock Bedrock to fail
+   - Call `AIService.generate()` with prompt
+   - Verify OpenAI response returned
+   - Verify `ai_runs` has 2 rows (Bedrock failed, OpenAI success)
+
+3. ✅ **Real Anthropic API call (fallback)**
+   - Mock Bedrock and OpenAI to fail
    - Call `AIService.generate()` with prompt
    - Verify Anthropic response returned
-   - Verify `ai_runs` has 2 rows (OpenAI failed, Anthropic success)
+   - Verify `ai_runs` has 3 rows (Bedrock failed, OpenAI failed, Anthropic success)
 
-3. ✅ **End-to-end fallback chain**
+4. ✅ **End-to-end fallback chain**
    - Temporarily set invalid API keys (or mock network failure)
    - Call `AIService.generate()`
    - Verify deterministic response returned
-   - Verify `ai_runs` has 3 rows (all failed except Deterministic)
+   - Verify `ai_runs` has 4 rows (all paid providers failed, Deterministic success)
 
 ### Manual Testing
 
@@ -328,7 +372,7 @@ Before starting this story, ensure:
 
 1. **Setup:** Get JWT token for test user (use Supabase Studio or mobile app)
 
-2. **Test OpenAI path:**
+2. **Test Bedrock path (primary):**
    ```bash
    curl -X POST http://localhost:8000/api/ai/generate \
      -H "Authorization: Bearer $JWT_TOKEN" \
@@ -338,7 +382,7 @@ Before starting this story, ensure:
        "prompt": "Summarize: User completed 3 tasks today."
      }'
    ```
-   - **Expected:** Response with `content`, `input_tokens`, `output_tokens`, `cost_usd`, `provider: "openai"`
+   - **Expected:** Response with `content`, `input_tokens`, `output_tokens`, `cost_usd`, `provider: "bedrock"`
 
 3. **Test cache hit:**
    - Repeat above request with identical prompt
@@ -377,34 +421,47 @@ Before starting this story, ensure:
 
 ### Functional Requirements
 
-- [ ] **AC-0.6-1:** `AIService.generate()` successfully calls OpenAI and returns valid response
-- [ ] **AC-0.6-2:** If OpenAI fails, automatically falls back to Anthropic
-- [ ] **AC-0.6-3:** If both OpenAI and Anthropic fail, falls back to Deterministic (never fully fails)
-- [ ] **AC-0.6-4:** Cached responses returned instantly (<100ms) without API call
-- [ ] **AC-0.6-5:** Cost tracked for every API call: `input_tokens`, `output_tokens`, `cost_usd` logged to `ai_runs`
-- [ ] **AC-0.6-6:** Daily budget enforced: At $83.33/day, auto-throttle to cache/deterministic only
-- [ ] **AC-0.6-7:** Rate limiting enforced: Max 10 AI calls/hour per user
-- [ ] **AC-0.6-8:** Budget alert logged at 80% ($66.66/day)
-- [ ] **AC-0.6-9:** All AI modules supported: 'onboarding', 'triad', 'recap', 'dream_self', 'weekly_insights'
+- [ ] **AC-0.6-1:** `AIService.generate()` successfully calls **AWS Bedrock** (primary) and returns valid response
+- [ ] **AC-0.6-2:** If Bedrock fails, automatically falls back to OpenAI
+- [ ] **AC-0.6-3:** If Bedrock + OpenAI fail, falls back to Anthropic
+- [ ] **AC-0.6-4:** If all paid providers fail, falls back to Deterministic (never fully fails)
+- [ ] **AC-0.6-5:** Cached responses returned instantly (<100ms) without API call
+- [ ] **AC-0.6-6:** **Dual cost tracking:** Both total application-wide cost AND per-user cost logged to `ai_runs`
+- [ ] **AC-0.6-7:** **Total budget enforced:** At $83.33/day application-wide, auto-throttle to cache/deterministic only
+- [ ] **AC-0.6-8:** **Per-user budget enforced:** At $0.02/day for free users and $0.10/day for paid users, throttle that specific user
+- [ ] **AC-0.6-9:** **Tier-based rate limiting:**
+  - Admin users: unlimited
+  - Paid users: 10 messages/hour
+  - Free users: 10 messages/day (stricter for cost control)
+- [ ] **AC-0.6-10:** Budget alerts logged at 80% ($66.66/day for total, 80% of user limit)
+- [ ] **AC-0.6-11:** All AI modules supported: 'onboarding', 'triad', 'recap', 'dream_self', 'weekly_insights'
+- [ ] **AC-0.6-12:** Extensible deterministic templates with scaffolding for adding new modules/messages
 
 ### Technical Requirements
 
-- [ ] **AC-0.6-10:** `AIProvider` ABC defines interface with 3 methods: `complete()`, `count_tokens()`, `estimate_cost()`
-- [ ] **AC-0.6-11:** `OpenAIProvider` implements interface, uses `openai` Python SDK
-- [ ] **AC-0.6-12:** `AnthropicProvider` implements interface, uses `anthropic` Python SDK
-- [ ] **AC-0.6-13:** `DeterministicProvider` returns template-based responses, zero cost
-- [ ] **AC-0.6-14:** Unit tests pass (`pytest tests/test_ai_service.py`) with >90% coverage
-- [ ] **AC-0.6-15:** Integration tests pass with real API keys
-- [ ] **AC-0.6-16:** Documentation created: `docs/dev/ai-service-guide.md`
+- [ ] **AC-0.6-13:** `AIProvider` ABC defines interface with 3 methods: `complete()`, `count_tokens()`, `estimate_cost()`
+- [ ] **AC-0.6-14:** **`BedrockProvider` implements interface**, uses `boto3` library (primary provider)
+- [ ] **AC-0.6-15:** `OpenAIProvider` implements interface, uses `openai` Python SDK (fallback)
+- [ ] **AC-0.6-16:** `AnthropicProvider` implements interface, uses `anthropic` Python SDK (fallback)
+- [ ] **AC-0.6-17:** `DeterministicProvider` with extensible template system (`templates.py`), zero cost
+- [ ] **AC-0.6-18:** `CostTracker` supports dual tracking: `get_total_daily_cost()` and `get_user_daily_cost(user_id)` with tier-aware budgets (free: $0.02/day, paid: $0.10/day)
+- [ ] **AC-0.6-19:** `RateLimiter` supports tier-based limits: admin unlimited, paid 10/hour, free 10/day
+- [ ] **AC-0.6-20:** Unit tests pass (`pytest tests/test_ai_service.py`) with >90% coverage
+- [ ] **AC-0.6-21:** Integration tests pass with real Bedrock/OpenAI/Anthropic APIs
+- [ ] **AC-0.6-22:** Documentation created: `docs/dev/ai-service-guide.md` (includes Bedrock setup)
 
 ### Definition of Done
 
-- [ ] All AC 1-16 verified
+- [ ] All AC 1-22 verified
+- [ ] Bedrock provider working (primary platform)
+- [ ] Dual cost tracking working (total + per-user)
+- [ ] Role-based rate limiting working (admin unlimited, users strict)
+- [ ] Extensible templates working (easy to add new modules)
 - [ ] Unit tests pass with >90% coverage
-- [ ] Integration tests pass with real APIs
-- [ ] Manual testing completed (all 6 test scenarios)
-- [ ] Documentation updated
-- [ ] Code reviewed (focus on: error handling, cost calculation accuracy, fallback logic)
+- [ ] Integration tests pass with real Bedrock/OpenAI/Anthropic APIs
+- [ ] Manual testing completed (all test scenarios including Bedrock)
+- [ ] Documentation updated (`ai-service-guide.md` includes Bedrock setup)
+- [ ] Code reviewed (focus on: Bedrock integration, dual cost tracking, role-based limits, fallback logic)
 - [ ] Merged to `main` branch
 
 ---
@@ -412,14 +469,25 @@ Before starting this story, ensure:
 ## Success Metrics
 
 **Immediate Validation:**
-- Fallback chain works: OpenAI → Anthropic → Deterministic (never fully fails)
-- Cache hit rate: >0% (verify with `SELECT COUNT(*) FROM ai_runs WHERE status = 'cache_hit'`)
-- Cost tracking: All API calls logged with `cost_usd > 0`
-- Budget enforcement: Test with $100 simulated daily spend → throttle to Deterministic
-- Rate limiting: 11th call in 1 hour blocked with `RateLimitError`
+- **4-tier fallback chain works:** Bedrock → OpenAI → Anthropic → Deterministic (never fully fails)
+- **Bedrock primary:** >90% of successful calls use Bedrock (verify with `SELECT COUNT(*) FROM ai_runs WHERE provider = 'bedrock' AND status = 'success'`)
+- **Dual cost tracking:** Both total and per-user costs tracked (query both metrics)
+- **Tier-based limits work correctly:**
+  - Admin: unlimited (can exceed any limit)
+  - Paid users: 10/hour enforced
+  - Free users: 10/day enforced (stricter)
+- **Cache hit rate:** >0% (verify with `SELECT COUNT(*) FROM ai_runs WHERE status = 'cache_hit'`)
+- **Cost tracking:** All API calls logged with `cost_usd > 0`
+- **Total budget enforcement:** Test with $100 simulated daily spend → throttle to Deterministic
+- **Free user budget:** Test with $0.03 simulated free user spend → throttle that user (exceeds $0.02/day)
+- **Paid user budget:** Test with $0.15 simulated paid user spend → throttle that user (exceeds $0.10/day)
+- **Admin rate limiting:** Admin can exceed any limit without error
+- **Paid user rate limiting:** Paid user's 11th call in 1 hour blocked with `RateLimitError`
+- **Free user rate limiting:** Free user's 11th call in same day blocked with `RateLimitError`
 
 **Performance:**
 - Cache hit response time: <100ms (no API call)
+- Bedrock API call: <3 seconds (P95)
 - OpenAI API call: <2 seconds (P95)
 - Anthropic API call: <3 seconds (P95)
 - Deterministic response: <10ms (instant template)
@@ -429,11 +497,13 @@ Before starting this story, ensure:
 ## Risk Assessment
 
 **Key Risks & Mitigations:**
-- **Cost overrun → budget exhaustion:** Daily budget limit ($83.33) with auto-throttle; budget alerts at 80%
-- **API outage → feature failure:** 3-tier fallback chain ensures AI never fully fails
-- **Token counting inaccuracy → cost mismatch:** Use provider SDKs for token counting (OpenAI tiktoken, Anthropic tokenizer); test with known prompts
+- **Cost overrun → budget exhaustion:** Total ($83.33/day) + per-user limits with auto-throttle; budget alerts at 80%
+- **Bedrock outage → feature failure:** 4-tier fallback chain (Bedrock → OpenAI → Anthropic → Deterministic) ensures AI never fully fails
+- **AWS credentials misconfigured → Bedrock failures:** Clear setup docs, test Bedrock connectivity during onboarding
+- **Token counting inaccuracy → cost mismatch:** Use provider SDKs for token counting (Bedrock/OpenAI tiktoken, Anthropic tokenizer); test with known prompts
 - **Cache poisoning → wrong responses:** Hash includes `module` and `model` in `input_hash`; 24-hour TTL prevents stale data
 - **Rate limit bypass → budget overrun:** Database-backed rate limit check (not in-memory only); query `ai_runs` table per request
+- **Admin abuse → unlimited costs:** Monitor admin usage separately; add soft alerts for high admin usage
 
 ---
 
@@ -680,11 +750,202 @@ class CostTracker:
         )
 ```
 
-### Dependencies to Install
+### AWS Bedrock Provider Implementation (PRIMARY)
+
+```python
+# weave-api/app/services/ai/bedrock_provider.py
+import boto3
+import json
+from .base import AIProvider, AIResponse
+
+class BedrockProvider(AIProvider):
+    def __init__(self, region: str = 'us-east-1'):
+        self.client = boto3.client('bedrock-runtime', region_name=region)
+        self.pricing = {
+            'anthropic.claude-3-5-haiku-20241022-v1:0': {'input': 0.25 / 1_000_000, 'output': 1.25 / 1_000_000},
+            'anthropic.claude-3-7-sonnet-20250219-v2:0': {'input': 3.00 / 1_000_000, 'output': 15.00 / 1_000_000},
+        }
+
+    def complete(self, prompt: str, model: str = 'anthropic.claude-3-5-haiku-20241022-v1:0', **kwargs) -> AIResponse:
+        try:
+            body = json.dumps({
+                'anthropic_version': 'bedrock-2023-05-31',
+                'max_tokens': kwargs.get('max_tokens', 2000),
+                'messages': [{'role': 'user', 'content': prompt}],
+            })
+
+            response = self.client.invoke_model(
+                modelId=model,
+                body=body,
+                contentType='application/json',
+                accept='application/json',
+            )
+
+            response_body = json.loads(response['body'].read())
+            content = response_body['content'][0]['text']
+
+            # Extract token counts from Bedrock response
+            usage = response_body.get('usage', {})
+            input_tokens = usage.get('input_tokens', 0)
+            output_tokens = usage.get('output_tokens', 0)
+            cost_usd = self.estimate_cost(input_tokens, output_tokens, model)
+
+            return AIResponse(
+                content=content,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                model=model,
+                cost_usd=cost_usd,
+                provider='bedrock',
+            )
+        except self.client.exceptions.ThrottlingException as e:
+            raise AIProviderError(f"Bedrock throttling: {e}", provider='bedrock', retryable=True)
+        except self.client.exceptions.ValidationException as e:
+            raise AIProviderError(f"Bedrock validation: {e}", provider='bedrock', retryable=False)
+        except Exception as e:
+            raise AIProviderError(f"Bedrock error: {e}", provider='bedrock', retryable=True)
+
+    def count_tokens(self, text: str, model: str) -> int:
+        # Approximate token count (Bedrock doesn't have built-in tokenizer)
+        # 1 token ≈ 4 characters for Claude models
+        return len(text) // 4
+
+    def estimate_cost(self, input_tokens: int, output_tokens: int, model: str) -> float:
+        pricing = self.pricing.get(model, self.pricing['anthropic.claude-3-5-haiku-20241022-v1:0'])
+        return (input_tokens * pricing['input']) + (output_tokens * pricing['output'])
+```
+
+### Extensible Deterministic Templates
+
+```python
+# weave-api/app/services/ai/templates.py
+"""
+Extensible template system for deterministic AI fallback.
+Add new modules and messages here without touching provider code.
+"""
+
+TEMPLATES = {
+    'onboarding': {
+        'default': """Let's break down your goal "{goal_title}" into actionable steps.
+
+I'll help you create a structured plan with consistent habits that move you forward daily.
+
+What specific milestones would indicate progress toward this goal?""",
+        'followup': "Great! Let's refine those steps into daily actions you can track.",
+    },
+    'triad': {
+        'default': """Based on your progress, here's what matters most tomorrow:
+
+1. {task_1}
+2. {task_2}
+3. {task_3}
+
+Focus on these to maintain momentum toward your goals.""",
+        'no_tasks': "Take a moment to review your goals and identify the next most important step.",
+    },
+    'recap': {
+        'default': """Today's summary:
+✓ Completed {completed_count} tasks
+✓ {proof_count} proof items captured
+
+You're building consistent momentum. Keep showing up!""",
+        'no_activity': "No tasks completed today. Tomorrow is a fresh start—let's make it count!",
+    },
+    'dream_self': {
+        'default': "That's a thoughtful question. Let's explore what matters most to you about {topic}.",
+        'encouragement': "You're making progress. Remember why you started this journey.",
+    },
+    'weekly_insights': {
+        'default': """This week's patterns:
+- {pattern_1}
+- {pattern_2}
+
+Focus area for next week: {focus_area}""",
+    },
+}
+
+def get_template(module: str, variant: str = 'default', **kwargs) -> str:
+    """
+    Get a template by module and variant, with variable substitution.
+
+    Example:
+        get_template('triad', 'default', task_1='Finish report', task_2='Gym', task_3='Read')
+    """
+    if module not in TEMPLATES:
+        return f"I'm here to help with {module}. Let's work through this together."
+
+    template_dict = TEMPLATES[module]
+    template = template_dict.get(variant, template_dict.get('default', ''))
+
+    # Substitute variables
+    try:
+        return template.format(**kwargs)
+    except KeyError as e:
+        # Missing variable, return template with placeholders
+        return template
+```
+
+```python
+# weave-api/app/services/ai/deterministic_provider.py
+from .base import AIProvider, AIResponse
+from .templates import get_template
+
+class DeterministicProvider(AIProvider):
+    def complete(self, prompt: str, module: str = 'triad', variant: str = 'default', **kwargs) -> AIResponse:
+        # Get extensible template
+        content = get_template(module, variant, **kwargs)
+
+        # Estimate token count (simple word count * 1.3)
+        tokens = len(content.split()) * 1.3
+
+        return AIResponse(
+            content=content,
+            input_tokens=int(tokens),
+            output_tokens=int(tokens),
+            model='deterministic',
+            cost_usd=0.0,  # Free
+            provider='deterministic',
+        )
+
+    def count_tokens(self, text: str, model: str = 'deterministic') -> int:
+        return len(text.split()) * 1.3  # Approximate
+
+    def estimate_cost(self, input_tokens: int, output_tokens: int, model: str) -> float:
+        return 0.0  # Always free
+```
+
+### Updated Dependencies to Install
 
 ```bash
 # Add to weave-api/pyproject.toml
-uv add openai anthropic tiktoken
+uv add boto3 openai anthropic tiktoken
+```
+
+### AWS Setup Instructions
+
+**1. Create IAM User for Bedrock:**
+```bash
+# In AWS Console:
+# 1. Go to IAM → Users → Create User
+# 2. User name: weave-bedrock-api
+# 3. Attach policy: AmazonBedrockFullAccess (or custom policy with bedrock:InvokeModel)
+# 4. Create access key → Save AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+```
+
+**2. Enable Bedrock Models:**
+```bash
+# In AWS Console:
+# 1. Go to Amazon Bedrock → Model Access
+# 2. Request access to: Claude 3.5 Haiku, Claude 3.7 Sonnet
+# 3. Wait for approval (usually instant)
+```
+
+**3. Configure Environment:**
+```bash
+# In weave-api/.env
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=us-east-1  # Or your preferred region
 ```
 
 ### Quick Verification Commands
