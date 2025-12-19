@@ -65,6 +65,13 @@ export type { CardProps, CardVariant, CardPadding } from './components/Card/type
 export { Checkbox } from './components/Checkbox/Checkbox';
 
 // ============================================================================
+// Input Components
+// ============================================================================
+export { Input } from './components/Input/Input';
+export type { InputProps } from './components/Input/Input';
+export type { InputVariant, InputSize } from './components/Input/types';
+
+// ============================================================================
 // Specialized Components (Weave-Specific)
 // ============================================================================
 export { WeaveCharacter } from './components/WeaveCharacter/WeaveCharacter';
