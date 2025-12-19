@@ -717,6 +717,7 @@ export default function IdentityBootupScreen() {
               key={rowIndex}
               style={{
                 flexDirection: 'row',
+                flexWrap: 'wrap',
                 justifyContent: 'center',
                 marginBottom: 12
               }}
@@ -752,7 +753,7 @@ export default function IdentityBootupScreen() {
                       numberOfLines={1}
                       style={{
                         fontSize: 16,
-                        fontWeight: isSelected ? '600' : '400',
+                        fontWeight: '600',
                         color: isSelected ? '#4CAF50' : '#333333'
                       }}
                     >
