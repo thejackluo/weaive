@@ -26,13 +26,16 @@ export type IdentityTrait =
   | 'Emotionally Grounded';
 
 /**
- * All 8 identity traits organized in 3 rows for visually appealing layout
- * (3-3-2 layout for balanced appearance)
+ * All 8 identity traits organized in 5 rows for visually appealing layout
+ * (2-1-2-1-2 layout for balanced appearance)
+ * Longest text ("Emotionally Grounded") is placed alone to prevent layout shifts
  */
 export const IDENTITY_TRAITS: IdentityTrait[][] = [
-  ['Clear Direction', 'Intentional Time', 'Decisive Action'],
-  ['Consistent Effort', 'High Standards', 'Continuous Growth'],
-  ['Self Aware', 'Emotionally Grounded']
+  ['Clear Direction', 'Intentional Time'],
+  ['Decisive Action'],
+  ['Consistent Effort', 'High Standards'],
+  ['Emotionally Grounded'],
+  ['Self Aware', 'Continuous Growth']
 ];
 
 /**

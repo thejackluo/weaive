@@ -736,7 +736,7 @@ The more you use the app, the better it understands how you grow — and eventua
 - [ ] Completion time target: <10 seconds
 - [ ] Traits are framed as aspirational (who the user is becoming), not fixed personality
 - [ ] User can edit selections later in Profile
-- [ ] Chip layout: 3-3-2 arrangement for visual balance
+- [ ] Chip layout: 2-1-2-1-2 arrangement for visual balance (longest text alone to prevent layout shifts)
 
 **Trait Options (Final):**
 - [ ] Clear Direction
