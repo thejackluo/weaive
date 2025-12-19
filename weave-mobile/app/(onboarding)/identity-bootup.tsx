@@ -336,7 +336,7 @@ export default function IdentityBootupScreen() {
       if (!isValidTraitCount(formData.identity_traits.length)) {
         Alert.alert(
           'Selection Required',
-          `Please select ${MIN_TRAITS}-${MAX_TRAITS} traits before continuing.`
+          `Please select exactly ${REQUIRED_TRAITS} traits before continuing.`
         );
         return;
       }
@@ -538,6 +538,7 @@ export default function IdentityBootupScreen() {
               height: PERSONA_CARD_MIN_HEIGHT,
               position: 'relative',
             }}
+            {...panResponder.panHandlers}
           >
             <Animated.View
               style={{
