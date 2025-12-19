@@ -65,7 +65,7 @@ export default function HomeScreen() {
       <View
         style={{
           position: 'absolute',
-          top: 16,
+          top: 48,
           right: 16,
           zIndex: 50,
         }}
