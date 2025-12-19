@@ -539,7 +539,7 @@ Proprietary - All rights reserved
 
 - **Design inspiration:** Opal app (for visual design)
 - **Concept inspiration:** Hollow Knight: Silksong (thread/needle/weave metaphor)
-- **AI frameworks:** OpenAI, Anthropic for model APIs
+- **AI frameworks:** OpenAI, Anthropic for model APIs, Bedrock for self-hosted models
 
 ---
 
