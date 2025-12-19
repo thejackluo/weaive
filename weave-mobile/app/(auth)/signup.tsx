@@ -46,6 +46,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Text, Card, useTheme, Checkbox, showSimpleToast } from '@/design-system';
 import { AuthError } from '@supabase/supabase-js';
+import { navigateAfterAuth, getAuthErrorMessage } from '@lib/authHelpers';
+import { supabase } from '@lib/supabase';
 
 /**
  * Email validation regex
@@ -63,7 +65,7 @@ const MIN_PASSWORD_LENGTH = 8;
  */
 export default function SignupScreen() {
   const router = useRouter();
-  const { signUp, signInWithOAuth, error: authError, clearError } = useAuth();
+  const { user, signUp, signOut, signInWithOAuth, error: authError, clearError } = useAuth();
   const { colors } = useTheme();
 
   // Form state
@@ -72,6 +74,8 @@ export default function SignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState<'apple' | 'google' | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isContinuing, setIsContinuing] = useState(false);
 
   // Form validation state
   const [emailError, setEmailError] = useState('');
@@ -80,6 +84,7 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [accountExists, setAccountExists] = useState(false);
 
   /**
    * Validate email format
@@ -259,16 +264,33 @@ export default function SignupScreen() {
 
     try {
       setIsLoading(true);
+      setAccountExists(false); // Reset account exists state
       await signUp(email, password);
 
       // Show success toast
       showSimpleToast('Account created successfully! 🎉', 'success');
 
-      // Navigation handled automatically by auth state change in _layout.tsx
+      // Get user ID and navigate appropriately
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await navigateAfterAuth(user.id, false);
+      }
+
       // Note: If email verification is required, user may need to check email
-    } catch (error) {
+    } catch (error: any) {
       console.error('[SIGNUP] Sign up error:', error);
-      // Error is set in auth context, displayed below
+
+      // Check if account already exists
+      if (error.message === 'User already registered') {
+        setAccountExists(true);
+        showSimpleToast('Account already exists. Please sign in instead.', 'error');
+        // Don't re-throw, let user see the UI
+        return;
+      }
+
+      // For other errors, show generic error message
+      showSimpleToast(getAuthErrorMessage(error), 'error');
+      // Error is also set in auth context, displayed below
     } finally {
       setIsLoading(false);
     }
@@ -291,14 +313,19 @@ export default function SignupScreen() {
     async (provider: 'apple' | 'google') => {
       try {
         setIsOAuthLoading(provider);
+        setAccountExists(false); // Reset account exists state
         await signInWithOAuth(provider);
 
         // Show success toast
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
         showSimpleToast(`Signed up with ${providerName}! 🎉`, 'success');
 
-        // Navigation handled automatically by auth state change in _layout.tsx
-      } catch (error) {
+        // Get user ID and navigate appropriately
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await navigateAfterAuth(user.id, false);
+        }
+      } catch (error: any) {
         console.error(`[SIGNUP] ${provider} sign in error:`, error);
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
         showSimpleToast(`Failed to sign up with ${providerName}. Please try again.`, 'error');
@@ -316,6 +343,41 @@ export default function SignupScreen() {
   const handleNavigateToLogin = useCallback(() => {
     router.push('/(auth)/login');
   }, [router]);
+
+  /**
+   * Handle Continue when already signed in
+   * Navigates to appropriate screen based on onboarding status
+   */
+  const handleContinue = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setIsContinuing(true);
+      await navigateAfterAuth(user.id, false);
+    } catch (error) {
+      console.error('[SIGNUP] Continue navigation error:', error);
+      showSimpleToast('Navigation failed. Please try again.', 'error');
+    } finally {
+      setIsContinuing(false);
+    }
+  }, [user]);
+
+  /**
+   * Handle Sign Out when already signed in
+   */
+  const handleSignOutAction = useCallback(async () => {
+    try {
+      setIsSigningOut(true);
+      await signOut();
+      showSimpleToast('Signed out successfully 👋', 'success');
+      // Stay on signup screen after sign out
+    } catch (error: any) {
+      console.error('[SIGNUP] Sign out error:', error);
+      showSimpleToast('Failed to sign out. Please try again.', 'error');
+    } finally {
+      setIsSigningOut(false);
+    }
+  }, [signOut]);
 
   /**
    * Get user-friendly error message
@@ -352,26 +414,120 @@ export default function SignupScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text variant="displayLg" color="primary">
-              Create Account
+              {user ? 'Already Signed In' : 'Create Account'}
             </Text>
             <Text variant="textLg" color="secondary" className="mt-2">
-              Start your journey with Weave
+              {user ? 'You are currently signed in' : 'Start your journey with Weave'}
             </Text>
           </View>
 
-          {/* Error Message */}
-          {authError && (
+          {/* Already Signed In Card */}
+          {user && (
+            <View style={styles.alreadySignedInCard}>
+              <View
+                style={{
+                  backgroundColor: `${colors.accent[500]}15`,
+                  borderLeftWidth: 4,
+                  borderLeftColor: colors.accent[500],
+                  borderRadius: 8,
+                  padding: 20,
+                  gap: 16,
+                }}
+              >
+                <View style={{ gap: 8 }}>
+                  <Text variant="textLg" weight="bold" style={{ color: colors.accent[500] }}>
+                    ✅ You're Already Signed In
+                  </Text>
+                  <Text variant="textBase" color="secondary">
+                    Signed in as <Text weight="semibold">{user.email}</Text>
+                  </Text>
+                  <Text variant="textSm" color="muted" style={{ marginTop: 4 }}>
+                    You can continue to your account or sign out to use a different account.
+                  </Text>
+                </View>
+
+                <View style={{ gap: 12 }}>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onPress={handleContinue}
+                    loading={isContinuing}
+                    disabled={isContinuing || isSigningOut}
+                    fullWidth
+                  >
+                    {isContinuing ? 'Loading...' : 'Continue to App'}
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onPress={handleSignOutAction}
+                    loading={isSigningOut}
+                    disabled={isContinuing || isSigningOut}
+                    fullWidth
+                  >
+                    {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+                  </Button>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Account Already Exists Card */}
+          {accountExists && !user && (
             <Card
               variant="glass"
               padding="default"
-              style={{ ...styles.errorCard, backgroundColor: `${colors.rose[500]}15` }}
+              style={{
+                ...styles.errorCard,
+                backgroundColor: `${colors.accent[500]}15`,
+                borderLeftWidth: 4,
+                borderLeftColor: colors.accent[500],
+              }}
             >
-              <Text color="error">{getErrorMessage(authError)}</Text>
+              <View style={{ gap: 16 }}>
+                <View style={{ gap: 8 }}>
+                  <Text variant="textLg" weight="bold" style={{ color: colors.accent[500] }}>
+                    Account Already Exists
+                  </Text>
+                  <Text variant="textBase" color="secondary">
+                    An account with <Text weight="semibold">{email}</Text> already exists. Please
+                    sign in instead.
+                  </Text>
+                </View>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onPress={() => {
+                    router.push({
+                      pathname: '/(auth)/login' as any,
+                      params: { email },
+                    });
+                  }}
+                  fullWidth
+                >
+                  Sign In Instead
+                </Button>
+              </View>
             </Card>
           )}
 
-          {/* Signup Form */}
-          <View style={styles.form}>
+          {/* Signup Form - Only show if not signed in */}
+          {!user && (
+            <>
+              {/* Error Message */}
+              {authError && !accountExists && (
+                <Card
+                  variant="glass"
+                  padding="default"
+                  style={{ ...styles.errorCard, backgroundColor: `${colors.rose[500]}15` }}
+                >
+                  <Text color="error">{getErrorMessage(authError)}</Text>
+                </Card>
+              )}
+
+              {/* Signup Form */}
+              <View style={styles.form}>
             {/* Email Input */}
             <Input
               label="Email"
@@ -602,6 +758,8 @@ export default function SignupScreen() {
               </Text>
             </Pressable>
           </View>
+            </>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
