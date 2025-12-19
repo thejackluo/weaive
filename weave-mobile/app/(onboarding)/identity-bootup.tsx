@@ -3,7 +3,7 @@
  *
  * Step 1: Name Entry (<10s)
  * Step 2: Weave Personality Selection (<20s)
- * Step 3: Identity Traits Selection (<15s)
+ * Step 3: Identity Traits (Aspirational Focus) (<10s)
  *
  * Total target time: <45 seconds
  *
@@ -19,20 +19,18 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  PanResponder,
   Animated,
   useWindowDimensions,
   Alert,
-  AccessibilityInfo,
-  Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { PERSONAS, PersonalityType } from '@/constants/personalityContent';
 import {
   IDENTITY_TRAITS,
-  MIN_TRAITS,
-  MAX_TRAITS,
+  REQUIRED_TRAITS,
   IdentityTrait,
-  isValidTraitCount
+  isValidTraitCount,
 } from '@/constants/identityTraits';
 
 // UI Constants
@@ -69,7 +67,7 @@ export default function IdentityBootupScreen() {
     preferred_name: '',
     core_personality: null,
     personality_selected_at: null,
-    identity_traits: []
+    identity_traits: [],
   });
 
   // Step 1: Name Entry State
@@ -81,6 +79,7 @@ export default function IdentityBootupScreen() {
     Array(PERSONAS.length).fill(false)
   );
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const iconPulseAnim = useRef(new Animated.Value(1)).current;
 
   // Step 3: Identity Traits State
   const [maxTraitsError, setMaxTraitsError] = useState<string | undefined>();
@@ -116,7 +115,10 @@ export default function IdentityBootupScreen() {
     // Allow letters, numbers, spaces, hyphens, apostrophes
     const validPattern = /^[a-zA-Z0-9\s\-']+$/;
     if (!validPattern.test(name)) {
-      return { valid: false, error: 'Please enter a valid name (1-50 characters, no special characters)' };
+      return {
+        valid: false,
+        error: 'Please enter a valid name (1-50 characters, no special characters)',
+      };
     }
 
     return { valid: true };
@@ -153,20 +155,40 @@ export default function IdentityBootupScreen() {
     }
   };
 
-  const isNameValid = nameValidation.valid;
-
   //================================
   // STEP 2: PERSONALITY SELECTION
   //================================
+
+  /**
+   * PanResponder for swipe gestures on persona cards
+   * Note: Not memoized to avoid stale closure bugs with handleSwipe
+   */
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      // Activate when horizontal movement exceeds vertical and threshold is met
+      return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      // Swipe left (next card) if moved more than 50px to the left
+      if (gestureState.dx < -50) {
+        handleSwipe('left');
+      }
+      // Swipe right (previous card) if moved more than 50px to the right
+      else if (gestureState.dx > 50) {
+        handleSwipe('right');
+      }
+    },
+  });
 
   /**
    * Handle swipe to next/previous persona
    */
   const handleSwipe = (direction: 'left' | 'right') => {
     try {
-      const newIndex = direction === 'left'
-        ? Math.min(currentPersonaIndex + 1, PERSONAS.length - 1)
-        : Math.max(currentPersonaIndex - 1, 0);
+      const newIndex =
+        direction === 'left'
+          ? Math.min(currentPersonaIndex + 1, PERSONAS.length - 1)
+          : Math.max(currentPersonaIndex - 1, 0);
 
       if (newIndex !== currentPersonaIndex) {
         // Mark persona as viewed
@@ -181,7 +203,7 @@ export default function IdentityBootupScreen() {
         const cardWidth = SCREEN_WIDTH * CARD_WIDTH_RATIO;
         Animated.spring(slideAnim, {
           toValue: -newIndex * (cardWidth + CARD_SPACING),
-          ...SWIPE_ANIMATION_CONFIG
+          ...SWIPE_ANIMATION_CONFIG,
         }).start();
 
         setCurrentPersonaIndex(newIndex);
@@ -201,7 +223,7 @@ export default function IdentityBootupScreen() {
       setFormData({
         ...formData,
         core_personality: personalityType,
-        personality_selected_at: new Date()
+        personality_selected_at: new Date(),
       });
 
       // TODO (Story 0-4): Track analytics event
@@ -221,8 +243,11 @@ export default function IdentityBootupScreen() {
         return;
       }
 
-      if (!viewedPersonas.every(v => v)) {
-        Alert.alert('View All Options', 'Please swipe to view both personality styles before continuing.');
+      if (!viewedPersonas.every((v) => v)) {
+        Alert.alert(
+          'View All Options',
+          'Please swipe to view both personality styles before continuing.'
+        );
         return;
       }
 
@@ -235,7 +260,7 @@ export default function IdentityBootupScreen() {
     }
   };
 
-  const canContinueStep2 = formData.core_personality !== null && viewedPersonas.every(v => v);
+  const canContinueStep2 = formData.core_personality !== null && viewedPersonas.every((v) => v);
 
   // Mark first persona as viewed on load
   useEffect(() => {
@@ -247,7 +272,27 @@ export default function IdentityBootupScreen() {
       // TODO (Story 0-4): Track analytics event
       // trackEvent('weave_personality_shown');
     }
-  }, [currentStep, viewedPersonas]);
+  }, [currentStep]);
+
+  // Animate Weave icon pulse on Step 2
+  useEffect(() => {
+    if (currentStep === 2) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(iconPulseAnim, {
+            toValue: 1.08,
+            duration: 1400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(iconPulseAnim, {
+            toValue: 1,
+            duration: 1400,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [currentStep, iconPulseAnim]);
 
   //==================================
   // STEP 3: IDENTITY TRAITS SELECTION
@@ -263,22 +308,22 @@ export default function IdentityBootupScreen() {
 
       if (currentTraits.includes(trait)) {
         // Deselect
-        newTraits = currentTraits.filter(t => t !== trait);
+        newTraits = currentTraits.filter((t) => t !== trait);
         setMaxTraitsError(undefined);
-      } else if (currentTraits.length < MAX_TRAITS) {
-        // Select (if under max)
+      } else if (currentTraits.length < REQUIRED_TRAITS) {
+        // Select (if under required count)
         newTraits = [...currentTraits, trait];
         setMaxTraitsError(undefined);
       } else {
         // At max, show inline error
-        setMaxTraitsError(`Maximum ${MAX_TRAITS} traits allowed`);
+        setMaxTraitsError(`Choose exactly ${REQUIRED_TRAITS} traits`);
         return;
       }
 
       // Sync with formData immediately (fixes state sync bug)
-      setFormData(current => ({
+      setFormData((current) => ({
         ...current,
-        identity_traits: newTraits
+        identity_traits: newTraits,
       }));
     } catch (error) {
       if (__DEV__) {
@@ -290,7 +335,10 @@ export default function IdentityBootupScreen() {
   const handleStep3Continue = () => {
     try {
       if (!isValidTraitCount(formData.identity_traits.length)) {
-        Alert.alert('Selection Required', `Please select ${MIN_TRAITS}-${MAX_TRAITS} traits before continuing.`);
+        Alert.alert(
+          'Selection Required',
+          `Please select exactly ${REQUIRED_TRAITS} traits before continuing.`
+        );
         return;
       }
 
@@ -305,10 +353,6 @@ export default function IdentityBootupScreen() {
       // TODO (Story 0-4): Track analytics event
       // trackEvent('identity_traits_selected', { traits: formData.identity_traits });
 
-      if (__DEV__) {
-        console.log('[ONBOARDING] All data collected:', formData);
-      }
-
       // Navigate to Story 1.7 (First Needle / Goal Input)
       // TODO: Implement Story 1.7 and replace with actual route
       Alert.alert(
@@ -317,8 +361,8 @@ export default function IdentityBootupScreen() {
         [
           {
             text: 'OK',
-            style: 'default'
-          }
+            style: 'default',
+          },
         ]
       );
     } catch (error) {
@@ -369,7 +413,7 @@ export default function IdentityBootupScreen() {
           fontWeight: '600',
           color: '#1A1A1A',
           textAlign: 'center',
-          marginBottom: 40
+          marginBottom: 40,
         }}
       >
         Let's get to know you
@@ -393,7 +437,7 @@ export default function IdentityBootupScreen() {
             padding: 16,
             fontSize: 18,
             backgroundColor: '#FFFFFF',
-            minHeight: 56
+            minHeight: 56,
           }}
           maxLength={50}
           autoCapitalize="words"
@@ -402,33 +446,29 @@ export default function IdentityBootupScreen() {
           onSubmitEditing={handleStep1Continue}
         />
         {nameError && (
-          <Text style={{ color: '#EF4444', fontSize: 14, marginTop: 8 }}>
-            {nameError}
-          </Text>
+          <Text style={{ color: '#EF4444', fontSize: 14, marginTop: 8 }}>{nameError}</Text>
         )}
       </View>
 
       {/* Continue Button */}
       <TouchableOpacity
         onPress={handleStep1Continue}
-        disabled={!isNameValid}
+        disabled={!nameValidation.valid}
         style={{
-          backgroundColor: isNameValid ? '#4CAF50' : '#CCCCCC',
+          backgroundColor: nameValidation.valid ? '#4CAF50' : '#CCCCCC',
           borderRadius: 12,
           padding: 16,
           minHeight: MIN_TOUCH_TARGET,
           justifyContent: 'center',
           alignItems: 'center',
-          opacity: isNameValid ? 1 : 0.5
+          opacity: nameValidation.valid ? 1 : 0.5,
         }}
         accessibilityRole="button"
         accessibilityLabel="Continue to personality selection"
         accessibilityHint="Proceeds to step 2 where you'll choose your Weave's interaction style"
-        accessibilityState={{ disabled: !isNameValid }}
+        accessibilityState={{ disabled: !nameValidation.valid }}
       >
-        <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
-          Continue
-        </Text>
+        <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
       </TouchableOpacity>
 
       {/* Back Button */}
@@ -438,7 +478,7 @@ export default function IdentityBootupScreen() {
           style={{
             marginTop: 16,
             padding: 12,
-            alignItems: 'center'
+            alignItems: 'center',
           }}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -455,7 +495,14 @@ export default function IdentityBootupScreen() {
    */
   const renderStep2 = () => (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 20, justifyContent: 'center' }}>
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 24,
+          paddingVertical: 20,
+          justifyContent: 'center',
+        }}
+      >
         {/* Title & Subheading */}
         <View style={{ marginBottom: 24 }}>
           <Text
@@ -465,11 +512,10 @@ export default function IdentityBootupScreen() {
               color: '#1A1A1A',
               textAlign: 'center',
               marginBottom: 12,
-              lineHeight: 32
+              lineHeight: 32,
             }}
           >
-            I'm your Weave — your future self in thread form.{'\n'}
-            How do you want me to interact with you?
+            I'm your Weave, your future self that we create together. How should I engage with you?
           </Text>
           <Text
             style={{
@@ -477,20 +523,28 @@ export default function IdentityBootupScreen() {
               color: '#666',
               opacity: 0.9,
               textAlign: 'center',
-              lineHeight: 24
+              lineHeight: 24,
             }}
           >
-            You can change this anytime. This sets my core personality — and I'll adapt as I understand you better.
+            You can change this anytime. This sets my core personality — and I'll adapt as I
+            understand you better.
           </Text>
         </View>
 
         {/* Swipeable Persona Cards */}
         <View style={{ flex: 1, alignItems: 'center', marginBottom: 24 }}>
-          <View style={{ width: SCREEN_WIDTH * CARD_WIDTH_RATIO, height: PERSONA_CARD_MIN_HEIGHT, position: 'relative' }}>
+          <View
+            style={{
+              width: SCREEN_WIDTH * CARD_WIDTH_RATIO,
+              height: PERSONA_CARD_MIN_HEIGHT,
+              position: 'relative',
+            }}
+            {...panResponder.panHandlers}
+          >
             <Animated.View
               style={{
                 flexDirection: 'row',
-                transform: [{ translateX: slideAnim }]
+                transform: [{ translateX: slideAnim }],
               }}
             >
               {PERSONAS.map((persona, index) => (
@@ -500,7 +554,7 @@ export default function IdentityBootupScreen() {
                   activeOpacity={0.8}
                   style={{
                     width: SCREEN_WIDTH * CARD_WIDTH_RATIO,
-                    marginRight: index < PERSONAS.length - 1 ? CARD_SPACING : 0
+                    marginRight: index < PERSONAS.length - 1 ? CARD_SPACING : 0,
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={`${persona.title} personality style`}
@@ -513,18 +567,19 @@ export default function IdentityBootupScreen() {
                       backgroundColor: 'rgba(255, 255, 255, 0.95)',
                       borderRadius: 24,
                       borderWidth: formData.core_personality === persona.id ? 3 : 1,
-                      borderColor: formData.core_personality === persona.id ? '#4CAF50' : 'rgba(0, 0, 0, 0.1)',
+                      borderColor:
+                        formData.core_personality === persona.id ? '#4CAF50' : 'rgba(0, 0, 0, 0.1)',
                       padding: 24,
                       shadowColor: '#000',
                       shadowOffset: { width: 0, height: 4 },
                       shadowOpacity: 0.1,
                       shadowRadius: 12,
                       elevation: 5,
-                      minHeight: PERSONA_CARD_MIN_HEIGHT
+                      minHeight: PERSONA_CARD_MIN_HEIGHT,
                     }}
                   >
-                    {/* Weave Icon Placeholder (TODO: Add actual icon) */}
-                    <View
+                    {/* Weave Icon with Pulse Animation */}
+                    <Animated.View
                       style={{
                         width: 60,
                         height: 60,
@@ -533,11 +588,12 @@ export default function IdentityBootupScreen() {
                         alignSelf: 'center',
                         marginBottom: 16,
                         justifyContent: 'center',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        transform: [{ scale: iconPulseAnim }]
                       }}
                     >
                       <Text style={{ fontSize: 24 }}>🧵</Text>
-                    </View>
+                    </Animated.View>
 
                     {/* Title */}
                     <Text
@@ -546,7 +602,7 @@ export default function IdentityBootupScreen() {
                         fontWeight: '600',
                         color: '#1A1A1A',
                         textAlign: 'center',
-                        marginBottom: 8
+                        marginBottom: 8,
                       }}
                     >
                       {persona.title}
@@ -559,7 +615,7 @@ export default function IdentityBootupScreen() {
                         color: '#666',
                         textAlign: 'center',
                         marginBottom: 24,
-                        fontStyle: 'italic'
+                        fontStyle: 'italic',
                       }}
                     >
                       {persona.subtitle}
@@ -574,14 +630,14 @@ export default function IdentityBootupScreen() {
                             backgroundColor: '#F5F5F5',
                             borderRadius: 12,
                             padding: 16,
-                            marginBottom: 12
+                            marginBottom: 12,
                           }}
                         >
                           <Text
                             style={{
                               fontSize: 15,
                               color: '#333',
-                              lineHeight: 22
+                              lineHeight: 22,
                             }}
                           >
                             {line}
@@ -595,7 +651,7 @@ export default function IdentityBootupScreen() {
                       <View
                         style={{
                           marginTop: 16,
-                          alignItems: 'center'
+                          alignItems: 'center',
                         }}
                       >
                         <Text style={{ color: '#4CAF50', fontWeight: '600', fontSize: 16 }}>
@@ -610,14 +666,21 @@ export default function IdentityBootupScreen() {
           </View>
 
           {/* Navigation Arrows (Accessibility Fallback) */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 16 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              width: '100%',
+              marginTop: 16,
+            }}
+          >
             <TouchableOpacity
               onPress={() => handleSwipe('right')}
               disabled={currentPersonaIndex === 0}
               style={{
                 opacity: currentPersonaIndex === 0 ? 0.3 : 1,
                 padding: 16,
-                minHeight: MIN_TOUCH_TARGET
+                minHeight: MIN_TOUCH_TARGET,
               }}
               accessibilityRole="button"
               accessibilityLabel="Previous personality"
@@ -632,7 +695,7 @@ export default function IdentityBootupScreen() {
               style={{
                 opacity: currentPersonaIndex === PERSONAS.length - 1 ? 0.3 : 1,
                 padding: 16,
-                minHeight: MIN_TOUCH_TARGET
+                minHeight: MIN_TOUCH_TARGET,
               }}
               accessibilityRole="button"
               accessibilityLabel="Next personality"
@@ -644,16 +707,23 @@ export default function IdentityBootupScreen() {
           </View>
 
           {/* Pagination Dots */}
-          <View style={{ flexDirection: 'row', marginTop: 16 }} accessibilityRole="adjustable" accessibilityLabel={`Personality ${currentPersonaIndex + 1} of ${PERSONAS.length}`}>
-            {PERSONAS.map((_, index) => (
+          <View
+            style={{ flexDirection: 'row', marginTop: 16 }}
+            accessibilityRole="adjustable"
+            accessibilityLabel={`Personality ${currentPersonaIndex + 1} of ${PERSONAS.length}`}
+          >
+            {PERSONAS.map((persona, index) => (
               <View
                 key={index}
+                accessible={true}
+                accessibilityLabel={`${persona.title}, page ${index + 1} of ${PERSONAS.length}`}
+                accessibilityState={{ selected: index === currentPersonaIndex }}
                 style={{
                   width: 8,
                   height: 8,
                   borderRadius: 4,
                   backgroundColor: index === currentPersonaIndex ? '#4CAF50' : '#E0E0E0',
-                  marginHorizontal: 4
+                  marginHorizontal: 4,
                 }}
               />
             ))}
@@ -671,16 +741,15 @@ export default function IdentityBootupScreen() {
             minHeight: MIN_TOUCH_TARGET,
             justifyContent: 'center',
             alignItems: 'center',
-            opacity: canContinueStep2 ? 1 : 0.5
+            opacity: canContinueStep2 ? 1 : 0.5,
+            marginTop: 24
           }}
           accessibilityRole="button"
           accessibilityLabel="Continue to identity traits"
           accessibilityHint="Proceeds to step 3 where you'll choose traits you want to develop"
           accessibilityState={{ disabled: !canContinueStep2 }}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
-            Continue
-          </Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
         </TouchableOpacity>
 
         {/* Back Button */}
@@ -689,7 +758,7 @@ export default function IdentityBootupScreen() {
           style={{
             marginTop: 16,
             padding: 12,
-            alignItems: 'center'
+            alignItems: 'center',
           }}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -706,7 +775,9 @@ export default function IdentityBootupScreen() {
    */
   const renderStep3 = () => (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 40 }}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 40 }}
+      >
         {/* Header with personalized name */}
         <View style={{ marginBottom: 32 }}>
           <Text
@@ -715,20 +786,20 @@ export default function IdentityBootupScreen() {
               fontWeight: '600',
               color: '#1A1A1A',
               textAlign: 'center',
-              marginBottom: 8
+              marginBottom: 8,
             }}
           >
-            Who do you want to become?
+            Who do we want to become?
           </Text>
           <Text
             style={{
               fontSize: 16,
               color: '#666',
               opacity: 0.9,
-              textAlign: 'center'
+              textAlign: 'center',
             }}
           >
-            Choose {MIN_TRAITS}-{MAX_TRAITS} traits, {formData.preferred_name}
+            Choose the 3 most important qualities you want to embody.
           </Text>
         </View>
 
@@ -739,14 +810,13 @@ export default function IdentityBootupScreen() {
               key={rowIndex}
               style={{
                 flexDirection: 'row',
-                flexWrap: 'wrap',
                 justifyContent: 'center',
-                marginBottom: 12
+                marginBottom: 12,
               }}
             >
               {row.map((trait) => {
                 const isSelected = formData.identity_traits.includes(trait);
-                const isDisabled = !isSelected && formData.identity_traits.length >= MAX_TRAITS;
+                const isDisabled = !isSelected && formData.identity_traits.length >= REQUIRED_TRAITS;
                 return (
                   <TouchableOpacity
                     key={trait}
@@ -763,18 +833,24 @@ export default function IdentityBootupScreen() {
                       minHeight: MIN_TOUCH_TARGET,
                       justifyContent: 'center',
                       alignItems: 'center',
-                      opacity: isDisabled ? 0.5 : 1
+                      opacity: isDisabled ? 0.5 : 1,
+                      flexShrink: 0
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={`${trait} trait`}
-                    accessibilityHint={isSelected ? "Double tap to deselect this trait" : "Double tap to select this trait"}
+                    accessibilityHint={
+                      isSelected
+                        ? 'Double tap to deselect this trait'
+                        : 'Double tap to select this trait'
+                    }
                     accessibilityState={{ selected: isSelected, disabled: isDisabled }}
                   >
                     <Text
+                      numberOfLines={1}
                       style={{
                         fontSize: 16,
                         fontWeight: isSelected ? '600' : '400',
-                        color: isSelected ? '#4CAF50' : '#333333'
+                        color: isSelected ? '#4CAF50' : '#333333',
                       }}
                     >
                       {trait}
@@ -789,9 +865,7 @@ export default function IdentityBootupScreen() {
         {/* Max Traits Error */}
         {maxTraitsError && (
           <View style={{ marginBottom: 16, alignItems: 'center' }}>
-            <Text style={{ color: '#EF4444', fontSize: 14 }}>
-              {maxTraitsError}
-            </Text>
+            <Text style={{ color: '#EF4444', fontSize: 14 }}>{maxTraitsError}</Text>
           </View>
         )}
 
@@ -801,10 +875,10 @@ export default function IdentityBootupScreen() {
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: canContinueStep3 ? '#4CAF50' : '#666'
+              color: canContinueStep3 ? '#4CAF50' : '#666',
             }}
           >
-            {formData.identity_traits.length} of {MIN_TRAITS}-{MAX_TRAITS} selected
+            {formData.identity_traits.length} of {REQUIRED_TRAITS} selected
           </Text>
         </View>
 
@@ -819,16 +893,14 @@ export default function IdentityBootupScreen() {
             minHeight: MIN_TOUCH_TARGET,
             justifyContent: 'center',
             alignItems: 'center',
-            opacity: canContinueStep3 ? 1 : 0.5
+            opacity: canContinueStep3 ? 1 : 0.5,
           }}
           accessibilityRole="button"
           accessibilityLabel="Complete identity bootup"
           accessibilityHint="Completes onboarding and saves your selections"
           accessibilityState={{ disabled: !canContinueStep3 }}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
-            Continue
-          </Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
         </TouchableOpacity>
 
         {/* Back Button */}
@@ -837,7 +909,7 @@ export default function IdentityBootupScreen() {
           style={{
             marginTop: 16,
             padding: 12,
-            alignItems: 'center'
+            alignItems: 'center',
           }}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -861,7 +933,7 @@ export default function IdentityBootupScreen() {
           flexDirection: 'row',
           paddingHorizontal: 24,
           paddingVertical: 16,
-          justifyContent: 'center'
+          justifyContent: 'center',
         }}
       >
         {[1, 2, 3].map((step) => (
@@ -872,7 +944,7 @@ export default function IdentityBootupScreen() {
               height: 4,
               backgroundColor: currentStep >= step ? '#4CAF50' : '#E0E0E0',
               marginHorizontal: 4,
-              borderRadius: 2
+              borderRadius: 2,
             }}
           />
         ))}

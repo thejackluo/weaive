@@ -65,6 +65,13 @@ export type { CardProps, CardVariant, CardPadding } from './components/Card/type
 export { Checkbox } from './components/Checkbox/Checkbox';
 
 // ============================================================================
+// Input Components
+// ============================================================================
+export { Input } from './components/Input/Input';
+export type { InputProps } from './components/Input/Input';
+export type { InputVariant, InputSize } from './components/Input/types';
+
+// ============================================================================
 // Specialized Components (Weave-Specific)
 // ============================================================================
 export { WeaveCharacter } from './components/WeaveCharacter/WeaveCharacter';
@@ -86,6 +93,16 @@ export { WeaveCharacter } from './components/WeaveCharacter/WeaveCharacter';
 export { GlassView } from './components/Glass/GlassView';
 // TODO: Implement AnimatedPressable
 // export { AnimatedPressable } from './components/Animated/AnimatedPressable';
+
+// ============================================================================
+// Feedback Components
+// ============================================================================
+export { Toast, ToastContainer, showToast } from './components/Toast';
+export type { ToastType, ToastConfig } from './components/Toast';
+
+// Simple Toast (fallback - no animations, no crashes)
+export { SimpleToast, SimpleToastContainer, showSimpleToast } from './components/SimpleToast';
+export type { SimpleToastType, SimpleToastConfig } from './components/SimpleToast';
 
 // ============================================================================
 // Constants

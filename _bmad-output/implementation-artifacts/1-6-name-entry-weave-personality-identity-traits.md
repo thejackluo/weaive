@@ -49,7 +49,7 @@ So that **the experience feels personally motivating and aligned with my communi
 ### Step 2: Weave Personality Selection (<20 seconds)
 
 **Title & Subheading (AC #6)**
-- [ ] Display title: "I'm your Weave — your future self in thread form. How do you want me to interact with you?"
+- [ ] Display title: "I'm your Weave, your future self that we create together. How should I engage with you?"
 - [ ] Display subheading: "You can change this anytime. This sets my core personality — and I'll adapt as I understand you better."
 - [ ] Typography: Title semi-bold, subheading regular at 90% opacity
 - [ ] Text alignment: Center
@@ -96,18 +96,18 @@ So that **the experience feels personally motivating and aligned with my communi
 - [ ] Text color: Same as Persona 1 for consistency
 
 **User Interaction Requirements (AC #11)**
-- [ ] User MUST swipe to view both personas before Continue button enables
-- [ ] Track which persona was viewed (state: [false, false] → [true, true])
 - [ ] Visual feedback on swipe (card slide animation, pagination dots update)
-- [ ] Tap persona card to select (highlight selected card with border or checkmark)
+- [ ] Tap persona card to select (highlight selected card with green border)
 - [ ] Selected state persists visually until user continues
+- [ ] Swipe gestures work in both directions (left for next, right for previous)
 
 **CTA & Navigation (AC #12)**
 - [ ] "Continue" button at bottom (fixed position, full-width)
-- [ ] Button disabled until BOTH personas viewed AND one selected
-- [ ] Button enabled when selection made
+- [ ] Button disabled until one personality is selected
+- [ ] Button enabled immediately when selection made
 - [ ] Navigate to Step 3 (Identity Traits) on continue
 - [ ] Smooth transition animation
+- [ ] Proper spacing between card content and Continue button (24px margin-top)
 
 **Data Storage (AC #13)**
 - [ ] Store `core_personality` in state: "supportive_direct" | "tough_warm"
@@ -124,67 +124,106 @@ So that **the experience feels personally motivating and aligned with my communi
 - [ ] All content static (no AI calls)
 - [ ] Smooth swipe performance (60fps target)
 - [ ] Emoji compatibility across iOS versions (test on iOS 15+)
-- [ ] Fallback arrows for accessibility if swipe not detected (tap arrows to navigate)
+- [ ] PanResponder used for swipe gesture detection with 50px threshold
 - [ ] Should be dismissible via swipe but NOT skippable (Continue button is only exit)
+- [ ] No "✓ Selected" text indicator (card border shows selection state)
+- [ ] No arrow navigation buttons (swipe-only navigation with pagination dots)
 
 ---
 
-### Step 3: Identity Traits Selection (<15 seconds)
+### Step 3: Identity Traits (Aspirational Focus) (<10 seconds)
 
-**Header & Personalization (AC #16)**
-- [ ] Display header: "Who do you want to become?"
-- [ ] Display personalized subtext: "Choose 3-5 traits, [Name]" (inject user's name from Step 1)
-- [ ] Typography: Header semi-bold, subtext regular at 90% opacity
+**User-Facing Copy (AC #16)**
+- [ ] Display title: "Who do we want to become?"
+- [ ] Display subtext: "Choose the 3 most important qualities you want to embody."
+- [ ] Typography: Title semi-bold, subtext regular at 90% opacity
 - [ ] Text alignment: Center
 
 **Trait Chips Display (AC #17)**
-- [ ] Display 12 selectable traits as chips/buttons:
-  - Row 1: Disciplined, Creative, Confident, Calm
-  - Row 2: Focused, Energetic, Organized, Patient
-  - Row 3: Resilient, Balanced, Intentional, Present
-- [ ] Chip layout: Multi-row, flex-wrap, centered
+- [ ] Display 8 total trait options as selectable chips/buttons:
+  - Clear Direction
+  - Intentional Time
+  - Decisive Action
+  - Consistent Effort
+  - High Standards
+  - Continuous Growth
+  - Self Aware
+  - Emotionally Grounded
+- [ ] Chip layout: 2-1-2-1-2 arrangement for visual balance
+  - Row 1 (2): Clear Direction, Intentional Time
+  - Row 2 (1): Decisive Action
+  - Row 3 (2): Consistent Effort, High Standards
+  - Row 4 (1): Emotionally Grounded (alone to prevent layout shifts due to length)
+  - Row 5 (2): Self Aware, Continuous Growth
+- [ ] Multi-row layout, centered (Note: Each row is a separate flex container without flexWrap to maintain 2-1-2-1-2 layout)
+- [ ] No scrolling required on standard mobile screen
 - [ ] Chip styling: Rounded pill shape, touchable, min 48px height
 - [ ] Unselected state: Light border, transparent background
 - [ ] Selected state: Green border (theme color), filled background (light green tint)
 - [ ] Touch feedback: Subtle scale animation on press
 
 **Selection Logic (AC #18)**
-- [ ] User can select 3-5 traits (enforce min/max)
-- [ ] Disable additional selections after 5 traits selected
-- [ ] Allow deselection to go back below 5
-- [ ] Show toast/alert if user tries to select >5: "Maximum 5 traits"
-- [ ] Show visual feedback when min requirement met (Continue button enables)
+- [ ] User must select exactly 3 traits (enforce exact count)
+- [ ] Disable additional selections after 3 traits selected
+- [ ] Allow deselection to go back below 3
+- [ ] Show toast/alert if user tries to select more: "Choose exactly 3 traits"
+- [ ] Show visual feedback when requirement met (Continue button enables)
+- [ ] Traits are framed as aspirational (who the user is becoming), not fixed personality
+- [ ] User can edit selections later in Profile
 
 **Selection Counter (AC #19)**
-- [ ] Display counter below traits: "X of 3-5 selected"
+- [ ] Display counter below traits: "X of 3 selected"
 - [ ] Update counter in real-time as user selects/deselects
-- [ ] Counter color changes when valid range reached (3-5):
+- [ ] Counter color changes when requirement met:
   - 0-2 selected: Neutral/warning color
-  - 3-5 selected: Success/green color
-  - >5 selected: Should not be possible (disabled state)
+  - 3 selected: Success/green color
+  - (Cannot select more than 3)
 
 **CTA & Navigation (AC #20)**
 - [ ] "Continue" button at bottom (fixed position, full-width)
-- [ ] Button disabled when <3 traits selected
-- [ ] Button enabled when 3-5 traits selected
+- [ ] Button disabled when ≠3 traits selected
+- [ ] Button enabled when exactly 3 traits selected
 - [ ] On continue: Write ALL onboarding data to database
 - [ ] Navigate to Story 1.7 (First Needle / Goal Input) on success
 
 **Data Storage (AC #21)**
-- [ ] Store `identity_traits` as array of selected trait names
-- [ ] Write to database: `user_profiles.identity_traits` (JSONB array)
+- [ ] Store `identity_traits` as array of exactly 3 selected trait names
+- [ ] Persist to: `identity_docs.json.active_traits` (array of 3 strings)
+- [ ] Persist immediately upon completion
 - [ ] Batch write with `preferred_name`, `core_personality`, `personality_selected_at`
 - [ ] Transaction: All three Step data points written together
 - [ ] DEFERRED: Database write (Story 0-4 backend integration)
   - For now: Store in local state, add TODO comment for backend write
 
-**Event Tracking (AC #22)**
-- [ ] Track `identity_traits_selected` with array of selected traits
+**Behavioral & AI Impact (AC #22 - Non-User Facing)**
+Selected traits are used as primary personalization signals that influence:
+- [ ] Weave's tone (gentle vs direct vs challenging)
+- [ ] Bind difficulty and pacing
+- [ ] Reminder frequency and urgency
+- [ ] Reflection depth and prompt style
+- [ ] Insight framing (performance-oriented vs introspective)
+- [ ] Traits represent initial intent, not fixed identity
+- [ ] Observed behavior can override trait assumptions over time
+
+**Event Tracking (AC #23)**
+- [ ] Track `identity_traits_selected` with array of selected traits + completion time
 - [ ] DEFERRED: Analytics integration (Story 0-4 backend)
 
-**Total Flow Time (AC #23)**
+**Technical Notes (AC #24)**
+- [ ] Deterministic selection (no AI call)
+- [ ] Hard validation: must select exactly 3
+- [ ] Traits are weighted equally on selection
+- [ ] Behavioral data takes precedence after onboarding
+
+**Success Metrics (AC #25)**
+- [ ] 95% completion rate target
+- [ ] Median completion time <10 seconds target
+- [ ] Low hesitation/back-navigation rate (<5%) target
+- [ ] Positive correlation with Day 1–3 bind completion
+
+**Total Flow Time (AC #26)**
 - [ ] All three steps complete in <45 seconds total
-- [ ] Step 1: <10s, Step 2: <20s, Step 3: <15s
+- [ ] Step 1: <10s, Step 2: <20s, Step 3: <10s (updated from <15s)
 - [ ] No loading states between steps (all local/sync)
 
 ---
@@ -213,23 +252,30 @@ So that **the experience feels personally motivating and aligned with my communi
 - [x] **Subtask 2.6**: Implement Persona 2 content (Tough but Warm) with emoji support
 - [x] **Subtask 2.7**: Implement swipeable card carousel (Animated.View with spring physics)
 - [x] **Subtask 2.8**: Add pagination dots with active state
-- [x] **Subtask 2.9**: Track which personas have been viewed (state array)
+- [x] **Subtask 2.9**: Implement PanResponder for swipe gesture detection (both directions)
 - [x] **Subtask 2.10**: Implement tap-to-select interaction
-- [x] **Subtask 2.11**: Add fallback arrow buttons for accessibility
-- [x] **Subtask 2.12**: Implement Continue button with conditional enable
+- [x] **Subtask 2.11**: ~~Add fallback arrow buttons for accessibility~~ (REMOVED - swipe-only navigation)
+- [x] **Subtask 2.12**: Implement Continue button with conditional enable (no view-all requirement)
 - [x] **Subtask 2.13**: Store core_personality selection in state
 - [x] **Subtask 2.14**: Navigate to Step 3 on continue
 
-### Task 3: Step 3 - Identity Traits Selection (AC: #16-#22)
+### Task 3: Step 3 - Identity Traits (Aspirational Focus) (AC: #16-#26)
 - [x] **Subtask 3.1**: Create IdentityTraitsScreen component (screen 3 of 3)
-- [x] **Subtask 3.2**: Implement header with personalized subtext (inject name)
+- [x] **Subtask 3.2**: Implement title "Who do we want to become?" with subtext "Choose the 3 most important qualities you want to embody."
 - [x] **Subtask 3.3**: Create TraitChip component with unselected/selected states
-- [x] **Subtask 3.4**: Render 12 trait chips in 3 rows
-- [x] **Subtask 3.5**: Implement selection logic (3-5 min/max enforcement)
+- [x] **Subtask 3.4**: Render 8 trait chips with concise aspirational trait names:
+  - Row 1: Clear Direction, Intentional Time
+  - Row 2: Decisive Action
+  - Row 3: Consistent Effort, High Standards
+  - Row 4: Emotionally Grounded
+  - Row 5: Self Aware, Continuous Growth
+- [x] **Subtask 3.4b**: Organize chips in 2-1-2-1-2 layout to prevent reflow (longest text alone)
+- [x] **Subtask 3.5**: Implement selection logic (exactly 3 enforcement - no min/max range)
 - [x] **Subtask 3.6**: Add touch feedback and animations
-- [x] **Subtask 3.7**: Implement selection counter display
-- [x] **Subtask 3.8**: Implement Continue button with conditional enable
-- [x] **Subtask 3.9**: Store identity_traits array in state
+- [x] **Subtask 3.7**: Implement selection counter display ("X of 3 selected")
+- [x] **Subtask 3.8**: Implement Continue button (enabled when exactly 3 traits selected)
+- [x] **Subtask 3.9**: Store identity_traits array (exactly 3 items) in state
+- [x] **Subtask 3.10**: Ensure completion time target <10 seconds (reduced from <15s)
 
 ### Task 4: Data Integration & Flow Coordination (AC: #4, #13, #21)
 - [x] **Subtask 4.1**: Decide on multi-screen vs single-screen-multi-step architecture
@@ -589,11 +635,13 @@ const TraitChip: React.FC<TraitChipProps> = ({ label, selected, onPress, disable
   );
 };
 
-// Usage
+// Usage (2-1-2-1-2 layout)
 const TRAITS = [
-  ['Disciplined', 'Creative', 'Confident', 'Calm'],
-  ['Focused', 'Energetic', 'Organized', 'Patient'],
-  ['Resilient', 'Balanced', 'Intentional', 'Present'],
+  ['Clear Direction', 'Intentional Time'],
+  ['Decisive Action'],
+  ['Consistent Effort', 'High Standards'],
+  ['Emotionally Grounded'],
+  ['Self Aware', 'Continuous Growth']
 ];
 
 const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
@@ -602,10 +650,10 @@ const handleTraitPress = (trait: string) => {
   setSelectedTraits(prev => {
     if (prev.includes(trait)) {
       return prev.filter(t => t !== trait);
-    } else if (prev.length < 5) {
+    } else if (prev.length < 3) {
       return [...prev, trait];
     } else {
-      Alert.alert('Maximum 5 traits', 'You can select up to 5 traits.');
+      Alert.alert('Choose exactly 3 traits', 'You must select exactly 3 traits.');
       return prev;
     }
   });
@@ -683,7 +731,7 @@ npx expo install expo-blur  # Optional, for true blur effect
 - `weave-mobile/src/components/onboarding/PersonaCard.tsx` - Reusable persona card
 - `weave-mobile/src/components/onboarding/TraitChip.tsx` - Reusable trait chip
 - `weave-mobile/src/constants/personalityContent.ts` - Persona data (titles, examples)
-- `weave-mobile/src/constants/identityTraits.ts` - Trait list (12 traits)
+- `weave-mobile/src/constants/identityTraits.ts` - Trait list (8 aspirational traits)
 
 **Option B: Three Separate Screens**
 - `weave-mobile/app/(onboarding)/name-entry.tsx`
@@ -719,28 +767,29 @@ npx expo install expo-blur  # Optional, for true blur effect
 - [ ] Swipe left gesture shows next persona (Supportive → Tough)
 - [ ] Swipe right gesture shows previous persona (Tough → Supportive)
 - [ ] Pagination dots update correctly
-- [ ] Both personas MUST be viewed before selection allowed
 - [ ] Tap to select works
-- [ ] Selected card has visual feedback (border/checkmark)
+- [ ] Selected card has visual feedback (green border, no text indicator)
 - [ ] Continue button disabled until selection made
-- [ ] Continue button enabled after selection
+- [ ] Continue button enabled immediately after first selection
 - [ ] Emoji displays correctly (iOS device test)
 - [ ] Weave icon animates subtly
 - [ ] Liquid-glass card styling renders correctly
-- [ ] Fallback arrows work (if implemented)
+- [ ] Proper spacing between card and Continue button (no overlap)
 - [ ] Navigates to Step 3 on continue
 
-**Step 3: Identity Traits**
-- [ ] Header displays with user's name from Step 1
-- [ ] 12 trait chips display in 3 rows
+**Step 3: Identity Traits (Aspirational Focus)**
+- [ ] Title displays: "Who do we want to become?"
+- [ ] Subtext displays: "Choose the 3 most important qualities you want to embody."
+- [ ] 8 trait chips display with concise aspirational trait names (Clear Direction, Intentional Time, etc.)
+- [ ] No scrolling required on standard mobile screen
 - [ ] Tap to select/deselect works
 - [ ] Selected chips have green border and background
-- [ ] Cannot select more than 5 traits (alert shown)
+- [ ] Cannot select more than 3 traits (alert shown)
 - [ ] Selection counter updates in real-time
-- [ ] Counter shows "0 of 3-5" initially
-- [ ] Counter shows "3 of 3-5" (green) when valid
-- [ ] Continue button disabled when <3 selected
-- [ ] Continue button enabled when 3-5 selected
+- [ ] Counter shows "0 of 3" initially
+- [ ] Counter shows "3 of 3" (green) when valid
+- [ ] Continue button disabled when ≠3 selected
+- [ ] Continue button enabled when exactly 3 selected
 - [ ] Navigates to Story 1.7 on continue
 
 **Performance & Accessibility**
@@ -867,7 +916,7 @@ console.log('[ONBOARDING] All data collected, navigating to Story 1.7');
 - [x] All front-end tasks completed (Tasks 1-7)
 - [x] Three-step flow functional (Name → Personality → Traits)
 - [x] Swipeable persona cards working (60fps)
-- [x] Trait selection logic correct (3-5 min/max)
+- [x] Trait selection logic correct (exactly 3 required)
 - [x] Name validation working (1-50 chars, no special chars)
 - [x] All data stored in component state
 - [x] Navigation to Story 1.7 works
@@ -886,9 +935,10 @@ console.log('[ONBOARDING] All data collected, navigating to Story 1.7');
 1. **Architecture:** Single screen with step state machine (currentStep: 1 | 2 | 3) for smoother UX
 2. **Animation:** Used Animated.View with spring physics instead of react-native-gesture-handler for simpler implementation
 3. **Styling:** Inline styles for iOS compatibility, following Story 1.5 patterns
-4. **Navigation:** Arrow buttons provided as accessibility fallback for swipe gestures
-5. **TypeScript:** Fixed implicit any errors in map callbacks with explicit type annotations
-6. **Import Paths:** Fixed @/src/constants → @/constants based on tsconfig path aliases
+4. **Navigation:** PanResponder for swipe gesture detection (50px threshold, bidirectional support)
+5. **Selection:** Removed "✓ Selected" text indicator and arrow buttons for cleaner UI
+6. **TypeScript:** Fixed implicit any errors in map callbacks with explicit type annotations
+7. **Import Paths:** Fixed @/src/constants → @/constants based on tsconfig path aliases
 
 **Next Steps:**
 1. Manual testing on iOS simulator (verify all 3 steps work end-to-end)
@@ -903,12 +953,14 @@ console.log('[ONBOARDING] All data collected, navigating to Story 1.7');
 ### File List
 
 **Created:**
-- [x] `weave-mobile/app/(onboarding)/identity-bootup.tsx` - Main screen with 3 steps (755 lines)
+- [x] `weave-mobile/app/(onboarding)/identity-bootup.tsx` - Main screen with 3 steps (883 lines)
   - Implements full step state machine with Step 1, 2, and 3 inline
   - Name validation logic
   - Swipeable persona cards with Animated.View
-  - Identity traits selection with 3-5 enforcement
+  - Weave icon with pulse animation
+  - Identity traits selection with exactly 3 enforcement
   - Progress indicator UI at top
+  - Comprehensive accessibility support (VoiceOver, reduced motion)
 - [x] `weave-mobile/src/constants/personalityContent.ts` - Persona data structure (62 lines)
   - PersonalityType type definition
   - PERSONAS array with 2 personas
@@ -951,6 +1003,15 @@ console.log('[ONBOARDING] All data collected, navigating to Story 1.7');
 - **2025-01-27**: Fixed TypeScript errors (import paths, implicit any in map callbacks)
 - **2025-01-27**: Updated authentication navigation target
 - **2025-01-27**: Implementation complete - Status: pending manual testing & code review
+- **2025-12-19**: Code review completed - Fixed 10 issues (5 High, 3 Medium, 2 Low):
+  - Fixed PanResponder useMemo stale closure bug
+  - Removed production console.log statements
+  - Implemented Weave icon pulse animation (AC #8)
+  - Enhanced pagination dots accessibility for VoiceOver
+  - Optimized validation performance (removed redundant calls)
+  - Fixed useEffect race condition with viewedPersonas dependency
+  - Updated file line counts (755 → 883 lines)
+- **2025-12-19**: Status: Code review fixes applied, ready for final testing
 
 ---
 
@@ -990,7 +1051,7 @@ const onboardingData = {
   preferred_name: string,           // Step 1
   core_personality: 'supportive_direct' | 'tough_warm',  // Step 2
   personality_selected_at: Date,     // Step 2
-  identity_traits: string[]          // Step 3 (3-5 items)
+  identity_traits: string[]          // Step 3 (exactly 3 items)
 };
 
 // TODO (Story 0-4): Write to Supabase user_profiles table

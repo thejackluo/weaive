@@ -1,11 +1,15 @@
 /**
  * Supabase Client Singleton
  *
- * Story 1.5: Authentication
+ * Story 0.3: Authentication Flow (UPDATED from Story 1.5)
  * Provides configured Supabase client for auth and database operations
  *
- * FRONT-END ONLY: Backend integration deferred to Story 0-4
- * TODO (Story 0-4):
+ * SECURITY FIX (Story 0.3):
+ * - Replaced AsyncStorage with react-native-keychain for encrypted token storage
+ * - JWT tokens now stored in device keychain (encrypted), not plain text
+ * - This is a CRITICAL security requirement
+ *
+ * TODO:
  * - Configure Supabase project and obtain credentials
  * - Add EXPO_PUBLIC_SUPABASE_URL to .env
  * - Add EXPO_PUBLIC_SUPABASE_ANON_KEY to .env
@@ -14,21 +18,37 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { secureStorage } from '@/services/secureStorage';
 
 // Environment variables (set in .env)
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
+// Debug: Log environment variables on load
+console.log('[SUPABASE] Environment check:');
+console.log('[SUPABASE] URL:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : '❌ MISSING');
+console.log(
+  '[SUPABASE] Anon Key:',
+  supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : '❌ MISSING'
+);
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('[SUPABASE] ❌ CRITICAL: Missing environment variables!');
+  console.error('[SUPABASE] Make sure .env file exists with:');
+  console.error('[SUPABASE]   EXPO_PUBLIC_SUPABASE_URL=https://xxx.supabase.co');
+  console.error('[SUPABASE]   EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJxxx...');
+  console.error('[SUPABASE] Then restart Metro bundler with: npx expo start --clear');
+}
+
 /**
  * Supabase client configuration
- * - Uses AsyncStorage for session persistence (mobile)
+ * - Uses react-native-keychain for ENCRYPTED session persistence (Story 0.3)
  * - Auto-refresh tokens for seamless auth
  * - Detects session from URL disabled for mobile (no browser URL sessions)
  */
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: AsyncStorage,
+    storage: secureStorage, // SECURITY: Encrypted keychain storage (not AsyncStorage)
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false, // Mobile doesn't use URL sessions

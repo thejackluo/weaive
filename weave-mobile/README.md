@@ -311,6 +311,198 @@ This guide includes:
 - Configuration file examples
 - Prevention best practices
 
+## OAuth Configuration
+
+### Google Sign-In Setup
+
+To enable Google Sign-In in the Weave mobile app, you need to configure both Google Cloud and Supabase.
+
+#### Step 1: Create Google Cloud Project
+
+1. **Go to Google Cloud Console:**
+   - Navigate to [Google Cloud Console](https://console.cloud.google.com/)
+   - Sign in with your Google account
+
+2. **Create a New Project:**
+   - Click the project dropdown at the top
+   - Click "New Project"
+   - Enter project name: `Weave MVP` (or your preferred name)
+   - Click "Create"
+
+#### Step 2: Configure OAuth Consent Screen
+
+1. **Navigate to OAuth Consent Screen:**
+   - In the left sidebar: APIs & Services → OAuth consent screen
+   - Select "External" user type (for public app)
+   - Click "Create"
+
+2. **Fill Out App Information:**
+   - **App name:** `Weave`
+   - **User support email:** Your email address
+   - **App logo:** Upload app icon (optional for testing)
+   - **Application home page:** `https://weaveapp.com` (or temporary URL)
+   - **Authorized domains:**
+     - Add your Supabase project domain: `<project-ref>.supabase.co`
+   - **Developer contact email:** Your email address
+   - Click "Save and Continue"
+
+3. **Scopes:**
+   - Click "Add or Remove Scopes"
+   - Add these scopes:
+     - `email` - View your email address
+     - `profile` - See your personal info
+   - Click "Update" → "Save and Continue"
+
+4. **Test Users (Optional):**
+   - Add test user emails if in testing mode
+   - Click "Save and Continue"
+
+5. **Summary:**
+   - Review and click "Back to Dashboard"
+
+#### Step 3: Create OAuth 2.0 Credentials
+
+1. **Navigate to Credentials:**
+   - In the left sidebar: APIs & Services → Credentials
+   - Click "Create Credentials" → "OAuth client ID"
+
+2. **Configure OAuth Client:**
+   - **Application type:** Web application
+   - **Name:** `Weave Mobile OAuth`
+   - **Authorized JavaScript origins:** Leave empty for now
+   - **Authorized redirect URIs:** Add your Supabase callback URL:
+     ```
+     https://<project-ref>.supabase.co/auth/v1/callback
+     ```
+     Replace `<project-ref>` with your actual Supabase project reference ID
+   - Click "Create"
+
+3. **Save Credentials:**
+   - **Copy the Client ID** (looks like: `123456789-abc123.apps.googleusercontent.com`)
+   - **Copy the Client Secret** (looks like: `GOCSPX-abc123xyz789`)
+   - Store these securely - you'll need them for Supabase
+
+#### Step 4: Configure Supabase
+
+1. **Open Supabase Dashboard:**
+   - Go to [Supabase Dashboard](https://app.supabase.com/)
+   - Select your Weave project
+
+2. **Navigate to Auth Providers:**
+   - In the left sidebar: Authentication → Providers
+   - Find "Google" in the provider list
+
+3. **Enable Google Provider:**
+   - Toggle "Enable Sign in with Google" to ON
+   - **Client ID:** Paste your Google OAuth Client ID
+   - **Client Secret:** Paste your Google OAuth Client Secret
+   - **Redirect URL:** Should auto-populate (verify it matches the URL you added to Google Console)
+   - Click "Save"
+
+#### Step 5: Configure Mobile App Deep Linking
+
+1. **Update app.json:**
+   - Open `app.json` in the project root
+   - Verify the `scheme` field is set:
+     ```json
+     {
+       "expo": {
+         "scheme": "weavelight"
+       }
+     }
+     ```
+
+2. **Test Deep Link:**
+   - The OAuth redirect will use: `weavelight://`
+   - Supabase handles the callback automatically
+   - Your app will receive the auth session via deep link
+
+#### Step 6: Test Google Sign-In
+
+1. **Start the app:**
+
+   ```bash
+   npx expo start --clear
+   ```
+
+2. **Open the app** and navigate to the login screen
+
+3. **Tap "Sign in with Google":**
+   - You should be redirected to Google's consent screen
+   - Select your Google account
+   - Review permissions (email, profile)
+   - Click "Allow"
+   - You should be redirected back to the app
+   - You should see a success toast: "Signed in with Google! 🎉"
+
+4. **Verify Authentication:**
+   - Check that you're logged in (should see home screen)
+   - Verify user data is in Supabase: Authentication → Users
+   - Logout and try logging in again with Google
+
+#### Troubleshooting Google OAuth
+
+**Error: "redirect_uri_mismatch"**
+
+- Verify the redirect URI in Google Console exactly matches:
+  `https://<project-ref>.supabase.co/auth/v1/callback`
+- Ensure no trailing slashes or typos
+
+**Error: "Access blocked: This app's request is invalid"**
+
+- Verify OAuth consent screen is fully configured
+- Check that `email` and `profile` scopes are enabled
+- Make sure the client ID/secret are correctly entered in Supabase
+
+**OAuth popup opens but nothing happens:**
+
+- Verify `scheme: "weavelight"` is in `app.json`
+- Check that deep linking is working: Test with a simple deep link
+- Verify Supabase Auth is configured correctly
+
+**Sign-In works in browser but not in app:**
+
+- This is expected! OAuth in React Native requires a development build
+- Expo Go may have limitations with OAuth deep linking
+- Build with: `npx expo prebuild && npx expo run:ios`
+
+### Apple Sign-In Setup (iOS Only)
+
+Apple Sign-In is currently **disabled** in the Weave app until full configuration is complete.
+
+#### Why Apple Sign-In is Disabled
+
+- Apple requires specific certificates and provisioning profiles
+- App must be published to App Store Connect (or TestFlight)
+- Requires Apple Developer Program membership ($99/year)
+- Not required for MVP testing with Expo Go
+
+#### Enabling Apple Sign-In (Future)
+
+When you're ready to enable Apple Sign-In:
+
+1. **Join Apple Developer Program:**
+   - Sign up at: https://developer.apple.com/programs/
+   - Cost: $99/year
+
+2. **Configure Sign in with Apple:**
+   - Create an App ID with "Sign in with Apple" capability
+   - Create a Services ID for OAuth
+   - Create a private key for authentication
+   - Configure in Supabase: Authentication → Providers → Apple
+
+3. **Re-enable Apple Button:**
+   - Edit `app/(auth)/login.tsx` and `app/(auth)/signup.tsx`
+   - Uncomment the Apple Sign-In button sections (lines 321-372)
+   - Remove the disabled state and enable `handleOAuthSignIn('apple')`
+
+4. **Test on Physical iOS Device:**
+   - Apple Sign-In requires a real iOS device (not simulator)
+   - Build with: `npx expo run:ios --device`
+   - Test the full OAuth flow end-to-end
+
+For now, Google Sign-In is fully functional and sufficient for MVP testing.
+
 ## Next Steps
 
 - Story 0.2: Database schema setup
@@ -323,3 +515,5 @@ This guide includes:
 - [React Native Documentation](https://reactnative.dev/)
 - [Expo Router Documentation](https://docs.expo.dev/router/introduction/)
 - [NativeWind Documentation](https://www.nativewind.dev/)
+- [Google OAuth Setup Guide](https://support.google.com/cloud/answer/6158849)
+- [Supabase Auth Documentation](https://supabase.com/docs/guides/auth)
