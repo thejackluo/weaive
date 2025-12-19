@@ -53,6 +53,15 @@ export type { TextProps } from './components/Text/types';
 export { Button } from './components/Button/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button/types';
 
+// Glass Morphism Button (Modern gradient glass buttons)
+export {
+  GlassButton,
+  PrimaryGlassButton,
+  SecondaryGlassButton,
+  GhostGlassButton,
+  GlassMorphButton,
+} from './components/GlassButton';
+
 // ============================================================================
 // Card Components
 // ============================================================================
