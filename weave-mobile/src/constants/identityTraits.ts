@@ -1,36 +1,41 @@
 /**
  * Identity Traits for User Selection (Story 1.6 - Step 3)
  *
- * 12 selectable traits representing desired identity characteristics.
- * User selects 3-5 traits during onboarding to define "who they want to become."
+ * 8 aspirational trait options representing qualities the user is actively trying to build.
+ * User must select exactly 3 traits during onboarding.
  *
- * These traits inform:
- * - Goal suggestions (Story 1.7)
- * - Dream Self generation (deferred to later stories)
- * - Progress tracking toward desired identity (deferred)
+ * These traits are framed as aspirational (who the user is becoming), not fixed personality.
+ * Selected traits influence:
+ * - Weave's tone (gentle vs direct vs challenging)
+ * - Bind difficulty and pacing
+ * - Reminder frequency and urgency
+ * - Reflection depth and prompt style
+ * - Insight framing (performance-oriented vs introspective)
+ *
+ * Behavioral data takes precedence after onboarding.
  */
 
 export type IdentityTrait =
-  | 'Disciplined'
-  | 'Creative'
-  | 'Confident'
-  | 'Calm'
-  | 'Focused'
-  | 'Energetic'
-  | 'Organized'
-  | 'Patient'
-  | 'Resilient'
-  | 'Balanced'
-  | 'Intentional'
-  | 'Present';
+  | 'Clear Direction'
+  | 'Intentional Time'
+  | 'Decisive Action'
+  | 'Consistent Effort'
+  | 'High Standards'
+  | 'Continuous Growth'
+  | 'Self Aware'
+  | 'Emotionally Grounded';
 
 /**
- * All 12 identity traits organized in 3 rows for UI display
+ * All 8 identity traits organized in 5 rows for visually appealing layout
+ * (2-1-2-1-2 layout for balanced appearance)
+ * Longest text ("Emotionally Grounded") is placed alone to prevent layout shifts
  */
 export const IDENTITY_TRAITS: IdentityTrait[][] = [
-  ['Disciplined', 'Creative', 'Confident', 'Calm'],
-  ['Focused', 'Energetic', 'Organized', 'Patient'],
-  ['Resilient', 'Balanced', 'Intentional', 'Present'],
+  ['Clear Direction', 'Intentional Time'],
+  ['Decisive Action'],
+  ['Consistent Effort', 'High Standards'],
+  ['Emotionally Grounded'],
+  ['Self Aware', 'Continuous Growth']
 ];
 
 /**
@@ -39,16 +44,15 @@ export const IDENTITY_TRAITS: IdentityTrait[][] = [
 export const ALL_TRAITS: IdentityTrait[] = IDENTITY_TRAITS.flat();
 
 /**
- * Minimum and maximum number of traits user can select
+ * Required number of traits user must select (exactly 3)
  */
-export const MIN_TRAITS = 3;
-export const MAX_TRAITS = 5;
+export const REQUIRED_TRAITS = 3;
 
 /**
- * Validation helper: Check if trait selection count is valid
+ * Validation helper: Check if trait selection count is valid (exactly 3)
  */
 export function isValidTraitCount(count: number): boolean {
-  return count >= MIN_TRAITS && count <= MAX_TRAITS;
+  return count === REQUIRED_TRAITS;
 }
 
 /**
