@@ -294,23 +294,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signInWithOAuth = async (provider: OAuthProvider): Promise<void> => {
     try {
       setError(null);
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('[AUTH] Starting OAuth flow for provider:', provider);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: 'weave://', // Deep link scheme (configured in app.json)
+          redirectTo: 'weavelight://', // Deep link scheme (must match app.json "scheme" field)
           skipBrowserRedirect: false,
         },
       });
 
       if (error) {
+        console.error('[AUTH] OAuth error:', {
+          message: error.message,
+          status: error.status,
+          provider,
+        });
         setError(error);
         throw error;
       }
 
+      console.log('[AUTH] OAuth flow initiated:', {
+        provider,
+        url: data?.url,
+        provider_data: data?.provider,
+      });
+
       // State will be updated automatically via onAuthStateChange
       // after OAuth flow completes and user returns to app
     } catch (err) {
-      console.error('[AUTH] OAuth sign in error:', err);
+      console.error('[AUTH] OAuth sign in exception:', err);
       throw err;
     }
   };
