@@ -16,9 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.weavelight.app",
-      "associatedDomains": [
-        "applinks:weavelight.app"
-      ]
+      "associatedDomains": ["applinks:weavelight.app"]
     },
     "android": {
       "package": "com.weavelight.app",
@@ -33,7 +31,7 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": ["expo-router", "expo-web-browser"]
+    "plugins": ["expo-router", "expo-web-browser"],
     "extra": {
       "router": {},
       "eas": {
