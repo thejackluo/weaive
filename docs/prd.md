@@ -479,11 +479,29 @@ New users experience a streamlined onboarding that gets them to their first "win
 - [ ] Sends `selected_painpoints` to backend (lightweight)
 
 **Data Requirements:**
-- Store `initial_painpoints` in `user_profiles.json`
+- Store `initial_painpoints` in `user_profiles.json` (array of 1-2 strings)
 
 **Technical Notes:**
 - Deterministic mapping → no AI call
 - Used later to adjust early prompts and tone
+
+**CRITICAL AI PERSONALIZATION USAGE:**
+
+Painpoints selected here define **who the user IS NOW** (current struggles).
+Combined with identity traits from US-1.6 (aspirational values), Weave creates **tension-driven coaching**:
+
+**How Painpoints Inform AI Messaging:**
+- **Consistency struggle** → Weave acknowledges "I know you start strong but fall off" + leverages aspirational identity to motivate
+- **Action struggle** → Weave acknowledges "I know you overthink" + challenges user to act in alignment with stated values
+- **Clarity struggle** → Weave acknowledges "I know direction feels unclear" + pushes for commitment over exploration
+- **Alignment struggle** → Weave acknowledges "I know you feel alone in this" + validates ambition while suggesting actionable next steps
+
+**Example Personalized Message:**
+- User selects: "Consistency" (US-1.2) + "Consistent Effort" (US-1.6)
+- Weave says: *"You still have a bind left. As someone who values consistent effort, you gotta make it happen."*
+- Creates cognitive dissonance between stated value and current inaction
+
+See `docs/idea/ai.md` → Personalization Framework for complete implementation guidelines.
 
 ---
 
@@ -756,14 +774,32 @@ The more you use the app, the better it understands how you grow — and eventua
 - [ ] Track analytics event: `identity_traits_selected` with selected traits + completion time
 
 **Behavioral & AI Impact (Non-User Facing):**
+
+**CRITICAL PERSONALIZATION FRAMEWORK:**
+
+Identity traits selected here define **who the user WANTS TO BE** (aspirational values).
+Combined with painpoints from US-1.2 (current struggles), Weave creates **tension-driven coaching**:
+
+- **US-1.2 painpoints** = Who the user IS NOW (e.g., "I struggle with consistency")
+- **US-1.6 identity traits** = Who the user WANTS TO BE (e.g., "I value consistent effort")
+- **Weave's messaging** = Bridges the gap by creating motivational tension
+
+**Example:** User struggles with "Consistency" but values "Consistent Effort"
+→ Weave: *"You still have a bind left. As someone who values consistent effort, you gotta make it happen."*
+
 Selected traits are used as primary personalization signals that influence:
 - Weave's tone (gentle vs direct vs challenging)
 - Bind difficulty and pacing
 - Reminder frequency and urgency
 - Reflection depth and prompt style
 - Insight framing (performance-oriented vs introspective)
+- **Language in notifications** - "As someone who values [trait]..."
+- **Daily recaps** - Progress toward stated values
+- **Triad generation** - Suggest binds aligned with traits
 - Traits represent initial intent, not fixed identity
 - Observed behavior can override trait assumptions over time
+
+See `docs/idea/ai.md` → Personalization Framework for complete implementation guidelines.
 
 **Data Requirements:**
 - [ ] Persist selected traits to: `identity_docs.json.active_traits` (array of 3 strings)

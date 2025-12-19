@@ -196,14 +196,45 @@ So that **the experience feels personally motivating and aligned with my communi
   - For now: Store in local state, add TODO comment for backend write
 
 **Behavioral & AI Impact (AC #22 - Non-User Facing)**
-Selected traits are used as primary personalization signals that influence:
+
+**CRITICAL PERSONALIZATION FRAMEWORK:**
+
+Identity traits selected in this step define **who the user wants to become** (aspirational state).
+Combined with painpoints from US-1.2 (current struggles), Weave constructs a personalized coaching voice that:
+1. **Acknowledges current reality** - References the user's selected painpoints (Clarity, Action, Consistency, Alignment)
+2. **Leverages aspirational identity** - Uses identity traits as motivational anchors in messaging
+3. **Bridges the gap** - Motivates user by connecting their actions to their desired identity
+
+**Example Personalization Patterns:**
+
+- **Painpoint:** Consistency (US-1.2) + **Trait:** Consistent Effort (US-1.6)
+  → Weave: "You still have a bind left. As someone who values consistent effort, you gotta make it happen."
+
+- **Painpoint:** Action (US-1.2) + **Trait:** Decisive Action (US-1.6)
+  → Weave: "You know you want this. Someone who values decisive action doesn't wait for permission."
+
+- **Painpoint:** Clarity (US-1.2) + **Trait:** Clear Direction (US-1.6)
+  → Weave: "You said you want clear direction. Let's choose one step right now instead of overthinking it."
+
+**AI Messaging Strategy:**
+- Identity traits inform Weave's **motivational language** and **value-based appeals**
+- Painpoints (from US-1.2) inform Weave's **empathy and understanding** of current struggles
+- Together, they create **tension-driven coaching**: "You're struggling with X, but you value Y. Let's act on Y."
+
+**Specific AI Behavior Influenced by Traits:**
 - [ ] Weave's tone (gentle vs direct vs challenging)
-- [ ] Bind difficulty and pacing
-- [ ] Reminder frequency and urgency
+- [ ] Bind difficulty and pacing recommendations
+- [ ] Reminder frequency and urgency level
 - [ ] Reflection depth and prompt style
-- [ ] Insight framing (performance-oriented vs introspective)
+- [ ] Insight framing (performance-oriented vs introspective vs empathetic)
+- [ ] Language in notifications, daily recaps, and triad generation
 - [ ] Traits represent initial intent, not fixed identity
 - [ ] Observed behavior can override trait assumptions over time
+
+**Data Dependencies:**
+- **Input 1:** `initial_painpoints` from US-1.2 (stored in `user_profiles.json`)
+- **Input 2:** `identity_traits` from US-1.6 Step 3 (stored in `user_profiles.json` or `identity_docs.json`)
+- **Output:** Personalized Weave messaging throughout the app
 
 **Event Tracking (AC #23)**
 - [ ] Track `identity_traits_selected` with array of selected traits + completion time
