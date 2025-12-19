@@ -1,8 +1,8 @@
-# Story 0.2b: Database Schema Refinement
+# Story 0.2b: Database Schema Refinement + Critical Tables
 
 **Status:** ready-for-dev
 **Epic:** Epic 0 - Foundation
-**Points:** 2
+**Points:** 4
 **Priority:** HIGH (Week 0 - Day 3-4)
 **Depends On:** Story 0.2a (Database Schema Core)
 
@@ -11,8 +11,8 @@
 ## Story
 
 **As a** development team,
-**I want** to review, optimize, and validate the database schema for performance and data integrity,
-**so that** we have a production-ready schema that supports all Sprint 1 queries efficiently with proper constraints and documentation.
+**I want** to review, optimize, and validate the database schema for performance and data integrity, AND add 4 critical tables required for Sprint 1 MVP,
+**so that** we have a production-ready schema that supports all Sprint 1 queries efficiently with proper constraints and documentation, enabling the core loop (bind completion, reflection, AI features) to function.
 
 ---
 
@@ -64,10 +64,13 @@
 - [ ] All unique constraints are intentional and documented
 - [ ] No N+1 query patterns identified in Sprint 1 features
 
-### AC 6: Missing Tables Added (If Needed)
-- [ ] Evaluate if daily_aggregates is needed for MVP (defer to Sprint 2+ if performance is acceptable)
-- [ ] Add any missing junction tables identified during review
-- [ ] Document decision to defer or include each additional table
+### AC 6: Critical Sprint 1 Tables Added ⭐ NEW
+- [ ] `daily_aggregates` table created (migration 009) - CRITICAL for dashboard performance
+- [ ] `triad_tasks` table created (migration 010) - CRITICAL for reflection workflow
+- [ ] `ai_runs` table created (migration 011) - HIGH for AI cost control and caching
+- [ ] `ai_artifacts` table created (migration 012) - HIGH for editable AI outputs
+- [ ] All 4 tables have proper indexes, constraints, and foreign keys
+- [ ] Performance testing shows dashboard query <10ms with daily_aggregates
 
 ---
 
@@ -440,27 +443,25 @@ WHERE si.user_id = $1 AND si.id = $2;
 ```
 ```
 
-### Task 7: Missing Tables Evaluation (AC: 6)
+### Task 7: Create Critical Sprint 1 Tables (AC: 6) ⭐ NEW
 
-#### Evaluate daily_aggregates Table
-- [ ] **Current State**: Not created in Story 0.2a
+**Context:** Schema validation analysis revealed 4 tables are CRITICAL for Sprint 1 MVP. Without these, Epic 3 (bind completion), Epic 4 (reflection), and Epic 6 (AI coaching) cannot be completed, and performance requirements will fail.
+
+#### Migration 009: daily_aggregates (CRITICAL)
 - [ ] **Purpose**: Pre-computed daily stats for dashboard performance
-- [ ] **Decision Criteria**: Add if dashboard query >100ms with realistic data
-- [ ] **Test**: Run dashboard query with 90 days of data for 100 test users
-- [ ] **Recommendation**:
-  - If <100ms: Defer to Sprint 2+ (post-MVP)
-  - If >100ms: Add in this story
+- [ ] **Why Required**: Without this, dashboard queries will take 200ms+ (fails <1s requirement)
+- [ ] **Performance Impact**: With this table, dashboard queries take <10ms
 
-**Schema (if needed):**
+**Schema:**
 ```sql
--- 010_daily_aggregates.sql (optional)
+-- 009_daily_aggregates.sql
 CREATE TABLE daily_aggregates (
   user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
   local_date DATE NOT NULL,
   completed_count INT DEFAULT 0,
   has_journal BOOLEAN DEFAULT FALSE,
   has_proof BOOLEAN DEFAULT FALSE,
-  active_day_with_proof BOOLEAN DEFAULT FALSE,
+  active_day_with_proof BOOLEAN DEFAULT FALSE, -- North Star metric
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   PRIMARY KEY (user_id, local_date)
 );
@@ -468,27 +469,87 @@ CREATE TABLE daily_aggregates (
 CREATE INDEX idx_daily_aggregates_user_date ON daily_aggregates(user_id, local_date DESC);
 ```
 
-#### Evaluate user_stats Table
-- [ ] **Purpose**: User-level aggregated stats (current streak, rank, total completions)
-- [ ] **Recommendation**: Defer to Sprint 2+ (when Progress Dashboard is implemented)
-- [ ] **Rationale**: Not needed until Epic 5 (Progress Visualization)
+#### Migration 010: triad_tasks (CRITICAL)
+- [ ] **Purpose**: Store AI-generated 3-task plan for tomorrow
+- [ ] **Why Required**: Without this, evening reflection workflow is incomplete (Epic 4)
+- [ ] **Feature Blocker**: Can't implement FR-3.2 (View Triad)
 
-#### Evaluate subtask_proofs Junction Table
-- [ ] **Purpose**: Link captures to subtask instances as proof
-- [ ] **Decision**: Include if Proof feature is Sprint 1 (Epic 3)
-- [ ] **Check**: Review Sprint 1 stories - is proof attachment included?
-- [ ] **Recommendation**: Add if needed for Sprint 1
-
-**Schema (if needed):**
+**Schema:**
 ```sql
--- 011_subtask_proofs.sql (if needed)
-CREATE TABLE subtask_proofs (
-  subtask_instance_id UUID NOT NULL REFERENCES subtask_instances(id) ON DELETE CASCADE,
-  capture_id UUID NOT NULL REFERENCES captures(id) ON DELETE CASCADE,
+-- 010_triad_tasks.sql
+CREATE TABLE triad_tasks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+  date_for DATE NOT NULL,
+  rank INT NOT NULL CHECK (rank >= 1 AND rank <= 3),
+  title TEXT NOT NULL,
+  linked_subtask_instance_id UUID REFERENCES subtask_instances(id) ON DELETE SET NULL,
+  generated_by_run_id UUID REFERENCES ai_runs(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  PRIMARY KEY (subtask_instance_id, capture_id)
+  UNIQUE(user_id, date_for, rank)
 );
+
+CREATE INDEX idx_triad_tasks_user_date ON triad_tasks(user_id, date_for);
 ```
+
+#### Migration 011: ai_runs (HIGH PRIORITY)
+- [ ] **Purpose**: Track AI generation runs for caching, cost tracking, debugging
+- [ ] **Why Required**: AI-C1-C4 cost control requirements, deterministic fallback chain
+- [ ] **Cost Impact**: Without this, no AI cost tracking ($2,500/month budget at risk)
+
+**Schema:**
+```sql
+-- 011_ai_runs.sql
+CREATE TYPE ai_module AS ENUM ('onboarding', 'triad', 'recap', 'dream_self', 'weekly_insights');
+CREATE TYPE ai_run_status AS ENUM ('queued', 'running', 'success', 'failed');
+
+CREATE TABLE ai_runs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+  module ai_module NOT NULL,
+  input_hash TEXT NOT NULL,          -- For caching/deduplication
+  prompt_version TEXT NOT NULL,
+  model TEXT NOT NULL,               -- 'gpt-4o-mini' or 'claude-3.7-sonnet'
+  params_json JSONB,
+  status ai_run_status DEFAULT 'queued',
+  cost_estimate NUMERIC,             -- USD cost tracking
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_ai_runs_user_module ON ai_runs(user_id, module);
+CREATE INDEX idx_ai_runs_input_hash ON ai_runs(input_hash);
+```
+
+#### Migration 012: ai_artifacts (HIGH PRIORITY)
+- [ ] **Purpose**: Store editable AI outputs (goal trees, insights, triads)
+- [ ] **Why Required**: Architecture principle "Editable by default - Every AI-generated plan can be edited"
+- [ ] **Feature Blocker**: Can't implement user editing of AI responses
+
+**Schema:**
+```sql
+-- 012_ai_artifacts.sql
+CREATE TYPE artifact_type AS ENUM ('goal_tree', 'triad', 'recap', 'insight', 'message');
+
+CREATE TABLE ai_artifacts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  run_id UUID NOT NULL REFERENCES ai_runs(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+  type artifact_type NOT NULL,
+  json JSONB NOT NULL,               -- Schema-validated AI output
+  is_user_edited BOOLEAN DEFAULT FALSE,
+  supersedes_id UUID REFERENCES ai_artifacts(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_ai_artifacts_user_type ON ai_artifacts(user_id, type);
+CREATE INDEX idx_ai_artifacts_run ON ai_artifacts(run_id);
+```
+
+#### Deferred Tables (Sprint 2+)
+- [ ] **user_stats** - Defer to Sprint 2+ (Progress Dashboard - Epic 5)
+- [ ] **subtask_proofs** - Defer to Sprint 3 (Trust-based proof, no verification needed for MVP)
+- [ ] **qgoals** - Defer to Sprint 2+ (Goal decomposition can use simpler logic for MVP)
+- [ ] **badges** + **user_badges** - Defer to Sprint 4 (Achievement system is v1.1 feature)
 
 ### Task 8: Documentation Updates (AC: 3)
 
