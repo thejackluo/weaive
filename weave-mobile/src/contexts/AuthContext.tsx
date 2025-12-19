@@ -36,7 +36,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@lib/supabase';
 
 /**
  * OAuth Provider Types
@@ -251,11 +251,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Sign out current user
+   * Uses 'local' scope to avoid AuthSessionMissingError on React Native
+   * See: https://github.com/supabase/supabase-js/issues/1543
    */
   const signOut = async (): Promise<void> => {
     try {
       setError(null);
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
 
       if (error) {
         setError(error);
