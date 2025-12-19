@@ -317,6 +317,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         options: {
           redirectTo: 'weavelight://', // Deep link scheme (must match app.json "scheme" field)
           skipBrowserRedirect: false,
+          queryParams: {
+            // Force Google to show consent screen every time (for testing)
+            // Remove this in production for better UX
+            prompt: 'consent',
+            // Also re-prompt for account selection
+            access_type: 'offline',
+          },
         },
       });
 
