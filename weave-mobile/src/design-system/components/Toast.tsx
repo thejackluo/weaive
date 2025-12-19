@@ -271,6 +271,7 @@ class ToastManager {
    * Set the listener function
    */
   setListener(listener: (config: ToastConfig | null) => void) {
+    console.log('[TOAST_MANAGER] Listener registered:', !!listener);
     this.listener = listener;
   }
 
@@ -278,8 +279,12 @@ class ToastManager {
    * Show a toast notification
    */
   show(message: string, type: ToastType = 'info', duration?: number) {
+    console.log('[TOAST_MANAGER] show() called:', { message, type, duration, hasListener: !!this.listener });
     if (this.listener) {
       this.listener({ message, type, duration });
+      console.log('[TOAST_MANAGER] Toast config sent to listener');
+    } else {
+      console.warn('[TOAST_MANAGER] No listener registered! Toast will not display.');
     }
   }
 
@@ -287,6 +292,7 @@ class ToastManager {
    * Hide current toast
    */
   hide() {
+    console.log('[TOAST_MANAGER] hide() called');
     if (this.listener) {
       this.listener(null);
     }
@@ -303,11 +309,25 @@ export function ToastContainer() {
   const [toastConfig, setToastConfig] = useState<ToastConfig | null>(null);
 
   useEffect(() => {
+    console.log('[TOAST_CONTAINER] Mounted, registering listener');
     toastManager.setListener(setToastConfig);
-    return () => toastManager.setListener(() => {});
+    return () => {
+      console.log('[TOAST_CONTAINER] Unmounting, removing listener');
+      toastManager.setListener(() => {});
+    };
   }, []);
 
+  useEffect(() => {
+    if (toastConfig) {
+      console.log('[TOAST_CONTAINER] Toast config updated, rendering toast:', toastConfig);
+    } else {
+      console.log('[TOAST_CONTAINER] No toast config, not rendering');
+    }
+  }, [toastConfig]);
+
   if (!toastConfig) return null;
+
+  console.log('[TOAST_CONTAINER] Rendering Toast component with:', toastConfig);
 
   return (
     <Toast
@@ -340,5 +360,6 @@ export function showToast(
   type: ToastType = 'info',
   duration?: number
 ) {
+  console.log('[SHOW_TOAST] Function called with:', { message, type, duration });
   toastManager.show(message, type, duration);
 }

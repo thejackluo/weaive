@@ -39,6 +39,7 @@ export default function HomeScreen() {
               await signOut();
 
               // Show success toast
+              console.log('[HOME] Calling showToast for logout...');
               showToast('Signed out successfully. See you soon! 👋', 'success');
 
               // Redirect handled automatically by auth state change in _layout.tsx
@@ -56,12 +57,37 @@ export default function HomeScreen() {
   };
 
   return (
-    <View className="flex-1 items-center justify-center bg-background-primary p-4 gap-6">
-      <View className="items-center gap-2">
-        <Text className="text-7xl font-bold text-text-primary">Weave MVP</Text>
-        <Text className="text-base text-text-secondary">Foundation Setup Complete ✅</Text>
+    <View style={{
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#0F0F10',
+      padding: 24,
+      gap: 24,
+    }}>
+      <View style={{ alignItems: 'center', gap: 12 }}>
+        <Text style={{
+          fontSize: 48,
+          fontWeight: 'bold',
+          color: '#FAFAFA',
+          textAlign: 'center',
+        }}>
+          Weave MVP
+        </Text>
+        <Text style={{
+          fontSize: 18,
+          color: '#A1A1AA',
+          textAlign: 'center',
+        }}>
+          Foundation Setup Complete ✅
+        </Text>
         {user && (
-          <Text className="text-sm text-text-muted mt-2">
+          <Text style={{
+            fontSize: 14,
+            color: '#71717A',
+            marginTop: 8,
+            textAlign: 'center',
+          }}>
             Signed in as: {user.email}
           </Text>
         )}
@@ -70,9 +96,20 @@ export default function HomeScreen() {
       {/* Design System Preview Button */}
       <Pressable
         onPress={() => router.push('/(tabs)/design-system-showcase')}
-        className="bg-accent-500 px-6 py-4 rounded-lg active:opacity-80 active:scale-98"
+        style={{
+          backgroundColor: '#8B5CF6',
+          paddingHorizontal: 24,
+          paddingVertical: 16,
+          borderRadius: 12,
+        }}
       >
-        <Text className="text-dark-900 text-sm font-medium tracking-wide">View Design System</Text>
+        <Text style={{
+          color: '#FAFAFA',
+          fontSize: 16,
+          fontWeight: '600',
+        }}>
+          View Design System
+        </Text>
       </Pressable>
 
       {/* Logout Button (Story 0.3 - Testing) */}
@@ -89,12 +126,14 @@ export default function HomeScreen() {
         </Button>
       </View>
 
-      <View className="absolute bottom-8 items-center">
-        <Text className="text-text-muted text-xs">React Native-First Design System</Text>
-        <Text className="text-text-muted text-xs">
+      <View style={{ position: 'absolute', bottom: 32, alignItems: 'center' }}>
+        <Text style={{ color: '#71717A', fontSize: 12 }}>
+          React Native-First Design System
+        </Text>
+        <Text style={{ color: '#71717A', fontSize: 12 }}>
           NativeWind v5 • Tailwind v4 • Liquid Glass UI
         </Text>
-        <Text className="text-text-muted text-xs mt-2">
+        <Text style={{ color: '#71717A', fontSize: 12, marginTop: 8 }}>
           Story 0.3: Authentication Flow
         </Text>
       </View>
