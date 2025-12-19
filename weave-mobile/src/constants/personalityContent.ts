@@ -24,28 +24,28 @@ export const PERSONAS: PersonaContent[] = [
     exampleLines: [
       "You don't need motivation — just one clear step. Let's choose it.",
       "You're capable. More than you think. Let's act on it.",
-      "If you slipped, just reset. One small restart changes everything."
+      'If you slipped, just reset. One small restart changes everything.',
     ],
-    caseSensitive: true // Proper casing
+    caseSensitive: true, // Proper casing
   },
   {
     id: 'tough_warm',
     title: 'Tough but Warm',
     subtitle: 'Gen Z-coded, playful, dry humor, gently confrontational, gender-neutral',
     exampleLines: [
-      "alright, lock in. you said you wanted this.",
-      "nice. that was actually clean. keep the pace.",
-      "bro… where'd you go 💀 let's get back to it."
+      'alright, lock in. you said you wanted this.',
+      'nice. that was actually clean. keep the pace.',
+      "bro… where'd you go 💀 let's get back to it.",
     ],
-    caseSensitive: false // Lowercase + emoji
-  }
+    caseSensitive: false, // Lowercase + emoji
+  },
 ];
 
 /**
  * Get persona content by ID
  */
 export function getPersonaById(id: PersonalityType): PersonaContent | undefined {
-  return PERSONAS.find(p => p.id === id);
+  return PERSONAS.find((p) => p.id === id);
 }
 
 /**
