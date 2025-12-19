@@ -79,7 +79,7 @@
 ### 3. Epics/Stories Readiness (6.5/10)
 
 **Strengths:**
-- Sprint 1 critical path identified (66 points)
+- Sprint 1 critical path identified (68 points)
 - Story blocking dependencies mapped
 - Return States (UX-R) integrated
 - Clear priorities (P0, P1, P2)
@@ -88,13 +88,13 @@
 
 | Issue | Details |
 |-------|---------|
-| **Over-commitment** | 66 points planned, capacity is ~50 points (20-32% over) |
+| **Over-commitment** | 68 points planned, capacity is ~50 points (36% over) |
 | **AI stories undefined** | 1.6a, 1.6b, 6.2 lack concrete implementation strategy |
 | **Serial dependency chain** | 1.6a → 1.6b → 1.6c creates blocking bottleneck |
 | **Infrastructure underestimated** | 0.1, 0.2 hide significant complexity |
 
 **Sprint 1 Viability:**
-- **Current scope (66 pts):** 30% confidence to deliver
+- **Current scope (68 pts):** 25% confidence to deliver
 - **Reduced scope (48 pts):** 75% confidence to deliver
 
 **Recommended Revised Scope:**
