@@ -36,17 +36,22 @@ CREATE INDEX IF NOT EXISTS idx_user_profiles_created_at
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Users can only read/update their own profile
+-- Note: These policies may already exist from 20251219170656_row_level_security.sql
+-- Using DROP IF EXISTS to avoid conflicts
+DROP POLICY IF EXISTS "Users can view own profile" ON public.user_profiles;
 CREATE POLICY "Users can view own profile"
   ON public.user_profiles
   FOR SELECT
   USING (auth.uid()::text = auth_user_id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON public.user_profiles;
 CREATE POLICY "Users can update own profile"
   ON public.user_profiles
   FOR UPDATE
   USING (auth.uid()::text = auth_user_id);
 
 -- RLS Policy: Allow service role to insert (for trigger)
+DROP POLICY IF EXISTS "Service role can insert profiles" ON public.user_profiles;
 CREATE POLICY "Service role can insert profiles"
   ON public.user_profiles
   FOR INSERT
