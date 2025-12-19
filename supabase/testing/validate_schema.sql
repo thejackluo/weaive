@@ -144,15 +144,15 @@ BEGIN
   END IF;
 
   -- subtask_completions columns (IMMUTABLE table)
-  SELECT COUNT(*) = 6 INTO col_exists
+  SELECT COUNT(*) = 7 INTO col_exists
   FROM information_schema.columns
   WHERE table_name = 'subtask_completions'
-  AND column_name IN ('id', 'user_id', 'instance_id', 'local_date', 'duration_minutes', 'completed_at');
+  AND column_name IN ('id', 'user_id', 'subtask_instance_id', 'local_date', 'duration_minutes', 'completed_at', 'created_at');
 
   IF col_exists THEN
-    INSERT INTO validation_results VALUES ('COLUMNS', 'subtask_completions (all 6 columns)', '✅ PASS', 'All required columns exist');
+    INSERT INTO validation_results VALUES ('COLUMNS', 'subtask_completions (all 7 columns)', '✅ PASS', 'All required columns exist');
   ELSE
-    INSERT INTO validation_results VALUES ('COLUMNS', 'subtask_completions (all 6 columns)', '❌ FAIL', 'Missing one or more columns');
+    INSERT INTO validation_results VALUES ('COLUMNS', 'subtask_completions (all 7 columns)', '❌ FAIL', 'Missing one or more columns');
   END IF;
 
   -- daily_aggregates.active_day_with_proof (North Star metric)
