@@ -1,4 +1,4 @@
-import { ViewProps } from 'react-native';
+import { ViewProps, StyleProp, ViewStyle } from 'react-native';
 
 export type CardVariant =
   | 'default'
@@ -9,9 +9,9 @@ export type CardVariant =
   | 'success'
   | 'subtle';
 
-export type CardPadding = 'none' | 'compact' | 'default' | 'spacious';
+export type CardPadding = 'none' | 'sm' | 'compact' | 'default' | 'spacious';
 
-export interface CardProps extends ViewProps {
+export interface CardProps extends Omit<ViewProps, 'style'> {
   /**
    * Card variant from design system
    * @default 'default'
@@ -43,4 +43,9 @@ export interface CardProps extends ViewProps {
    * NativeWind className
    */
   className?: string;
+
+  /**
+   * Inline style prop (supports arrays and objects)
+   */
+  style?: StyleProp<ViewStyle>;
 }
