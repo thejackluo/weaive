@@ -36,7 +36,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 /**
  * OAuth Provider Types
