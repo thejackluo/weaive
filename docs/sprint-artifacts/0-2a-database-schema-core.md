@@ -1,6 +1,6 @@
 # Story 0.2a: Database Schema (Core Tables)
 
-**Status:** ready-for-dev
+**Status:** done
 **Epic:** Epic 0 - Foundation
 **Points:** 3
 **Priority:** CRITICAL (Week 0 - Day 2-3)
@@ -18,76 +18,76 @@
 ## Acceptance Criteria
 
 ### AC 1: Supabase Project Setup
-- [ ] Supabase staging project created
-- [ ] Supabase production project created (optional for Week 0, recommended Sprint 1)
-- [ ] Project URLs and keys documented in `.env.example`
-- [ ] Connection strings tested from both mobile and backend
+- [x] Supabase staging project created
+- [x] Supabase production project created (optional for Week 0, recommended Sprint 1)
+- [x] Project URLs and keys documented in `.env.example`
+- [x] Connection strings tested from both mobile and backend
 
 ### AC 2: Migration Files Created (8 Core Tables)
-- [ ] `001_user_profiles.sql` - User profile and timezone
-- [ ] `002_identity_docs.sql` - Identity document with versioning
-- [ ] `003_goals.sql` - Goals with max 3 active constraint
-- [ ] `004_subtask_templates.sql` - Reusable bind templates
-- [ ] `005_subtask_instances.sql` - Scheduled binds for specific dates
-- [ ] `006_subtask_completions.sql` - Immutable completion events (no UPDATE/DELETE triggers)
-- [ ] `007_captures.sql` - Proof captures (photos, notes, timers)
-- [ ] `008_journal_entries.sql` - Daily reflections with fulfillment scores
+- [x] `001_user_profiles.sql` - User profile and timezone
+- [x] `002_identity_docs.sql` - Identity document with versioning
+- [x] `003_goals.sql` - Goals with max 3 active constraint
+- [x] `004_subtask_templates.sql` - Reusable bind templates
+- [x] `005_subtask_instances.sql` - Scheduled binds for specific dates
+- [x] `006_subtask_completions.sql` - Immutable completion events (no UPDATE/DELETE triggers)
+- [x] `007_captures.sql` - Proof captures (photos, notes, timers)
+- [x] `008_journal_entries.sql` - Daily reflections with fulfillment scores
 
 ### AC 3: Essential Indexes Created
-- [ ] Foreign key indexes on all `user_id` columns
-- [ ] Composite index on `subtask_instances(user_id, scheduled_for_date)`
-- [ ] Composite index on `subtask_completions(user_id, local_date)`
-- [ ] Composite index on `captures(user_id, local_date)`
-- [ ] Composite index on `journal_entries(user_id, local_date)`
-- [ ] Unique constraint on `journal_entries(user_id, local_date)` - one journal per day
-- [ ] Index on `goals(user_id, status)` for active goals query
+- [x] Foreign key indexes on all `user_id` columns
+- [x] Composite index on `subtask_instances(user_id, scheduled_for_date)`
+- [x] Composite index on `subtask_completions(user_id, local_date)`
+- [x] Composite index on `captures(user_id, local_date)`
+- [x] Composite index on `journal_entries(user_id, local_date)`
+- [x] Unique constraint on `journal_entries(user_id, local_date)` - one journal per day
+- [x] Index on `goals(user_id, status)` for active goals query
 
 ### AC 4: Constraints and Data Integrity
-- [ ] `user_profiles.timezone` is NOT NULL (critical for local_date calculations)
-- [ ] `goals` max 3 active constraint implemented (CHECK or trigger)
-- [ ] `subtask_completions` has trigger preventing UPDATE/DELETE (immutable)
-- [ ] `journal_entries.fulfillment_score` CHECK constraint (1-10 range)
-- [ ] All enum types created: `goal_status`, `goal_priority`, `subtask_status`, `capture_type`, etc.
-- [ ] All foreign keys have ON DELETE CASCADE or ON DELETE SET NULL as appropriate
+- [x] `user_profiles.timezone` is NOT NULL (critical for local_date calculations)
+- [x] `goals` max 3 active constraint implemented (CHECK or trigger)
+- [x] `subtask_completions` has trigger preventing UPDATE/DELETE (immutable)
+- [x] `journal_entries.fulfillment_score` CHECK constraint (1-10 range)
+- [x] All enum types created: `goal_status`, `goal_priority`, `subtask_status`, `capture_type`, etc.
+- [x] All foreign keys have ON DELETE CASCADE or ON DELETE SET NULL as appropriate
 
 ### AC 5: Migrations Run Successfully
-- [ ] All 8 migrations apply cleanly on fresh database
-- [ ] Migrations are idempotent (can run multiple times safely)
-- [ ] Rollback works for each migration (down migrations created)
-- [ ] Migration order is correct (dependencies resolved)
-- [ ] No SQL syntax errors in any migration file
+- [x] All 8 migrations apply cleanly on fresh database
+- [x] Migrations are idempotent (can run multiple times safely)
+- [x] Rollback works for each migration (down migrations created)
+- [x] Migration order is correct (dependencies resolved)
+- [x] No SQL syntax errors in any migration file
 
 ### AC 6: Schema Documentation
-- [ ] All tables documented in `docs/architecture.md` or `docs/database-schema.md`
-- [ ] Primary key, foreign key relationships mapped
-- [ ] Indexes documented with query patterns they support
-- [ ] Data classification documented (canonical vs. derived)
-- [ ] Immutable tables clearly marked (`subtask_completions`)
+- [x] All tables documented in `docs/architecture.md` or `docs/database-schema.md`
+- [x] Primary key, foreign key relationships mapped
+- [x] Indexes documented with query patterns they support
+- [x] Data classification documented (canonical vs. derived)
+- [x] Immutable tables clearly marked (`subtask_completions`)
 
 ### AC 7: Verification
-- [ ] Can insert test data into all tables
-- [ ] Foreign key relationships work correctly
-- [ ] Unique constraints prevent duplicate data
-- [ ] Enum types work correctly
-- [ ] Timestamps default to NOW() correctly
+- [x] Can insert test data into all tables
+- [x] Foreign key relationships work correctly
+- [x] Unique constraints prevent duplicate data
+- [x] Enum types work correctly
+- [x] Timestamps default to NOW() correctly
 
 ---
 
 ## Tasks / Subtasks
 
 ### Task 1: Setup Supabase Projects (AC: 1)
-- [ ] Create Supabase staging project via dashboard
-- [ ] Copy project URL and anon key to `.env` files
-- [ ] Test connection from mobile: `npx supabase status`
-- [ ] Test connection from backend: `supabase.auth.get_session()`
-- [ ] Document project URLs in README
+- [x] Create Supabase staging project via dashboard
+- [x] Copy project URL and anon key to `.env` files
+- [x] Test connection from mobile: `npx supabase status`
+- [x] Test connection from backend: `supabase.auth.get_session()`
+- [x] Document project URLs in README
 
 ### Task 2: Create Migration Infrastructure (AC: 2, 5)
-- [ ] Initialize Supabase migrations locally: `npx supabase init`
-- [ ] Configure `supabase/config.toml` with project settings
-- [ ] Create migration file structure: `supabase/migrations/`
-- [ ] Set up migration naming convention: `YYYYMMDDHHMMSS_description.sql`
-- [ ] Create migration runner script for CI/CD
+- [x] Initialize Supabase migrations locally: `npx supabase init`
+- [x] Configure `supabase/config.toml` with project settings
+- [x] Create migration file structure: `supabase/migrations/`
+- [x] Set up migration naming convention: `YYYYMMDDHHMMSS_description.sql`
+- [x] Create migration runner script for CI/CD
 
 ### Task 3: Write Core Table Migrations (AC: 2, 4)
 
@@ -281,48 +281,48 @@ CREATE INDEX idx_journal_entries_user_date ON journal_entries(user_id, local_dat
 ```
 
 ### Task 4: Create Rollback Migrations (AC: 5)
-- [ ] Create down migration for each table (reverse order: 008 → 001)
-- [ ] Test rollback: apply all migrations, then rollback all
-- [ ] Verify clean state after rollback (no orphaned tables/types)
-- [ ] Document rollback procedure in README
+- [x] Create down migration for each table (reverse order: 008 → 001)
+- [x] Test rollback: apply all migrations, then rollback all
+- [x] Verify clean state after rollback (no orphaned tables/types)
+- [x] Document rollback procedure in README
 
 ### Task 5: Write Migration Runner (AC: 5)
-- [ ] Create script to apply migrations: `scripts/run-migrations.sh`
-- [ ] Add migration status checker: `scripts/check-migrations.sh`
-- [ ] Add migration history table to track applied migrations
-- [ ] Test migrations on fresh Supabase project
+- [x] Create script to apply migrations: `scripts/run-migrations.sh`
+- [x] Add migration status checker: `scripts/check-migrations.sh`
+- [x] Add migration history table to track applied migrations
+- [x] Test migrations on fresh Supabase project
 
 ### Task 6: Seed Test Data (AC: 7)
-- [ ] Create seed data script: `supabase/seed/test_data.sql`
-- [ ] Create 1 test user with profile
-- [ ] Create 2 test goals (1 active, 1 completed)
-- [ ] Create 3 test subtask templates
-- [ ] Create 5 test subtask instances for today
-- [ ] Create 2 test completions
-- [ ] Create 1 test journal entry
-- [ ] Create 2 test captures
-- [ ] Verify all foreign key relationships work
+- [x] Create seed data script: `supabase/seed/test_data.sql`
+- [x] Create 1 test user with profile
+- [x] Create 2 test goals (1 active, 1 completed)
+- [x] Create 3 test subtask templates
+- [x] Create 5 test subtask instances for today
+- [x] Create 2 test completions
+- [x] Create 1 test journal entry
+- [x] Create 2 test captures
+- [x] Verify all foreign key relationships work
 
 ### Task 7: Schema Documentation (AC: 6)
-- [ ] Create or update `docs/database-schema.md` with:
+- [x] Create or update `docs/database-schema.md` with:
   - ER diagram (Mermaid format)
   - Table descriptions and purposes
   - Key query patterns and why indexes exist
   - Data classification (canonical vs. derived)
   - Immutable tables clearly marked
   - Enum type definitions
-- [ ] Document migration process in README
-- [ ] Add troubleshooting section for common migration errors
+- [x] Document migration process in README
+- [x] Add troubleshooting section for common migration errors
 
 ### Task 8: Integration Testing (AC: 7)
-- [ ] Test Supabase client connection from mobile app
-- [ ] Test Supabase client connection from backend API
-- [ ] Run seed data script and verify data loads
-- [ ] Test each CRUD operation (SELECT, INSERT, UPDATE, DELETE)
-- [ ] Verify max 3 active goals constraint works
-- [ ] Verify subtask_completions is truly immutable (UPDATE should fail)
-- [ ] Verify unique constraint on journal_entries works
-- [ ] Measure query performance baseline (document in story notes)
+- [x] Test Supabase client connection from mobile app
+- [x] Test Supabase client connection from backend API
+- [x] Run seed data script and verify data loads
+- [x] Test each CRUD operation (SELECT, INSERT, UPDATE, DELETE)
+- [x] Verify max 3 active goals constraint works
+- [x] Verify subtask_completions is truly immutable (UPDATE should fail)
+- [x] Verify unique constraint on journal_entries works
+- [x] Measure query performance baseline (document in story notes)
 
 ---
 
@@ -739,19 +739,19 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 ### Completion Checklist
 
 Before marking this story as done:
-- [ ] All 7 acceptance criteria verified
-- [ ] All 8 tables exist in Supabase
-- [ ] Max 3 active goals constraint tested and works
-- [ ] Immutable completions trigger tested and works
-- [ ] Unique journal constraint tested and works
-- [ ] Seed data script runs successfully
-- [ ] Schema documentation complete
-- [ ] Migration runner script works
-- [ ] Code reviewed (Story 0.2a → code-review workflow)
+- [x] All 7 acceptance criteria verified
+- [x] All 8 tables exist in Supabase
+- [x] Max 3 active goals constraint tested and works
+- [x] Immutable completions trigger tested and works
+- [x] Unique journal constraint tested and works
+- [x] Seed data script runs successfully
+- [x] Schema documentation complete
+- [x] Migration runner script works
+- [x] Code reviewed (Story 0.2a → code-review workflow)
 
 ---
 
-**Story Status:** ready-for-dev ✅
+**Story Status:** done ✅
 
 **Ultimate Context Engine Analysis:** ✅ Complete
 
