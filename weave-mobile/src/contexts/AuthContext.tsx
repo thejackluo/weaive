@@ -231,20 +231,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signUp = async (email: string, password: string): Promise<void> => {
     try {
       setError(null);
-      const { error } = await supabase.auth.signUp({
+      console.log('[AUTH] Attempting signup with email:', email);
+
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (error) {
+        console.error('[AUTH] Supabase signup error:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+          code: (error as any).code,
+          details: error,
+        });
         setError(error);
         throw error;
       }
 
+      console.log('[AUTH] Signup successful:', {
+        user: data.user?.id,
+        session: !!data.session,
+        needsConfirmation: !data.session && !!data.user,
+      });
+
       // State will be updated automatically via onAuthStateChange
       // Note: User may need to verify email before session is active
     } catch (err) {
-      console.error('[AUTH] Sign up error:', err);
+      console.error('[AUTH] Sign up exception:', err);
       throw err;
     }
   };

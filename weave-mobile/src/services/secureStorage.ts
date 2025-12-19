@@ -35,13 +35,22 @@ export const secureStorage = {
       const credentials = await Keychain.getGenericPassword({ service: KEYCHAIN_SERVICE });
 
       if (credentials && credentials.password) {
-        const data = JSON.parse(credentials.password);
-        return data[key] || null;
+        try {
+          const data = JSON.parse(credentials.password);
+          return data[key] || null;
+        } catch (parseError) {
+          // JSON parse error - this IS a real error (corrupted data)
+          console.error('[SECURE_STORAGE] Error parsing keychain data:', parseError);
+          return null;
+        }
       }
 
+      // No credentials found - this is NORMAL on first app load
+      // Don't log as error, this is expected behavior
       return null;
     } catch (error) {
-      console.error('[SECURE_STORAGE] Error getting item from keychain:', error);
+      // Keychain access error - log this as it's unexpected
+      console.error('[SECURE_STORAGE] Error accessing keychain:', error);
       return null;
     }
   },
