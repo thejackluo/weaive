@@ -425,11 +425,97 @@ Product terms used in UI/docs vs. technical database terms:
 
 ## Security Model
 
-- **Row Level Security (RLS):** Required on all user-owned tables in Supabase
+- **Row Level Security (RLS):** ✅ Implemented on all 12 user-owned tables (Story 0.4)
 - **JWT verification:** Middleware for custom APIs
 - **File upload limits:** 10MB max, allowed types: JPEG, PNG, MP3
 - **Input validation:** Zod schemas for all API inputs
 - **Rate limiting:** AI (10 req/hr), Uploads (50/day), Completions (100/day)
+
+### RLS Quick Reference
+
+**Implementation:** Story 0.4 - Row Level Security
+**Migration:** `supabase/migrations/20251219170656_row_level_security.sql`
+**Tests:** `supabase/tests/rls_policies.test.sql` (48 tests)
+**Penetration Testing:** `scripts/test_rls_security.py`
+
+#### RLS Pattern: auth.uid() → user_profiles.id Lookup
+
+All user-owned tables use `user_profiles.id` as foreign key (NOT `auth.uid()` directly). RLS policies must lookup through `user_profiles.auth_user_id`:
+
+```sql
+-- Standard pattern for user-owned tables
+CREATE POLICY "users_manage_own_data" ON table_name
+    FOR ALL
+    USING (user_id IN (
+        SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text
+    ));
+```
+
+**Critical:** Must cast `auth.uid()::text` (UUID → TEXT) to match `auth_user_id` column type.
+
+#### RLS-Enabled Tables (12 total)
+
+| Table | Policy Type | Notes |
+|-------|-------------|-------|
+| `user_profiles` | SELECT, INSERT, UPDATE (3 policies) | No DELETE (use soft delete) |
+| `identity_docs` | FOR ALL | Full management |
+| `goals` | FOR ALL | Full management |
+| `subtask_templates` | FOR ALL | Full management |
+| `subtask_instances` | FOR ALL | Full management |
+| `subtask_completions` | SELECT + INSERT only | **Immutable** - no UPDATE/DELETE |
+| `captures` | FOR ALL | Full management |
+| `journal_entries` | FOR ALL | Full management |
+| `daily_aggregates` | FOR ALL | Full management |
+| `triad_tasks` | FOR ALL | Full management |
+| `ai_runs` | FOR ALL | Full management |
+| `ai_artifacts` | FOR ALL | Full management |
+
+#### Immutable Table Pattern (subtask_completions)
+
+Completions are append-only event logs. RLS enforces immutability:
+
+```sql
+-- SELECT policy
+CREATE POLICY "users_select_own_completions" ON subtask_completions
+    FOR SELECT
+    USING (user_id IN (SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text));
+
+-- INSERT policy
+CREATE POLICY "users_insert_own_completions" ON subtask_completions
+    FOR INSERT
+    WITH CHECK (user_id IN (SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text));
+
+-- NO UPDATE OR DELETE POLICIES = Immutable
+```
+
+#### Testing RLS Locally
+
+```bash
+# Start local Supabase
+npx supabase start
+
+# Apply migrations
+npx supabase db push
+
+# Run automated tests (requires Docker)
+npx supabase test db
+
+# Run penetration tests
+python scripts/test_rls_security.py
+```
+
+**Expected:** All 48 tests pass, 0 successful cross-user attacks.
+
+#### Adding RLS to New Tables
+
+When creating new user-owned tables:
+
+1. **Enable RLS:** `ALTER TABLE new_table ENABLE ROW LEVEL SECURITY;`
+2. **Add policy:** Use standard pattern above (FOR ALL or specific operations)
+3. **Write tests:** Add test cases in `supabase/tests/rls_policies.test.sql`
+4. **Update docs:** Add table to list above + `docs/security-architecture.md`
+
+**Reference:** Full RLS specification in `docs/security-architecture.md` (lines 189-312)
 
 ## MVP Scope
 
