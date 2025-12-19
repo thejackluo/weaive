@@ -31,8 +31,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from '@react-native-community/blur';
-import { Text } from './Text';
-import { useTheme } from '../theme/ThemeContext';
+import { Text } from './Text/Text';
+import { useTheme } from '../theme/ThemeProvider';
 
 /**
  * Toast Types
