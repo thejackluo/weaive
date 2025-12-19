@@ -1,7 +1,7 @@
 # Sprint Status Tracking
 # Generated: 2025-12-16 (Updated: 2025-12-17 for Epic 1 Hybrid Flow)
 # Project: Weave MVP
-# Total Scope: 299 story points across 9 epics (+27 pts from Epic 1 hybrid flow, includes name entry)
+# Total Scope: 300 story points across 9 epics (+28 pts from Epic 1 hybrid flow, includes name entry + personality)
 # Sprint Length: 2 weeks (10 work days)
 # Team Capacity: 50 points/sprint
 
@@ -62,14 +62,14 @@ week-0-stories:
 # ============================================================================
 # Duration: 2 weeks (Weeks 1-2)
 # Goal: Onboarding (Phases 1-5) + first bind + basic progress
-# Points: 58 (Epic 1: 34 pts, Epic 3: 16 pts, Epic 5: 8 pts)
+# Points: 59 (Epic 1: 35 pts, Epic 3: 16 pts, Epic 5: 8 pts)
 
 sprint-1-status: planned
 sprint-1-start-date: null
 sprint-1-end-date: null
 
 sprint-1-stories:
-  # Epic 1: Onboarding (Hybrid Flow) - Phases 1-5 (34 pts, was 33)
+  # Epic 1: Onboarding (Hybrid Flow) - Phases 1-5 (35 pts, was 33)
   epic-1: in-progress
   # Phase 1: Emotional Hook (Pre-Auth)
   1-1-welcome-vision-hook: done                 # 2 pts (front-end done, follow-ups documented)
@@ -78,7 +78,7 @@ sprint-1-stories:
   1-4-weave-solution: review                    # 2 pts (code review complete, tests created)
   1-5-authentication: review                    # 3 pts (front-end UI complete, pending manual testing on device)
   # Phase 2: Light Identity Bootup
-  1-6-name-and-identity-traits: backlog         # 4 pts (name entry + traits selection)
+  1-6-name-and-identity-traits: review          # 5 pts (name entry + personality + traits)
   1-7-first-needle-simple: backlog              # 3 pts
   # Phase 3: Early Value Proof
   1-8a-weave-path-generation-ui: backlog        # 3 pts
@@ -296,7 +296,7 @@ backlog-post-mvp:
 
 epic-completion:
   epic-0-foundation: 0/38              # Week 0: 0% complete
-  epic-1-onboarding-hybrid: 0/49       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1, Phases 6-7: Sprint 2, +1 for name entry)
+  epic-1-onboarding-hybrid: 0/50       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1, Phases 6-7: Sprint 2, +2 for name entry + personality)
   epic-2-goal-management: 0/27         # Sprint 3: 0% complete
   epic-3-daily-actions: 0/38           # Sprint 1-2, 5: 0% complete
   epic-4-reflection: 0/28              # Sprint 2: 0% complete
@@ -305,7 +305,7 @@ epic-completion:
   epic-7-notifications: 0/28           # Sprint 3, 5: 0% complete
   epic-8-settings: 0/23                # Sprint 3, 5: 0% complete
 
-total-completion: 0/299 (0%)
+total-completion: 0/300 (0%)
 
 # ============================================================================
 # VELOCITY TRACKING
@@ -317,7 +317,7 @@ velocity-history:
     actual: null
     completion-rate: null
   sprint-1:
-    planned: 58  # Updated from 48 for Epic 1 Hybrid Flow (+10 pts, includes name entry)
+    planned: 59  # Updated from 48 for Epic 1 Hybrid Flow (+11 pts, includes name entry + personality)
     actual: null
     completion-rate: null
   sprint-2:
