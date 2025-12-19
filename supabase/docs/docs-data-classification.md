@@ -1,0 +1,270 @@
+# Data Classification
+
+**Created:** 2025-12-18
+**Story:** 0.2b - Database Schema Refinement + Critical Tables
+**Purpose:** Define canonical truth vs. derived data, editable vs. read-only
+
+---
+
+## Canonical Truth (Immutable Event Logs)
+
+**Purpose:** Source of truth for all derived metrics. Never UPDATE or DELETE.
+
+| Table | Description | Why Immutable | Protection |
+|-------|-------------|---------------|------------|
+| **subtask_completions** | Bind completion events | Audit trail, streak calculations, consistency metrics | Triggers prevent UPDATE/DELETE |
+
+**Data Integrity Rules:**
+- **NO UPDATE operations** - Once written, completion events are permanent historical facts
+- **NO DELETE operations** - Preserves complete audit trail for compliance and debugging
+- **Append-only** - New events added via INSERT only
+- **Trigger protection** - Database-level enforcement prevents accidental modification
+
+**Why This Matters:**
+- **Streaks**: Calculated from consecutive days with completions. Modifying history would corrupt streaks.
+- **Consistency %**: Derived from completion_count / planned_count over time. Must be accurate.
+- **User trust**: Users need to trust their progress data is accurate and unmanipulated.
+- **Compliance**: Immutable event logs are required for audit trails in regulated industries.
+
+---
+
+## Derived Data (Recomputable)
+
+**Purpose:** Pre-computed for performance. Can be regenerated from canonical truth.
+
+| Table | Source Tables | Regeneration Trigger | Performance Impact |
+|-------|---------------|---------------------|-------------------|
+| **daily_aggregates** | subtask_completions, captures, journal_entries | On completion/capture/journal submit | 20x faster dashboard (200ms → 10ms) |
+
+**Regeneration Strategy:**
+- **Incremental updates**: Update only affected date when event occurs
+- **Batch recalculation**: Nightly job recalculates last 90 days for all users (optional)
+- **On-demand**: Can regenerate for specific user/date if data seems stale
+
+**When to Regenerate:**
+```sql
+-- Regenerate daily_aggregates for specific user/date
+INSERT INTO daily_aggregates (user_id, local_date, completed_count, planned_count, has_journal, has_proof)
+SELECT
+  sc.user_id,
+  sc.local_date,
+  COUNT(DISTINCT sc.id) as completed_count,
+  (SELECT COUNT(*) FROM subtask_instances WHERE user_id = sc.user_id AND scheduled_for_date = sc.local_date) as planned_count,
+  EXISTS(SELECT 1 FROM journal_entries WHERE user_id = sc.user_id AND local_date = sc.local_date) as has_journal,
+  EXISTS(SELECT 1 FROM captures WHERE user_id = sc.user_id AND local_date = sc.local_date AND subtask_instance_id IS NOT NULL) as has_proof
+FROM subtask_completions sc
+WHERE sc.user_id = ? AND sc.local_date = ?
+GROUP BY sc.user_id, sc.local_date
+ON CONFLICT (user_id, local_date) DO UPDATE
+SET completed_count = EXCLUDED.completed_count,
+    planned_count = EXCLUDED.planned_count,
+    has_journal = EXCLUDED.has_journal,
+    has_proof = EXCLUDED.has_proof,
+    updated_at = NOW();
+```
+
+---
+
+## Editable by User
+
+**Purpose:** User-controlled data that can be modified.
+
+| Table | What Users Can Edit | Versioning Strategy | Notes |
+|-------|---------------------|---------------------|-------|
+| **goals** | title, description, status, priority, dates | No versioning (updated_at timestamp) | Change warning in UI for active goals |
+| **subtask_templates** | title, recurrence, is_archived | No versioning | Affects future instances only |
+| **subtask_instances** | title_override, notes, status | No versioning | Single-instance customization |
+| **identity_docs** | All fields via new version | **Versioned (append-only)** | Each edit creates new version, AI uses latest |
+| **journal_entries** | text, fulfillment_score | updated_at timestamp | One journal per day, UPDATE for edits |
+| **captures** | content_text (notes only) | updated_at timestamp | Photos/audio immutable after upload |
+| **triad_tasks** | title, rank (reorder) | is_user_edited flag | AI suggestions are editable |
+| **ai_artifacts** | json (all AI outputs) | edit_count, supersedes_id | Track edit frequency for AI improvement |
+
+**Versioning Strategies:**
+
+### 1. Simple Update (Most Tables)
+- **When:** Data naturally supersedes old value (goal title change, journal edit)
+- **Implementation:** UPDATE with updated_at = NOW()
+- **History:** Optional audit log table if needed
+
+### 2. Append-Only Versioning (identity_docs)
+- **When:** Historical versions matter for AI context
+- **Implementation:** INSERT new row with version = MAX(version) + 1
+- **Query:** ORDER BY version DESC LIMIT 1 for latest
+
+### 3. Edit Tracking (AI outputs)
+- **When:** Need to measure AI accuracy and user corrections
+- **Implementation:** is_user_edited flag + edit_count increment
+- **Analytics:** High edit_count signals AI needs improvement
+
+---
+
+## Read-Only (System Generated)
+
+**Purpose:** System-generated data that users cannot directly edit.
+
+| Table | Generated By | User Visibility | Can User Influence? |
+|-------|-------------|-----------------|---------------------|
+| **user_profiles** | Supabase Auth + onboarding | Visible (display_name editable) | Via settings screen |
+| **triad_tasks** | AI after journal submit | Visible and **editable** | Via journal quality and feedback |
+| **ai_runs** | AI service layer | Hidden (dev/debug only) | Via input parameters |
+| **ai_artifacts** | AI generation | Visible and **editable** | Via "Not helpful" feedback |
+| **daily_aggregates** | Background calculation | Visible (dashboard stats) | Via completing binds/journal |
+
+**Important:** "Read-only" means direct DB editing is prevented, but users influence via actions (completing binds affects aggregates, journal input affects Triad).
+
+---
+
+## Security Classification
+
+### RLS Policies (Implemented in Story 0.4)
+
+| Table | RLS Policy | Access Pattern |
+|-------|-----------|----------------|
+| **All user-owned tables** | `user_id = auth.uid()` | SELECT, INSERT, UPDATE, DELETE |
+| **subtask_completions** | `user_id = auth.uid()` | SELECT, INSERT only (**NO UPDATE/DELETE**) |
+| **ai_runs** | `user_id = auth.uid()` | SELECT only (INSERT via service_role) |
+
+**Key Principles:**
+1. **Default Deny**: All tables have RLS enabled, deny by default
+2. **User Isolation**: Users can only see/modify their own data
+3. **Service Role Bypass**: Backend API uses service_role key for admin operations
+4. **Immutability Enforcement**: RLS + triggers double protection for completions
+
+### Data Sensitivity Levels
+
+| Level | Tables | Protection | Examples |
+|-------|--------|------------|----------|
+| **PII (High)** | user_profiles, identity_docs | Encrypted at rest + in transit | Email, display_name, dream_self |
+| **Private (Med)** | goals, journal_entries, captures | RLS + user isolation | Goal titles, journal text, photos |
+| **Derived (Low)** | daily_aggregates | RLS + recomputable | Completion counts, consistency % |
+| **System (Internal)** | ai_runs, ai_artifacts | RLS + service_role | AI costs, prompt versions |
+
+---
+
+## Query Optimization Strategy
+
+### When to Use Each Data Source
+
+| Use Case | Data Source | Query Pattern | Performance |
+|----------|-------------|---------------|-------------|
+| **Dashboard overview** | daily_aggregates | Single SELECT with date range | <10ms |
+| **Today's binds list** | subtask_instances | user_id + scheduled_for_date | <50ms |
+| **Streak calculation** | subtask_completions | user_id + local_date range | <100ms |
+| **User profile** | user_profiles + identity_docs (latest) | user_id + version DESC LIMIT 1 | <20ms |
+| **Journal history** | journal_entries | user_id + local_date range | <50ms |
+
+### N+1 Query Prevention
+
+**Anti-pattern (Slow):**
+```javascript
+// BAD: N+1 queries
+const goals = await supabase.from('goals').select('*').eq('user_id', userId);
+for (const goal of goals) {
+  const binds = await supabase.from('subtask_templates').select('*').eq('goal_id', goal.id);
+  goal.binds = binds;
+}
+```
+
+**Best Practice (Fast):**
+```javascript
+// GOOD: Single query with JOIN
+const goals = await supabase
+  .from('goals')
+  .select(`
+    *,
+    subtask_templates!goal_id (*)
+  `)
+  .eq('user_id', userId);
+```
+
+---
+
+## Data Retention & Deletion
+
+### Soft Delete Pattern
+
+| Table | Soft Delete Column | Retention Period | Hard Delete Trigger |
+|-------|-------------------|------------------|---------------------|
+| goals | deleted_at | 30 days | User account deletion |
+| captures | deleted_at | 30 days | User account deletion |
+| journal_entries | deleted_at | Never | User account deletion only |
+| subtask_completions | **No soft delete** | **Permanent** | User account deletion only |
+
+**Important:** subtask_completions has NO soft delete. Deletions only occur when user deletes entire account.
+
+### GDPR Compliance (Account Deletion)
+
+```sql
+-- When user requests account deletion (Right to be Forgotten)
+-- Cascade deletes via ON DELETE CASCADE foreign keys:
+DELETE FROM user_profiles WHERE auth_user_id = '<user-id>';
+
+-- This automatically deletes:
+-- - identity_docs (cascade)
+-- - goals (cascade)
+-- - subtask_templates (cascade)
+-- - subtask_instances (cascade)
+-- - subtask_completions (cascade) -- YES, even immutable data deleted for GDPR
+-- - captures (cascade)
+-- - journal_entries (cascade)
+-- - daily_aggregates (cascade)
+-- - triad_tasks (cascade)
+-- - ai_runs (cascade)
+-- - ai_artifacts (cascade)
+```
+
+---
+
+## Data Migration Strategy
+
+### Safe Schema Changes
+
+| Change Type | Safe? | Migration Strategy | Risk |
+|-------------|-------|-------------------|------|
+| **Add column with DEFAULT** | ✅ Yes | ALTER TABLE ADD COLUMN | None |
+| **Add nullable column** | ✅ Yes | ALTER TABLE ADD COLUMN | None |
+| **Add index** | ✅ Yes | CREATE INDEX CONCURRENTLY | Locks (use CONCURRENTLY) |
+| **Drop column** | ⚠️ Maybe | Two-phase: 1) Stop using, 2) Drop after deploy | Breaking change if not careful |
+| **Change NOT NULL to nullable** | ✅ Yes | ALTER TABLE ALTER COLUMN DROP NOT NULL | None |
+| **Change nullable to NOT NULL** | ⚠️ Maybe | 1) Backfill nulls, 2) Add constraint | Data validation required |
+| **Rename column** | ❌ No | Two-phase: 1) Add new + duplicate writes, 2) Drop old | Risky, avoid if possible |
+
+**Golden Rule:** Never run destructive migrations (DROP TABLE, DROP COLUMN, RENAME) without full backup and downtime window.
+
+---
+
+## Performance Monitoring
+
+### Key Metrics to Track
+
+| Metric | Target | Alert Threshold | Query |
+|--------|--------|-----------------|-------|
+| **Dashboard load time** | <100ms | >200ms | P95 latency |
+| **Today's binds query** | <50ms | >100ms | P95 latency |
+| **Completion write time** | <50ms | >100ms | P95 latency |
+| **AI cache hit rate** | >80% | <60% | input_hash matches / total ai_runs |
+| **Daily aggregate freshness** | <5min | >15min | MAX(updated_at) per user |
+
+### Slow Query Detection
+
+```sql
+-- Enable slow query logging (Supabase dashboard)
+ALTER DATABASE postgres SET log_min_duration_statement = '100ms';
+
+-- Find queries taking >100ms
+SELECT query, calls, mean_exec_time, max_exec_time
+FROM pg_stat_statements
+WHERE mean_exec_time > 100
+ORDER BY mean_exec_time DESC
+LIMIT 10;
+```
+
+---
+
+## References
+
+- [Story: docs/sprint-artifacts/0-2a-database-schema-core.md]
+- [Story: docs/sprint-artifacts/0-2b-database-schema-refinement.md]
+- [Architecture: docs/architecture.md#data-patterns]
+- [CLAUDE.md#data-classification-critical]
