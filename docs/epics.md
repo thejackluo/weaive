@@ -352,7 +352,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ## Epic List
 
-### Epic 0: Foundation (38 pts)
+### Epic 0: Foundation (40 pts)
 **User Outcome:** Development team has a fully scaffolded, secure, and testable codebase with authentication, database, and AI infrastructure ready for feature development.
 
 **FRs Covered:** FR-0.1, FR-0.2, FR-0.3, FR-0.4, FR-0.5, FR-0.6, FR-0.7, FR-0.8, FR-0.9
@@ -385,12 +385,13 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **AC:** Migrations run successfully on staging; rollback works; seed data loads
   - **DoD:** All tables exist with proper constraints, indexes documented
 
-- **Story 0.2b: Database Schema Refinement** (2 pts)
+- **Story 0.2b: Database Schema Refinement + Critical Tables** (4 pts)
   - Review and optimize schema based on architecture doc
   - Add missing constraints (CHECK, NOT NULL, DEFAULT)
   - Create composite indexes for common query patterns (user_id + local_date)
   - Document data classification (canonical vs. derived)
-  - **AC:** Schema supports all Sprint 1 queries efficiently; no N+1 query patterns
+  - **ADD 4 CRITICAL TABLES:** daily_aggregates, triad_tasks, ai_runs, ai_artifacts
+  - **AC:** Schema supports all Sprint 1 queries efficiently; no N+1 query patterns; dashboard <10ms with daily_aggregates
   - **DoD:** Schema validation checklist complete; performance baseline established
 
 - **Story 0.3: Authentication Flow** (3 pts)
@@ -464,7 +465,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **AC:** Memory storage works; retrieval returns relevant memories for AI context
   - **DoD:** Decision documented; schema ready for Sprint 2 implementation
 
-**Epic 0 Total: 38 points** (increased from 25 to capture complexity)
+**Epic 0 Total: 40 points** (increased from 38 after adding 4 critical tables to Story 0.2b)
 
 ---
 
@@ -726,7 +727,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 | Epic | Name | Story Points | Priority FRs (M) | Dependencies | Phase |
 |------|------|--------------|------------------|--------------|-------|
-| 0 | Foundation | 38 | 7 | None (True Foundation) | `[MVP]` |
+| 0 | Foundation | 40 | 7 | None (True Foundation) | `[MVP]` |
 | 1 | Onboarding & Identity | 35 | 8 | Epic 0 | `[MVP]` (core) + `[v1.2]` (full) |
 | 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1 | `[v1.2]` |
 | 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 2 | `[MVP]` (basic) + `[v1.1]` (enhanced) |
@@ -736,10 +737,10 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3 | `[v1.2]` |
 | 8 | Settings & Profile | 23 | 5 | Epic 0, 1 | `[v1.2]` |
 
-**Total:** 285 story points across 58 FRs
+**Total:** 287 story points across 58 FRs
 
 **Phase Breakdown:**
-- **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~66 pts (Sprint 1)
+- **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~68 pts (Sprint 1)
 - **v1.1:** Epic 3 (enhanced features), Epic 4 (all), Epic 5 (basic dashboard) = ~75 pts (Sprint 2-4)
 - **v1.2:** Epic 1 (full onboarding), Epic 2 (all), Epic 5 (advanced), Epic 6 (advanced), Epic 7 (all), Epic 8 (all) = ~131 pts (Sprint 5+)
 
@@ -994,7 +995,7 @@ Day 9-10: AI Companion (CRUCIAL)
 | **P2** | 6.1 AI Chat Interface | 5 | 0.6 | Chat UI |
 | **P2** | 6.2 Contextual AI Engine | 8 | 6.1, 0.6 | AI brain + Return UX |
 
-**Sprint 1 Total: 66 points**
+**Sprint 1 Total: 68 points**
 
 ### Sprint 1 Deferrals
 
