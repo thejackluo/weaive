@@ -16,7 +16,7 @@ import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Button, Text, Card, useTheme } from '@/design-system';
+import { Button, Text, useTheme } from '@/design-system';
 
 export default function TermsOfServiceScreen() {
   const router = useRouter();
@@ -127,10 +127,11 @@ export default function TermsOfServiceScreen() {
         </View>
 
         {/* Section 3 - AI Disclaimer (CRITICAL) */}
-        <Card
-          variant="glass"
-          padding="default"
-          style={[styles.section, { backgroundColor: `${colors.rose[500]}15` }]}
+        <View
+          style={[
+            styles.section,
+            { backgroundColor: `${colors.rose[500]}15`, padding: 16, borderRadius: 12 },
+          ]}
         >
           <Text variant="textLg" weight="semibold" style={{ color: colors.rose[400] }}>
             3. AI Coaching Disclaimer (CRITICAL - READ CAREFULLY)
@@ -142,10 +143,13 @@ export default function TermsOfServiceScreen() {
             </Text>
           </Text>
 
-          <Card
-            variant="glass"
-            padding="sm"
-            style={{ backgroundColor: `${colors.rose[500]}25`, marginBottom: spacing[3] }}
+          <View
+            style={{
+              backgroundColor: `${colors.rose[500]}25`,
+              marginBottom: spacing[3],
+              padding: 12,
+              borderRadius: 8,
+            }}
           >
             <Text variant="textSm" weight="semibold" style={{ color: colors.rose[300] }}>
               ⚠️ Important Limitations:
@@ -166,7 +170,7 @@ export default function TermsOfServiceScreen() {
                 • You make your own decisions - we provide suggestions, not directives
               </Text>
             </View>
-          </Card>
+          </View>
 
           <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             Mental Health Emergencies:
@@ -222,7 +226,7 @@ export default function TermsOfServiceScreen() {
             Weave and its creators are not liable for any decisions you make based on AI-generated
             content.
           </Text>
-        </Card>
+        </View>
 
         {/* Section 4 */}
         <View style={styles.section}>
@@ -640,10 +644,11 @@ export default function TermsOfServiceScreen() {
         </View>
 
         {/* Section 11 - Disclaimers & Liability */}
-        <Card
-          variant="glass"
-          padding="default"
-          style={[styles.section, { backgroundColor: `${colors.amber[500]}15` }]}
+        <View
+          style={[
+            styles.section,
+            { backgroundColor: `${colors.amber[500]}15`, padding: 16, borderRadius: 12 },
+          ]}
         >
           <Text variant="textLg" weight="semibold" style={{ color: colors.amber[400] }}>
             11. Disclaimers & Limitation of Liability
@@ -709,7 +714,7 @@ export default function TermsOfServiceScreen() {
             liability. In such cases, our liability is limited to the maximum extent permitted by
             law.
           </Text>
-        </Card>
+        </View>
 
         {/* Section 12 */}
         <View style={styles.section}>
@@ -927,11 +932,7 @@ export default function TermsOfServiceScreen() {
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
             Questions, concerns, or feedback about these Terms? Contact us:
           </Text>
-          <Card
-            variant="glass"
-            padding="default"
-            style={{ backgroundColor: `${colors.dark[800]}40` }}
-          >
+          <View style={{ backgroundColor: `${colors.dark[800]}40`, padding: 16, borderRadius: 12 }}>
             <View style={styles.bulletList}>
               <Text variant="textBase" color="primary" style={styles.bullet}>
                 <Text weight="semibold">Legal Inquiries:</Text> legal@weavelight.com
@@ -946,7 +947,7 @@ export default function TermsOfServiceScreen() {
                 <Text weight="semibold">Response Time:</Text> Within 2-3 business days
               </Text>
             </View>
-          </Card>
+          </View>
         </View>
 
         {/* Footer */}

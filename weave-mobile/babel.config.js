@@ -16,7 +16,8 @@ module.exports = function (api) {
           },
         },
       ],
-      'react-native-reanimated/plugin', // Must be last plugin
+      // 'react-native-reanimated/plugin', // TEMPORARILY DISABLED: React 19 + Reanimated ref bug
+      // See GitHub issue for details: Causes crash with "You attempted to set the key `current` with the value `undefined`"
     ],
   };
 };

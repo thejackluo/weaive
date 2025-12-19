@@ -16,7 +16,7 @@ import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Button, Text, Card, useTheme } from '@/design-system';
+import { Button, Text, useTheme } from '@/design-system';
 
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
@@ -195,10 +195,11 @@ export default function PrivacyPolicyScreen() {
         </View>
 
         {/* Section 3 - AI Processing (Important) */}
-        <Card
-          variant="glass"
-          padding="default"
-          style={[styles.section, { backgroundColor: `${colors.amber[500]}15` }]}
+        <View
+          style={[
+            styles.section,
+            { backgroundColor: `${colors.amber[500]}15`, padding: 16, borderRadius: 12 },
+          ]}
         >
           <Text variant="textLg" weight="semibold" style={{ color: colors.amber[400] }}>
             3. AI Processing & Third-Party Services
@@ -222,10 +223,13 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Card
-            variant="glass"
-            padding="sm"
-            style={{ backgroundColor: `${colors.emerald[500]}20`, marginTop: spacing[3] }}
+          <View
+            style={{
+              backgroundColor: `${colors.emerald[500]}20`,
+              marginTop: spacing[3],
+              padding: 12,
+              borderRadius: 8,
+            }}
           >
             <Text variant="textSm" weight="semibold" style={{ color: colors.emerald[400] }}>
               🔒 Your Privacy Protections:
@@ -244,7 +248,7 @@ export default function PrivacyPolicyScreen() {
                 ✓ All AI communications are encrypted in transit (TLS 1.3)
               </Text>
             </View>
-          </Card>
+          </View>
 
           <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             B. Infrastructure Providers
@@ -282,7 +286,7 @@ export default function PrivacyPolicyScreen() {
             All third-party services operate under strict confidentiality agreements and comply with
             applicable data protection laws.
           </Text>
-        </Card>
+        </View>
 
         {/* Section 4 */}
         <View style={styles.section}>
@@ -339,10 +343,13 @@ export default function PrivacyPolicyScreen() {
             We respect your privacy and have strict policies about data sharing:
           </Text>
 
-          <Card
-            variant="glass"
-            padding="sm"
-            style={{ backgroundColor: `${colors.emerald[500]}20`, marginBottom: spacing[3] }}
+          <View
+            style={{
+              backgroundColor: `${colors.emerald[500]}20`,
+              marginBottom: spacing[3],
+              padding: 12,
+              borderRadius: 8,
+            }}
           >
             <Text variant="textBase" weight="semibold" style={{ color: colors.emerald[400] }}>
               What We DON'T Do:
@@ -358,7 +365,7 @@ export default function PrivacyPolicyScreen() {
                 ✗ We do NOT share your data with data brokers
               </Text>
             </View>
-          </Card>
+          </View>
 
           <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             Limited Sharing With Service Providers:
@@ -385,10 +392,11 @@ export default function PrivacyPolicyScreen() {
         </View>
 
         {/* Section 6 - User Rights */}
-        <Card
-          variant="glass"
-          padding="default"
-          style={[styles.section, { backgroundColor: `${colors.accent[500]}15` }]}
+        <View
+          style={[
+            styles.section,
+            { backgroundColor: `${colors.accent[500]}15`, padding: 16, borderRadius: 12 },
+          ]}
         >
           <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
             6. Your Rights & Control
@@ -464,7 +472,7 @@ export default function PrivacyPolicyScreen() {
               requests
             </Text>
           </View>
-        </Card>
+        </View>
 
         {/* Section 7 */}
         <View style={styles.section}>
@@ -640,11 +648,7 @@ export default function PrivacyPolicyScreen() {
             If you have questions, concerns, or requests regarding this Privacy Policy or our data
             practices, please contact us:
           </Text>
-          <Card
-            variant="glass"
-            padding="default"
-            style={{ backgroundColor: `${colors.dark[800]}40` }}
-          >
+          <View style={{ backgroundColor: `${colors.dark[800]}40`, padding: 16, borderRadius: 12 }}>
             <View style={styles.bulletList}>
               <Text variant="textBase" color="primary" style={styles.bullet}>
                 <Text weight="semibold">Privacy Inquiries:</Text> privacy@weavelight.com
@@ -659,7 +663,7 @@ export default function PrivacyPolicyScreen() {
                 <Text weight="semibold">Response Time:</Text> Within 30 days
               </Text>
             </View>
-          </Card>
+          </View>
         </View>
 
         {/* Footer */}
