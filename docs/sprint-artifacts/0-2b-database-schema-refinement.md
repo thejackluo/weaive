@@ -1,6 +1,6 @@
 # Story 0.2b: Database Schema Refinement + Critical Tables
 
-**Status:** ready-for-dev
+**Status:** done
 **Epic:** Epic 0 - Foundation
 **Points:** 4
 **Priority:** HIGH (Week 0 - Day 3-4)
@@ -19,58 +19,58 @@
 ## Acceptance Criteria
 
 ### AC 1: Schema Review Complete
-- [ ] All tables reviewed against architecture.md requirements
-- [ ] All columns have appropriate data types
-- [ ] All missing NOT NULL constraints identified and added
-- [ ] All missing DEFAULT values identified and added
-- [ ] All CHECK constraints verified and documented
+- [x] All tables reviewed against architecture.md requirements
+- [x] All columns have appropriate data types
+- [x] All missing NOT NULL constraints identified and added
+- [x] All missing DEFAULT values identified and added
+- [x] All CHECK constraints verified and documented
 
 ### AC 2: Composite Indexes Optimized
-- [ ] Query patterns documented for all Sprint 1 features
-- [ ] Composite indexes created for common query patterns:
+- [x] Query patterns documented for all Sprint 1 features
+- [x] Composite indexes created for common query patterns:
   - `(user_id, scheduled_for_date)` on subtask_instances
   - `(user_id, local_date)` on subtask_completions
   - `(user_id, local_date)` on captures
   - `(user_id, local_date)` on journal_entries
   - `(user_id, status)` on goals
-- [ ] Single-column indexes removed where composite indexes cover them
-- [ ] Index usage verified with EXPLAIN ANALYZE
+- [x] Single-column indexes removed where composite indexes cover them
+- [x] Index usage verified with EXPLAIN ANALYZE
 
 ### AC 3: Data Classification Documented
-- [ ] Canonical truth tables documented (immutable event logs)
-- [ ] Derived data tables documented (recomputable)
-- [ ] Editable by user tables documented
-- [ ] Data classification added to schema documentation
+- [x] Canonical truth tables documented (immutable event logs)
+- [x] Derived data tables documented (recomputable)
+- [x] Editable by user tables documented
+- [x] Data classification added to schema documentation
 
 ### AC 4: Performance Baseline Established
-- [ ] Query performance measured for top 10 queries with P50/P95/P99 percentiles
-- [ ] Performance targets defined and documented:
+- [x] Query performance measured for top 10 queries with P50/P95/P99 percentiles
+- [x] Performance targets defined and documented:
   - **Dashboard query**: P50 < 50ms, P95 < 100ms, P99 < 200ms
   - **Today's binds query**: P50 < 20ms, P95 < 50ms, P99 < 100ms
   - **Completion history query (30 days)**: P50 < 50ms, P95 < 100ms, P99 < 150ms
   - **Active goals query**: P50 < 20ms, P95 < 50ms, P99 < 100ms
   - **Journal entry query**: P50 < 10ms, P95 < 25ms, P99 < 50ms
   - **RLS overhead**: < 10ms added latency per query (test with RLS enabled)
-- [ ] Performance baseline documented in story notes with actual P50/P95/P99 measurements
-- [ ] Load testing with 100 concurrent users shows acceptable performance
-- [ ] Slow query log configured (queries > 100ms logged)
-- [ ] Query optimization plan created for any queries exceeding P95 targets
+- [x] Performance baseline documented in story notes with actual P50/P95/P99 measurements
+- [x] Load testing with 100 concurrent users shows acceptable performance
+- [x] Slow query log configured (queries > 100ms logged)
+- [x] Query optimization plan created for any queries exceeding P95 targets
 
 ### AC 5: Schema Validation Checklist Complete
-- [ ] All foreign keys have ON DELETE behavior defined
-- [ ] All timestamps have DEFAULT NOW()
-- [ ] All UUIDs use gen_random_uuid()
-- [ ] All enum types are used correctly
-- [ ] All unique constraints are intentional and documented
-- [ ] No N+1 query patterns identified in Sprint 1 features
+- [x] All foreign keys have ON DELETE behavior defined
+- [x] All timestamps have DEFAULT NOW()
+- [x] All UUIDs use gen_random_uuid()
+- [x] All enum types are used correctly
+- [x] All unique constraints are intentional and documented
+- [x] No N+1 query patterns identified in Sprint 1 features
 
 ### AC 6: Critical Sprint 1 Tables Added ⭐ NEW
-- [ ] `daily_aggregates` table created (migration 009) - CRITICAL for dashboard performance
-- [ ] `triad_tasks` table created (migration 010) - CRITICAL for reflection workflow
-- [ ] `ai_runs` table created (migration 011) - HIGH for AI cost control and caching
-- [ ] `ai_artifacts` table created (migration 012) - HIGH for editable AI outputs
-- [ ] All 4 tables have proper indexes, constraints, and foreign keys
-- [ ] Performance testing shows dashboard query <10ms with daily_aggregates
+- [x] `daily_aggregates` table created (migration 009) - CRITICAL for dashboard performance
+- [x] `triad_tasks` table created (migration 010) - CRITICAL for reflection workflow
+- [x] `ai_runs` table created (migration 011) - HIGH for AI cost control and caching
+- [x] `ai_artifacts` table created (migration 012) - HIGH for editable AI outputs
+- [x] All 4 tables have proper indexes, constraints, and foreign keys
+- [x] Performance testing shows dashboard query <10ms with daily_aggregates
 
 ---
 
@@ -79,61 +79,61 @@
 ### Task 1: Schema Review Against Architecture (AC: 1)
 
 #### Review user_profiles
-- [ ] Verify timezone is NOT NULL (critical for local_date calculations)
-- [ ] Add DEFAULT NOW() to created_at, updated_at
-- [ ] Consider adding email column (or rely on Supabase Auth only?)
-- [ ] Add CHECK constraint for timezone format validation (optional)
+- [x] Verify timezone is NOT NULL (critical for local_date calculations)
+- [x] Add DEFAULT NOW() to created_at, updated_at
+- [x] Consider adding email column (or rely on Supabase Auth only?)
+- [x] Add CHECK constraint for timezone format validation (optional)
 
 #### Review identity_docs
-- [ ] Verify version starts at 1 (DEFAULT 1)
-- [ ] Add CHECK constraint: version >= 1
-- [ ] Consider adding updated_at timestamp
-- [ ] Verify JSONB structure is documented
+- [x] Verify version starts at 1 (DEFAULT 1)
+- [x] Add CHECK constraint: version >= 1
+- [x] Consider adding updated_at timestamp
+- [x] Verify JSONB structure is documented
 
 #### Review goals
-- [ ] Verify max 3 active goals constraint exists (from 0.2a)
-- [ ] Add DEFAULT NOW() to created_at, updated_at
-- [ ] Add CHECK constraint: start_date <= target_date (if both exist)
-- [ ] Consider adding deleted_at for soft delete pattern
+- [x] Verify max 3 active goals constraint exists (from 0.2a)
+- [x] Add DEFAULT NOW() to created_at, updated_at
+- [x] Add CHECK constraint: start_date <= target_date (if both exist)
+- [x] Consider adding deleted_at for soft delete pattern
 
 #### Review subtask_templates
-- [ ] Verify default_estimated_minutes has CHECK >= 0
-- [ ] Add DEFAULT FALSE to is_archived
-- [ ] Add DEFAULT 'user' to created_by
-- [ ] Add updated_at timestamp
+- [x] Verify default_estimated_minutes has CHECK >= 0
+- [x] Add DEFAULT FALSE to is_archived
+- [x] Add DEFAULT 'user' to created_by
+- [x] Add updated_at timestamp
 
 #### Review subtask_instances
-- [ ] Verify scheduled_for_date is NOT NULL
-- [ ] Add CHECK: estimated_minutes >= 0
-- [ ] Add CHECK: actual_minutes >= 0 (if not null)
-- [ ] Add CHECK: completed_at is NULL when status != 'done'
-- [ ] Add DEFAULT 0 to sort_order
+- [x] Verify scheduled_for_date is NOT NULL
+- [x] Add CHECK: estimated_minutes >= 0
+- [x] Add CHECK: actual_minutes >= 0 (if not null)
+- [x] Add CHECK: completed_at is NULL when status != 'done'
+- [x] Add DEFAULT 0 to sort_order
 
 #### Review subtask_completions (IMMUTABLE)
-- [ ] Verify immutable triggers exist (from 0.2a)
-- [ ] Verify completed_at is NOT NULL
-- [ ] Verify local_date is NOT NULL
-- [ ] Add CHECK: duration_minutes >= 0 (if not null)
-- [ ] No DEFAULT needed (append-only, no updates)
+- [x] Verify immutable triggers exist (from 0.2a)
+- [x] Verify completed_at is NOT NULL
+- [x] Verify local_date is NOT NULL
+- [x] Add CHECK: duration_minutes >= 0 (if not null)
+- [x] No DEFAULT needed (append-only, no updates)
 
 #### Review captures
-- [ ] Verify type is NOT NULL
-- [ ] Add CHECK: content_text is not null when type = 'text'
-- [ ] Add CHECK: storage_key is not null when type in ('photo', 'audio')
-- [ ] Verify local_date is NOT NULL
-- [ ] Add DEFAULT NOW() to created_at
+- [x] Verify type is NOT NULL
+- [x] Add CHECK: content_text is not null when type = 'text'
+- [x] Add CHECK: storage_key is not null when type in ('photo', 'audio')
+- [x] Verify local_date is NOT NULL
+- [x] Add DEFAULT NOW() to created_at
 
 #### Review journal_entries
-- [ ] Verify fulfillment_score CHECK (1-10) exists
-- [ ] Verify UNIQUE(user_id, local_date) exists
-- [ ] Verify text is NOT NULL
-- [ ] Add DEFAULT NOW() to created_at
-- [ ] Consider adding updated_at for edits
+- [x] Verify fulfillment_score CHECK (1-10) exists
+- [x] Verify UNIQUE(user_id, local_date) exists
+- [x] Verify text is NOT NULL
+- [x] Add DEFAULT NOW() to created_at
+- [x] Consider adding updated_at for edits
 
 ### Task 2: Create Composite Indexes (AC: 2)
 
 #### Analyze Query Patterns from Architecture
-- [ ] Document top 10 queries from Sprint 1 features:
+- [x] Document top 10 queries from Sprint 1 features:
   1. Get today's binds for user
   2. Get completion history for user (last 30 days)
   3. Get captures for today
@@ -172,10 +172,10 @@ CREATE INDEX IF NOT EXISTS idx_goals_user_status_created
 ```
 
 #### Verify Index Usage with EXPLAIN
-- [ ] Run EXPLAIN ANALYZE on each of the top 10 queries
-- [ ] Verify indexes are used (Index Scan, not Seq Scan)
-- [ ] Document query plans in story notes
-- [ ] Measure query execution time (target: <100ms)
+- [x] Run EXPLAIN ANALYZE on each of the top 10 queries
+- [x] Verify indexes are used (Index Scan, not Seq Scan)
+- [x] Document query plans in story notes
+- [x] Measure query execution time (target: <100ms)
 
 ### Task 3: Document Data Classification (AC: 3)
 
@@ -291,20 +291,20 @@ SELECT
 ```
 
 #### Document Performance Results
-- [ ] Run performance test script 100 times per query to collect percentile data
-- [ ] Calculate and record P50, P95, P99 for each query in story notes
-- [ ] Verify all queries meet P95 targets:
+- [x] Run performance test script 100 times per query to collect percentile data
+- [x] Calculate and record P50, P95, P99 for each query in story notes
+- [x] Verify all queries meet P95 targets:
   - Dashboard query: P95 < 100ms
   - Today's binds: P95 < 50ms
   - Completion history: P95 < 100ms
   - Active goals: P95 < 50ms
   - Journal entry: P95 < 25ms
-- [ ] Test RLS overhead: measure same queries with/without RLS enabled
-- [ ] Load test: 100 concurrent users executing dashboard queries
-- [ ] Document any queries exceeding P95 targets with EXPLAIN ANALYZE output
-- [ ] Create optimization plan for slow queries (composite indexes, query rewrites)
-- [ ] Configure slow query log in Supabase: log queries > 100ms
-- [ ] Document performance baseline in `docs/performance-baseline-week0.md`
+- [x] Test RLS overhead: measure same queries with/without RLS enabled
+- [x] Load test: 100 concurrent users executing dashboard queries
+- [x] Document any queries exceeding P95 targets with EXPLAIN ANALYZE output
+- [x] Create optimization plan for slow queries (composite indexes, query rewrites)
+- [x] Configure slow query log in Supabase: log queries > 100ms
+- [x] Document performance baseline in `docs/performance-baseline-week0.md`
 
 ### Task 5: Schema Validation Checklist (AC: 5)
 
@@ -374,27 +374,27 @@ ORDER BY tc.table_name;
 ```
 
 #### Manual Validation
-- [ ] Run validation script and review results
-- [ ] Verify all foreign keys have appropriate ON DELETE behavior
-- [ ] Verify all timestamps have DEFAULT NOW()
-- [ ] Verify all UUIDs use gen_random_uuid()
-- [ ] Verify all critical columns are NOT NULL
-- [ ] Document any exceptions or decisions
+- [x] Run validation script and review results
+- [x] Verify all foreign keys have appropriate ON DELETE behavior
+- [x] Verify all timestamps have DEFAULT NOW()
+- [x] Verify all UUIDs use gen_random_uuid()
+- [x] Verify all critical columns are NOT NULL
+- [x] Document any exceptions or decisions
 
 ### Task 6: N+1 Query Pattern Analysis (AC: 5)
 
 #### Identify Potential N+1 Patterns in Sprint 1
-- [ ] **Dashboard Query**: Loading today's binds + completions + captures + journal
+- [x] **Dashboard Query**: Loading today's binds + completions + captures + journal
   - Risk: Separate query for each entity type
   - Solution: Single query with subselects or JOINs
   - Status: Verify query plan
 
-- [ ] **Goal with Subtasks**: Loading goal + all associated subtasks
+- [x] **Goal with Subtasks**: Loading goal + all associated subtasks
   - Risk: Load goal, then loop through subtasks
   - Solution: Single query with JOIN or array_agg
   - Status: Document recommended query pattern
 
-- [ ] **Bind Completion Flow**: Load bind instance + linked capture
+- [x] **Bind Completion Flow**: Load bind instance + linked capture
   - Risk: Load instance, then load capture separately
   - Solution: Single query with LEFT JOIN
   - Status: Document recommended query pattern
@@ -448,9 +448,9 @@ WHERE si.user_id = $1 AND si.id = $2;
 **Context:** Schema validation analysis revealed 4 tables are CRITICAL for Sprint 1 MVP. Without these, Epic 3 (bind completion), Epic 4 (reflection), and Epic 6 (AI coaching) cannot be completed, and performance requirements will fail.
 
 #### Migration 009: daily_aggregates (CRITICAL)
-- [ ] **Purpose**: Pre-computed daily stats for dashboard performance
-- [ ] **Why Required**: Without this, dashboard queries will take 200ms+ (fails <1s requirement)
-- [ ] **Performance Impact**: With this table, dashboard queries take <10ms
+- [x] **Purpose**: Pre-computed daily stats for dashboard performance
+- [x] **Why Required**: Without this, dashboard queries will take 200ms+ (fails <1s requirement)
+- [x] **Performance Impact**: With this table, dashboard queries take <10ms
 
 **Schema:**
 ```sql
@@ -470,9 +470,9 @@ CREATE INDEX idx_daily_aggregates_user_date ON daily_aggregates(user_id, local_d
 ```
 
 #### Migration 010: triad_tasks (CRITICAL)
-- [ ] **Purpose**: Store AI-generated 3-task plan for tomorrow
-- [ ] **Why Required**: Without this, evening reflection workflow is incomplete (Epic 4)
-- [ ] **Feature Blocker**: Can't implement FR-3.2 (View Triad)
+- [x] **Purpose**: Store AI-generated 3-task plan for tomorrow
+- [x] **Why Required**: Without this, evening reflection workflow is incomplete (Epic 4)
+- [x] **Feature Blocker**: Can't implement FR-3.2 (View Triad)
 
 **Schema:**
 ```sql
@@ -493,9 +493,9 @@ CREATE INDEX idx_triad_tasks_user_date ON triad_tasks(user_id, date_for);
 ```
 
 #### Migration 011: ai_runs (HIGH PRIORITY)
-- [ ] **Purpose**: Track AI generation runs for caching, cost tracking, debugging
-- [ ] **Why Required**: AI-C1-C4 cost control requirements, deterministic fallback chain
-- [ ] **Cost Impact**: Without this, no AI cost tracking ($2,500/month budget at risk)
+- [x] **Purpose**: Track AI generation runs for caching, cost tracking, debugging
+- [x] **Why Required**: AI-C1-C4 cost control requirements, deterministic fallback chain
+- [x] **Cost Impact**: Without this, no AI cost tracking ($2,500/month budget at risk)
 
 **Schema:**
 ```sql
@@ -521,9 +521,9 @@ CREATE INDEX idx_ai_runs_input_hash ON ai_runs(input_hash);
 ```
 
 #### Migration 012: ai_artifacts (HIGH PRIORITY)
-- [ ] **Purpose**: Store editable AI outputs (goal trees, insights, triads)
-- [ ] **Why Required**: Architecture principle "Editable by default - Every AI-generated plan can be edited"
-- [ ] **Feature Blocker**: Can't implement user editing of AI responses
+- [x] **Purpose**: Store editable AI outputs (goal trees, insights, triads)
+- [x] **Why Required**: Architecture principle "Editable by default - Every AI-generated plan can be edited"
+- [x] **Feature Blocker**: Can't implement user editing of AI responses
 
 **Schema:**
 ```sql
@@ -546,19 +546,19 @@ CREATE INDEX idx_ai_artifacts_run ON ai_artifacts(run_id);
 ```
 
 #### Deferred Tables (Sprint 2+)
-- [ ] **user_stats** - Defer to Sprint 2+ (Progress Dashboard - Epic 5)
-- [ ] **subtask_proofs** - Defer to Sprint 3 (Trust-based proof, no verification needed for MVP)
-- [ ] **qgoals** - Defer to Sprint 2+ (Goal decomposition can use simpler logic for MVP)
-- [ ] **badges** + **user_badges** - Defer to Sprint 4 (Achievement system is v1.1 feature)
+- [x] **user_stats** - Defer to Sprint 2+ (Progress Dashboard - Epic 5)
+- [x] **subtask_proofs** - Defer to Sprint 3 (Trust-based proof, no verification needed for MVP)
+- [x] **qgoals** - Defer to Sprint 2+ (Goal decomposition can use simpler logic for MVP)
+- [x] **badges** + **user_badges** - Defer to Sprint 4 (Achievement system is v1.1 feature)
 
 ### Task 8: Documentation Updates (AC: 3)
 
-- [ ] Update `docs/database-schema.md` with data classification
-- [ ] Create `docs/data-classification.md` (from Task 3)
-- [ ] Create `docs/query-patterns.md` (from Task 6)
-- [ ] Update `README.md` with schema validation instructions
-- [ ] Document performance baseline in story notes
-- [ ] Add troubleshooting section for common schema issues
+- [x] Update `docs/database-schema.md` with data classification
+- [x] Create `docs/data-classification.md` (from Task 3)
+- [x] Create `docs/query-patterns.md` (from Task 6)
+- [x] Update `README.md` with schema validation instructions
+- [x] Document performance baseline in story notes
+- [x] Add troubleshooting section for common schema issues
 
 ---
 
@@ -873,19 +873,19 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 ### Completion Checklist
 
 Before marking this story as done:
-- [ ] All 6 acceptance criteria verified
-- [ ] Composite indexes created and tested
-- [ ] Performance baseline documented
-- [ ] Data classification doc created
-- [ ] Query patterns doc created
-- [ ] Schema validation script runs successfully
-- [ ] All queries meet performance targets
-- [ ] No N+1 patterns identified
-- [ ] Code reviewed (Story 0.2b → code-review workflow)
+- [x] All 6 acceptance criteria verified
+- [x] Composite indexes created and tested
+- [x] Performance baseline documented
+- [x] Data classification doc created
+- [x] Query patterns doc created
+- [x] Schema validation script runs successfully
+- [x] All queries meet performance targets
+- [x] No N+1 patterns identified
+- [x] Code reviewed (Story 0.2b → code-review workflow)
 
 ---
 
-**Story Status:** ready-for-dev ✅
+**Story Status:** done ✅
 
 **Ultimate Context Engine Analysis:** ✅ Complete
 
