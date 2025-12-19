@@ -16,9 +16,10 @@ This guide explains how to use Git, GitHub, and version control effectively whil
 4. [Git Worktrees (Advanced)](#git-worktrees-advanced)
 5. [Handling Merge Conflicts](#handling-merge-conflicts)
 6. [Creating Issues and Pull Requests](#creating-issues-and-pull-requests)
-7. [Debugging with Git](#debugging-with-git)
-8. [Common Git Problems and Solutions](#common-git-problems-and-solutions)
-9. [Git Commands Cheat Sheet](#git-commands-cheat-sheet)
+7. [Branch Protection Rules](#branch-protection-rules)
+8. [Debugging with Git](#debugging-with-git)
+9. [Common Git Problems and Solutions](#common-git-problems-and-solutions)
+10. [Git Commands Cheat Sheet](#git-commands-cheat-sheet)
 
 ---
 
@@ -1014,6 +1015,279 @@ gh pr view 42
 # Check status (tests passing?)
 gh pr status
 ```
+
+---
+
+## Branch Protection Rules
+
+### What are Branch Protection Rules?
+
+**Branch protection rules** are GitHub settings that enforce quality gates before code can be merged to important branches (like `main`).
+
+**Analogy:** Like a security checkpoint at an airport. You can't board the plane until you pass security checks.
+
+**Why we use them:**
+- Prevents accidental merges of broken code
+- Ensures all tests pass before merge
+- Requires code review approval
+- Maintains main branch stability
+
+---
+
+### Weave's Protection Rules for `main`
+
+The `main` branch has the following protections:
+
+#### Required Status Checks
+
+All these CI checks must **pass** before you can merge a PR:
+
+| Check | What It Does | Triggers When |
+|-------|--------------|---------------|
+| **mobile-lint** | Runs ESLint on mobile code | `weave-mobile/**` changes |
+| **backend-lint** | Runs Ruff on backend code | `weave-api/**` changes |
+| **type-check** | Runs TypeScript compiler | `.ts` or `.tsx` files change |
+| **mobile-tests** | Runs Jest tests for mobile | `weave-mobile/**` changes |
+| **backend-tests** | Runs pytest for backend | `weave-api/**` changes |
+
+**Example:** If you change a file in `weave-mobile/`, then `mobile-lint`, `type-check`, and `mobile-tests` will run. Backend checks won't run (path filters optimize this).
+
+---
+
+#### Require Branches Up to Date
+
+**What it means:** Your branch must include all commits from `main` before merging.
+
+**Why:** Prevents integration issues where your code works in isolation but breaks when combined with recent changes.
+
+**How to fix:**
+```bash
+# Update your branch with latest main
+git checkout story/0.5-ci-cd
+git pull origin main
+
+# If there are conflicts, resolve them
+# Then push the updated branch
+git push
+```
+
+---
+
+#### Require Pull Request Reviews
+
+**What it means:** At least 1 person must approve your PR before it can be merged.
+
+**Why:** Peer review catches bugs, improves code quality, shares knowledge.
+
+**How to request:**
+```bash
+# Request review via GitHub CLI
+gh pr review --request @thejackluo
+
+# Or via GitHub website: PR page → "Reviewers" section
+```
+
+---
+
+### Handling Failed CI Checks
+
+#### When a Check Fails
+
+**What you'll see:**
+```
+❌ Some checks were not successful
+   ❌ mobile-lint — 2 errors found
+   ✅ type-check
+   ✅ mobile-tests
+```
+
+**What this means:** Your PR is **blocked** from merging until `mobile-lint` passes.
+
+---
+
+#### Step-by-Step: Fixing Failed Checks
+
+**1. Click on the failed check to see details**
+
+```
+❌ mobile-lint
+   mobile/App.tsx:42:10 - Error: 'theme' is assigned but never used
+   mobile/Login.tsx:15:5 - Error: Unexpected console.log statement
+```
+
+**2. Fix the issues locally**
+
+```bash
+# Run the same check locally
+cd weave-mobile
+npm run lint
+
+# Fix the errors
+# ... edit files ...
+
+# Verify it passes now
+npm run lint
+```
+
+**3. Commit and push the fix**
+
+```bash
+git add .
+git commit -m "fix: remove unused variable and console.log
+
+- Removed unused 'theme' variable in App.tsx
+- Removed debug console.log in Login.tsx
+
+🤖 Generated with Claude Code
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+
+git push
+```
+
+**4. CI runs automatically**
+
+The PR page will show CI running again. Wait for it to turn green ✅.
+
+**5. Now you can merge!**
+
+Once all checks pass and you have approval, the "Merge" button becomes enabled.
+
+---
+
+#### Common CI Failures and Fixes
+
+| Failure | Likely Cause | How to Fix |
+|---------|--------------|------------|
+| **mobile-lint fails** | ESLint errors (unused vars, missing semicolons) | Run `npm run lint` locally, fix errors |
+| **backend-lint fails** | Ruff errors (formatting, imports) | Run `uv run ruff check .` locally, fix errors |
+| **type-check fails** | TypeScript errors | Run `npx tsc --noEmit` locally, fix type errors |
+| **mobile-tests fail** | Broken tests or code | Run `npm test` locally, fix implementation |
+| **backend-tests fail** | Broken tests, missing env vars, or RLS issues | Run `uv run pytest` locally, check test output |
+
+**Pro tip:** Always run checks locally before pushing to catch issues early!
+
+---
+
+### Emergency Hotfix Process
+
+**Scenario:** Production is down. You need to merge a fix immediately, but CI takes 5 minutes to run.
+
+#### Option A: Admin Bypass (Not Recommended)
+
+GitHub admins can bypass branch protection rules in emergencies.
+
+**How:**
+1. Go to PR page
+2. Admin will see "Merge without waiting for requirements to be met"
+3. Click "Merge pull request" → "Confirm merge"
+
+**⚠️ Warning:** Only use this for true emergencies (production outages, security vulnerabilities).
+
+**After emergency:**
+1. Document what happened in a post-mortem
+2. Ensure CI passes retroactively
+3. If CI fails retroactively, create immediate follow-up PR to fix
+
+---
+
+#### Option B: Temporary Disable Protection (Very Rare)
+
+**Only for catastrophic situations.**
+
+1. Go to: Settings → Branches → Branch protection rules → `main`
+2. Click "Edit"
+3. Uncheck "Require status checks to pass"
+4. Click "Save changes"
+5. Merge your emergency fix
+6. **Immediately** re-enable protection rules
+
+**Document this:** Any time protection is disabled, create a GitHub issue explaining why, what was merged, and when protection was restored.
+
+---
+
+### Checking Branch Protection Status
+
+#### Via GitHub Website
+
+1. Go to: https://github.com/thejackluo/weavelight/settings/branches
+2. Look for `main` branch protection rule
+3. Click "Edit" to see all settings
+
+---
+
+#### Via GitHub CLI
+
+```bash
+# View branch protection status
+gh api repos/:owner/:repo/branches/main/protection
+
+# Check if specific status checks are required
+gh api repos/:owner/:repo/branches/main/protection/required_status_checks
+```
+
+---
+
+### Best Practices
+
+#### ✅ DO
+
+1. **Fix CI failures promptly** - Don't let PRs sit with failing checks
+2. **Run checks locally first** - Catch issues before pushing
+3. **Keep PRs small** - Fewer changes = fewer potential CI failures
+4. **Request review early** - Don't wait for CI to pass (parallel work)
+5. **Communicate blockers** - If CI fails due to infrastructure, notify team
+
+#### ❌ DON'T
+
+1. **Don't bypass protection casually** - Only for true emergencies
+2. **Don't merge with failing tests** - Always investigate failures
+3. **Don't disable protection permanently** - Defeats the purpose
+4. **Don't ignore flaky tests** - Fix them or mark as known issue
+5. **Don't push broken code** - Wastes CI time and blocks others
+
+---
+
+### Troubleshooting Branch Protection
+
+#### Problem: "Merge button is disabled but all checks passed"
+
+**Possible causes:**
+1. Branch is not up to date with main
+   - **Fix:** `git pull origin main && git push`
+2. Missing required review approval
+   - **Fix:** Request review from team member
+3. You're not a repo collaborator
+   - **Fix:** Ask repo owner to add you
+
+---
+
+#### Problem: "Required check is missing"
+
+**Example:** PR shows "Some checks haven't reported yet"
+
+**Cause:** Path filters prevented a check from running, but GitHub still expects it.
+
+**Fix:** This is usually fine. If the workflow didn't trigger (due to path filters), the check will be marked as "skipped" and won't block the merge. If it's actually required, manually trigger the workflow:
+
+```bash
+# Re-trigger all workflows
+gh workflow run mobile-lint.yml
+```
+
+---
+
+#### Problem: "Check is stuck in 'pending' state"
+
+**Cause:** GitHub Actions runner is overloaded or workflow has an infinite loop.
+
+**Fix:**
+1. Wait 10 minutes (GitHub Actions can be slow)
+2. If still pending, cancel and re-run:
+   ```bash
+   gh run list --workflow=mobile-lint
+   gh run cancel <run-id>
+   gh workflow run mobile-lint.yml
+   ```
 
 ---
 
