@@ -76,8 +76,20 @@ CREATE INDEX IF NOT EXISTS idx_ai_artifacts_user_edited
   ON ai_artifacts(user_id, type, updated_at DESC)
   WHERE is_user_edited = TRUE;
 
+-- ═══════════════════════════════════════════════════════════════════════
+-- FOREIGN KEY CONSTRAINTS (Added after dependencies exist)
+-- ═══════════════════════════════════════════════════════════════════════
+
+-- Add FK for triad_tasks.generated_by_run_id (deferred from migration 010)
+-- Now safe to add because ai_runs table exists from migration 011
+ALTER TABLE triad_tasks
+  ADD CONSTRAINT fk_triad_tasks_generated_by_run
+  FOREIGN KEY (generated_by_run_id)
+  REFERENCES ai_runs(id)
+  ON DELETE SET NULL;
+
 -- Comments for documentation
-COMMENT ON INDEX idx_goals_user_status_created ON goals IS 'Partial index for active goals list. 3x faster than full table scan.';
-COMMENT ON INDEX idx_subtask_completions_dashboard_query ON subtask_completions IS 'CRITICAL: Dashboard query optimization with INCLUDE clause to avoid heap lookups.';
-COMMENT ON INDEX idx_captures_bind_proof ON captures IS 'Partial index for proof-linked captures only. Used for "Active Days with Proof" metric.';
-COMMENT ON INDEX idx_ai_artifacts_user_edited ON ai_artifacts IS 'Track user edits for AI improvement feedback loop.';
+COMMENT ON INDEX idx_goals_user_status_created IS 'Partial index for active goals list. 3x faster than full table scan.';
+COMMENT ON INDEX idx_subtask_completions_dashboard_query IS 'CRITICAL: Dashboard query optimization with INCLUDE clause to avoid heap lookups.';
+COMMENT ON INDEX idx_captures_bind_proof IS 'Partial index for proof-linked captures only. Used for "Active Days with Proof" metric.';
+COMMENT ON INDEX idx_ai_artifacts_user_edited IS 'Track user edits for AI improvement feedback loop.';

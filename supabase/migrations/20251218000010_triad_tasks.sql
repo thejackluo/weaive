@@ -11,7 +11,7 @@ CREATE TABLE triad_tasks (
   title TEXT NOT NULL,  -- AI-generated task title (can be edited by user)
   rationale TEXT,  -- AI's reasoning: "Why this bind is recommended today"
   linked_subtask_instance_id UUID REFERENCES subtask_instances(id) ON DELETE SET NULL,  -- If Triad links to existing bind
-  generated_by_run_id UUID REFERENCES ai_runs(id) ON DELETE SET NULL,  -- Track which AI run created this
+  generated_by_run_id UUID,  -- Track which AI run created this (FK added in migration 013)
   is_user_edited BOOLEAN DEFAULT FALSE,  -- Did user modify AI's suggestion?
   created_at TIMESTAMPTZ DEFAULT NOW(),
 
