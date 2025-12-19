@@ -19,8 +19,10 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Button } from '@/design-system';
+import { Button, showSimpleToast } from '@/design-system';
 import { signInWithApple, signInWithGoogle } from '@lib/auth';
+import { bypassAuthForDev } from '@lib/authHelpers';
+import { supabase } from '@lib/supabase';
 
 type AuthProvider = 'apple' | 'google' | 'email';
 
@@ -41,11 +43,15 @@ export default function AuthenticationScreen() {
         throw new Error(result.error || 'Failed to sign in with Google');
       }
 
+      // Show success toast
+      showSimpleToast('Signed in successfully! 🎉', 'success');
+
       // Success - navigate to next onboarding step
       router.push('/(onboarding)/identity-bootup' as any);
     } catch (err: any) {
       const errorMessage = err.message || 'Unable to sign in with Google. Please try again.';
       setError(errorMessage);
+      showSimpleToast(errorMessage, 'error');
       Alert.alert('Authentication Error', errorMessage);
     } finally {
       setLoading(false);
@@ -65,11 +71,15 @@ export default function AuthenticationScreen() {
         throw new Error(result.error || 'Failed to sign in with Apple');
       }
 
+      // Show success toast
+      showSimpleToast('Signed in successfully! 🎉', 'success');
+
       // Success - navigate to next onboarding step
       router.push('/(onboarding)/identity-bootup' as any);
     } catch (err: any) {
       const errorMessage = err.message || 'Unable to sign in with Apple. Please try again.';
       setError(errorMessage);
+      showSimpleToast(errorMessage, 'error');
       Alert.alert('Authentication Error', errorMessage);
     } finally {
       setLoading(false);
@@ -237,6 +247,35 @@ export default function AuthenticationScreen() {
           <Button variant="ghost" size="md" onPress={handleBack} disabled={loading}>
             Back
           </Button>
+
+          {/* Development Bypass Button - Only in DEV mode */}
+          {__DEV__ && (
+            <View style={{ marginTop: 16, alignItems: 'center' }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onPress={() => {
+                  // For onboarding flow, navigate to identity-bootup instead of tabs
+                  showSimpleToast('🔧 Dev bypass: Continuing to onboarding', 'success');
+                  router.push('/(onboarding)/identity-bootup' as any);
+                }}
+                disabled={loading}
+                style={{ opacity: 0.6 }}
+              >
+                🔧 Skip Auth (Dev Only)
+              </Button>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: '#9ca3af',
+                  textAlign: 'center',
+                  marginTop: 4,
+                }}
+              >
+                Development mode only - bypasses authentication
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
