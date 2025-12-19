@@ -70,8 +70,6 @@ console.log('║    Development (Expo Go): exp://192.168.x.x:8081');
 console.log('║    Production (Custom): weavelight://');
 console.log('║    iOS Simulator: exp://localhost:8081');
 console.log('╚════════════════════════════════════════════════════════════');
-
-
 /**
  * OAuth Provider Types
  * Supported providers for social authentication
@@ -111,20 +109,20 @@ export interface AuthContextType {
 
   /**
    * Sign in with email and password
-   * @param email - User email address
-   * @param password - User password
+   * @param _email - User email address
+   * @param _password - User password
    * @throws {AuthError} If authentication fails
    */
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (_email: string, _password: string) => Promise<void>;
 
   /**
    * Sign up new user with email and password
-   * @param email - User email address
-   * @param password - User password
+   * @param _email - User email address
+   * @param _password - User password
    * @throws {AuthError} If sign up fails
    * @note User may need to verify email before login (Supabase setting)
    */
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (_email: string, _password: string) => Promise<void>;
 
   /**
    * Sign out current user
@@ -135,11 +133,11 @@ export interface AuthContextType {
 
   /**
    * Sign in with OAuth provider (Apple, Google)
-   * @param provider - OAuth provider name
+   * @param _provider - OAuth provider name
    * @throws {AuthError} If OAuth sign in fails
    * @note Opens browser for OAuth flow, redirects back to app
    */
-  signInWithOAuth: (provider: OAuthProvider) => Promise<void>;
+  signInWithOAuth: (_provider: OAuthProvider) => Promise<void>;
 
   /**
    * Clear error state
@@ -380,10 +378,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   prompt: 'consent',
                 }
               : provider === 'apple'
-              ? {
-                  scope: 'email name',
-                }
-              : undefined,
+                ? {
+                    scope: 'email name',
+                  }
+                : undefined,
         },
       });
 
@@ -414,13 +412,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('[AUTH_CONTEXT]   - OAuth URL:', data.url.substring(0, 150) + '...');
         console.log('[AUTH_CONTEXT]   - Expected redirect URI:', redirectTo);
         console.log('[AUTH_CONTEXT]   - Redirect URI must match EXACTLY for browser to close');
-        console.log('[AUTH_CONTEXT]   - Make sure this exact URI is added to Supabase redirect URLs');
+        console.log(
+          '[AUTH_CONTEXT]   - Make sure this exact URI is added to Supabase redirect URLs'
+        );
 
         // Use a timeout to detect if browser gets stuck
         const browserPromise = WebBrowser.openAuthSessionAsync(data.url, redirectTo);
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => {
-            reject(new Error('OAuth browser timeout - browser may be stuck. Check redirect URI configuration.'));
+            reject(
+              new Error(
+                'OAuth browser timeout - browser may be stuck. Check redirect URI configuration.'
+              )
+            );
           }, 60000); // 60 second timeout
         });
 
@@ -428,14 +432,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         console.log('[AUTH_CONTEXT] 📥 Browser result received:', {
           type: result.type,
-          url: result.url ? result.url.substring(0, 200) : 'no URL',
-          fullUrl: result.url, // Log full URL for debugging
+          url: 'url' in result && result.url ? result.url.substring(0, 200) : 'no URL',
+          fullUrl: 'url' in result ? result.url : undefined, // Log full URL for debugging
         });
 
         // Log redirect URI comparison for debugging
-        if (result.url) {
-          const receivedRedirect = new URL(result.url).origin + new URL(result.url).pathname;
-          const expectedRedirect = new URL(redirectTo).origin + new URL(redirectTo).pathname;
+        if ('url' in result && result.url) {
+          // Extract origin and pathname for comparison
+          const parseUrl = (urlString: string) => {
+            try {
+              // Use URLSearchParams and string manipulation since URL constructor may not be available
+              const [baseUrl] = urlString.split('?');
+              return baseUrl;
+            } catch {
+              return urlString;
+            }
+          };
+
+          const receivedRedirect = parseUrl(result.url);
+          const expectedRedirect = parseUrl(redirectTo);
           console.log('[AUTH_CONTEXT] 🔍 Redirect URI comparison:');
           console.log('[AUTH_CONTEXT]   - Received base:', receivedRedirect);
           console.log('[AUTH_CONTEXT]   - Expected base:', expectedRedirect);
@@ -457,7 +472,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           throw failError;
         }
 
-        if (!result.url) {
+        // Type guard: at this point we know result.type === 'success', so result should have url
+        if (!('url' in result) || !result.url) {
           const noCallbackError = new Error('No callback URL received from OAuth flow');
           console.error('[AUTH_CONTEXT] ❌ No URL in browser result');
           setError(noCallbackError as AuthError);
@@ -520,13 +536,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // The browser should have closed automatically when redirect matched
         console.log('[AUTH_CONTEXT] ✅ OAuth Sign In flow completed successfully!');
         console.log('[AUTH_CONTEXT] Waiting for onAuthStateChange to update user state...');
-        
+
         // Force a small delay to ensure state updates propagate
         // This helps with navigation timing issues
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
         // Double-check that session is actually set
-        const { data: { session: verifySession } } = await supabase.auth.getSession();
+        const {
+          data: { session: verifySession },
+        } = await supabase.auth.getSession();
         if (verifySession) {
           console.log('[AUTH_CONTEXT] ✅ Session verified - user is authenticated');
           console.log('[AUTH_CONTEXT] User ID:', verifySession.user.id);

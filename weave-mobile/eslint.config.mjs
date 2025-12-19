@@ -50,7 +50,16 @@ export default [
     },
     rules: {
       'prettier/prettier': 'error',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      'no-unused-vars': 'off', // Turn off base rule for TypeScript
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_', // Ignore parameters starting with _
+          varsIgnorePattern: '^_', // Ignore variables starting with _
+          args: 'after-used', // Allow unused parameters before used ones
+          ignoreRestSiblings: true,
+        },
+      ],
     },
   },
   {
