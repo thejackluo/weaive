@@ -143,3 +143,4 @@ Write-Host "  Remove worktrees:  .\scripts\setup-worktrees.ps1 -Remove" -Foregro
 Write-Host "`n✓ Ready to work on parallel features! 🚀" -ForegroundColor Green
 
 
+
