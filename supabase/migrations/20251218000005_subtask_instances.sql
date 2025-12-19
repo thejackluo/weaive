@@ -35,4 +35,4 @@ COMMENT ON TABLE subtask_instances IS 'Daily scheduled binds. Query by (user_id,
 COMMENT ON COLUMN subtask_instances.scheduled_for_date IS 'The local date this bind is planned for (uses user timezone).';
 COMMENT ON COLUMN subtask_instances.completed_at IS 'UTC timestamp when completed. May be different day than scheduled_for_date if done late.';
 COMMENT ON COLUMN subtask_instances.title_override IS 'Allows user to customize bind title for this specific day without changing template.';
-COMMENT ON INDEX idx_subtask_instances_user_date ON subtask_instances IS 'PRIMARY QUERY PATTERN: Get today''s binds for dashboard. Must be FAST (<50ms).';
+COMMENT ON INDEX idx_subtask_instances_user_date IS 'PRIMARY QUERY PATTERN: Get today''s binds for dashboard. Must be FAST (<50ms).';
