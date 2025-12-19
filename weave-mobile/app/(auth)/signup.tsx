@@ -453,9 +453,7 @@ export default function SignupScreen() {
                   I agree to the{' '}
                 </Text>
                 <Pressable
-                  onPress={() => {
-                    /* TODO: Navigate to Terms of Service */
-                  }}
+                  onPress={() => router.push('/(auth)/terms-of-service')}
                   disabled={isLoading}
                   accessibilityLabel="Read Terms of Service"
                   accessibilityRole="link"
@@ -472,9 +470,7 @@ export default function SignupScreen() {
                   {' '}and{' '}
                 </Text>
                 <Pressable
-                  onPress={() => {
-                    /* TODO: Navigate to Privacy Policy */
-                  }}
+                  onPress={() => router.push('/(auth)/privacy-policy')}
                   disabled={isLoading}
                   accessibilityLabel="Read Privacy Policy"
                   accessibilityRole="link"
