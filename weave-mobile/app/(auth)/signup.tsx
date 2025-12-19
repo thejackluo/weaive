@@ -292,10 +292,17 @@ export default function SignupScreen() {
       try {
         setIsOAuthLoading(provider);
         await signInWithOAuth(provider);
+
+        // Show success toast
+        const providerName = provider === 'apple' ? 'Apple' : 'Google';
+        showSimpleToast(`Signed up with ${providerName}! 🎉`, 'success');
+
         // Navigation handled automatically by auth state change in _layout.tsx
       } catch (error) {
         console.error(`[SIGNUP] ${provider} sign in error:`, error);
-        // Error is set in auth context, displayed below
+        const providerName = provider === 'apple' ? 'Apple' : 'Google';
+        showSimpleToast(`Failed to sign up with ${providerName}. Please try again.`, 'error');
+        // Error is also set in auth context, displayed in error card below
       } finally {
         setIsOAuthLoading(null);
       }
@@ -544,27 +551,7 @@ export default function SignupScreen() {
 
           {/* OAuth Buttons */}
           <View style={styles.oauthButtons}>
-            {/* Sign up with Apple (iOS only) */}
-            {Platform.OS === 'ios' && (
-              <Button
-                variant="secondary"
-                size="lg"
-                onPress={() => handleOAuthSignIn('apple')}
-                disabled={isLoading || isOAuthLoading !== null}
-                loading={isOAuthLoading === 'apple'}
-                fullWidth
-                style={styles.oauthButton}
-                accessibilityLabel="Sign up with Apple"
-              >
-                {isOAuthLoading === 'apple' ? (
-                  <ActivityIndicator color={colors.accent[500]} />
-                ) : (
-                  'Sign up with Apple'
-                )}
-              </Button>
-            )}
-
-            {/* Sign up with Google */}
+            {/* Sign up with Google - Fully Functional */}
             <Button
               variant="secondary"
               size="lg"
@@ -581,6 +568,27 @@ export default function SignupScreen() {
                 'Sign up with Google'
               )}
             </Button>
+
+            {/* Sign up with Apple - Disabled (requires Apple Developer Program) */}
+            {Platform.OS === 'ios' && (
+              <View>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onPress={() => {}}
+                  disabled={true}
+                  fullWidth
+                  style={[styles.oauthButton, { opacity: 0.5 }]}
+                  accessibilityLabel="Sign up with Apple (currently disabled)"
+                  accessibilityHint="Apple Sign-In requires Apple Developer Program membership"
+                >
+                  Sign up with Apple (Coming Soon)
+                </Button>
+                <Text variant="textXs" color="muted" style={{ textAlign: 'center', marginTop: 4 }}>
+                  Requires Apple Developer Program
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Login Link */}
