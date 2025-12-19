@@ -741,7 +741,8 @@ export default function IdentityBootupScreen() {
                       minHeight: MIN_TOUCH_TARGET,
                       justifyContent: 'center',
                       alignItems: 'center',
-                      opacity: isDisabled ? 0.5 : 1
+                      opacity: isDisabled ? 0.5 : 1,
+                      flexShrink: 0
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={`${trait} trait`}
@@ -749,6 +750,7 @@ export default function IdentityBootupScreen() {
                     accessibilityState={{ selected: isSelected, disabled: isDisabled }}
                   >
                     <Text
+                      numberOfLines={1}
                       style={{
                         fontSize: 16,
                         fontWeight: isSelected ? '600' : '400',
