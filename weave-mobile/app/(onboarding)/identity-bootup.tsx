@@ -696,7 +696,7 @@ export default function IdentityBootupScreen() {
               marginBottom: 8
             }}
           >
-            What are you trying to build right now?
+            Who do we want to become?
           </Text>
           <Text
             style={{
@@ -706,7 +706,7 @@ export default function IdentityBootupScreen() {
               textAlign: 'center'
             }}
           >
-            Choose 3.
+            Choose the 3 most important qualities you want to embody.
           </Text>
         </View>
 

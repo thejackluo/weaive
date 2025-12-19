@@ -726,27 +726,27 @@ The more you use the app, the better it understands how you grow — and eventua
 **Step 3: Identity Traits (Aspirational Focus)**
 
 **User-Facing Copy:**
-- [ ] Display title: "What are you trying to build right now?"
-- [ ] Display subtext: "Choose 3."
+- [ ] Display title: "Who do we want to become?"
+- [ ] Display subtext: "Choose the 3 most important qualities you want to embody."
 
 **Acceptance Criteria:**
 - [ ] Display 8 total trait options as selectable chips
 - [ ] User must select exactly 3 traits to continue
 - [ ] No scrolling required on standard mobile screen
-- [ ] No explanatory paragraphs shown (keep copy minimal)
 - [ ] Completion time target: <10 seconds
 - [ ] Traits are framed as aspirational (who the user is becoming), not fixed personality
 - [ ] User can edit selections later in Profile
+- [ ] Chip layout: 3-3-2 arrangement for visual balance
 
 **Trait Options (Final):**
-- [ ] Clear about my direction
-- [ ] Intentional with my time
-- [ ] Takes action even when unsure
-- [ ] Shows up consistently
-- [ ] Strives for excellence
-- [ ] Always improving
-- [ ] Self-aware
-- [ ] Emotionally grounded
+- [ ] Clear Direction
+- [ ] Intentional Time
+- [ ] Decisive Action
+- [ ] Consistent Effort
+- [ ] High Standards
+- [ ] Continuous Growth
+- [ ] Self Aware
+- [ ] Emotionally Grounded
 
 **Selection Requirements:**
 - [ ] Exactly 3 traits required

@@ -16,24 +16,23 @@
  */
 
 export type IdentityTrait =
-  | 'Clear about my direction'
-  | 'Intentional with my time'
-  | 'Takes action even when unsure'
-  | 'Shows up consistently'
-  | 'Strives for excellence'
-  | 'Always improving'
-  | 'Self-aware'
-  | 'Emotionally grounded';
+  | 'Clear Direction'
+  | 'Intentional Time'
+  | 'Decisive Action'
+  | 'Consistent Effort'
+  | 'High Standards'
+  | 'Continuous Growth'
+  | 'Self Aware'
+  | 'Emotionally Grounded';
 
 /**
- * All 8 identity traits organized in 4 rows for UI display
- * (2 traits per row for clean mobile layout)
+ * All 8 identity traits organized in 3 rows for visually appealing layout
+ * (3-3-2 layout for balanced appearance)
  */
 export const IDENTITY_TRAITS: IdentityTrait[][] = [
-  ['Clear about my direction', 'Intentional with my time'],
-  ['Takes action even when unsure', 'Shows up consistently'],
-  ['Strives for excellence', 'Always improving'],
-  ['Self-aware', 'Emotionally grounded']
+  ['Clear Direction', 'Intentional Time', 'Decisive Action'],
+  ['Consistent Effort', 'High Standards', 'Continuous Growth'],
+  ['Self Aware', 'Emotionally Grounded']
 ];
 
 /**
