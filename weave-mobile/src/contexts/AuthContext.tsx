@@ -208,19 +208,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signIn = async (email: string, password: string): Promise<void> => {
     try {
       setError(null);
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('[AUTH] Attempting sign in with email:', email);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('[AUTH] Supabase sign in error:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+          code: (error as any).code,
+          details: error,
+        });
         setError(error);
         throw error;
       }
 
+      console.log('[AUTH] Sign in successful:', {
+        user: data.user?.id,
+        session: !!data.session,
+      });
+
       // State will be updated automatically via onAuthStateChange
     } catch (err) {
-      console.error('[AUTH] Sign in error:', err);
+      console.error('[AUTH] Sign in exception:', err);
       throw err;
     }
   };

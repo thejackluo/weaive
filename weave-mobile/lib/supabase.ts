@@ -24,6 +24,19 @@ import { secureStorage } from '@/services/secureStorage';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
+// Debug: Log environment variables on load
+console.log('[SUPABASE] Environment check:');
+console.log('[SUPABASE] URL:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : '❌ MISSING');
+console.log('[SUPABASE] Anon Key:', supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : '❌ MISSING');
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('[SUPABASE] ❌ CRITICAL: Missing environment variables!');
+  console.error('[SUPABASE] Make sure .env file exists with:');
+  console.error('[SUPABASE]   EXPO_PUBLIC_SUPABASE_URL=https://xxx.supabase.co');
+  console.error('[SUPABASE]   EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJxxx...');
+  console.error('[SUPABASE] Then restart Metro bundler with: npx expo start --clear');
+}
+
 /**
  * Supabase client configuration
  * - Uses react-native-keychain for ENCRYPTED session persistence (Story 0.3)
