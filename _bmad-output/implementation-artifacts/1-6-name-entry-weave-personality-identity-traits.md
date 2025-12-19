@@ -134,23 +134,23 @@ So that **the experience feels personally motivating and aligned with my communi
 ### Step 3: Identity Traits (Aspirational Focus) (<10 seconds)
 
 **User-Facing Copy (AC #16)**
-- [ ] Display title: "What are you trying to build right now?"
-- [ ] Display subtext: "Choose 3."
+- [ ] Display title: "Who do we want to become?"
+- [ ] Display subtext: "Choose the 3 most important qualities you want to embody."
 - [ ] Typography: Title semi-bold, subtext regular at 90% opacity
 - [ ] Text alignment: Center
-- [ ] No explanatory paragraphs shown (keep copy minimal)
 
 **Trait Chips Display (AC #17)**
 - [ ] Display 8 total trait options as selectable chips/buttons:
-  - Clear about my direction
-  - Intentional with my time
-  - Takes action even when unsure
-  - Shows up consistently
-  - Strives for excellence
-  - Always improving
-  - Self-aware
-  - Emotionally grounded
-- [ ] Chip layout: Multi-row, flex-wrap, centered
+  - Clear Direction
+  - Intentional Time
+  - Decisive Action
+  - Consistent Effort
+  - High Standards
+  - Continuous Growth
+  - Self Aware
+  - Emotionally Grounded
+- [ ] Chip layout: 3-3-2 arrangement (3 chips in row 1, 3 in row 2, 2 centered in row 3)
+- [ ] Multi-row, flex-wrap, centered
 - [ ] No scrolling required on standard mobile screen
 - [ ] Chip styling: Rounded pill shape, touchable, min 48px height
 - [ ] Unselected state: Light border, transparent background
@@ -256,11 +256,13 @@ Selected traits are used as primary personalization signals that influence:
 
 ### Task 3: Step 3 - Identity Traits (Aspirational Focus) (AC: #16-#26)
 - [x] **Subtask 3.1**: Create IdentityTraitsScreen component (screen 3 of 3)
-- [x] **Subtask 3.2**: Implement title "What are you trying to build right now?" with subtext "Choose 3."
+- [x] **Subtask 3.2**: Implement title "Who do we want to become?" with subtext "Choose the 3 most important qualities you want to embody."
 - [x] **Subtask 3.3**: Create TraitChip component with unselected/selected states
-- [x] **Subtask 3.4**: Render 8 trait chips with new aspirational trait names:
-  - Clear about my direction, Intentional with my time, Takes action even when unsure, Shows up consistently
-  - Strives for excellence, Always improving, Self-aware, Emotionally grounded
+- [x] **Subtask 3.4**: Render 8 trait chips with concise aspirational trait names:
+  - Clear Direction, Intentional Time, Decisive Action
+  - Consistent Effort, High Standards, Continuous Growth
+  - Self Aware, Emotionally Grounded
+- [x] **Subtask 3.4b**: Organize chips in 3-3-2 layout for visual balance
 - [x] **Subtask 3.5**: Implement selection logic (exactly 3 enforcement - no min/max range)
 - [x] **Subtask 3.6**: Add touch feedback and animations
 - [x] **Subtask 3.7**: Implement selection counter display ("X of 3 selected")
@@ -628,10 +630,9 @@ const TraitChip: React.FC<TraitChipProps> = ({ label, selected, onPress, disable
 
 // Usage
 const TRAITS = [
-  ['Clear about my direction', 'Intentional with my time'],
-  ['Takes action even when unsure', 'Shows up consistently'],
-  ['Strives for excellence', 'Always improving'],
-  ['Self-aware', 'Emotionally grounded'],
+  ['Clear Direction', 'Intentional Time', 'Decisive Action'],
+  ['Consistent Effort', 'High Standards', 'Continuous Growth'],
+  ['Self Aware', 'Emotionally Grounded']
 ];
 
 const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
@@ -768,9 +769,9 @@ npx expo install expo-blur  # Optional, for true blur effect
 - [ ] Navigates to Step 3 on continue
 
 **Step 3: Identity Traits (Aspirational Focus)**
-- [ ] Title displays: "What are you trying to build right now?"
-- [ ] Subtext displays: "Choose 3."
-- [ ] 8 trait chips display with aspirational trait names
+- [ ] Title displays: "Who do we want to become?"
+- [ ] Subtext displays: "Choose the 3 most important qualities you want to embody."
+- [ ] 8 trait chips display with concise aspirational trait names (Clear Direction, Intentional Time, etc.)
 - [ ] No scrolling required on standard mobile screen
 - [ ] Tap to select/deselect works
 - [ ] Selected chips have green border and background
