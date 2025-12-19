@@ -14,7 +14,7 @@
  *
  * Usage:
  * ```tsx
- * import { useAuth } from '@/src/contexts/AuthContext';
+ * import { useAuth } from '@/contexts/AuthContext';
  *
  * function MyComponent() {
  *   const { user, isLoading, signIn, signOut } = useAuth();
@@ -118,7 +118,7 @@ export interface AuthContextType {
  * Auth Context
  * Internal context - use useAuth() hook instead
  */
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
  * Auth Provider Props
@@ -134,7 +134,7 @@ interface AuthProviderProps {
  * @example
  * ```tsx
  * // app/_layout.tsx
- * import { AuthProvider } from '@/src/contexts/AuthContext';
+ * import { AuthProvider } from '@/contexts/AuthContext';
  *
  * export default function RootLayout() {
  *   return (
@@ -330,7 +330,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
  *
  * @example
  * ```tsx
- * import { useAuth } from '@/src/contexts/AuthContext';
+ * import { useAuth } from '@/contexts/AuthContext';
  *
  * function LoginScreen() {
  *   const { signIn, error } = useAuth();
@@ -372,7 +372,7 @@ export function useAuth(): AuthContextType {
  *
  * @example
  * ```tsx
- * import { useAuth, isUserAuthenticated } from '@/src/contexts/AuthContext';
+ * import { useAuth, isUserAuthenticated } from '@/contexts/AuthContext';
  *
  * function MyComponent() {
  *   const auth = useAuth();
