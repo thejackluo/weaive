@@ -21,14 +21,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  Animated,
-  Dimensions,
-  Pressable,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet, Animated, Dimensions, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from '@react-native-community/blur';
 import { Text } from './Text/Text';
@@ -158,20 +151,11 @@ export function Toast({ message, type, duration = 3000, onDismiss }: ToastProps)
                 },
               ]}
             >
-              <Text
-                variant="textLg"
-                weight="bold"
-                style={{ color: backgroundColor }}
-              >
+              <Text variant="textLg" weight="bold" style={{ color: backgroundColor }}>
                 {getIcon()}
               </Text>
             </View>
-            <Text
-              variant="textBase"
-              weight="medium"
-              color="primary"
-              style={styles.message}
-            >
+            <Text variant="textBase" weight="medium" color="primary" style={styles.message}>
               {message}
             </Text>
           </BlurView>
@@ -193,20 +177,11 @@ export function Toast({ message, type, duration = 3000, onDismiss }: ToastProps)
                 },
               ]}
             >
-              <Text
-                variant="textLg"
-                weight="bold"
-                style={{ color: backgroundColor }}
-              >
+              <Text variant="textLg" weight="bold" style={{ color: backgroundColor }}>
                 {getIcon()}
               </Text>
             </View>
-            <Text
-              variant="textBase"
-              weight="medium"
-              color="primary"
-              style={styles.message}
-            >
+            <Text variant="textBase" weight="medium" color="primary" style={styles.message}>
               {message}
             </Text>
           </View>
@@ -279,7 +254,12 @@ class ToastManager {
    * Show a toast notification
    */
   show(message: string, type: ToastType = 'info', duration?: number) {
-    console.log('[TOAST_MANAGER] show() called:', { message, type, duration, hasListener: !!this.listener });
+    console.log('[TOAST_MANAGER] show() called:', {
+      message,
+      type,
+      duration,
+      hasListener: !!this.listener,
+    });
     if (this.listener) {
       this.listener({ message, type, duration });
       console.log('[TOAST_MANAGER] Toast config sent to listener');
@@ -355,11 +335,7 @@ export function ToastContainer() {
  * showToast('Invalid email', 'error', 5000);
  * ```
  */
-export function showToast(
-  message: string,
-  type: ToastType = 'info',
-  duration?: number
-) {
+export function showToast(message: string, type: ToastType = 'info', duration?: number) {
   console.log('[SHOW_TOAST] Function called with:', { message, type, duration });
   toastManager.show(message, type, duration);
 }

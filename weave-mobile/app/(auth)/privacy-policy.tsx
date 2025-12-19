@@ -72,12 +72,7 @@ export default function PrivacyPolicyScreen() {
             We collect several types of information to provide and improve our service:
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             A. Account Information
           </Text>
           <View style={styles.bulletList}>
@@ -92,12 +87,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             B. Identity & Goals Data
           </Text>
           <View style={styles.bulletList}>
@@ -115,12 +105,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             C. Progress & Activity Data
           </Text>
           <View style={styles.bulletList}>
@@ -138,12 +123,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             D. Proof Captures
           </Text>
           <View style={styles.bulletList}>
@@ -158,12 +138,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             E. Technical Data
           </Text>
           <View style={styles.bulletList}>
@@ -233,12 +208,7 @@ export default function PrivacyPolicyScreen() {
             data is processed:
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             A. AI Providers
           </Text>
           <View style={styles.bulletList}>
@@ -276,12 +246,7 @@ export default function PrivacyPolicyScreen() {
             </View>
           </Card>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             B. Infrastructure Providers
           </Text>
           <View style={styles.bulletList}>
@@ -297,12 +262,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             C. Future Services (Post-MVP)
           </Text>
           <View style={styles.bulletList}>
@@ -314,7 +274,11 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Text variant="textSm" color="secondary" style={[styles.paragraph, { marginTop: spacing[3] }]}>
+          <Text
+            variant="textSm"
+            color="secondary"
+            style={[styles.paragraph, { marginTop: spacing[3] }]}
+          >
             All third-party services operate under strict confidentiality agreements and comply with
             applicable data protection laws.
           </Text>
@@ -356,7 +320,11 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Text variant="textSm" color="secondary" style={[styles.paragraph, { marginTop: spacing[3] }]}>
+          <Text
+            variant="textSm"
+            color="secondary"
+            style={[styles.paragraph, { marginTop: spacing[3] }]}
+          >
             However, no system is 100% secure. We cannot guarantee absolute security, but we
             continuously work to improve our protections.
           </Text>
@@ -392,12 +360,7 @@ export default function PrivacyPolicyScreen() {
             </View>
           </Card>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             Limited Sharing With Service Providers:
           </Text>
           <View style={styles.bulletList}>
@@ -412,12 +375,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             Legal Compliance & Protection:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -439,12 +397,7 @@ export default function PrivacyPolicyScreen() {
             You have comprehensive rights over your data, depending on your location:
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             A. GDPR Rights (EU Users)
           </Text>
           <View style={styles.bulletList}>
@@ -472,12 +425,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             B. CCPA Rights (California Users)
           </Text>
           <View style={styles.bulletList}>
@@ -499,12 +447,7 @@ export default function PrivacyPolicyScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             C. How to Exercise Your Rights:
           </Text>
           <View style={styles.bulletList}>
@@ -721,7 +664,11 @@ export default function PrivacyPolicyScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text variant="textSm" color="secondary" style={{ textAlign: 'center', marginBottom: spacing[4] }}>
+          <Text
+            variant="textSm"
+            color="secondary"
+            style={{ textAlign: 'center', marginBottom: spacing[4] }}
+          >
             By using Weave, you acknowledge that you have read and understood this Privacy Policy
             and agree to its terms.
           </Text>

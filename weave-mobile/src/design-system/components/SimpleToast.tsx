@@ -147,7 +147,12 @@ class SimpleToastManager {
   }
 
   show(message: string, type: SimpleToastType = 'info', duration?: number) {
-    console.log('[SIMPLE_TOAST_MANAGER] show() called:', { message, type, duration, hasListener: !!this.listener });
+    console.log('[SIMPLE_TOAST_MANAGER] show() called:', {
+      message,
+      type,
+      duration,
+      hasListener: !!this.listener,
+    });
     if (this.listener) {
       this.listener({ message, type, duration });
       console.log('[SIMPLE_TOAST_MANAGER] Toast config sent to listener');

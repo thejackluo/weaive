@@ -86,9 +86,13 @@ async function testKeychainAvailability(): Promise<boolean> {
             'Secure storage is not available. The app cannot store authentication tokens safely. Please contact support.',
             [{ text: 'OK' }]
           );
-          throw new Error('PRODUCTION SECURITY VIOLATION: Keychain unavailable - cannot store tokens securely');
+          throw new Error(
+            'PRODUCTION SECURITY VIOLATION: Keychain unavailable - cannot store tokens securely'
+          );
         } else {
-          console.warn('[SECURE_STORAGE] ⚠️ Keychain native module not working - using AsyncStorage fallback (DEV ONLY)');
+          console.warn(
+            '[SECURE_STORAGE] ⚠️ Keychain native module not working - using AsyncStorage fallback (DEV ONLY)'
+          );
           console.warn('[SECURE_STORAGE] Run: npx expo prebuild && npx expo run:ios');
         }
       }
@@ -110,8 +114,12 @@ async function testKeychainAvailability(): Promise<boolean> {
       throw new Error('PRODUCTION SECURITY VIOLATION: Keychain unavailable');
     }
 
-    console.warn('[SECURE_STORAGE] ⚠️ Keychain not available - using AsyncStorage fallback (DEV ONLY)');
-    console.warn('[SECURE_STORAGE] This is expected in Expo Go. For production, use a development build.');
+    console.warn(
+      '[SECURE_STORAGE] ⚠️ Keychain not available - using AsyncStorage fallback (DEV ONLY)'
+    );
+    console.warn(
+      '[SECURE_STORAGE] This is expected in Expo Go. For production, use a development build.'
+    );
     useKeychain = false;
   }
 })();
@@ -298,7 +306,10 @@ async function removeItemFromKeychain(key: string): Promise<void> {
       // Silently fall back to AsyncStorage (don't spam console)
       return removeItemFromAsyncStorage(key);
     }
-    console.warn('[SECURE_STORAGE] Keychain removeItem error, falling back to AsyncStorage:', error);
+    console.warn(
+      '[SECURE_STORAGE] Keychain removeItem error, falling back to AsyncStorage:',
+      error
+    );
     return removeItemFromAsyncStorage(key);
   }
 }
