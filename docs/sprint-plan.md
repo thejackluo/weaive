@@ -21,7 +21,7 @@ Based on the **Implementation Readiness Assessment**, this project requires **We
 | RLS policies missing | Security vulnerability | Week 0 |
 
 **Revised Strategy:**
-1. **Week 0:** Foundation setup (Epic 0: 38 pts → 3-5 days)
+1. **Week 0:** Foundation setup (Epic 0: 40 pts → 3-5 days)
 2. **Sprint 1:** Core user journey (48 pts → 2 weeks)
 3. **Sprint 2:** AI features & polish (52 pts → 2 weeks)
 4. **Sprint 3+:** Remaining features and scale prep
@@ -32,7 +32,7 @@ Based on the **Implementation Readiness Assessment**, this project requires **We
 
 **Duration:** 3-5 days
 **Goal:** Establish executable codebase with authentication, database, and security
-**Epic:** Epic 0 - Foundation (38 points)
+**Epic:** Epic 0 - Foundation (40 points)
 
 ### Critical Path
 

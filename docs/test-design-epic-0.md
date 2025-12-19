@@ -3,7 +3,7 @@
 **Date:** 2025-12-17
 **Author:** Claude Code (TEA Agent)
 **Status:** Draft
-**Epic:** Epic 0 - Foundation (Week 0, 38 points)
+**Epic:** Epic 0 - Foundation (Week 0, 40 points)
 
 ---
 
