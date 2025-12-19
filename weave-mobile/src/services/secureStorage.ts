@@ -1,27 +1,29 @@
 /**
  * Secure Storage Adapter for Supabase
  *
- * Story 0.3: Authentication Flow (FIXED - Keychain Error v2)
+ * Story 0.3: Authentication Flow (SECURITY FIX v3 - Code Review)
  * Provides encrypted storage for JWT tokens using react-native-keychain
  *
- * FIX v2: Completely bulletproof null checks
- * - Never calls Keychain methods if module doesn't exist
- * - Always uses AsyncStorage as reliable fallback
- * - Works in Expo Go, development builds, and production
+ * FIX v3: PRODUCTION SECURITY ENFORCEMENT
+ * - Keychain is REQUIRED in production builds
+ * - AsyncStorage fallback ONLY allowed in development/Expo Go
+ * - Production apps FAIL HARD if keychain unavailable (forces proper setup)
+ * - This prevents JWT tokens from ever being stored in plain text in production
  *
  * CRITICAL SECURITY:
- * - JWT tokens SHOULD be stored in keychain (encrypted)
- * - AsyncStorage fallback is DEVELOPMENT ONLY (plain text)
- * - Never use AsyncStorage in production for auth tokens
+ * - JWT tokens MUST be stored in keychain (encrypted) in production
+ * - AsyncStorage fallback is DEVELOPMENT/EXPO GO ONLY (plain text)
+ * - Production builds will throw error if keychain is not available
  *
  * Implementation Pattern:
  * - Compatible with Supabase AsyncStorage interface
- * - Uses react-native-keychain for encryption (when available)
- * - Falls back to AsyncStorage gracefully
+ * - Uses react-native-keychain for encryption (required in production)
+ * - Falls back to AsyncStorage ONLY in __DEV__ mode
  * - Service name: 'weave-auth-tokens' for isolation
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 const KEYCHAIN_SERVICE = 'weave-auth-tokens';
 const ASYNC_STORAGE_KEY = '@weave:auth-tokens';
@@ -74,15 +76,41 @@ async function testKeychainAvailability(): Promise<boolean> {
         console.log('[SECURE_STORAGE] ✓ Keychain available (encrypted storage)');
       } else {
         useKeychain = false;
-        console.warn('[SECURE_STORAGE] ⚠️ Keychain native module not working - using AsyncStorage fallback');
-        console.warn('[SECURE_STORAGE] Run: npx expo prebuild && npx expo run:ios');
+        // PRODUCTION SECURITY CHECK: Keychain REQUIRED in production
+        if (!__DEV__) {
+          console.error('[SECURE_STORAGE] ❌ CRITICAL: Keychain not working in PRODUCTION build!');
+          console.error('[SECURE_STORAGE] JWT tokens CANNOT be stored securely.');
+          console.error('[SECURE_STORAGE] Fix: Build with `npx expo prebuild && npx expo run:ios`');
+          Alert.alert(
+            'Security Error',
+            'Secure storage is not available. The app cannot store authentication tokens safely. Please contact support.',
+            [{ text: 'OK' }]
+          );
+          throw new Error('PRODUCTION SECURITY VIOLATION: Keychain unavailable - cannot store tokens securely');
+        } else {
+          console.warn('[SECURE_STORAGE] ⚠️ Keychain native module not working - using AsyncStorage fallback (DEV ONLY)');
+          console.warn('[SECURE_STORAGE] Run: npx expo prebuild && npx expo run:ios');
+        }
       }
     } else {
       console.warn('[SECURE_STORAGE] ⚠️ Keychain module loaded but missing required functions');
       useKeychain = false;
+
+      // PRODUCTION SECURITY CHECK
+      if (!__DEV__) {
+        console.error('[SECURE_STORAGE] ❌ CRITICAL: Keychain module incomplete in PRODUCTION!');
+        throw new Error('PRODUCTION SECURITY VIOLATION: Keychain module incomplete');
+      }
     }
   } catch (error) {
-    console.warn('[SECURE_STORAGE] ⚠️ Keychain not available - using AsyncStorage fallback');
+    // PRODUCTION SECURITY CHECK
+    if (!__DEV__) {
+      console.error('[SECURE_STORAGE] ❌ CRITICAL: Keychain not available in PRODUCTION build!');
+      console.error('[SECURE_STORAGE] Error:', error);
+      throw new Error('PRODUCTION SECURITY VIOLATION: Keychain unavailable');
+    }
+
+    console.warn('[SECURE_STORAGE] ⚠️ Keychain not available - using AsyncStorage fallback (DEV ONLY)');
     console.warn('[SECURE_STORAGE] This is expected in Expo Go. For production, use a development build.');
     useKeychain = false;
   }
@@ -279,46 +307,63 @@ async function removeItemFromKeychain(key: string): Promise<void> {
  * Secure Storage Adapter
  * Compatible with Supabase storage interface
  *
- * Uses keychain when available (development builds, production)
- * Falls back to AsyncStorage in Expo Go or when keychain fails
+ * SECURITY ENFORCEMENT:
+ * - Production builds REQUIRE keychain (encrypted storage)
+ * - Development builds CAN use AsyncStorage fallback
+ * - Production operations FAIL if keychain unavailable
  */
 export const secureStorage = {
   /**
-   * Get item from encrypted storage (keychain or AsyncStorage fallback)
+   * Get item from encrypted storage (keychain required in production)
    * @param key - Storage key
    * @returns Promise<string | null> - Stored value or null if not found
+   * @throws Error in production if keychain unavailable
    */
   async getItem(key: string): Promise<string | null> {
     if (useKeychain) {
       return getItemFromKeychain(key);
     } else {
+      // PRODUCTION CHECK: Fail if keychain not available
+      if (!__DEV__) {
+        throw new Error('SECURITY: Cannot access secure storage in production without keychain');
+      }
       return getItemFromAsyncStorage(key);
     }
   },
 
   /**
-   * Set item in encrypted storage (keychain or AsyncStorage fallback)
+   * Set item in encrypted storage (keychain required in production)
    * @param key - Storage key
    * @param value - Value to store
    * @returns Promise<void>
+   * @throws Error in production if keychain unavailable
    */
   async setItem(key: string, value: string): Promise<void> {
     if (useKeychain) {
       return setItemInKeychain(key, value);
     } else {
+      // PRODUCTION CHECK: Fail if keychain not available
+      if (!__DEV__) {
+        throw new Error('SECURITY: Cannot store tokens in production without keychain');
+      }
       return setItemInAsyncStorage(key, value);
     }
   },
 
   /**
-   * Remove item from encrypted storage (keychain or AsyncStorage fallback)
+   * Remove item from encrypted storage (keychain required in production)
    * @param key - Storage key to remove
    * @returns Promise<void>
+   * @throws Error in production if keychain unavailable
    */
   async removeItem(key: string): Promise<void> {
     if (useKeychain) {
       return removeItemFromKeychain(key);
     } else {
+      // PRODUCTION CHECK: Fail if keychain not available
+      if (!__DEV__) {
+        throw new Error('SECURITY: Cannot remove tokens in production without keychain');
+      }
       return removeItemFromAsyncStorage(key);
     }
   },
