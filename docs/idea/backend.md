@@ -621,9 +621,15 @@ flowchart TB
 
 # Data Model
 
+**Sprint 1 Tables (12 total):** user_profiles, identity_docs, goals, subtask_templates, subtask_instances, subtask_completions, captures, journal_entries, daily_aggregates, triad_tasks, ai_runs, ai_artifacts
+
+**Deferred Tables:** user_stats, qgoals, badges, user_badges, subtask_proofs, event_log, user_edits, devices
+
+---
+
 ## Users & Identity
 
-### UserProfile
+### UserProfile `[Sprint 1 - Story 0.2a]`
 
 Stores basic user information and preferences.
 
@@ -646,7 +652,7 @@ CREATE INDEX idx_user_profiles_auth_id ON user_profiles(auth_user_id);
 - `timezone` - Critical for converting UTC timestamps to user's local date
 - `auth_user_id` - Links to Supabase auth system
 
-### IdentityDoc
+### IdentityDoc `[Sprint 1 - Story 0.2a]`
 
 Stores user's identity profile that informs AI behavior. Versioned to allow rollback and reference specific versions.
 
@@ -675,7 +681,7 @@ CREATE INDEX idx_identity_docs_user_version ON identity_docs(user_id, version DE
 
 ## Goals & Planning
 
-### Goal (aka "Needle" in MVP)
+### Goal (aka "Needle" in MVP) `[Sprint 1 - Story 0.2a]`
 
 Top-level user goals (max 3 active at a time). In the MVP product language, these are called **"Needles"** — the direction the user wants to weave toward.
 
@@ -699,7 +705,7 @@ CREATE TABLE goals (
 CREATE INDEX idx_goals_user_status ON goals(user_id, status);
 ```
 
-### QGoal (Quantifiable Goal)
+### QGoal (Quantifiable Goal) `[Deferred - Sprint 2+]`
 
 Breakdown of goals into measurable sub-goals with cadence and metrics.
 
@@ -734,7 +740,7 @@ CREATE INDEX idx_qgoals_goal_id ON qgoals(goal_id);
 
 In the MVP product language, subtasks are called **"Binds"** — the consistent actions that bind the user to their needles (goals). Each bind strengthens the weave (user's progress).
 
-### SubtaskTemplate
+### SubtaskTemplate `[Sprint 1 - Story 0.2a]`
 
 Reusable task templates that can generate instances. These are the base definitions for recurring binds.
 
@@ -758,7 +764,7 @@ CREATE TABLE subtask_templates (
 CREATE INDEX idx_subtask_templates_user_goal ON subtask_templates(user_id, goal_id);
 ```
 
-### SubtaskInstance
+### SubtaskInstance `[Sprint 1 - Story 0.2a]`
 
 Specific instance of a task scheduled for a particular date.
 
@@ -786,7 +792,7 @@ CREATE INDEX idx_subtask_instances_user_date ON subtask_instances(user_id, sched
 CREATE INDEX idx_subtask_instances_status ON subtask_instances(status);
 ```
 
-### SubtaskCompletion (Bind Completion Event)
+### SubtaskCompletion (Bind Completion Event) `[Sprint 1 - Story 0.2a]`
 
 **Immutable event log** for bind completions. This is canonical truth.
 
@@ -821,7 +827,7 @@ CREATE INDEX idx_subtask_completions_instance ON subtask_completions(subtask_ins
 
 Part of the MVP's "Document" feature — users capture proof of bind completion and daily memories.
 
-### Capture
+### Capture `[Sprint 1 - Story 0.2a]`
 
 User-created content (photos, notes, audio, timers) that can serve as proof. These captures power the "Active Day With Proof" metric and provide evidence for the weave progression system.
 
@@ -846,7 +852,7 @@ CREATE INDEX idx_captures_user_date ON captures(user_id, local_date);
 CREATE INDEX idx_captures_type ON captures(type);
 ```
 
-### SubtaskProof
+### SubtaskProof `[Deferred - Sprint 3]`
 
 Join table linking captures to subtask instances as proof.
 
@@ -869,7 +875,7 @@ CREATE TABLE subtask_proofs (
 
 The **Thread** feature in MVP — users reflect on their day and receive AI-generated insights and plans.
 
-### JournalEntry (Daily Reflection)
+### JournalEntry (Daily Reflection) `[Sprint 1 - Story 0.2a]`
 
 Daily reflection and fulfillment tracking. One per user per day. Part of the core user loop described in MVP as "Thread (Reflection)".
 
@@ -887,7 +893,7 @@ CREATE TABLE journal_entries (
 CREATE INDEX idx_journal_entries_user_date ON journal_entries(user_id, local_date);
 ```
 
-### TriadTask
+### TriadTask `[Sprint 1 - Story 0.2b]`
 
 AI-generated "triad" of 3 tasks for tomorrow. Generated after journal submission.
 
@@ -915,7 +921,7 @@ CREATE INDEX idx_triad_tasks_user_date ON triad_tasks(user_id, date_for);
 
 In MVP terms, this is where the user's **"Weave"** is computed — the visual representation of their progress and consistency. The weave grows stronger and more complex with each completed bind.
 
-### DailyAggregate
+### DailyAggregate `[Sprint 1 - Story 0.2b]`
 
 **Pre-computed daily stats** for fast dashboard queries. Updated by worker.
 
@@ -939,7 +945,7 @@ CREATE TABLE daily_aggregates (
 - Journal is submitted
 - Capture is created
 
-### UserStats (Weave Progression State)
+### UserStats (Weave Progression State) `[Deferred - Sprint 2+]`
 
 User-level aggregated stats, computed by worker nightly. Represents the user's **weave level** and progression from "thread" to complex, beautiful weave pattern.
 
@@ -965,7 +971,7 @@ CREATE TABLE user_stats (
 - Level 26-50: Complex weave pattern
 - Level 51+: Master weave (most visually impressive)
 
-### Badges
+### Badges `[Deferred - Sprint 4]`
 
 Global badge definitions and user badge assignments.
 
@@ -1003,7 +1009,7 @@ CREATE INDEX idx_user_badges_user ON user_badges(user_id);
 
 All AI interactions are deterministic and based on the user's identity document to ensure consistent, personalized coaching.
 
-### AiRun
+### AiRun `[Sprint 1 - Story 0.2b]`
 
 Tracks each AI generation run for debugging, caching, and cost tracking.
 
@@ -1028,7 +1034,7 @@ CREATE INDEX idx_ai_runs_user_module ON ai_runs(user_id, module);
 CREATE INDEX idx_ai_runs_input_hash ON ai_runs(input_hash);
 ```
 
-### AiArtifact
+### AiArtifact `[Sprint 1 - Story 0.2b]`
 
 The actual AI-generated content. Can be edited by users.
 
@@ -1050,7 +1056,7 @@ CREATE INDEX idx_ai_artifacts_user_type ON ai_artifacts(user_id, type);
 CREATE INDEX idx_ai_artifacts_run ON ai_artifacts(run_id);
 ```
 
-### UserEdit
+### UserEdit `[Deferred - Sprint 2]`
 
 Tracks user edits to AI artifacts for audit trail.
 
@@ -1072,7 +1078,7 @@ CREATE INDEX idx_user_edits_artifact ON user_edits(artifact_id);
 
 ## Events
 
-### EventLog
+### EventLog `[Deferred - Sprint 2+]`
 
 **Append-only event log** for event-driven workflows.
 
