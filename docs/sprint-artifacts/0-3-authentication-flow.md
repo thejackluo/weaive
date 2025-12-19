@@ -206,34 +206,35 @@
   - [x] Export typed hook with all context values ✅
 
 ### Task 4: JWT Verification Middleware (Backend) (AC: 4)
-- [ ] Create auth dependency for FastAPI:
-  - [ ] File: `app/core/auth.py`
-  - [ ] Function: `get_current_user(token: str = Depends(oauth2_scheme))`
-  - [ ] Verify JWT using Supabase public key from config
-  - [ ] Extract `user_id` from JWT payload (`sub` claim)
-  - [ ] Return `user_id` or raise 401 HTTPException
-- [ ] Add JWT secret to config:
-  - [ ] File: `app/core/config.py`
-  - [ ] Add `SUPABASE_JWT_SECRET` (public key from Supabase dashboard → API Settings → JWT Secret)
-  - [ ] Update `.env.example` with `SUPABASE_JWT_SECRET=<your-jwt-secret>`
-- [ ] Protect example endpoint:
-  - [ ] Create `app/api/user.py` with `GET /api/user/me`
-  - [ ] Endpoint depends on `get_current_user`
-  - [ ] Returns `{"user_id": "...", "message": "Authenticated"}`
+- [x] Create auth dependency for FastAPI:
+  - [x] File: `app/core/deps.py` ✅
+  - [x] Function: `get_current_user(token: str = Depends(oauth2_scheme))` ✅
+  - [x] Verify JWT using Supabase public key from config ✅
+  - [x] Extract `user_id` from JWT payload (`sub` claim) ✅
+  - [x] Return `user_id` or raise 401 HTTPException ✅
+  - [x] BONUS: Added `get_optional_user()` for optional auth ✅
+- [x] Add JWT secret to config:
+  - [x] File: `app/core/config.py` ✅
+  - [x] Add `SUPABASE_JWT_SECRET` (public key from Supabase dashboard → API Settings → JWT Secret) ✅
+  - [x] Update `.env.example` with `SUPABASE_JWT_SECRET=<your-jwt-secret>` ✅
+- [x] Protect example endpoint:
+  - [x] Create `app/api/user.py` with `GET /api/user/me` ✅
+  - [x] Endpoint depends on `get_current_user` ✅
+  - [x] Returns `{"user_id": "...", "message": "Authenticated"}` ✅
 - [ ] Test JWT middleware:
-  - [ ] Call `/api/user/me` without token → 401 Unauthorized
-  - [ ] Call `/api/user/me` with valid token → 200 OK
-  - [ ] Call `/api/user/me` with expired token → 401 Unauthorized
+  - [ ] Call `/api/user/me` without token → 401 Unauthorized *(Pending: Manual testing)*
+  - [ ] Call `/api/user/me` with valid token → 200 OK *(Pending: Manual testing)*
+  - [ ] Call `/api/user/me` with expired token → 401 Unauthorized *(Pending: Manual testing)*
 
 ### Task 5: Protected Routes Setup (AC: 5)
 - [x] Create auth route group:
   - [x] Directory: `app/(auth)/` ✅
   - [x] File: `app/(auth)/_layout.tsx` (stack navigator for auth screens) ✅
   - [x] Redirect to tabs if already authenticated ✅
-- [ ] Create protected tabs group:
+- [x] Create protected tabs group:
   - [x] Directory: `app/(tabs)/` *(Already exists from Story 0.1)* ✅
-  - [ ] File: `app/(tabs)/_layout.tsx` - **INCOMPLETE: Auth guard NOT implemented** ❌
-  - [ ] Redirect to login if not authenticated **CRITICAL: Not implemented** ❌
+  - [x] File: `app/(tabs)/_layout.tsx` - Auth guard implemented ✅
+  - [x] Redirect to login if not authenticated (lines 37-46) ✅
 - [x] Update root layout:
   - [x] File: `app/_layout.tsx` ✅
   - [x] Wrapped with AuthProvider *(Auth redirect logic handled in route group layouts)* ✅
@@ -277,7 +278,7 @@
   - [x] Character counter with max limit ✅
   - [x] Helper text and error text ✅
   - [x] React Native Reanimated animations ✅
-  - [ ] **MISSING: types.ts file** - `InputVariant` and `InputSize` types need separate file ❌
+  - [x] Created types.ts file - `InputVariant` and `InputSize` types ✅
 
 ### Task 7: OAuth Configuration (AC: 1)
 - [ ] Configure Sign in with Apple in Supabase:
