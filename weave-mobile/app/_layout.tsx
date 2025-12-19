@@ -1,8 +1,15 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
+import { LogBox } from 'react-native';
 import { ThemeProvider, ToastContainer } from '../src/design-system';
 import { AuthProvider } from '../src/contexts/AuthContext';
 import '../global.css';
+
+// Suppress Reanimated React 19 compatibility warning (known issue, fix pending upgrade)
+LogBox.ignoreLogs([
+  'You attempted to set the key `current`',
+  'deepFreezeAndThrowOnMutationInDev',
+]);
 
 /**
  * Root layout component for Expo Router
