@@ -420,6 +420,7 @@ To enable Google Sign-In in the Weave mobile app, you need to configure both Goo
 #### Step 6: Test Google Sign-In
 
 1. **Start the app:**
+
    ```bash
    npx expo start --clear
    ```
@@ -442,21 +443,25 @@ To enable Google Sign-In in the Weave mobile app, you need to configure both Goo
 #### Troubleshooting Google OAuth
 
 **Error: "redirect_uri_mismatch"**
+
 - Verify the redirect URI in Google Console exactly matches:
   `https://<project-ref>.supabase.co/auth/v1/callback`
 - Ensure no trailing slashes or typos
 
 **Error: "Access blocked: This app's request is invalid"**
+
 - Verify OAuth consent screen is fully configured
 - Check that `email` and `profile` scopes are enabled
 - Make sure the client ID/secret are correctly entered in Supabase
 
 **OAuth popup opens but nothing happens:**
+
 - Verify `scheme: "weavelight"` is in `app.json`
 - Check that deep linking is working: Test with a simple deep link
 - Verify Supabase Auth is configured correctly
 
 **Sign-In works in browser but not in app:**
+
 - This is expected! OAuth in React Native requires a development build
 - Expo Go may have limitations with OAuth deep linking
 - Build with: `npx expo prebuild && npx expo run:ios`
