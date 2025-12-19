@@ -2,13 +2,13 @@
  * Button Component Types
  */
 
-import { PressableProps } from 'react-native';
+import { PressableProps, StyleProp, ViewStyle } from 'react-native';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'ai' | 'success';
 
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-export interface ButtonProps extends Omit<PressableProps, 'children'> {
+export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   /**
    * Button variant from design system
    * @default 'primary'
@@ -55,4 +55,9 @@ export interface ButtonProps extends Omit<PressableProps, 'children'> {
    * NativeWind className
    */
   className?: string;
+
+  /**
+   * Inline style prop (supports arrays and objects)
+   */
+  style?: StyleProp<ViewStyle>;
 }

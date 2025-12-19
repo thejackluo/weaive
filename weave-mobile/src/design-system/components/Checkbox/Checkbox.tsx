@@ -36,6 +36,7 @@ export interface CheckboxProps {
   disabled?: boolean;
   size?: 'sm' | 'md' | 'lg';
   style?: ViewStyle;
+  accessibilityLabel?: string;
 }
 
 export function Checkbox({
@@ -45,6 +46,7 @@ export function Checkbox({
   disabled = false,
   size = 'md',
   style,
+  accessibilityLabel,
 }: CheckboxProps) {
   const { colors, spacing, springs } = useTheme();
 
@@ -139,6 +141,9 @@ export function Checkbox({
       <AnimatedPressable
         onPress={handlePress}
         disabled={disabled}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked }}
+        accessibilityLabel={accessibilityLabel || label || 'Checkbox'}
         style={[
           styles.checkbox,
           {
