@@ -37,6 +37,7 @@ npx supabase db push --migration-name 20251219_auto_create_user_profiles
 **Purpose:** Automatically create user profiles when users sign in via OAuth
 
 **What it does:**
+
 - Creates `user_profiles` table (if it doesn't exist)
 - Creates database trigger to auto-create profiles on new auth users
 - Enables Row Level Security (RLS) policies
@@ -45,6 +46,7 @@ npx supabase db push --migration-name 20251219_auto_create_user_profiles
 **Status:** ✅ Ready to apply
 
 **Test verification:**
+
 ```sql
 -- After running migration, verify it worked:
 

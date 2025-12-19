@@ -55,7 +55,7 @@ async function createSessionFromUrl(url: string): Promise<AuthResult> {
 
     console.log('[AUTH] Setting session from OAuth tokens...');
 
-    const { data, error } = await supabase.auth.setSession({
+    const { error } = await supabase.auth.setSession({
       access_token,
       refresh_token,
     });
@@ -106,7 +106,7 @@ export async function signInWithApple(): Promise<AuthResult> {
       });
       throw error;
     }
-    
+
     if (!data?.url) {
       console.error('[AUTH] ❌ No OAuth URL returned from Supabase');
       console.error('[AUTH] Data received:', JSON.stringify(data, null, 2));
@@ -120,7 +120,7 @@ export async function signInWithApple(): Promise<AuthResult> {
     // Step 2: Open OAuth URL in in-app browser
     try {
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      
+
       console.log('[AUTH] Browser result received:', {
         type: result.type,
         url: result.url ? result.url.substring(0, 100) + '...' : 'no URL',
@@ -209,7 +209,7 @@ export async function signInWithGoogle(): Promise<AuthResult> {
       });
       throw error;
     }
-    
+
     if (!data?.url) {
       console.error('[AUTH] ❌ No OAuth URL returned from Supabase');
       console.error('[AUTH] Data received:', JSON.stringify(data, null, 2));
@@ -223,7 +223,7 @@ export async function signInWithGoogle(): Promise<AuthResult> {
     // Step 2: Open OAuth URL in in-app browser
     try {
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      
+
       console.log('[AUTH] Browser result received:', {
         type: result.type,
         url: result.url ? result.url.substring(0, 100) + '...' : 'no URL',
@@ -284,35 +284,27 @@ export async function signInWithGoogle(): Promise<AuthResult> {
  * - OR password-based auth
  * - Configure email templates in Supabase Dashboard
  */
-export async function signInWithEmail(email: string): Promise<AuthResult> {
-  try {
-    // TODO (Story 0-4): Implement email sign-in
-    // Option 1: Magic link
-    // const { data, error } = await supabase.auth.signInWithOtp({
-    //   email,
-    //   options: {
-    //     emailRedirectTo: 'weavelight://auth/callback',
-    //   },
-    // });
+export async function signInWithEmail(_email: string): Promise<AuthResult> {
+  // TODO (Story 0-4): Implement email sign-in
+  // Option 1: Magic link
+  // const { data, error } = await supabase.auth.signInWithOtp({
+  //   email: _email,
+  //   options: {
+  //     emailRedirectTo: 'weavelight://auth/callback',
+  //   },
+  // });
 
-    // Option 2: Password-based
-    // Requires additional UI for password input
-    // const { data, error } = await supabase.auth.signInWithPassword({
-    //   email,
-    //   password,
-    // });
+  // Option 2: Password-based
+  // Requires additional UI for password input
+  // const { data, error } = await supabase.auth.signInWithPassword({
+  //   email: _email,
+  //   password,
+  // });
 
-    return {
-      success: false,
-      error: 'Email authentication not yet implemented. Please use Apple or Google Sign In.',
-    };
-  } catch (err: any) {
-    console.error('[AUTH] Email Sign In failed:', err);
-    return {
-      success: false,
-      error: err.message || 'Unable to sign in with email. Please try again.',
-    };
-  }
+  return {
+    success: false,
+    error: 'Email authentication not yet implemented. Please use Apple or Google Sign In.',
+  };
 }
 
 /**

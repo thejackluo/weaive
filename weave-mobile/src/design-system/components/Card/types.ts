@@ -1,3 +1,4 @@
+import React from 'react';
 import { ViewProps, StyleProp, ViewStyle } from 'react-native';
 
 export type CardVariant =
