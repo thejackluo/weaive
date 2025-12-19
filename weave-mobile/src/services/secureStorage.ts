@@ -30,26 +30,63 @@ const ASYNC_STORAGE_KEY = '@weave:auth-tokens';
 let KeychainModule: any = null;
 let useKeychain = false;
 
-try {
-  KeychainModule = require('react-native-keychain');
-  // Double-check the module actually loaded with required functions
-  if (
-    KeychainModule &&
-    typeof KeychainModule.getGenericPassword === 'function' &&
-    typeof KeychainModule.setGenericPassword === 'function' &&
-    typeof KeychainModule.resetGenericPassword === 'function'
-  ) {
-    useKeychain = true;
-    console.log('[SECURE_STORAGE] ✓ Keychain available (encrypted storage)');
-  } else {
-    console.warn('[SECURE_STORAGE] ⚠️ Keychain module loaded but missing required functions');
+/**
+ * Test if keychain is actually working
+ * Some environments load the module but native methods are null
+ */
+async function testKeychainAvailability(): Promise<boolean> {
+  if (!KeychainModule) return false;
+
+  try {
+    // Try a simple test operation
+    await KeychainModule.getGenericPassword({ service: KEYCHAIN_SERVICE });
+    return true;
+  } catch (error: any) {
+    // Check for null native module errors
+    if (
+      error?.message?.includes('getGenericPasswordForOptions') ||
+      error?.message?.includes('null is not an object')
+    ) {
+      console.warn('[SECURE_STORAGE] Native keychain module not initialized');
+      return false;
+    }
+    // Other errors (like "not found") are OK - keychain works but empty
+    return true;
+  }
+}
+
+// Initialize keychain module
+(async () => {
+  try {
+    KeychainModule = require('react-native-keychain');
+
+    // Double-check the module actually loaded with required functions
+    if (
+      KeychainModule &&
+      typeof KeychainModule.getGenericPassword === 'function' &&
+      typeof KeychainModule.setGenericPassword === 'function' &&
+      typeof KeychainModule.resetGenericPassword === 'function'
+    ) {
+      // Test if native module is actually initialized
+      const isWorking = await testKeychainAvailability();
+      if (isWorking) {
+        useKeychain = true;
+        console.log('[SECURE_STORAGE] ✓ Keychain available (encrypted storage)');
+      } else {
+        useKeychain = false;
+        console.warn('[SECURE_STORAGE] ⚠️ Keychain native module not working - using AsyncStorage fallback');
+        console.warn('[SECURE_STORAGE] Run: npx expo prebuild && npx expo run:ios');
+      }
+    } else {
+      console.warn('[SECURE_STORAGE] ⚠️ Keychain module loaded but missing required functions');
+      useKeychain = false;
+    }
+  } catch (error) {
+    console.warn('[SECURE_STORAGE] ⚠️ Keychain not available - using AsyncStorage fallback');
+    console.warn('[SECURE_STORAGE] This is expected in Expo Go. For production, use a development build.');
     useKeychain = false;
   }
-} catch (error) {
-  console.warn('[SECURE_STORAGE] ⚠️ Keychain not available - using AsyncStorage fallback');
-  console.warn('[SECURE_STORAGE] This is expected in Expo Go. For production, use a development build.');
-  useKeychain = false;
-}
+})();
 
 /**
  * Check if keychain is available and working
@@ -119,7 +156,6 @@ async function getItemFromKeychain(key: string): Promise<string | null> {
   try {
     // Triple-check KeychainModule exists and has the method
     if (!KeychainModule || typeof KeychainModule.getGenericPassword !== 'function') {
-      console.warn('[SECURE_STORAGE] Keychain module unavailable in getItem, using AsyncStorage');
       return getItemFromAsyncStorage(key);
     }
 
@@ -138,7 +174,15 @@ async function getItemFromKeychain(key: string): Promise<string | null> {
     }
 
     return null;
-  } catch (error) {
+  } catch (error: any) {
+    // Check if this is a native module initialization error
+    if (
+      error?.message?.includes('getGenericPasswordForOptions') ||
+      error?.message?.includes('null is not an object')
+    ) {
+      // Silently fall back to AsyncStorage (don't spam console)
+      return getItemFromAsyncStorage(key);
+    }
     console.warn('[SECURE_STORAGE] Keychain getItem error, falling back to AsyncStorage:', error);
     return getItemFromAsyncStorage(key);
   }
@@ -155,7 +199,6 @@ async function setItemInKeychain(key: string, value: string): Promise<void> {
       typeof KeychainModule.getGenericPassword !== 'function' ||
       typeof KeychainModule.setGenericPassword !== 'function'
     ) {
-      console.warn('[SECURE_STORAGE] Keychain module unavailable in setItem, using AsyncStorage');
       return setItemInAsyncStorage(key, value);
     }
 
@@ -172,7 +215,15 @@ async function setItemInKeychain(key: string, value: string): Promise<void> {
     await KeychainModule.setGenericPassword('auth', JSON.stringify(data), {
       service: KEYCHAIN_SERVICE,
     });
-  } catch (error) {
+  } catch (error: any) {
+    // Check if this is a native module initialization error
+    if (
+      error?.message?.includes('getGenericPasswordForOptions') ||
+      error?.message?.includes('null is not an object')
+    ) {
+      // Silently fall back to AsyncStorage (don't spam console)
+      return setItemInAsyncStorage(key, value);
+    }
     console.warn('[SECURE_STORAGE] Keychain setItem error, falling back to AsyncStorage:', error);
     return setItemInAsyncStorage(key, value);
   }
@@ -190,7 +241,6 @@ async function removeItemFromKeychain(key: string): Promise<void> {
       typeof KeychainModule.setGenericPassword !== 'function' ||
       typeof KeychainModule.resetGenericPassword !== 'function'
     ) {
-      console.warn('[SECURE_STORAGE] Keychain module unavailable in removeItem, using AsyncStorage');
       return removeItemFromAsyncStorage(key);
     }
 
@@ -211,7 +261,15 @@ async function removeItemFromKeychain(key: string): Promise<void> {
         await KeychainModule.resetGenericPassword({ service: KEYCHAIN_SERVICE });
       }
     }
-  } catch (error) {
+  } catch (error: any) {
+    // Check if this is a native module initialization error
+    if (
+      error?.message?.includes('getGenericPasswordForOptions') ||
+      error?.message?.includes('null is not an object')
+    ) {
+      // Silently fall back to AsyncStorage (don't spam console)
+      return removeItemFromAsyncStorage(key);
+    }
     console.warn('[SECURE_STORAGE] Keychain removeItem error, falling back to AsyncStorage:', error);
     return removeItemFromAsyncStorage(key);
   }
