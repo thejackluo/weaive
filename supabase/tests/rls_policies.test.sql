@@ -10,7 +10,7 @@
 BEGIN;
 
 -- Load pgTAP extension
-SELECT plan(48); -- Total number of tests
+SELECT plan(41); -- Total number of tests
 
 -- Create test users in auth.users (simulating Supabase Auth)
 -- Note: In real tests, this would be done via Supabase Auth API
@@ -78,11 +78,12 @@ SELECT is(
 );
 
 -- Test: User A can INSERT their own journal entry
-INSERT INTO journal_entries (id, user_id, local_date, fulfillment_score)
+INSERT INTO journal_entries (id, user_id, local_date, text, fulfillment_score)
 VALUES (
   '20000000-0000-0000-0000-000000000001'::uuid,
   '00000000-0000-0000-0000-000000000001'::uuid,
   '2025-12-19',
+  'Today was productive!',
   8
 );
 
@@ -93,12 +94,12 @@ SELECT is(
 );
 
 -- Test: User A can INSERT their own identity doc
-INSERT INTO identity_docs (id, user_id, doc_type, content)
+INSERT INTO identity_docs (id, user_id, version, json)
 VALUES (
   '30000000-0000-0000-0000-000000000001'::uuid,
   '00000000-0000-0000-0000-000000000001'::uuid,
-  'archetype',
-  '{"type": "builder"}'::jsonb
+  1,
+  '{"archetype": "builder", "dream_self": "successful entrepreneur"}'::jsonb
 );
 
 SELECT is(
@@ -115,9 +116,30 @@ RESET request.jwt.claims;
 -- TEST SCENARIO 2: User A can SELECT but NOT UPDATE subtask_completions
 -- ═══════════════════════════════════════════════════════════════════════
 
--- Simulate User A session
+-- Simulate User A session FIRST
 SET LOCAL role = 'authenticated';
 SET LOCAL request.jwt.claims = '{"sub": "00000000-0000-0000-0000-00000000000a"}';
+
+-- Create test subtask_template (needed for subtask_instance)
+INSERT INTO subtask_templates (id, user_id, goal_id, title, default_estimated_minutes)
+VALUES (
+  '50000000-0000-0000-0000-000000000001'::uuid,
+  '00000000-0000-0000-0000-000000000001'::uuid,
+  '10000000-0000-0000-0000-000000000001'::uuid,  -- Reference goal created earlier
+  'Test Bind',
+  30
+);
+
+-- Create test subtask_instance (needed for completion)
+INSERT INTO subtask_instances (id, user_id, template_id, scheduled_for_date, status, estimated_minutes)
+VALUES (
+  '60000000-0000-0000-0000-000000000001'::uuid,
+  '00000000-0000-0000-0000-000000000001'::uuid,
+  '50000000-0000-0000-0000-000000000001'::uuid,
+  '2025-12-19',
+  'planned',
+  30
+);
 
 -- Test: User A can INSERT completion
 INSERT INTO subtask_completions (
@@ -126,7 +148,7 @@ INSERT INTO subtask_completions (
 VALUES (
   '40000000-0000-0000-0000-000000000001'::uuid,
   '00000000-0000-0000-0000-000000000001'::uuid,
-  NULL, -- No subtask_instance linked for this test
+  '60000000-0000-0000-0000-000000000001'::uuid,  -- Reference subtask_instance created above
   '2025-12-19',
   NOW()
 );
@@ -171,11 +193,12 @@ VALUES (
   'active'
 );
 
-INSERT INTO journal_entries (id, user_id, local_date, fulfillment_score)
+INSERT INTO journal_entries (id, user_id, local_date, text, fulfillment_score)
 VALUES (
   '20000000-0000-0000-0000-000000000002'::uuid,
   '00000000-0000-0000-0000-000000000002'::uuid,
   '2025-12-19',
+  'Had a good day!',
   7
 );
 
@@ -364,11 +387,13 @@ SELECT is(
 -- TEST SCENARIO 8: Verify policy counts
 -- ═══════════════════════════════════════════════════════════════════════
 
--- user_profiles should have 3 policies (SELECT, INSERT, UPDATE)
+-- user_profiles should have 6 policies (3 from RLS migration + 3 from auto_create trigger)
+-- RLS migration: users_select_own_profile, users_insert_own_profile, users_update_own_profile
+-- Auto-create migration: Users can view own profile, Users can update own profile, Service role can insert profiles
 SELECT is(
   (SELECT COUNT(*) FROM pg_policies WHERE schemaname = 'public' AND tablename = 'user_profiles'),
-  3::bigint,
-  'user_profiles has 3 policies (SELECT, INSERT, UPDATE)'
+  6::bigint,
+  'user_profiles has 6 policies (3 RLS + 3 auto-create trigger)'
 );
 
 -- subtask_completions should have 2 policies (SELECT, INSERT - NO UPDATE/DELETE)
@@ -474,27 +499,17 @@ RESET request.jwt.claims;
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Clean up test data
-DELETE FROM subtask_completions WHERE user_id IN (
-  '00000000-0000-0000-0000-000000000001'::uuid,
-  '00000000-0000-0000-0000-000000000002'::uuid
-);
+-- Note: Cannot DELETE from subtask_completions (immutable table) - test verified trigger works!
+-- Using TRUNCATE CASCADE to clean up all test data
+TRUNCATE TABLE goals CASCADE;  -- This cascades to all dependent tables
+TRUNCATE TABLE identity_docs CASCADE;
+TRUNCATE TABLE journal_entries CASCADE;
 
-DELETE FROM journal_entries WHERE user_id IN (
-  '00000000-0000-0000-0000-000000000001'::uuid,
-  '00000000-0000-0000-0000-000000000002'::uuid
+-- Clean up test user profiles
+DELETE FROM user_profiles WHERE auth_user_id IN (
+  '00000000-0000-0000-0000-00000000000a',
+  '00000000-0000-0000-0000-00000000000b'
 );
-
-DELETE FROM goals WHERE user_id IN (
-  '00000000-0000-0000-0000-000000000001'::uuid,
-  '00000000-0000-0000-0000-000000000002'::uuid
-);
-
-DELETE FROM identity_docs WHERE user_id IN (
-  '00000000-0000-0000-0000-000000000001'::uuid,
-  '00000000-0000-0000-0000-000000000002'::uuid
-);
-
-DELETE FROM user_profiles WHERE auth_user_id IN ('test-user-a', 'test-user-b');
 
 -- Finish test suite
 SELECT * FROM finish();
