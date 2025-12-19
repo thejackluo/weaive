@@ -32,6 +32,8 @@ Before starting this story, ensure:
 - ✅ Story 0.1 completed (Project Scaffolding with mobile + backend)
 - ✅ ESLint 9 configured for mobile (flat config format in `eslint.config.mjs`)
 - ✅ Ruff configured for backend (in `pyproject.toml`)
+- ✅ RLS penetration test script exists (`scripts/test_rls_security.py` from Story 0.4)
+- ✅ Test scripts configured (Story 0.7 will add comprehensive tests; basic smoke tests sufficient for MVP)
 - ✅ GitHub repository exists with `main` branch
 - ✅ Expo account created (for EAS Build)
 - ✅ Railway account created (for backend deployment)
@@ -74,8 +76,9 @@ Before starting this story, ensure:
 - Penetration test script exists: `scripts/test_rls_security.py`
 - Tests currently run locally only - CI/CD needed to enforce before merge
 
-**Critical Implementation Insight:**
-Story 0.1 implementation notes mention "Pre-commit hooks documentation: Will add in Story 0.5 (CI/CD Pipeline)" - this story fulfills that requirement.
+**Critical Implementation Insights:**
+- Story 0.1 implementation notes mention "Pre-commit hooks documentation: Will add in Story 0.5 (CI/CD Pipeline)"
+- **Pre-commit hooks decision:** Deferred to post-MVP. GitHub Actions CI/CD provides sufficient quality gates for MVP. Pre-commit hooks add local friction during rapid development. Will revisit after Story 0.7 (Test Infrastructure) is complete.
 
 ---
 
@@ -86,8 +89,10 @@ Story 0.1 implementation notes mention "Pre-commit hooks documentation: Will add
 **1. Set up GitHub repository secrets (0.25 SP)**
    - Add `EXPO_TOKEN` to GitHub repository secrets (Settings → Secrets and variables → Actions)
    - Generate token at https://expo.dev/settings/access-tokens
-   - Optional: Add `RAILWAY_TOKEN` for automated backend deployment
+   - Add `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` from `weave-api/.env` (needed for backend tests in CI)
+   - Optional: Add `RAILWAY_TOKEN` for automated backend deployment (deferred to post-MVP)
    - Document token generation process in `docs/dev/ci-cd-setup.md`
+   - **Note:** Set calendar reminder for 80 days to rotate EXPO_TOKEN before expiration
 
 **2. Create mobile linting workflow (0.5 SP)**
    - File: `.github/workflows/mobile-lint.yml`
@@ -120,11 +125,14 @@ Story 0.1 implementation notes mention "Pre-commit hooks documentation: Will add
    - File: `.github/workflows/backend-tests.yml`
    - Trigger on: Same as backend-lint
    - Actions: Checkout, setup uv with caching, sync with dev dependencies, run pytest
+   - **Environment setup:** Configure SUPABASE_URL and SUPABASE_SERVICE_KEY from GitHub secrets for tests
    - Run: `uv run pytest tests --cov=app --cov-report=term-missing`
-   - Includes RLS penetration test: `uv run python scripts/test_rls_security.py`
+   - Includes RLS penetration test: `uv run python scripts/test_rls_security.py` (created in Story 0.4)
+   - **Note:** Database migrations from Story 0.2 should be applied before tests (check if `scripts/migrate.py` exists; if so, run before pytest)
 
 **7. Configure Expo EAS Build (0.25 SP)**
-   - Verify `eas.json` exists (created by Story 0.1 prerequisite)
+   - Create `eas.json` if missing: Run `cd weave-mobile && eas build:configure` and select iOS
+   - Verify `eas.json` contains build profiles (preview, production)
    - Create `.github/workflows/eas-build.yml` (manual trigger only for MVP)
    - Trigger: `workflow_dispatch` (manual button in GitHub Actions tab)
    - Actions: Checkout, setup Node.js, setup Expo/EAS, install, build with `--non-interactive --no-wait`
@@ -136,7 +144,7 @@ Story 0.1 implementation notes mention "Pre-commit hooks documentation: Will add
    - Require status checks: `mobile-lint`, `backend-lint`, `type-check`, `mobile-tests`, `backend-tests`
    - Require branches to be up to date before merging
    - Enable "Require approval before merging" (1 approver)
-   - Document process in `docs/dev/git-workflow-guide.md`
+   - Document process in `docs/dev/git-workflow-guide.md`: Add section explaining branch protection rules, required status checks, how to handle failed CI checks, and emergency hotfix process (bypass protection)
 
 **9. Document CI/CD setup and troubleshooting (0.25 SP)**
    - Create `docs/dev/ci-cd-setup.md` with:
@@ -145,7 +153,13 @@ Story 0.1 implementation notes mention "Pre-commit hooks documentation: Will add
      - Common CI failures and fixes
      - Cache invalidation process
      - Railway deployment strategy (deferred to post-MVP)
-   - Update `CLAUDE.md` with CI/CD command reference
+   - Update `CLAUDE.md` with CI/CD command reference section:
+     - `gh workflow list` - View all workflows
+     - `gh run list --workflow=mobile-lint` - View workflow runs
+     - `gh run rerun <run-id>` - Re-run failed workflow
+     - `gh cache list` - View GitHub Actions caches
+     - `gh cache delete <cache-id>` - Clear specific cache
+     - Troubleshooting: Link to `docs/dev/ci-cd-setup.md`
 
 ### Technical Decisions
 
@@ -260,6 +274,18 @@ if command -v gh &> /dev/null; then
   else
     echo "⚠️  EXPO_TOKEN secret NOT FOUND (required for EAS Build)"
   fi
+
+  if gh secret list | grep -q "SUPABASE_URL"; then
+    echo "✅ SUPABASE_URL secret exists"
+  else
+    echo "⚠️  SUPABASE_URL secret NOT FOUND (required for backend tests)"
+  fi
+
+  if gh secret list | grep -q "SUPABASE_SERVICE_KEY"; then
+    echo "✅ SUPABASE_SERVICE_KEY secret exists"
+  else
+    echo "⚠️  SUPABASE_SERVICE_KEY secret NOT FOUND (required for backend tests)"
+  fi
 fi
 
 echo ""
@@ -267,6 +293,11 @@ echo "✅ CI/CD setup verification complete!"
 ```
 
 **Run:** `bash scripts/verify-ci-setup.sh`
+
+**Windows Users:** Run this script using Git Bash or WSL. For PowerShell alternative, use:
+```powershell
+Get-ChildItem .github/workflows/*.yml | ForEach-Object { Write-Host "✅ $($_.Name) exists" }
+```
 
 ---
 
@@ -288,16 +319,18 @@ echo "✅ CI/CD setup verification complete!"
 ### Technical Requirements
 
 - [ ] **AC-0.5-11:** `EXPO_TOKEN` secret configured in GitHub repository
-- [ ] **AC-0.5-12:** npm dependencies cached with `actions/setup-node` cache feature
-- [ ] **AC-0.5-13:** uv dependencies cached with `astral-sh/setup-uv` enable-cache feature
-- [ ] **AC-0.5-14:** CI/CD documentation created in `docs/dev/ci-cd-setup.md`
-- [ ] **AC-0.5-15:** Git workflow guide updated with branch protection info
+- [ ] **AC-0.5-12:** `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` secrets configured (from `weave-api/.env`)
+- [ ] **AC-0.5-13:** npm dependencies cached with `actions/setup-node` cache feature
+- [ ] **AC-0.5-14:** uv dependencies cached with `astral-sh/setup-uv` enable-cache feature
+- [ ] **AC-0.5-15:** CI/CD documentation created in `docs/dev/ci-cd-setup.md`
+- [ ] **AC-0.5-16:** Git workflow guide updated with branch protection info
 
 ### Definition of Done
 
 - [ ] All 6 workflows created and tested
 - [ ] Branch protection rules enabled on `main` branch
-- [ ] Documentation complete and reviewed
+- [ ] CI/CD documentation (`docs/dev/ci-cd-setup.md`) complete and reviewed
+- [ ] Git workflow guide updated with branch protection section
 - [ ] Verification script passes
 - [ ] At least 1 PR merged using the new CI/CD process
 - [ ] Code reviewed by team lead
@@ -552,6 +585,9 @@ jobs:
   test:
     name: pytest (Backend)
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
     defaults:
       run:
         working-directory: weave-api
@@ -574,6 +610,9 @@ jobs:
 
       - name: Run pytest
         run: uv run pytest tests --cov=app --cov-report=term-missing --cov-report=xml
+
+      - name: Run RLS security tests
+        run: uv run python scripts/test_rls_security.py
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -666,6 +705,10 @@ jobs:
 **Issue: "EXPO_TOKEN is not set"**
 - **Cause:** GitHub secret not configured or typo in workflow
 - **Fix:** Go to Settings → Secrets and variables → Actions → New repository secret → Name: `EXPO_TOKEN`, Value: [your token]
+
+**Issue: "Backend tests fail with Supabase connection error"**
+- **Cause:** SUPABASE_URL or SUPABASE_SERVICE_KEY not configured in GitHub secrets
+- **Fix:** Copy values from `weave-api/.env` and add to GitHub secrets. Ensure secret names match exactly (not SUPABASE_KEY - must be SUPABASE_SERVICE_KEY)
 
 **Issue: "Path filter not working"**
 - **Cause:** Glob pattern syntax error or missing root-level files
