@@ -76,7 +76,7 @@ sprint-1-stories:
   1-2-emotional-state-selection: done           # 3 pts
   1-3-insight-reflection: review                # 2 pts
   1-4-weave-solution: review                    # 2 pts (code review complete, tests created)
-  1-5-authentication: backlog                   # 3 pts
+  1-5-authentication: review                    # 3 pts (front-end UI complete, pending manual testing on device)
   # Phase 2: Light Identity Bootup
   1-6-identity-traits-selection: backlog        # 3 pts
   1-7-first-needle-simple: backlog              # 3 pts
