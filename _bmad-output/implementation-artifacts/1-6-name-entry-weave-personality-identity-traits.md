@@ -155,7 +155,7 @@ So that **the experience feels personally motivating and aligned with my communi
   - Row 3 (2): Consistent Effort, High Standards
   - Row 4 (1): Emotionally Grounded (alone to prevent layout shifts due to length)
   - Row 5 (2): Self Aware, Continuous Growth
-- [ ] Multi-row, flex-wrap, centered
+- [ ] Multi-row layout, centered (Note: Each row is a separate flex container without flexWrap to maintain 2-1-2-1-2 layout)
 - [ ] No scrolling required on standard mobile screen
 - [ ] Chip styling: Rounded pill shape, touchable, min 48px height
 - [ ] Unselected state: Light border, transparent background
