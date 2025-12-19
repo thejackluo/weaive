@@ -3,7 +3,7 @@
     "name": "weave-mobile",
     "slug": "weave-mobile",
     "version": "0.0.1",
-    "scheme": "weave",
+    "scheme": "weavelight",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,9 +14,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.weavelight.app",
+      "associatedDomains": ["applinks:weavelight.app"]
     },
     "android": {
+      "package": "com.weavelight.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
