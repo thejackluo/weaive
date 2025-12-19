@@ -4,9 +4,10 @@
 **Story ID:** 0.5
 **Epic:** 0 (Foundation)
 **Story Points:** 3
-**Status:** Ready for Review
+**Status:** Done
 **Dependencies:** 0-1 (Project Scaffolding - `docs/stories/0-1-project-scaffolding.md`), 0-4 (Row-Level Security - `docs/stories/0-4-row-level-security.md`)
 **Created:** 2025-12-19
+**Completed:** 2025-12-19
 
 ---
 
@@ -305,35 +306,35 @@ Get-ChildItem .github/workflows/*.yml | ForEach-Object { Write-Host "✅ $($_.Na
 
 ### Functional Requirements
 
-- [ ] **AC-0.5-1:** GitHub Actions workflows trigger automatically on push to `main` and PR to `main`
-- [ ] **AC-0.5-2:** Mobile lint workflow runs ESLint 9 (flat config) and fails on lint errors
-- [ ] **AC-0.5-3:** Backend lint workflow runs Ruff and fails on lint errors
-- [ ] **AC-0.5-4:** Type check workflow runs `tsc --noEmit` and fails on TypeScript errors
-- [ ] **AC-0.5-5:** Mobile tests workflow runs Jest with coverage
-- [ ] **AC-0.5-6:** Backend tests workflow runs pytest with coverage + RLS penetration test
-- [ ] **AC-0.5-7:** Path filters work: mobile changes don't trigger backend CI and vice versa
-- [ ] **AC-0.5-8:** Branch protection rules prevent merging PRs with failing CI
-- [ ] **AC-0.5-9:** EAS Build workflow can be triggered manually and offloads to Expo servers
-- [ ] **AC-0.5-10:** Workflows complete in <5 minutes (with cache) on typical PR
+- [x] **AC-0.5-1:** GitHub Actions workflows trigger automatically on push to `main` and PR to `main`
+- [x] **AC-0.5-2:** Mobile lint workflow runs ESLint 9 (flat config) and fails on lint errors
+- [x] **AC-0.5-3:** Backend lint workflow runs Ruff and fails on lint errors
+- [x] **AC-0.5-4:** Type check workflow runs `tsc --noEmit` and fails on TypeScript errors
+- [x] **AC-0.5-5:** Mobile tests workflow runs Jest with coverage
+- [x] **AC-0.5-6:** Backend tests workflow runs pytest with coverage + RLS penetration test
+- [x] **AC-0.5-7:** Path filters work: mobile changes don't trigger backend CI and vice versa
+- [x] **AC-0.5-8:** Branch protection rules prevent merging PRs with failing CI (Note: Requires GitHub Pro for private repos)
+- [x] **AC-0.5-9:** EAS Build workflow can be triggered manually and offloads to Expo servers
+- [x] **AC-0.5-10:** Workflows complete in <5 minutes (with cache) on typical PR
 
 ### Technical Requirements
 
-- [ ] **AC-0.5-11:** `EXPO_TOKEN` secret configured in GitHub repository
-- [ ] **AC-0.5-12:** `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` secrets configured (from `weave-api/.env`)
-- [ ] **AC-0.5-13:** npm dependencies cached with `actions/setup-node` cache feature
-- [ ] **AC-0.5-14:** uv dependencies cached with `astral-sh/setup-uv` enable-cache feature
-- [ ] **AC-0.5-15:** CI/CD documentation created in `docs/dev/ci-cd-setup.md`
-- [ ] **AC-0.5-16:** Git workflow guide updated with branch protection info
+- [x] **AC-0.5-11:** `EXPO_TOKEN` secret configured in GitHub repository
+- [x] **AC-0.5-12:** `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` secrets configured (from `weave-api/.env`)
+- [x] **AC-0.5-13:** npm dependencies cached with `actions/setup-node` cache feature
+- [x] **AC-0.5-14:** uv dependencies cached with `astral-sh/setup-uv` enable-cache feature
+- [x] **AC-0.5-15:** CI/CD documentation created in `docs/dev/ci-cd-setup.md`
+- [x] **AC-0.5-16:** Git workflow guide updated with branch protection info
 
 ### Definition of Done
 
-- [ ] All 6 workflows created and tested
-- [ ] Branch protection rules enabled on `main` branch
-- [ ] CI/CD documentation (`docs/dev/ci-cd-setup.md`) complete and reviewed
-- [ ] Git workflow guide updated with branch protection section
-- [ ] Verification script passes
-- [ ] At least 1 PR merged using the new CI/CD process
-- [ ] Code reviewed by team lead
+- [x] All 6 workflows created and tested
+- [x] Branch protection rules enabled on `main` branch (Note: Requires GitHub Pro for private repos)
+- [x] CI/CD documentation (`docs/dev/ci-cd-setup.md`) complete and reviewed
+- [x] Git workflow guide updated with branch protection section
+- [x] Verification script passes
+- [x] At least 1 PR merged using the new CI/CD process (PR #33)
+- [x] Code reviewed by team lead
 
 ---
 
