@@ -139,6 +139,13 @@ INSERT INTO subtask_templates (id, goal_id, user_id, title, recurrence_rule, def
 -- SUBTASK INSTANCES (Scheduled binds - 11 = instances)
 -- ═══════════════════════════════════════════════════════════════════════
 
+-- Alex's instances - 2 days ago (all done - perfect day)
+INSERT INTO subtask_instances (id, template_id, user_id, goal_id, scheduled_for_date, status, estimated_minutes, completed_at, created_at) VALUES
+('11111101-1111-1111-1111-111111111111', '17111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 'done', 30, NOW() - INTERVAL '2 days' + INTERVAL '10 hours', NOW() - INTERVAL '2 days'),
+('11111102-1111-1111-1111-111111111111', '17111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 'done', 15, NOW() - INTERVAL '2 days' + INTERVAL '14 hours', NOW() - INTERVAL '2 days'),
+('11111103-1111-1111-1111-111111111111', '17111113-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111112-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 'done', 30, NOW() - INTERVAL '2 days' + INTERVAL '7 hours', NOW() - INTERVAL '2 days'),
+('11111104-1111-1111-1111-111111111111', '17111114-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111113-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 'done', 45, NOW() - INTERVAL '2 days' + INTERVAL '22 hours', NOW() - INTERVAL '2 days');
+
 -- Alex's instances - Yesterday (all done)
 INSERT INTO subtask_instances (id, template_id, user_id, goal_id, scheduled_for_date, status, estimated_minutes, completed_at, created_at) VALUES
 ('11111111-1111-1111-1111-111111111111', '17111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '16111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 'done', 30, NOW() - INTERVAL '1 day' + INTERVAL '9 hours', NOW() - INTERVAL '1 day'),
@@ -179,10 +186,10 @@ INSERT INTO subtask_completions (id, user_id, subtask_instance_id, local_date, d
 
 -- Alex's completions (2 days ago - 4 binds completed - perfect day)
 INSERT INTO subtask_completions (id, user_id, subtask_instance_id, local_date, duration_minutes, completed_at) VALUES
-('1c111121-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '2 days', 30, NOW() - INTERVAL '2 days' + INTERVAL '10 hours'),
-('1c111122-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '2 days', 15, NOW() - INTERVAL '2 days' + INTERVAL '14 hours'),
-('1c111123-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '2 days', 30, NOW() - INTERVAL '2 days' + INTERVAL '7 hours'),
-('1c111124-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', NULL, CURRENT_DATE - INTERVAL '2 days', 45, NOW() - INTERVAL '2 days' + INTERVAL '22 hours');
+('1c111121-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111101-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 30, NOW() - INTERVAL '2 days' + INTERVAL '10 hours'),
+('1c111122-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111102-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 15, NOW() - INTERVAL '2 days' + INTERVAL '14 hours'),
+('1c111123-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111103-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 30, NOW() - INTERVAL '2 days' + INTERVAL '7 hours'),
+('1c111124-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', '11111104-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 45, NOW() - INTERVAL '2 days' + INTERVAL '22 hours');
 
 -- Jordan's completions (yesterday - only 1 bind completed)
 INSERT INTO subtask_completions (id, user_id, subtask_instance_id, local_date, duration_minutes, completed_at) VALUES
@@ -228,19 +235,19 @@ INSERT INTO journal_entries (id, user_id, local_date, text, fulfillment_score, c
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's aggregates (high consistency)
-INSERT INTO daily_aggregates (user_id, local_date, completed_count, planned_count, consistency_percent, has_journal, has_proof, active_day_with_proof, updated_at) VALUES
-('11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 3, 3, 100, TRUE, TRUE, TRUE, NOW() - INTERVAL '1 day' + INTERVAL '22 hours'),
-('11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 4, 4, 100, TRUE, FALSE, TRUE, NOW() - INTERVAL '2 days' + INTERVAL '23 hours'),
+INSERT INTO daily_aggregates (user_id, local_date, completed_count, planned_count, capture_count, has_journal, has_proof, active_day_with_proof, updated_at) VALUES
+('11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day', 3, 3, 2, TRUE, TRUE, TRUE, NOW() - INTERVAL '1 day' + INTERVAL '22 hours'),
+('11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 4, 4, 1, TRUE, FALSE, TRUE, NOW() - INTERVAL '2 days' + INTERVAL '23 hours'),
 ('11111111-1111-1111-1111-111111111111', CURRENT_DATE, 0, 4, 0, FALSE, FALSE, FALSE, NOW());
 
 -- Jordan's aggregates (inconsistent)
-INSERT INTO daily_aggregates (user_id, local_date, completed_count, planned_count, consistency_percent, has_journal, has_proof, active_day_with_proof, updated_at) VALUES
-('22222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '1 day', 1, 2, 50, FALSE, FALSE, TRUE, NOW() - INTERVAL '1 day' + INTERVAL '16 hours'),
-('22222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '2 days', 1, 3, 33, TRUE, FALSE, TRUE, NOW() - INTERVAL '2 days' + INTERVAL '21 hours'),
+INSERT INTO daily_aggregates (user_id, local_date, completed_count, planned_count, capture_count, has_journal, has_proof, active_day_with_proof, updated_at) VALUES
+('22222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '1 day', 1, 2, 0, FALSE, FALSE, TRUE, NOW() - INTERVAL '1 day' + INTERVAL '16 hours'),
+('22222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '2 days', 1, 3, 0, TRUE, FALSE, TRUE, NOW() - INTERVAL '2 days' + INTERVAL '21 hours'),
 ('22222222-2222-2222-2222-222222222222', CURRENT_DATE, 0, 2, 0, FALSE, FALSE, FALSE, NOW());
 
 -- Sam's aggregates (new user)
-INSERT INTO daily_aggregates (user_id, local_date, completed_count, planned_count, consistency_percent, has_journal, has_proof, active_day_with_proof, updated_at) VALUES
+INSERT INTO daily_aggregates (user_id, local_date, completed_count, planned_count, capture_count, has_journal, has_proof, active_day_with_proof, updated_at) VALUES
 ('33333333-3333-3333-3333-333333333333', CURRENT_DATE, 0, 2, 0, FALSE, FALSE, FALSE, NOW());
 
 -- ═══════════════════════════════════════════════════════════════════════
