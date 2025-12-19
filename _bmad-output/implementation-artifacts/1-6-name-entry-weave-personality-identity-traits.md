@@ -149,7 +149,12 @@ So that **the experience feels personally motivating and aligned with my communi
   - Continuous Growth
   - Self Aware
   - Emotionally Grounded
-- [ ] Chip layout: 3-3-2 arrangement (3 chips in row 1, 3 in row 2, 2 centered in row 3)
+- [ ] Chip layout: 2-1-2-1-2 arrangement for visual balance
+  - Row 1 (2): Clear Direction, Intentional Time
+  - Row 2 (1): Decisive Action
+  - Row 3 (2): Consistent Effort, High Standards
+  - Row 4 (1): Emotionally Grounded (alone to prevent layout shifts due to length)
+  - Row 5 (2): Self Aware, Continuous Growth
 - [ ] Multi-row, flex-wrap, centered
 - [ ] No scrolling required on standard mobile screen
 - [ ] Chip styling: Rounded pill shape, touchable, min 48px height
@@ -259,10 +264,12 @@ Selected traits are used as primary personalization signals that influence:
 - [x] **Subtask 3.2**: Implement title "Who do we want to become?" with subtext "Choose the 3 most important qualities you want to embody."
 - [x] **Subtask 3.3**: Create TraitChip component with unselected/selected states
 - [x] **Subtask 3.4**: Render 8 trait chips with concise aspirational trait names:
-  - Clear Direction, Intentional Time, Decisive Action
-  - Consistent Effort, High Standards, Continuous Growth
-  - Self Aware, Emotionally Grounded
-- [x] **Subtask 3.4b**: Organize chips in 3-3-2 layout for visual balance
+  - Row 1: Clear Direction, Intentional Time
+  - Row 2: Decisive Action
+  - Row 3: Consistent Effort, High Standards
+  - Row 4: Emotionally Grounded
+  - Row 5: Self Aware, Continuous Growth
+- [x] **Subtask 3.4b**: Organize chips in 2-1-2-1-2 layout to prevent reflow (longest text alone)
 - [x] **Subtask 3.5**: Implement selection logic (exactly 3 enforcement - no min/max range)
 - [x] **Subtask 3.6**: Add touch feedback and animations
 - [x] **Subtask 3.7**: Implement selection counter display ("X of 3 selected")
@@ -628,11 +635,13 @@ const TraitChip: React.FC<TraitChipProps> = ({ label, selected, onPress, disable
   );
 };
 
-// Usage
+// Usage (2-1-2-1-2 layout)
 const TRAITS = [
-  ['Clear Direction', 'Intentional Time', 'Decisive Action'],
-  ['Consistent Effort', 'High Standards', 'Continuous Growth'],
-  ['Self Aware', 'Emotionally Grounded']
+  ['Clear Direction', 'Intentional Time'],
+  ['Decisive Action'],
+  ['Consistent Effort', 'High Standards'],
+  ['Emotionally Grounded'],
+  ['Self Aware', 'Continuous Growth']
 ];
 
 const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
