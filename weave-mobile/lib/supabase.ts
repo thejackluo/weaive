@@ -18,7 +18,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { secureStorage } from '@/src/services/secureStorage';
+import { secureStorage } from '@/services/secureStorage';
 
 // Environment variables (set in .env)
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';

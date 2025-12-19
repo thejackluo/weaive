@@ -6,7 +6,7 @@
  *
  * Usage:
  * ```tsx
- * import { useAuth } from '@/src/hooks/useAuth';
+ * import { useAuth } from '@/hooks/useAuth';
  *
  * function MyComponent() {
  *   const { user, signIn, signOut, isLoading } = useAuth();
@@ -31,7 +31,7 @@
  */
 
 import { useContext } from 'react';
-import { AuthContext } from '@/src/contexts/AuthContext';
+import { AuthContext } from '@/contexts/AuthContext';
 
 export function useAuth() {
   const context = useContext(AuthContext);
