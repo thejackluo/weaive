@@ -46,21 +46,29 @@ import { ensureUserProfile } from '@lib/auth';
 WebBrowser.maybeCompleteAuthSession();
 
 // Debug: Log the redirect URI that will be used for OAuth
+// CRITICAL: This URI must match EXACTLY in Supabase settings
+// Even a trailing slash difference will cause the browser to stay open
 const REDIRECT_URI = makeRedirectUri();
 console.log('╔════════════════════════════════════════════════════════════');
 console.log('║ 🔗 OAUTH REDIRECT URI CONFIGURATION');
 console.log('╠════════════════════════════════════════════════════════════');
 console.log('║ Generated Redirect URI:', REDIRECT_URI);
 console.log('║');
+console.log('║ ⚠️  CRITICAL: This URI must match EXACTLY in Supabase!');
+console.log('║    - Copy the URI above EXACTLY (including scheme, no trailing slash)');
+console.log('║    - Any mismatch will cause browser to stay open after OAuth');
+console.log('║');
 console.log('║ 📋 ADD THIS URL TO SUPABASE:');
 console.log('║ 1. Go to: https://supabase.com/dashboard');
 console.log('║ 2. Select your project');
 console.log('║ 3. Navigate to: Authentication → URL Configuration');
 console.log('║ 4. Add to "Redirect URLs":', REDIRECT_URI);
+console.log('║ 5. Verify it matches EXACTLY (case-sensitive, no extra slashes)');
 console.log('║');
 console.log('║ 💡 COMMON REDIRECT URIs:');
 console.log('║    Development (Expo Go): exp://192.168.x.x:8081');
 console.log('║    Production (Custom): weavelight://');
+console.log('║    iOS Simulator: exp://localhost:8081');
 console.log('╚════════════════════════════════════════════════════════════');
 
 
@@ -402,12 +410,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Step 2: Open OAuth URL in in-app browser
       try {
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        console.log('[AUTH_CONTEXT] 🔍 Opening browser with:');
+        console.log('[AUTH_CONTEXT]   - OAuth URL:', data.url.substring(0, 150) + '...');
+        console.log('[AUTH_CONTEXT]   - Expected redirect URI:', redirectTo);
+        console.log('[AUTH_CONTEXT]   - Redirect URI must match EXACTLY for browser to close');
+        console.log('[AUTH_CONTEXT]   - Make sure this exact URI is added to Supabase redirect URLs');
 
-        console.log('[AUTH_CONTEXT] Browser result received:', {
-          type: result.type,
-          url: result.url ? result.url.substring(0, 100) + '...' : 'no URL',
+        // Use a timeout to detect if browser gets stuck
+        const browserPromise = WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            reject(new Error('OAuth browser timeout - browser may be stuck. Check redirect URI configuration.'));
+          }, 60000); // 60 second timeout
         });
+
+        const result = await Promise.race([browserPromise, timeoutPromise]);
+
+        console.log('[AUTH_CONTEXT] 📥 Browser result received:', {
+          type: result.type,
+          url: result.url ? result.url.substring(0, 200) : 'no URL',
+          fullUrl: result.url, // Log full URL for debugging
+        });
+
+        // Log redirect URI comparison for debugging
+        if (result.url) {
+          const receivedRedirect = new URL(result.url).origin + new URL(result.url).pathname;
+          const expectedRedirect = new URL(redirectTo).origin + new URL(redirectTo).pathname;
+          console.log('[AUTH_CONTEXT] 🔍 Redirect URI comparison:');
+          console.log('[AUTH_CONTEXT]   - Received base:', receivedRedirect);
+          console.log('[AUTH_CONTEXT]   - Expected base:', expectedRedirect);
+          console.log('[AUTH_CONTEXT]   - Match:', receivedRedirect === expectedRedirect);
+        }
 
         if (result.type === 'cancel') {
           console.log('[AUTH_CONTEXT] ⚠️ User cancelled OAuth flow');
@@ -419,6 +452,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (result.type !== 'success') {
           const failError = new Error(`OAuth failed: ${result.type}`);
           console.error('[AUTH_CONTEXT] ❌ OAuth failed with result type:', result.type);
+          console.error('[AUTH_CONTEXT] Full result:', JSON.stringify(result, null, 2));
           setError(failError as AuthError);
           throw failError;
         }
@@ -431,9 +465,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // Step 3: Extract tokens from callback URL and set session
+        console.log('[AUTH_CONTEXT] 🔑 Extracting tokens from callback URL...');
         const { params, errorCode } = QueryParams.getQueryParams(result.url);
 
         if (errorCode) {
+          console.error('[AUTH_CONTEXT] ❌ Error code in callback:', errorCode);
           const paramsError = new Error(errorCode);
           setError(paramsError as AuthError);
           throw paramsError;
@@ -442,11 +478,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const { access_token, refresh_token } = params;
 
         if (!access_token) {
+          console.error('[AUTH_CONTEXT] ❌ No access token found in callback URL');
+          console.error('[AUTH_CONTEXT] Available params:', Object.keys(params));
           const noTokenError = new Error('No access token in OAuth callback URL');
           setError(noTokenError as AuthError);
           throw noTokenError;
         }
 
+        console.log('[AUTH_CONTEXT] ✅ Tokens extracted successfully');
         console.log('[AUTH_CONTEXT] Setting session from OAuth tokens...');
 
         const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
@@ -455,11 +494,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
 
         if (sessionError) {
+          console.error('[AUTH_CONTEXT] ❌ Failed to set session:', sessionError);
           setError(sessionError);
           throw sessionError;
         }
 
-        console.log('[AUTH_CONTEXT] ✅ OAuth Sign In successful!');
+        console.log('[AUTH_CONTEXT] ✅ Session set successfully!');
+        console.log('[AUTH_CONTEXT] User ID:', sessionData?.user?.id);
+        console.log('[AUTH_CONTEXT] Session expires at:', sessionData?.session?.expires_at);
 
         // Ensure user profile exists (safety fallback if trigger didn't fire)
         if (sessionData?.user) {
@@ -475,6 +517,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // State will be updated automatically via onAuthStateChange
+        // The browser should have closed automatically when redirect matched
+        console.log('[AUTH_CONTEXT] ✅ OAuth Sign In flow completed successfully!');
+        console.log('[AUTH_CONTEXT] Waiting for onAuthStateChange to update user state...');
+        
+        // Force a small delay to ensure state updates propagate
+        // This helps with navigation timing issues
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Double-check that session is actually set
+        const { data: { session: verifySession } } = await supabase.auth.getSession();
+        if (verifySession) {
+          console.log('[AUTH_CONTEXT] ✅ Session verified - user is authenticated');
+          console.log('[AUTH_CONTEXT] User ID:', verifySession.user.id);
+        } else {
+          console.error('[AUTH_CONTEXT] ⚠️ WARNING: Session not found after setSession!');
+        }
       } catch (browserError: any) {
         console.error('[AUTH_CONTEXT] ❌ WebBrowser.openAuthSessionAsync failed:', {
           message: browserError.message,

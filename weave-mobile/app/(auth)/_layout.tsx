@@ -42,13 +42,26 @@ export default function AuthLayout() {
    * - If user is not authenticated → stay on auth screens
    */
   useEffect(() => {
-    if (isLoading) return; // Wait for auth state to load
+    if (isLoading) {
+      console.log('[AUTH_LAYOUT] ⏳ Waiting for auth state to load...');
+      return; // Wait for auth state to load
+    }
 
     const inAuthGroup = segments[0] === '(auth)';
 
+    console.log('[AUTH_LAYOUT] 🔍 Auth state check:', {
+      hasUser: !!user,
+      userId: user?.id,
+      inAuthGroup,
+      currentSegments: segments,
+    });
+
     if (user && inAuthGroup) {
       // User is authenticated but on auth screens → redirect to tabs
+      console.log('[AUTH_LAYOUT] ✅ User authenticated, redirecting to tabs...');
       router.replace('/(tabs)');
+    } else if (!user && !inAuthGroup) {
+      console.log('[AUTH_LAYOUT] ℹ️ User not authenticated, staying on current screen');
     }
   }, [user, isLoading, segments, router]);
 
