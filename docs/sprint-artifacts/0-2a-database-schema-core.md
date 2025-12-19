@@ -758,3 +758,84 @@ Before marking this story as done:
 All architecture, epics, backend schema, and previous story context has been thoroughly analyzed and included. The developer has everything needed for flawless implementation.
 
 **Next Action:** Run `/bmad:bmm:workflows:dev-story` to implement this story.
+
+---
+
+## ⚠️ Known Issues
+
+### Issue 1: seed.sql Has Multiple Column Name Mismatches
+**Status:** UNRESOLVED
+**Severity:** HIGH (Blocks deployment)
+**Discovered:** 2025-12-18
+
+**Problem:**
+The `supabase/seed.sql` file contains multiple column name mismatches between INSERT statements and the actual migration schemas. These cause deployment failures when running `npx supabase db push`.
+
+**Errors Encountered:**
+1. **subtask_templates**: Uses `recurrence_pattern` and `estimated_duration_minutes`, but migration defines `recurrence_rule` and `default_estimated_minutes`
+2. **captures**: Uses `storage_path`, but migration defines `storage_key`
+3. **subtask_completions**: Uses `instance_id`, but migration defines `subtask_instance_id`
+4. **goals**: Uses `'medium'` for priority enum, but valid value is `'med'`
+5. **captures**: Uses `'note'` for type enum, but valid value is `'text'`
+
+**Root Cause:**
+Seed data was written before systematically cross-referencing with migration CREATE TABLE statements. Column names were guessed or assumed rather than verified against actual schema.
+
+**Action Required:**
+- Systematically compare ALL INSERT column lists in seed.sql against migration schemas
+- Fix all column name mismatches
+- Fix all enum value mismatches
+
+**Related:** See GitHub Issue #[TBD]
+
+### Issue 2: validate_schema.sql Has Type Mismatch Error
+**Status:** UNRESOLVED
+**Severity:** MEDIUM (Blocks validation, not deployment)
+**Discovered:** 2025-12-18
+
+**Problem:**
+The `supabase/validate_schema.sql` script fails with error: `invalid input syntax for type integer: "t"`
+
+**Root Cause:**
+Script uses `SELECT EXISTS(...) INTO fk_count` where `fk_count` is declared as INTEGER, but EXISTS returns BOOLEAN ('t'/'f'). PostgreSQL fails when trying to coerce boolean to integer.
+
+**Code Location:**
+```sql
+-- WRONG (causes error):
+DECLARE fk_count INT;
+SELECT EXISTS(SELECT 1 FROM ...) INTO fk_count;
+
+-- CORRECT (needs fix):
+DECLARE fk_exists BOOLEAN;
+SELECT EXISTS(SELECT 1 FROM ...) INTO fk_exists;
+```
+
+**Action Required:**
+- Change all `fk_count INT` declarations to `fk_exists BOOLEAN`
+- Update all logic to use boolean checks instead of integer comparisons
+- Test validation script end-to-end
+
+**Related:** See GitHub Issue #[TBD]
+
+### Issue 3: Performance Validation Not Tested
+**Status:** NOT STARTED
+**Severity:** MEDIUM (AC requirement not met)
+**Discovered:** 2025-12-18
+
+**Problem:**
+Story 0.2a AC #7 requires measuring query performance baselines, but this has not been done yet.
+
+**Missing Tests:**
+- Dashboard query performance (target: P50 < 50ms)
+- Today's binds query (target: P50 < 20ms)
+- Completion history query (target: P50 < 50ms)
+- Active goals query (target: P50 < 20ms)
+- Journal entry query (target: P50 < 10ms)
+
+**Action Required:**
+- Create performance test script with realistic data volume (1000+ users, 10K+ completions)
+- Measure P50/P95/P99 latencies for top 10 queries
+- Document baseline metrics in Dev Notes section
+- Identify any queries exceeding targets
+
+**Related:** Story 0.2b has more detailed performance requirements

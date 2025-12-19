@@ -892,3 +892,99 @@ Before marking this story as done:
 All architecture, performance requirements, and Story 0.2a learnings have been analyzed. The developer has everything needed for schema optimization and validation.
 
 **Next Action:** Implement on same branch as Story 0.2a, then run validation workflow.
+
+---
+
+## ⚠️ Known Issues
+
+### Issue 1: seed.sql Has Multiple Column Name Mismatches
+**Status:** UNRESOLVED
+**Severity:** HIGH (Blocks deployment)
+**Discovered:** 2025-12-18
+
+**Problem:**
+The `supabase/seed.sql` file contains multiple column name mismatches between INSERT statements and the actual migration schemas, affecting tables across both Story 0.2a and 0.2b. These cause deployment failures when running `npx supabase db push`.
+
+**Errors Encountered:**
+1. **subtask_templates**: Uses `recurrence_pattern` and `estimated_duration_minutes`, but migration defines `recurrence_rule` and `default_estimated_minutes`
+2. **captures**: Uses `storage_path`, but migration defines `storage_key`
+3. **subtask_completions**: Uses `instance_id`, but migration defines `subtask_instance_id`
+4. **goals**: Uses `'medium'` for priority enum, but valid value is `'med'`
+5. **captures**: Uses `'note'` for type enum, but valid value is `'text'`
+
+**Root Cause:**
+Seed data was written without systematically cross-referencing against migration CREATE TABLE statements. Column names were guessed rather than verified.
+
+**Action Required:**
+- Systematically compare ALL INSERT column lists in seed.sql against migration schemas
+- Fix all column name mismatches
+- Fix all enum value mismatches
+- Create validation script to prevent future mismatches
+
+**Related:** See GitHub Issue #[TBD], also affects Story 0.2a
+
+### Issue 2: validate_schema.sql Has Type Mismatch Error
+**Status:** UNRESOLVED
+**Severity:** MEDIUM (Blocks validation, not deployment)
+**Discovered:** 2025-12-18
+
+**Problem:**
+The `supabase/validate_schema.sql` script fails with error: `invalid input syntax for type integer: "t"`
+
+**Root Cause:**
+Script uses `SELECT EXISTS(...) INTO fk_count` where `fk_count` is declared as INTEGER, but EXISTS returns BOOLEAN ('t'/'f'). PostgreSQL tries to coerce boolean to integer and fails.
+
+**Code Location:**
+```sql
+-- WRONG (causes error):
+DECLARE fk_count INT;
+SELECT EXISTS(SELECT 1 FROM ...) INTO fk_count;
+
+-- CORRECT (needs fix):
+DECLARE fk_exists BOOLEAN;
+SELECT EXISTS(SELECT 1 FROM ...) INTO fk_exists;
+```
+
+**Action Required:**
+- Change all `fk_count INT` declarations to `fk_exists BOOLEAN`
+- Update all logic to use boolean checks instead of integer comparisons
+- Test validation script end-to-end on both staging and fresh database
+
+**Related:** See GitHub Issue #[TBD], also affects Story 0.2a
+
+### Issue 3: Performance Validation Not Tested (AC 4 Not Met)
+**Status:** NOT STARTED
+**Severity:** HIGH (Critical AC requirement not met)
+**Discovered:** 2025-12-18
+
+**Problem:**
+Story 0.2b AC #4 requires comprehensive performance baseline establishment with P50/P95/P99 percentiles for all top queries. This has not been completed.
+
+**Missing Tests:**
+- Dashboard query performance (target: P50 < 50ms, P95 < 100ms, P99 < 200ms)
+- Today's binds query (target: P50 < 20ms, P95 < 50ms, P99 < 100ms)
+- Completion history query (target: P50 < 50ms, P95 < 100ms, P99 < 150ms)
+- Active goals query (target: P50 < 20ms, P95 < 50ms, P99 < 100ms)
+- Journal entry query (target: P50 < 10ms, P95 < 25ms, P99 < 50ms)
+- RLS overhead testing (<10ms added latency)
+- Load testing with 100 concurrent users
+
+**Action Required:**
+1. Create performance test script with realistic data volume:
+   - 100+ test users
+   - 90 days of historical data
+   - ~300 completions per user (realistic usage pattern)
+2. Run each query 100 times to collect timing data
+3. Calculate P50/P95/P99 percentiles for each query
+4. Measure RLS overhead (with vs without RLS)
+5. Run load test with 100 concurrent users
+6. Document all baseline metrics in `docs/performance-baseline-week0.md`
+7. Identify any queries exceeding P95 targets and create optimization plan
+
+**Impact:**
+- Cannot verify dashboard performance requirement (NFR-P2: <1s load time)
+- Cannot validate that composite indexes are working
+- No baseline for future performance regression testing
+- Story 0.2b AC #4 not satisfied (story should not be marked "done")
+
+**Related:** See GitHub Issue #[TBD]
