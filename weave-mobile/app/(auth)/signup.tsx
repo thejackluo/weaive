@@ -2,18 +2,22 @@
  * Signup Screen
  *
  * Story 0.3: Authentication Flow
- * New user registration with email/password
+ * New user registration with email/password or OAuth (Apple, Google)
  *
  * Features:
  * - Email/password registration
+ * - OAuth sign up (Apple on iOS, Google)
+ * - Password strength indicator
  * - Password confirmation field
+ * - Terms of Service & Privacy Policy agreement
  * - Form validation:
  *   - Email format validation
  *   - Password minimum length (8 characters)
  *   - Password match validation
+ *   - Terms acceptance required
  * - Loading states during registration
  * - Error message display with user-friendly text
- * - Navigation to login screen
+ * - Navigation to login screen, Terms, and Privacy screens
  * - Auto-redirect to tabs on successful signup (if email verification not required)
  *
  * UX Considerations:
@@ -23,6 +27,7 @@
  * - Loading indicators prevent double-submission
  * - Keyboard-aware scrolling
  * - Password visibility toggle
+ * - OAuth buttons disabled during email/password flow (and vice versa)
  */
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -34,6 +39,7 @@ import {
   StyleSheet,
   Pressable,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -57,7 +63,7 @@ const MIN_PASSWORD_LENGTH = 8;
  */
 export default function SignupScreen() {
   const router = useRouter();
-  const { signUp, error: authError, clearError } = useAuth();
+  const { signUp, signInWithOAuth, error: authError, clearError } = useAuth();
   const { colors } = useTheme();
 
   // Form state
@@ -65,6 +71,7 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isOAuthLoading, setIsOAuthLoading] = useState<'apple' | 'google' | null>(null);
 
   // Form validation state
   const [emailError, setEmailError] = useState('');
@@ -273,6 +280,26 @@ export default function SignupScreen() {
   ]);
 
   /**
+   * Handle OAuth sign in
+   * Note: OAuth automatically creates account if user doesn't exist
+   */
+  const handleOAuthSignIn = useCallback(
+    async (provider: 'apple' | 'google') => {
+      try {
+        setIsOAuthLoading(provider);
+        await signInWithOAuth(provider);
+        // Navigation handled automatically by auth state change in _layout.tsx
+      } catch (error) {
+        console.error(`[SIGNUP] ${provider} sign in error:`, error);
+        // Error is set in auth context, displayed below
+      } finally {
+        setIsOAuthLoading(null);
+      }
+    },
+    [signInWithOAuth]
+  );
+
+  /**
    * Navigate to login screen
    */
   const handleNavigateToLogin = useCallback(() => {
@@ -347,7 +374,7 @@ export default function SignupScreen() {
               errorText={emailError}
               variant={emailError ? 'error' : 'default'}
               size="lg"
-              disabled={isLoading}
+              disabled={isLoading || isOAuthLoading !== null}
               accessibilityLabel="Email address"
               accessibilityHint="Enter your email address"
             />
@@ -367,7 +394,7 @@ export default function SignupScreen() {
                 helperText={!passwordError ? `Minimum ${MIN_PASSWORD_LENGTH} characters` : undefined}
                 variant={passwordError ? 'error' : 'default'}
                 size="lg"
-                disabled={isLoading}
+                disabled={isLoading || isOAuthLoading !== null}
                 accessibilityLabel="Password"
                 accessibilityHint={`Enter a password with at least ${MIN_PASSWORD_LENGTH} characters`}
                 rightIcon={
@@ -424,7 +451,7 @@ export default function SignupScreen() {
               errorText={confirmPasswordError}
               variant={confirmPasswordError ? 'error' : 'default'}
               size="lg"
-              disabled={isLoading}
+              disabled={isLoading || isOAuthLoading !== null}
               accessibilityLabel="Confirm password"
               accessibilityHint="Re-enter your password to confirm"
               rightIcon={
@@ -445,7 +472,7 @@ export default function SignupScreen() {
               <Checkbox
                 checked={agreedToTerms}
                 onChange={setAgreedToTerms}
-                disabled={isLoading}
+                disabled={isLoading || isOAuthLoading !== null}
                 accessibilityLabel="Agree to Terms of Service and Privacy Policy"
               />
               <View style={styles.termsText}>
@@ -454,7 +481,7 @@ export default function SignupScreen() {
                 </Text>
                 <Pressable
                   onPress={() => router.push('/(auth)/terms-of-service')}
-                  disabled={isLoading}
+                  disabled={isLoading || isOAuthLoading !== null}
                   accessibilityLabel="Read Terms of Service"
                   accessibilityRole="link"
                 >
@@ -471,7 +498,7 @@ export default function SignupScreen() {
                 </Text>
                 <Pressable
                   onPress={() => router.push('/(auth)/privacy-policy')}
-                  disabled={isLoading}
+                  disabled={isLoading || isOAuthLoading !== null}
                   accessibilityLabel="Read Privacy Policy"
                   accessibilityRole="link"
                 >
@@ -491,7 +518,7 @@ export default function SignupScreen() {
               variant="primary"
               size="lg"
               onPress={handleSignUp}
-              disabled={isLoading || !agreedToTerms}
+              disabled={isLoading || !agreedToTerms || isOAuthLoading !== null}
               loading={isLoading}
               fullWidth
               style={styles.signUpButton}
@@ -502,6 +529,56 @@ export default function SignupScreen() {
             </Button>
           </View>
 
+          {/* Divider */}
+          <View style={styles.dividerContainer}>
+            <View style={[styles.divider, { backgroundColor: colors.border.muted }]} />
+            <Text variant="textSm" color="muted" style={styles.dividerText}>
+              or continue with
+            </Text>
+            <View style={[styles.divider, { backgroundColor: colors.border.muted }]} />
+          </View>
+
+          {/* OAuth Buttons */}
+          <View style={styles.oauthButtons}>
+            {/* Sign up with Apple (iOS only) */}
+            {Platform.OS === 'ios' && (
+              <Button
+                variant="secondary"
+                size="lg"
+                onPress={() => handleOAuthSignIn('apple')}
+                disabled={isLoading || isOAuthLoading !== null}
+                loading={isOAuthLoading === 'apple'}
+                fullWidth
+                style={styles.oauthButton}
+                accessibilityLabel="Sign up with Apple"
+              >
+                {isOAuthLoading === 'apple' ? (
+                  <ActivityIndicator color={colors.accent[500]} />
+                ) : (
+                  'Sign up with Apple'
+                )}
+              </Button>
+            )}
+
+            {/* Sign up with Google */}
+            <Button
+              variant="secondary"
+              size="lg"
+              onPress={() => handleOAuthSignIn('google')}
+              disabled={isLoading || isOAuthLoading !== null}
+              loading={isOAuthLoading === 'google'}
+              fullWidth
+              style={styles.oauthButton}
+              accessibilityLabel="Sign up with Google"
+            >
+              {isOAuthLoading === 'google' ? (
+                <ActivityIndicator color={colors.accent[500]} />
+              ) : (
+                'Sign up with Google'
+              )}
+            </Button>
+          </View>
+
           {/* Login Link */}
           <View style={styles.footer}>
             <Text variant="textBase" color="secondary">
@@ -509,7 +586,7 @@ export default function SignupScreen() {
             </Text>
             <Pressable
               onPress={handleNavigateToLogin}
-              disabled={isLoading}
+              disabled={isLoading || isOAuthLoading !== null}
               accessibilityLabel="Navigate to login"
               accessibilityRole="button"
             >
@@ -578,10 +655,29 @@ const styles = StyleSheet.create({
   signUpButton: {
     marginTop: 8,
   },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: 16,
+  },
+  oauthButtons: {
+    gap: 12,
+    marginBottom: 24,
+  },
+  oauthButton: {
+    marginBottom: 0,
+  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 8,
   },
 });
