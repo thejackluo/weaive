@@ -36,7 +36,32 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
+import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import { supabase } from '@lib/supabase';
+
+// CRITICAL: Initialize WebBrowser for OAuth (required for web, doesn't hurt on mobile)
+WebBrowser.maybeCompleteAuthSession();
+
+// Debug: Log the redirect URI that will be used for OAuth
+const REDIRECT_URI = makeRedirectUri();
+console.log('╔════════════════════════════════════════════════════════════');
+console.log('║ 🔗 OAUTH REDIRECT URI CONFIGURATION');
+console.log('╠════════════════════════════════════════════════════════════');
+console.log('║ Generated Redirect URI:', REDIRECT_URI);
+console.log('║');
+console.log('║ 📋 ADD THIS URL TO SUPABASE:');
+console.log('║ 1. Go to: https://supabase.com/dashboard');
+console.log('║ 2. Select your project');
+console.log('║ 3. Navigate to: Authentication → URL Configuration');
+console.log('║ 4. Add to "Redirect URLs":', REDIRECT_URI);
+console.log('║');
+console.log('║ 💡 COMMON REDIRECT URIs:');
+console.log('║    Development (Expo Go): exp://192.168.x.x:8081');
+console.log('║    Production (Custom): weavelight://');
+console.log('╚════════════════════════════════════════════════════════════');
+
 
 /**
  * OAuth Provider Types
@@ -305,48 +330,141 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Sign in with OAuth provider
-   * Opens browser for OAuth flow, then redirects back to app
+   * Opens browser for OAuth flow using expo-web-browser, then redirects back to app
+   *
+   * PATTERN: Following official Supabase docs for React Native OAuth
+   * 1. Get OAuth URL with skipBrowserRedirect: true
+   * 2. Open URL in expo-web-browser
+   * 3. Manually extract tokens and set session
    */
   const signInWithOAuth = async (provider: OAuthProvider): Promise<void> => {
     try {
       setError(null);
-      console.log('[AUTH] Starting OAuth flow for provider:', provider);
+      console.log('[AUTH_CONTEXT] Starting OAuth flow for provider:', provider);
 
+      // Use the pre-computed redirect URI
+      const redirectTo = REDIRECT_URI;
+      console.log('[AUTH_CONTEXT] Using Redirect URI:', redirectTo);
+
+      // Step 1: Get OAuth URL from Supabase (don't let Supabase handle redirect)
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: 'weavelight://', // Deep link scheme (must match app.json "scheme" field)
-          skipBrowserRedirect: false,
-          queryParams: {
-            // Force Google to show consent screen every time (for testing)
-            // Remove this in production for better UX
-            prompt: 'consent',
-            // Also re-prompt for account selection
-            access_type: 'offline',
-          },
+          redirectTo,
+          skipBrowserRedirect: true, // CRITICAL: Let expo-web-browser handle the redirect
+          queryParams:
+            provider === 'google'
+              ? {
+                  access_type: 'offline',
+                  prompt: 'consent',
+                }
+              : provider === 'apple'
+              ? {
+                  scope: 'email name',
+                }
+              : undefined,
         },
       });
 
       if (error) {
-        console.error('[AUTH] OAuth error:', {
+        console.error('[AUTH_CONTEXT] ❌ Supabase OAuth error:', {
           message: error.message,
           status: error.status,
-          provider,
+          name: error.name,
         });
         setError(error);
         throw error;
       }
 
-      console.log('[AUTH] OAuth flow initiated:', {
-        provider,
-        url: data?.url,
-        provider_data: data?.provider,
-      });
+      if (!data?.url) {
+        const noUrlError = new Error('No OAuth URL returned from Supabase');
+        console.error('[AUTH_CONTEXT] ❌ No OAuth URL returned from Supabase');
+        console.error('[AUTH_CONTEXT] Data received:', JSON.stringify(data, null, 2));
+        setError(noUrlError as AuthError);
+        throw noUrlError;
+      }
 
-      // State will be updated automatically via onAuthStateChange
-      // after OAuth flow completes and user returns to app
-    } catch (err) {
-      console.error('[AUTH] OAuth sign in exception:', err);
+      console.log('[AUTH_CONTEXT] ✅ OAuth URL received:', data.url.substring(0, 100) + '...');
+      console.log('[AUTH_CONTEXT] Opening OAuth URL in browser...');
+
+      // Step 2: Open OAuth URL in in-app browser
+      try {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+        console.log('[AUTH_CONTEXT] Browser result received:', {
+          type: result.type,
+          url: result.url ? result.url.substring(0, 100) + '...' : 'no URL',
+        });
+
+        if (result.type === 'cancel') {
+          console.log('[AUTH_CONTEXT] ⚠️ User cancelled OAuth flow');
+          const cancelError = new Error('Sign in cancelled.');
+          setError(cancelError as AuthError);
+          throw cancelError;
+        }
+
+        if (result.type !== 'success') {
+          const failError = new Error(`OAuth failed: ${result.type}`);
+          console.error('[AUTH_CONTEXT] ❌ OAuth failed with result type:', result.type);
+          setError(failError as AuthError);
+          throw failError;
+        }
+
+        if (!result.url) {
+          const noCallbackError = new Error('No callback URL received from OAuth flow');
+          console.error('[AUTH_CONTEXT] ❌ No URL in browser result');
+          setError(noCallbackError as AuthError);
+          throw noCallbackError;
+        }
+
+        // Step 3: Extract tokens from callback URL and set session
+        const { params, errorCode } = QueryParams.getQueryParams(result.url);
+
+        if (errorCode) {
+          const paramsError = new Error(errorCode);
+          setError(paramsError as AuthError);
+          throw paramsError;
+        }
+
+        const { access_token, refresh_token } = params;
+
+        if (!access_token) {
+          const noTokenError = new Error('No access token in OAuth callback URL');
+          setError(noTokenError as AuthError);
+          throw noTokenError;
+        }
+
+        console.log('[AUTH_CONTEXT] Setting session from OAuth tokens...');
+
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token,
+          refresh_token,
+        });
+
+        if (sessionError) {
+          setError(sessionError);
+          throw sessionError;
+        }
+
+        console.log('[AUTH_CONTEXT] ✅ OAuth Sign In successful!');
+
+        // State will be updated automatically via onAuthStateChange
+      } catch (browserError: any) {
+        console.error('[AUTH_CONTEXT] ❌ WebBrowser.openAuthSessionAsync failed:', {
+          message: browserError.message,
+          stack: browserError.stack,
+          name: browserError.name,
+        });
+        setError(browserError as AuthError);
+        throw browserError;
+      }
+    } catch (err: any) {
+      console.error('[AUTH_CONTEXT] ❌ OAuth sign in exception:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name,
+      });
+      setError(err as AuthError);
       throw err;
     }
   };
