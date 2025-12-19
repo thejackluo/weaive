@@ -57,37 +57,45 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={{
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#0F0F10',
-      padding: 24,
-      gap: 24,
-    }}>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#0F0F10',
+        padding: 24,
+        gap: 24,
+      }}
+    >
       <View style={{ alignItems: 'center', gap: 12 }}>
-        <Text style={{
-          fontSize: 48,
-          fontWeight: 'bold',
-          color: '#FAFAFA',
-          textAlign: 'center',
-        }}>
+        <Text
+          style={{
+            fontSize: 48,
+            fontWeight: 'bold',
+            color: '#FAFAFA',
+            textAlign: 'center',
+          }}
+        >
           Weave MVP
         </Text>
-        <Text style={{
-          fontSize: 18,
-          color: '#A1A1AA',
-          textAlign: 'center',
-        }}>
+        <Text
+          style={{
+            fontSize: 18,
+            color: '#A1A1AA',
+            textAlign: 'center',
+          }}
+        >
           Foundation Setup Complete ✅
         </Text>
         {user && (
-          <Text style={{
-            fontSize: 14,
-            color: '#71717A',
-            marginTop: 8,
-            textAlign: 'center',
-          }}>
+          <Text
+            style={{
+              fontSize: 14,
+              color: '#71717A',
+              marginTop: 8,
+              textAlign: 'center',
+            }}
+          >
             Signed in as: {user.email}
           </Text>
         )}
@@ -103,11 +111,13 @@ export default function HomeScreen() {
           borderRadius: 12,
         }}
       >
-        <Text style={{
-          color: '#FAFAFA',
-          fontSize: 16,
-          fontWeight: '600',
-        }}>
+        <Text
+          style={{
+            color: '#FAFAFA',
+            fontSize: 16,
+            fontWeight: '600',
+          }}
+        >
           View Design System
         </Text>
       </Pressable>
@@ -127,9 +137,7 @@ export default function HomeScreen() {
       </View>
 
       <View style={{ position: 'absolute', bottom: 32, alignItems: 'center' }}>
-        <Text style={{ color: '#71717A', fontSize: 12 }}>
-          React Native-First Design System
-        </Text>
+        <Text style={{ color: '#71717A', fontSize: 12 }}>React Native-First Design System</Text>
         <Text style={{ color: '#71717A', fontSize: 12 }}>
           NativeWind v5 • Tailwind v4 • Liquid Glass UI
         </Text>

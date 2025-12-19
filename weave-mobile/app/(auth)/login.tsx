@@ -54,11 +54,16 @@ export default function LoginScreen() {
 
   // Debug: Log auth error state
   React.useEffect(() => {
-    console.log('[LOGIN_SCREEN] Auth error state changed:', authError ? {
-      message: authError.message,
-      code: (authError as any).code,
-      status: authError.status,
-    } : 'null');
+    console.log(
+      '[LOGIN_SCREEN] Auth error state changed:',
+      authError
+        ? {
+            message: authError.message,
+            code: (authError as any).code,
+            status: authError.status,
+          }
+        : 'null'
+    );
   }, [authError]);
 
   // Form state
@@ -228,7 +233,9 @@ export default function LoginScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text variant="displayLg" color="primary">Welcome Back</Text>
+            <Text variant="displayLg" color="primary">
+              Welcome Back
+            </Text>
             <Text variant="textLg" color="secondary" className="mt-2">
               Sign in to continue your journey
             </Text>
@@ -237,18 +244,22 @@ export default function LoginScreen() {
           {/* Error Message */}
           {authError && (
             <View style={styles.errorCard}>
-              <View style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                borderLeftWidth: 4,
-                borderLeftColor: '#EF4444',
-                borderRadius: 8,
-                padding: 16,
-              }}>
-                <RNText style={{
-                  color: '#EF4444',
-                  fontSize: 14,
-                  fontWeight: '500',
-                }}>
+              <View
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  borderLeftWidth: 4,
+                  borderLeftColor: '#EF4444',
+                  borderRadius: 8,
+                  padding: 16,
+                }}
+              >
+                <RNText
+                  style={{
+                    color: '#EF4444',
+                    fontSize: 14,
+                    fontWeight: '500',
+                  }}
+                >
                   {getErrorMessage(authError)}
                 </RNText>
               </View>
@@ -323,7 +334,9 @@ export default function LoginScreen() {
           {/* Divider */}
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: colors.border.muted }]} />
-            <Text variant="textXs" color="muted">or continue with</Text>
+            <Text variant="textXs" color="muted">
+              or continue with
+            </Text>
             <View style={[styles.dividerLine, { backgroundColor: colors.border.muted }]} />
           </View>
 

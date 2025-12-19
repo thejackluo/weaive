@@ -402,7 +402,9 @@ export default function SignupScreen() {
                 autoComplete="password-new"
                 autoCorrect={false}
                 errorText={passwordError}
-                helperText={!passwordError ? `Minimum ${MIN_PASSWORD_LENGTH} characters` : undefined}
+                helperText={
+                  !passwordError ? `Minimum ${MIN_PASSWORD_LENGTH} characters` : undefined
+                }
                 variant={passwordError ? 'error' : 'default'}
                 size="lg"
                 disabled={isLoading || isOAuthLoading !== null}
@@ -496,16 +498,13 @@ export default function SignupScreen() {
                   accessibilityLabel="Read Terms of Service"
                   accessibilityRole="link"
                 >
-                  <Text
-                    variant="textSm"
-                    weight="semibold"
-                    style={{ color: colors.accent[500] }}
-                  >
+                  <Text variant="textSm" weight="semibold" style={{ color: colors.accent[500] }}>
                     Terms of Service
                   </Text>
                 </Pressable>
                 <Text variant="textSm" color="secondary">
-                  {' '}and{' '}
+                  {' '}
+                  and{' '}
                 </Text>
                 <Pressable
                   onPress={() => router.push('/(auth)/privacy-policy')}
@@ -513,11 +512,7 @@ export default function SignupScreen() {
                   accessibilityLabel="Read Privacy Policy"
                   accessibilityRole="link"
                 >
-                  <Text
-                    variant="textSm"
-                    weight="semibold"
-                    style={{ color: colors.accent[500] }}
-                  >
+                  <Text variant="textSm" weight="semibold" style={{ color: colors.accent[500] }}>
                     Privacy Policy
                   </Text>
                 </Pressable>

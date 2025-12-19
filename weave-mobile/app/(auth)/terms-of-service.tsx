@@ -136,8 +136,10 @@ export default function TermsOfServiceScreen() {
             3. AI Coaching Disclaimer (CRITICAL - READ CAREFULLY)
           </Text>
           <Text variant="textBase" color="primary" style={styles.paragraph}>
-            <Text weight="bold">WEAVE IS NOT A SUBSTITUTE FOR PROFESSIONAL MEDICAL, MENTAL HEALTH,
-            OR THERAPEUTIC SERVICES.</Text>
+            <Text weight="bold">
+              WEAVE IS NOT A SUBSTITUTE FOR PROFESSIONAL MEDICAL, MENTAL HEALTH, OR THERAPEUTIC
+              SERVICES.
+            </Text>
           </Text>
 
           <Card
@@ -166,12 +168,7 @@ export default function TermsOfServiceScreen() {
             </View>
           </Card>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             Mental Health Emergencies:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -189,12 +186,7 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             When to Seek Professional Help:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -221,7 +213,11 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text variant="textSm" color="secondary" style={[styles.paragraph, { marginTop: spacing[3] }]}>
+          <Text
+            variant="textSm"
+            color="secondary"
+            style={[styles.paragraph, { marginTop: spacing[3] }]}
+          >
             By using Weave, you acknowledge that you understand these limitations and agree that
             Weave and its creators are not liable for any decisions you make based on AI-generated
             content.
@@ -237,12 +233,7 @@ export default function TermsOfServiceScreen() {
             To use Weave, you must create an account:
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             Account Requirements:
           </Text>
           <View style={styles.bulletList}>
@@ -260,12 +251,7 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             Account Security:
           </Text>
           <View style={styles.bulletList}>
@@ -283,12 +269,7 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             Account Termination:
           </Text>
           <View style={styles.bulletList}>
@@ -316,12 +297,7 @@ export default function TermsOfServiceScreen() {
             You agree to use Weave in a lawful and respectful manner.
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             Permitted Uses:
           </Text>
           <View style={styles.bulletList}>
@@ -339,12 +315,7 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             Prohibited Uses:
           </Text>
           <View style={styles.bulletList}>
@@ -392,12 +363,7 @@ export default function TermsOfServiceScreen() {
             6. User-Generated Content
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             A. Your Content Ownership:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -418,12 +384,7 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             B. License You Grant to Us:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -449,12 +410,7 @@ export default function TermsOfServiceScreen() {
             policies in our Privacy Policy).
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             C. AI-Generated Content:
           </Text>
           <View style={styles.bulletList}>
@@ -475,12 +431,7 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             D. Content Moderation:
           </Text>
           <View style={styles.bulletList}>
@@ -536,12 +487,7 @@ export default function TermsOfServiceScreen() {
             8. Intellectual Property
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             A. Our Intellectual Property:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -568,12 +514,7 @@ export default function TermsOfServiceScreen() {
             All rights not expressly granted to you are reserved by Weave.
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             B. Your Limited License:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -602,22 +543,39 @@ export default function TermsOfServiceScreen() {
           </Text>
           <View style={styles.bulletList}>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">OpenAI</Text> (GPT-4o, GPT-4o-mini) - see OpenAI Terms of
-              Use
+              •{' '}
+              <Text weight="semibold" color="primary">
+                OpenAI
+              </Text>{' '}
+              (GPT-4o, GPT-4o-mini) - see OpenAI Terms of Use
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Anthropic</Text> (Claude 3.7 Sonnet, Claude 3.5 Haiku) -
-              see Anthropic Terms of Service
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Anthropic
+              </Text>{' '}
+              (Claude 3.7 Sonnet, Claude 3.5 Haiku) - see Anthropic Terms of Service
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Supabase</Text> (database, auth, storage) - see Supabase
-              Terms
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Supabase
+              </Text>{' '}
+              (database, auth, storage) - see Supabase Terms
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Apple Sign-In</Text> - see Apple Terms and Conditions
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Apple Sign-In
+              </Text>{' '}
+              - see Apple Terms and Conditions
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Google Sign-In</Text> - see Google Terms of Service
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Google Sign-In
+              </Text>{' '}
+              - see Google Terms of Service
             </Text>
           </View>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -637,28 +595,46 @@ export default function TermsOfServiceScreen() {
           </Text>
           <View style={styles.bulletList}>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Immutable Logs:</Text> Completion events are permanent
-              (integrity of progress tracking)
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Immutable Logs:
+              </Text>{' '}
+              Completion events are permanent (integrity of progress tracking)
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Encrypted Storage:</Text> JWT tokens in device keychain,
-              AES-256 for database
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Encrypted Storage:
+              </Text>{' '}
+              JWT tokens in device keychain, AES-256 for database
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">AI Processing:</Text> Your data sent to OpenAI/Anthropic
-              ONLY for responses
+              •{' '}
+              <Text weight="semibold" color="primary">
+                AI Processing:
+              </Text>{' '}
+              Your data sent to OpenAI/Anthropic ONLY for responses
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">No AI Training:</Text> Your data is NOT used to train AI
-              models
+              •{' '}
+              <Text weight="semibold" color="primary">
+                No AI Training:
+              </Text>{' '}
+              Your data is NOT used to train AI models
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Deletion:</Text> Most data deleted within 30 days of account
-              closure
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Deletion:
+              </Text>{' '}
+              Most data deleted within 30 days of account closure
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Your Rights:</Text> Access, export, delete, and rectify your
-              data (GDPR/CCPA)
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Your Rights:
+              </Text>{' '}
+              Access, export, delete, and rectify your data (GDPR/CCPA)
             </Text>
           </View>
         </View>
@@ -673,12 +649,7 @@ export default function TermsOfServiceScreen() {
             11. Disclaimers & Limitation of Liability
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             A. Service "As-Is":
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -701,12 +672,7 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             B. Limitation of Liability:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -734,7 +700,11 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text variant="textSm" color="secondary" style={[styles.paragraph, { marginTop: spacing[3] }]}>
+          <Text
+            variant="textSm"
+            color="secondary"
+            style={[styles.paragraph, { marginTop: spacing[3] }]}
+          >
             Some jurisdictions do not allow exclusion of certain warranties or limitations on
             liability. In such cases, our liability is limited to the maximum extent permitted by
             law.
@@ -776,12 +746,7 @@ export default function TermsOfServiceScreen() {
             13. Termination
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             A. Termination by You:
           </Text>
           <View style={styles.bulletList}>
@@ -796,12 +761,7 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             B. Termination by Us:
           </Text>
           <View style={styles.bulletList}>
@@ -816,12 +776,7 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             C. Effect of Termination:
           </Text>
           <View style={styles.bulletList}>
@@ -846,12 +801,7 @@ export default function TermsOfServiceScreen() {
             14. Dispute Resolution
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             A. Informal Resolution:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -859,12 +809,7 @@ export default function TermsOfServiceScreen() {
             issue informally. We commit to good-faith efforts to resolve disputes.
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             B. Binding Arbitration (US Users):
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -886,12 +831,7 @@ export default function TermsOfServiceScreen() {
             </Text>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             C. Small Claims Court:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -899,12 +839,7 @@ export default function TermsOfServiceScreen() {
             court.
           </Text>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            color="primary"
-            style={styles.subsectionTitle}
-          >
+          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
             D. Class Action Waiver:
           </Text>
           <Text variant="textBase" color="secondary" style={styles.paragraph}>
@@ -939,28 +874,47 @@ export default function TermsOfServiceScreen() {
 
           <View style={styles.bulletList}>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Severability:</Text> If any provision is invalid, the rest
-              remains in effect
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Severability:
+              </Text>{' '}
+              If any provision is invalid, the rest remains in effect
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">No Waiver:</Text> Our delay in enforcing rights doesn't
-              waive them
+              •{' '}
+              <Text weight="semibold" color="primary">
+                No Waiver:
+              </Text>{' '}
+              Our delay in enforcing rights doesn't waive them
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Assignment:</Text> We may transfer these Terms; you may not
-              without our consent
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Assignment:
+              </Text>{' '}
+              We may transfer these Terms; you may not without our consent
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Entire Agreement:</Text> These Terms + Privacy Policy =
-              complete agreement
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Entire Agreement:
+              </Text>{' '}
+              These Terms + Privacy Policy = complete agreement
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Force Majeure:</Text> Not liable for events beyond
-              reasonable control (acts of God, war, natural disasters, etc.)
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Force Majeure:
+              </Text>{' '}
+              Not liable for events beyond reasonable control (acts of God, war, natural disasters,
+              etc.)
             </Text>
             <Text variant="textBase" color="secondary" style={styles.bullet}>
-              • <Text weight="semibold" color="primary">Language:</Text> English version controls; translations for
-              convenience only
+              •{' '}
+              <Text weight="semibold" color="primary">
+                Language:
+              </Text>{' '}
+              English version controls; translations for convenience only
             </Text>
           </View>
         </View>
@@ -997,11 +951,19 @@ export default function TermsOfServiceScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text variant="textSm" color="secondary" style={{ textAlign: 'center', marginBottom: spacing[4] }}>
+          <Text
+            variant="textSm"
+            color="secondary"
+            style={{ textAlign: 'center', marginBottom: spacing[4] }}
+          >
             By using Weave, you acknowledge that you have read, understood, and agree to be bound by
             these Terms of Service and our Privacy Policy.
           </Text>
-          <Text variant="textSm" color="secondary" style={{ textAlign: 'center', marginBottom: spacing[4] }}>
+          <Text
+            variant="textSm"
+            color="secondary"
+            style={{ textAlign: 'center', marginBottom: spacing[4] }}
+          >
             Thank you for choosing Weave. We're excited to help you achieve your goals! 🎯
           </Text>
           <Button variant="secondary" size="lg" onPress={() => router.back()} fullWidth>

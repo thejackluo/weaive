@@ -51,8 +51,7 @@ const glassVariants = tv({
 });
 
 export interface GlassViewProps
-  extends Omit<ViewProps, 'style'>,
-    VariantProps<typeof glassVariants> {
+  extends Omit<ViewProps, 'style'>, VariantProps<typeof glassVariants> {
   /**
    * Custom blur amount (ignored on web, uses CSS classes)
    */
