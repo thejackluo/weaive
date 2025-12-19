@@ -100,6 +100,10 @@ export { GlassView } from './components/Glass/GlassView';
 export { Toast, ToastContainer, showToast } from './components/Toast';
 export type { ToastType, ToastConfig } from './components/Toast';
 
+// Simple Toast (fallback - no animations, no crashes)
+export { SimpleToast, SimpleToastContainer, showSimpleToast } from './components/SimpleToast';
+export type { SimpleToastType, SimpleToastConfig } from './components/SimpleToast';
+
 // ============================================================================
 // Constants
 // ============================================================================

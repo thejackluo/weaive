@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { LogBox } from 'react-native';
-import { ThemeProvider, ToastContainer } from '../src/design-system';
+import { ThemeProvider, SimpleToastContainer } from '../src/design-system';
 import { AuthProvider } from '../src/contexts/AuthContext';
 import '../global.css';
 
@@ -9,6 +9,7 @@ import '../global.css';
 LogBox.ignoreLogs([
   'You attempted to set the key `current`',
   'deepFreezeAndThrowOnMutationInDev',
+  'immutable',
 ]);
 
 /**
@@ -22,13 +23,13 @@ LogBox.ignoreLogs([
  * - Headers hidden by default (screens can override if needed)
  * - Wrapped with ThemeProvider for design system support
  * - Wrapped with AuthProvider for authentication state management (Story 0.3)
- * - ToastContainer for global toast notifications (Story 0.3)
+ * - SimpleToastContainer for global toast notifications (Story 0.3)
  *
  * Provider Hierarchy:
  * - ThemeProvider (outermost) - Design system theme
  * - AuthProvider - Authentication state and methods
  * - Stack - Navigation structure
- * - ToastContainer - Toast notification overlay
+ * - SimpleToastContainer - Simple toast notification overlay (no animations)
  *
  * @returns Stack navigation component wrapped with providers
  */
@@ -41,7 +42,7 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
-        <ToastContainer />
+        <SimpleToastContainer />
       </AuthProvider>
     </ThemeProvider>
   );

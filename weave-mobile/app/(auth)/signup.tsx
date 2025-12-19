@@ -44,7 +44,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { Button, Input, Text, Card, useTheme, Checkbox, showToast } from '@/design-system';
+import { Button, Input, Text, Card, useTheme, Checkbox, showSimpleToast } from '@/design-system';
 import { AuthError } from '@supabase/supabase-js';
 
 /**
@@ -262,7 +262,7 @@ export default function SignupScreen() {
       await signUp(email, password);
 
       // Show success toast
-      showToast('Account created successfully! 🎉', 'success');
+      showSimpleToast('Account created successfully! 🎉', 'success');
 
       // Navigation handled automatically by auth state change in _layout.tsx
       // Note: If email verification is required, user may need to check email
