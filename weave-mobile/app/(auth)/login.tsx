@@ -34,7 +34,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { Button, Input, Text, Card, useTheme, showToast } from '@/design-system';
+import { Button, Input, Text, Card, useTheme, showSimpleToast } from '@/design-system';
 import { AuthError } from '@supabase/supabase-js';
 
 /**
@@ -137,14 +137,14 @@ export default function LoginScreen() {
       await signIn(email, password);
 
       // Show success toast
-      console.log('[LOGIN] Sign in successful, calling showToast...');
-      showToast('Welcome back! 🎉', 'success');
+      console.log('[LOGIN] Sign in successful, calling showSimpleToast...');
+      showSimpleToast('Welcome back! 🎉', 'success');
 
       // Navigation handled automatically by auth state change in _layout.tsx
     } catch (error) {
       console.error('[LOGIN] Sign in error:', error);
-      console.log('[LOGIN] Calling showToast for error...');
-      showToast('Sign in failed. Please try again.', 'error');
+      console.log('[LOGIN] Calling showSimpleToast for error...');
+      showSimpleToast('Sign in failed. Please try again.', 'error');
       // Error is also set in auth context, displayed in error card below
     } finally {
       setIsLoading(false);
@@ -162,7 +162,7 @@ export default function LoginScreen() {
 
         // Show success toast
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
-        showToast(`Signed in with ${providerName}! 🎉`, 'success');
+        showSimpleToast(`Signed in with ${providerName}! 🎉`, 'success');
 
         // Navigation handled automatically by auth state change in _layout.tsx
       } catch (error) {
