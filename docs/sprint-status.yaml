@@ -81,8 +81,8 @@ sprint-1-stories:
   1-6-name-and-identity-traits: review          # 5 pts (name entry + personality + traits)
   1-7-first-needle-simple: review               # 3 pts (implementation complete, manual testing pending)
   # Phase 3: Early Value Proof
-  1-8a-weave-path-generation-ui: backlog        # 3 pts
-  1-8b-ai-goal-breakdown: backlog               # 5 pts
+  1-8a-weave-path-generation-ui: in-progress          # 3 pts (implementation complete, code review applied, NetInfo added, blocked by Story 1.9)
+  1-8b-ai-goal-breakdown: ready-for-dev         # 5 pts
   1-9-first-commitment-ritual: backlog          # 3 pts
   # Phase 4: Lightweight Orientation
   1-10-app-mini-tutorial: backlog               # 3 pts
