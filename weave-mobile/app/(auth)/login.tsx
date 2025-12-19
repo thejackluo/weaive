@@ -137,12 +137,15 @@ export default function LoginScreen() {
       await signIn(email, password);
 
       // Show success toast
+      console.log('[LOGIN] Sign in successful, calling showToast...');
       showToast('Welcome back! 🎉', 'success');
 
       // Navigation handled automatically by auth state change in _layout.tsx
     } catch (error) {
       console.error('[LOGIN] Sign in error:', error);
-      // Error is set in auth context, displayed below
+      console.log('[LOGIN] Calling showToast for error...');
+      showToast('Sign in failed. Please try again.', 'error');
+      // Error is also set in auth context, displayed in error card below
     } finally {
       setIsLoading(false);
     }
