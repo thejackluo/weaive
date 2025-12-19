@@ -711,7 +711,7 @@ export default function IdentityBootupScreen() {
             accessibilityRole="adjustable"
             accessibilityLabel={`Personality ${currentPersonaIndex + 1} of ${PERSONAS.length}`}
           >
-            {PERSONAS.map((_, index) => (
+            {PERSONAS.map((persona, index) => (
               <View
                 key={index}
                 accessible={true}
