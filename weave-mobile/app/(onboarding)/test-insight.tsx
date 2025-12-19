@@ -18,27 +18,27 @@ export default function TestInsightScreen() {
     {
       title: 'Test: 1 Painpoint (Clarity)',
       painpoints: ['clarity'],
-      description: 'Single card should show'
+      description: 'Single card should show',
     },
     {
       title: 'Test: 1 Painpoint (Action)',
       painpoints: ['action'],
-      description: 'Single card should show'
+      description: 'Single card should show',
     },
     {
       title: 'Test: 2 Painpoints (Clarity + Action)',
       painpoints: ['clarity', 'action'],
-      description: 'Two cards with staggered animation'
+      description: 'Two cards with staggered animation',
     },
     {
       title: 'Test: 2 Painpoints (Consistency + Alignment)',
       painpoints: ['consistency', 'alignment'],
-      description: 'Two cards with staggered animation'
+      description: 'Two cards with staggered animation',
     },
     {
       title: 'Test: Empty Selection (Edge Case)',
       painpoints: [],
-      description: 'Should show fallback text'
+      description: 'Should show fallback text',
     },
   ];
 
@@ -51,9 +51,7 @@ export default function TestInsightScreen() {
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="flex-1 p-4">
         <View className="mb-6">
-          <Text className="text-2xl font-bold text-neutral-900 mb-2">
-            Story 1.3 Test Screen
-          </Text>
+          <Text className="text-2xl font-bold text-neutral-900 mb-2">Story 1.3 Test Screen</Text>
           <Text className="text-sm text-neutral-600">
             Select a test scenario to navigate to the Insight Reflection screen
           </Text>
@@ -65,34 +63,23 @@ export default function TestInsightScreen() {
             className="mb-3 p-4 bg-blue-50 rounded-xl border border-blue-200 active:bg-blue-100"
             onPress={() => handleTestScenario(scenario.painpoints)}
           >
-            <Text className="text-base font-semibold text-blue-900 mb-1">
-              {scenario.title}
-            </Text>
+            <Text className="text-base font-semibold text-blue-900 mb-1">{scenario.title}</Text>
             <Text className="text-sm text-blue-700 mb-2">
-              Painpoints: {scenario.painpoints.length === 0 ? 'None' : scenario.painpoints.join(', ')}
+              Painpoints:{' '}
+              {scenario.painpoints.length === 0 ? 'None' : scenario.painpoints.join(', ')}
             </Text>
-            <Text className="text-xs text-neutral-600">
-              {scenario.description}
-            </Text>
+            <Text className="text-xs text-neutral-600">{scenario.description}</Text>
           </Pressable>
         ))}
 
         <View className="mt-6 p-4 bg-neutral-100 rounded-xl">
-          <Text className="text-sm font-semibold text-neutral-900 mb-2">
-            Testing Checklist:
-          </Text>
-          <Text className="text-xs text-neutral-700 mb-1">
-            ✓ Glass effect on cards
-          </Text>
-          <Text className="text-xs text-neutral-700 mb-1">
-            ✓ Fade-in animation for first card
-          </Text>
+          <Text className="text-sm font-semibold text-neutral-900 mb-2">Testing Checklist:</Text>
+          <Text className="text-xs text-neutral-700 mb-1">✓ Glass effect on cards</Text>
+          <Text className="text-xs text-neutral-700 mb-1">✓ Fade-in animation for first card</Text>
           <Text className="text-xs text-neutral-700 mb-1">
             ✓ Slide-up animation for second card (200ms delay)
           </Text>
-          <Text className="text-xs text-neutral-700 mb-1">
-            ✓ CTA button appears after cards
-          </Text>
+          <Text className="text-xs text-neutral-700 mb-1">✓ CTA button appears after cards</Text>
           <Text className="text-xs text-neutral-700 mb-1">
             ✓ Correct symptom text for each painpoint
           </Text>

@@ -16,7 +16,14 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.weavelight.app",
-      "associatedDomains": ["applinks:weavelight.app"]
+      "associatedDomains": ["applinks:weavelight.app"],
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["weavelight"]
+          }
+        ]
+      }
     },
     "android": {
       "package": "com.weavelight.app",
@@ -24,6 +31,18 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "weavelight"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -31,6 +50,12 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": ["expo-router"]
+    "plugins": ["expo-router", "expo-web-browser"],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "958e77af-47be-49ec-a7e6-bbfa14552734"
+      }
+    }
   }
 }

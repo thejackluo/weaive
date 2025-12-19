@@ -349,32 +349,38 @@ function getSizeStyles(size: ButtonSize, spacing: any) {
   const sizes = {
     sm: {
       button: {
-        height: 36,
+        height: 40, // Increased from 36 to prevent text cutoff
         paddingHorizontal: spacing[3],
+        paddingVertical: 2, // Add vertical padding for better text alignment
         borderRadius: 10,
       },
       text: {
         fontSize: 12,
+        lineHeight: 16, // Explicit line height for consistent text rendering
       },
     },
     md: {
       button: {
-        height: 44,
+        height: 48, // Increased from 44 to prevent text cutoff
         paddingHorizontal: spacing[4],
+        paddingVertical: 2, // Add vertical padding for better text alignment
         borderRadius: 12,
       },
       text: {
         fontSize: 14,
+        lineHeight: 20, // Explicit line height for consistent text rendering
       },
     },
     lg: {
       button: {
-        height: 56,
+        height: 60, // Increased from 56 to prevent text cutoff
         paddingHorizontal: spacing[6],
+        paddingVertical: 2, // Add vertical padding for better text alignment
         borderRadius: 14,
       },
       text: {
         fontSize: 16,
+        lineHeight: 24, // Explicit line height for consistent text rendering
       },
     },
   };
