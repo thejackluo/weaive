@@ -282,19 +282,19 @@
 
 ### Task 7: OAuth Configuration (AC: 1)
 - [ ] Configure Sign in with Apple in Supabase:
-  - [ ] Go to Supabase Dashboard → Authentication → Providers
-  - [ ] Enable Apple provider
-  - [ ] Configure Apple Developer settings (App ID, Services ID, private key)
-  - [ ] Add redirect URLs for mobile deep linking
-  - [ ] Update mobile app scheme in `app.json`: `"scheme": "weave"`
-- [ ] (Optional) Configure Sign in with Google:
-  - [ ] Enable Google provider in Supabase
-  - [ ] Configure Google OAuth consent screen
-  - [ ] Add Google OAuth credentials
-  - [ ] Add Google sign-in button to login screen
+  - [x] Go to Supabase Dashboard → Authentication → Providers ✅
+  - [ ] Enable Apple provider (SKIPPED - requires Apple Developer Program $99/year)
+  - [ ] Configure Apple Developer settings (SKIPPED - requires Apple Developer Program)
+  - [x] Add redirect URLs for mobile deep linking ✅
+  - [x] Update mobile app scheme in `app.json`: `"scheme": "weavelight"` ✅
+- [x] (Optional) Configure Sign in with Google:
+  - [x] Enable Google provider in Supabase ✅
+  - [x] Configure Google OAuth consent screen ✅
+  - [x] Add Google OAuth credentials ✅
+  - [x] Add Google sign-in button to login screen ✅
 - [ ] Test OAuth flows:
-  - [ ] Sign in with Apple → redirects back to app with session
-  - [ ] Sign in with Google → redirects back to app with session
+  - [ ] Sign in with Google → redirects back to app with session (BLOCKED: Needs Android emulator)
+  - [ ] Sign in with Apple → SKIPPED (not configured yet)
 
 ### Task 8: End-to-End Testing & Security Checklist (AC: 7)
 - [ ] **Manual Testing of Complete Auth Flows:**
