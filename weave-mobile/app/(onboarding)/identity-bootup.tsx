@@ -354,17 +354,7 @@ export default function IdentityBootupScreen() {
       // trackEvent('identity_traits_selected', { traits: formData.identity_traits });
 
       // Navigate to Story 1.7 (First Needle / Goal Input)
-      // TODO: Implement Story 1.7 and replace with actual route
-      Alert.alert(
-        'Onboarding Complete! ✨',
-        `Thanks, ${formData.preferred_name}! Your personality and traits have been saved.\n\nStory 1.7 (First Needle) is coming next. For now, this completes the current onboarding flow.`,
-        [
-          {
-            text: 'OK',
-            style: 'default',
-          },
-        ]
-      );
+      router.push('/(onboarding)/first-needle');
     } catch (error) {
       if (__DEV__) {
         console.error('[ONBOARDING] Step 3 error:', error);
