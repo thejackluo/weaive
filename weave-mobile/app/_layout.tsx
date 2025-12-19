@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
-import { ThemeProvider } from '../src/design-system';
+import { ThemeProvider, ToastContainer } from '../src/design-system';
 import { AuthProvider } from '../src/contexts/AuthContext';
 import '../global.css';
 
@@ -15,11 +15,13 @@ import '../global.css';
  * - Headers hidden by default (screens can override if needed)
  * - Wrapped with ThemeProvider for design system support
  * - Wrapped with AuthProvider for authentication state management (Story 0.3)
+ * - ToastContainer for global toast notifications (Story 0.3)
  *
  * Provider Hierarchy:
  * - ThemeProvider (outermost) - Design system theme
  * - AuthProvider - Authentication state and methods
  * - Stack - Navigation structure
+ * - ToastContainer - Toast notification overlay
  *
  * @returns Stack navigation component wrapped with providers
  */
@@ -32,6 +34,7 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+        <ToastContainer />
       </AuthProvider>
     </ThemeProvider>
   );

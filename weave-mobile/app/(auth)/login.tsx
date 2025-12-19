@@ -34,7 +34,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { Button, Input, Text, Card, useTheme } from '@/design-system';
+import { Button, Input, Text, Card, useTheme, showToast } from '@/design-system';
 import { AuthError } from '@supabase/supabase-js';
 
 /**
@@ -135,6 +135,10 @@ export default function LoginScreen() {
     try {
       setIsLoading(true);
       await signIn(email, password);
+
+      // Show success toast
+      showToast('Welcome back! 🎉', 'success');
+
       // Navigation handled automatically by auth state change in _layout.tsx
     } catch (error) {
       console.error('[LOGIN] Sign in error:', error);
@@ -152,6 +156,11 @@ export default function LoginScreen() {
       try {
         setIsOAuthLoading(provider);
         await signInWithOAuth(provider);
+
+        // Show success toast
+        const providerName = provider === 'apple' ? 'Apple' : 'Google';
+        showToast(`Signed in with ${providerName}! 🎉`, 'success');
+
         // Navigation handled automatically by auth state change in _layout.tsx
       } catch (error) {
         console.error(`[LOGIN] ${provider} sign in error:`, error);

@@ -95,6 +95,12 @@ export { GlassView } from './components/Glass/GlassView';
 // export { AnimatedPressable } from './components/Animated/AnimatedPressable';
 
 // ============================================================================
+// Feedback Components
+// ============================================================================
+export { Toast, ToastContainer, showToast } from './components/Toast';
+export type { ToastType, ToastConfig } from './components/Toast';
+
+// ============================================================================
 // Constants
 // ============================================================================
 export * from './constants';
