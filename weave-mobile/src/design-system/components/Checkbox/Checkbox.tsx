@@ -60,10 +60,7 @@ export function Checkbox({
   useEffect(() => {
     if (checked) {
       // Morphing animation: circle → square with weave pattern
-      borderRadius.value = withSpring(
-        size === 'sm' ? 4 : size === 'lg' ? 8 : 6,
-        springs.default
-      );
+      borderRadius.value = withSpring(size === 'sm' ? 4 : size === 'lg' ? 8 : 6, springs.default);
       checkProgress.value = withSpring(1, springs.quick);
       rotation.value = withSpring(360, springs.default);
 
@@ -98,10 +95,7 @@ export function Checkbox({
       }
 
       // Scale animation
-      scale.value = withSequence(
-        withSpring(0.9, springs.press),
-        withSpring(1, springs.default)
-      );
+      scale.value = withSequence(withSpring(0.9, springs.press), withSpring(1, springs.default));
 
       onChange(!checked);
     }
@@ -111,22 +105,11 @@ export function Checkbox({
 
   // Animated styles
   const animatedCheckboxStyle = useAnimatedStyle(() => {
-    const backgroundColor = interpolate(
-      checkProgress.value,
-      [0, 1],
-      [0, 1],
-      Extrapolate.CLAMP
-    );
+    const backgroundColor = interpolate(checkProgress.value, [0, 1], [0, 1], Extrapolate.CLAMP);
 
     return {
-      transform: [
-        { scale: scale.value },
-        { rotate: `${rotation.value}deg` },
-      ],
-      backgroundColor:
-        backgroundColor > 0.5
-          ? colors.accent[500]
-          : colors.background.elevated,
+      transform: [{ scale: scale.value }, { rotate: `${rotation.value}deg` }],
+      backgroundColor: backgroundColor > 0.5 ? colors.accent[500] : colors.background.elevated,
       borderRadius: borderRadius.value,
     };
   });
@@ -134,10 +117,7 @@ export function Checkbox({
   const animatedCheckStyle = useAnimatedStyle(() => {
     return {
       opacity: checkProgress.value,
-      transform: [
-        { scale: checkProgress.value },
-        { rotate: `${rotation.value * 0.5}deg` },
-      ],
+      transform: [{ scale: checkProgress.value }, { rotate: `${rotation.value * 0.5}deg` }],
     };
   });
 
@@ -199,10 +179,7 @@ export function Checkbox({
                   styles.particle,
                   {
                     backgroundColor: colors.accent[300],
-                    transform: [
-                      { rotate: `${i * 60}deg` },
-                      { translateX: sizeValue * 0.8 },
-                    ],
+                    transform: [{ rotate: `${i * 60}deg` }, { translateX: sizeValue * 0.8 }],
                   },
                 ]}
               />

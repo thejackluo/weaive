@@ -117,7 +117,17 @@ export function Button({
       }
       onPressOut?.(event);
     },
-    [disabled, loading, onPressOut, scale, glassOpacity, letterSpacing, rippleScale, springs, typography]
+    [
+      disabled,
+      loading,
+      onPressOut,
+      scale,
+      glassOpacity,
+      letterSpacing,
+      rippleScale,
+      springs,
+      typography,
+    ]
   );
 
   // Handle press
@@ -162,12 +172,7 @@ export function Button({
   });
 
   const animatedShimmerStyle = useAnimatedStyle(() => {
-    const translateX = interpolate(
-      shimmer.value,
-      [0, 1],
-      [-200, 200],
-      Extrapolate.CLAMP
-    );
+    const translateX = interpolate(shimmer.value, [0, 1], [-200, 200], Extrapolate.CLAMP);
 
     return {
       transform: [{ translateX }],
@@ -209,17 +214,11 @@ export function Button({
       {...pressableProps}
     >
       {/* Glass morphism layer */}
-      <Animated.View
-        style={[styles.glassLayer, variantStyles.glass, animatedGlassStyle]}
-      />
+      <Animated.View style={[styles.glassLayer, variantStyles.glass, animatedGlassStyle]} />
 
       {/* Ripple effect */}
       <Animated.View
-        style={[
-          styles.ripple,
-          { backgroundColor: variantStyles.ripple },
-          animatedRippleStyle,
-        ]}
+        style={[styles.ripple, { backgroundColor: variantStyles.ripple }, animatedRippleStyle]}
       />
 
       {/* Shimmer effect */}

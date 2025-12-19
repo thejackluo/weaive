@@ -6,11 +6,7 @@
 
 import React from 'react';
 import { View, Pressable, StyleSheet, ViewStyle } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { CardVariant, CardPadding } from './types';
 
@@ -73,9 +69,7 @@ export function Card({
       {...componentProps}
     >
       {/* Glass blur layer */}
-      {variant === 'glass' && (
-        <View style={[StyleSheet.absoluteFill, styles.glassLayer]} />
-      )}
+      {variant === 'glass' && <View style={[StyleSheet.absoluteFill, styles.glassLayer]} />}
 
       {/* Content */}
       <View style={styles.content}>{children}</View>
@@ -83,7 +77,13 @@ export function Card({
       {/* Subtle weave pattern overlay */}
       <View style={styles.weaveOverlay} pointerEvents="none">
         <View style={[styles.weaveLine, { backgroundColor: variantStyles.weaveColor }]} />
-        <View style={[styles.weaveLine, styles.weaveLineVertical, { backgroundColor: variantStyles.weaveColor }]} />
+        <View
+          style={[
+            styles.weaveLine,
+            styles.weaveLineVertical,
+            { backgroundColor: variantStyles.weaveColor },
+          ]}
+        />
       </View>
     </Component>
   );

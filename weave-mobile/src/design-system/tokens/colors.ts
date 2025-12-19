@@ -10,37 +10,37 @@ export const colors = {
   // Background Colors (Dark-First)
   // ============================================================================
   background: {
-    primary: '#09090B',     // Main app background - Deep black
-    secondary: '#0F0F12',   // Card backgrounds - Slightly lighter
-    elevated: '#1A1A1F',    // Floating elements, modals
-    glass: 'rgba(26, 26, 31, 0.7)',  // Glass effect background
-    overlay: 'rgba(9, 9, 11, 0.8)',  // Modal overlays
+    primary: '#09090B', // Main app background - Deep black
+    secondary: '#0F0F12', // Card backgrounds - Slightly lighter
+    elevated: '#1A1A1F', // Floating elements, modals
+    glass: 'rgba(26, 26, 31, 0.7)', // Glass effect background
+    overlay: 'rgba(9, 9, 11, 0.8)', // Modal overlays
   },
 
   // ============================================================================
   // Text Colors
   // ============================================================================
   text: {
-    primary: '#ECECF1',     // High emphasis - Headers, important text
-    secondary: '#D4D4DC',   // Normal body text
-    muted: '#71717F',       // De-emphasized text, labels
-    disabled: '#3F3F46',    // Disabled state
-    ai: '#9D71E8',          // AI-generated content (violet)
-    success: '#10D87E',     // Success messages
-    error: '#E85A7E',       // Error messages
-    warning: '#F5A623',     // Warning messages
-    inverse: '#09090B',     // Text on light backgrounds
+    primary: '#ECECF1', // High emphasis - Headers, important text
+    secondary: '#D4D4DC', // Normal body text
+    muted: '#71717F', // De-emphasized text, labels
+    disabled: '#3F3F46', // Disabled state
+    ai: '#9D71E8', // AI-generated content (violet)
+    success: '#10D87E', // Success messages
+    error: '#E85A7E', // Error messages
+    warning: '#F5A623', // Warning messages
+    inverse: '#09090B', // Text on light backgrounds
   },
 
   // ============================================================================
   // Border Colors
   // ============================================================================
   border: {
-    subtle: 'rgba(255, 255, 255, 0.05)',   // Very subtle borders
-    muted: 'rgba(255, 255, 255, 0.1)',     // Default borders
-    focus: 'rgba(91, 141, 239, 0.4)',      // Focus states
-    glass: 'rgba(255, 255, 255, 0.15)',    // Glass effect borders
-    error: 'rgba(232, 90, 126, 0.5)',      // Error state borders
+    subtle: 'rgba(255, 255, 255, 0.05)', // Very subtle borders
+    muted: 'rgba(255, 255, 255, 0.1)', // Default borders
+    focus: 'rgba(91, 141, 239, 0.4)', // Focus states
+    glass: 'rgba(255, 255, 255, 0.15)', // Glass effect borders
+    error: 'rgba(232, 90, 126, 0.5)', // Error state borders
   },
 
   // ============================================================================
@@ -53,7 +53,7 @@ export const colors = {
     200: '#BCD4FF',
     300: '#8EBAFF',
     400: '#5994FF',
-    500: '#5B8DEF',  // Base - Primary action color
+    500: '#5B8DEF', // Base - Primary action color
     600: '#2858E8',
     700: '#1E44D5',
     800: '#1F38AC',
@@ -68,7 +68,7 @@ export const colors = {
     200: '#DDD6FE',
     300: '#C4B5FD',
     400: '#A78BFA',
-    500: '#9D71E8',  // Base - AI theme color
+    500: '#9D71E8', // Base - AI theme color
     600: '#7C3AED',
     700: '#6D28D9',
     800: '#5B21B6',
@@ -82,7 +82,7 @@ export const colors = {
     200: '#FDE68A',
     300: '#FCD34D',
     400: '#FBBF24',
-    500: '#F5A623',  // Base - Celebration color
+    500: '#F5A623', // Base - Celebration color
     600: '#D97706',
     700: '#B45309',
     800: '#92400E',
@@ -96,7 +96,7 @@ export const colors = {
     200: '#A7F3D0',
     300: '#6EE7B7',
     400: '#34D399',
-    500: '#10D87E',  // Base - Success color
+    500: '#10D87E', // Base - Success color
     600: '#059669',
     700: '#047857',
     800: '#065F46',
@@ -110,7 +110,7 @@ export const colors = {
     200: '#FECDD3',
     300: '#FDA4AF',
     400: '#FB7185',
-    500: '#E85A7E',  // Base - Error color
+    500: '#E85A7E', // Base - Error color
     600: '#E11D48',
     700: '#BE123C',
     800: '#9F1239',
@@ -180,23 +180,23 @@ export const colors = {
   // Dark Theme Palette (Reference - maps to above)
   // ============================================================================
   dark: {
-    100: '#ECECF1',   // → text.primary
-    200: '#D4D4DC',   // → text.secondary
+    100: '#ECECF1', // → text.primary
+    200: '#D4D4DC', // → text.secondary
     300: '#A1A1AA',
-    400: '#71717F',   // → text.muted
+    400: '#71717F', // → text.muted
     500: '#52525B',
-    600: '#3F3F46',   // → text.disabled
+    600: '#3F3F46', // → text.disabled
     700: '#27272A',
-    800: '#1A1A1F',   // → background.elevated
-    850: '#0F0F12',   // → background.secondary
-    900: '#09090B',   // → background.primary
+    800: '#1A1A1F', // → background.elevated
+    850: '#0F0F12', // → background.secondary
+    900: '#09090B', // → background.primary
   },
 
   // ============================================================================
   // Light Theme Palette (For Future Light Mode)
   // ============================================================================
   light: {
-    100: '#09090B',   // → text on light bg
+    100: '#09090B', // → text on light bg
     200: '#27272A',
     300: '#3F3F46',
     400: '#71717F',

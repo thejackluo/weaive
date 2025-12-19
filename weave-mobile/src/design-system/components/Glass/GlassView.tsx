@@ -94,7 +94,8 @@ const blurTypeConfig = {
   overlay: 'dark' as const,
 };
 
-export interface GlassViewProps extends Omit<ViewProps, 'style'>, VariantProps<typeof glassVariants> {
+export interface GlassViewProps
+  extends Omit<ViewProps, 'style'>, VariantProps<typeof glassVariants> {
   /**
    * Custom blur amount (0-100)
    * Overrides variant blur amount

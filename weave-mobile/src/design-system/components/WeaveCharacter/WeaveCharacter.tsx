@@ -37,11 +37,11 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export interface WeaveCharacterProps {
-  level: number;          // 1-100 - determines curve complexity
-  progress: number;       // 0-1 - progress to next level
+  level: number; // 1-100 - determines curve complexity
+  progress: number; // 0-1 - progress to next level
   size?: 'small' | 'medium' | 'large';
-  animated?: boolean;     // Whether to animate breathing
-  showLevel?: boolean;    // Show level number
+  animated?: boolean; // Whether to animate breathing
+  showLevel?: boolean; // Show level number
 }
 
 export function WeaveCharacter({
@@ -92,10 +92,7 @@ export function WeaveCharacter({
   // Animated styles
   const animatedContainerStyle = useAnimatedStyle(() => {
     return {
-      transform: [
-        { scale: breathe.value },
-        { rotate: `${rotation.value}deg` },
-      ],
+      transform: [{ scale: breathe.value }, { rotate: `${rotation.value}deg` }],
     };
   });
 
@@ -279,19 +276,7 @@ function generateArcPath(
   const end = polarToCartesian(cx, cy, radius, startAngle);
   const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
 
-  return [
-    'M',
-    start.x,
-    start.y,
-    'A',
-    radius,
-    radius,
-    0,
-    largeArcFlag,
-    0,
-    end.x,
-    end.y,
-  ].join(' ');
+  return ['M', start.x, start.y, 'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(' ');
 }
 
 function polarToCartesian(
