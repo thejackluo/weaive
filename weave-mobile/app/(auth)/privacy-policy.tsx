@@ -34,7 +34,7 @@ export default function PrivacyPolicyScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text variant="displayMd" color="primary" weight="bold">
+          <Text variant="displayMd" weight="bold" style={{ color: colors.text.primary }}>
             Privacy Policy
           </Text>
           <View style={[styles.badge, { backgroundColor: `${colors.accent[500]}20` }]}>
@@ -46,17 +46,26 @@ export default function PrivacyPolicyScreen() {
 
         {/* Introduction */}
         <View style={styles.section}>
-          <Text variant="textBase" color="primary" style={styles.paragraph}>
+          <Text
+            variant="textBase"
+            style={[styles.paragraph, { color: colors.text.primary }]}
+          >
             At Weave, we are committed to protecting your privacy and being transparent about how we
             collect, use, and protect your personal information. This Privacy Policy explains our
             data practices in detail.
           </Text>
-          <Text variant="textBase" color="secondary" style={styles.paragraph}>
+          <Text
+            variant="textBase"
+            style={[styles.paragraph, { color: colors.text.secondary }]}
+          >
             By using Weave, you agree to the terms of this Privacy Policy. If you do not agree,
             please do not use our service.
           </Text>
-          <Text variant="textBase" color="secondary" style={styles.paragraph}>
-            <Text weight="semibold" color="primary">
+          <Text
+            variant="textBase"
+            style={[styles.paragraph, { color: colors.text.secondary }]}
+          >
+            <Text weight="semibold" style={{ color: colors.text.primary }}>
               Contact Us:{' '}
             </Text>
             privacy@weavelight.com | support@weavelight.com
@@ -68,93 +77,116 @@ export default function PrivacyPolicyScreen() {
           <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
             1. Information We Collect
           </Text>
-          <Text variant="textBase" color="secondary" style={styles.paragraph}>
+          <Text
+            variant="textBase"
+            style={[styles.paragraph, { color: colors.text.secondary }]}
+          >
             We collect several types of information to provide and improve our service:
           </Text>
 
-          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
+          <Text
+            variant="textBase"
+            weight="semibold"
+            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          >
             A. Account Information
           </Text>
           <View style={styles.bulletList}>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Email address (for authentication and communication)
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • User profile (name, timezone, preferences)
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • OAuth provider data (if you sign in with Apple or Google)
             </Text>
           </View>
 
-          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
+          <Text
+            variant="textBase"
+            weight="semibold"
+            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          >
             B. Identity & Goals Data
           </Text>
           <View style={styles.bulletList}>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Archetype selection (your starting identity type)
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Dream Self description (your aspirational identity)
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Personal motivations and constraints
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Goals, Q-goals (quantifiable goals), and subtasks (your "Needles" and "Binds")
             </Text>
           </View>
 
-          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
+          <Text
+            variant="textBase"
+            weight="semibold"
+            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          >
             C. Progress & Activity Data
           </Text>
           <View style={styles.bulletList}>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Subtask completions (immutable event logs for progress integrity)
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Daily journal entries with fulfillment scores
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Reflections and personal notes
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Consistency metrics, streaks, and progress ranks
             </Text>
           </View>
 
-          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
+          <Text
+            variant="textBase"
+            weight="semibold"
+            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          >
             D. Proof Captures
           </Text>
           <View style={styles.bulletList}>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Photos of completed tasks
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Audio recordings (optional voice notes)
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Text notes attached to completions
             </Text>
           </View>
 
-          <Text variant="textBase" weight="semibold" color="primary" style={styles.subsectionTitle}>
+          <Text
+            variant="textBase"
+            weight="semibold"
+            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          >
             E. Technical Data
           </Text>
           <View style={styles.bulletList}>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Device information (type, OS version, device ID)
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • IP address and approximate location (for fraud prevention)
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • App usage analytics (screens viewed, features used)
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Push notification tokens (for habit reminders)
             </Text>
-            <Text variant="textBase" color="secondary" style={styles.bullet}>
+            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
               • Error logs and crash reports (for debugging)
             </Text>
           </View>
