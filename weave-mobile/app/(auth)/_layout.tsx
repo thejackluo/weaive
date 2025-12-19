@@ -92,6 +92,21 @@ export default function AuthLayout() {
           title: 'Create Account',
         }}
       />
+      {/* Privacy Policy and Terms of Service - no animation to avoid Reanimated React 19 bug */}
+      <Stack.Screen
+        name="privacy-policy"
+        options={{
+          title: 'Privacy Policy',
+          animation: 'none', // Disable animation to avoid React Reanimated bug
+        }}
+      />
+      <Stack.Screen
+        name="terms-of-service"
+        options={{
+          title: 'Terms of Service',
+          animation: 'none', // Disable animation to avoid React Reanimated bug
+        }}
+      />
     </Stack>
   );
 }
