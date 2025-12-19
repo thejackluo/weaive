@@ -674,23 +674,42 @@ The more you use the app, the better it understands how you grow — and eventua
 
 ### PHASE 2 — Light Identity Bootup (IN-APP, FAST)
 
-#### US-1.6: Identity Traits Selection
+#### US-1.6: Name Entry & Identity Traits Selection
 
 **Priority:** M (Must Have)
 
 **As a** new user
-**I want to** choose traits I want to grow into
-**So that** the app can anchor my early journey to identity
+**I want to** enter my preferred name and choose traits I want to grow into
+**So that** the app can personalize my experience and anchor my early journey to identity
 
 **Acceptance Criteria:**
-- [ ] Display 12 selectable traits (chips)
-- [ ] User selects 3-5
-- [ ] Stored immediately after selection
-- [ ] CTA: "Continue"
+
+**Step 1: Name Entry**
+- [ ] Display welcoming header: "Let's get to know you"
+- [ ] Input field: "What should we call you?" (single line text input)
+- [ ] Placeholder: "Your first name or nickname"
+- [ ] Validation: Required field, 1-50 characters, no special characters
+- [ ] CTA: "Continue" (disabled until valid name entered)
+- [ ] Completion time <10 seconds
+
+**Step 2: Identity Traits Selection**
+- [ ] Display header: "Who do you want to become?"
+- [ ] Display personalized subtext: "Choose 3-5 traits, [Name]"
+- [ ] Display 12 selectable traits (chips):
+  - Disciplined, Creative, Confident, Calm
+  - Focused, Energetic, Organized, Patient
+  - Resilient, Balanced, Intentional, Present
+- [ ] User selects 3-5 traits (enforce min/max)
+- [ ] Selected traits highlight with green border
+- [ ] Show counter: "X of 3-5 selected"
+- [ ] CTA: "Continue" (enabled when 3-5 selected)
 - [ ] Completion time <15 seconds
 
 **Data Requirements:**
-- Write `identity_traits` → `identity_docs.json`
+- Write `preferred_name` → `user_profiles.preferred_name` (VARCHAR 50)
+- Write `identity_traits` → `user_profiles.identity_traits` (JSONB array)
+
+**Total Flow Time:** <25 seconds
 
 ---
 
@@ -918,7 +937,7 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 | US-1.3 | Insight Mirror | M | 2 pts |
 | US-1.4 | Weave Solution | M | 2 pts |
 | US-1.5 | Auth | M | 3 pts |
-| US-1.6 | Identity Traits | M | 3 pts |
+| US-1.6 | Name Entry & Identity Traits | M | 4 pts |
 | US-1.7 | First Needle | M | 3 pts |
 | US-1.8 | AI Path | M | 8 pts |
 | US-1.9 | First Commitment | M | 3 pts |
@@ -930,9 +949,9 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 | US-1.15 | Constraints & Demographics | S | 2 pts |
 | US-1.16 | Soft Paywall (Day 3-4) | M | 5 pts |
 
-**Epic Total:** 48 story points
+**Epic Total:** 49 story points (includes name entry in US-1.6)
 
-**Note:** This hybrid flow increases story points from 35 to 48, but distributes complexity across the user journey, resulting in higher activation rates and lower drop-off. The deferred personalization (US-1.12 through US-1.15) can be implemented incrementally without blocking the core onboarding flow.
+**Note:** This hybrid flow increases story points from 35 to 49, but distributes complexity across the user journey, resulting in higher activation rates and lower drop-off. The deferred personalization (US-1.12 through US-1.15) can be implemented incrementally without blocking the core onboarding flow. The additional point accounts for name entry in US-1.6.
 
 ---
 
