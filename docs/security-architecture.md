@@ -188,9 +188,32 @@ async def get_current_user(
 
 ### Row Level Security (RLS)
 
-**CRITICAL: RLS must be implemented before alpha release.**
+**✅ RLS IMPLEMENTED** - See migration: `supabase/migrations/20251219170656_row_level_security.sql`
 
 RLS provides database-level isolation ensuring users can only access their own data, even if application code has bugs.
+
+#### RLS Implementation Status
+
+**Migration:** `20251219170656_row_level_security.sql` (Story 0.4)
+**Tables Secured:** 12 of 12 existing user-owned tables
+**Test Coverage:** 48 automated tests in `supabase/tests/rls_policies.test.sql`
+**Security Testing:** Penetration test script: `scripts/test_rls_security.py`
+
+**RLS-Enabled Tables:**
+1. `user_profiles` - 3 policies (SELECT, INSERT, UPDATE)
+2. `identity_docs` - Full management (FOR ALL)
+3. `goals` - Full management (FOR ALL)
+4. `subtask_templates` - Full management (FOR ALL)
+5. `subtask_instances` - Full management (FOR ALL)
+6. `subtask_completions` - **Immutable** (SELECT + INSERT only, no UPDATE/DELETE)
+7. `captures` - Full management (FOR ALL)
+8. `journal_entries` - Full management (FOR ALL)
+9. `daily_aggregates` - Full management (FOR ALL)
+10. `triad_tasks` - Full management (FOR ALL)
+11. `ai_runs` - Full management (FOR ALL)
+12. `ai_artifacts` - Full management (FOR ALL)
+
+**Not Yet Created:** qgoals, user_stats, badges, user_edits, event_log (planned, will add RLS when created)
 
 #### Core RLS Policy Pattern
 
@@ -2164,8 +2187,8 @@ Apple reviews apps for security. Ensure compliance:
 
 | Task | Priority | Status | Owner |
 |------|----------|--------|-------|
-| Enable RLS on all tables | Critical | [ ] | Engineering |
-| Test RLS with multiple users | Critical | [ ] | Engineering |
+| Enable RLS on all tables | Critical | [x] COMPLETE | Engineering |
+| Test RLS with multiple users | Critical | [x] COMPLETE | Engineering |
 | Configure rate limiting | High | [ ] | Engineering |
 | Set up security logging | High | [ ] | Engineering |
 | Write privacy policy | High | [ ] | Product |

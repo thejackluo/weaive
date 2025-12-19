@@ -1,9 +1,10 @@
 # Story 0.3: Authentication Flow
 
-**Status:** ready-for-dev
+**Status:** review
 **Epic:** Epic 0 - Foundation
 **Points:** 3
 **Priority:** CRITICAL (Week 0 - Day 3-4)
+**Notes:** Partially complete, pending production testing
 
 ---
 

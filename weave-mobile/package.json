@@ -5,9 +5,9 @@
   "scripts": {
     "start": "expo start",
     "start:clean": "expo start --clear",
-    "android": "expo start --android",
+    "android": "expo run:android",
     "android:clean": "expo start --android --clear",
-    "ios": "expo start --ios",
+    "ios": "expo run:ios",
     "ios:clean": "expo start --ios --clear",
     "web": "expo start --web",
     "reset": "watchman watch-del-all && rm -rf node_modules && npm install && npm run start:clean",

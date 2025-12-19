@@ -479,11 +479,29 @@ New users experience a streamlined onboarding that gets them to their first "win
 - [ ] Sends `selected_painpoints` to backend (lightweight)
 
 **Data Requirements:**
-- Store `initial_painpoints` in `user_profiles.json`
+- Store `initial_painpoints` in `user_profiles.json` (array of 1-2 strings)
 
 **Technical Notes:**
 - Deterministic mapping → no AI call
 - Used later to adjust early prompts and tone
+
+**CRITICAL AI PERSONALIZATION USAGE:**
+
+Painpoints selected here define **who the user IS NOW** (current struggles).
+Combined with identity traits from US-1.6 (aspirational values), Weave creates **tension-driven coaching**:
+
+**How Painpoints Inform AI Messaging:**
+- **Consistency struggle** → Weave acknowledges "I know you start strong but fall off" + leverages aspirational identity to motivate
+- **Action struggle** → Weave acknowledges "I know you overthink" + challenges user to act in alignment with stated values
+- **Clarity struggle** → Weave acknowledges "I know direction feels unclear" + pushes for commitment over exploration
+- **Alignment struggle** → Weave acknowledges "I know you feel alone in this" + validates ambition while suggesting actionable next steps
+
+**Example Personalized Message:**
+- User selects: "Consistency" (US-1.2) + "Consistent Effort" (US-1.6)
+- Weave says: *"You still have a bind left. As someone who values consistent effort, you gotta make it happen."*
+- Creates cognitive dissonance between stated value and current inaction
+
+See `docs/idea/ai.md` → Personalization Framework for complete implementation guidelines.
 
 ---
 
@@ -756,14 +774,32 @@ The more you use the app, the better it understands how you grow — and eventua
 - [ ] Track analytics event: `identity_traits_selected` with selected traits + completion time
 
 **Behavioral & AI Impact (Non-User Facing):**
+
+**CRITICAL PERSONALIZATION FRAMEWORK:**
+
+Identity traits selected here define **who the user WANTS TO BE** (aspirational values).
+Combined with painpoints from US-1.2 (current struggles), Weave creates **tension-driven coaching**:
+
+- **US-1.2 painpoints** = Who the user IS NOW (e.g., "I struggle with consistency")
+- **US-1.6 identity traits** = Who the user WANTS TO BE (e.g., "I value consistent effort")
+- **Weave's messaging** = Bridges the gap by creating motivational tension
+
+**Example:** User struggles with "Consistency" but values "Consistent Effort"
+→ Weave: *"You still have a bind left. As someone who values consistent effort, you gotta make it happen."*
+
 Selected traits are used as primary personalization signals that influence:
 - Weave's tone (gentle vs direct vs challenging)
 - Bind difficulty and pacing
 - Reminder frequency and urgency
 - Reflection depth and prompt style
 - Insight framing (performance-oriented vs introspective)
+- **Language in notifications** - "As someone who values [trait]..."
+- **Daily recaps** - Progress toward stated values
+- **Triad generation** - Suggest binds aligned with traits
 - Traits represent initial intent, not fixed identity
 - Observed behavior can override trait assumptions over time
+
+See `docs/idea/ai.md` → Personalization Framework for complete implementation guidelines.
 
 **Data Requirements:**
 - [ ] Persist selected traits to: `identity_docs.json.active_traits` (array of 3 strings)
@@ -820,24 +856,116 @@ This step:
 
 ---
 
-#### US-1.7: First Needle (Goal Definition – Simple)
+#### US-1.7: Choose Your First Needle (Suggested Starting Goals)
 
 **Priority:** M (Must Have)
 
 **As a** new user
-**I want to** define one goal
-**So that** Weave can break it down into actionable steps
+**I want to** choose a clear starting goal from suggested options
+**So that** I can begin making progress without overthinking what my goal should be
+
+**Overview / Rationale:**
+
+Many users do not arrive with a clearly articulated goal.
+This step surfaces concrete, proven starting goals that map cleanly to Weave's bind and proof system.
+
+Instead of asking users to define a goal from scratch, Weave:
+- Presents recognizable goal suggestions
+- Lets users select one that resonates
+- Optionally allows light customization
+- Commits that selection as the user's first Needle
+
+Categories (Health vs Career) exist internally only and are not shown to the user.
 
 **Acceptance Criteria:**
-- [ ] Input field: "What's one thing you want to achieve first?"
-- [ ] Suggestion chips based on painpoint chosen earlier
-- [ ] User must input or tap a suggestion
-- [ ] CTA: "Continue"
-- [ ] Completion time <10 seconds
+
+**A. Framing (Pressure Reduction)**
+- [ ] Display short framing copy above the options:
+  - Title: **"What do you want to work on first?"**
+  - Subtext: **"This doesn't have to be perfect — it's just a starting point."**
+- [ ] Copy must fit entirely on one screen with no scrolling
+
+**B. Suggested First Needle Options**
+- [ ] Display 10 selectable goal buttons/cards
+- [ ] All options are visible at once (no pagination)
+- [ ] Options are unordered or lightly grouped visually (no category labels)
+- [ ] User must select exactly one option to proceed
+- [ ] Selected option shows a clear visual "locked-in" state
+
+**Suggested First Needles (User-Facing Copy):**
+1. Build a simple fitness routine
+2. Improve my sleep and daily energy
+3. Reduce stress and feel more balanced
+4. Get back into a healthy rhythm
+5. Improve focus and productivity
+6. Make steady progress in school
+7. Work consistently on a project
+8. Start or rebuild a creative habit
+9. Prepare for an upcoming opportunity
+10. Build discipline around my work
+
+**C. Optional Custom Goal Input (Escape Hatch)**
+- [ ] Below the suggested options, display: **"Can't find yours? Type your own goal."**
+- [ ] Tapping this reveals a short free-text input
+- [ ] Constraints:
+  - Max length: 80 characters
+  - Optional — user may skip
+- [ ] If user types a custom goal:
+  - It replaces the selected suggestion OR
+  - Is mapped to the closest internal template (fallback logic)
+
+**D. Optional Light Customization (Post-Selection)**
+- [ ] After a suggestion or custom goal is selected, optionally show:
+  - **"Want to make this more specific?"** (optional)
+  - Provide a single short text field (e.g. "gym", "writing", "studying", "startup")
+  - This field is skippable and non-blocking
+
+**E. Commitment Confirmation**
+- [ ] Display a confirmation screen summarizing:
+  - Selected goal text
+  - Any customization text (if provided)
+- [ ] CTA button: **"This will be my first Needle"**
+- [ ] User must explicitly confirm to continue to US-1.8 (AI Path Generation)
+
+**F. Time & Friction Constraints**
+- [ ] Total completion time: ≤ 30 seconds
+- [ ] No long-form writing required
+- [ ] No "why is this important" prompts
+- [ ] No multi-goal selection allowed
 
 **Data Requirements:**
-- Store basic goal text in temporary onboarding state
-- Later transformed into tables during AI breakdown
+- Store onboarding state:
+  - `needle_template_id` (nullable if fully custom)
+  - `needle_display_text`
+  - `needle_customization_text` (nullable)
+- Map suggested options deterministically to internal templates
+- Pass selected data to US-1.8: AI Path Generation
+
+**Technical Notes:**
+- No AI calls during US-1.7
+- Suggested options map to predefined templates with:
+  - Default milestone structures
+  - Safe bind suggestions
+  - Target early success probability (~70%)
+- Analytics events:
+  - `first_needle_suggestion_selected`
+  - `first_needle_custom_entered`
+  - `first_needle_confirmed`
+
+**Out of Scope:**
+- ❌ Multiple first Needles
+- ❌ Deep personalization or motivation analysis
+- ❌ Relationship or social-life goals
+- ❌ Abstract internal traits (discipline, confidence, etc.)
+
+**Success Criteria:**
+- ≥ 90% completion rate for US-1.7
+- ≥ 75% of users complete at least one bind on Day 1
+- Reduced early churn due to poorly scoped goals
+- Improved quality of AI-generated plans in US-1.8
+
+**Rationale:**
+This version of US-1.7 is aligned with Weave's actual strengths: action, proof, visible progress, and identity emerging from consistency. It avoids promising outcomes the app can't reliably deliver.
 
 ---
 
@@ -1045,7 +1173,7 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 | US-1.4 | Weave Solution | M | 2 pts |
 | US-1.5 | Auth | M | 3 pts |
 | US-1.6 | Name Entry, Weave Personality & Identity Traits | M | 5 pts |
-| US-1.7 | First Needle | M | 3 pts |
+| US-1.7 | First Needle (Suggested Goals) | M | 5 pts |
 | US-1.8 | AI Path | M | 8 pts |
 | US-1.9 | First Commitment | M | 3 pts |
 | US-1.10 | Mini Tutorial | M | 3 pts |
@@ -1056,7 +1184,7 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 | US-1.15 | Constraints & Demographics | S | 2 pts |
 | US-1.16 | Soft Paywall (Day 3-4) | M | 5 pts |
 
-**Epic Total:** 50 story points (includes name entry + Weave Personality Selection in US-1.6)
+**Epic Total:** 52 story points (includes name entry + Weave Personality Selection in US-1.6, enhanced US-1.7 with suggested goals)
 
 **Note:** This hybrid flow increases story points from 35 to 50, but distributes complexity across the user journey, resulting in higher activation rates and lower drop-off. The deferred personalization (US-1.12 through US-1.15) can be implemented incrementally without blocking the core onboarding flow. The additional points account for name entry and Weave personality selection in US-1.6.
 
@@ -2374,7 +2502,7 @@ Users manage their account settings, identity document, and app preferences.
 | Epic | Description | M Points | S Points | C Points | Total |
 |------|-------------|----------|----------|----------|-------|
 | E0 | Foundation | 40 | 0 | 0 | 40 |
-| E1 | Onboarding (Hybrid Flow) | 38 | 10 | 0 | 48 |
+| E1 | Onboarding (Hybrid Flow) | 42 | 10 | 0 | 52 |
 | E2 | Goal Management | 24 | 3 | 0 | 27 |
 | E3 | Daily Actions & Proof | 28 | 5 | 5 | 38 |
 | E4 | Reflection & Journaling | 19 | 9 | 0 | 28 |
@@ -2382,13 +2510,13 @@ Users manage their account settings, identity document, and app preferences.
 | E6 | AI Coaching | 13 | 11 | 5 | 29 |
 | E7 | Notifications | 23 | 5 | 0 | 28 |
 | E8 | Settings & Profile | 20 | 3 | 0 | 23 |
-| **Total** | | **215** | **67** | **10** | **300** |
+| **Total** | | **217** | **67** | **10** | **302** |
 
 **Note:** Epic 0 (Foundation) added - includes infrastructure, auth, RLS, CI/CD, and AI service abstraction (40 pts). Epic 1 updated with optimized hybrid flow (+13 pts) that distributes personalization across Days 1-3 for higher activation. Epics 3, 4 also updated based on implementation complexity assessment and story splitting for clarity.
 
 ### MVP Scope (Must Have)
 
-**Total Must Have Points:** 215 story points (includes Epic 0 Foundation: 40 pts, Epic 1 Hybrid Flow: 38 pts M)
+**Total Must Have Points:** 217 story points (includes Epic 0 Foundation: 40 pts, Epic 1 Hybrid Flow: 42 pts M)
 
 **Estimated Duration:** 10-14 sprints (assuming 15-20 points/sprint with 2-person team)
 

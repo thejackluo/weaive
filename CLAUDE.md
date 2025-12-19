@@ -8,139 +8,288 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Target Users:** Ambitious but chaotic students and builders (high intent, inconsistent execution)
 
-**Current Stage:** Pre-MVP (Documentation and architecture planning phase)
+**Current Stage:** 🚀 **Active Implementation** (Story-based development, MVP in progress)
 
 ## Tech Stack
 
-- **Mobile:** React Native (Expo SDK 53, React 19, TypeScript)
-- **Backend:** Python FastAPI (Python 3.11+, deployed on Railway)
+- **Mobile:** React Native (Expo SDK 53, React 19, TypeScript) - **✅ Implemented**
+- **Backend:** Python FastAPI (Python 3.11+, uv for dependencies) - **✅ Implemented**
 - **Database:** Supabase (PostgreSQL + Auth + Storage)
 - **AI Models:** GPT-4o, GPT-4o-mini (OpenAI), Claude 3.7 Sonnet, Claude 3.5 Haiku (Anthropic)
 - **Push Notifications:** Expo Push (iOS APNs)
 - **State Management:** TanStack Query (server state), Zustand (UI state), useState (local)
 - **Styling:** NativeWind (Tailwind CSS for React Native)
-- **Analytics:** PostHog (post-MVP)
-- **Error Tracking:** Sentry (post-MVP)
-- **Job Queue:** Redis + BullMQ (post-MVP)
 
 ## Common Development Commands
+
+### Mobile Development (weave-mobile/)
+
+```bash
+cd weave-mobile
+
+# Start Expo dev server (most common)
+npm start
+
+# Start with cache cleared (if experiencing issues)
+npm run start:clean
+
+# Run on iOS simulator
+npm run ios
+
+# Run on Android emulator
+npm run android
+
+# Lint code
+npm run lint
+
+# Format code
+npm run format
+
+# Full reset (when node_modules corrupted)
+npm run reset
+```
+
+### Backend Development (weave-api/)
+
+```bash
+cd weave-api
+
+# Run development server
+uv run uvicorn app.main:app --reload
+
+# Run with 5-second timeout (for testing startup)
+timeout 5 uv run uvicorn app.main:app --reload
+
+# Run tests
+uv run pytest
+uv run pytest tests/test_goals.py -v
+
+# Add dependencies
+uv add fastapi supabase anthropic
+
+# Lint with ruff
+uv run ruff check .
+```
 
 ### Documentation Viewer
 
 ```bash
-# Windows (PowerShell)
-.\dev\docs-viewer\scripts\serve.ps1
+# View all documentation in browser
+./dev/docs-viewer/scripts/serve.sh    # Mac/Linux
+.\dev\docs-viewer\scripts\serve.ps1   # Windows
 
-# Mac/Linux
-./dev/docs-viewer/scripts/serve.sh
-
-# Or directly with Node.js/Python
-node dev/docs-viewer/scripts/server.js
-python dev/docs-viewer/scripts/server.py
-```
-
-Then open: **http://localhost:3030**
-
-### Mobile Development (Future)
-
-```bash
-# Initialize mobile app
-npx create-expo-app weave-mobile --template blank-typescript
-cd weave-mobile
-npx expo install expo-router expo-linking expo-constants
-npm install @supabase/supabase-js nativewind @tanstack/react-query zustand
-
-# Start development server
-npx expo start
-
-# Run on iOS simulator
-npx expo start --ios
-
-# Generate TypeScript types from Supabase
-npx supabase gen types typescript --project-id <project-ref> > lib/database.types.ts
-```
-
-### Backend Development (Future)
-
-```bash
-# Initialize backend
-mkdir weave-api && cd weave-api
-uv init
-uv add fastapi "uvicorn[standard]" supabase python-dotenv openai anthropic pydantic-settings
-
-# Run development server
-uvicorn app.main:app --reload
-
-# Run tests
-pytest
-pytest tests/test_goals.py -v
+# Then open: http://localhost:3030
 ```
 
 ### MCP Tools Verification
 
 ```bash
-# Verify MCP setup
-bash scripts/verify-mcp-setup.sh     # Mac/Linux
-.\scripts\verify-mcp-setup.ps1       # Windows
+bash scripts/verify-mcp-setup.sh      # Mac/Linux
+.\scripts\verify-mcp-setup.ps1        # Windows
 ```
 
-## Architecture
+### CI/CD Commands
 
-### Three-Layer Data Model
+```bash
+# View all workflows
+gh workflow list
 
-1. **Static Text Database** - Demographics, stable user profile fields, identity documents (archetype, dream self, motivations)
-2. **Dynamic Text Database (Artifact Store)** - Goals, Q-goals, subtasks, journal entries, reflections, AI-generated outputs, computed statistics
-3. **Image Storage** - User uploads, proof captures from completed tasks, identity visuals
+# View workflow runs
+gh run list --workflow=mobile-lint
+gh run list --status=failure    # Failed runs only
 
-### Request Flow Patterns
+# Re-run failed workflow
+gh run rerun <run-id>
 
-- **Pattern A (Fast Path):** Auth + Basic CRUD - synchronous responses
-- **Pattern B (AI-Heavy):** Long-running operations via Queue + Workers - async with 202 Accepted
-- **Pattern C (Media Uploads):** Direct to storage with signed URLs
-- **Pattern D (Latency-Critical):** Edge Functions for instant response
+# Trigger manual EAS Build
+gh workflow run eas-build.yml --ref main --field platform=ios
 
-### Data Access Strategy
+# View GitHub Actions caches
+gh cache list
 
-| Access Pattern | When to Use | Examples |
-|----------------|-------------|----------|
-| **Supabase Direct** | Auth, storage, simple CRUD | Login, file uploads, read user profile |
-| **FastAPI Backend** | AI operations, complex business logic | Triad generation, onboarding, Dream Self chat |
+# Clear specific cache
+gh cache delete <cache-id>
 
-**Decision Tree:**
-1. Auth or file storage? → Supabase direct
-2. Simple read/write with no business logic? → Supabase direct
-3. AI involvement? → FastAPI
-4. Complex validation or multi-table transactions? → FastAPI
+# Clear all caches (if corruption suspected)
+gh cache list | awk '{print $1}' | xargs -I {} gh cache delete {}
+```
 
-### State Management Architecture
+**Troubleshooting:** See `docs/dev/ci-cd-setup.md` for detailed guide on secrets setup, common failures, and fixes.
 
-| Layer | Library | Purpose | Examples |
-|-------|---------|---------|----------|
-| **Server State** | TanStack Query | Remote data, caching, sync | Goals, completions, user profile |
-| **Shared UI State** | Zustand | Cross-component state | Active filters, modal state |
-| **Local State** | useState | Component-scoped | Form inputs, toggles |
+## Development Workflow
 
-**Key Configuration:**
-- TanStack Query: `refetchOnWindowFocus: false` (mobile optimization)
-- TanStack Query: `networkMode: 'offlineFirst'` (offline support)
-- Zustand stores must be typed from day one - no `any` types
+### Story-Based Development
 
-## Terminology Mapping
+This project uses **story-based development** with BMAD methodology:
 
-Product terms used in UI/docs vs. technical database terms:
+1. **Stories are in:** `docs/stories/` (e.g., `0-1-project-scaffolding.md`, `1-1-welcome-vision-hook.md`)
+2. **Git branches:** `story/X.Y` format (e.g., `story/0.1`, `story/1.1`)
+3. **Sprint artifacts:** Implementation summaries in `docs/sprint-artifacts/`
+4. **Main branch:** `main` (use for PRs)
 
-| MVP Term | Technical Term | Purpose |
-|----------|---------------|---------|
-| **Needle** | Goal | Top-level user goals (max 3 active) |
-| **Bind** | Subtask | Consistent actions/habits toward goals |
-| **Thread** | User/Identity | User's starting state and identity |
-| **Weave** | Progress/Stats | User's evolved state, consistency metrics |
-| **Q-Goal** | Quantifiable Goal | Measurable subgoals with metrics |
-| **Proof** | Capture + Completion | Evidence of bind completion |
-| **Triad** | Daily Plan | AI-generated 3 tasks for next day |
-| **Reflection** | Journal Entry | Daily check-in with fulfillment score |
+**Typical workflow:**
+```bash
+# 1. Check current story
+git branch  # You're likely on story/X.Y
 
-**Convention:** Use technical terms in code/database. Use MVP terms in API responses, UI, and user-facing documentation.
+# 2. Read the story file
+# Example: docs/stories/0-3-authentication-flow.md
+
+# 3. Implement the story
+cd weave-mobile  # or weave-api
+# Make changes...
+
+# 4. Test locally
+npm start  # or uv run uvicorn...
+
+# 5. Commit and push
+git add .
+git commit -m "feat: implement authentication flow"
+git push origin story/0.3
+
+# 6. Create PR to main when done
+gh pr create --base main
+```
+
+### When Working on a Story
+
+1. **Read the story file first** - Stories are detailed specs with acceptance criteria
+2. **Check sprint artifacts** - See `docs/sprint-artifacts/` for implementation notes from previous sessions
+3. **Follow the acceptance criteria** - Don't add scope beyond what's specified
+4. **Update sprint artifacts** - Document significant decisions or blockers
+5. **Test before committing** - Mobile: test on simulator; Backend: run pytest
+
+## Project Structure (Current Reality)
+
+```
+weavelight/
+├── weave-mobile/                # ✅ Expo React Native app (ACTIVE)
+│   ├── app/                     # Expo Router (file-based routing)
+│   │   ├── (auth)/              # Auth screens (login, signup)
+│   │   ├── (onboarding)/        # Onboarding flow
+│   │   ├── (tabs)/              # Main app tabs
+│   │   ├── _layout.tsx          # Root layout
+│   │   └── index.tsx            # Entry point
+│   ├── src/
+│   │   ├── components/          # Reusable components
+│   │   ├── constants/           # App constants
+│   │   ├── contexts/            # React contexts
+│   │   ├── design-system/       # Design system components
+│   │   ├── hooks/               # Custom hooks
+│   │   ├── services/            # API/Supabase services
+│   │   ├── stores/              # Zustand stores
+│   │   └── types/               # TypeScript types
+│   ├── package.json             # Dependencies and scripts
+│   └── ...
+│
+├── weave-api/                   # ✅ FastAPI backend (ACTIVE)
+│   ├── app/
+│   │   ├── api/                 # API routes
+│   │   ├── core/                # Core config
+│   │   ├── models/              # Database models
+│   │   ├── services/            # Business logic
+│   │   └── main.py              # FastAPI app entry
+│   ├── tests/                   # Pytest tests
+│   ├── pyproject.toml           # Python dependencies (uv)
+│   └── ...
+│
+├── src/
+│   └── design-system/           # Root-level design system (reference)
+│       ├── components/          # Button, Card, Input, Text, etc.
+│       ├── tokens/              # Colors, typography, spacing
+│       └── theme/               # ThemeContext and hooks
+│
+├── docs/
+│   ├── architecture/            # 📁 Sharded architecture docs
+│   │   ├── index.md             # Table of contents
+│   │   ├── core-architectural-decisions.md
+│   │   ├── implementation-patterns-consistency-rules.md
+│   │   └── ...                  # 8 more section files
+│   │
+│   ├── prd/                     # 📁 Sharded PRD docs
+│   │   ├── index.md             # Table of contents
+│   │   ├── product-vision.md
+│   │   ├── epic-0-foundation.md
+│   │   ├── epic-1-onboarding-optimized-hybrid-flow.md
+│   │   └── ...                  # 26 total section files
+│   │
+│   ├── stories/                 # 📁 Story specifications
+│   │   ├── 0-1-project-scaffolding.md
+│   │   ├── 0-2a-database-schema-core.md
+│   │   ├── 0-3-authentication-flow.md
+│   │   ├── 1-1-welcome-vision-hook.md
+│   │   └── ...                  # 15+ story files
+│   │
+│   ├── sprint-artifacts/        # Implementation summaries
+│   │   ├── story-0.3-implementation-summary.md
+│   │   └── ...
+│   │
+│   ├── idea/                    # Original deep specs (1000+ lines each)
+│   │   ├── mvp.md               # Complete product MVP spec
+│   │   ├── backend.md           # Backend architecture + DB schema
+│   │   ├── ai.md                # AI system design
+│   │   └── ux.md                # UX design system
+│   │
+│   ├── dev/                     # Developer guides
+│   │   ├── design-system-guide.md
+│   │   ├── docs-viewer-guide.md
+│   │   ├── git-workflow-guide.md
+│   │   ├── bmad-implementation-guide.md
+│   │   └── mcp-quick-reference.md
+│   │
+│   ├── bugs/                    # Bug reports and solutions
+│   │   ├── metro-path-alias-cache-issue-2025-12-18.md
+│   │   ├── nativewind-styling-issue-2025-12-17.md
+│   │   └── ...
+│   │
+│   ├── archive/                 # Archived single-file docs
+│   │   ├── architecture.md      # Original before sharding
+│   │   └── prd.md               # Original before sharding
+│   │
+│   ├── bmm-workflow-status.yaml # BMAD workflow progress
+│   ├── epics.md                 # Implementation epics
+│   ├── test-design.md           # Testing strategy
+│   └── ...
+│
+├── dev/
+│   └── docs-viewer/             # Documentation viewer tool
+│       ├── index.html           # Beautiful UI
+│       └── scripts/             # Server scripts
+│
+├── .bmad/                       # BMAD methodology system
+│   ├── core/                    # Core workflows and agents
+│   ├── bmm/                     # BMM (methodology module)
+│   └── _cfg/                    # Configuration
+│
+├── .claude/                     # Claude Code configuration
+│   ├── hooks/                   # Event hooks
+│   ├── personalities/           # Claude personalities
+│   └── settings.json            # Settings
+│
+└── scripts/                     # Utility scripts
+    └── verify-mcp-setup.sh
+```
+
+## Documentation Navigation
+
+**Documentation is now SHARDED** - no more single 1000+ line files!
+
+### When to Read What
+
+| Task | Read This | Why |
+|------|-----------|-----|
+| Implementing a story | `docs/stories/[story-name].md` | Detailed spec with acceptance criteria |
+| Understanding product vision | `docs/prd/product-vision.md` | High-level goals and user personas |
+| Understanding an epic | `docs/prd/epic-[N]-[name].md` | Epic breakdown and requirements |
+| Architecture decisions | `docs/architecture/core-architectural-decisions.md` | Tech stack, patterns, rationale |
+| Database schema | `docs/idea/backend.md` (lines 200-800) | Complete schema with relationships |
+| API patterns | `docs/architecture/implementation-patterns-consistency-rules.md` | Code conventions and guardrails |
+| Design system usage | `docs/dev/design-system-guide.md` | Components, tokens, examples |
+| Git workflow | `docs/dev/git-workflow-guide.md` | Branching, commits, PRs |
+| Debugging common issues | `docs/bugs/[issue-name].md` | Known bugs and solutions |
+| Deep product context | `docs/idea/mvp.md` | 1600-line comprehensive spec (only if needed) |
+
+**Tip:** Use `docs/architecture/index.md` or `docs/prd/index.md` as a table of contents to find specific sections.
 
 ## Naming Conventions
 
@@ -166,272 +315,86 @@ Product terms used in UI/docs vs. technical database terms:
 - Functions/variables: `snake_case` (e.g., `def get_user_goals():`)
 - Classes: `PascalCase` (e.g., `class GoalCreate(BaseModel):`)
 
-## Data Classification (Critical)
+## Critical Guardrails
 
-### Canonical Truth (Immutable Event Logs)
-- Goals, Q-goals, subtasks
-- Completions (immutable completion events)
-- Captures (photos, notes, audio)
-- Journals (daily reflections)
-- Identity documents
+### Data Integrity
 
-**NEVER** UPDATE or DELETE from `subtask_completions` table - append-only!
+**NEVER UPDATE or DELETE from these tables** - they are append-only event logs:
+- `subtask_completions` (canonical completion events)
+- `captures` (proof photos, notes, audio)
+- `journal_entries` (daily reflections)
 
-### Derived Views (Recomputable)
-- Streaks (calculated from completions)
-- Consistency percentages (calculated from aggregates)
-- Badges and ranks
-- Daily summaries and AI insights
+**Why:** These are canonical truth. Stats and views are recomputed from these events. Editing them corrupts historical data.
 
-**Key Rule:** Never edit derived data directly. Always regenerate from source events. Stats are computed at write-time or via scheduled batch jobs.
+**Alternative:** If a completion was logged incorrectly, add a new row with `is_correction: true` that references the original. Never delete the original event.
 
-## Event-Driven Workflows
+### Common Pitfalls (From `docs/bugs/`)
 
-### On `journal_submitted`
-- Recompute `DailyAggregate` for that date
-- Generate triad for tomorrow
-- Generate daily recap
-- Schedule next day push notifications
+1. **Metro cache issues** - If imports fail after moving files, run `npm run start:clean`
+2. **NativeWind styles not applying** - Check that component is inside the ThemeProvider
+3. **Path aliases not resolving** - Use `@/design-system` not `~/design-system`
+4. **React Native module errors** - Don't use Node.js-only modules (fs, path) in React Native code
+5. **Babel plugin validation errors** - Check `babel.config.js` plugin order (nativewind must be last)
 
-### On `subtask_completed`
-- Recompute `DailyAggregate`
-- Recompute streak and rank
-- Update user_stats
+**If you encounter a bug:** Check `docs/bugs/` first - it likely has a solution.
 
-### On `capture_created`
-- Recompute `DailyAggregate`
-- Optionally enqueue transcription for audio
-- Suggest proof attachments
+### Design System Usage
 
-## AI System Principles (Non-Negotiable)
-
-1. **Editable by default** - Every AI-generated plan can be edited by users
-2. **No hallucinated certainty** - AI must label assumptions and ask questions
-3. **Deterministic personality** - Same user gets consistent coaching based on archetype and dream self
-4. **Guardrails** - Clear scope and constraints for all AI outputs
-5. **Failure recovery** - Fallback chain: OpenAI → Anthropic → Deterministic
-
-## AI Cost Control Strategy
-
-- Most screens should NOT call the AI model
-- Batch AI calls around journal time and onboarding
-- Cache outputs with input_hash; regenerate only when inputs change
-- Use deterministic logic where possible
-- Rate limiting: 10 AI calls/hour per user
-- Budget: $2,500/month at 10K users
-- Cost monitoring with alerts at 50%, 80%, 100% of daily budget
-
-### AI Model Selection
-
-| Operation | Model | Cost | Rationale |
-|-----------|-------|------|-----------|
-| Triad generation (90%) | GPT-4o-mini | $0.15/$0.60 per MTok | Routine, high volume |
-| Daily recap (90%) | GPT-4o-mini | $0.15/$0.60 per MTok | Routine, high volume |
-| Onboarding (10%) | Claude 3.7 Sonnet | $3.00/$15.00 per MTok | Complex reasoning |
-| Dream Self chat (10%) | Claude 3.7 Sonnet | $3.00/$15.00 per MTok | Quality-critical |
-
-## Design System
-
-Weave uses a **custom Opal-inspired dark-first design system** built for React Native.
-
-### Quick Usage
+**Always use the design system components - never hardcode styles:**
 
 ```tsx
-import { Button, Card, Text, Input, useTheme } from '@/design-system';
+// ✅ GOOD
+import { Button, Card, Text } from '@/design-system';
+<Card variant="glass">
+  <Text variant="displayLg">Welcome</Text>
+  <Button onPress={handlePress}>Get Started</Button>
+</Card>
 
-function MyScreen() {
-  const { colors, spacing } = useTheme();
-
-  return (
-    <Card variant="glass">
-      <Text variant="displayLg">Welcome to Weave</Text>
-      <Button onPress={handlePress}>Get Started</Button>
-    </Card>
-  );
-}
+// ❌ BAD - Don't hardcode colors or spacing
+<View style={{ backgroundColor: '#1a1a1a', padding: 16 }}>
+  <Text style={{ fontSize: 32, color: '#fff' }}>Welcome</Text>
+  <TouchableOpacity style={{ backgroundColor: '#3b82f6' }}>
+    <Text>Get Started</Text>
+  </TouchableOpacity>
+</View>
 ```
 
-### Available Components
-- **Text**: `Text`, `Heading`, `Title`, `Body`, `Caption`, `Label`, `Mono`
-- **Buttons**: `Button`, `PrimaryButton`, `SecondaryButton`, `GhostButton`, `AIButton`, `IconButton`
-- **Cards**: `Card`, `GlassCard`, `ElevatedCard`, `AICard`, `NeedleCard`, `InsightCard`
-- **Inputs**: `Input`, `TextArea`, `SearchInput`
-- **Form**: `Checkbox`, `BindCheckbox`
-- **Status**: `Badge`, `ConsistencyBadge`, `StreakBadge`, `AIBadge`, `StatusDot`
+**📖 Full guide:** `docs/dev/design-system-guide.md`
 
-### Key Principles
-1. **Always use theme hooks** - Never hardcode colors/spacing
-2. **Use semantic color names** - `colors.text.primary` not `colors.dark[100]`
-3. **Prefer pre-built components** - Don't recreate buttons/cards
-4. **Use spacing tokens** - `spacing[4]` not `16`
+### State Management
 
-📖 **Full guide:** `docs/dev/design-system-guide.md`
+**Use the right tool for the right state:**
 
-## Performance & Database
+| State Type | Tool | Example |
+|------------|------|---------|
+| **Server data** | TanStack Query | Goals, completions, user profile |
+| **Cross-component UI** | Zustand | Active filters, modal state, theme |
+| **Local component** | useState | Form inputs, toggles, counters |
 
-### Critical Indexes
+**Don't use Zustand for server data** - use TanStack Query with proper cache invalidation.
 
-```sql
-user_profiles(auth_user_id)
-subtask_instances(user_id, scheduled_for_date)
-subtask_completions(user_id, local_date)
-captures(user_id, local_date)
-journal_entries(user_id, local_date)
-goals(user_id, status)
-daily_aggregates(user_id, local_date)
-```
+## Architecture Principles
 
-**Key Rule:** Dashboard should read mostly from pre-computed `daily_aggregates`, not scan raw completions.
+### Three-Layer Data Model
 
-## Security Model
+1. **Static Text Database** - Demographics, stable profile fields, identity documents
+2. **Dynamic Text Database (Artifact Store)** - Goals, subtasks, journal entries, AI outputs, computed stats
+3. **Image Storage** - User uploads, proof captures, identity visuals
 
-- **Row Level Security (RLS):** Required Sprint 1 (before alpha) on all user-owned tables in Supabase
-- **JWT verification:** Middleware for custom APIs
-- **File upload limits:** 10MB max, allowed types: JPEG, PNG, MP3
-- **Input validation:** Zod or similar
-- **Rate limiting:** AI (10 req/hr), Uploads (50/day), Completions (100/day)
+### Data Access Strategy
 
-## Success Metrics
+| Access Pattern | When to Use | Examples |
+|----------------|-------------|----------|
+| **Supabase Direct** | Auth, storage, simple CRUD | Login, file uploads, read user profile |
+| **FastAPI Backend** | AI operations, complex business logic | Triad generation, onboarding, Dream Self chat |
 
-**North Star:** Active Days with Proof
-- User completes ≥1 subtask + logs memory/capture OR journal check-in
+**Decision Tree:**
+1. Auth or file storage? → Supabase direct
+2. Simple read/write with no business logic? → Supabase direct
+3. AI involvement? → FastAPI
+4. Complex validation or multi-table transactions? → FastAPI
 
-**Onboarding Success:** User completes onboarding + sets 1 goal + completes 1 mission in 24 hours
-
-## MVP Scope
-
-### Must Ship
-1. Goal Breakdown Engine (Goal → Q-goals → Consistent habits with ~70% completion probability)
-2. Identity Document (Archetype, dream self, motivations, constraints - editable)
-3. Action + Memory Capture (Completed subtasks + quick proof: note/photo/timer)
-4. Daily Reflection/Journaling (Fulfillment score + insights + next day plan)
-5. Progress Visualization (Consistency heatmap, Weave character leveling)
-6. AI Coach (Structured, editable, consistent personality based on dream self)
-
-### Do Not Block MVP
-- Vector embeddings for "second brain"
-- Multi-modal long-term memory
-- Complex recurrence UI
-- iMessage integration
-- Query result caching
-- Database connection pooling
-- Read replicas for scaling
-- PostHog analytics (add at 500+ users)
-- Sentry error tracking (add at 500+ users)
-- Redis/BullMQ job queue (add at 1K+ users)
-
-## Project Structure
-
-```
-weavelight/
-├── src/
-│   └── design-system/           # React Native design system
-│       ├── components/          # Button, Card, Input, Text, etc.
-│       ├── tokens/              # Colors, typography, spacing
-│       └── theme/               # ThemeContext and hooks
-│
-├── docs/                        # All project documentation
-│   ├── architecture.md          # System architecture decisions
-│   ├── prd.md                   # Product requirements
-│   ├── epics.md                 # Implementation epics
-│   ├── idea/
-│   │   ├── mvp.md              # MVP product specification
-│   │   ├── backend.md          # Backend architecture + data models
-│   │   └── ai.md               # AI system architecture
-│   ├── dev/
-│   │   ├── design-system-guide.md
-│   │   ├── docs-viewer-guide.md
-│   │   └── mcp-quick-reference.md
-│   └── setup/
-│       ├── mcp-setup-guide.md   # MCP servers configuration
-│       └── env-example.txt      # Environment variables template
-│
-├── dev/
-│   └── docs-viewer/             # Internal documentation viewer
-│       ├── index.html           # Beautiful UI for viewing docs
-│       └── scripts/             # Server scripts (Node.js/Python)
-│
-├── scripts/                     # Utility scripts
-│   ├── verify-mcp-setup.ps1
-│   └── verify-mcp-setup.sh
-│
-└── .cursor/
-    └── .cursor-changes          # Detailed project changelog
-```
-
-### Future Structure (When Implemented)
-
-```
-mobile/                          # Expo React Native app
-├── app/                         # Expo Router (file-based routing)
-│   ├── (auth)/                  # Unauthenticated routes
-│   └── (tabs)/                  # Main authenticated tabs
-├── components/
-│   ├── ui/                      # Generic components
-│   └── features/                # Feature-specific components
-├── lib/                         # Supabase client, API calls
-├── hooks/                       # Custom React hooks
-├── stores/                      # Zustand stores (UI state only)
-└── types/                       # TypeScript types
-
-api/                             # Python FastAPI backend
-├── app/
-│   ├── routers/                 # API route handlers
-│   ├── services/                # Business logic
-│   └── contracts/v1/            # Pydantic request/response models
-└── tests/                       # pytest tests
-```
-
-## Documentation
-
-### Primary Documentation
-- `docs/idea/mvp.md` - Complete product MVP specification (1600+ lines)
-- `docs/idea/backend.md` - Backend architecture V2 (1586 lines, includes full database schema)
-- `docs/idea/ai.md` - AI system design
-- `docs/architecture.md` - Complete architecture decisions and patterns
-- `docs/prd.md` - Product requirements and epics
-- `docs/epics.md` - Implementation epics with story points
-
-### Developer Guides
-- `docs/dev/design-system-guide.md` - How to use the Weave design system
-- `docs/dev/docs-viewer-guide.md` - How to use and customize the docs viewer
-- `docs/dev/mcp-quick-reference.md` - Daily MCP usage cheat sheet
-- `docs/dev/notification-hooks-guide.md` - Claude Code notification chimes setup and customization
-- `docs/dev/bmad-implementation-guide.md` - Non-technical guide to BMAD implementation workflow
-- `docs/dev/git-workflow-guide.md` - Complete guide to Git, branching, PRs, and debugging
-
-### Setup Guides
-- `docs/setup/mcp-setup-guide.md` - MCP servers configuration (6 servers)
-- `docs/setup/env-example.txt` - Environment variables template
-
-## MCP Servers Configured
-
-This project uses **5 MCP servers** for AI-assisted development:
-
-| Server | Purpose | Setup Time | Status |
-|--------|---------|------------|--------|
-| **Filesystem** | Read project files | Instant | ✅ Works immediately |
-| **Context7** | Up-to-date library documentation (React Native, Expo, Supabase) | 5 min | ⚙️ Requires API key |
-| **GitHub** | Issues, PRs, branches | 3 min | ⚙️ Requires token |
-| **Notion** | Product specs and documentation | 5 min | 🔄 Optional |
-| **BrowserStack** | Real-device testing | 5 min | 🔄 Optional |
-
-**Setup:** API keys required - see `docs/setup/mcp-setup-guide.md`
-
-## Workflow Tips
-
-1. **Always start with docs** - Read `docs/idea/mvp.md` for product context, `docs/idea/backend.md` for architecture
-2. **Data classification matters** - Know what is canonical truth vs. derived views
-3. **Cost awareness** - Count AI API calls carefully, use caching with input_hash, batch operations around journal time
-4. **MVP focus** - Don't implement post-MVP features. Real devices + user data matters more than fancy UI
-5. **Use MCP servers** - Context7 for current API syntax, Filesystem for reading architecture docs
-6. **Use docs viewer** - Run `./dev/docs-viewer/scripts/serve.sh` to browse all documentation
-7. **Follow naming conventions** - snake_case for DB/API, camelCase for TypeScript, PascalCase for components
-8. **Protect immutable data** - Never UPDATE/DELETE from `subtask_completions`
-9. **Use design system** - Import from `@/design-system`, never hardcode colors/spacing
-10. **Test offline behavior** - TanStack Query is configured for offline-first
-
-## API Response Format
+### API Response Format
 
 All API responses must follow this format:
 
@@ -446,162 +409,232 @@ All API responses must follow this format:
 { "data": [...], "meta": { "total": 42, "page": 1, "per_page": 20 } }
 ```
 
+## Terminology Mapping
+
+Product terms used in UI/docs vs. technical database terms:
+
+| MVP Term | Technical Term | Purpose |
+|----------|---------------|---------|
+| **Needle** | Goal | Top-level user goals (max 3 active) |
+| **Bind** | Subtask | Consistent actions/habits toward goals |
+| **Thread** | User/Identity | User's starting state and identity |
+| **Weave** | Progress/Stats | User's evolved state, consistency metrics |
+| **Q-Goal** | Quantifiable Goal | Measurable subgoals with metrics |
+| **Proof** | Capture + Completion | Evidence of bind completion |
+| **Triad** | Daily Plan | AI-generated 3 tasks for next day |
+| **Reflection** | Journal Entry | Daily check-in with fulfillment score |
+
+**Convention:** Use technical terms in code/database. Use MVP terms in API responses, UI, and user-facing documentation.
+
+## AI System Principles
+
+1. **Editable by default** - Every AI-generated plan can be edited by users
+2. **No hallucinated certainty** - AI must label assumptions and ask questions
+3. **Deterministic personality** - Same user gets consistent coaching based on archetype
+4. **Guardrails** - Clear scope and constraints for all AI outputs
+5. **Failure recovery** - Fallback chain: OpenAI → Anthropic → Deterministic
+
+### AI Cost Control
+
+- **Most screens should NOT call AI** - Batch AI calls around journal time and onboarding
+- **Cache with input_hash** - Regenerate only when inputs change
+- **Use deterministic logic where possible** - Don't call AI for simple logic
+- **Rate limiting:** 10 AI calls/hour per user
+- **Budget:** $2,500/month at 10K users
+
+### AI Model Selection
+
+| Operation | Model | Cost | Rationale |
+|-----------|-------|------|-----------|
+| Triad generation (90%) | GPT-4o-mini | $0.15/$0.60 per MTok | Routine, high volume |
+| Daily recap (90%) | GPT-4o-mini | $0.15/$0.60 per MTok | Routine, high volume |
+| Onboarding (10%) | Claude 3.7 Sonnet | $3.00/$15.00 per MTok | Complex reasoning |
+| Dream Self chat (10%) | Claude 3.7 Sonnet | $3.00/$15.00 per MTok | Quality-critical |
+
+## Security Model
+
+- **Row Level Security (RLS):** ✅ Implemented on all 12 user-owned tables (Story 0.4)
+- **JWT verification:** Middleware for custom APIs
+- **File upload limits:** 10MB max, allowed types: JPEG, PNG, MP3
+- **Input validation:** Zod schemas for all API inputs
+- **Rate limiting:** AI (10 req/hr), Uploads (50/day), Completions (100/day)
+
+### RLS Quick Reference
+
+**Implementation:** Story 0.4 - Row Level Security
+**Migration:** `supabase/migrations/20251219170656_row_level_security.sql`
+**Tests:** `supabase/tests/rls_policies.test.sql` (48 tests)
+**Penetration Testing:** `scripts/test_rls_security.py`
+
+#### RLS Pattern: auth.uid() → user_profiles.id Lookup
+
+All user-owned tables use `user_profiles.id` as foreign key (NOT `auth.uid()` directly). RLS policies must lookup through `user_profiles.auth_user_id`:
+
+```sql
+-- Standard pattern for user-owned tables
+CREATE POLICY "users_manage_own_data" ON table_name
+    FOR ALL
+    USING (user_id IN (
+        SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text
+    ));
+```
+
+**Critical:** Must cast `auth.uid()::text` (UUID → TEXT) to match `auth_user_id` column type.
+
+#### RLS-Enabled Tables (12 total)
+
+| Table | Policy Type | Notes |
+|-------|-------------|-------|
+| `user_profiles` | SELECT, INSERT, UPDATE (3 policies) | No DELETE (use soft delete) |
+| `identity_docs` | FOR ALL | Full management |
+| `goals` | FOR ALL | Full management |
+| `subtask_templates` | FOR ALL | Full management |
+| `subtask_instances` | FOR ALL | Full management |
+| `subtask_completions` | SELECT + INSERT only | **Immutable** - no UPDATE/DELETE |
+| `captures` | FOR ALL | Full management |
+| `journal_entries` | FOR ALL | Full management |
+| `daily_aggregates` | FOR ALL | Full management |
+| `triad_tasks` | FOR ALL | Full management |
+| `ai_runs` | FOR ALL | Full management |
+| `ai_artifacts` | FOR ALL | Full management |
+
+#### Immutable Table Pattern (subtask_completions)
+
+Completions are append-only event logs. RLS enforces immutability:
+
+```sql
+-- SELECT policy
+CREATE POLICY "users_select_own_completions" ON subtask_completions
+    FOR SELECT
+    USING (user_id IN (SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text));
+
+-- INSERT policy
+CREATE POLICY "users_insert_own_completions" ON subtask_completions
+    FOR INSERT
+    WITH CHECK (user_id IN (SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text));
+
+-- NO UPDATE OR DELETE POLICIES = Immutable
+```
+
+#### Testing RLS Locally
+
+```bash
+# Start local Supabase
+npx supabase start
+
+# Apply migrations
+npx supabase db push
+
+# Run automated tests (requires Docker)
+npx supabase test db
+
+# Run penetration tests
+python scripts/test_rls_security.py
+```
+
+**Expected:** All 48 tests pass, 0 successful cross-user attacks.
+
+#### Adding RLS to New Tables
+
+When creating new user-owned tables:
+
+1. **Enable RLS:** `ALTER TABLE new_table ENABLE ROW LEVEL SECURITY;`
+2. **Add policy:** Use standard pattern above (FOR ALL or specific operations)
+3. **Write tests:** Add test cases in `supabase/tests/rls_policies.test.sql`
+4. **Update docs:** Add table to list above + `docs/security-architecture.md`
+
+**Reference:** Full RLS specification in `docs/security-architecture.md` (lines 189-312)
+
+## MVP Scope
+
+### Must Ship
+1. Goal Breakdown Engine (Goal → Q-goals → Consistent habits)
+2. Identity Document (Archetype, dream self, motivations - editable)
+3. Action + Memory Capture (Completed subtasks + quick proof)
+4. Daily Reflection/Journaling (Fulfillment score + insights)
+5. Progress Visualization (Consistency heatmap, Weave character)
+6. AI Coach (Structured, editable, consistent personality)
+
+### Do Not Block MVP
+- Vector embeddings, multi-modal memory, complex recurrence UI
+- iMessage integration, query caching, database pooling, read replicas
+- PostHog analytics (add at 500+ users)
+- Sentry error tracking (add at 500+ users)
+- Redis/BullMQ job queue (add at 1K+ users)
+
+## MCP Servers Configured
+
+This project uses **5 MCP servers** for AI-assisted development:
+
+| Server | Purpose | Status |
+|--------|---------|--------|
+| **Filesystem** | Read project files | ✅ Works immediately |
+| **Context7** | Up-to-date library docs (React Native, Expo, Supabase) | ⚙️ Requires API key |
+| **GitHub** | Issues, PRs, branches | ⚙️ Requires token |
+| **Notion** | Product specs and documentation | 🔄 Optional |
+| **BrowserStack** | Real-device testing | 🔄 Optional |
+
+**Setup:** See `docs/setup/mcp-setup-guide.md` for API keys.
+
 ## BMAD Methodology
 
-This project uses **BMAD (Better Methodology for AI Development)** - a structured workflow system optimized for AI-assisted software development.
+This project uses **BMAD (Better Methodology for AI Development)** - structured workflows for AI-assisted development.
 
-### What is BMAD?
+**Key workflows completed:**
+- ✅ Product Brief, PRD, UX Design
+- ✅ Architecture, Epics & Stories, Test Design
+- ✅ Implementation Readiness Validation
+- 🚀 Currently in: **Sprint Planning & Story Implementation**
 
-BMAD is a methodology that provides:
-- **Specialized AI Agents** - Role-based agents (PM, Architect, Developer, UX Designer, etc.)
-- **Structured Workflows** - Step-by-step processes for planning, design, and implementation
-- **Collaborative Processes** - Multi-agent discussions and validations
-- **Quality Assurance** - Built-in validation and review workflows
+**Check workflow status:** `docs/bmm-workflow-status.yaml`
 
-### BMAD Directory Structure
+**BMAD directory:** `.bmad/` (core workflows and agents)
 
-```
-.bmad/
-├── core/                    # Core BMAD system
-│   ├── agents/             # Core agents (bmad-master)
-│   └── workflows/          # Core workflows (brainstorming, party-mode)
-│
-├── bmb/                     # BMAD Builder module
-│   ├── agents/             # Builder agents
-│   ├── workflows/          # Creation workflows
-│   ├── docs/               # BMAD documentation
-│   └── reference/          # Example agents and workflows
-│
-└── _cfg/                    # Configuration
-    ├── agents/             # Custom agent configurations
-    ├── task-manifest.csv   # Available tasks
-    └── workflow-manifest.csv # Available workflows
+## Changelog
 
-.claude/                     # Claude Code configuration
-├── hooks/                   # Event hooks
-├── personalities/           # Claude personalities
-├── plugins/                 # Claude plugins
-└── settings.json           # Claude settings
-```
+**Location:** `.cursor/.cursor-changes` (NOT a .md file)
 
-### Available BMAD Agents
-
-| Agent | Purpose | When to Use |
-|-------|---------|-------------|
-| **bmad-master** | Master orchestrator, task execution | Start workflows, list tasks |
-| **bmm-pm** | Product Manager | PRD creation, requirement gathering |
-| **bmm-architect** | Software Architect | Architecture decisions, tech stack |
-| **bmm-dev** | Developer | Code implementation, refactoring |
-| **bmm-ux-designer** | UX Designer | User flows, wireframes, design system |
-| **bmm-tech-writer** | Technical Writer | Documentation, guides, API docs |
-| **bmm-analyst** | Business Analyst | Market research, competitive analysis |
-| **bmm-tea** | Technical Engineering Advisor | Technical validation, code review |
-| **bmm-sm** | Scrum Master | Sprint planning, agile processes |
-| **bmb-bmad-builder** | BMAD Builder | Create custom agents and workflows |
-
-### BMAD Workflow Types
-
-**Planning Phase:**
-- `brainstorm-project` - Initial ideation and concept development
-- `research` - Market research and competitive analysis
-- `product-brief` - Executive summary and vision
-- `prd` - Product requirements document
-- `create-ux-design` - User experience design
-- `design-system` - Design system creation
-
-**Solutioning Phase:**
-- `create-architecture` - System architecture and tech stack
-- `create-epics-and-stories` - Break down features into epics and stories
-- `test-design` - Testing strategy and test plans
-- `validate-architecture` - Architecture review and validation
-- `create-security-architecture` - Security design and threat model
-- `create-devops-strategy` - CI/CD, deployment, monitoring
-
-**Implementation Phase:**
-- `sprint-planning` - Plan sprints and allocate work
-- `code-review` - Review code quality and standards
-
-**Collaboration:**
-- `party-mode` - Multi-agent discussion and brainstorming
-
-### How to Use BMAD Agents
-
-BMAD agents are typically invoked through cursor rules or slash commands. For standard Claude Code usage:
-
-1. **Follow the workflow status** - Check `docs/bmm-workflow-status.yaml` to see where you are
-2. **Complete workflows in order** - Each phase builds on the previous
-3. **Document decisions** - Update architecture docs and changelog as you go
-4. **Use party-mode for validation** - When you need multiple perspectives
-
-### Current Workflow Status
-
-Check `docs/bmm-workflow-status.yaml` to see:
-- Which workflows are complete (✅)
-- Which workflows are required next
-- Which workflows are optional or can be skipped
-
-## Changelog Conventions
-
-**IMPORTANT:** When making significant changes to the project, always document them in the changelog.
-
-### File Location
-- **Single source of truth:** `.cursor/.cursor-changes`
-- **Do NOT create:** duplicate changelog files in root, docs/, or other locations
-- **Format:** Markdown with structured sections
-- **Note:** This is `.cursor/.cursor-changes` (no `.md` extension)
-
-### When to Add Changelog Entries
-
-Add an entry when you:
-- Complete a major feature or refactoring
+**When to update:**
+- Complete a major feature or story
 - Fix significant bugs
 - Make architectural decisions
 - Update documentation structure
 - Change tooling or configuration
-- Release a new version
 
-### Entry Format
+**Don't create duplicate changelogs** - `.cursor/.cursor-changes` is the single source of truth.
 
-```markdown
-## [YYYY-MM-DD] Brief Title
+## Quick Reference
 
-### Summary
-One-paragraph overview of what changed and why.
+### Most Common Tasks
 
-### What Changed
+| Task | Command |
+|------|---------|
+| Start mobile dev | `cd weave-mobile && npm start` |
+| Start backend dev | `cd weave-api && uv run uvicorn app.main:app --reload` |
+| View docs | `./dev/docs-viewer/scripts/serve.sh` |
+| Clear mobile cache | `cd weave-mobile && npm run start:clean` |
+| Run mobile linting | `cd weave-mobile && npm run lint` |
+| Run backend tests | `cd weave-api && uv run pytest` |
+| Check current story | `git branch` (look for story/X.Y) |
+| Read a story spec | Open `docs/stories/[story-name].md` |
 
-**Prior State:**
-- Bullet points describing the before state
+### Key Files to Know
 
-**New State:**
-- Bullet points describing the after state
+- `weave-mobile/package.json` - Mobile dependencies and scripts
+- `weave-api/pyproject.toml` - Backend dependencies (uv)
+- `docs/stories/` - Current story specifications
+- `docs/sprint-artifacts/` - Implementation session notes
+- `docs/architecture/index.md` - Architecture table of contents
+- `docs/prd/index.md` - PRD table of contents
+- `docs/bmm-workflow-status.yaml` - BMAD workflow progress
 
-**Files Modified:**
-- List of modified files
+### Workflow Reminders
 
-**Files Created:**
-- List of new files
-
-### Impact
-Explain the practical impact of this change on developers, users, or the codebase.
-
-**Version**: X.Y.Z → X.Y.Z+1
-**Status**: ✅ Complete / ⏳ In Progress / ❌ Blocked
-```
-
-### Versioning Guidelines
-
-- **Major (X.0.0):** Breaking changes to architecture or APIs
-- **Minor (0.X.0):** New features, components, or significant functionality added
-- **Patch (0.0.X):** Bug fixes, documentation improvements, minor tweaks
-
-### Best Practices
-
-1. **Write in reverse chronological order** - Newest entries first
-2. **Include context** - Explain WHY, not just WHAT
-3. **Be specific** - Reference file paths, line numbers, specific issues
-4. **Show before/after** - Use comparison tables or code blocks
-5. **Document decisions** - Explain trade-offs and alternatives considered
-6. **Link to related docs** - Reference PRD, architecture docs, or issues
-7. **Add technical details** - Include code snippets, config examples
-8. **Update immediately** - Don't batch changelog entries
+1. **Always read the story file first** before implementing
+2. **Check `docs/bugs/` if you hit an error** - likely already solved
+3. **Use the design system** - import from `@/design-system`
+4. **Test locally before committing** - run the app, check for errors
+5. **Never edit canonical truth tables** - append-only event logs
+6. **Use TanStack Query for server state** - not Zustand
+7. **Follow naming conventions** - snake_case DB, camelCase TS
+8. **Document significant decisions** in `.cursor/.cursor-changes`
