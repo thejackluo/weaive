@@ -5,6 +5,7 @@
 **Expo Go cannot handle OAuth redirects.** This is a fundamental limitation documented by Expo.
 
 Development builds:
+
 - ✅ Support OAuth redirects properly
 - ✅ Use your custom `weavelight://` scheme
 - ✅ Have fast refresh and all dev features
@@ -16,6 +17,7 @@ Development builds:
 ### iOS Development Build
 
 **Requirements:**
+
 - Mac with Xcode installed
 - iOS Simulator or physical iPhone
 - Apple Developer account (free tier is fine)
@@ -23,6 +25,7 @@ Development builds:
 **Steps:**
 
 1. **Install iOS dependencies** (if not already installed):
+
    ```bash
    # Install CocoaPods (if not installed)
    sudo gem install cocoapods
@@ -32,6 +35,7 @@ Development builds:
    ```
 
 2. **Build and run on iOS Simulator**:
+
    ```bash
    cd weave-mobile
    npx expo run:ios
@@ -45,6 +49,7 @@ Development builds:
    - Install and run the app
 
 3. **Build for physical iPhone** (optional):
+
    ```bash
    # Connect iPhone via USB
    # Trust the computer on your iPhone
@@ -56,6 +61,7 @@ Development builds:
 ### Android Development Build
 
 **Requirements:**
+
 - Android Studio installed
 - Android Emulator or physical Android device
 - USB debugging enabled (for physical device)
@@ -68,6 +74,7 @@ Development builds:
    - Set up environment variables (Android Studio should do this automatically)
 
 2. **Build and run on Android Emulator**:
+
    ```bash
    cd weave-mobile
    npx expo run:android
@@ -81,6 +88,7 @@ Development builds:
    - Install and run the app
 
 3. **Build for physical Android device**:
+
    ```bash
    # Enable USB debugging on your Android device:
    # Settings → About Phone → Tap "Build Number" 7 times → Developer Options → Enable USB Debugging
@@ -124,6 +132,7 @@ Once running in a development build:
 ### iOS: "No development team selected"
 
 Fix:
+
 1. Open `ios/weavemobile.xcworkspace` in Xcode
 2. Select your target in the project navigator
 3. Go to "Signing & Capabilities" tab
@@ -132,6 +141,7 @@ Fix:
 ### iOS: "Could not find iPhone simulator"
 
 Fix:
+
 ```bash
 # Open Xcode and install simulators
 open -a Simulator
@@ -140,12 +150,14 @@ open -a Simulator
 ### Android: "SDK location not found"
 
 Fix:
+
 1. Create `android/local.properties` file
 2. Add: `sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk` (adjust path for your system)
 
 ### Android: Emulator not starting
 
 Fix:
+
 ```bash
 # Launch Android Studio
 # Tools → Device Manager → Create Virtual Device
@@ -157,6 +169,7 @@ Fix:
 ### App builds but OAuth still doesn't work
 
 Verify:
+
 1. Check console logs - redirect URI should show `weavelight://` not `exp://`
 2. Verify Supabase has `weavelight://` in redirect URLs (already configured ✓)
 3. Restart the app after building
@@ -164,6 +177,7 @@ Verify:
 ### Metro bundler errors
 
 Fix:
+
 ```bash
 # Clear Metro cache
 npx expo start --clear
@@ -179,16 +193,19 @@ npx expo run:ios # or npx expo run:android
 ## Development Workflow
 
 **First time:**
+
 ```bash
 npx expo run:ios  # Builds native app (takes ~5 minutes)
 ```
 
 **Every other time:**
+
 ```bash
 npx expo start  # Just starts Metro, app hot-reloads instantly
 ```
 
 You only need to rebuild when:
+
 - You add/remove native dependencies (libraries that require `npx expo install`)
 - You modify `app.json` (change scheme, bundle ID, permissions, etc.)
 - You update Expo SDK version
@@ -205,6 +222,7 @@ You only need to rebuild when:
 ## Next Steps
 
 After OAuth works:
+
 1. Continue developing with fast refresh
 2. Test other features (push notifications, etc.)
 3. When ready for beta testing, use EAS Build for cloud builds
