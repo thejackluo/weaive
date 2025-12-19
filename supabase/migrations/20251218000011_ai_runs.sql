@@ -47,4 +47,4 @@ COMMENT ON COLUMN ai_runs.input_hash IS 'SHA256 hash of normalized input. Used f
 COMMENT ON COLUMN ai_runs.prompt_version IS 'Version of prompt template. Enables A/B testing and prompt improvements without losing history.';
 COMMENT ON COLUMN ai_runs.model IS 'Which AI model: gpt-4o-mini (90%), claude-3.7-sonnet (10% complex), deterministic (fallback).';
 COMMENT ON COLUMN ai_runs.cost_estimate IS 'USD cost. Sum daily to enforce budget: Alert at 50%, throttle at 80%, cache-only at 100%.';
-COMMENT ON INDEX idx_ai_runs_input_hash ON ai_runs IS 'CACHE LOOKUP: Check if we already generated output for this input. Reduces cost by 80%+.';
+COMMENT ON INDEX idx_ai_runs_input_hash IS 'CACHE LOOKUP: Check if we already generated output for this input. Reduces cost by 80%+.';
