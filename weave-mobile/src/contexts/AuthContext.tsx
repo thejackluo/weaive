@@ -223,7 +223,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           code: (error as any).code,
           details: error,
         });
+        console.log('[AUTH] Setting error state to:', error.message);
         setError(error);
+        console.log('[AUTH] Error state set, throwing error');
         throw error;
       }
 

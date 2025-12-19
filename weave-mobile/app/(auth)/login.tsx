@@ -30,6 +30,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Pressable,
+  Text as RNText,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -50,6 +51,15 @@ export default function LoginScreen() {
   const router = useRouter();
   const { signIn, signInWithOAuth, error: authError, clearError } = useAuth();
   const { colors } = useTheme();
+
+  // Debug: Log auth error state
+  React.useEffect(() => {
+    console.log('[LOGIN_SCREEN] Auth error state changed:', authError ? {
+      message: authError.message,
+      code: (authError as any).code,
+      status: authError.status,
+    } : 'null');
+  }, [authError]);
 
   // Form state
   const [email, setEmail] = useState('');
@@ -224,13 +234,23 @@ export default function LoginScreen() {
 
           {/* Error Message */}
           {authError && (
-            <Card
-              variant="glass"
-              padding="default"
-              style={{ ...styles.errorCard, backgroundColor: `${colors.rose[500]}15` }}
-            >
-              <Text color="error">{getErrorMessage(authError)}</Text>
-            </Card>
+            <View style={styles.errorCard}>
+              <View style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderLeftWidth: 4,
+                borderLeftColor: '#EF4444',
+                borderRadius: 8,
+                padding: 16,
+              }}>
+                <RNText style={{
+                  color: '#EF4444',
+                  fontSize: 14,
+                  fontWeight: '500',
+                }}>
+                  {getErrorMessage(authError)}
+                </RNText>
+              </View>
+            </View>
           )}
 
           {/* Login Form */}
