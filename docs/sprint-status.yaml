@@ -1,5 +1,5 @@
 # Sprint Status Tracking
-# Generated: 2025-12-16 (Updated: 2025-12-17 for Epic 1 Hybrid Flow)
+# Generated: 2025-12-16 (Updated: 2025-12-19 for story status updates)
 # Project: Weave MVP
 # Total Scope: 300 story points across 9 epics (+28 pts from Epic 1 hybrid flow, includes name entry + personality)
 # Sprint Length: 2 weeks (10 work days)
@@ -40,17 +40,17 @@ current_velocity: 50
 # Goal: Establish executable codebase with auth, database, and security
 # Points: 38
 
-week-0-status: planned
+week-0-status: active
 
 week-0-stories:
   epic-0: in-progress
   0-1-project-scaffolding: done                 # 5 pts ✅
-  0-2a-database-schema-core: ready-for-dev      # 3 pts
-  0-2b-database-schema-refinement: ready-for-dev # 2 pts
-  0-3-authentication-flow: ready-for-dev        # 3 pts ✅
-  0-4-row-level-security: backlog               # 5 pts [CRITICAL]
+  0-2a-database-schema-core: done               # 3 pts ✅ (SQL tested and working)
+  0-2b-database-schema-refinement: done         # 2 pts ✅ (SQL tested and working)
+  0-3-authentication-flow: review               # 3 pts (partially done, pending production testing)
+  0-4-row-level-security: ready-for-dev         # 5 pts [CRITICAL]
   0-5-cicd-pipeline: backlog                    # 3 pts
-  0-6-ai-service-abstraction: backlog           # 3 pts
+  0-6-ai-service-abstraction: ready-for-dev     # 3 pts (next story to implement)
   0-7-test-infrastructure: backlog              # 3 pts
   0-8-error-handling-framework: backlog         # 3 pts
   0-9-image-upload-error-handling: backlog      # 3 pts
@@ -295,7 +295,7 @@ backlog-post-mvp:
 # ============================================================================
 
 epic-completion:
-  epic-0-foundation: 0/38              # Week 0: 0% complete
+  epic-0-foundation: 10/38             # Week 0: 26% complete (0.1, 0.2a, 0.2b done)
   epic-1-onboarding-hybrid: 0/50       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1, Phases 6-7: Sprint 2, +2 for name entry + personality)
   epic-2-goal-management: 0/27         # Sprint 3: 0% complete
   epic-3-daily-actions: 0/38           # Sprint 1-2, 5: 0% complete
@@ -305,7 +305,7 @@ epic-completion:
   epic-7-notifications: 0/28           # Sprint 3, 5: 0% complete
   epic-8-settings: 0/23                # Sprint 3, 5: 0% complete
 
-total-completion: 0/300 (0%)
+total-completion: 10/300 (3%)
 
 # ============================================================================
 # VELOCITY TRACKING
@@ -314,8 +314,8 @@ total-completion: 0/300 (0%)
 velocity-history:
   week-0:
     planned: 38
-    actual: null
-    completion-rate: null
+    actual: 10        # 0.1 (5 pts), 0.2a (3 pts), 0.2b (2 pts) complete
+    completion-rate: 26%
   sprint-1:
     planned: 59  # Updated from 48 for Epic 1 Hybrid Flow (+11 pts, includes name entry + personality)
     actual: null
