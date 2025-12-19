@@ -91,7 +91,7 @@ export default function AuthenticationScreen() {
       // - Create user row in user_profiles table
       // - Store selected_painpoints from onboarding
       // - Track auth_completed analytics event
-      router.push('/(onboarding)/identity-traits' as any);
+      router.push('/(onboarding)/identity-bootup' as any);
     } catch (err: any) {
       setError(err.message || 'Unable to sign in with Apple. Please try again.');
       Alert.alert(
@@ -132,7 +132,7 @@ export default function AuthenticationScreen() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // On success: Navigate to Story 1.6
-      router.push('/(onboarding)/identity-traits' as any);
+      router.push('/(onboarding)/identity-bootup' as any);
     } catch (err: any) {
       setError(err.message || 'Unable to sign in with Google. Please try again.');
       Alert.alert(
