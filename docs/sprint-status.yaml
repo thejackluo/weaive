@@ -1,5 +1,5 @@
 # Sprint Status Tracking
-# Generated: 2025-12-16 (Updated: 2025-12-17 for Epic 1 Hybrid Flow)
+# Generated: 2025-12-16 (Updated: 2025-12-19 for story status updates)
 # Project: Weave MVP
 # Total Scope: 300 story points across 9 epics (+28 pts from Epic 1 hybrid flow, includes name entry + personality)
 # Sprint Length: 2 weeks (10 work days)
@@ -40,18 +40,18 @@ current_velocity: 50
 # Goal: Establish executable codebase with auth, database, and security
 # Points: 38
 
-week-0-status: planned
+week-0-status: active
 
 week-0-stories:
   epic-0: in-progress
   0-1-project-scaffolding: done                 # 5 pts ✅
-  0-2a-database-schema-core: ready-for-dev      # 3 pts
-  0-2b-database-schema-refinement: ready-for-dev # 2 pts
-  0-3-authentication-flow: ready-for-dev        # 3 pts ✅
-  0-4-row-level-security: backlog               # 5 pts [CRITICAL]
-  0-5-cicd-pipeline: backlog                    # 3 pts
-  0-6-ai-service-abstraction: backlog           # 3 pts
-  0-7-test-infrastructure: backlog              # 3 pts
+  0-2a-database-schema-core: done               # 3 pts ✅ (SQL tested and working)
+  0-2b-database-schema-refinement: done pending testing        # 2 pts ✅ (SQL tested and working)
+  0-3-authentication-flow: done pending testing               # 3 pts (partially done, pending production testing)
+  0-4-row-level-security: done pending testing  # 5 pts [CRITICAL] ✅ (RLS policies implemented, pending production penetration testing)
+  0-5-cicd-pipeline: ready-for-dev                    # 3 pts
+  0-6-ai-service-abstraction: ready-for-dev     # 3 pts ✅ (includes AWS Bedrock primary, dual cost tracking, role-based limits)
+  0-7-test-infrastructure: ready-for-dev        # 3 pts
   0-8-error-handling-framework: backlog         # 3 pts
   0-9-image-upload-error-handling: backlog      # 3 pts
   0-10-ai-failure-handling: backlog             # 3 pts
@@ -79,7 +79,7 @@ sprint-1-stories:
   1-5-authentication: review                    # 3 pts (front-end UI complete, pending manual testing on device)
   # Phase 2: Light Identity Bootup
   1-6-name-and-identity-traits: review          # 5 pts (name entry + personality + traits)
-  1-7-first-needle-simple: backlog              # 3 pts
+  1-7-first-needle-simple: review               # 3 pts (implementation complete, manual testing pending)
   # Phase 3: Early Value Proof
   1-8a-weave-path-generation-ui: backlog        # 3 pts
   1-8b-ai-goal-breakdown: backlog               # 5 pts
@@ -295,7 +295,7 @@ backlog-post-mvp:
 # ============================================================================
 
 epic-completion:
-  epic-0-foundation: 0/38              # Week 0: 0% complete
+  epic-0-foundation: 18/38             # Week 0: 47% complete (0.1, 0.2a, 0.2b, 0.3, 0.4 done/done pending testing)
   epic-1-onboarding-hybrid: 0/50       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1, Phases 6-7: Sprint 2, +2 for name entry + personality)
   epic-2-goal-management: 0/27         # Sprint 3: 0% complete
   epic-3-daily-actions: 0/38           # Sprint 1-2, 5: 0% complete
@@ -305,7 +305,7 @@ epic-completion:
   epic-7-notifications: 0/28           # Sprint 3, 5: 0% complete
   epic-8-settings: 0/23                # Sprint 3, 5: 0% complete
 
-total-completion: 0/300 (0%)
+total-completion: 18/300 (6%)
 
 # ============================================================================
 # VELOCITY TRACKING
@@ -314,8 +314,8 @@ total-completion: 0/300 (0%)
 velocity-history:
   week-0:
     planned: 38
-    actual: null
-    completion-rate: null
+    actual: 18        # 0.1 (5 pts), 0.2a (3 pts), 0.2b (2 pts), 0.3 (3 pts), 0.4 (5 pts) complete
+    completion-rate: 47%
   sprint-1:
     planned: 59  # Updated from 48 for Epic 1 Hybrid Flow (+11 pts, includes name entry + personality)
     actual: null

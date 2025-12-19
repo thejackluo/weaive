@@ -638,6 +638,10 @@ CREATE TABLE user_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   auth_user_id TEXT UNIQUE NOT NULL,        -- Supabase auth user ID
   display_name TEXT,                        -- User's display name
+  preferred_name TEXT,                      -- User's preferred name (US-1.6 Step 1)
+  core_personality TEXT CHECK (core_personality IN ('supportive_direct', 'tough_warm')),  -- US-1.6 Step 2
+  personality_selected_at TIMESTAMPTZ,      -- When personality was chosen
+  initial_painpoints JSONB,                 -- US-1.2: Array of 1-2 painpoints (current struggles)
   timezone TEXT NOT NULL,                   -- Critical for local_date calculations
   locale TEXT DEFAULT 'en-US',              -- User's locale preference
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -651,6 +655,11 @@ CREATE INDEX idx_user_profiles_auth_id ON user_profiles(auth_user_id);
 **Key Fields:**
 - `timezone` - Critical for converting UTC timestamps to user's local date
 - `auth_user_id` - Links to Supabase auth system
+- `preferred_name` - Collected in US-1.6 Step 1 (1-50 chars, used throughout UI)
+- `core_personality` - Selected in US-1.6 Step 2 (determines AI tone: supportive vs tough)
+- `initial_painpoints` - Selected in US-1.2 (defines current struggles for AI personalization)
+
+**NOTE:** The onboarding fields (`preferred_name`, `core_personality`, `personality_selected_at`, `initial_painpoints`) will be added in Story 0-4 (Backend Integration). Current schema is Sprint 1 baseline.
 
 ### IdentityDoc `[Sprint 1 - Story 0.2a]`
 
@@ -664,6 +673,7 @@ CREATE TABLE identity_docs (
   json JSONB NOT NULL,                      -- Contains:
                                             --   - archetype (MBTI-like)
                                             --   - dream_self (description)
+                                            --   - identity_traits (array of 3 strings from US-1.6)
                                             --   - motivations (array)
                                             --   - constraints (time windows, energy patterns)
                                             --   - coaching_preference (gentle/strict)
@@ -676,6 +686,23 @@ CREATE INDEX idx_identity_docs_user_version ON identity_docs(user_id, version DE
 ```
 
 **Why versioning:** So AI can reference "IdentityDoc v3" and you can roll back if needed.
+
+**CRITICAL: Two-Dimensional Personalization Model**
+
+The combination of `user_profiles.initial_painpoints` (from US-1.2) and `identity_docs.json.identity_traits` (from US-1.6) creates Weave's **tension-driven coaching** framework:
+
+- **`initial_painpoints`** (in user_profiles) = Who the user IS NOW (current struggles: Clarity, Action, Consistency, Alignment)
+- **`identity_traits`** (in identity_docs.json) = Who the user WANTS TO BE (aspirational values: Clear Direction, Decisive Action, Consistent Effort, etc.)
+
+**AI modules MUST load both fields** to generate personalized messaging that:
+1. Acknowledges current reality (painpoints)
+2. Leverages aspirational identity (traits)
+3. Creates motivational tension ("You struggle with X but value Y. Let's act on Y.")
+
+**Example:** User with `initial_painpoints: ["Consistency"]` and `identity_traits: ["Consistent Effort", "High Standards", "Clear Direction"]`
+→ Weave notification: *"You still have a bind left. As someone who values consistent effort, you gotta make it happen."*
+
+See `docs/idea/ai.md` → Personalization Framework for complete guidelines.
 
 ---
 

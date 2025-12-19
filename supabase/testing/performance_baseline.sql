@@ -43,7 +43,7 @@ SELECT
   local_date,
   completed_count,
   planned_count,
-  consistency_percent,
+  capture_count,
   has_journal,
   has_proof,
   active_day_with_proof
@@ -73,7 +73,7 @@ SELECT
   si.status,
   si.title_override,
   st.title as template_title,
-  st.estimated_duration_minutes,
+  st.default_estimated_minutes,
   g.title as goal_title,
   g.id as goal_id
 FROM subtask_instances si
@@ -106,8 +106,8 @@ SELECT
     json_build_object(
       'id', st.id,
       'title', st.title,
-      'recurrence_pattern', st.recurrence_pattern,
-      'estimated_duration_minutes', st.estimated_duration_minutes,
+      'recurrence_rule', st.recurrence_rule,
+      'default_estimated_minutes', st.default_estimated_minutes,
       'is_archived', st.is_archived
     ) ORDER BY st.created_at
   ) FILTER (WHERE st.id IS NOT NULL) as subtask_templates
@@ -142,11 +142,11 @@ SELECT
       'id', c.id,
       'type', c.type,
       'content_text', c.content_text,
-      'storage_path', c.storage_path
+      'storage_path', c.storage_key
     )
   ) FILTER (WHERE c.id IS NOT NULL) as proof_captures
 FROM subtask_completions sc
-LEFT JOIN subtask_instances si ON si.id = sc.instance_id
+LEFT JOIN subtask_instances si ON si.id = sc.subtask_instance_id
 LEFT JOIN subtask_templates st ON st.id = si.template_id
 LEFT JOIN captures c ON c.subtask_instance_id = si.id AND c.local_date = sc.local_date
 WHERE sc.user_id = '11111111-1111-1111-1111-111111111111'

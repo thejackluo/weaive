@@ -844,6 +844,124 @@ You're not the same person. Share your progress? [share card button]
 
 ---
 
+## Personalization Framework (Critical)
+
+### The Two-Dimensional Identity Model
+
+Weave's AI personalization is built on a **dual-state identity model** that captures both where the user is now and where they want to go:
+
+| Dimension | Source | Purpose | Example Values |
+|-----------|--------|---------|----------------|
+| **Current State** | US-1.2 Painpoint Selection | Who the user IS NOW (struggles) | Clarity, Action, Consistency, Alignment |
+| **Aspirational State** | US-1.6 Identity Traits | Who the user WANTS TO BE (values) | Clear Direction, Decisive Action, Consistent Effort, etc. |
+
+### Personalization Strategy: Tension-Driven Coaching
+
+Weave's messaging leverages the **tension** between current struggles and aspirational identity to create motivating, personalized coaching:
+
+```
+Coaching Message = f(Current Struggle, Aspirational Value, User Action Context)
+```
+
+**Formula:**
+1. **Acknowledge Reality** - Reference the user's painpoint to show empathy and understanding
+2. **Invoke Identity** - Call back to the user's selected trait to create motivational tension
+3. **Connect to Action** - Bridge the gap by linking immediate action to aspirational identity
+
+### Example Personalization Patterns
+
+**Pattern 1: Consistency Struggle + Consistent Effort Value**
+- **Context:** User has 1 bind remaining for the day
+- **Message:** *"You still have a bind left. As someone who values consistent effort, you gotta make it happen."*
+- **Why it works:** Creates cognitive dissonance between stated value and current inaction
+
+**Pattern 2: Action Struggle + Decisive Action Value**
+- **Context:** User viewing a goal but hasn't started a bind in 2 days
+- **Message:** *"You know you want this. Someone who values decisive action doesn't wait for permission."*
+- **Why it works:** Challenges the user to act in alignment with their stated identity
+
+**Pattern 3: Clarity Struggle + Clear Direction Value**
+- **Context:** User reflecting on goal progress, expressing confusion
+- **Message:** *"You said you want clear direction. Let's choose one step right now instead of overthinking it."*
+- **Why it works:** Reframes paralysis as misalignment with stated values
+
+**Pattern 4: Alignment Struggle + High Standards Value**
+- **Context:** User completed all binds but fulfillment score is low
+- **Message:** *"You checked the boxes, but you know this isn't your standard. What would hitting your real standard look like?"*
+- **Why it works:** Pushes user beyond surface completion toward meaningful progress
+
+### Implementation Guidelines for AI Modules
+
+**All AI modules that generate user-facing text MUST:**
+
+1. **Load User Identity Context**
+   ```python
+   # Required context for personalization
+   user_context = {
+       "painpoints": user.initial_painpoints,  # from US-1.2
+       "identity_traits": user.identity_traits,  # from US-1.6
+       "core_personality": user.core_personality,  # from US-1.6 Step 2
+       "dream_self": user.dream_self_description  # from later stories
+   }
+   ```
+
+2. **Apply Personalization Rules**
+   - **Notifications:** Use identity traits as motivational hooks ("As someone who [trait]...")
+   - **Daily Recaps:** Acknowledge painpoint progress ("You said you struggle with [painpoint]. Today you...")
+   - **Triad Generation:** Suggest binds that align with traits ("This bind builds [trait] you said you value")
+   - **Reflection Prompts:** Reference both states ("You started strong but fell off [painpoint]. What would [trait] look like tomorrow?")
+   - **Dream Self Chat:** Use both for empathy + aspiration ("I know [painpoint] is hard. But [trait] is who you want to be. Let's bridge that.")
+
+3. **Avoid Generic Platitudes**
+   - ❌ Generic: *"You can do it! Keep going!"*
+   - ✅ Personalized: *"You said consistency matters to you. One bind left. Make it count."*
+
+### Data Dependencies
+
+**Required Fields in `user_profiles` or `identity_docs`:**
+- `initial_painpoints` (array of 1-2 strings from US-1.2)
+- `identity_traits` (array of exactly 3 strings from US-1.6)
+- `core_personality` (enum: 'supportive_direct' | 'tough_warm' from US-1.6)
+- `dream_self_description` (optional, from later stories)
+
+**AI Prompt Template Structure:**
+```
+You are Weave, the user's future self coaching companion.
+
+USER IDENTITY:
+- Current struggles: {painpoints}
+- Aspirational values: {identity_traits}
+- Coaching style preference: {core_personality}
+
+CONTEXT:
+{recent actions, goals, completions, journal entries}
+
+TASK:
+{specific AI task: generate triad, daily recap, notification, etc.}
+
+RULES:
+1. Acknowledge their struggle with {painpoint} empathetically
+2. Leverage their stated value of {trait} as motivational anchor
+3. Create tension between current state and aspirational identity
+4. Be specific and action-oriented, not generic
+5. Use {core_personality} tone (supportive_direct or tough_warm)
+```
+
+### Testing Personalization
+
+**Manual Test Cases:**
+1. User selects "Consistency" + "Consistent Effort" → Verify messaging calls out the contradiction when they miss binds
+2. User selects "Action" + "Decisive Action" → Verify messaging challenges hesitation and overthinking
+3. User selects "Clarity" + "Clear Direction" → Verify messaging pushes for commitment over exploration
+4. User selects "Alignment" + "High Standards" → Verify messaging raises the bar on quality, not just completion
+
+**Quality Metrics:**
+- Personalized messaging should reference identity_traits in 80%+ of notifications
+- Painpoint acknowledgment should appear in 50%+ of reflection prompts
+- Generic platitudes ("You got this!") should be <10% of all AI-generated text
+
+---
+
 ## Cost Control (Important)
 
 ### Principle: Most Screens Should NOT Call the Model
