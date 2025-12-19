@@ -42,7 +42,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ### Functional Requirements
 
-**Epic 1: Onboarding (Optimized Hybrid Flow) (48 pts)**
+**Epic 1: Onboarding (Optimized Hybrid Flow) (50 pts)**
 - FR-1.1: Welcome & Vision Hook - Display Weave logo + tagline ("See who you're becoming"), short value prop (1 sentence), Get Started CTA. Loads <2s (M)
 - FR-1.2: Emotional State Selection (Painpoint) - Display 4 cards: Clarity, Action, Consistency, Alignment. User selects 1-2. Sends `selected_painpoints` to backend (M)
 - FR-1.3: Symptom Insight Screen (Dynamic Mirror) - Display 1-2 short, high-impact paragraphs describing user's symptom(s). If two painpoints selected, show both symptom cards stacked in glass panels. Title: "Why this feels so hard". Design: glass-paneled cards with animations, soft shadows, thread-lines background. Completion <10s (M)
@@ -468,7 +468,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
-### Epic 1: Onboarding (Optimized Hybrid Flow) (48 pts)
+### Epic 1: Onboarding (Optimized Hybrid Flow) (50 pts)
 **User Outcome:** New users experience streamlined onboarding that gets them to their first "win" within 3 minutes, then progressively gathers deeper personalization over Days 1-3 of actual usage. Maximizes completion → emotional resonance → early activation.
 
 **FRs Covered:** FR-1.1, FR-1.2, FR-1.3, FR-1.4, FR-1.5, FR-1.6, FR-1.7, FR-1.8, FR-1.9, FR-1.10, FR-1.11, FR-1.12, FR-1.13, FR-1.14, FR-1.15, FR-1.16
@@ -487,7 +487,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 - **Story 1.5: Authentication** (3 pts) - FR-1.5: Quick account creation with Apple/Google/Email. Show "7-day free trial. No commitment." Fast auth <3s. Store user in `user_profiles`. Track `auth_completed`
 
 **PHASE 2: Light Identity Bootup (In-App, Fast)**
-- **Story 1.6: Identity Traits Selection** (3 pts) - FR-1.6: Display 12 selectable traits (chips), user selects 3-5. Stored immediately to `identity_docs.json`. Completion <15s
+- **Story 1.6: Name Entry, Weave Personality Selection & Identity Traits** (5 pts) - FR-1.6: Three-step flow: (1) Name entry with validation (2) Swipeable Weave personality selection (Supportive but Direct vs Tough but Warm) with liquid-glass card design, example lines, and subtle animations (3) 12 selectable identity traits (chips), user selects 3-5. Stores `preferred_name`, `core_personality`, and `identity_traits`. Total completion <45s. All content static, no AI calls
 - **Story 1.7: First Needle (Simple)** (3 pts) - FR-1.7: Input field: "What's one thing you want to achieve first?" Suggestion chips based on earlier painpoint. Store in temporary onboarding state. Completion <10s
 
 **PHASE 3: Early Value Proof ("Wow Moment")**
@@ -736,7 +736,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3 | `[v1.2]` |
 | 8 | Settings & Profile | 23 | 5 | Epic 0, 1 | `[v1.2]` |
 
-**Total:** 285 story points across 58 FRs
+**Total:** 287 story points across 58 FRs
 
 **Phase Breakdown:**
 - **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~66 pts (Sprint 1)
