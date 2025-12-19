@@ -5,7 +5,7 @@
 **Epic:** 0 (Foundation)
 **Story Points:** 5
 **Status:** ready-for-dev
-**Dependencies:** 0-2a (Database Schema - Core Tables), 0-2b (Database Schema Refinement), 0-3 (Authentication Flow)
+**Dependencies:** 0-2a (Database Schema - Core Tables - `docs/stories/0-2a-database-schema-core.md`), 0-2b (Database Schema Refinement - `docs/stories/0-2b-database-schema-refinement.md`), 0-3 (Authentication Flow - `docs/stories/0-3-authentication-flow.md`)
 **Created:** 2025-12-19
 
 ---
@@ -22,120 +22,59 @@ As a **development team**, I need **Row Level Security (RLS) policies implemente
 - **Immutable Event Log Protection:** Special policies ensure `subtask_completions` table remains append-only (no UPDATE/DELETE)
 
 **Why This Story Matters:**
-This is **CRITICAL** blocker before alpha release. Without RLS, a single application bug could expose all user data. The security-architecture.md document explicitly states "RLS must be implemented before alpha release" and "This is the last line of defense against unauthorized data access."
+This is **CRITICAL** blocker before alpha release. Without RLS, a single application bug could expose all user data.
+
+---
+
+## Prerequisites
+
+Before starting this story, ensure:
+- ✅ Supabase CLI v1.x+ installed locally (`supabase --version`)
+- ✅ Local Supabase running (`supabase start`)
+- ✅ Database migrations from Story 0.2a/0.2b applied
+- ✅ Authentication flow from Story 0.3 working (able to create test users)
+- ✅ Supabase project connection strings configured in `.env`
 
 ---
 
 ## Context & Background
 
 ### Epic Context
-**Epic 0: Foundation** is the foundational epic that establishes project scaffolding, database, authentication, and security before any feature development. Story 0.4 is the **4th story** in this epic, following:
-- ✅ 0.1: Project Scaffolding (done)
-- 🔄 0.2a: Database Schema - Core Tables (ready-for-dev)
-- 🔄 0.2b: Database Schema Refinement (ready-for-dev)
-- 🔄 0.3: Authentication Flow (ready-for-dev)
+**Epic 0: Foundation** establishes project scaffolding, database, authentication, and security before feature development. Story 0.4 is the **security capstone** following:
+- ✅ 0.1: Project Scaffolding (`docs/stories/0-1-project-scaffolding.md`) - Established `supabase/migrations/` folder
+- 🔄 0.2a: Database Schema - Core Tables (`docs/stories/0-2a-database-schema-core.md`) - Created 13 user-owned tables with `user_id` foreign keys
+- 🔄 0.2b: Database Schema Refinement - Added indexes and constraints
+- 🔄 0.3: Authentication Flow (`docs/stories/0-3-authentication-flow.md`) - Implemented JWT authentication with `user_profiles.auth_user_id` linking pattern
 
-RLS is the **security capstone** of the Foundation epic - it cannot be deferred or skipped.
+### Architecture Alignment
 
-### Architecture Context
+**Security Requirements:** Full RLS specification in `docs/security-architecture.md` (lines 189-292). RLS is **Layer 4 of 5** in defense-in-depth: Network (TLS) → Auth (JWT) → API Authorization → **Database (RLS)** → Storage (Signed URLs).
 
-**From `docs/security-architecture.md`:**
-
-> **CRITICAL: RLS must be implemented before alpha release.**
->
-> RLS provides database-level isolation ensuring users can only access their own data, even if application code has bugs.
-
-**Authorization Layers (from security-architecture.md):**
-1. **Network:** HTTPS/TLS 1.3 (encrypt data in transit)
-2. **Authentication:** Supabase Auth + JWT (verify user identity)
-3. **API Authorization:** FastAPI middleware (validate JWT on every request)
-4. **Database Authorization:** PostgreSQL RLS ⬅️ **THIS STORY**
-5. **Storage Authorization:** Signed URLs (time-limited file access)
-
-**RLS is Layer 4 of 5** - the last defense before data. Without it, layers 1-3 can fail and data is exposed.
-
-### Security Threat Model
-
-**Top Security Risk #1: Unauthorized Data Access** (from security-architecture.md)
-
-**Risk:** Attacker gains access to another user's journal entries, identity documents, or captures.
-
-**Impact:** High - Personal, sensitive data exposure. Trust violation. Potential legal liability.
-
-**Attack Vectors WITHOUT RLS:**
-- Broken authentication (stolen/forged tokens) → Application accepts bad token → Query returns all users' data
-- IDOR (Insecure Direct Object Reference) → Developer forgets `WHERE user_id = X` → All users' data returned
-- SQL injection → Malicious input bypasses app validation → Direct database access
-
-**Mitigations (ALL required):**
-- ✅ Supabase Auth with JWT validation (Story 0.3)
-- ✅ UUID for IDs (unguessable) (Story 0.2a)
-- ✅ Input validation preventing SQL injection (Story 0.8)
-- ⬜ **Row Level Security on all tables ← THIS STORY**
-- ✅ Authorization check at every endpoint (Story 0.3)
-
-### Data Classification
-
-**From `docs/architecture.md` and `docs/idea/backend.md`:**
-
-Tables requiring RLS are classified as:
-1. **Canonical Truth (Immutable Event Logs):**
-   - `subtask_completions` - **INSERT-only policy** (no UPDATE/DELETE)
-   - `captures` - proof photos, notes, audio
-   - `journal_entries` - daily reflections
-
-2. **User-Owned Data (Mutable):**
-   - `user_profiles`
-   - `identity_docs`
-   - `goals`
-   - `qgoals`
-   - `subtask_templates`
-   - `subtask_instances`
-   - `daily_aggregates`
-   - `user_stats`
-   - `triad_tasks`
-   - `ai_runs`
-   - `ai_artifacts`
-   - `user_edits`
-   - `event_log`
-
-3. **Global Read-Only Tables (No RLS needed):**
-   - `badges` - Everyone can read, only service_role can write
+**Data Classification:** Per `docs/architecture.md` - `subtask_completions` is **Canonical Truth** (immutable event log), requiring special INSERT-only policies.
 
 ### Previous Story Learnings
 
-**Story 0.1 (Project Scaffolding):**
-- Established the mono-repo structure with `mobile/`, `api/`, `supabase/`
-- Created `supabase/migrations/` folder for SQL migration files
+**From Story 0.2a/0.2b (Database Schema):**
+- All user-owned tables have `user_id` column referencing `user_profiles(id)` (NOT `auth.uid()` directly)
+- Composite indexes on `(user_id, local_date)` exist for fast user-scoped queries
+- Foreign key constraints enforce referential integrity
 
-**Story 0.2a/0.2b (Database Schema):**
-- Created all 8 core tables + 4 critical tables (daily_aggregates, triad_tasks, ai_runs, ai_artifacts)
-- Added foreign key constraints: `user_id` references `user_profiles(id)`
-- Added composite indexes on `(user_id, local_date)` for fast user-scoped queries
-- **Key learning:** All user-owned tables have `user_id` column pointing to `user_profiles(id)`, NOT `auth.uid()` directly
+**From Story 0.3 (Authentication Flow):**
+- `auth.uid()` returns Supabase Auth UUID from JWT
+- `user_profiles.auth_user_id` (TEXT) links to `auth.users(id)`
+- `user_profiles.id` (UUID) is internal user ID used in all foreign keys
 
-**Story 0.3 (Authentication Flow):**
-- Implemented Supabase Auth with JWT tokens stored in iOS Keychain
-- Created `user_profiles` table with `auth_user_id TEXT UNIQUE` linking to `auth.users(id)`
-- **Key learning:** `auth.uid()` returns the Supabase Auth user ID; `user_profiles.id` is the internal user ID used in all foreign keys
+### RLS Pattern: auth.uid() → user_profiles.auth_user_id → user_profiles.id → user_id
 
-### RLS Pattern: auth.uid() → user_profiles.id → user_id
+**CRITICAL:** RLS policies check `auth.uid()` but tables use `user_profiles.id`. Lookup required:
 
-**CRITICAL:** Foreign keys use `user_profiles.id`, but RLS policies must check `auth.uid()`.
-
-**Lookup Pattern:**
 ```sql
--- RLS policy checks if current auth user owns this row
 USING (user_id IN (
     SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text
 ))
 ```
 
-This two-step lookup is required because:
-1. `auth.uid()` is the Supabase Auth user ID (from JWT)
-2. `user_profiles.id` is the internal application user ID
-3. `user_profiles.auth_user_id` links them together
-4. All tables use `user_profiles.id` as foreign key for consistency
+**Why `::text` cast:** `auth.uid()` returns UUID type, `user_profiles.auth_user_id` is TEXT. Without cast, comparison fails silently (returns no rows). This is PostgreSQL strict type checking.
 
 ---
 
@@ -144,8 +83,9 @@ This two-step lookup is required because:
 ### Subtasks
 
 1. **Enable RLS on all user-owned tables** (1 SP)
+   - Create migration file: `supabase/migrations/$(date +%Y%m%d%H%M%S)_row_level_security.sql`
    - Run `ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;` on 13 tables
-   - Verify RLS is enabled: `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';`
+   - Verify RLS enabled: `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';`
 
 2. **Create RLS policies for user_profiles** (0.5 SP)
    - `users_select_own_profile` - Users can SELECT their own profile
@@ -154,38 +94,53 @@ This two-step lookup is required because:
    - NO DELETE policy (use soft delete with `archived_at`)
 
 3. **Create RLS policies for mutable user data** (1 SP)
-   - Apply "users_manage_own_data" pattern to 11 tables:
+   - Apply "users_manage_own_data" pattern (see Implementation Notes) to 11 tables:
      - `identity_docs`, `goals`, `qgoals`, `subtask_templates`, `subtask_instances`
      - `captures`, `journal_entries`, `daily_aggregates`, `user_stats`, `triad_tasks`
      - `ai_runs`, `ai_artifacts`, `user_edits`, `event_log`
    - Policy: `FOR ALL` (SELECT/INSERT/UPDATE/DELETE) using standard USING clause
 
 4. **Create special policy for subtask_completions (immutable)** (0.5 SP)
+   - Per `docs/architecture.md` Data Classification: `subtask_completions` is **Canonical Truth** (immutable event log)
    - `users_select_own_completions` - FOR SELECT (can view own completions)
    - `users_insert_own_completions` - FOR INSERT (can create completions)
-   - NO UPDATE or DELETE policies (immutable event log)
+   - NO UPDATE or DELETE policies (enforces immutability)
 
 5. **Create policy for badges (global read-only)** (0.25 SP)
    - `anyone_can_read_badges` - FOR SELECT using `true` (no restriction)
    - `service_role_manages_badges` - FOR ALL using `auth.role() = 'service_role'`
 
 6. **Write comprehensive RLS tests** (1 SP)
-   - Create 2 test users (User A, User B)
-   - Test User A can SELECT/UPDATE their own data
-   - Test User A CANNOT SELECT User B's data (should return empty, not error)
-   - Test User A CANNOT UPDATE User B's data (should fail)
-   - Test subtask_completions INSERT works, UPDATE fails
-   - Test badges are readable by all, writable by service_role only
+   - Testing framework: Supabase CLI (`supabase test db`) with SQL test files in `supabase/tests/`
+   - Test file: `supabase/tests/rls_policies.test.sql` (see Testing Strategy for examples)
+   - Create 2 test users (User A, User B) in test setup
+   - Run tests locally: `supabase test db`
+   - Verify all 8 test scenarios pass (see Testing Strategy)
 
-7. **Create RLS penetration test script** (0.5 SP)
-   - Automated script that attempts cross-user attacks
+7. **Test RLS locally with manual verification** (0.5 SP)
+   - Start local Supabase: `supabase start`
+   - Create 2 test users via Supabase Studio (http://localhost:54323)
+   - Get JWT tokens for both users
+   - Run cross-user queries with different JWTs
+   - Verify User A CANNOT access User B data
+   - Document test results in story notes
+
+8. **Create RLS penetration test script** (0.5 SP)
+   - Script location: `scripts/test_rls_security.py`
+   - Uses Python + Supabase client library
+   - Automated script that attempts cross-user attacks (see Security Testing)
    - Run as part of CI/CD before merging to main
    - Log all attempts and verify 0 successful cross-user accesses
 
-8. **Document RLS policies in security checklist** (0.25 SP)
-   - Update `docs/security-architecture.md` with RLS implementation status
-   - Add RLS policy reference to `docs/architecture.md`
-   - Create quick-reference SQL template in architecture doc
+9. **Document RLS policies in security checklist** (0.25 SP)
+   - Update `docs/security-architecture.md`:
+     - Mark "RLS: COMPLETE" in Pre-Launch Checklist (line 2167)
+     - Add table listing all 13 RLS-enabled tables in RLS section
+     - Link to migration file: `supabase/migrations/YYYYMMDDHHMMSS_row_level_security.sql`
+   - Update `docs/architecture.md`:
+     - Add "RLS Quick Reference" section with policy pattern
+     - Document `auth.uid() → user_profiles.id` lookup pattern
+     - Note immutable tables policy approach
 
 ### Technical Decisions
 
@@ -194,32 +149,37 @@ This two-step lookup is required because:
 - **Rationale:** Consistent with existing schema (Story 0.2a); allows internal user ID to persist even if auth provider changes
 - **Alternative considered:** Use `auth.uid()` directly as FK - rejected (requires schema migration)
 
-**TD-0.4-2: Soft delete for user_profiles, no DELETE policy**
-- **Decision:** Use `archived_at TIMESTAMPTZ` for soft deletes, no RLS DELETE policy
-- **Rationale:** Preserves data integrity, enables audit trail, supports GDPR "right to erasure" with batch job
-- **Alternative considered:** Hard delete with CASCADE - rejected (loses audit trail)
-
-**TD-0.4-3: Immutable completions enforced by RLS, not triggers**
+**TD-0.4-2: Immutable completions enforced by RLS, not triggers**
 - **Decision:** RLS has no UPDATE/DELETE policies for `subtask_completions`
-- **Rationale:** Simpler than triggers, policy-based enforcement is declarative
+- **Rationale:** Simpler than triggers, policy-based enforcement is declarative, easier to test
 - **Alternative considered:** Database triggers to block UPDATE/DELETE - rejected (more complex, harder to test)
 
-**TD-0.4-4: Test RLS with actual database queries, not mocks**
-- **Decision:** RLS tests run against Supabase test project with real queries
-- **Rationale:** RLS is database-level; mocking doesn't test actual enforcement
-- **Alternative considered:** Mock Supabase client - rejected (false confidence)
+**TD-0.4-3: Test RLS with actual database queries, not mocks**
+- **Decision:** RLS tests run against local Supabase with real queries using Supabase CLI test framework
+- **Rationale:** RLS is database-level; mocking doesn't test actual enforcement. Need real PostgreSQL + JWT simulation.
+- **Alternative considered:** Mock Supabase client - rejected (false confidence, misses edge cases)
 
 ---
 
 ## Testing Strategy
 
-### Unit Tests
-- N/A (RLS is database-level, requires integration tests)
-
 ### Integration Tests
 
-**File:** `supabase/tests/rls_policies.test.sql` (using pgTAP or custom test framework)
+**File:** `supabase/tests/rls_policies.test.sql`
+**Framework:** Supabase CLI (`supabase test db`) or pgTAP
+**Run command:** `supabase test db` (runs all tests in `supabase/tests/`)
 
+**Test Scenarios (All 8 must pass):**
+1. ✅ User A can SELECT/INSERT/UPDATE their own data (goals, journals, etc.)
+2. ✅ User A can SELECT (but not UPDATE/DELETE) their own `subtask_completions`
+3. ✅ User A CANNOT SELECT User B's data (returns empty set, not error)
+4. ✅ User A CANNOT INSERT with User B's `user_id` (fails RLS policy)
+5. ✅ User A CANNOT UPDATE User B's data (fails RLS policy)
+6. ✅ User A can SELECT badges (global read)
+7. ✅ User A CANNOT INSERT/UPDATE badges (service_role only)
+8. ✅ Service role CAN INSERT/UPDATE badges (using service_role key)
+
+**Example Test (see `supabase/tests/rls_policies.test.sql` for full suite):**
 ```sql
 -- Test User A can access own data
 SELECT is(
@@ -236,53 +196,56 @@ SELECT is(
   0,
   'User A CANNOT SELECT User B goals'
 );
-
--- Test immutable completions
-SET LOCAL role = 'authenticated';
-SET LOCAL request.jwt.claims = '{"sub": "user-a-auth-id"}';
-SELECT throws_ok(
-  'UPDATE subtask_completions SET completed_at = NOW() WHERE user_id = (SELECT id FROM user_profiles WHERE auth_user_id = ''user-a-auth-id'')',
-  'User A CANNOT UPDATE subtask_completions (immutable)'
-);
 ```
-
-**Test Scenarios:**
-1. ✅ User A can SELECT/INSERT/UPDATE their own data
-2. ✅ User A can SELECT (but not UPDATE/DELETE) their own `subtask_completions`
-3. ✅ User A CANNOT SELECT User B's data (returns empty set)
-4. ✅ User A CANNOT INSERT with User B's `user_id` (fails check constraint)
-5. ✅ User A CANNOT UPDATE User B's data (fails RLS policy)
-6. ✅ User A can SELECT badges (global read)
-7. ✅ User A CANNOT INSERT/UPDATE badges (service_role only)
-8. ✅ Service role CAN manage badges
 
 ### Manual Testing
 
 **Prerequisites:**
-- Supabase project with all migrations applied
-- 2 test user accounts created with different JWT tokens
+- Local Supabase running (`supabase start`)
+- 2 test users created in Supabase Studio (http://localhost:54323)
 
-**Test Steps:**
-1. Log in as User A (get JWT token)
-2. Create goal via Supabase client: `supabase.from('goals').insert({...})`
-3. Verify goal appears in User A's dashboard
-4. Log in as User B (get different JWT token)
-5. Attempt to query User A's goal: `supabase.from('goals').select().eq('id', user_a_goal_id)`
-6. **Expected:** Empty result (not error), goal is hidden
-7. Attempt to create completion for User A's goal
-8. **Expected:** INSERT fails with permission error
+**Step-by-Step Test Procedure:**
+1. **Setup:** Create User A and User B in Supabase Studio → Authentication
+2. **User A Session:**
+   - Log in as User A via mobile app or Supabase client
+   - Get JWT token (inspect network request or use `supabase.auth.getSession()`)
+   - Create goal: `supabase.from('goals').insert({ title: 'User A Goal', user_id: userA.id })`
+   - Verify goal visible: `supabase.from('goals').select('*')`
+3. **User B Session:**
+   - Log in as User B (different JWT token)
+   - Attempt to query User A's goal: `supabase.from('goals').select().eq('id', userA_goal_id)`
+   - **Expected Result:** Empty array `[]` (not error, not User A's goal)
+   - Attempt to update User A's goal: `supabase.from('goals').update({ title: 'Hacked' }).eq('id', userA_goal_id)`
+   - **Expected Result:** 0 rows updated, no error (RLS silently blocks)
+4. **Cross-User Completion Test:**
+   - User B attempts: `supabase.from('subtask_completions').insert({ user_id: userA.id, ... })`
+   - **Expected Result:** INSERT fails (CHECK constraint or RLS policy violation)
+5. **Immutable Test:**
+   - User A creates completion
+   - User A attempts UPDATE: `supabase.from('subtask_completions').update({ completed_at: new Date() })`
+   - **Expected Result:** 0 rows updated (no UPDATE policy exists)
+6. **Service Role Test:**
+   - Use service_role key
+   - Verify CAN insert/update badges
+   - **Expected Result:** Success
 
 ### Security Testing
 
 **Penetration Test Script:** `scripts/test_rls_security.py`
+**Language:** Python with Supabase client library
+**Purpose:** Automated adversarial testing - attempts cross-user attacks
 
+**Script Logic:**
 ```python
-# Run automated penetration tests
-# 1. Create 10 test users
-# 2. Each user creates goals, completions, journals
-# 3. Each user attempts to access ALL other users' data
-# 4. Verify 0 successful cross-user accesses
-# 5. Log all attempts to security audit log
+# 1. Create 10 test users with Supabase Auth
+# 2. Each user creates: 2 goals, 5 completions, 3 journal entries
+# 3. Each user attempts to access ALL other users' data via:
+#    - Direct ID queries
+#    - Enumeration attacks
+#    - Batch queries
+# 4. Verify 0 successful cross-user accesses (all return empty or error)
+# 5. Log all attempts to `security_audit.log`
+# 6. Exit code 0 if all attempts blocked, 1 if any succeed
 ```
 
 **Success Criteria:**
@@ -296,71 +259,54 @@ SELECT throws_ok(
 
 ### Functional Requirements
 
-- [x] **AC-0.4-1:** RLS is enabled on all 13 user-owned tables
-- [x] **AC-0.4-2:** User A can SELECT, INSERT, UPDATE their own data in all tables
-- [x] **AC-0.4-3:** User A can SELECT but NOT UPDATE `subtask_completions`
-- [x] **AC-0.4-4:** User A CANNOT SELECT User B's data (returns empty set, not error)
-- [x] **AC-0.4-5:** User A CANNOT INSERT data with User B's `user_id` (fails)
-- [x] **AC-0.4-6:** User A CANNOT UPDATE User B's data (fails)
-- [x] **AC-0.4-7:** User A CANNOT DELETE User B's data (fails)
-- [x] **AC-0.4-8:** All users can SELECT badges; only service_role can manage badges
-- [x] **AC-0.4-9:** RLS policies use `auth.uid() → user_profiles.auth_user_id` lookup pattern consistently
+- [ ] **AC-0.4-1:** RLS is enabled on all 13 user-owned tables
+- [ ] **AC-0.4-2:** User A can SELECT, INSERT, UPDATE their own data in all tables
+- [ ] **AC-0.4-3:** User A can SELECT but NOT UPDATE `subtask_completions`
+- [ ] **AC-0.4-4:** User A CANNOT SELECT User B's data (returns empty set, not error)
+- [ ] **AC-0.4-5:** User A CANNOT INSERT data with User B's `user_id` (fails)
+- [ ] **AC-0.4-6:** User A CANNOT UPDATE User B's data (fails)
+- [ ] **AC-0.4-7:** User A CANNOT DELETE User B's data (fails)
+- [ ] **AC-0.4-8:** All users can SELECT badges; only service_role can manage badges
+- [ ] **AC-0.4-9:** RLS policies use `auth.uid() → user_profiles.auth_user_id` lookup pattern consistently
 
 ### Technical Requirements
 
-- [x] **AC-0.4-10:** RLS tests pass in CI/CD pipeline
-- [x] **AC-0.4-11:** Penetration test script runs without errors
-- [x] **AC-0.4-12:** Security checklist updated in `docs/security-architecture.md`
-- [x] **AC-0.4-13:** RLS policy quick-reference added to `docs/architecture.md`
+- [ ] **AC-0.4-10:** RLS tests pass locally (`supabase test db`) - Note: CI/CD workflow creation is follow-up task
+- [ ] **AC-0.4-11:** Penetration test script (`scripts/test_rls_security.py`) runs without errors
+- [ ] **AC-0.4-12:** Security checklist updated in `docs/security-architecture.md` (line 2167 marked complete, RLS tables listed)
+- [ ] **AC-0.4-13:** RLS policy quick-reference added to `docs/architecture.md`
 
 ### Definition of Done
 
-- [x] All RLS policies created and enabled
-- [x] All RLS tests pass (automated + manual)
-- [x] Penetration test shows 0 successful unauthorized accesses
-- [x] Code reviewed by security-focused reviewer
-- [x] Documentation updated (security-architecture.md, architecture.md)
-- [x] Merged to `main` branch
+- [ ] All RLS policies created and enabled
+- [ ] All RLS tests pass (automated + manual)
+- [ ] Penetration test shows 0 successful unauthorized accesses
+- [ ] Code reviewed by security-focused reviewer
+- [ ] Documentation updated (security-architecture.md, architecture.md)
+- [ ] Merged to `main` branch
 
 ---
 
 ## Success Metrics
 
-### Immediate Metrics
-- **RLS Coverage:** 13/13 user-owned tables have RLS enabled
-- **Test Coverage:** 100% of RLS policies have automated tests
-- **Security Test Results:** 0 cross-user accesses successful in penetration test
-
-### Post-Implementation Metrics
-- **Security Incidents:** 0 unauthorized data access incidents reported
-- **Performance Impact:** Dashboard queries <50ms (RLS adds ~5-10ms overhead)
-- **Audit Trail:** All RLS policy violations logged to `event_log` table
-
-### Success Indicators
-- ✅ RLS enabled before alpha launch (security requirement met)
-- ✅ Team confident deploying to production without data leakage risk
-- ✅ Security architecture document marked "RLS: COMPLETE"
-- ✅ Alpha users' data is isolated at database level
+**Immediate Validation:**
+- RLS Coverage: 13/13 user-owned tables enabled
+- Test Coverage: 8/8 test scenarios pass
+- Penetration Test: 0 successful cross-user accesses
+- Performance: Measure dashboard queries with `EXPLAIN ANALYZE`:
+  - `SELECT * FROM goals WHERE user_id = X` <50ms (baseline + RLS overhead ~5-10ms)
+  - `SELECT * FROM daily_aggregates WHERE user_id = X AND local_date = Y` <50ms
 
 ---
 
 ## Risk Assessment
 
-### Technical Risks
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| **RLS policy bugs allow data leakage** | Medium | Critical | Comprehensive test suite + penetration testing before alpha |
-| **RLS performance overhead slows queries** | Low | Medium | Benchmark dashboard queries; optimize indexes if >50ms |
-| **Policy lookup complexity causes errors** | Low | Medium | Use consistent `auth.uid() → user_profiles` pattern everywhere |
-
-### Implementation Risks
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| **Forgetting to enable RLS on new tables** | Medium | Critical | Add RLS check to CI/CD; document in architecture |
-| **Policy typo allows unauthorized access** | Low | Critical | Peer review all policies; automated testing |
-| **Test false positives (tests pass but RLS broken)** | Low | Critical | Test with REAL database queries, not mocks |
+**Key Risks & Mitigations:**
+- **RLS policy bugs → data leakage:** Comprehensive test suite + penetration testing before alpha
+- **Performance overhead → slow queries:** Benchmark dashboard queries; existing composite indexes should keep overhead <10ms
+- **Forgetting RLS on new tables:** Document in architecture + future CI/CD check
+- **Policy typos → unauthorized access:** Peer review all policies + automated testing
+- **Test false positives:** Test with REAL database queries (not mocks) using Supabase CLI
 
 ---
 
@@ -368,12 +314,10 @@ SELECT throws_ok(
 
 ### RLS Quick Reference
 
-**Standard User-Owned Table Policy:**
+**Standard User-Owned Table Policy (apply to 11 tables):**
 ```sql
--- Enable RLS
 ALTER TABLE table_name ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can manage their own data
 CREATE POLICY "users_manage_own_data" ON table_name
     FOR ALL
     USING (user_id IN (
@@ -381,47 +325,41 @@ CREATE POLICY "users_manage_own_data" ON table_name
     ));
 ```
 
-**Immutable Table Policy (e.g., subtask_completions):**
+**Immutable Table (subtask_completions only):**
 ```sql
--- SELECT policy
 CREATE POLICY "users_select_own" ON subtask_completions
     FOR SELECT
-    USING (user_id IN (
-        SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text
-    ));
+    USING (user_id IN (SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text));
 
--- INSERT policy
 CREATE POLICY "users_insert_own" ON subtask_completions
     FOR INSERT
-    WITH CHECK (user_id IN (
-        SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text
-    ));
-
--- NO UPDATE or DELETE policies (immutable)
+    WITH CHECK (user_id IN (SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text));
+-- NO UPDATE/DELETE policies
 ```
 
-**Global Read-Only Table Policy (e.g., badges):**
+**Global Read-Only (badges only):**
 ```sql
--- Everyone can read
-CREATE POLICY "anyone_can_read" ON badges
-    FOR SELECT
-    USING (true);
-
--- Only service role can write
-CREATE POLICY "service_role_manages" ON badges
-    FOR ALL
-    USING (auth.role() = 'service_role');
+CREATE POLICY "anyone_can_read" ON badges FOR SELECT USING (true);
+CREATE POLICY "service_role_manages" ON badges FOR ALL USING (auth.role() = 'service_role');
 ```
+
+For additional policy patterns, see `docs/security-architecture.md` (lines 189-292).
+
+### Emergency Rollback Plan
+
+If RLS breaks production queries:
+1. **Immediate:** Disable RLS on affected table: `ALTER TABLE X DISABLE ROW LEVEL SECURITY;`
+2. **Investigate:** Check RLS policy syntax and test locally
+3. **Fix:** Correct policy and re-enable: `ALTER TABLE X ENABLE ROW LEVEL SECURITY;`
+4. **Verify:** Run test suite before redeploying
 
 ### Common Pitfalls
 
-1. **Don't use `auth.uid()` as FK directly** - Use `user_profiles.id` (consistent with schema)
-2. **Don't forget `::text` cast** - `auth.uid()` returns UUID, `auth_user_id` is TEXT
-3. **Don't skip penetration tests** - RLS bugs are catastrophic, test thoroughly
-4. **Don't assume RLS is enabled** - Always verify: `SELECT tablename, rowsecurity FROM pg_tables;`
+1. **Don't use `auth.uid()` as FK directly** - Use `user_profiles.id` (consistent with existing schema from Story 0.2a)
+2. **Don't forget `::text` cast** - `auth.uid()` returns UUID, `auth_user_id` is TEXT. Without cast, PostgreSQL type mismatch causes silent failure (returns 0 rows instead of error)
+3. **Don't skip penetration tests** - RLS bugs are catastrophic (full data breach), test thoroughly with adversarial mindset
+4. **Don't assume RLS is enabled** - Always verify after migration: `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';`
 
 ---
-
-**Story Status:** ✅ READY FOR DEVELOPMENT
 
 **Next Story:** 0.5 - CI/CD Pipeline
