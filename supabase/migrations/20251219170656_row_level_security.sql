@@ -15,6 +15,46 @@
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- ═══════════════════════════════════════════════════════════════════════
+-- ROLLBACK INSTRUCTIONS (Execute in reverse order if needed)
+-- ═══════════════════════════════════════════════════════════════════════
+--
+-- WARNING: Rolling back RLS will disable database-level security isolation.
+-- Only execute rollback in emergency situations (e.g., production incident).
+--
+-- Step 1: Drop all RLS policies
+-- DROP POLICY IF EXISTS "users_select_own_profile" ON user_profiles;
+-- DROP POLICY IF EXISTS "users_insert_own_profile" ON user_profiles;
+-- DROP POLICY IF EXISTS "users_update_own_profile" ON user_profiles;
+-- DROP POLICY IF EXISTS "users_manage_own_identity_docs" ON identity_docs;
+-- DROP POLICY IF EXISTS "users_manage_own_goals" ON goals;
+-- DROP POLICY IF EXISTS "users_manage_own_subtask_templates" ON subtask_templates;
+-- DROP POLICY IF EXISTS "users_manage_own_subtask_instances" ON subtask_instances;
+-- DROP POLICY IF EXISTS "users_select_own_completions" ON subtask_completions;
+-- DROP POLICY IF EXISTS "users_insert_own_completions" ON subtask_completions;
+-- DROP POLICY IF EXISTS "users_manage_own_captures" ON captures;
+-- DROP POLICY IF EXISTS "users_manage_own_journal_entries" ON journal_entries;
+-- DROP POLICY IF EXISTS "users_manage_own_daily_aggregates" ON daily_aggregates;
+-- DROP POLICY IF EXISTS "users_manage_own_triad_tasks" ON triad_tasks;
+-- DROP POLICY IF EXISTS "users_manage_own_ai_runs" ON ai_runs;
+-- DROP POLICY IF EXISTS "users_manage_own_ai_artifacts" ON ai_artifacts;
+--
+-- Step 2: Disable RLS on all tables
+-- ALTER TABLE user_profiles DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE identity_docs DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE goals DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE subtask_templates DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE subtask_instances DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE subtask_completions DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE captures DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE journal_entries DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE daily_aggregates DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE triad_tasks DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE ai_runs DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE ai_artifacts DISABLE ROW LEVEL SECURITY;
+--
+-- ═══════════════════════════════════════════════════════════════════════
+
+-- ═══════════════════════════════════════════════════════════════════════
 -- STEP 1: ENABLE RLS ON ALL USER-OWNED TABLES
 -- ═══════════════════════════════════════════════════════════════════════
 

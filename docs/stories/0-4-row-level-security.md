@@ -4,9 +4,10 @@
 **Story ID:** 0.4
 **Epic:** 0 (Foundation)
 **Story Points:** 5
-**Status:** Ready for Review
+**Status:** Code Review Complete - Ready for Testing
 **Dependencies:** 0-2a (Database Schema - Core Tables - `docs/stories/0-2a-database-schema-core.md`), 0-2b (Database Schema Refinement - `docs/stories/0-2b-database-schema-refinement.md`), 0-3 (Authentication Flow - `docs/stories/0-3-authentication-flow.md`)
 **Created:** 2025-12-19
+**Code Review:** 2025-12-19 (Adversarial review completed - H1, M1, M2 addressed)
 
 ---
 
@@ -479,14 +480,18 @@ If RLS breaks production queries:
 
 ### Files Created
 
-- `supabase/migrations/20251219170656_row_level_security.sql` - RLS migration for 12 tables
-- `supabase/tests/rls_policies.test.sql` - 48 automated RLS test cases
-- `scripts/test_rls_security.py` - Penetration test script (adversarial attacks)
+- `supabase/migrations/20251219170656_row_level_security.sql` - RLS migration for 12 tables (includes rollback instructions)
+- `supabase/tests/rls_policies.test.sql` - 41 automated RLS test cases using pgTAP framework
+- `scripts/test_rls_security.py` - Penetration test script (adversarial attacks - 6 attack types)
+- `scripts/validate-database.sh` - Bash validation script for local/cloud database testing
+- `scripts/validate-database.ps1` - PowerShell validation script for Windows
+- `scripts/db-status.ps1` - Database status checker (Windows)
 
 ### Files Modified
 
 - `docs/security-architecture.md` - Added RLS implementation status, updated Pre-Launch checklist
 - `CLAUDE.md` - Added RLS Quick Reference section with patterns, table list, testing instructions
+- `supabase/testing/performance_baseline.sql` - Performance baseline for 10 query patterns (needs RLS overhead testing per code review)
 
 ---
 
