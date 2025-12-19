@@ -52,8 +52,10 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function LoginScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { signIn, signInWithOAuth, error: authError, clearError } = useAuth();
+  const { user, signIn, signOut, signInWithOAuth, error: authError, clearError } = useAuth();
   const { colors } = useTheme();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isContinuing, setIsContinuing] = useState(false);
 
   // Debug: Log auth error state
   React.useEffect(() => {
@@ -211,6 +213,41 @@ export default function LoginScreen() {
   }, [router]);
 
   /**
+   * Handle Continue when already signed in
+   * Navigates to appropriate screen based on onboarding status
+   */
+  const handleContinue = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setIsContinuing(true);
+      await navigateAfterAuth(user.id, false);
+    } catch (error) {
+      console.error('[LOGIN] Continue navigation error:', error);
+      showSimpleToast('Navigation failed. Please try again.', 'error');
+    } finally {
+      setIsContinuing(false);
+    }
+  }, [user]);
+
+  /**
+   * Handle Sign Out when already signed in
+   */
+  const handleSignOut = useCallback(async () => {
+    try {
+      setIsSigningOut(true);
+      await signOut();
+      showSimpleToast('Signed out successfully 👋', 'success');
+      // Stay on login screen after sign out
+    } catch (error: any) {
+      console.error('[LOGIN] Sign out error:', error);
+      showSimpleToast('Failed to sign out. Please try again.', 'error');
+    } finally {
+      setIsSigningOut(false);
+    }
+  }, [signOut]);
+
+  /**
    * Get user-friendly error message
    */
   const getErrorMessage = (error: AuthError | null): string => {
@@ -245,15 +282,67 @@ export default function LoginScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text variant="displayLg" color="primary">
-              Welcome Back
+              {user ? 'Already Signed In' : 'Welcome Back'}
             </Text>
             <Text variant="textLg" color="secondary" className="mt-2">
-              Sign in to continue your journey
+              {user ? 'You are currently signed in' : 'Sign in to continue your journey'}
             </Text>
           </View>
 
-          {/* Error Message */}
-          {authError && (
+          {/* Already Signed In Card */}
+          {user && (
+            <View style={styles.alreadySignedInCard}>
+              <View
+                style={{
+                  backgroundColor: `${colors.accent[500]}15`,
+                  borderLeftWidth: 4,
+                  borderLeftColor: colors.accent[500],
+                  borderRadius: 8,
+                  padding: 20,
+                  gap: 16,
+                }}
+              >
+                <View style={{ gap: 8 }}>
+                  <Text variant="textLg" weight="bold" style={{ color: colors.accent[500] }}>
+                    ✅ You're Already Signed In
+                  </Text>
+                  <Text variant="textBase" color="secondary">
+                    Signed in as <Text weight="semibold">{user.email}</Text>
+                  </Text>
+                  <Text variant="textSm" color="muted" style={{ marginTop: 4 }}>
+                    You can continue to your account or sign out to use a different account.
+                  </Text>
+                </View>
+
+                <View style={{ gap: 12 }}>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onPress={handleContinue}
+                    loading={isContinuing}
+                    disabled={isContinuing || isSigningOut}
+                    fullWidth
+                  >
+                    {isContinuing ? 'Loading...' : 'Continue to App'}
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onPress={handleSignOut}
+                    loading={isSigningOut}
+                    disabled={isContinuing || isSigningOut}
+                    fullWidth
+                  >
+                    {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+                  </Button>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Error Message - Only show if not already signed in */}
+          {authError && !user && (
             <View style={styles.errorCard}>
               <View
                 style={{
@@ -277,10 +366,12 @@ export default function LoginScreen() {
             </View>
           )}
 
-          {/* Login Form */}
-          <View style={styles.form}>
-            {/* Email Input */}
-            <Input
+          {/* Login Form - Only show if not signed in */}
+          {!user && (
+            <>
+              <View style={styles.form}>
+                {/* Email Input */}
+                <Input
               label="Email"
               placeholder="your.email@example.com"
               value={email}
@@ -411,23 +502,25 @@ export default function LoginScreen() {
             </Pressable>
           </View>
 
-          {/* Development Bypass Button - Only in DEV mode */}
-          {__DEV__ && (
-            <View style={styles.devBypass}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onPress={bypassAuthForDev}
-                disabled={isLoading || isOAuthLoading !== null}
-                accessibilityLabel="Development bypass"
-                style={{ opacity: 0.6 }}
-              >
-                🔧 Skip Auth (Dev Only)
-              </Button>
-              <Text variant="textXs" color="muted" style={{ textAlign: 'center', marginTop: 4 }}>
-                Development mode only - bypasses authentication
-              </Text>
-            </View>
+              {/* Development Bypass Button - Only in DEV mode */}
+              {__DEV__ && (
+                <View style={styles.devBypass}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onPress={bypassAuthForDev}
+                    disabled={isLoading || isOAuthLoading !== null}
+                    accessibilityLabel="Development bypass"
+                    style={{ opacity: 0.6 }}
+                  >
+                    🔧 Skip Auth (Dev Only)
+                  </Button>
+                  <Text variant="textXs" color="muted" style={{ textAlign: 'center', marginTop: 4 }}>
+                    Development mode only - bypasses authentication
+                  </Text>
+                </View>
+              )}
+            </>
           )}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -452,6 +545,9 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 8,
+  },
+  alreadySignedInCard: {
+    marginBottom: 24,
   },
   errorCard: {
     marginBottom: 24,
