@@ -33,10 +33,12 @@ import {
   Text as RNText,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Text, useTheme, showSimpleToast } from '@/design-system';
 import { AuthError } from '@supabase/supabase-js';
+import { navigateAfterAuth, getAuthErrorMessage, bypassAuthForDev } from '@lib/authHelpers';
+import { supabase } from '@lib/supabase';
 
 /**
  * Email validation regex
@@ -49,8 +51,11 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn, signInWithOAuth, error: authError, clearError } = useAuth();
+  const params = useLocalSearchParams();
+  const { user, signIn, signOut, signInWithOAuth, error: authError, clearError } = useAuth();
   const { colors } = useTheme();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isContinuing, setIsContinuing] = useState(false);
 
   // Debug: Log auth error state
   React.useEffect(() => {
@@ -66,8 +71,8 @@ export default function LoginScreen() {
     );
   }, [authError]);
 
-  // Form state
-  const [email, setEmail] = useState('');
+  // Form state - pre-fill email from params if provided (e.g., from signup screen)
+  const [email, setEmail] = useState((params.email as string) || '');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState<'apple' | 'google' | null>(null);
@@ -155,11 +160,15 @@ export default function LoginScreen() {
       console.log('[LOGIN] Sign in successful, calling showSimpleToast...');
       showSimpleToast('Welcome back! 🎉', 'success');
 
-      // Navigation handled automatically by auth state change in _layout.tsx
-    } catch (error) {
+      // Get user ID and navigate appropriately based on onboarding status
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await navigateAfterAuth(user.id, false);
+      }
+    } catch (error: any) {
       console.error('[LOGIN] Sign in error:', error);
       console.log('[LOGIN] Calling showSimpleToast for error...');
-      showSimpleToast('Sign in failed. Please try again.', 'error');
+      showSimpleToast(getAuthErrorMessage(error), 'error');
       // Error is also set in auth context, displayed in error card below
     } finally {
       setIsLoading(false);
@@ -179,8 +188,12 @@ export default function LoginScreen() {
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
         showSimpleToast(`Signed in with ${providerName}! 🎉`, 'success');
 
-        // Navigation handled automatically by auth state change in _layout.tsx
-      } catch (error) {
+        // Get user ID and navigate appropriately based on onboarding status
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await navigateAfterAuth(user.id, false);
+        }
+      } catch (error: any) {
         console.error(`[LOGIN] ${provider} sign in error:`, error);
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
         showSimpleToast(`Failed to sign in with ${providerName}. Please try again.`, 'error');
@@ -198,6 +211,41 @@ export default function LoginScreen() {
   const handleNavigateToSignup = useCallback(() => {
     router.push('/(auth)/signup');
   }, [router]);
+
+  /**
+   * Handle Continue when already signed in
+   * Navigates to appropriate screen based on onboarding status
+   */
+  const handleContinue = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setIsContinuing(true);
+      await navigateAfterAuth(user.id, false);
+    } catch (error) {
+      console.error('[LOGIN] Continue navigation error:', error);
+      showSimpleToast('Navigation failed. Please try again.', 'error');
+    } finally {
+      setIsContinuing(false);
+    }
+  }, [user]);
+
+  /**
+   * Handle Sign Out when already signed in
+   */
+  const handleSignOut = useCallback(async () => {
+    try {
+      setIsSigningOut(true);
+      await signOut();
+      showSimpleToast('Signed out successfully 👋', 'success');
+      // Stay on login screen after sign out
+    } catch (error: any) {
+      console.error('[LOGIN] Sign out error:', error);
+      showSimpleToast('Failed to sign out. Please try again.', 'error');
+    } finally {
+      setIsSigningOut(false);
+    }
+  }, [signOut]);
 
   /**
    * Get user-friendly error message
@@ -234,15 +282,67 @@ export default function LoginScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text variant="displayLg" color="primary">
-              Welcome Back
+              {user ? 'Already Signed In' : 'Welcome Back'}
             </Text>
             <Text variant="textLg" color="secondary" className="mt-2">
-              Sign in to continue your journey
+              {user ? 'You are currently signed in' : 'Sign in to continue your journey'}
             </Text>
           </View>
 
-          {/* Error Message */}
-          {authError && (
+          {/* Already Signed In Card */}
+          {user && (
+            <View style={styles.alreadySignedInCard}>
+              <View
+                style={{
+                  backgroundColor: `${colors.accent[500]}15`,
+                  borderLeftWidth: 4,
+                  borderLeftColor: colors.accent[500],
+                  borderRadius: 8,
+                  padding: 20,
+                  gap: 16,
+                }}
+              >
+                <View style={{ gap: 8 }}>
+                  <Text variant="textLg" weight="bold" style={{ color: colors.accent[500] }}>
+                    ✅ You're Already Signed In
+                  </Text>
+                  <Text variant="textBase" color="secondary">
+                    Signed in as <Text weight="semibold">{user.email}</Text>
+                  </Text>
+                  <Text variant="textSm" color="muted" style={{ marginTop: 4 }}>
+                    You can continue to your account or sign out to use a different account.
+                  </Text>
+                </View>
+
+                <View style={{ gap: 12 }}>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onPress={handleContinue}
+                    loading={isContinuing}
+                    disabled={isContinuing || isSigningOut}
+                    fullWidth
+                  >
+                    {isContinuing ? 'Loading...' : 'Continue to App'}
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onPress={handleSignOut}
+                    loading={isSigningOut}
+                    disabled={isContinuing || isSigningOut}
+                    fullWidth
+                  >
+                    {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+                  </Button>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Error Message - Only show if not already signed in */}
+          {authError && !user && (
             <View style={styles.errorCard}>
               <View
                 style={{
@@ -266,10 +366,12 @@ export default function LoginScreen() {
             </View>
           )}
 
-          {/* Login Form */}
-          <View style={styles.form}>
-            {/* Email Input */}
-            <Input
+          {/* Login Form - Only show if not signed in */}
+          {!user && (
+            <>
+              <View style={styles.form}>
+                {/* Email Input */}
+                <Input
               label="Email"
               placeholder="your.email@example.com"
               value={email}
@@ -399,6 +501,27 @@ export default function LoginScreen() {
               </Text>
             </Pressable>
           </View>
+
+              {/* Development Bypass Button - Only in DEV mode */}
+              {__DEV__ && (
+                <View style={styles.devBypass}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onPress={bypassAuthForDev}
+                    disabled={isLoading || isOAuthLoading !== null}
+                    accessibilityLabel="Development bypass"
+                    style={{ opacity: 0.6 }}
+                  >
+                    🔧 Skip Auth (Dev Only)
+                  </Button>
+                  <Text variant="textXs" color="muted" style={{ textAlign: 'center', marginTop: 4 }}>
+                    Development mode only - bypasses authentication
+                  </Text>
+                </View>
+              )}
+            </>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -422,6 +545,9 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 8,
+  },
+  alreadySignedInCard: {
+    marginBottom: 24,
   },
   errorCard: {
     marginBottom: 24,
@@ -453,5 +579,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 32,
+  },
+  devBypass: {
+    marginTop: 24,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
   },
 });

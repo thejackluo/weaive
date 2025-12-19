@@ -19,6 +19,7 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  PanResponder,
   Animated,
   useWindowDimensions,
   Alert,
@@ -176,7 +177,7 @@ export default function IdentityBootupScreen() {
       else if (gestureState.dx > 50) {
         handleSwipe('right');
       }
-    }
+    },
   });
 
   /**
@@ -460,7 +461,7 @@ export default function IdentityBootupScreen() {
           minHeight: MIN_TOUCH_TARGET,
           justifyContent: 'center',
           alignItems: 'center',
-          opacity: isNameValid ? 1 : 0.5,
+          opacity: nameValidation.valid ? 1 : 0.5,
         }}
         accessibilityRole="button"
         accessibilityLabel="Continue to personality selection"
@@ -710,7 +711,7 @@ export default function IdentityBootupScreen() {
             accessibilityRole="adjustable"
             accessibilityLabel={`Personality ${currentPersonaIndex + 1} of ${PERSONAS.length}`}
           >
-            {PERSONAS.map((_, index) => (
+            {PERSONAS.map((persona, index) => (
               <View
                 key={index}
                 accessible={true}
