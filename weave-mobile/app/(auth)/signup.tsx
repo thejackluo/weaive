@@ -46,6 +46,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Text, Card, useTheme, Checkbox, showSimpleToast } from '@/design-system';
 import { AuthError } from '@supabase/supabase-js';
+import { navigateAfterAuth, getAuthErrorMessage } from '@lib/authHelpers';
+import { supabase } from '@lib/supabase';
 
 /**
  * Email validation regex
@@ -80,6 +82,7 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [accountExists, setAccountExists] = useState(false);
 
   /**
    * Validate email format
@@ -259,16 +262,33 @@ export default function SignupScreen() {
 
     try {
       setIsLoading(true);
+      setAccountExists(false); // Reset account exists state
       await signUp(email, password);
 
       // Show success toast
       showSimpleToast('Account created successfully! 🎉', 'success');
 
-      // Navigation handled automatically by auth state change in _layout.tsx
+      // Get user ID and navigate appropriately
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await navigateAfterAuth(user.id, false);
+      }
+
       // Note: If email verification is required, user may need to check email
-    } catch (error) {
+    } catch (error: any) {
       console.error('[SIGNUP] Sign up error:', error);
-      // Error is set in auth context, displayed below
+
+      // Check if account already exists
+      if (error.message === 'User already registered') {
+        setAccountExists(true);
+        showSimpleToast('Account already exists. Please sign in instead.', 'error');
+        // Don't re-throw, let user see the UI
+        return;
+      }
+
+      // For other errors, show generic error message
+      showSimpleToast(getAuthErrorMessage(error), 'error');
+      // Error is also set in auth context, displayed below
     } finally {
       setIsLoading(false);
     }
@@ -291,14 +311,19 @@ export default function SignupScreen() {
     async (provider: 'apple' | 'google') => {
       try {
         setIsOAuthLoading(provider);
+        setAccountExists(false); // Reset account exists state
         await signInWithOAuth(provider);
 
         // Show success toast
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
         showSimpleToast(`Signed up with ${providerName}! 🎉`, 'success');
 
-        // Navigation handled automatically by auth state change in _layout.tsx
-      } catch (error) {
+        // Get user ID and navigate appropriately
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await navigateAfterAuth(user.id, false);
+        }
+      } catch (error: any) {
         console.error(`[SIGNUP] ${provider} sign in error:`, error);
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
         showSimpleToast(`Failed to sign up with ${providerName}. Please try again.`, 'error');
@@ -359,8 +384,47 @@ export default function SignupScreen() {
             </Text>
           </View>
 
+          {/* Account Already Exists Card */}
+          {accountExists && (
+            <Card
+              variant="glass"
+              padding="default"
+              style={{
+                ...styles.errorCard,
+                backgroundColor: `${colors.accent[500]}15`,
+                borderLeftWidth: 4,
+                borderLeftColor: colors.accent[500],
+              }}
+            >
+              <View style={{ gap: 16 }}>
+                <View style={{ gap: 8 }}>
+                  <Text variant="textLg" weight="bold" style={{ color: colors.accent[500] }}>
+                    Account Already Exists
+                  </Text>
+                  <Text variant="textBase" color="secondary">
+                    An account with <Text weight="semibold">{email}</Text> already exists. Please
+                    sign in instead.
+                  </Text>
+                </View>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onPress={() => {
+                    router.push({
+                      pathname: '/(auth)/login' as any,
+                      params: { email },
+                    });
+                  }}
+                  fullWidth
+                >
+                  Sign In Instead
+                </Button>
+              </View>
+            </Card>
+          )}
+
           {/* Error Message */}
-          {authError && (
+          {authError && !accountExists && (
             <Card
               variant="glass"
               padding="default"
