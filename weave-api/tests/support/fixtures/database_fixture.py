@@ -4,7 +4,6 @@ Database fixtures for integration tests.
 Provides Supabase client connections and database setup/teardown.
 """
 
-import os
 
 import pytest
 from supabase import Client, create_client

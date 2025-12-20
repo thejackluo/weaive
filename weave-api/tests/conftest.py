@@ -8,9 +8,9 @@ from app.main import app
 # Import integration test fixtures (for tests/integration/)
 try:
     from tests.support.fixtures.database_fixture import (
-        clean_test_users,
-        database_transaction,
-        test_supabase_client,
+        clean_test_users,  # noqa: F401
+        database_transaction,  # noqa: F401
+        test_supabase_client,  # noqa: F401
     )
 except ImportError:
     # Fixtures not available if dependencies not installed

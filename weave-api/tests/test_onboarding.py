@@ -12,7 +12,6 @@ Tests cover:
   - User profile not found
 """
 
-import os
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 

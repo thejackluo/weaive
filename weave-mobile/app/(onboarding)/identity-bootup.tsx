@@ -868,7 +868,10 @@ export default function IdentityBootupScreen() {
                 );
               } catch (error) {
                 console.error('❌ Debug failed:', error);
-                Alert.alert('Debug Error', error instanceof Error ? error.message : 'Unknown error');
+                Alert.alert(
+                  'Debug Error',
+                  error instanceof Error ? error.message : 'Unknown error'
+                );
               }
             }}
             style={{
@@ -909,11 +912,7 @@ export default function IdentityBootupScreen() {
           accessibilityState={{ disabled: !canContinueStep3 || isSubmitting }}
         >
           {isSubmitting && (
-            <ActivityIndicator
-              size="small"
-              color="#FFFFFF"
-              style={{ marginRight: 8 }}
-            />
+            <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
           )}
           <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
             {isSubmitting ? 'Saving...' : 'Continue'}

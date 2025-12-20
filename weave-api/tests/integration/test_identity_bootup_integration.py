@@ -15,7 +15,6 @@ Requirements:
 - Test user profiles created in database
 """
 
-import os
 from datetime import datetime, timezone
 
 import pytest
@@ -24,8 +23,7 @@ from supabase import Client, create_client
 
 from app.core.config import settings
 from app.main import app
-from tests.support.factories.user_factory import create_test_user, create_test_jwt
-from tests.support.fixtures.database_fixture import test_supabase_client
+from tests.support.factories.user_factory import create_test_jwt, create_test_user
 
 client = TestClient(app)
 
