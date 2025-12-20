@@ -5,6 +5,17 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
+# Import integration test fixtures (for tests/integration/)
+try:
+    from tests.support.fixtures.database_fixture import (
+        clean_test_users,
+        database_transaction,
+        test_supabase_client,
+    )
+except ImportError:
+    # Fixtures not available if dependencies not installed
+    pass
+
 
 @pytest.fixture
 def client():
@@ -36,3 +47,10 @@ def cleanup_test_data():
     # - TRUNCATE goals CASCADE;
     # - Reset sequences to 1
     pass
+
+
+def pytest_configure(config):
+    """Configure pytest with custom markers."""
+    config.addinivalue_line(
+        "markers", "integration: marks tests as integration tests (require external services)"
+    )
