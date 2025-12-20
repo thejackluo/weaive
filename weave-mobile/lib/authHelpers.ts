@@ -42,7 +42,10 @@ export async function hasCompletedOnboarding(userId: string): Promise<boolean> {
  * @param userId - Auth user ID
  * @param fromOnboarding - Whether user came from onboarding flow
  */
-export async function navigateAfterAuth(userId: string, fromOnboarding: boolean = false): Promise<void> {
+export async function navigateAfterAuth(
+  userId: string,
+  fromOnboarding: boolean = false
+): Promise<void> {
   try {
     console.log('[AUTH_HELPERS] Determining post-auth navigation...', {
       userId,

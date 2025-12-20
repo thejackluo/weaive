@@ -23,7 +23,7 @@ let BlurView: any;
 try {
   // @ts-ignore
   BlurView = require('@react-native-community/blur').BlurView;
-} catch (e) {
+} catch {
   // BlurView not installed - will fall back to regular View
   console.warn(
     '@react-native-community/blur not installed. GlassView will render without blur effect. Install with: npm install @react-native-community/blur'

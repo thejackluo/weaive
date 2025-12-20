@@ -19,10 +19,10 @@ import Animated, {
   withTiming,
   withSequence,
   withDelay,
-  Easing,
+  Easing as _Easing,
   interpolate,
   Extrapolate,
-  runOnJS,
+  runOnJS as _runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../theme/ThemeProvider';

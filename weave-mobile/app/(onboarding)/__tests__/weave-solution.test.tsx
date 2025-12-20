@@ -6,7 +6,7 @@
  * Run: npm install --save-dev @testing-library/react-native @testing-library/jest-native
  */
 
-import React from 'react';
+import _React from 'react';
 // TODO: Uncomment when testing library is set up
 // import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
 // import WeaveSolutionScreen from '../weave-solution';

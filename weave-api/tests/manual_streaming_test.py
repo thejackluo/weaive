@@ -20,20 +20,21 @@ Usage:
     uv run python tests/manual_streaming_test.py --provider anthropic
 """
 
+import argparse
 import os
 import sys
 import time
-import argparse
 from pathlib import Path
 
 # Add parent directory to path to import app modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-from app.services.ai.openai_provider import OpenAIProvider
-from app.services.ai.bedrock_provider import BedrockProvider
+
 from app.services.ai.anthropic_provider import AnthropicProvider
 from app.services.ai.base import AIProviderError
+from app.services.ai.bedrock_provider import BedrockProvider
+from app.services.ai.openai_provider import OpenAIProvider
 
 # Load environment variables
 load_dotenv()
@@ -86,7 +87,7 @@ def test_openai_streaming():
         elapsed = time.time() - start_time
 
         print_colored("\n" + "─" * 80 + "\n", "0;37")
-        print_colored(f"✅ OpenAI Streaming Success!\n", "1;32")
+        print_colored("✅ OpenAI Streaming Success!\n", "1;32")
         print_colored(f"   • Time: {elapsed:.2f}s\n", "0;37")
         print_colored(f"   • Tokens: {input_tokens} in + {output_tokens} out\n", "0;37")
         print_colored(f"   • Cost: ${cost_usd:.6f}\n", "0;37")
@@ -145,7 +146,7 @@ def test_bedrock_streaming():
         elapsed = time.time() - start_time
 
         print_colored("\n" + "─" * 80 + "\n", "0;37")
-        print_colored(f"✅ Bedrock Streaming Success!\n", "1;32")
+        print_colored("✅ Bedrock Streaming Success!\n", "1;32")
         print_colored(f"   • Time: {elapsed:.2f}s\n", "0;37")
         print_colored(f"   • Tokens: {input_tokens} in + {output_tokens} out\n", "0;37")
         print_colored(f"   • Cost: ${cost_usd:.6f}\n", "0;37")
@@ -175,7 +176,6 @@ def test_anthropic_streaming():
         return False
 
     try:
-        from anthropic import Anthropic
 
         provider = AnthropicProvider(api_key=api_key)
         client = provider.client
@@ -213,7 +213,7 @@ def test_anthropic_streaming():
         cost_usd = provider.estimate_cost(input_tokens, output_tokens, 'claude-3-5-haiku-20241022')
 
         print_colored("\n" + "─" * 80 + "\n", "0;37")
-        print_colored(f"✅ Anthropic Streaming Success!\n", "1;32")
+        print_colored("✅ Anthropic Streaming Success!\n", "1;32")
         print_colored(f"   • Time: {elapsed:.2f}s\n", "0;37")
         print_colored(f"   • Tokens: {input_tokens} in + {output_tokens} out\n", "0;37")
         print_colored(f"   • Cost: ${cost_usd:.6f}\n", "0;37")

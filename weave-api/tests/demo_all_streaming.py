@@ -18,9 +18,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-from app.services.ai.openai_provider import OpenAIProvider
-from app.services.ai.bedrock_provider import BedrockProvider
+
 from app.services.ai.anthropic_provider import AnthropicProvider
+from app.services.ai.bedrock_provider import BedrockProvider
+from app.services.ai.openai_provider import OpenAIProvider
 
 load_dotenv()
 
@@ -33,7 +34,7 @@ def stream_test(provider_name, provider, prompt, model):
     print(f"\n{'='*70}")
     print(f"🤖 {provider_name.upper()} - {model}")
     print(f"{'='*70}\n")
-    print(f"Streaming: ", end='', flush=True)
+    print("Streaming: ", end='', flush=True)
 
     start = time.time()
     chunks = []
@@ -47,7 +48,7 @@ def stream_test(provider_name, provider, prompt, model):
                 chunks.append(chunk)
             elif chunk['type'] == 'done':
                 elapsed = time.time() - start
-                print(f"\n\n✅ Complete!")
+                print("\n\n✅ Complete!")
                 print(f"   • Time: {elapsed:.2f}s")
                 print(f"   • Tokens: {chunk['input_tokens']} in + {chunk['output_tokens']} out")
                 print(f"   • Cost: ${chunk['cost_usd']:.6f}")
@@ -101,13 +102,12 @@ def main():
     if os.getenv('ANTHROPIC_API_KEY'):
         try:
             provider = AnthropicProvider(api_key=os.getenv('ANTHROPIC_API_KEY'))
-            from anthropic import Anthropic
             client = provider.client
 
             print(f"\n{'='*70}")
-            print(f"🧠 ANTHROPIC - Claude 3.5 Haiku")
+            print("🧠 ANTHROPIC - Claude 3.5 Haiku")
             print(f"{'='*70}\n")
-            print(f"Streaming: ", end='', flush=True)
+            print("Streaming: ", end='', flush=True)
 
             start = time.time()
             chunks = []
@@ -129,7 +129,7 @@ def main():
             elapsed = time.time() - start
             cost = provider.estimate_cost(input_tokens, output_tokens, 'claude-3-5-haiku-20241022')
 
-            print(f"\n\n✅ Complete!")
+            print("\n\n✅ Complete!")
             print(f"   • Time: {elapsed:.2f}s")
             print(f"   • Tokens: {input_tokens} in + {output_tokens} out")
             print(f"   • Cost: ${cost:.6f}")
