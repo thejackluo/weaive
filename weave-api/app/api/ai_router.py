@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.core.auth import get_current_user
+from app.core.deps import get_current_user, get_supabase_client
 from app.services.ai.ai_service import AIService
 from app.services.ai.base import AIProviderError, AIResponse
 from app.services.ai.rate_limiter import RateLimitError
@@ -57,7 +57,6 @@ def get_ai_service() -> AIService:
     # For now, create a new instance (should be singleton in production)
     import os
     from dotenv import load_dotenv
-    from app.core.database import get_db
 
     load_dotenv()
 
@@ -65,7 +64,7 @@ def get_ai_service() -> AIService:
     anthropic_key = os.getenv('ANTHROPIC_API_KEY')
     aws_region = os.getenv('AWS_REGION', 'us-east-1')
 
-    db = get_db()
+    db = get_supabase_client()
 
     return AIService(
         db=db,
@@ -268,9 +267,8 @@ async def ai_health_check(ai_service: AIService = Depends(get_ai_service)):
     """
     try:
         from app.services.ai.cost_tracker import CostTracker
-        from app.core.database import get_db
 
-        db = get_db()
+        db = get_supabase_client()
         cost_tracker = CostTracker(db)
 
         daily_cost = cost_tracker.get_total_daily_cost()
