@@ -11,74 +11,74 @@ so that **I can write and run automated tests with coverage reporting, mocking, 
 ## Acceptance Criteria
 
 1. **Mobile Testing Framework**
-   - ✅ Jest + React Native Testing Library configured in `weave-mobile/`
-   - ✅ Sample component test passes (`Button.test.tsx` or similar)
-   - ✅ Test commands work: `npm test`, `npm run test:watch`, `npm run test:coverage`
-   - ✅ Coverage reporting configured with baseline report (0% starting baseline)
+   - [ ] Jest + React Native Testing Library configured in `weave-mobile/`
+   - [ ] Sample component test passes (`Button.test.tsx` or similar)
+   - [ ] Test commands work: `npm test`, `npm run test:watch`, `npm run test:coverage`
+   - [ ] Coverage reporting configured with baseline report (0% starting baseline)
 
 2. **Backend Testing Framework**
-   - ✅ pytest + pytest-asyncio + httpx configured in `weave-api/`
-   - ✅ Sample API endpoint test passes (`test_health.py` or similar)
-   - ✅ Test commands work: `uv run pytest`, `uv run pytest -v`, `uv run pytest --cov`
-   - ✅ Coverage reporting configured with baseline report (0% starting baseline)
+   - [ ] pytest + pytest-asyncio + httpx configured in `weave-api/`
+   - [ ] Sample API endpoint test passes (`test_health.py` or similar)
+   - [ ] Test commands work: `uv run pytest`, `uv run pytest -v`, `uv run pytest --cov`
+   - [ ] Coverage reporting configured with baseline report (0% starting baseline)
 
 3. **Test Database Setup**
-   - ✅ Separate Supabase test project created OR local PostgreSQL configured
-   - ✅ Test environment variables in `.env.test`
-   - ✅ Migrations can run against test database
-   - ✅ Database cleanup utilities (truncate tables between tests)
+   - [ ] Separate Supabase test project created OR local PostgreSQL configured
+   - [ ] Test environment variables in `.env.test`
+   - [ ] Migrations can run against test database
+   - [ ] Database cleanup utilities (truncate tables between tests)
 
 4. **Test Data Factories**
-   - ✅ Backend: Factory functions for creating test users, goals, subtasks, journal entries
-   - ✅ Mobile: Mock data generators for API responses
-   - ✅ Documented in `docs/dev/testing-guide.md` (or similar)
+   - [ ] Backend: Factory functions for creating test users, goals, subtasks, journal entries
+   - [ ] Mobile: Mock data generators for API responses
+   - [ ] Documented in `docs/dev/testing-guide.md` (or similar)
 
 5. **AI Mocking Strategy**
-   - ✅ Deterministic AI mocks for testing without real API calls
-   - ✅ Mock responses for OpenAI and Anthropic API calls
-   - ✅ Documented approach for testing AI-dependent features
+   - [ ] Deterministic AI mocks for testing without real API calls
+   - [ ] Mock responses for OpenAI and Anthropic API calls
+   - [ ] Documented approach for testing AI-dependent features
 
 6. **Coverage Reporting**
-   - ✅ Mobile: Jest coverage report generated (`coverage/` directory)
-   - ✅ Backend: pytest-cov coverage report generated
-   - ✅ Baseline coverage metrics documented (0% acceptable for Story 0.7)
+   - [ ] Mobile: Jest coverage report generated (`coverage/` directory)
+   - [ ] Backend: pytest-cov coverage report generated
+   - [ ] Baseline coverage metrics documented (0% acceptable for Story 0.7)
 
 ## Tasks / Subtasks
 
-- [x] Task 1: Configure Mobile Testing (AC: #1)
-  - [x] Install Jest + React Native Testing Library dependencies
-  - [x] Create `jest.config.js` with React Native preset
-  - [x] Configure test scripts in `package.json`
-  - [x] Write sample component test (`src/components/__tests__/Button.test.tsx`)
-  - [x] Verify `npm test` passes
+- [ ] Task 1: Configure Mobile Testing (AC: #1)
+  - [ ] Install Jest + React Native Testing Library dependencies
+  - [ ] Create `jest.config.js` with React Native preset
+  - [ ] Configure test scripts in `package.json`
+  - [ ] Write sample component test (`src/components/__tests__/Button.test.tsx`)
+  - [ ] Verify `npm test` passes
 
-- [x] Task 2: Configure Backend Testing (AC: #2)
-  - [x] Install pytest + pytest-asyncio + httpx dependencies via `uv add --dev`
-  - [x] Create `pytest.ini` or `pyproject.toml` test configuration
-  - [x] Write sample API test (`tests/test_health.py`)
-  - [x] Verify `uv run pytest` passes
+- [ ] Task 2: Configure Backend Testing (AC: #2)
+  - [ ] Install pytest + pytest-asyncio + httpx dependencies via `uv add --dev`
+  - [ ] Create `pytest.ini` or `pyproject.toml` test configuration
+  - [ ] Write sample API test (`tests/test_health.py`)
+  - [ ] Verify `uv run pytest` passes
 
-- [x] Task 3: Set Up Test Database (AC: #3)
-  - [x] Create separate Supabase test project OR configure local PostgreSQL
-  - [x] Create `.env.test` with test database credentials
-  - [x] Document test database setup in `docs/dev/testing-guide.md`
-  - [x] Write database cleanup utility function
+- [ ] Task 3: Set Up Test Database (AC: #3)
+  - [ ] Create separate Supabase test project OR configure local PostgreSQL
+  - [ ] Create `.env.test` with test database credentials
+  - [ ] Document test database setup in `docs/dev/testing-guide.md`
+  - [ ] Write database cleanup utility function
 
-- [x] Task 4: Create Test Data Factories (AC: #4)
-  - [x] Backend: Create `tests/factories.py` with fixture functions
-  - [x] Mobile: Create `src/test-utils/mockData.ts` with mock generators
-  - [x] Document factory usage patterns
+- [ ] Task 4: Create Test Data Factories (AC: #4)
+  - [ ] Backend: Create `tests/factories.py` with fixture functions
+  - [ ] Mobile: Create `src/test-utils/mockData.ts` with mock generators
+  - [ ] Document factory usage patterns
 
-- [x] Task 5: Configure AI Mocking (AC: #5)
-  - [x] Create mock AI response generators
-  - [x] Document AI mocking strategy for OpenAI and Anthropic
-  - [x] Write sample test using mocked AI
+- [ ] Task 5: Configure AI Mocking (AC: #5)
+  - [ ] Create mock AI response generators
+  - [ ] Document AI mocking strategy for OpenAI and Anthropic
+  - [ ] Write sample test using mocked AI
 
-- [x] Task 6: Enable Coverage Reporting (AC: #6)
-  - [x] Mobile: Configure Jest coverage in `jest.config.js`
-  - [x] Backend: Configure pytest-cov in `pyproject.toml`
-  - [x] Generate initial 0% baseline coverage reports
-  - [x] Document coverage commands
+- [ ] Task 6: Enable Coverage Reporting (AC: #6)
+  - [ ] Mobile: Configure Jest coverage in `jest.config.js`
+  - [ ] Backend: Configure pytest-cov in `pyproject.toml`
+  - [ ] Generate initial 0% baseline coverage reports
+  - [ ] Document coverage commands
 
 ## Dev Notes
 
