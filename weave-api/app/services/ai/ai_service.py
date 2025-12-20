@@ -176,18 +176,8 @@ class AIService:
                     **kwargs
                 )
 
-                # Update run as success
+                # Update run as success (includes cost, tokens, model)
                 self._update_run_success(run_id, response, module)
-
-                # Record cost
-                if response.cost_usd > 0:
-                    self.cost_tracker.record_cost(
-                        run_id,
-                        response.input_tokens,
-                        response.output_tokens,
-                        response.model,
-                        response.cost_usd
-                    )
 
                 # Create artifact
                 self._create_artifact(run_id, user_id, module, response)
@@ -362,17 +352,8 @@ class AIService:
                 run_id=run_id,
             )
 
+            # Update run as success (includes cost, tokens, model)
             self._update_run_success(run_id, response, module)
-
-            # Record cost
-            if cost_usd > 0:
-                self.cost_tracker.record_cost(
-                    run_id,
-                    input_tokens,
-                    output_tokens,
-                    model,
-                    cost_usd
-                )
 
             # Create artifact
             self._create_artifact(run_id, user_id, module, response)
