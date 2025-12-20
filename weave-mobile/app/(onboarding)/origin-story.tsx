@@ -968,11 +968,11 @@ export default function OriginStoryScreen() {
             alignItems: 'center',
             justifyContent: 'center',
           }}
-          accessibilityLabel="Continue to set your first goal"
+          accessibilityLabel="Continue"
           accessibilityRole="button"
         >
           <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
-            Continue to set your first goal →
+            Continue
           </Text>
         </TouchableOpacity>
       </View>
