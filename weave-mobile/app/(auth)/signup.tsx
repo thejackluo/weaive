@@ -427,7 +427,7 @@ export default function SignupScreen() {
 
           {/* Already Signed In Card */}
           {user && (
-            <View style={styles.alreadySignedInCard}>
+            <View style={{ marginBottom: 24 }}>
               <View
                 style={{
                   backgroundColor: `${colors.accent[500]}15`,
@@ -819,7 +819,6 @@ const styles = StyleSheet.create({
   strengthBar: {
     height: '100%',
     borderRadius: 2,
-    transition: 'width 0.3s ease',
   },
   termsCheckbox: {
     flexDirection: 'row',

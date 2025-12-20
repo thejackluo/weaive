@@ -516,7 +516,7 @@ export default function LoginScreen() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onPress={bypassAuthForDev}
+                    onPress={() => bypassAuthForDev()}
                     disabled={isLoading || isOAuthLoading !== null}
                     accessibilityLabel="Development bypass"
                     style={{ opacity: 0.6 }}

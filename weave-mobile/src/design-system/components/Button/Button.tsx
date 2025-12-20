@@ -19,6 +19,7 @@ import {
   ViewStyle,
   TextStyle,
   PressableProps,
+  StyleProp,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -44,8 +45,8 @@ export interface ButtonProps extends Omit<PressableProps, 'style'> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   children: React.ReactNode;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 export function Button({
