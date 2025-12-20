@@ -532,6 +532,24 @@ class GoalFactory(factory.Factory):
 | **Long Streaks** | Overflow handling | 365+ day streak |
 | **Unicode Text** | Emoji, special chars | Goal title: "健康 💪 Fitness" |
 
+### Story 4.1: Daily Reflection Entry - Additional Edge Cases
+
+**NOTE:** These edge cases identified during Story 4.1 validation but not written as automated tests yet.
+
+| Edge Case | Why Important | Expected Behavior | Priority |
+|-----------|---------------|-------------------|----------|
+| **Edit existing journal** | User should be able to update same-day reflection | GET retrieves existing → form pre-populates → PATCH updates | P0 |
+| **Offline submission** | Users reflect in subway/elevator | Submission queued → reconnect → auto-sync successful | P0 |
+| **Max custom questions** | Prevent unbounded data growth | 5 questions exist → attempt 6th → toast "Max 5 questions" | P1 |
+| **Character limit enforcement** | Prevent excessive input | Type 500 chars → typing disabled at 500 | P1 |
+| **Timezone near midnight** | Date boundary calculation | User at 11:59 PM → journal saves to correct local_date | P0 |
+| **Edit after AI feedback** | Verify AI batch re-triggers | Update journal → verify new AI batch job triggered | P1 |
+| **Custom question deletion** | Historical data preservation | Delete question → past responses still in custom_responses JSONB | P1 |
+| **Auto-save draft recovery** | App crash during entry | App crashes → reopen → draft restored from AsyncStorage | P0 |
+| **Duplicate submission prevention** | Unique constraint handling | Submit twice rapidly → second call returns 409 or edit mode | P1 |
+
+**Test Status:** ❌ Not yet implemented - marked for future test coverage improvement sprint.
+
 ---
 
 ## CI/CD Integration
