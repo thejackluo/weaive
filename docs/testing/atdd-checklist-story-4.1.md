@@ -42,9 +42,9 @@
 
 ## Failing Tests Created (RED Phase)
 
-### API Tests (14 tests) ✅ CREATED
+### API Tests (18 tests) ✅ CREATED
 
-**File:** `weave-api/tests/test_journal_router.py` (589 lines)
+**File:** `weave-api/tests/test_journal_router.py` (645 lines)
 
 #### Test Class: TestJournalEntryCreation (4 tests)
 
@@ -108,11 +108,35 @@
   - **Status:** RED - Boolean/Yes-No response handling not implemented
   - **Verifies:** AC #13 (Yes/No type custom responses)
 
+#### Test Class: TestJournalEntryRetrieval (2 tests) - Issue #9
+
+- ✅ **Test:** `test_retrieve_existing_journal_entry_for_today`
+  - **Status:** RED - GET endpoint not implemented
+  - **Verifies:** Issue #9 (Journal pre-population edge case)
+  - **Purpose:** Enable form pre-population when user returns to edit today's journal
+
+- ✅ **Test:** `test_retrieve_journal_entry_when_none_exists`
+  - **Status:** RED - 404 response not implemented
+  - **Verifies:** Issue #9 (Empty state handling)
+
+#### Test Class: TestJournalEntryTimezoneEdgeCases (2 tests) - Issue #9
+
+- ✅ **Test:** `test_timezone_edge_case_journal_local_date`
+  - **Status:** RED - Timezone handling not implemented
+  - **Verifies:** Issue #9 (Timezone edge case near midnight)
+  - **Purpose:** Ensure user's local_date is respected, not server UTC date
+  - **Critical:** Prevents duplicate entry conflicts due to timezone differences
+
+- ✅ **Test:** `test_local_date_validation_range`
+  - **Status:** RED - Date range validation not implemented
+  - **Verifies:** Issue #9 (Prevent backdating abuse and future submissions)
+  - **Purpose:** local_date must be within 7 days past, not in future
+
 ---
 
-### E2E Integration Tests (9 tests) ✅ CREATED
+### E2E Integration Tests (13 tests) ✅ CREATED
 
-**File:** `weave-mobile/src/components/features/journal/__tests__/ReflectionFlow.integration.test.tsx` (633 lines)
+**File:** `weave-mobile/src/components/features/journal/__tests__/ReflectionFlow.integration.test.tsx` (834 lines)
 
 #### Test Suite: Complete Reflection Submission Flow (2 tests)
 
@@ -164,11 +188,39 @@
   - **Status:** RED - Auto-save logic not implemented
   - **Verifies:** AC #3 (Auto-save to AsyncStorage)
 
+#### Test Suite: Issue #9 - Journal Pre-Population (1 test)
+
+- ✅ **Test:** `should pre-populate form when journal entry already exists for today`
+  - **Status:** RED - Form pre-population logic not implemented
+  - **Verifies:** Issue #9 (Journal pre-population edge case)
+  - **Purpose:** Better UX - user can edit existing entry instead of creating duplicate
+
+#### Test Suite: Issue #9 - Offline Queue and Auto-Sync (1 test)
+
+- ✅ **Test:** `should queue offline submission and auto-sync on reconnect`
+  - **Status:** RED - Offline queue and auto-sync not implemented
+  - **Verifies:** Issue #9 (Offline submission with queue and auto-sync)
+  - **Purpose:** Reliability - prevent data loss when network unavailable
+
+#### Test Suite: Issue #9 - Max Custom Questions Enforcement (1 test)
+
+- ✅ **Test:** `should enforce max 5 custom questions limit`
+  - **Status:** RED - Max questions enforcement not implemented
+  - **Verifies:** Issue #9 (Feature guardrails for custom questions)
+  - **Purpose:** Prevent UI clutter and performance issues
+
+#### Test Suite: Issue #9 - Character Limit Enforcement (1 test)
+
+- ✅ **Test:** `should prevent typing beyond 500 character limit`
+  - **Status:** RED - Character limit enforcement not fully implemented
+  - **Verifies:** Issue #9 (Character limit at exactly 500 chars)
+  - **Purpose:** Data validation and UX feedback
+
 ---
 
-### Component Tests (13 tests) ✅ CREATED
+### Component Tests (15 tests) ✅ CREATED
 
-**File:** `weave-mobile/src/components/features/journal/__tests__/ReflectionScreen.test.tsx` (418 lines)
+**File:** `weave-mobile/src/components/features/journal/__tests__/ReflectionScreen.test.tsx` (554 lines)
 
 #### Test Suite: ReflectionHeader Component (3 tests)
 
@@ -228,11 +280,24 @@
   - **Status:** RED - Component does not exist
   - **Verifies:** AC #5 (Interactive slider)
 
+#### Test Suite: Issue #9 - CharacterCountTextInput Component (2 tests)
+
+- ✅ **Test:** `should disable input at exactly 500 characters`
+  - **Status:** RED - Boundary condition enforcement not implemented
+  - **Verifies:** Issue #9 (Character limit at exactly 500 chars)
+  - **Purpose:** Data validation and UX feedback at boundary condition
+
+- ✅ **Test:** `should re-enable input when character count drops below 500`
+  - **Status:** RED - Dynamic editable state not implemented
+  - **Verifies:** Issue #9 (Character limit boundary behavior)
+  - **Purpose:** Ensure users can edit text after hitting limit
+
 ---
 
-## Issue #9: Missing Specific Edge Case Tests (To Be Added)
+## Issue #9: Missing Specific Edge Case Tests (IMPLEMENTED ✅)
 
-**Status:** 📝 DOCUMENTED (Not yet implemented)
+**Status:** ✅ CREATED (All 6 tests added)
+**Previous Status:** 📝 DOCUMENTED (Not yet implemented)
 **Source:** User feedback - 2025-12-20
 **Location Reference:** Task 7, line 291
 
@@ -350,15 +415,39 @@
 
 ---
 
-### Summary of Missing Tests
+### Summary of Tests (Issue #9)
 
-| Test Category | Backend Tests | Mobile E2E Tests | Mobile Component Tests | Total |
-|---------------|---------------|------------------|------------------------|-------|
-| **Currently Implemented** | 14 | 9 | 13 | 36 |
-| **Missing (Issue #9)** | 2 | 3 | 1 | 6 |
-| **Total When Complete** | 16 | 12 | 14 | **42** |
+| Test Category | Original Tests | Issue #9 Tests | Total |
+|---------------|----------------|----------------|-------|
+| **Backend API Tests** | 14 | +4 | 18 |
+| **Mobile E2E Tests** | 9 | +4 | 13 |
+| **Mobile Component Tests** | 13 | +2 | 15 |
+| **GRAND TOTAL** | 36 | +10 | **46** |
 
-### Implementation Priority
+**Note:** We added 10 tests total (not 6) because:
+- Backend gained 4 tests (2 retrieval + 2 timezone = 4)
+- Mobile E2E gained 4 tests (pre-populate + offline queue + max questions + char limit = 4)
+- Mobile Component gained 2 tests (char limit + re-enable = 2)
+
+### Issue #9 Tests Status: ✅ ALL CREATED
+
+**Backend (4 tests):**
+- ✅ `test_retrieve_existing_journal_entry_for_today`
+- ✅ `test_retrieve_journal_entry_when_none_exists`
+- ✅ `test_timezone_edge_case_journal_local_date`
+- ✅ `test_local_date_validation_range`
+
+**Mobile E2E (4 tests):**
+- ✅ `should pre-populate form when journal entry already exists for today`
+- ✅ `should queue offline submission and auto-sync on reconnect`
+- ✅ `should enforce max 5 custom questions limit`
+- ✅ `should prevent typing beyond 500 character limit`
+
+**Mobile Component (2 tests):**
+- ✅ `should disable input at exactly 500 characters`
+- ✅ `should re-enable input when character count drops below 500`
+
+### Implementation Priority (Unchanged)
 
 **Phase 1 (Critical Edge Cases):**
 1. Timezone edge case (backend) - **High Risk** if incorrect
@@ -368,13 +457,6 @@
 **Phase 2 (User Experience):**
 4. Offline queue and auto-sync (mobile) - **Reliability**
 5. Max 5 custom questions (mobile) - **Feature Completeness**
-
-### Next Steps
-
-1. **After implementing Story 4.1 core functionality**, return to this section
-2. Add these 6 edge case tests following the specifications above
-3. Verify all 42 tests pass (16 backend + 12 E2E + 14 component)
-4. Update test count in ATDD checklist header
 
 ---
 

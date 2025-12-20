@@ -575,6 +575,253 @@ describe('Daily Reflection Flow - E2E Integration Tests', () => {
       jest.useRealTimers();
     });
   });
+
+  describe('Issue #9: Edge Cases - Journal Pre-Population', () => {
+    it('should pre-populate form when journal entry already exists for today', async () => {
+      /**
+       * GIVEN: User navigates to Daily Check-in screen
+       * WHEN: Journal entry already exists for today (API returns existing data)
+       * THEN: Form fields pre-populate with saved reflection, focus, fulfillment score, and custom responses
+       *
+       * Validates: Issue #9 - Journal pre-population edge case
+       * Purpose: Better UX - user can edit existing entry instead of creating duplicate
+       */
+
+      // GIVEN: Existing journal entry for today
+      const existingEntry = generateMockJournalEntry({
+        local_date: new Date().toISOString().split('T')[0],
+        fulfillment_score: 8,
+        default_responses: {
+          today_reflection: 'Great day with lots of progress!',
+          tomorrow_focus: 'Continue momentum on project',
+        },
+        custom_responses: {
+          'uuid-123': {
+            question_text: 'Did I meditate?',
+            response: 'Yes',
+          },
+        },
+      });
+
+      // Mock API to return existing entry
+      (journalApi.getJournalEntryForDate as jest.Mock).mockResolvedValue({
+        data: existingEntry,
+      });
+
+      const { getByTestId, getByDisplayValue } = render(
+        <QueryClientProvider client={queryClient}>
+          <NavigationContainer>
+            {/* <ReflectionScreen /> - Component to be implemented */}
+            <div data-testid="reflection-screen">Reflection Screen Placeholder</div>
+          </NavigationContainer>
+        </QueryClientProvider>
+      );
+
+      // WHEN: Screen loads and fetches existing entry
+      await waitFor(() => {
+        expect(journalApi.getJournalEntryForDate).toHaveBeenCalledWith(
+          expect.stringMatching(/\d{4}-\d{2}-\d{2}/)
+        );
+      });
+
+      // THEN: Form fields pre-populate with existing data
+      await waitFor(() => {
+        expect(getByDisplayValue('Great day with lots of progress!')).toBeTruthy();
+        expect(getByDisplayValue('Continue momentum on project')).toBeTruthy();
+      });
+
+      const slider = getByTestId('fulfillment-slider');
+      expect(slider.props.value).toBe(8);
+
+      // Custom question response pre-populated
+      const customInput = getByTestId('custom-question-uuid-123-input');
+      expect(customInput.props.value).toBe('Yes');
+    });
+  });
+
+  describe('Issue #9: Edge Cases - Offline Queue and Auto-Sync', () => {
+    it('should queue offline submission and auto-sync on reconnect', async () => {
+      /**
+       * GIVEN: User completes reflection form
+       * WHEN: User submits while in airplane mode (network unavailable)
+       * THEN:
+       *   - Toast shows "Saved locally, will sync when online"
+       *   - Entry saved to AsyncStorage under `pending-journal-submissions`
+       *   - Navigation still proceeds to AI Feedback screen (with "pending" state)
+       * WHEN: Network reconnects
+       * THEN:
+       *   - TanStack Query resumePausedMutations() triggers auto-sync
+       *   - Entry successfully submitted to API
+       *   - AsyncStorage queue cleared
+       *   - Toast shows "✓ Reflection synced"
+       *
+       * Validates: Issue #9 - Offline submission queue and auto-sync
+       * Purpose: Reliability - prevent data loss when network unavailable
+       */
+
+      // GIVEN: User fills reflection form
+      const { getByTestId } = render(
+        <QueryClientProvider client={queryClient}>
+          <NavigationContainer>
+            {/* <ReflectionScreen /> - Component to be implemented */}
+            <div data-testid="reflection-screen">Reflection Screen Placeholder</div>
+          </NavigationContainer>
+        </QueryClientProvider>
+      );
+
+      const reflectionInput = getByTestId('reflection-text-input');
+      const submitButton = getByTestId('submit-button');
+
+      fireEvent.changeText(reflectionInput, 'Offline reflection test');
+
+      // WHEN: Network error occurs during submission
+      (journalApi.submitJournalEntry as jest.Mock).mockRejectedValue(
+        new Error('Network request failed')
+      );
+
+      fireEvent.press(submitButton);
+
+      // THEN: Offline queue toast shown
+      await waitFor(() => {
+        expect(mockShowToast).toHaveBeenCalledWith(
+          expect.stringMatching(/saved locally|will sync when online/i)
+        );
+      });
+
+      // THEN: Entry saved to AsyncStorage
+      await waitFor(() => {
+        expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+          'pending-journal-submissions',
+          expect.stringContaining('Offline reflection test')
+        );
+      });
+
+      // WHEN: Network reconnects (simulate successful submission)
+      (journalApi.submitJournalEntry as jest.Mock).mockResolvedValue({
+        data: generateMockJournalEntry(),
+      });
+
+      // Simulate TanStack Query resuming paused mutations
+      await queryClient.resumePausedMutations();
+
+      // THEN: Entry synced successfully
+      await waitFor(() => {
+        expect(journalApi.submitJournalEntry).toHaveBeenCalled();
+        expect(mockShowToast).toHaveBeenCalledWith(
+          expect.stringMatching(/synced|uploaded/i)
+        );
+      });
+
+      // THEN: AsyncStorage queue cleared
+      await waitFor(() => {
+        expect(AsyncStorage.removeItem).toHaveBeenCalledWith('pending-journal-submissions');
+      });
+    });
+  });
+
+  describe('Issue #9: Edge Cases - Max Custom Questions Enforcement', () => {
+    it('should enforce max 5 custom questions limit', async () => {
+      /**
+       * GIVEN: User has 5 existing custom questions in preferences
+       * WHEN: User taps "+ Add custom question" link
+       * THEN: Modal opens showing existing 5 questions
+       * WHEN: User taps "Add new question" button
+       * THEN:
+       *   - Button is disabled or shows tooltip
+       *   - Toast appears: "You can have up to 5 custom questions"
+       *   - No new question form is shown
+       *
+       * Validates: Issue #9 - Max 5 custom questions enforcement
+       * Purpose: Feature guardrails - prevent UI clutter and performance issues
+       */
+
+      // GIVEN: User has 5 existing custom questions
+      const mockUser = generateMockUser({
+        preferences: {
+          custom_reflection_questions: generateMockCustomQuestions(5), // Max limit
+        },
+      });
+
+      (journalApi.getCurrentUser as jest.Mock).mockResolvedValue({
+        data: mockUser,
+      });
+
+      const { getByTestId } = render(
+        <QueryClientProvider client={queryClient}>
+          <NavigationContainer>
+            {/* <ReflectionScreen /> - Component to be implemented */}
+            <div data-testid="reflection-screen">Reflection Screen Placeholder</div>
+          </NavigationContainer>
+        </QueryClientProvider>
+      );
+
+      // WHEN: User taps "+ Add custom question" link
+      const addQuestionLink = getByTestId('add-custom-question-link');
+      fireEvent.press(addQuestionLink);
+
+      // THEN: Modal opens
+      await waitFor(() => {
+        expect(getByTestId('manage-questions-modal')).toBeTruthy();
+      });
+
+      // WHEN: User attempts to add 6th question
+      const addButton = getByTestId('add-new-question-button');
+      fireEvent.press(addButton);
+
+      // THEN: Toast shows max limit reached
+      await waitFor(() => {
+        expect(mockShowToast).toHaveBeenCalledWith(
+          expect.stringMatching(/max 5 questions|up to 5/i)
+        );
+      });
+
+      // THEN: Button disabled (or no new question form shown)
+      expect(addButton.props.disabled).toBe(true);
+    });
+  });
+
+  describe('Issue #9: Edge Cases - Character Limit Enforcement', () => {
+    it('should prevent typing beyond 500 character limit', async () => {
+      /**
+       * GIVEN: User is typing in reflection text input
+       * WHEN: User reaches 500 characters
+       * THEN: Cannot type additional characters (maxLength enforcement works)
+       *
+       * Validates: Issue #9 - Character limit enforcement at exactly 500 chars
+       * Purpose: Data validation and UX feedback
+       */
+
+      const { getByTestId } = render(
+        <QueryClientProvider client={queryClient}>
+          <NavigationContainer>
+            {/* <ReflectionScreen /> - Component to be implemented */}
+            <div data-testid="reflection-screen">Reflection Screen Placeholder</div>
+          </NavigationContainer>
+        </QueryClientProvider>
+      );
+
+      const reflectionInput = getByTestId('reflection-text-input');
+
+      // GIVEN: User types exactly 500 characters
+      const text500Chars = 'A'.repeat(500);
+      fireEvent.changeText(reflectionInput, text500Chars);
+
+      // THEN: Character counter shows 500 / 500
+      await waitFor(() => {
+        const counterText = getByTestId('character-counter').props.children;
+        expect(counterText).toMatch(/500\s*\/\s*500/);
+      });
+
+      // WHEN: User tries to type 501st character
+      const text501Chars = 'A'.repeat(501);
+      fireEvent.changeText(reflectionInput, text501Chars);
+
+      // THEN: Input truncated at 500 characters (maxLength prop enforces this)
+      await waitFor(() => {
+        expect(reflectionInput.props.value.length).toBe(500);
+      });
+    });
+  });
 });
 
 /**

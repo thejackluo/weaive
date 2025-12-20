@@ -449,6 +449,102 @@ describe('CustomQuestionInput Component', () => {
   });
 });
 
+describe('Issue #9: Edge Cases - CharacterCountTextInput Component', () => {
+  it('should disable input at exactly 500 characters', () => {
+    /**
+     * GIVEN: Reflection text input is rendered
+     * WHEN: User types exactly 500 characters
+     * THEN:
+     *   - Character counter shows "500 / 500"
+     *   - Input becomes non-editable (editable={false})
+     *   - Visual feedback (counter turns red or input border highlights)
+     *   - Further typing is prevented
+     *
+     * Validates: Issue #9 - Character limit enforcement at exactly 500 chars
+     * Purpose: Data validation and UX feedback at boundary condition
+     */
+
+    // Component stub for testing (to be implemented in Story 4.1)
+    const CharacterCountTextInput = ({ maxLength, onChange }: any) => null;
+
+    const mockOnChange = jest.fn();
+    const { getByTestId, rerender } = render(
+      <CharacterCountTextInput maxLength={500} onChange={mockOnChange} />
+    );
+
+    const input = getByTestId('reflection-text-input');
+    const counter = getByTestId('character-counter');
+
+    // GIVEN: User types 499 characters (still editable)
+    const text499Chars = 'A'.repeat(499);
+    fireEvent.changeText(input, text499Chars);
+
+    // THEN: Counter shows 499 / 500, input still editable
+    expect(counter.props.children).toMatch(/499\s*\/\s*500/);
+    expect(input.props.editable).toBe(true);
+
+    // WHEN: User types exactly 500 characters
+    const text500Chars = 'A'.repeat(500);
+    fireEvent.changeText(input, text500Chars);
+
+    // THEN: Counter shows 500 / 500
+    expect(counter.props.children).toMatch(/500\s*\/\s*500/);
+
+    // THEN: Input becomes non-editable (hard limit enforcement)
+    expect(input.props.editable).toBe(false);
+
+    // THEN: Visual feedback applied (counter style change)
+    expect(counter.props.style).toMatchObject(
+      expect.objectContaining({
+        color: expect.stringMatching(/#[eE][fF][45]|red/), // Red color variants
+      })
+    );
+
+    // WHEN: User tries to type 501st character
+    const text501Chars = 'A'.repeat(501);
+    fireEvent.changeText(input, text501Chars);
+
+    // THEN: Input value truncated at 500 (maxLength prop enforces this)
+    expect(input.props.value.length).toBe(500);
+    expect(mockOnChange).not.toHaveBeenCalledWith(text501Chars);
+  });
+
+  it('should re-enable input when character count drops below 500', () => {
+    /**
+     * GIVEN: Input is at 500 characters (disabled)
+     * WHEN: User deletes characters (e.g., backspace)
+     * THEN: Input becomes editable again when < 500 characters
+     *
+     * Validates: Issue #9 - Character limit boundary behavior
+     * Purpose: Ensure users can edit text after hitting limit
+     */
+
+    const CharacterCountTextInput = ({ maxLength, onChange }: any) => null;
+
+    const { getByTestId } = render(
+      <CharacterCountTextInput maxLength={500} onChange={() => {}} />
+    );
+
+    const input = getByTestId('reflection-text-input');
+
+    // GIVEN: Input at 500 characters (disabled)
+    const text500Chars = 'A'.repeat(500);
+    fireEvent.changeText(input, text500Chars);
+    expect(input.props.editable).toBe(false);
+
+    // WHEN: User deletes one character (499 chars)
+    const text499Chars = 'A'.repeat(499);
+    fireEvent.changeText(input, text499Chars);
+
+    // THEN: Input becomes editable again
+    expect(input.props.editable).toBe(true);
+
+    // THEN: Counter no longer shows red
+    const counter = getByTestId('character-counter');
+    expect(counter.props.style?.color).not.toMatch(/red|#[eE][fF][45]/);
+  });
+});
+
 /**
  * Additional component test TODOs:
  * - ManageQuestionsModal component tests (AC #11)
