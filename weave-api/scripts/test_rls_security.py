@@ -27,12 +27,11 @@ Run: uv run python scripts/test_rls_security.py
 import logging
 import os
 import sys
-import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 # Load environment variables
 load_dotenv()
@@ -159,7 +158,7 @@ class RLSPenetrationTester:
                     goal_data = {
                         'user_id': user['profile_id'],
                         'title': f"User {user['index']} Goal {goal_idx + 1}",
-                        'description': f"Test goal for RLS validation",
+                        'description': "Test goal for RLS validation",
                         'status': 'active',
                     }
                     client.table('goals').insert(goal_data).execute()
@@ -179,7 +178,7 @@ class RLSPenetrationTester:
             except Exception as e:
                 logger.error(f"  ❌ Error seeding data for user {user['index']}: {str(e)[:100]}")
 
-        logger.info(f"✅ Data seeding complete")
+        logger.info("✅ Data seeding complete")
 
     def _get_authenticated_client(self, access_token: Optional[str]) -> Client:
         """Create Supabase client with specific user's auth token."""
@@ -294,7 +293,7 @@ class RLSPenetrationTester:
                 })
                 logger.error(f"  🚨 VULNERABILITY: User {attacker['index']} inserted data for User {victim['index']}!")
             else:
-                logger.info(f"  ✅ Cross-user INSERT blocked (RLS policy prevented insert)")
+                logger.info("  ✅ Cross-user INSERT blocked (RLS policy prevented insert)")
 
         except Exception as e:
             logger.info(f"  ✅ Cross-user INSERT blocked: {str(e)[:100]}")
@@ -340,7 +339,7 @@ class RLSPenetrationTester:
                 })
                 logger.error(f"  🚨 VULNERABILITY: User {attacker['index']} updated User {victim['index']} data!")
             else:
-                logger.info(f"  ✅ Cross-user UPDATE blocked (0 rows affected)")
+                logger.info("  ✅ Cross-user UPDATE blocked (0 rows affected)")
 
         except Exception as e:
             logger.info(f"  ✅ Cross-user UPDATE blocked: {str(e)[:100]}")
@@ -371,7 +370,7 @@ class RLSPenetrationTester:
             victim_journal_id = victim_journals.data[0]['id']
 
             # Try to delete victim's journal as attacker
-            response = attacker_client.table('journal_entries').delete().eq('id', victim_journal_id).execute()
+            _ = attacker_client.table('journal_entries').delete().eq('id', victim_journal_id).execute()
 
             # Verify journal still exists
             check = self.supabase.table('journal_entries').select('id').eq('id', victim_journal_id).execute()
@@ -386,7 +385,7 @@ class RLSPenetrationTester:
                 })
                 logger.error(f"  🚨 VULNERABILITY: User {attacker['index']} deleted User {victim['index']} data!")
             else:
-                logger.info(f"  ✅ Cross-user DELETE blocked (data still exists)")
+                logger.info("  ✅ Cross-user DELETE blocked (data still exists)")
 
         except Exception as e:
             logger.info(f"  ✅ Cross-user DELETE blocked: {str(e)[:100]}")
@@ -453,7 +452,7 @@ class RLSPenetrationTester:
             # Test UPDATE (should be blocked)
             self.attack_attempts['immutability_violations'] += 1
             try:
-                update_response = user_client.table('subtask_completions').update({
+                _ = user_client.table('subtask_completions').update({
                     'local_date': '2099-12-31'  # Try to change date
                 }).eq('id', completion_id).execute()
 
@@ -469,7 +468,7 @@ class RLSPenetrationTester:
                     })
                     logger.error(f"  🚨 VULNERABILITY: User {user['index']} updated immutable completion!")
                 else:
-                    logger.info(f"  ✅ UPDATE blocked on immutable table (data unchanged)")
+                    logger.info("  ✅ UPDATE blocked on immutable table (data unchanged)")
 
             except Exception as e:
                 logger.info(f"  ✅ UPDATE blocked: {str(e)[:100]}")
@@ -477,7 +476,7 @@ class RLSPenetrationTester:
             # Test DELETE (should be blocked)
             self.attack_attempts['immutability_violations'] += 1
             try:
-                delete_response = user_client.table('subtask_completions').delete().eq('id', completion_id).execute()
+                _ = user_client.table('subtask_completions').delete().eq('id', completion_id).execute()
 
                 # Check if still exists
                 check = self.supabase.table('subtask_completions').select('id').eq('id', completion_id).execute()
@@ -491,7 +490,7 @@ class RLSPenetrationTester:
                     })
                     logger.error(f"  🚨 VULNERABILITY: User {user['index']} deleted immutable completion!")
                 else:
-                    logger.info(f"  ✅ DELETE blocked on immutable table (still exists)")
+                    logger.info("  ✅ DELETE blocked on immutable table (still exists)")
 
             except Exception as e:
                 logger.info(f"  ✅ DELETE blocked: {str(e)[:100]}")
@@ -587,7 +586,7 @@ class RLSPenetrationTester:
         logger.info("🛡️  RLS PENETRATION TEST SUMMARY")
         logger.info("=" * 80)
 
-        logger.info(f"\n📊 Attack Statistics:")
+        logger.info("\n📊 Attack Statistics:")
         logger.info(f"  • Direct ID queries: {self.attack_attempts['direct_id_queries']}")
         logger.info(f"  • Enumeration attacks: {self.attack_attempts['enumeration_attacks']}")
         logger.info(f"  • Batch queries: {self.attack_attempts['batch_queries']}")
@@ -609,10 +608,10 @@ class RLSPenetrationTester:
             logger.error("⚠️  CRITICAL: Fix vulnerabilities before deploying to production!")
             return False
         else:
-            logger.info(f"\n✅ SECURITY TEST PASSED!")
+            logger.info("\n✅ SECURITY TEST PASSED!")
             logger.info(f"✅ All {total_attempts} attack attempts were blocked by RLS policies")
-            logger.info(f"✅ Zero unauthorized data accesses detected")
-            logger.info(f"✅ Database is secure for multi-user production use")
+            logger.info("✅ Zero unauthorized data accesses detected")
+            logger.info("✅ Database is secure for multi-user production use")
             return True
 
     def run_all_tests(self):
@@ -621,7 +620,7 @@ class RLSPenetrationTester:
         logger.info("🔒 RLS PENETRATION TESTING - Story 0.4")
         logger.info("=" * 80)
         logger.info(f"Started: {datetime.now().isoformat()}")
-        logger.info(f"Test strategy: Create 10 users, seed data, attempt cross-user attacks")
+        logger.info("Test strategy: Create 10 users, seed data, attempt cross-user attacks")
         logger.info("")
 
         try:
@@ -648,7 +647,7 @@ class RLSPenetrationTester:
             # Results
             success = self.print_summary()
 
-            logger.info(f"\n📄 Full audit log: security_audit.log")
+            logger.info("\n📄 Full audit log: security_audit.log")
             logger.info(f"Completed: {datetime.now().isoformat()}")
 
             sys.exit(0 if success else 1)
