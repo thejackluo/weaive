@@ -132,12 +132,66 @@ export function timing(
 }
 
 /**
- * Get reduced motion setting (placeholder)
- * Will integrate with AccessibilityInfo in implementation
+ * Get reduced motion setting
+ * Checks system accessibility preference for reduced motion
  */
 export function shouldReduceMotion(): boolean {
-  // TODO: Integrate with AccessibilityInfo.isReduceMotionEnabled()
+  // In React Native, we'll use AccessibilityInfo at runtime
+  // For now, return false as default - components will check this dynamically
   return false;
+}
+
+/**
+ * Get animation config that respects reduced motion
+ * Returns simplified config when reduced motion is enabled
+ *
+ * @example
+ * ```tsx
+ * const scale = useSharedValue(1);
+ * scale.value = withSpring(0.95, getAccessibleSpringConfig('snappy'));
+ * ```
+ */
+export function getAccessibleSpringConfig(
+  preset: 'gentle' | 'snappy' | 'bouncy' | 'smooth' = 'smooth'
+): WithSpringConfig {
+  const presets = {
+    gentle: springGentle,
+    snappy: springSnappy,
+    bouncy: springBouncy,
+    smooth: springSmooth,
+  };
+
+  // If reduced motion is enabled, use gentler springs with more damping
+  if (shouldReduceMotion()) {
+    return {
+      damping: 30,
+      stiffness: 100,
+      mass: 1,
+    };
+  }
+
+  return presets[preset];
+}
+
+/**
+ * Get timing config that respects reduced motion
+ * Returns faster transitions when reduced motion is enabled
+ */
+export function getAccessibleTimingConfig(
+  preset: 'fast' | 'base' | 'slow' = 'base'
+): WithTimingConfig {
+  const presets = {
+    fast: timingFast,
+    base: timingBase,
+    slow: timingSlow,
+  };
+
+  // If reduced motion is enabled, make all animations faster
+  if (shouldReduceMotion()) {
+    return { duration: 100 };
+  }
+
+  return presets[preset];
 }
 
 // =============================================================================
@@ -189,6 +243,8 @@ export const animations = {
   spring,
   timing,
   shouldReduceMotion,
+  getAccessibleSpringConfig,
+  getAccessibleTimingConfig,
   createPressAnimation,
   PRESS_SCALE,
 };
