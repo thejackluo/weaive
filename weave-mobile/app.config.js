@@ -1,0 +1,65 @@
+require('dotenv').config();
+
+module.exports = {
+  expo: {
+    name: 'weave-mobile',
+    slug: 'weave-mobile',
+    version: '0.0.1',
+    scheme: 'weavelight',
+    orientation: 'portrait',
+    icon: './assets/icon.png',
+    userInterfaceStyle: 'light',
+    newArchEnabled: true,
+    splash: {
+      image: './assets/splash-icon.png',
+      resizeMode: 'contain',
+      backgroundColor: '#ffffff'
+    },
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: 'com.weavelight.app',
+      associatedDomains: ['applinks:weavelight.app'],
+      infoPlist: {
+        CFBundleURLTypes: [
+          {
+            CFBundleURLSchemes: ['weavelight']
+          }
+        ]
+      }
+    },
+    android: {
+      package: 'com.weavelight.app',
+      adaptiveIcon: {
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#ffffff'
+      },
+      intentFilters: [
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          data: [
+            {
+              scheme: 'weavelight'
+            }
+          ],
+          category: ['BROWSABLE', 'DEFAULT']
+        }
+      ],
+      edgeToEdgeEnabled: true,
+      predictiveBackGestureEnabled: false
+    },
+    web: {
+      favicon: './assets/favicon.png',
+      bundler: 'metro'
+    },
+    plugins: ['expo-router', 'expo-web-browser'],
+    extra: {
+      router: {},
+      eas: {
+        projectId: '958e77af-47be-49ec-a7e6-bbfa14552734'
+      },
+      // API Configuration from .env
+      apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:8000',
+    }
+  }
+};
