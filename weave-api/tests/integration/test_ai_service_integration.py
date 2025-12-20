@@ -106,7 +106,7 @@ def test_anthropic_real_api():
     """
     Test Anthropic provider with REAL API call.
 
-    Uses Claude 4.5 Haiku (cheaper than Sonnet) with minimal prompt.
+    Uses Claude 3.5 Haiku (current version) with minimal prompt.
     Expected cost: ~$0.0001
     """
     from app.services.ai.anthropic_provider import AnthropicProvider
@@ -119,7 +119,7 @@ def test_anthropic_real_api():
 
     # Use shortest possible prompt to minimize cost
     prompt = "Say 'hello' in one word"
-    model = 'claude-4-5-haiku-20250514'  # Cheaper: $1/$5 per MTok
+    model = 'claude-3-5-haiku-20241022'  # Current version: $1/$5 per MTok
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🤖 Model: {model}")
@@ -165,7 +165,7 @@ def test_bedrock_real_api():
 
     # Use shortest possible prompt to minimize cost
     prompt = "Say 'hey' in one word"
-    model = 'anthropic.claude-3-5-haiku-20241022-v1:0'  # Cheapest: $0.25/$1.25 per MTok
+    model = 'us.anthropic.claude-3-5-haiku-20241022-v1:0'  # Inference profile ID: $0.25/$1.25 per MTok
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🤖 Model: {model}")

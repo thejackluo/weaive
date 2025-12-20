@@ -31,17 +31,26 @@ from app.services.ai.templates import get_template
 def mock_db():
     """Mock Supabase client."""
     db = Mock()
-    db.table = Mock(return_value=db)
-    db.select = Mock(return_value=db)
-    db.insert = Mock(return_value=db)
-    db.update = Mock(return_value=db)
-    db.eq = Mock(return_value=db)
-    db.gte = Mock(return_value=db)
-    db.lte = Mock(return_value=db)
-    db.order = Mock(return_value=db)
-    db.limit = Mock(return_value=db)
-    db.execute = Mock(return_value=Mock(data=[], count=0))
-    return db
+
+    # Create a mock that returns itself for chaining
+    # but returns proper Mock for execute()
+    chain_mock = Mock()
+    chain_mock.table = Mock(return_value=chain_mock)
+    chain_mock.select = Mock(return_value=chain_mock)
+    chain_mock.insert = Mock(return_value=chain_mock)
+    chain_mock.update = Mock(return_value=chain_mock)
+    chain_mock.eq = Mock(return_value=chain_mock)
+    chain_mock.gte = Mock(return_value=chain_mock)
+    chain_mock.lt = Mock(return_value=chain_mock)
+    chain_mock.lte = Mock(return_value=chain_mock)
+    chain_mock.order = Mock(return_value=chain_mock)
+    chain_mock.limit = Mock(return_value=chain_mock)
+    chain_mock.execute = Mock(return_value=Mock(data=[], count=0))
+
+    # Make db.table() return the chain mock
+    db.table = Mock(return_value=chain_mock)
+
+    return chain_mock  # Return chain mock so tests can configure it
 
 
 @pytest.fixture
@@ -375,9 +384,9 @@ def test_anthropic_provider_cost_estimation():
     """Test Anthropic cost estimation."""
     provider = AnthropicProvider(api_key='sk-ant-test')
 
-    cost = provider.estimate_cost(1000, 500, 'claude-3-7-sonnet-20250219')
+    cost = provider.estimate_cost(1000, 500, 'claude-3-5-sonnet-20241022')
 
-    # Claude 3.7 Sonnet: $3.00/$15.00 per MTok
+    # Claude 3.5 Sonnet: $3.00/$15.00 per MTok
     expected_cost = (1000 * 3.00 / 1_000_000) + (500 * 15.00 / 1_000_000)
     assert abs(cost - expected_cost) < 0.000001
 
