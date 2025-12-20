@@ -46,6 +46,7 @@ app.include_router(health.router, tags=["health"])
 app.include_router(user.router, tags=["user"])
 app.include_router(analytics.router, tags=["analytics"])
 app.include_router(onboarding.router, tags=["onboarding"])
+app.include_router(ai_router.router, tags=["ai"])
 
 @app.get("/")
 async def root():
