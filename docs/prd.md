@@ -1061,88 +1061,133 @@ This step introduces:
 
 **Priority:** M (Must Have)
 
-**As a** new user
-**I want to** see a clear, AI-generated breakdown of my goal
-**So that** I understand exactly how to begin
-
-**Acceptance Criteria:**
-- [ ] Loading animation: "Shaping your path…"
-- [ ] 1-3 second delay (UX pacing)
-- [ ] AI generates:
-  - Goal title & summary
-  - 2-3 milestones
-  - 2-4 binds (actions/habits)
-- [ ] User can accept or edit each item
-- [ ] CTA: "Looks good" → or "Edit"
-
-**AI Module:** Onboarding Coach (deterministic constraints, ~70% success probability)
-
-**Data Requirements:**
-- Write outputs to:
-  - `goals`
-  - `qgoals`
-  - `subtask_templates`
-- Create `ai_runs` record
-
----
-
-#### US-1.9: First Commitment Ritual (Bind #1)
-
-**Priority:** M (Must Have)
+**User Story:**
 
 **As a** new user
-**I want to** complete a symbolic first action
-**So that** I feel emotionally invested and committed
+**I want to** complete a daily check-in
+**So that** I feel present and so Weave can begin learning how I think
+
+**Overview / Rationale:**
+
+Reflection is the third pillar of Weave:
+- **Needles** = direction
+- **Binds** = action
+- **Reflection** = meaning
+
+This lightweight Day 0 reflection introduces the reflection habit immediately after goal setup, establishing the core loop before the user leaves onboarding.
 
 **Acceptance Criteria:**
-- [ ] Display: "Today is [date]. Mark this as the start of your transformation."
-- [ ] User must tap "Complete my first Bind"
-- [ ] Accept any input type: text, photo, audio, or checkmark
-- [ ] Show micro-animation of thread tightening
-- [ ] Display: "Day 1 complete."
+- [ ] Display prompt: "How are you feeling right now about starting this journey?"
+- [ ] Text input (50-500 characters, optional)
+- [ ] Fulfillment slider (1-10): "Rate your current state"
+- [ ] Simple, non-intimidating UI - feels like a quick check-in, not heavy journaling
+- [ ] Completion time <60 seconds
+- [ ] CTA: "Done" or "Continue"
 
 **Data Requirements:**
-- Create first `subtask_instance`
-- Write `bind_completed` event
-- Set `onboarding_first_bind_completed_at`
+- Create first entry in `journal_entries` table
+- Fields: `user_id`, `local_date`, `fulfillment_score`, `reflection_text`, `created_at`
+- Set `user_profiles.first_journal_at` timestamp
+- Track analytics event: `first_journal_completed`
+
+**Technical Notes:**
+- No AI generation on submit (too early, not enough data)
+- This establishes the reflection habit pattern
+- Future reflections will be more structured with AI feedback
 
 ---
 
 ### PHASE 4 — Lightweight Orientation
 
-#### US-1.10: App Mini-Tutorial (Tooltip Style)
+#### US-1.10: Progress Dashboard Introduction
 
 **Priority:** M (Must Have)
 
 **As a** new user
-**I want to** see a quick, digestible tour
-**So that** I understand the core structure without feeling overwhelmed
+**I want to** understand the key parts of my progress dashboard
+**So that** I know how to track my transformation
 
 **Acceptance Criteria:**
-- [ ] 3 tooltips:
-  - Highlight Weave avatar → "This grows with your consistency."
-  - Highlight Binds → "These are your identity-building actions."
+- [ ] 3 tooltips introducing core dashboard elements:
+  - Highlight Weave visualization → "This grows with your consistency."
+  - Highlight Binds section → "These are your identity-building actions."
   - Highlight Reflection button → "Reflect nightly for deeper insights."
 - [ ] Each tooltip dismissible with "Got it"
 - [ ] Tutorial duration <20 seconds
 - [ ] Track tutorial completed vs skipped
+- [ ] Completion immediately after first reflection
+
+**Technical Notes:**
+- Simplified orientation focusing on progress visualization
+- Tooltips appear on Thread (Home) screen
+- User can skip tutorial if desired
 
 ---
 
-### PHASE 5 — Trial Activation
+### PHASE 5 — Trial Activation & Handoff
 
-#### US-1.11: Welcome Into the 7-Day Journey
+#### US-1.11: Housekeeping, Trial Framing & Handoff
 
 **Priority:** M (Must Have)
 
+**User Story:**
+
 **As a** new user
-**I want to** understand I'm beginning a guided 7-day experience
-**So that** I'm motivated to continue
+**I want to** complete essential setup and understand my trial
+**So that** I can start using Weave with proper context
+
+**Overview / Rationale:**
+
+This 4-screen flow combines essential housekeeping (privacy, notifications), trial framing (7-day context + soft paywall), and completion ceremony into a cohesive handoff from onboarding to active usage.
+
+**Screen 1: Privacy & Data**
+- Title: "Your data is private and secure"
+- Body: Brief explanation of data encryption and RLS
+- Checkbox: "I agree to Privacy Policy and Terms"
+- CTA: "Continue"
+
+**Screen 2: Notification Permissions**
+- Title: "Stay on track with gentle reminders"
+- Body: "Weave can send you daily nudges to complete your binds and reflect."
+- Options: "Allow Notifications" or "Skip for now"
+- Note: Can be enabled later in settings
+
+**Screen 3: Trial Framing & Soft Paywall**
+- Title: "You're starting your 7-day journey"
+- Body: "For the next 7 days, you have full access to Weave. After that, choose the plan that fits."
+- Display tier comparison: Free vs Pro vs Max
+- CTAs: "Start Free Trial" (Pro/Max) or "Continue Free"
+- **Always show "Continue free" option** - soft paywall, not blocking
+
+**Screen 4: Completion & Welcome**
+- Title: "You're all set!"
+- Body: "Your first needle is ready. Let's start building your weave."
+- Celebration animation (confetti + weave spark)
+- Banner appears: "Day 1 of your 7-day transformation"
+- CTA: "Enter Thread" → Navigate to Thread (Home)
 
 **Acceptance Criteria:**
-- [ ] Banner at top: "You're on Day 1 of your 7-day transformation."
-- [ ] No paywall
-- [ ] User enters Thread (Home)
+- [ ] 4-screen flow as specified above
+- [ ] Privacy policy checkbox required before continue
+- [ ] Notification permission request uses native iOS prompt
+- [ ] Soft paywall shows all 3 tiers clearly
+- [ ] Always allows skipping to free tier (no hard paywall)
+- [ ] Track events: `privacy_accepted`, `notifications_permission`, `paywall_presented`, `paywall_action`, `onboarding_completed`
+- [ ] Completion time <90 seconds
+- [ ] Smooth transitions between screens
+
+**Data Requirements:**
+- Set `user_profiles.onboarding_completed_at` timestamp
+- Store `privacy_policy_accepted_at` and `terms_accepted_at`
+- Store `notifications_enabled` boolean
+- If user selected paid tier: write to `subscription_tier`, `trial_started_at`, `trial_ends_at`
+- Set `user_profiles.onboarding_version` = 'hybrid_v1'
+
+**Technical Notes:**
+- This combines the old US-1.11 (Trial Activation) and US-1.16 (Soft Paywall)
+- Use RevenueCat or native StoreKit 2 for subscription management
+- Notification permission uses Expo Notifications API
+- Privacy policy and terms links open in web view or Safari
 
 ---
 
@@ -1219,33 +1264,7 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 
 ---
 
-### PHASE 7 — Monetization
-
-#### US-1.16: Soft Paywall (Day 3-4 Trigger)
-
-**Priority:** M (Must Have)
-
-**As a** trialing user
-**I want to** understand the tiers after I've had value
-**So that** upgrading feels natural and earned
-
-**Trigger:**
-- After 3 consecutive days of bind completion
-- OR when user tries to add a second Needle
-
-**Acceptance Criteria:**
-- [ ] Show Free vs Pro vs Max
-- [ ] Clear CTA: "Start 7-day free trial" (if applicable)
-- [ ] Always show "Continue free" option
-- [ ] Track `paywall_presented` and `paywall_action` events
-
-**Data Requirements:**
-- Write to `user_profiles.subscription_tier`
-- Store `subscription_started_at`, `trial_ends_at`
-
-**Technical Notes:**
-- Use RevenueCat or native StoreKit 2 for subscription management
-- Soft paywall = always allows skip to free tier
+**Note:** Phase 7 (Monetization / Soft Paywall) has been integrated into US-1.11 Screen 3 for a cohesive onboarding handoff.
 
 ---
 
@@ -1253,26 +1272,25 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 
 | ID | Story | Priority | Estimate |
 |----|-------|----------|----------|
-| US-1.1 | Welcome | M | 2 pts |
-| US-1.2 | Painpoint Selection | M | 3 pts |
-| US-1.3 | Insight Mirror | M | 2 pts |
-| US-1.4 | Weave Solution | M | 2 pts |
-| US-1.5 | Auth | M | 3 pts |
+| US-1.1 | Welcome & Vision Hook | M | 2 pts |
+| US-1.2 | Emotional State Selection (Painpoint) | M | 3 pts |
+| US-1.3 | Symptom Insight Screen | M | 2 pts |
+| US-1.4 | Weave Solution Screen | M | 2 pts |
+| US-1.5 | Authentication | M | 3 pts |
 | US-1.6 | Name Entry, Weave Personality & Identity Traits | M | 5 pts |
-| US-1.7 | First Needle (Suggested Goals) | M | 5 pts |
-| US-1.8 | AI Path | M | 8 pts |
-| US-1.9 | First Commitment | M | 3 pts |
-| US-1.10 | Mini Tutorial | M | 3 pts |
-| US-1.11 | Trial Activation | M | 1 pt |
-| US-1.12 | Dream Self (Deferred) | S | 3 pts |
-| US-1.13 | Micro-Archetype (Deferred) | S | 3 pts |
-| US-1.14 | Motivations & Failure Modes | S | 3 pts |
-| US-1.15 | Constraints & Demographics | S | 2 pts |
-| US-1.16 | Soft Paywall (Day 3-4) | M | 5 pts |
+| US-1.7 | Commitment Ritual & Origin Story (First Bind) | M | 5 pts |
+| US-1.8 | Create Your First Needle (Goal + Plan) | M | 8 pts |
+| US-1.9 | First Daily Reflection (Day 0 Check-In) | M | 2 pts |
+| US-1.10 | Progress Dashboard Introduction | M | 2 pts |
+| US-1.11 | Housekeeping, Trial Framing & Handoff | M | 6 pts |
+| US-1.12 | Dream Self (Deferred - Day 1 Evening) | S | 3 pts |
+| US-1.13 | Archetype Micro-Assessment (Deferred - Day 2) | S | 3 pts |
+| US-1.14 | Motivations & Failure Modes (Deferred - Day 2-3) | S | 3 pts |
+| US-1.15 | Constraints & Demographics (Deferred - Day 3) | S | 2 pts |
 
-**Epic Total:** 52 story points (includes name entry + Weave Personality Selection in US-1.6, enhanced US-1.7 with suggested goals)
+**Epic Total:** 51 story points
 
-**Note:** This hybrid flow increases story points from 35 to 50, but distributes complexity across the user journey, resulting in higher activation rates and lower drop-off. The deferred personalization (US-1.12 through US-1.15) can be implemented incrementally without blocking the core onboarding flow. The additional points account for name entry and Weave personality selection in US-1.6.
+**Note:** This hybrid flow maximizes completion by front-loading emotional resonance and early value delivery (Phases 1-5: 40 pts Must Have), while deferring deep personalization to Days 1-3 when users are already activated (Phase 6: 11 pts Should Have). US-1.7 introduces the Commitment Ritual as an emotional anchor before goal definition. US-1.11 combines housekeeping, trial framing, and soft paywall into a cohesive 4-screen handoff from onboarding to active usage.
 
 ---
 
@@ -2588,7 +2606,7 @@ Users manage their account settings, identity document, and app preferences.
 | Epic | Description | M Points | S Points | C Points | Total |
 |------|-------------|----------|----------|----------|-------|
 | E0 | Foundation | 40 | 0 | 0 | 40 |
-| E1 | Onboarding (Hybrid Flow) | 42 | 10 | 0 | 52 |
+| E1 | Onboarding (Hybrid Flow) | 40 | 11 | 0 | 51 |
 | E2 | Goal Management | 24 | 3 | 0 | 27 |
 | E3 | Daily Actions & Proof | 28 | 5 | 5 | 38 |
 | E4 | Reflection & Journaling | 19 | 9 | 0 | 28 |
@@ -2596,13 +2614,13 @@ Users manage their account settings, identity document, and app preferences.
 | E6 | AI Coaching | 13 | 11 | 5 | 29 |
 | E7 | Notifications | 23 | 5 | 0 | 28 |
 | E8 | Settings & Profile | 20 | 3 | 0 | 23 |
-| **Total** | | **217** | **67** | **10** | **302** |
+| **Total** | | **215** | **68** | **10** | **301** |
 
-**Note:** Epic 0 (Foundation) added - includes infrastructure, auth, RLS, CI/CD, and AI service abstraction (40 pts). Epic 1 updated with optimized hybrid flow (+13 pts) that distributes personalization across Days 1-3 for higher activation. Epics 3, 4 also updated based on implementation complexity assessment and story splitting for clarity.
+**Note:** Epic 0 (Foundation) added - includes infrastructure, auth, RLS, CI/CD, and AI service abstraction (40 pts). Epic 1 restructured with Commitment Ritual anchor (US-1.7) before goal definition, introduces reflection pillar early (US-1.9), and integrates soft paywall into handoff flow (US-1.11). This hybrid flow front-loads emotional resonance while deferring deep personalization to Days 1-3 for higher activation.
 
 ### MVP Scope (Must Have)
 
-**Total Must Have Points:** 217 story points (includes Epic 0 Foundation: 40 pts, Epic 1 Hybrid Flow: 42 pts M)
+**Total Must Have Points:** 215 story points (includes Epic 0 Foundation: 40 pts, Epic 1 Hybrid Flow: 40 pts M)
 
 **Estimated Duration:** 10-14 sprints (assuming 15-20 points/sprint with 2-person team)
 

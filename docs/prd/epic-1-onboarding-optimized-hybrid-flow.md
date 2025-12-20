@@ -427,77 +427,248 @@ This step:
 
 ---
 
-### US-1.7: First Needle (Goal Definition – Simple)
+### US-1.7: Commitment Ritual & Origin Story (First Bind)
 
 **Priority:** M (Must Have)
 
+**User Story:**
+
 **As a** new user
-**I want to** define one goal
-**So that** Weave can break it down into actionable steps
+**I want to** mark the beginning of my transformation in a personal, meaningful way
+**So that** I feel emotionally committed and can look back on where I started
+
+**Overview / Rationale:**
+
+This ritual transforms onboarding inputs into a permanent origin story.
+
+By reflecting the user's:
+- current struggles (from US-1.2),
+- desired future traits (from US-1.6),
+- and spoken commitment,
+
+Weave creates a time-stamped narrative artifact that:
+- reinforces identity change,
+- anchors motivation,
+- and gives future progress emotional context.
+
+This first Bind is symbolic, narrative, and irreversible.
+
+**Flow Summary:**
+
+- **Trigger:** After completion of US-1.6: Name Entry, Weave Personality & Identity Traits
+- **Total Screens:** 3
+- **Total Time:** ~45–60 seconds
+
+**Screen 1: Narrative Validation (Current → Future)**
+
+**UI Copy:**
+- **Title:** "This is where your story shifts."
+- **Body:**
+  - "Right now, you're feeling [primary struggle 1] (and [primary struggle 2], if selected)."
+  - "But you want to become someone who is [dream trait 1], [dream trait 2], and [dream trait 3]."
+  - "Weave is how you bridge that gap — one action at a time."
+- **Primary CTA:** "Take the first step →"
 
 **Acceptance Criteria:**
-- [ ] Input field: "What's one thing you want to achieve first?"
-- [ ] Suggestion chips based on painpoint chosen earlier
-- [ ] User must input or tap a suggestion
-- [ ] CTA: "Continue"
-- [ ] Completion time <10 seconds
+- [ ] Copy dynamically injects 1–2 struggles and 3 future traits
+- [ ] Copy must read naturally (use conjunction logic)
+- [ ] No user input on this screen
+- [ ] Completion time < 10 seconds
+- [ ] Track event: `origin_story_intro_viewed`
+
+**Screen 2: Origin Story Capture (Commitment Bind)**
+
+**UI Copy:**
+- **Title:** "Let's make this moment official."
+- **Body:**
+  - "Take a photo and record a short voice note saying:"
+  - *"Today is [date]. My name is [name]. I'm starting this because I'm [struggle], and I'm committed to becoming someone who is [dream traits]."*
+  - "This will be saved as the beginning of your story — something you can return to anytime."
+- **Primary CTA:** "Complete Bind"
+
+**Acceptance Criteria:**
+- [ ] Camera capture (required)
+- [ ] Voice note capture (required)
+- [ ] Display preview card: photo thumbnail + "From/To" summary + voice playback
+- [ ] User confirms before final submission
+- [ ] Track event: `origin_story_created`
 
 **Data Requirements:**
-- Store basic goal text in temporary onboarding state
-- Later transformed into tables during AI breakdown
+- Create `origin_stories` record with photo + voice asset IDs
+- Associate with first `bind_instance`
+- Immutable record (no UPDATE or DELETE)
+
+**Screen 3: Completion & Reinforcement**
+
+**UI Copy:**
+- **Title:** "This is your beginning."
+- **Body:**
+  - "You've created your origin story."
+  - "Every Bind you complete builds on this moment — strengthening your Weave and the person you're becoming."
+- **Primary CTA:** "Continue →"
+
+**Acceptance Criteria:**
+- [ ] Weave animation evolves from blank → first form
+- [ ] Confetti or subtle glow
+- [ ] Level bar animates from 0 → 1
+- [ ] Track event: `origin_bind_completed`
+- [ ] Set: `first_bind_completed_at`, `user level = 1`
+
+**Success Criteria:**
+- ≥ 95% completion rate
+- Users can articulate what a "Bind" is without explanation
+- Increased emotional attachment to early progress
+- Stronger long-term retention driven by narrative continuity
+
+---
+
+### US-1.8: Create Your First Needle (Goal + Plan)
+
+**Priority:** M (Must Have)
+
+**User Story:**
+
+**As a** new user
+**I want to** create my first Needle
+**So that** my daily actions are connected to a clear long-term goal
+
+**Overview / Rationale:**
+
+After completing the Commitment Ritual (US-1.7), the user is emotionally invested and ready for structure.
+
+This step introduces:
+- what a Needle is,
+- how Binds relate to it,
+- and provides an AI-generated plan that is explicitly flexible.
+
+**Flow Summary:**
+
+- **Trigger:** Immediately after US-1.7: Commitment Ritual & Origin Story
+- **Total Screens:** 4
+- **Total Time:** ~90 seconds
+
+**Screen 1: Introduce Needles**
+
+**UI Copy:**
+- **Title:** "Give your actions direction."
+- **Body:**
+  - "The Binds you complete each day connect to your Needles — the long-term goals you're working toward."
+  - "Let's create your first one."
+  - "You can change or refine this anytime."
+- **Primary CTA:** "Create my first Needle →"
+
+**Acceptance Criteria:**
+- [ ] Display educational card explaining Needles
+- [ ] Reassure that this is flexible (not permanent)
+- [ ] Track event: `needle_intro_viewed`
+
+**Screen 2: Choose Your First Needle (Suggested Options)**
+
+**UI Copy:**
+- **Title:** "What do you want to work on first?"
+- **Subtext:** "This doesn't have to be perfect — it's just a starting point."
+
+**Suggested Options (single-select):**
+1. Build a simple fitness routine
+2. Improve my sleep and daily energy
+3. Reduce stress and feel more balanced
+4. Get back into a healthy rhythm
+5. Improve focus and productivity
+6. Make steady progress in school
+7. Work consistently on a project
+8. Start or rebuild a creative habit
+9. Prepare for an upcoming opportunity
+10. Build discipline around my work
+
+**Secondary Option:** "Can't find yours? Type your own goal"
+
+**Acceptance Criteria:**
+- [ ] Display 10 suggested goal options as selectable cards
+- [ ] User must select exactly one option OR enter custom goal
+- [ ] Custom goal input: 10-200 characters
+- [ ] Track event: `needle_option_selected`
+
+**Screen 3: Optional Customization**
+
+**UI Copy:**
+- **Title:** "Want to make this more specific?"
+- **Input Placeholder:** "e.g. gym, writing, studying, startup"
+- **Primary CTA:** "Continue →"
+- **Secondary CTA:** "Skip"
+
+**Acceptance Criteria:**
+- [ ] Optional text input (0-100 characters)
+- [ ] User can skip this screen
+- [ ] Track event: `needle_customized` if user adds text
+
+**Screen 4: AI Plan Breakdown**
+
+**UI Copy:**
+- **Title:** "Here's how we'll work toward this."
+- **Body:**
+  - "I've broken your Needle into milestones and Binds that are realistic and sustainable."
+  - "This is a starting point — not a contract."
+  - "You can adjust anything later."
+
+**Display:**
+- [ ] Show AI-generated breakdown: Needle title + summary, 2–3 milestones, 2–4 Bind templates
+- [ ] Each item is editable (tap to edit inline)
+- [ ] Loading state: "Shaping your path..." animation during AI processing
+
+**Primary CTA:** "Looks good →"
+
+**Acceptance Criteria:**
+- [ ] AI generates structured breakdown using Onboarding Coach module
+- [ ] All outputs editable before accepting
+- [ ] Error handling with retry option
+- [ ] Track events: `needle_plan_generated`, `needle_plan_accepted`
+
+**Data Requirements:**
+- Create records in: `goals`, `qgoals`, `subtask_templates`, `ai_runs`
+
+**AI Module:** Onboarding Coach (deterministic constraints, ~70% success probability)
 
 ---
 
 ## PHASE 3 — Early Value Proof ("Wow Moment")
 
-### US-1.8: Weave Path Generation (AI-Assisted)
+### US-1.9: First Daily Reflection (Day 0 Check-In)
 
 **Priority:** M (Must Have)
 
-**As a** new user
-**I want to** see a clear, AI-generated breakdown of my goal
-**So that** I understand exactly how to begin
-
-**Acceptance Criteria:**
-- [ ] Loading animation: "Shaping your path…"
-- [ ] 1-3 second delay (UX pacing)
-- [ ] AI generates:
-  - Goal title & summary
-  - 2-3 milestones
-  - 2-4 binds (actions/habits)
-- [ ] User can accept or edit each item
-- [ ] CTA: "Looks good" → or "Edit"
-
-**AI Module:** Onboarding Coach (deterministic constraints, ~70% success probability)
-
-**Data Requirements:**
-- Write outputs to:
-  - `goals`
-  - `qgoals`
-  - `subtask_templates`
-- Create `ai_runs` record
-
----
-
-### US-1.9: First Commitment Ritual (Bind #1)
-
-**Priority:** M (Must Have)
+**User Story:**
 
 **As a** new user
-**I want to** complete a symbolic first action
-**So that** I feel emotionally invested and committed
+**I want to** complete a daily check-in
+**So that** I feel present and so Weave can begin learning how I think
+
+**Overview / Rationale:**
+
+Reflection is the third pillar of Weave:
+- **Needles** = direction
+- **Binds** = action
+- **Reflection** = meaning
+
+This lightweight Day 0 reflection introduces the reflection habit immediately after goal setup, establishing the core loop before the user leaves onboarding.
 
 **Acceptance Criteria:**
-- [ ] Display: "Today is [date]. Mark this as the start of your transformation."
-- [ ] User must tap "Complete my first Bind"
-- [ ] Accept any input type: text, photo, audio, or checkmark
-- [ ] Show micro-animation of thread tightening
-- [ ] Display: "Day 1 complete."
+- [ ] Display prompt: "How are you feeling right now about starting this journey?"
+- [ ] Text input (50-500 characters, optional)
+- [ ] Fulfillment slider (1-10): "Rate your current state"
+- [ ] Simple, non-intimidating UI - feels like a quick check-in, not heavy journaling
+- [ ] Completion time <60 seconds
+- [ ] CTA: "Done" or "Continue"
 
 **Data Requirements:**
-- Create first `subtask_instance`
-- Write `bind_completed` event
-- Set `onboarding_first_bind_completed_at`
+- Create first entry in `journal_entries` table
+- Fields: `user_id`, `local_date`, `fulfillment_score`, `reflection_text`, `created_at`
+- Set `user_profiles.first_journal_at` timestamp
+- Track analytics event: `first_journal_completed`
+
+**Technical Notes:**
+- No AI generation on submit (too early, not enough data)
+- This establishes the reflection habit pattern
+- Future reflections will be more structured with AI feedback
 
 ---
 
