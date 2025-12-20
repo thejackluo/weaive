@@ -1,7 +1,7 @@
 # Sprint Status Tracking
-# Generated: 2025-12-16 (Updated: 2025-12-19 for story status updates)
+# Generated: 2025-12-16 (Updated: 2025-12-20 for Epic 1 restructure - US-1.8 through US-1.11 redesigned)
 # Project: Weave MVP
-# Total Scope: 300 story points across 9 epics (+28 pts from Epic 1 hybrid flow, includes name entry + personality)
+# Total Scope: 301 story points across 9 epics (Epic 1: 51 pts, streamlined onboarding)
 # Sprint Length: 2 weeks (10 work days)
 # Team Capacity: 50 points/sprint
 
@@ -61,37 +61,35 @@ week-0-stories:
 # SPRINT 1: CORE USER JOURNEY
 # ============================================================================
 # Duration: 2 weeks (Weeks 1-2)
-# Goal: Onboarding (Phases 1-5) + first bind + basic progress
-# Points: 59 (Epic 1: 35 pts, Epic 3: 16 pts, Epic 5: 8 pts)
+# Goal: Complete onboarding (Phases 1-5) + basic bind/reflection flow
+# Points: 60 (Epic 1: 36 pts [Phases 1-5], Epic 3: 16 pts, Epic 5: 8 pts)
 
 sprint-1-status: planned
 sprint-1-start-date: null
 sprint-1-end-date: null
 
 sprint-1-stories:
-  # Epic 1: Onboarding (Hybrid Flow) - Phases 1-5 (35 pts, was 33)
+  # Epic 1: Onboarding (Hybrid Flow) - Phases 1-5 (36 pts)
   epic-1: in-progress
   # Phase 1: Emotional Hook (Pre-Auth)
-  1-1-welcome-vision-hook: done                 # 2 pts (front-end done, follow-ups documented)
-  1-2-emotional-state-selection: done           # 3 pts
-  1-3-insight-reflection: review                # 2 pts
-  1-4-weave-solution: review                    # 2 pts (code review complete, tests created)
-  1-5-authentication: review                    # 3 pts (front-end UI complete, pending manual testing on device)
+  1-1-welcome-vision-hook: done                        # 2 pts
+  1-2-emotional-state-selection: done                  # 3 pts
+  1-3-insight-reflection: review                       # 2 pts
+  1-4-weave-solution: review                           # 2 pts
+  1-5-authentication: review                           # 3 pts
   # Phase 2: Light Identity Bootup
-  1-6-name-and-identity-traits: review          # 5 pts (name entry + personality + traits)
-  1-7-first-needle-simple: review               # 3 pts (implementation complete, manual testing pending)
+  1-6-name-and-identity-traits: review                 # 5 pts (name + personality + traits)
+  1-7-commitment-ritual-origin-story: backlog          # 5 pts (photo + voice origin story)
+  1-8-create-your-first-needle: backlog                # 8 pts (4 screens: intro, choose, customize, AI plan)
   # Phase 3: Early Value Proof
-  1-8a-weave-path-generation-ui: in-progress          # 3 pts (implementation complete, code review applied, NetInfo added, blocked by Story 1.9)
-  1-8b-ai-goal-breakdown: ready-for-dev         # 5 pts
-  1-9-first-commitment-ritual: backlog          # 3 pts
+  1-9-first-daily-reflection: backlog                  # 2 pts (Day 0 check-in)
   # Phase 4: Lightweight Orientation
-  1-10-app-mini-tutorial: backlog               # 3 pts
-  # Phase 5: Trial Activation
-  1-11-welcome-7day-journey: backlog            # 1 pt
-  # DEFERRED Phases 6-7 (15 pts) → Sprint 2:
+  1-10-progress-dashboard-introduction: backlog        # 2 pts (3 tooltips)
+  # Phase 5: Trial Activation & Handoff
+  1-11-housekeeping-trial-handoff: backlog             # 6 pts (4 screens: privacy, reminders, paywall, complete)
+  # DEFERRED Phases 6 (11 pts) → Sprint 2:
   # 1.12 Dream Self (3 pts), 1.13 Archetype (3 pts),
-  # 1.14 Motivations (3 pts), 1.15 Constraints (2 pts),
-  # 1.16 Soft Paywall (5 pts) - triggered Days 1-4
+  # 1.14 Motivations (3 pts), 1.15 Constraints (2 pts)
 
   # Epic 3: Daily Actions (16 pts) - Simplified
   epic-3: backlog
@@ -113,22 +111,20 @@ sprint-1-stories:
 # SPRINT 2: AI FEATURES & DEFERRED PERSONALIZATION
 # ============================================================================
 # Duration: 2 weeks (Weeks 3-4)
-# Goal: Deferred onboarding (Phases 6-7), daily plans, journaling with feedback
-# Points: 57 (Epic 1: 15 pts, Epic 3: 14 pts, Epic 4: 20 pts, Epic 5: 8 pts)
+# Goal: Deferred onboarding (Phase 6), daily plans, journaling with feedback
+# Points: 53 (Epic 1: 11 pts, Epic 3: 14 pts, Epic 4: 20 pts, Epic 5: 8 pts)
 
 sprint-2-status: planned
 sprint-2-start-date: null
 sprint-2-end-date: null
 
 sprint-2-stories:
-  # Epic 1 (Continued): Hybrid Flow Phases 6-7 (15 pts)
+  # Epic 1 (Continued): Hybrid Flow Phase 6 (11 pts)
   # Phase 6: Deferred Deep Personalization (Days 1-3)
   1-12-dream-self-day1-evening: backlog         # 3 pts
   1-13-archetype-micro-assessment-day2: backlog # 3 pts
   1-14-motivations-failure-modes-day2-3: backlog # 3 pts
   1-15-constraints-demographics-day3: backlog   # 2 pts
-  # Phase 7: Monetization
-  1-16-soft-paywall-day3-4-trigger: backlog     # 5 pts (moved from Sprint 5)
 
   # Epic 3 (Continued): AI Daily Plan (14 pts)
   3-2a-view-triad-ai-plan: backlog              # 5 pts
@@ -296,7 +292,7 @@ backlog-post-mvp:
 
 epic-completion:
   epic-0-foundation: 18/38             # Week 0: 47% complete (0.1, 0.2a, 0.2b, 0.3, 0.4 done/done pending testing)
-  epic-1-onboarding-hybrid: 0/50       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1, Phases 6-7: Sprint 2, +2 for name entry + personality)
+  epic-1-onboarding-hybrid: 0/51       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1 [36 pts], Phase 6: Sprint 2 [11 pts])
   epic-2-goal-management: 0/27         # Sprint 3: 0% complete
   epic-3-daily-actions: 0/38           # Sprint 1-2, 5: 0% complete
   epic-4-reflection: 0/28              # Sprint 2: 0% complete
@@ -305,7 +301,7 @@ epic-completion:
   epic-7-notifications: 0/28           # Sprint 3, 5: 0% complete
   epic-8-settings: 0/23                # Sprint 3, 5: 0% complete
 
-total-completion: 18/300 (6%)
+total-completion: 18/301 (6%)
 
 # ============================================================================
 # VELOCITY TRACKING
@@ -317,11 +313,11 @@ velocity-history:
     actual: 18        # 0.1 (5 pts), 0.2a (3 pts), 0.2b (2 pts), 0.3 (3 pts), 0.4 (5 pts) complete
     completion-rate: 47%
   sprint-1:
-    planned: 59  # Updated from 48 for Epic 1 Hybrid Flow (+11 pts, includes name entry + personality)
+    planned: 60  # Epic 1 Phases 1-5 (36 pts) + Epic 3 (16 pts) + Epic 5 (8 pts)
     actual: null
     completion-rate: null
   sprint-2:
-    planned: 57  # Updated from 53 for Epic 1 Hybrid Flow (+4 pts)
+    planned: 53  # Epic 1 Phase 6 (11 pts) + Epic 3 (14 pts) + Epic 4 (20 pts) + Epic 5 (8 pts)
     actual: null
     completion-rate: null
   sprint-3:
