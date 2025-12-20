@@ -788,14 +788,18 @@ python scripts/test_rls_security.py
 
 ## 🗺️ Roadmap
 
-### MVP (Launching Soon)
+### MVP (In Progress)
 
-- ✅ Goal breakdown engine with AI
-- ✅ Identity document system
-- ✅ Action + memory capture
-- ✅ Daily reflection and journaling
-- ✅ Progress visualization (heatmaps, streaks)
-- ✅ Dream Self AI coach
+- ✅ Project scaffolding (Story 0.1)
+- ✅ Database schema - Core (Story 0.2a)
+- ✅ Authentication flow (Story 0.3)
+- ✅ Row Level Security (Story 0.4)
+- 🚧 Welcome & Vision Hook screen (Story 1.1)
+- 🔜 Onboarding flow (Stories 1.2-1.5)
+- 🔜 Goal breakdown with AI
+- 🔜 Daily binds and completions
+- 🔜 Progress visualization
+- 🔜 Dream Self AI coach
 
 ### V1.5 (Post-MVP)
 
@@ -814,6 +818,47 @@ python scripts/test_rls_security.py
 - iMessage integration
 - Shared accountability features
 - Screen time integration
+
+---
+
+## 🚀 Quick Reference
+
+### Most Common Tasks
+
+| Task | Command |
+|------|---------|
+| Start mobile dev | `cd weave-mobile && npm start` |
+| Start backend dev | `cd weave-api && uv run uvicorn app.main:app --reload` |
+| View docs | `npx @thejackluo/docs-viewer` or `./dev/docs-viewer/scripts/serve.sh` |
+| Clear mobile cache | `cd weave-mobile && npm run start:clean` |
+| Run mobile linting | `cd weave-mobile && npm run lint` |
+| Run backend tests | `cd weave-api && uv run pytest` |
+| Check current story | `git branch` (look for story/X.Y) |
+| Read a story spec | Open `docs/stories/[story-name].md` |
+| Apply DB migrations | `npx supabase db push` |
+| Test RLS policies | `npx supabase test db` |
+
+### Key Files to Know
+
+- `weave-mobile/package.json` - Mobile dependencies and scripts
+- `weave-api/pyproject.toml` - Backend dependencies (uv)
+- `docs/stories/` - Current story specifications
+- `docs/sprint-artifacts/` - Implementation session notes
+- `docs/architecture/index.md` - Architecture table of contents
+- `docs/prd/index.md` - PRD table of contents
+- `docs/bmm-workflow-status.yaml` - BMAD workflow progress
+- `CLAUDE.md` - Project instructions for Claude Code
+
+### Workflow Reminders
+
+1. **Always read the story file first** before implementing
+2. **Check `docs/bugs/` if you hit an error** - likely already solved
+3. **Use the design system** - import from `@/design-system`
+4. **Test locally before committing** - run the app, check for errors
+5. **Never edit canonical truth tables** - append-only event logs
+6. **Use TanStack Query for server state** - not Zustand
+7. **Follow naming conventions** - snake_case DB, camelCase TS
+8. **Document significant decisions** in `.cursor/.cursor-changes`
 
 ---
 
