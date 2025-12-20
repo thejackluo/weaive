@@ -21,7 +21,7 @@ so that **I can build consistent UIs with dark/light modes, smooth animations, a
 
 ## Business Context
 
-This is the **foundational story** of Epic DS (Design System Rebuild). The existing design system at `src/design-system/` is "vibe-coded," buggy, and inconsistent. This story creates a **completely new standalone package** (`@weave/design-system`) from scratch with 220+ design tokens, runtime theme switching, and spring physics animations.
+This is the **foundational story** of Epic DS (Design System Rebuild). The existing design system at `src/design-system/` is "vibe-coded," buggy, and inconsistent. This story creates a **completely new standalone package** (`@weave/design-system`) from scratch with 220 tokens minimum (may expand as needed), runtime theme switching, and spring physics animations.
 
 **Why This Matters:**
 - **Blocks 58 downstream FRs** across all 8 product epics
@@ -36,7 +36,7 @@ This is the **foundational story** of Epic DS (Design System Rebuild). The exist
 
 ## Acceptance Criteria
 
-### AC-1: 220+ Design Tokens Organized by Category
+### AC-1: 220 Tokens Minimum Organized by Category
 
 **Required Token Categories:**
 
@@ -95,7 +95,7 @@ This is the **foundational story** of Epic DS (Design System Rebuild). The exist
 - [ ] **Reduced motion:** `reducedMotion.disable` (accessibility support)
 
 **Validation:**
-- [ ] All 220+ tokens exported from single `tokens/index.ts` file
+- [ ] All tokens exported from single `tokens/index.ts` file (minimum 220, may expand as needed)
 - [ ] TypeScript types generated for all tokens (autocomplete in IDEs)
 - [ ] Tokens organized into separate files by category: `colors.ts`, `typography.ts`, `spacing.ts`, `effects.ts`, `borders.ts`, `animations.ts`
 
@@ -209,6 +209,16 @@ This is the **foundational story** of Epic DS (Design System Rebuild). The exist
 
 ---
 
+## Do Not Block MVP On
+
+The following items are targets but should NOT block story completion or MVP progress:
+- **Exact token count:** 220 is target, 200-240 acceptable range
+- **All gradient definitions:** `weaveGradient.primary` + `weaveGradient.accent` required; `gradients.sunset/ocean/aurora` optional (nice to have)
+- **Complex motion presets:** `motion.fadeIn` required; `motion.slideUp/scale/pressIn` can defer to Story DS-2 if time-constrained
+- **Perfect spring tuning:** Initial spring configs provided are starting points; fine-tuning can happen iteratively based on feel
+
+---
+
 ## Tasks / Subtasks
 
 ### Task 1: Set Up Package Structure (AC: #1)
@@ -218,8 +228,15 @@ This is the **foundational story** of Epic DS (Design System Rebuild). The exist
   - Version: `0.1.0` (pre-release)
   - Main entry: `dist/index.js`
   - Types entry: `dist/index.d.ts`
-  - Dependencies: `react-native-reanimated`, `react-native-gesture-handler`
-  - PeerDependencies: `react`, `react-native`
+  - Dependencies:
+    - `react-native-reanimated: "^3.15.0"`
+    - `react-native-gesture-handler: "^2.19.0"`
+    - `@react-native-community/blur: "^4.4.1"` (for glass effects)
+    - `expo-linear-gradient: "~13.0.2"` (for gradients)
+  - PeerDependencies:
+    - `react: "^19.0.0"`
+    - `react-native: "^0.79.0"`
+  - ⚠️ **Critical:** Ensure main app uses React 19 + React Native 0.79+ before installing this package. Version mismatches cause hard-to-debug errors.
 - [ ] **1.3:** Set up TypeScript config (tsconfig.json) with strict mode
 - [ ] **1.4:** Create source directory structure:
   ```
@@ -255,16 +272,73 @@ This is the **foundational story** of Epic DS (Design System Rebuild). The exist
   ├── package.json
   └── tsconfig.json
   ```
+- [ ] **1.5:** Configure Metro bundler in root project:
+  - Edit `metro.config.js` to add package resolution:
+    ```javascript
+    const path = require('path');
+    module.exports = {
+      watchFolders: [path.resolve(__dirname, 'packages')],
+      resolver: {
+        extraNodeModules: {
+          '@weave/design-system': path.resolve(__dirname, 'packages/weave-design-system/src'),
+        },
+      },
+    };
+    ```
+  - Edit root `tsconfig.json` to add path alias:
+    ```json
+    {
+      "compilerOptions": {
+        "paths": {
+          "@weave/design-system": ["./packages/weave-design-system/src"]
+        }
+      }
+    }
+    ```
+- [ ] **1.6:** Set up build process:
+  - Install dev dependencies: `npm install -D typescript @types/react @types/react-native`
+  - Add build scripts to package.json:
+    ```json
+    "scripts": {
+      "build": "tsc",
+      "dev": "tsc --watch",
+      "clean": "rm -rf dist"
+    }
+    ```
+  - Configure tsconfig.json with `outDir: "dist"`
+  - Add `.gitignore` entry: `dist/`
 
 ---
 
 ### Task 2: Implement Design Tokens (AC: #1)
 - [ ] **2.1:** Create `tokens/colors.ts` with all 60+ color tokens
   - Implement scale-based colors (dark[50-950], accent[50-950], violet, amber, rose, emerald)
+  - Use these exact color values for consistency (or reference Figma design file):
+    ```typescript
+    export const dark = {
+      50: '#F8F9FA',   100: '#E9ECEF',  200: '#DEE2E6',
+      300: '#CED4DA',  400: '#ADB5BD',  500: '#6C757D',
+      600: '#495057',  700: '#343A40',  800: '#212529',
+      900: '#16181A',  950: '#0D0F10',
+    };
+    // Repeat pattern for accent, violet, amber, rose, emerald with brand colors
+    ```
   - Implement semantic colors (success, warning, error, info)
   - Implement background, text, border color aliases
   - Implement heat map colors
-  - Implement gradients (linear gradient definitions)
+  - Implement gradients using expo-linear-gradient:
+    ```typescript
+    import { LinearGradient } from 'expo-linear-gradient';
+    export const weaveGradient = {
+      primary: { colors: ['#A78BFA', '#EC4899'], start: [0, 0], end: [1, 1] },
+      accent: { colors: ['#F59E0B', '#EF4444'], start: [0, 0], end: [1, 1] },
+    };
+    export const gradients = {
+      sunset: { colors: ['#FCA5A5', '#FBBF24'], start: [0, 0], end: [1, 1] },
+      ocean: { colors: ['#60A5FA', '#34D399'], start: [0, 0], end: [1, 1] },
+      aurora: { colors: ['#A78BFA', '#4ADE80'], start: [0, 0], end: [0, 1] },
+    };
+    ```
 - [ ] **2.2:** Create `tokens/typography.ts` with all 45+ typography tokens
   - Font families (sans, mono)
   - Font sizes (xs → 5xl)
@@ -280,7 +354,15 @@ This is the **foundational story** of Epic DS (Design System Rebuild). The exist
 - [ ] **2.4:** Create `tokens/effects.ts` with all 35+ effect tokens
   - Shadows (sm, md, lg, xl, card, modal)
   - Glows (colored shadow tints)
-  - Glass effects (light, medium, heavy with blur + opacity values)
+  - Glass effects implementation using @react-native-community/blur:
+    ```typescript
+    import { BlurView } from '@react-native-community/blur';
+    export const glass = {
+      light: { blurType: 'light', blurAmount: 10, opacity: 0.7 },
+      medium: { blurType: 'light', blurAmount: 20, opacity: 0.5 },
+      heavy: { blurType: 'dark', blurAmount: 30, opacity: 0.3 },
+    };
+    ```
   - Blur values (sm, md, lg, xl)
   - Opacity scale (10-90 in 10% increments)
 - [ ] **2.5:** Create `tokens/borders.ts` with all 20+ border tokens
@@ -326,17 +408,35 @@ This is the **foundational story** of Epic DS (Design System Rebuild). The exist
   - Accept `name` prop: `'violet' | 'amber' | 'rose' | 'emerald' | 'ocean' | 'sunset' | 'aurora'`
   - Override accent color based on name
   - Inherit all other tokens from parent theme
-  - Implement color-matched shadow tints (take accent[500], apply 20% opacity)
+  - Implement color-matched shadow algorithm:
+    ```typescript
+    function getColorMatchedShadow(accentColor: string): string {
+      // If accentColor is hex, convert to rgba with 20% opacity
+      // Example: '#A78BFA' → 'rgba(167, 139, 250, 0.2)'
+      return convertHexToRgba(accentColor, 0.2);
+    }
+    ```
 
 ---
 
 ### Task 4: Implement Animation System (AC: #4)
 - [ ] **4.1:** Create `animations/springs.ts`
+  - Define TypeScript interface for spring configs:
+    ```typescript
+    export interface SpringConfig {
+      damping: number;
+      stiffness: number;
+      mass: number;
+    }
+
+    export const springs: Record<string, SpringConfig> = {
+      gentle: { damping: 15, stiffness: 150, mass: 0.8 },
+      snappy: { damping: 20, stiffness: 300, mass: 0.5 },
+      bouncy: { damping: 10, stiffness: 200, mass: 1.2 },
+      stiff: { damping: 25, stiffness: 400, mass: 0.4 },
+    };
+    ```
   - Export spring preset objects compatible with Reanimated `withSpring()`
-  - `springs.gentle: { damping: 15, stiffness: 150, mass: 0.8 }`
-  - `springs.snappy: { damping: 20, stiffness: 300, mass: 0.5 }`
-  - `springs.bouncy: { damping: 10, stiffness: 200, mass: 1.2 }`
-  - `springs.stiff: { damping: 25, stiffness: 400, mass: 0.4 }`
 - [ ] **4.2:** Create `animations/motions.ts`
   - Implement motion presets as Reanimated worklet functions
   - `motion.fadeIn(sharedValue)` - animates opacity 0 → 1
@@ -344,9 +444,20 @@ This is the **foundational story** of Epic DS (Design System Rebuild). The exist
   - `motion.scale(sharedValue)` - animates scale 0.95 → 1
   - `motion.pressIn(sharedValue)` - animates scale 0.98 → 1
 - [ ] **4.3:** Create `animations/useReducedMotion.ts` hook
+  - Import AccessibilityInfo: `import { AccessibilityInfo } from 'react-native';`
   - Check `AccessibilityInfo.isReduceMotionEnabled()` from React Native
   - Return boolean: `true` if reduced motion enabled
   - Use React.useEffect to listen for changes
+  - Handle API failure gracefully:
+    ```typescript
+    const [reducedMotion, setReducedMotion] = useState(false);
+    try {
+      const isEnabled = await AccessibilityInfo.isReduceMotionEnabled();
+      setReducedMotion(isEnabled ?? false); // Default to false if undefined
+    } catch (error) {
+      setReducedMotion(false); // Fail-safe: enable animations
+    }
+    ```
 - [ ] **4.4:** Create `animations/useAnimatedValue.ts` hook
   - Wrapper around Reanimated's `useSharedValue`
   - Automatically respects reduced motion setting
@@ -367,9 +478,14 @@ This is the **foundational story** of Epic DS (Design System Rebuild). The exist
 - [ ] **5.2:** Create Storybook stories for theme system
   - Story: ThemeProvider with dark/light toggle
   - Story: Nested Theme component with different accent colors
-  - Story: Token showcase (all 220+ tokens displayed)
+  - Story: Token showcase (all tokens displayed)
   - Story: Animation spring presets comparison
+  - ⚠️ **Note:** Full Storybook setup happens in Story DS-9. This task creates story files only; they may not render until DS-9 is complete.
 - [ ] **5.3:** Validate animations on real device (not just simulator)
+  - Use React Native Performance Monitor to verify 60fps:
+    - Shake device → "Show Perf Monitor"
+    - All animations must show: JS FPS: 60, UI FPS: 60
+    - If FPS drops below 55, optimize animation config
   - Test all spring presets run at 60fps
   - Test reduced motion disables animations
   - Test motion presets (fadeIn, slideUp, scale, pressIn)
@@ -377,6 +493,11 @@ This is the **foundational story** of Epic DS (Design System Rebuild). The exist
   - README.md with usage examples
   - Token reference table (name, value, usage)
   - Migration guide from old design system
+- [ ] **5.5:** Publish package locally:
+  - Run `npm pack` in package directory to create tarball
+  - Install in main app: `npm install ../packages/weave-design-system`
+  - Verify import works: `import { useTheme } from '@weave/design-system'`
+  - Test basic theme hook functionality in main app
 
 ---
 
