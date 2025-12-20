@@ -63,7 +63,7 @@ def check_database_connection():
         client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
         # Test query
-        result = client.table('ai_runs').select('id').limit(1).execute()
+        _ = client.table('ai_runs').select('id').limit(1).execute()
 
         print("\n✅ Connected to Supabase")
         print(f"   URL: {SUPABASE_URL}")

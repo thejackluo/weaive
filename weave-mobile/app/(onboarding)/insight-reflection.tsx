@@ -19,9 +19,9 @@ import Animated, {
   FadeIn,
   SlideInUp,
   FadeInDown,
-  useAnimatedStyle,
-  withTiming,
-  withDelay,
+  useAnimatedStyle as _useAnimatedStyle,
+  withTiming as _withTiming,
+  withDelay as _withDelay,
 } from 'react-native-reanimated';
 
 import { useOnboardingStore } from '@/stores/onboardingStore';
