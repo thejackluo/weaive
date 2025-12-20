@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 from app.core.auth import get_current_user
 from app.services.ai.ai_service import AIService
 from app.services.ai.base import AIProviderError, AIResponse
+from app.services.ai.rate_limiter import RateLimitError
 
 logger = logging.getLogger(__name__)
 
@@ -68,9 +69,9 @@ def get_ai_service() -> AIService:
 
     return AIService(
         db=db,
+        bedrock_region=aws_region,  # Fixed: correct parameter name
         openai_key=openai_key,
         anthropic_key=anthropic_key,
-        aws_region=aws_region,
     )
 
 
@@ -133,10 +134,19 @@ async def generate_ai(
         logger.error(f"AI provider error: {e}")
         raise HTTPException(status_code=503, detail=f"AI service temporarily unavailable: {e}")
 
-    except PermissionError as e:
-        # Rate limit or budget exceeded
-        logger.warning(f"Permission denied: {e}")
-        raise HTTPException(status_code=429, detail=str(e))
+    except RateLimitError as e:
+        # Rate limit exceeded - return 429 with retry_after
+        logger.warning(f"Rate limit exceeded: {e}")
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "rate_limit_exceeded",
+                "message": str(e),
+                "user_tier": e.user_tier,
+                "limit": e.limit,
+                "retry_after": e.retry_after.isoformat() if e.retry_after else None
+            }
+        )
 
     except Exception as e:
         logger.error(f"Unexpected error in AI generation: {e}")
@@ -221,9 +231,9 @@ async def generate_ai_stream(
                 logger.error(f"AI provider error during streaming: {e}")
                 yield f"data: {json.dumps({'type': 'error', 'message': f'AI service error: {e}'})}\n\n"
 
-            except PermissionError as e:
-                logger.warning(f"Permission denied during streaming: {e}")
-                yield f"data: {json.dumps({'type': 'error', 'message': str(e), 'code': 'RATE_LIMIT_EXCEEDED'})}\n\n"
+            except RateLimitError as e:
+                logger.warning(f"Rate limit exceeded during streaming: {e}")
+                yield f"data: {json.dumps({'type': 'error', 'message': str(e), 'code': 'RATE_LIMIT_EXCEEDED', 'retry_after': e.retry_after.isoformat() if e.retry_after else None})}\n\n"
 
             except Exception as e:
                 logger.error(f"Unexpected error during streaming: {e}")
