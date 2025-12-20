@@ -123,7 +123,11 @@ export function Text({
 // ANIMATED VERSION
 // =============================================================================
 
-export const AnimatedText = Animated.createAnimatedComponent(Text);
+// NOTE: AnimatedText is intentionally NOT exported to avoid barrel export issues
+// with createAnimatedComponent. If you need an animated Text component, create
+// it locally: const AnimatedText = Animated.createAnimatedComponent(Text);
+// This follows the pattern of all other animated components in the design system.
+// export const AnimatedText = Animated.createAnimatedComponent(Text);
 
 // =============================================================================
 // HELPER FUNCTIONS
