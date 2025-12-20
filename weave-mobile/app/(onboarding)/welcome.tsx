@@ -82,11 +82,6 @@ export default function WelcomeScreen() {
 
         {/* CTA Button - AC1, AC3, AC5 */}
         <Pressable
-          className={({ pressed }) =>
-            `bg-primary-500 h-11 rounded-lg w-full justify-center items-center ${
-              pressed ? 'bg-primary-600 scale-[0.98]' : ''
-            }`
-          }
           onPress={handleGetStarted}
           accessibilityRole="button"
           accessible={true}
@@ -97,8 +92,8 @@ export default function WelcomeScreen() {
           </Text>
         </Pressable>
 
-        {/* Design System Preview Button - Dev Tool */}
-        <Pressable
+        {/* Design System Preview Button - TEMPORARILY DISABLED (showcase has undefined components) */}
+        {/* <Pressable
           className={({ pressed }) =>
             `bg-neutral-200 h-11 rounded-lg w-full justify-center items-center ${
               pressed ? 'bg-neutral-300 scale-[0.98]' : ''
@@ -112,15 +107,10 @@ export default function WelcomeScreen() {
           <Text className="text-neutral-800 text-sm font-medium tracking-wider" style={{ color: '#262626', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}>
             View Design System
           </Text>
-        </Pressable>
+        </Pressable> */}
 
         {/* Component Testing Button - Dev Tool */}
         <Pressable
-          className={({ pressed }) =>
-            `bg-violet-600 h-11 rounded-lg w-full justify-center items-center ${
-              pressed ? 'bg-violet-700 scale-[0.98]' : ''
-            }`
-          }
           onPress={handleComponentTesting}
           accessibilityRole="button"
           accessible={true}
