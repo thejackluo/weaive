@@ -1,23 +1,18 @@
 /**
- * Weave Design System - React Native First
+ * Weave Design System - Clean Slate
  *
- * A comprehensive design system built for React Native with:
- * - NativeWind v5 + Tailwind CSS v4
- * - React 19.1.0
- * - Glassmorphism effects
- * - Dark-first Opal-inspired aesthetics
- *
- * @see docs/dev/design-system-guide.md
+ * Starting from zero - building one component at a time
+ * Current status: Theme tokens only, NO components yet
  */
 
 // ============================================================================
-// Theme System
+// Theme System (Foundation)
 // ============================================================================
 export { ThemeProvider, useTheme, useThemeMode } from './theme/ThemeProvider';
 export type { Theme, ThemeMode } from './theme/types';
 
 // ============================================================================
-// Design Tokens
+// Design Tokens (Foundation)
 // ============================================================================
 export { colors } from './tokens/colors';
 export { typography } from './tokens/typography';
@@ -27,7 +22,7 @@ export { shadows, glass } from './tokens/effects';
 export { springs, durations, easings } from './tokens/animations';
 
 // ============================================================================
-// Hooks
+// Hooks (Foundation)
 // ============================================================================
 export { useColors } from './theme/hooks/useColors';
 export { useSpacing } from './theme/hooks/useSpacing';
@@ -36,56 +31,10 @@ export { useShadows } from './theme/hooks/useShadows';
 export { useAnimations } from './theme/hooks/useAnimations';
 
 // ============================================================================
-// Text Components
+// Components - Building one at a time
 // ============================================================================
-export { Text } from './components/Text/Text';
-export { Heading } from './components/Text/Heading';
-export { Title } from './components/Text/Title';
-export { Body } from './components/Text/Body';
-export { Caption } from './components/Text/Caption';
-export { Label } from './components/Text/Label';
-export { Mono } from './components/Text/Mono';
-export type { TextProps } from './components/Text/types';
-
-// ============================================================================
-// Button Components
-// ============================================================================
-export { Button } from './components/Button/Button';
-export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button/types';
-
-// ============================================================================
-// Card Components
-// ============================================================================
-export { Card } from './components/Card/Card';
-export type { CardProps, CardVariant, CardPadding } from './components/Card/types';
-
-// ============================================================================
-// Checkbox Components
-// ============================================================================
-export { Checkbox } from './components/Checkbox/Checkbox';
-
-// ============================================================================
-// Specialized Components (Weave-Specific)
-// ============================================================================
-export { WeaveCharacter } from './components/WeaveCharacter/WeaveCharacter';
-
-// ============================================================================
-// Badge Components
-// ============================================================================
-// TODO: Implement Badge components
-// export { Badge } from './components/Badge/Badge';
-// export { ConsistencyBadge } from './components/Badge/ConsistencyBadge';
-// export { StreakBadge } from './components/Badge/StreakBadge';
-// export { AIBadge } from './components/Badge/AIBadge';
-// export { StatusDot } from './components/Badge/StatusDot';
-// export type { BadgeProps, BadgeVariant, BadgeSize } from './components/Badge/types';
-
-// ============================================================================
-// Utility Components
-// ============================================================================
-export { GlassView } from './components/Glass/GlassView';
-// TODO: Implement AnimatedPressable
-// export { AnimatedPressable } from './components/Animated/AnimatedPressable';
+// NONE YET - Starting from scratch
+// Will add: Button, Card, Checkbox (in that order)
 
 // ============================================================================
 // Constants
