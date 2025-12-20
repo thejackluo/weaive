@@ -838,10 +838,10 @@ export default function OriginStoryScreen() {
             color: '#1a1a1a',
           }}
         >
-          You've created your origin story.
+          You've completed your first bind!
         </Text>
 
-        {/* Body Text */}
+        {/* Subheading */}
         <Text
           style={{
             fontSize: 17,
@@ -853,8 +853,8 @@ export default function OriginStoryScreen() {
             paddingHorizontal: 8,
           }}
         >
-          Every Bind you complete builds on this moment — strengthening your Weave and the person
-          you're becoming.
+          The origin story you've just made is the first of many actions you'll take that
+          strengthens us both.
         </Text>
 
         {/* Weave Character Animation Placeholder */}
