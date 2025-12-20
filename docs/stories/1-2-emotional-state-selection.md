@@ -45,7 +45,7 @@
 ### AC4: Data Storage (PRD Line 479, 482-483)
 
 - [x] Store `selected_painpoints` in zustand onboarding store (frontend-only)
-- [ ] **Future:** Send to backend API (lightweight call) - PRD specifies storing in `user_profiles.json`
+- [x] Send to backend API via POST /api/onboarding/painpoints (completed 2025-12-19)
 - [x] Selection persists if user navigates back
 
 ### AC5: Navigation
@@ -234,7 +234,17 @@ await fetch('/api/onboarding/painpoints', {
 // Backend stores in user_profiles.json (PRD Line 482-483)
 ```
 
-**Current Implementation:** Frontend-only, stores in zustand (per user request)
+**Current Implementation:** Frontend zustand store + Backend API integration (2025-12-19)
+
+**Backend Implementation (2025-12-19):**
+✅ AC4: Data storage complete
+- Created POST /api/onboarding/painpoints endpoint
+- Pydantic models for request validation (1-2 painpoints from valid set)
+- Service layer with validation logic
+- Mobile onboarding service for API calls
+- Stores in analytics_events table (temporary) with painpoint_selected event
+- TODO: Create onboarding_sessions table for pre-auth data
+- TODO: Update user_profiles.json field for authenticated users
 
 ---
 
@@ -249,6 +259,16 @@ await fetch('/api/onboarding/painpoints', {
 
 **Files Modified:**
 1. `weave-mobile/app/(onboarding)/welcome.tsx` - Updated navigation route to `/emotional-state`
+
+**Backend Files (2025-12-19):**
+1. `weave-api/app/models/onboarding.py` - Created painpoint selection models
+2. `weave-api/app/services/onboarding.py` - Created onboarding service with validation
+3. `weave-api/app/api/onboarding.py` - Created onboarding API endpoint
+4. `weave-api/app/main.py` - Registered onboarding router
+5. `weave-api/app/models/__init__.py` - Export onboarding models
+6. `weave-api/app/services/__init__.py` - Export onboarding service
+7. `weave-api/app/api/__init__.py` - Export onboarding router
+8. `weave-mobile/src/services/onboarding.ts` - Created mobile onboarding service
 
 **Key Implementation Decisions:**
 - Used native React Native components (no design system due to path resolution issues)
