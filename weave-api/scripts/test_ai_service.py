@@ -119,7 +119,7 @@ def test_bedrock():
     provider = BedrockProvider(region=AWS_REGION)
 
     prompt = "Say 'hey' in exactly one word"
-    model = 'anthropic.claude-3-5-haiku-20241022-v1:0'
+    model = 'claude-3-5-haiku'  # User-friendly name (maps to us.anthropic.claude-3-5-haiku-20241022-v1:0)
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🎯 Model: {model}")
