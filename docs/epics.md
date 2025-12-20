@@ -49,11 +49,11 @@ This document provides the complete epic and story breakdown for Weave, decompos
 - FR-1.4: Weave Solution Screen (Dynamic "Here's What Changes Now") - Display one short "solution" paragraph for each selected painpoint. If two painpoints selected, show two solution cards with soft stacking animation. Title: "How Weave helps". Design: liquid-glass cards with background animation (threads converging). Completion <8s (M)
 - FR-1.5: Authentication - Quick account creation: Sign in with Apple/Google/Email. Show "7-day free trial. No commitment." Fast auth <3s (M)
 - FR-1.6: Identity Traits Selection - Display 12 selectable traits (chips), user selects 3-5. Stored immediately. Completion <15s (M)
-- FR-1.7: Choose Your First Needle (Suggested Starting Goals) - Display 10 selectable goal options. Framing: "What do you want to work on first?" Optional custom goal input (escape hatch). Optional light customization. Confirmation screen. Maps to predefined templates. Completion ≤30s (M)
-- FR-1.8: Weave Path Generation (AI-Assisted) - Loading animation: "Shaping your path…" (1-3s delay). AI generates: goal title & summary, 2-3 milestones, 2-4 binds. User can accept or edit. AI Module: Onboarding Coach (M)
-- FR-1.9: First Commitment Ritual (Bind #1) - Display: "Today is [date]. Mark this as the start of your transformation." User taps "Complete my first Bind". Accept any input type. Show micro-animation of thread tightening. Display: "Day 1 complete." (M)
-- FR-1.10: App Mini-Tutorial (Tooltip Style) - 3 tooltips: Weave avatar, Binds, Reflection button. Each dismissible with "Got it". Duration <20s (M)
-- FR-1.11: Welcome Into 7-Day Journey - Banner at top: "You're on Day 1 of your 7-day transformation." No paywall. User enters Thread (Home) (M)
+- FR-1.7: Commitment Ritual & Origin Story (First Bind) - 3-screen flow: (1) Narrative Validation showing user's current struggles vs aspirational traits, (2) Origin Story Capture with required photo + voice note commitment, (3) Completion & Reinforcement with weave animation and level up. Creates immutable `origin_stories` record. This emotional anchor precedes goal definition (M, 5 pts)
+- FR-1.8: Create Your First Needle (Goal + Plan) - 4-screen flow: (1) Introduce Needles concept, (2) Choose from 10 suggested goal options or custom input, (3) Optional customization text, (4) AI Plan Breakdown with generated milestones and binds (editable). AI Module: Onboarding Coach. Combines goal selection and AI generation (M, 8 pts)
+- FR-1.9: First Daily Reflection (Day 0 Check-In) - Introduces reflection pillar immediately after goal setup. Prompt: "How are you feeling right now about starting this journey?" Text input (50-500 chars, optional) + fulfillment slider (1-10). Creates first `journal_entries` record. Establishes core loop before leaving onboarding (M, 2 pts)
+- FR-1.10: Progress Dashboard Introduction - 3 tooltips introducing core dashboard elements: Weave visualization, Binds section, Reflection button. Each dismissible with "Got it". Duration <20s. Simplified orientation focusing on progress tracking. Completion immediately after first reflection (M, 2 pts)
+- FR-1.11: Housekeeping, Trial Framing & Handoff - 4-screen flow: (1) Privacy & Data consent, (2) Notification Permissions, (3) Trial Framing & Soft Paywall (Free/Pro/Max tiers, always allows skip), (4) Completion & Welcome with celebration animation. Combines housekeeping, trial context, and onboarding completion ceremony (M, 6 pts)
 - FR-1.12: Dream Self (Day 1 Evening Prompt) - **Deferred personalization.** Triggered inside nightly reflection. Text input: "Describe the person you're becoming" (200 char min). Stored in identity_docs (S)
 - FR-1.13: Archetype Micro-Assessment (Day 2) - **Deferred personalization.** 3-4 quick questions delivered in chat or reflection. Deterministic archetype mapping (S)
 - FR-1.14: Motivations & Failure Modes (Day 2-3) - **Deferred personalization.** Select 2-3 motivation drivers, failure mode, optional constraints. Inserted contextually into reflection flow (S)
@@ -300,9 +300,11 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | FR-1.4 | Epic 1 | Dream Self Definition |
 | FR-1.5 | Epic 1 | Motivation and Constraints |
 | FR-1.6 | Epic 1 | First Needle/Goal Setup (AI) |
-| FR-1.7 | Epic 1 | First Commitment |
-| FR-1.8 | Epic 1 | App Tutorial |
-| FR-1.9 | Epic 1 | Soft Paywall |
+| FR-1.7 | Epic 1 | Commitment Ritual & Origin Story |
+| FR-1.8 | Epic 1 | Create Your First Needle (Goal + Plan) |
+| FR-1.9 | Epic 1 | First Daily Reflection |
+| FR-1.10 | Epic 1 | Progress Dashboard Introduction |
+| FR-1.11 | Epic 1 | Housekeeping, Trial Framing & Handoff |
 | FR-2.1 | Epic 2 | View Needles List |
 | FR-2.2 | Epic 2 | View Needle Details |
 | FR-2.3 | Epic 2 | Create New Needle (AI) |
