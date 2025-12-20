@@ -186,7 +186,7 @@ class TestRateLimiting:
         unique_prompt = f"Cache test at {os.urandom(8).hex()}"
 
         # First call (not cached)
-        response1 = ai_service.generate(
+        _ = ai_service.generate(
             user_id=test_user_id,
             user_role='admin',
             user_tier='free',

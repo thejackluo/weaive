@@ -5,7 +5,6 @@ ensuring tests are fast, deterministic, and don't incur costs.
 """
 
 from typing import Any, Dict
-from unittest.mock import Mock
 
 
 class MockOpenAIProvider:
