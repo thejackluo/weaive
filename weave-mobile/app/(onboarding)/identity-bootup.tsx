@@ -90,6 +90,27 @@ export default function IdentityBootupScreen() {
   // Loading state for API call
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Validate 2-1-2-1-2 layout pattern on mount (AC #17)
+  useEffect(() => {
+    const expectedLayout = [2, 1, 2, 1, 2];
+    const actualLayout = IDENTITY_TRAITS.map((row) => row.length);
+    const isValid =
+      actualLayout.length === expectedLayout.length &&
+      actualLayout.every((count, index) => count === expectedLayout[index]);
+
+    if (!isValid) {
+      console.error(
+        `[ONBOARDING] Invalid trait layout! Expected [2,1,2,1,2], got [${actualLayout.join(',')}]`
+      );
+      if (__DEV__) {
+        Alert.alert(
+          'Layout Error',
+          `Identity traits layout must follow 2-1-2-1-2 pattern. Current: [${actualLayout.join(',')}]`
+        );
+      }
+    }
+  }, []);
+
   // Auto-focus name input on mount (Step 1)
   const nameInputRef = useRef<TextInput>(null);
   useEffect(() => {
@@ -251,14 +272,6 @@ export default function IdentityBootupScreen() {
         return;
       }
 
-      if (!viewedPersonas.every((v) => v)) {
-        Alert.alert(
-          'View All Options',
-          'Please swipe to view both personality styles before continuing.'
-        );
-        return;
-      }
-
       setCurrentStep(3);
     } catch (error) {
       if (__DEV__) {
@@ -268,7 +281,7 @@ export default function IdentityBootupScreen() {
     }
   };
 
-  const canContinueStep2 = formData.core_personality !== null && viewedPersonas.every((v) => v);
+  const canContinueStep2 = formData.core_personality !== null;
 
   // Mark first persona as viewed on load
   useEffect(() => {
@@ -368,8 +381,6 @@ export default function IdentityBootupScreen() {
 
       // TODO (Story 0-4): Track analytics event
       // trackEvent('identity_traits_selected', { traits: formData.identity_traits });
-
-      console.log('[ONBOARDING] ✅ Identity bootup data saved successfully');
 
       // Navigate to Story 1.7 (First Needle / Goal Input)
       router.push('/(onboarding)/first-needle');
@@ -660,65 +671,10 @@ export default function IdentityBootupScreen() {
                         </View>
                       ))}
                     </View>
-
-                    {/* Selected Indicator */}
-                    {formData.core_personality === persona.id && (
-                      <View
-                        style={{
-                          marginTop: 16,
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Text style={{ color: '#4CAF50', fontWeight: '600', fontSize: 16 }}>
-                          ✓ Selected
-                        </Text>
-                      </View>
-                    )}
                   </View>
                 </TouchableOpacity>
               ))}
             </Animated.View>
-          </View>
-
-          {/* Navigation Arrows (Accessibility Fallback) */}
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              width: '100%',
-              marginTop: 16,
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => handleSwipe('right')}
-              disabled={currentPersonaIndex === 0}
-              style={{
-                opacity: currentPersonaIndex === 0 ? 0.3 : 1,
-                padding: 16,
-                minHeight: MIN_TOUCH_TARGET,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Previous personality"
-              accessibilityHint="Navigate to the previous personality option"
-              accessibilityState={{ disabled: currentPersonaIndex === 0 }}
-            >
-              <Text style={{ fontSize: 24 }}>←</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleSwipe('left')}
-              disabled={currentPersonaIndex === PERSONAS.length - 1}
-              style={{
-                opacity: currentPersonaIndex === PERSONAS.length - 1 ? 0.3 : 1,
-                padding: 16,
-                minHeight: MIN_TOUCH_TARGET,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Next personality"
-              accessibilityHint="Navigate to the next personality option"
-              accessibilityState={{ disabled: currentPersonaIndex === PERSONAS.length - 1 }}
-            >
-              <Text style={{ fontSize: 24 }}>→</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Pagination Dots */}
