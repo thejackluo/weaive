@@ -143,8 +143,9 @@ function getVariantStyles(variant: CardVariant, colors: any) {
 }
 
 function getPaddingValue(padding: CardPadding, spacing: any) {
-  const paddings = {
+  const paddings: Record<CardPadding, number> = {
     none: 0,
+    sm: spacing[2],
     compact: spacing[3],
     default: spacing[4],
     spacious: spacing[6],

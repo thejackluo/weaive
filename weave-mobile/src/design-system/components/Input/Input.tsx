@@ -187,14 +187,14 @@ export function Input({
           onChangeText={handleChangeText}
           editable={!disabled}
           style={[
-            typography.bodyBase,
+            typography.textBase,
             styles.input,
             sizeStyles.input,
             {
               color: colors.text.primary,
             },
-            leftIcon && styles.inputWithLeftIcon,
-            rightIcon && styles.inputWithRightIcon,
+            leftIcon ? styles.inputWithLeftIcon : undefined,
+            rightIcon ? styles.inputWithRightIcon : undefined,
             inputStyle,
           ]}
           placeholderTextColor={colors.text.muted}
@@ -211,7 +211,7 @@ export function Input({
         {(helperText || errorText) && (
           <Text
             style={[
-              typography.caption,
+              typography.textXs,
               styles.helperText,
               {
                 color: errorText ? colors.text.error : colors.text.muted,
@@ -225,7 +225,7 @@ export function Input({
         {showCharacterCount && maxCharacters && (
           <Text
             style={[
-              typography.caption,
+              typography.textXs,
               styles.characterCount,
               {
                 color: characterCount > maxCharacters ? colors.text.error : colors.text.muted,

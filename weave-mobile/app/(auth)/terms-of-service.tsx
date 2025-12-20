@@ -30,7 +30,6 @@ export default function TermsOfServiceScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        accessibilityRole="article"
       >
         {/* Header */}
         <View style={styles.header}>
