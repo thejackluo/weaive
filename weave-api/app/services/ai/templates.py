@@ -183,6 +183,42 @@ You're building something real here. Week by week, day by day.
 Next week: {next_milestone}""",
     },
 
+    'factual_question': {
+        'default': """I don't have access to real-time information or specific factual knowledge.
+
+For factual questions like this, I recommend:
+• Checking a reliable source (Wikipedia, official docs, etc.)
+• Using a search engine for up-to-date information
+• Consulting subject matter experts
+
+However, I'm here to help you think through goals, habits, and personal development questions.
+
+What can I help you work toward today?""",
+
+        'math': """I can't perform complex calculations reliably.
+
+For math problems, please use:
+• A calculator or spreadsheet
+• WolframAlpha for complex computations
+• Math-specific tools
+
+I'm better suited for helping you:
+• Break down goals into steps
+• Build consistent habits
+• Track your progress
+
+What goal-related question can I help with?""",
+
+        'technical': """For technical questions like this, I recommend checking the official documentation or community resources.
+
+I'm optimized for personal development coaching, not technical troubleshooting.
+
+Can I help you with:
+• Setting and tracking goals?
+• Building consistent habits?
+• Planning your daily actions?""",
+    },
+
     # Fallback for unknown modules
     'generic': {
         'default': """I'm here to help with {module}.
