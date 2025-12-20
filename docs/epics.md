@@ -722,10 +722,10 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
-### Epic DS: Design System Rebuild (53 pts)
-**User Outcome:** Complete rebuild of the Weavelight Design System with 62 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
+### Epic DS: Design System Rebuild (74 pts)
+**User Outcome:** Complete rebuild of the Weavelight Design System with 70 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
 
-**FRs Covered:** FR-DS-1, FR-DS-2, FR-DS-3, FR-DS-4, FR-DS-5, FR-DS-6, FR-DS-7, FR-DS-8, FR-DS-9
+**FRs Covered:** FR-DS-1, FR-DS-2, FR-DS-3, FR-DS-4, FR-DS-5, FR-DS-6, FR-DS-7, FR-DS-8, FR-DS-9, FR-DS-10
 
 **Why This Order:** Design system foundation enables consistent, rapid UI development across all other epics. Must be completed early (ideally before or alongside Epic 1) to prevent design debt and component inconsistencies.
 
@@ -765,9 +765,13 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **AC:** All skeletons use same shimmer animation. Empty states have icons + messages + optional CTAs. Error states include retry functionality.
   - **DoD:** Shimmer runs smoothly. Empty states support Lottie animations. Presets configured for all Weave screens.
 
-- **Story DS-9: Testing & Storybook** (6 pts) - FR-DS-9: Set up Storybook v7 for all 62 components. Write unit tests achieving 75% coverage (enforced in CI). Integrate Chromatic for visual regression testing. Bundle size analysis (<150KB target). Accessibility audit (WCAG 2.1 AA). CI/CD quality gates (linting, tests, type safety, bundle size, visual regression).
+- **Story DS-9: Testing & Storybook** (6 pts) - FR-DS-9: Set up Storybook v7 for all 70 components. Write unit tests achieving 75% coverage (enforced in CI). Integrate Chromatic for visual regression testing. Bundle size analysis (<150KB target). Accessibility audit (WCAG 2.1 AA). CI/CD quality gates (linting, tests, type safety, bundle size, visual regression).
   - **AC:** Storybook shows all components with interactive controls. Test coverage ≥75%. Chromatic integrated. CI fails on regressions.
   - **DoD:** README + CONTRIBUTING docs. All components have accessibility labels. Bundle size tracked. Performance targets met (60fps, <16ms render).
+
+- **Story DS-10: Additional Form & Layout Components** (21 pts) - FR-DS-10: Build 8 critical missing components that block 11+ MVP features: Slider with gesture control + snap-to-step + haptic feedback (FR-4.1, FR-7.6, FR-8.2). Radio + RadioGroup with composable anatomy (FR-1.13, FR-1.14, FR-2.6). Toggle/Switch with spring physics animation (FR-7.6, FR-8.3). Tabs with animated indicator + swipe gestures (FR-8.3, FR-4.5, FR-5.2). Divider (separator). ListItem with composable anatomy (FR-4.5, FR-8.1). Select (dropdown with bottom sheet). All components use React Native Gesture Handler + Reanimated for 60fps animations, spring physics using `withSpring()`, composable anatomy pattern (Radix-inspired), VoiceOver accessibility, keyboard navigation, theme token integration.
+  - **AC:** All 8 components functional. Slider gesture smooth with snap. RadioGroup supports keyboard navigation. Toggle thumb slides with spring. Tabs indicator animates smoothly. ListItem press animation natural. Select opens BottomSheet. All respect reduced motion.
+  - **DoD:** Cross-references to blocked FRs documented. All components in Storybook. Gesture interactions tested on device. Accessibility labels work. Theme customization via tokens. 75% test coverage maintained.
 
 ---
 
@@ -776,7 +780,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | Epic | Name | Story Points | Priority FRs (M) | Dependencies | Phase |
 |------|------|--------------|------------------|--------------|-------|
 | 0 | Foundation | 38 | 7 | None (True Foundation) | `[MVP]` |
-| DS | Design System Rebuild | 53 | 9 | Epic 0 (minimal) | `[MVP]` (foundation) + All phases |
+| DS | Design System Rebuild | 74 | 10 | Epic 0 (minimal) | `[MVP]` (foundation) + All phases |
 | 1 | Onboarding & Identity | 35 | 8 | Epic 0, DS (recommended) | `[MVP]` (core) + `[v1.2]` (full) |
 | 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1, DS | `[v1.2]` |
 | 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 2, DS | `[MVP]` (basic) + `[v1.1]` (enhanced) |
@@ -786,7 +790,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3, DS | `[v1.2]` |
 | 8 | Settings & Profile | 23 | 5 | Epic 0, 1, DS | `[v1.2]` |
 
-**Total:** 338 story points across 67 FRs (58 original + 9 design system)
+**Total:** 359 story points across 68 FRs (58 original + 10 design system)
 
 **Phase Breakdown:**
 - **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~66 pts (Sprint 1)
