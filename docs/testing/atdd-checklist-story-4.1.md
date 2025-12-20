@@ -230,6 +230,154 @@
 
 ---
 
+## Issue #9: Missing Specific Edge Case Tests (To Be Added)
+
+**Status:** 📝 DOCUMENTED (Not yet implemented)
+**Source:** User feedback - 2025-12-20
+**Location Reference:** Task 7, line 291
+
+### Recommended Edge Case Tests to Add
+
+#### 1. Journal Pre-Population When Entry Already Exists
+
+**Test:** Journal already exists for today → GET retrieves existing entry → form pre-populates with saved data
+
+**Backend Test (API):**
+- **File:** `weave-api/tests/test_journal_router.py`
+- **Test Name:** `test_retrieve_existing_journal_entry_for_today`
+- **Scenario:**
+  - GIVEN: User already created a journal entry for today
+  - WHEN: GET /api/journal-entries?local_date=2025-12-20 is called
+  - THEN: Existing journal entry is returned with all saved responses
+
+**Mobile Test (E2E):**
+- **File:** `weave-mobile/src/components/features/journal/__tests__/ReflectionFlow.integration.test.tsx`
+- **Test Name:** `should pre-populate form when journal entry already exists for today`
+- **Scenario:**
+  - GIVEN: User navigates to Daily Check-in screen
+  - WHEN: Journal entry already exists for today (API returns existing data)
+  - THEN: Form fields pre-populate with saved reflection, focus, fulfillment score, and custom responses
+
+---
+
+#### 2. Offline Submission Queue and Auto-Sync
+
+**Test:** Offline submission → airplane mode → submission queued → reconnect → auto-sync successful
+
+**Mobile Test (E2E):**
+- **File:** `weave-mobile/src/components/features/journal/__tests__/ReflectionFlow.integration.test.tsx`
+- **Test Name:** `should queue offline submission and auto-sync on reconnect`
+- **Scenario:**
+  - GIVEN: User completes reflection form
+  - WHEN: User submits while in airplane mode (network unavailable)
+  - THEN:
+    - Toast shows "Saved locally, will sync when online"
+    - Entry saved to AsyncStorage under `pending-journal-submissions`
+    - Navigation still proceeds to AI Feedback screen (with "pending" state)
+  - WHEN: Network reconnects
+  - THEN:
+    - TanStack Query `resumePausedMutations()` triggers auto-sync
+    - Entry successfully submitted to API
+    - AsyncStorage queue cleared
+    - Toast shows "✓ Reflection synced"
+
+---
+
+#### 3. Max 5 Custom Questions Enforcement
+
+**Test:** 5 custom questions exist → attempt to add 6th → show toast "Max 5 questions"
+
+**Mobile Test (E2E):**
+- **File:** `weave-mobile/src/components/features/journal/__tests__/ReflectionFlow.integration.test.tsx`
+- **Test Name:** `should enforce max 5 custom questions limit`
+- **Scenario:**
+  - GIVEN: User has 5 existing custom questions in preferences
+  - WHEN: User taps "+ Add custom question" link
+  - THEN: Modal opens showing existing 5 questions
+  - WHEN: User taps "Add new question" button
+  - THEN:
+    - Button is disabled or shows tooltip
+    - Toast appears: "You can have up to 5 custom questions"
+    - No new question form is shown
+
+---
+
+#### 4. Character Limit Enforcement at Exactly 500 Characters
+
+**Test:** Type 500 chars → typing disabled at 500 (hard enforcement)
+
+**Mobile Test (Component):**
+- **File:** `weave-mobile/src/components/features/journal/__tests__/ReflectionScreen.test.tsx`
+- **Test Name:** `should disable input at exactly 500 characters`
+- **Scenario:**
+  - GIVEN: Reflection text input is rendered
+  - WHEN: User types exactly 500 characters
+  - THEN:
+    - Character counter shows "500 / 500"
+    - Input becomes non-editable (`editable={false}`)
+    - Visual feedback (counter turns red or input border highlights)
+    - Further typing is prevented
+
+**Mobile Test (E2E):**
+- **File:** `weave-mobile/src/components/features/journal/__tests__/ReflectionFlow.integration.test.tsx`
+- **Test Name:** `should prevent typing beyond 500 character limit`
+- **Scenario:**
+  - GIVEN: User is typing in reflection text input
+  - WHEN: User reaches 500 characters
+  - THEN: Cannot type additional characters (maxLength enforcement works)
+
+---
+
+#### 5. Timezone Edge Case Near Midnight
+
+**Test:** User near midnight → journal saves to correct local_date based on user's timezone
+
+**Backend Test (API):**
+- **File:** `weave-api/tests/test_journal_router.py`
+- **Test Name:** `test_timezone_edge_case_journal_local_date`
+- **Scenario:**
+  - GIVEN: User in timezone PST (UTC-8) submits journal at 11:58 PM PST (7:58 AM UTC next day)
+  - WHEN: POST /api/journal-entries with local_date="2025-12-20"
+  - THEN:
+    - Journal entry is saved with local_date="2025-12-20" (not 2025-12-21)
+    - User's timezone is respected for local_date calculation
+    - No duplicate entry conflict even though server timestamp is next day in UTC
+
+**Implementation Note:**
+- Client must send `local_date` explicitly (user's device date)
+- Server must trust client's `local_date` (don't recalculate from server timezone)
+- Validation: `local_date` must be within reasonable range (past 7 days, not future)
+
+---
+
+### Summary of Missing Tests
+
+| Test Category | Backend Tests | Mobile E2E Tests | Mobile Component Tests | Total |
+|---------------|---------------|------------------|------------------------|-------|
+| **Currently Implemented** | 14 | 9 | 13 | 36 |
+| **Missing (Issue #9)** | 2 | 3 | 1 | 6 |
+| **Total When Complete** | 16 | 12 | 14 | **42** |
+
+### Implementation Priority
+
+**Phase 1 (Critical Edge Cases):**
+1. Timezone edge case (backend) - **High Risk** if incorrect
+2. Character limit enforcement (mobile) - **User Experience**
+3. Journal pre-population (backend + mobile) - **Data Integrity**
+
+**Phase 2 (User Experience):**
+4. Offline queue and auto-sync (mobile) - **Reliability**
+5. Max 5 custom questions (mobile) - **Feature Completeness**
+
+### Next Steps
+
+1. **After implementing Story 4.1 core functionality**, return to this section
+2. Add these 6 edge case tests following the specifications above
+3. Verify all 42 tests pass (16 backend + 12 E2E + 14 component)
+4. Update test count in ATDD checklist header
+
+---
+
 ## Data Factories Created
 
 ### Backend Factories (Python)
@@ -752,17 +900,112 @@ cd weave-mobile && npm test -- --coverage
 
 ---
 
+## Test Database Setup (REQUIRED for Backend Integration Tests)
+
+### ⚙️ Prerequisites
+
+Backend API tests require a **real Supabase database** to verify:
+- API endpoint functionality
+- Database writes (journal_entries, daily_aggregates)
+- RLS policy enforcement
+- Constraint validation (unique user + date)
+
+**Recommended:** Local Supabase with Docker (fast, safe, free)
+
+### 🚀 Quick Setup (Automated)
+
+**Mac/Linux:**
+```bash
+bash scripts/setup-test-db.sh
+```
+
+**Windows PowerShell:**
+```powershell
+.\scripts\setup-test-db.ps1
+```
+
+**What this does:**
+1. Verifies Docker is running
+2. Starts local Supabase (`npx supabase start`)
+3. Displays connection credentials
+4. Guides you to create `.env.test` file
+
+### 📝 Manual Setup
+
+If you prefer manual setup:
+
+```bash
+# 1. Start local Supabase (requires Docker Desktop running)
+npx supabase start
+
+# 2. Copy output credentials (API URL, anon key, service_role key)
+
+# 3. Create .env.test file
+cp weave-api/.env.test.example weave-api/.env.test
+
+# 4. Edit .env.test with credentials from step 2
+
+# 5. Apply database migrations
+npx supabase db push
+
+# 6. Verify setup works
+cd weave-api && uv run pytest tests/test_health.py -v
+```
+
+**Expected:** `test_health_endpoint PASSED` ✅
+
+### 🔄 Daily Workflow
+
+```bash
+# Start test database (once per work session)
+npx supabase start
+
+# Run tests (as many times as needed)
+cd weave-api && uv run pytest tests/ -v
+
+# Reset database (clean slate)
+npx supabase db reset
+
+# Stop test database (end of work session)
+npx supabase stop
+```
+
+### ❓ Troubleshooting
+
+**Issue:** Docker not running
+- **Solution:** Start Docker Desktop, wait for it to fully start, try again
+
+**Issue:** Port already in use (54321, 54322, etc.)
+- **Solution:** `npx supabase stop` then `npx supabase start`
+
+**Issue:** Connection refused
+- **Solution:** Check `.env.test` has correct `SUPABASE_URL` from `npx supabase start` output
+
+**Full guide:** `docs/dev/test-database-setup.md`
+
+---
+
 ## Next Steps
 
-1. **Review this checklist** with team in standup or planning
-2. **Run failing tests** to confirm RED phase:
-   - `cd weave-api && uv run pytest tests/test_journal_router.py -v`
-   - `cd weave-mobile && npm test -- journal`
-3. **Begin implementation** using implementation checklist as guide (start with backend)
-4. **Work one test at a time** (red → green for each)
-5. **Share progress** in daily standup
-6. **When all tests pass**, refactor code for quality
-7. **When refactoring complete**, manually update story status to 'done' in `docs/bmm-workflow-status.yaml`
+1. **Setup test database** ⚙️ (see section above) - **REQUIRED before running backend tests**
+2. **Verify setup works:**
+   ```bash
+   cd weave-api && uv run pytest tests/test_health.py -v
+   ```
+3. **Review this checklist** with team in standup or planning
+4. **Run failing tests** to confirm RED phase:
+   ```bash
+   # Backend tests (requires test database)
+   cd weave-api && uv run pytest tests/test_journal_router.py -v
+
+   # Mobile tests (uses mocks, no database needed)
+   cd weave-mobile && npm test -- journal
+   ```
+5. **Begin implementation** using implementation checklist as guide (start with backend)
+6. **Work one test at a time** (red → green for each)
+7. **Share progress** in daily standup
+8. **When all tests pass**, refactor code for quality
+9. **When refactoring complete**, manually update story status to 'done' in `docs/bmm-workflow-status.yaml`
 
 ---
 
