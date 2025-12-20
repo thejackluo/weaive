@@ -227,7 +227,7 @@ class AIService:
         Generate AI response with real-time streaming (async generator).
 
         Yields chunks as they arrive from the AI provider (word-by-word or sentence-by-sentence).
-        Uses Anthropic's native streaming API for providers that support it.
+        Supports streaming from Bedrock, OpenAI, and Anthropic with automatic fallback.
 
         Args:
             user_id: User ID (from user_profiles.id)
@@ -240,11 +240,11 @@ class AIService:
         Yields:
             Dict with:
             - {'type': 'chunk', 'content': 'word or sentence'} - During generation
-            - {'type': 'done', 'input_tokens': N, 'output_tokens': M, 'cost_usd': X, 'provider': 'anthropic', 'run_id': 'uuid'} - Final metadata
+            - {'type': 'done', 'input_tokens': N, 'output_tokens': M, 'cost_usd': X, 'provider': 'provider_name', 'run_id': 'uuid'} - Final metadata
 
         Raises:
             RateLimitError: If user exceeds rate limit
-            AIServiceError: If streaming not supported or all providers fail
+            AIServiceError: If all providers fail
         """
         logger.info(f"🌊 AI streaming request: user={user_id}, module={module}, role={user_role}, tier={user_tier}")
 
@@ -259,7 +259,7 @@ class AIService:
         budget_exceeded = self._check_budgets(user_id, user_tier)
 
         if budget_exceeded:
-            logger.warning("💰 Budget exceeded, streaming not available")
+            logger.warning("💰 Budget exceeded, using deterministic fallback")
             # Fallback to deterministic (no streaming, just return full response)
             deterministic = self.providers[-1][1]  # Last provider is always deterministic
             response = deterministic.complete(prompt=prompt, module=module, **kwargs)
@@ -275,115 +275,122 @@ class AIService:
             }
             return
 
-        # 3. Try streaming with Anthropic provider (supports native streaming)
-        anthropic_provider = None
-        for provider_name, provider in self.providers:
-            if provider_name == 'anthropic':
-                anthropic_provider = provider
-                break
-
-        if not anthropic_provider:
-            logger.error("🚨 Anthropic provider not available for streaming")
-            raise AIServiceError("Streaming not available (Anthropic provider required)")
-
-        # 4. Create ai_runs record
+        # 3. Compute input hash for run tracking
         input_hash = self._compute_hash(prompt, module, kwargs.get('model', 'auto'))
-        run_id = self._create_run(user_id, module, input_hash, 'anthropic')
 
-        try:
-            # Stream from Anthropic
-            logger.info("🔄 Streaming with Anthropic provider")
+        # 4. Try streaming with each provider in fallback chain
+        errors = []
 
-            # Use Anthropic's streaming API
+        # Get providers that support streaming (exclude deterministic)
+        streaming_providers = [(name, provider) for name, provider in self.providers
+                              if name in ['bedrock', 'openai', 'anthropic']]
 
-            client = anthropic_provider.client
+        if not streaming_providers:
+            logger.error("🚨 No streaming providers available")
+            raise AIServiceError("Streaming not available (no providers support streaming)")
 
-            # Prepare request
-            model = kwargs.get('model', 'claude-3-5-sonnet-20241022')
-            max_tokens = kwargs.get('max_tokens', 2000)
-            temperature = kwargs.get('temperature')
-            system = kwargs.get('system')
+        for provider_name, provider in streaming_providers:
+            # Check if provider has stream() method
+            if not hasattr(provider, 'stream'):
+                logger.warning(f"⚠️  Provider {provider_name} does not support streaming, skipping")
+                continue
 
-            # Build request params
-            request_params = {
-                'model': model,
-                'max_tokens': max_tokens,
-                'messages': [{'role': 'user', 'content': prompt}],
-            }
+            # Create ai_runs record
+            run_id = self._create_run(user_id, module, input_hash, provider_name)
 
-            if temperature is not None:
-                request_params['temperature'] = temperature
+            try:
+                logger.info(f"🔄 Streaming with {provider_name} provider")
 
-            if system is not None:
-                if isinstance(system, str):
-                    request_params['system'] = [{'type': 'text', 'text': system}]
-                elif isinstance(system, list):
-                    request_params['system'] = system
+                # Collect full content for artifact creation
+                full_content = []
+                input_tokens = 0
+                output_tokens = 0
+                cost_usd = 0.0
+                model = kwargs.get('model', 'auto')
 
-            # Stream completion
-            full_content = []
-            input_tokens = 0
-            output_tokens = 0
+                # Stream from provider
+                for chunk in provider.stream(prompt=prompt, module=module, **kwargs):
+                    if chunk['type'] == 'chunk':
+                        # Yield content chunk
+                        full_content.append(chunk['content'])
+                        yield chunk
+                    elif chunk['type'] == 'done':
+                        # Store final metadata
+                        input_tokens = chunk.get('input_tokens', 0)
+                        output_tokens = chunk.get('output_tokens', 0)
+                        cost_usd = chunk.get('cost_usd', 0.0)
+                        model = chunk.get('model', model)
 
-            with client.messages.stream(**request_params) as stream:
-                for text in stream.text_stream:
-                    # Yield each text chunk
-                    full_content.append(text)
-                    yield {'type': 'chunk', 'content': text}
+                # Build response object for database
+                complete_content = ''.join(full_content)
+                response = AIResponse(
+                    content=complete_content,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    model=model,
+                    cost_usd=cost_usd,
+                    provider=provider_name,
+                    cached=False,
+                    run_id=run_id,
+                )
 
-                # Get final message with usage
-                final_message = stream.get_final_message()
-                input_tokens = final_message.usage.input_tokens
-                output_tokens = final_message.usage.output_tokens
+                # Update run as success
+                self._update_run_success(run_id, response, module)
 
-            # Calculate cost
-            cost_usd = anthropic_provider.estimate_cost(input_tokens, output_tokens, model)
+                # Create artifact
+                self._create_artifact(run_id, user_id, module, response)
 
-            # Update run as success
-            complete_content = ''.join(full_content)
-            response = AIResponse(
-                content=complete_content,
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                model=model,
-                cost_usd=cost_usd,
-                provider='anthropic',
-                cached=False,
-                run_id=run_id,
-            )
+                logger.info(
+                    f"✅ {provider_name} streaming success: ${cost_usd:.6f}, "
+                    f"{input_tokens} in + {output_tokens} out tokens"
+                )
 
-            # Update run as success (includes cost, tokens, model)
-            self._update_run_success(run_id, response, module)
+                # Yield final metadata
+                yield {
+                    'type': 'done',
+                    'input_tokens': input_tokens,
+                    'output_tokens': output_tokens,
+                    'cost_usd': cost_usd,
+                    'provider': provider_name,
+                    'run_id': run_id,
+                }
 
-            # Create artifact
-            self._create_artifact(run_id, user_id, module, response)
+                # Success! Exit without trying other providers
+                return
 
-            logger.info(
-                f"✅ Anthropic streaming success: ${cost_usd:.6f}, "
-                f"{input_tokens} in + {output_tokens} out tokens"
-            )
+            except AIProviderError as e:
+                # Provider failed, log and try next
+                self._update_run_failure(run_id, str(e))
+                errors.append(f"{provider_name}: {e.message}")
+                logger.warning(f"❌ {provider_name} streaming failed: {e.message}")
 
-            # Yield final metadata
-            yield {
-                'type': 'done',
-                'input_tokens': input_tokens,
-                'output_tokens': output_tokens,
-                'cost_usd': cost_usd,
-                'provider': 'anthropic',
-                'run_id': run_id,
-            }
+                if not e.retryable:
+                    logger.error(f"🛑 {provider_name} error is not retryable, skipping remaining providers")
+                    break
 
-        except Exception as e:
-            # Stream failed
-            self._update_run_failure(run_id, str(e))
-            logger.error(f"💥 Anthropic streaming failed: {e}")
+                continue  # Try next provider
 
-            # Yield error event
-            yield {
-                'type': 'error',
-                'message': f"Streaming failed: {e}",
-                'run_id': run_id,
-            }
+            except Exception as e:
+                # Unexpected error
+                self._update_run_failure(run_id, f"Unexpected error: {e}")
+                errors.append(f"{provider_name}: Unexpected error: {e}")
+                logger.error(f"💥 {provider_name} unexpected streaming error: {e}")
+                continue
+
+        # All providers failed - fallback to deterministic
+        logger.warning("⚠️  All streaming providers failed, falling back to deterministic")
+        deterministic = self.providers[-1][1]
+        response = deterministic.complete(prompt=prompt, module=module, **kwargs)
+
+        # Yield as single chunk
+        yield {'type': 'chunk', 'content': response.content}
+        yield {
+            'type': 'done',
+            'input_tokens': response.input_tokens,
+            'output_tokens': response.output_tokens,
+            'cost_usd': 0.0,
+            'provider': 'deterministic',
+        }
 
     def _compute_hash(self, prompt: str, module: str, model: str) -> str:
         """
