@@ -4,19 +4,10 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': [
-      'babel-jest',
-      {
-        presets: [
-          '@babel/preset-env',
-          '@babel/preset-react',
-          '@babel/preset-typescript',
-        ],
-      },
-    ],
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|react-native-reanimated|react-native-gesture-handler|react-native-svg)/)',
+    'node_modules/(?!(react-native|@react-native|@react-native-community|react-native-reanimated|react-native-gesture-handler|react-native-svg)/)',
   ],
   testMatch: [
     '**/__tests__/**/*.(test|spec).(ts|tsx|js)',
