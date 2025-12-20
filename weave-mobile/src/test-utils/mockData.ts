@@ -10,6 +10,16 @@ export interface MockUser {
   email: string;
   timezone: string;
   created_at: string;
+  preferred_name?: string;
+  preferences?: {
+    notifications_enabled?: boolean;
+    custom_reflection_questions?: Array<{
+      id: string;
+      question: string;
+      type: 'text' | 'numeric' | 'yes_no';
+      created_at: string;
+    }>;
+  };
 }
 
 export interface MockGoal {
