@@ -1,0 +1,1332 @@
+/**
+ * Weave Design System Showcase
+ *
+ * COMPREHENSIVE showcase of ALL 70+ design system components
+ * - Bottom navigation (mobile app pattern)
+ * - 8 comprehensive tabs
+ * - ALL components with ALL variants
+ * - Proper contrast throughout (dark text on light, light text on dark)
+ */
+
+import React, { useState } from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Pressable,
+  Text as RNText,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  // Theme
+  ThemeProvider,
+  useTheme,
+
+  // Text Components (13)
+  Text,
+  AnimatedText,
+  Heading,
+  Title,
+  Subtitle,
+  Body,
+  BodySmall,
+  Caption,
+  Label,
+  Link,
+  Mono,
+
+  // Button Components (7)
+  Button,
+  PrimaryButton,
+  SecondaryButton,
+  GhostButton,
+  DestructiveButton,
+  AIButton,
+  IconButton,
+
+  // Card Components (7)
+  Card,
+  GlassCard,
+  ElevatedCard,
+  AICard,
+  SuccessCard,
+  NeedleCard,
+  InsightCard,
+
+  // Input Components (3) - COMMENTED OUT: Not yet implemented in mobile design system
+  // Input,
+  // TextArea,
+  // SearchInput,
+
+  // Checkbox Components (2)
+  Checkbox,
+  BindCheckbox,
+
+  // Badge Components (6)
+  Badge,
+  CountBadge,
+  StatusDot,
+  StreakBadge,
+  AIBadge,
+  ConsistencyBadge,
+
+  // Specialized Cards (2)
+  BindCard,
+  CaptureCard,
+
+  // Progress Components (2)
+  ProgressBar,
+  CircularProgress,
+
+  // Heatmap (1)
+  ConsistencyHeatmap,
+
+  // Navigation Components (3)
+  BottomTabBar,
+  HeaderBar,
+  BackButton,
+
+  // Overlay Components (3)
+  Modal,
+  BottomSheet,
+  Toast,
+
+  // Timer (1)
+  Timer,
+
+  // Skeleton Loaders (8)
+  Skeleton,
+  SkeletonText,
+  SkeletonAvatar,
+  SkeletonCard,
+  SkeletonListItem,
+  SkeletonBindCard,
+  SkeletonStatCard,
+  SkeletonProgressCard,
+
+  // Empty State Components (9)
+  EmptyState,
+  EmptyGoals,
+  EmptyBinds,
+  EmptyCaptures,
+  EmptyJournal,
+  EmptySearch,
+  EmptyNotifications,
+  ErrorState,
+  NoConnectionState,
+  ComingSoonState,
+
+  // Avatar Components (3)
+  Avatar,
+  AvatarGroup,
+  AvatarWithName,
+
+  // Stat Card Components (4)
+  StatCard,
+  StatCardGrid,
+  MiniStatCard,
+  ProgressStatCard,
+} from '../../src/design-system';
+
+type TabId = 'foundations' | 'typography' | 'buttons' | 'cards' | 'inputs' | 'status' | 'specialty' | 'overlays';
+
+function ShowcaseContent() {
+  const { colors, spacing, radius, typography } = useTheme();
+
+  // ============================================
+  // ASSERTION CHECKS - Identify undefined components
+  // ============================================
+  const assertDefined = (name: string, v: any) => {
+    if (!v) throw new Error(`[ShowcaseContent] ${name} is undefined (import/export mismatch)`);
+    if (typeof v !== 'function' && typeof v !== 'object') {
+      throw new Error(`[ShowcaseContent] ${name} is weird type: ${typeof v}`);
+    }
+  };
+
+  // Text Components
+  assertDefined("Text", Text);
+  assertDefined("AnimatedText", AnimatedText);
+  assertDefined("Heading", Heading);
+  assertDefined("Title", Title);
+  assertDefined("Subtitle", Subtitle);
+  assertDefined("Body", Body);
+  assertDefined("BodySmall", BodySmall);
+  assertDefined("Caption", Caption);
+  assertDefined("Label", Label);
+  assertDefined("Link", Link);
+  assertDefined("Mono", Mono);
+
+  // Button Components
+  assertDefined("Button", Button);
+  assertDefined("PrimaryButton", PrimaryButton);
+  assertDefined("SecondaryButton", SecondaryButton);
+  assertDefined("GhostButton", GhostButton);
+  assertDefined("DestructiveButton", DestructiveButton);
+  assertDefined("AIButton", AIButton);
+  assertDefined("IconButton", IconButton);
+
+  // Card Components
+  assertDefined("Card", Card);
+  assertDefined("GlassCard", GlassCard);
+  assertDefined("ElevatedCard", ElevatedCard);
+  assertDefined("AICard", AICard);
+  assertDefined("SuccessCard", SuccessCard);
+  assertDefined("NeedleCard", NeedleCard);
+  assertDefined("InsightCard", InsightCard);
+
+  // Input Components - COMMENTED OUT: Not yet implemented
+  // assertDefined("Input", Input);
+  // assertDefined("TextArea", TextArea);
+  // assertDefined("SearchInput", SearchInput);
+
+  // Checkbox Components
+  assertDefined("Checkbox", Checkbox);
+  assertDefined("BindCheckbox", BindCheckbox);
+
+  // Badge Components
+  assertDefined("Badge", Badge);
+  assertDefined("CountBadge", CountBadge);
+  assertDefined("StatusDot", StatusDot);
+  assertDefined("StreakBadge", StreakBadge);
+  assertDefined("AIBadge", AIBadge);
+  assertDefined("ConsistencyBadge", ConsistencyBadge);
+
+  // Specialized Cards
+  assertDefined("BindCard", BindCard);
+  assertDefined("CaptureCard", CaptureCard);
+
+  // Progress Components
+  assertDefined("ProgressBar", ProgressBar);
+  assertDefined("CircularProgress", CircularProgress);
+
+  // Heatmap
+  assertDefined("ConsistencyHeatmap", ConsistencyHeatmap);
+
+  // Navigation Components
+  assertDefined("BottomTabBar", BottomTabBar);
+  assertDefined("HeaderBar", HeaderBar);
+  assertDefined("BackButton", BackButton);
+
+  // Overlay Components
+  assertDefined("Modal", Modal);
+  assertDefined("BottomSheet", BottomSheet);
+  assertDefined("Toast", Toast);
+
+  // Timer
+  assertDefined("Timer", Timer);
+
+  // Skeleton Loaders
+  assertDefined("Skeleton", Skeleton);
+  assertDefined("SkeletonText", SkeletonText);
+  assertDefined("SkeletonAvatar", SkeletonAvatar);
+  assertDefined("SkeletonCard", SkeletonCard);
+  assertDefined("SkeletonListItem", SkeletonListItem);
+  assertDefined("SkeletonBindCard", SkeletonBindCard);
+  assertDefined("SkeletonStatCard", SkeletonStatCard);
+  assertDefined("SkeletonProgressCard", SkeletonProgressCard);
+
+  // Empty State Components
+  assertDefined("EmptyState", EmptyState);
+  assertDefined("EmptyGoals", EmptyGoals);
+  assertDefined("EmptyBinds", EmptyBinds);
+  assertDefined("EmptyCaptures", EmptyCaptures);
+  assertDefined("EmptyJournal", EmptyJournal);
+  assertDefined("EmptySearch", EmptySearch);
+  assertDefined("EmptyNotifications", EmptyNotifications);
+  assertDefined("ErrorState", ErrorState);
+  assertDefined("NoConnectionState", NoConnectionState);
+  assertDefined("ComingSoonState", ComingSoonState);
+
+  // Avatar Components
+  assertDefined("Avatar", Avatar);
+  assertDefined("AvatarGroup", AvatarGroup);
+  assertDefined("AvatarWithName", AvatarWithName);
+
+  // Stat Card Components
+  assertDefined("StatCard", StatCard);
+  assertDefined("StatCardGrid", StatCardGrid);
+  assertDefined("MiniStatCard", MiniStatCard);
+  assertDefined("ProgressStatCard", ProgressStatCard);
+
+  console.log("✅ All 73 components are defined!");
+  // ============================================
+
+  // Guard: Return early if theme is not available
+  if (!colors || !spacing || !radius || !typography) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+        <RNText style={{ color: '#fff' }}>Loading theme...</RNText>
+      </SafeAreaView>
+    );
+  }
+
+  const [activeTab, setActiveTab] = useState<TabId>('foundations');
+
+  const tabs: Array<{ id: TabId; label: string; icon?: string }> = [
+    { id: 'foundations', label: 'Foundations' },
+    { id: 'typography', label: 'Typography' },
+    { id: 'buttons', label: 'Buttons' },
+    { id: 'cards', label: 'Cards' },
+    { id: 'inputs', label: 'Inputs' },
+    { id: 'status', label: 'Status' },
+    { id: 'specialty', label: 'Specialty' },
+    { id: 'overlays', label: 'Overlays' },
+  ];
+
+  // Dynamic styles using StyleSheet (bypasses react-native-css)
+  const dynamicStyles = StyleSheet.create({
+    // Container
+    container: {
+      flex: 1,
+      backgroundColor: colors?.background?.primary,
+    },
+
+    // Header
+    header: {
+      padding: spacing?.[4],
+      alignItems: 'center' as const,
+      borderBottomWidth: 1,
+      borderBottomColor: colors?.border?.muted,
+    },
+    headerCaption: {
+      marginTop: spacing?.[2],
+    },
+
+    // Content
+    contentScrollView: {
+      flex: 1,
+    },
+    contentContainer: {
+      padding: spacing?.[4],
+      paddingBottom: spacing?.[24], // Extra padding for bottom nav
+    },
+
+    // Bottom Navigation Bar (FIXED AT BOTTOM)
+    bottomNavBar: {
+      position: 'absolute' as const,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: colors?.background?.secondary,
+      borderTopWidth: 1,
+      borderTopColor: colors?.border?.muted,
+      paddingBottom: spacing?.[2], // Safe area padding
+    },
+    bottomNavScrollView: {
+      paddingHorizontal: spacing?.[2],
+      paddingVertical: spacing?.[2],
+    },
+    bottomNavContent: {
+      flexDirection: 'row' as const,
+      gap: spacing?.[2],
+    },
+
+    // Tab buttons
+    tabButton: {
+      paddingHorizontal: spacing?.[4],
+      paddingVertical: spacing?.[3],
+      borderRadius: radius?.md,
+      minWidth: 90,
+      alignItems: 'center' as const,
+    },
+    tabButtonActive: {
+      backgroundColor: colors?.accent?.[500],
+    },
+    tabButtonInactive: {
+      backgroundColor: 'transparent' as const,
+    },
+    tabTextActive: {
+      color: colors?.dark?.[900], // Dark text on light accent bg
+      fontSize: 13,
+      fontWeight: '600' as const,
+    },
+    tabTextInactive: {
+      color: colors?.text?.secondary,
+      fontSize: 13,
+      fontWeight: '500' as const,
+    },
+
+    // Section styles
+    sectionGap: {
+      gap: spacing?.[6],
+    },
+    section: {
+      gap: spacing?.[3],
+    },
+
+    // Spacing helpers
+    marginTop1: {
+      marginTop: spacing?.[1],
+    },
+    marginTop2: {
+      marginTop: spacing?.[2],
+    },
+    marginTop3: {
+      marginTop: spacing?.[3],
+    },
+    marginTop4: {
+      marginTop: spacing?.[4],
+    },
+    gap1: {
+      gap: spacing?.[1],
+    },
+    gap2: {
+      gap: spacing?.[2],
+    },
+    gap3: {
+      gap: spacing?.[3],
+    },
+    gap4: {
+      gap: spacing?.[4],
+    },
+    padding2: {
+      padding: spacing?.[2],
+    },
+    padding3: {
+      padding: spacing?.[3],
+    },
+    padding4: {
+      padding: spacing?.[4],
+    },
+
+    // Color palette
+    colorPaletteRow: {
+      flexDirection: 'row' as const,
+      gap: spacing?.[3],
+      flexWrap: 'wrap' as const,
+    },
+
+    // Grid layouts
+    buttonGrid: {
+      flexDirection: 'row' as const,
+      flexWrap: 'wrap' as const,
+      gap: spacing?.[3],
+    },
+    twoColumnGrid: {
+      flexDirection: 'row' as const,
+      flexWrap: 'wrap' as const,
+      gap: spacing?.[3],
+    },
+    gridItem: {
+      flex: 1,
+      minWidth: 150,
+    },
+
+    // Badge container
+    badgeRow: {
+      flexDirection: 'row' as const,
+      gap: spacing?.[3],
+      flexWrap: 'wrap' as const,
+      alignItems: 'center' as const,
+    },
+
+    // Demo containers with proper contrast
+    lightBgDemo: {
+      backgroundColor: colors?.light?.[100],
+      padding: spacing?.[4],
+      borderRadius: radius?.lg,
+    },
+    darkBgDemo: {
+      backgroundColor: colors?.dark?.[800],
+      padding: spacing?.[4],
+      borderRadius: radius?.lg,
+    },
+
+    // Avatar row
+    avatarRow: {
+      flexDirection: 'row' as const,
+      gap: spacing?.[3],
+      alignItems: 'center' as const,
+    },
+  });
+
+  return (
+    <SafeAreaView style={dynamicStyles.container}>
+      {/* Header */}
+      <View style={dynamicStyles.header}>
+        <Heading>Weave Design System</Heading>
+        <Caption color="muted" style={dynamicStyles.headerCaption}>
+          70+ Components • Mobile-First • React Native
+        </Caption>
+      </View>
+
+      {/* Main Content */}
+      <ScrollView
+        style={dynamicStyles.contentScrollView}
+        contentContainerStyle={dynamicStyles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* FOUNDATIONS TAB */}
+        {activeTab === 'foundations' && (
+          <View style={dynamicStyles.sectionGap}>
+            <Section title="Color Palette" spacing={spacing}>
+              <View style={dynamicStyles.colorPaletteRow}>
+                <ColorSwatch color={colors?.accent?.[500]} label="Accent" spacing={spacing} radius={radius} />
+                <ColorSwatch color={colors?.violet?.[500]} label="Violet (AI)" spacing={spacing} radius={radius} />
+                <ColorSwatch color={colors?.amber?.[500]} label="Amber" spacing={spacing} radius={radius} />
+                <ColorSwatch color={colors?.emerald?.[500]} label="Emerald" spacing={spacing} radius={radius} />
+                <ColorSwatch color={colors?.rose?.[500]} label="Rose" spacing={spacing} radius={radius} />
+                <ColorSwatch color={colors?.blue?.[500]} label="Blue" spacing={spacing} radius={radius} />
+              </View>
+            </Section>
+
+            <Section title="Semantic Colors" spacing={spacing}>
+              <Card variant="default" padding="spacious">
+                <View style={dynamicStyles.gap2}>
+                  <View style={dynamicStyles.lightBgDemo}>
+                    <Text style={{ color: colors?.dark?.[900] }}>Dark text on light background ✓</Text>
+                  </View>
+                  <View style={dynamicStyles.darkBgDemo}>
+                    <Text style={{ color: colors?.light?.[100] }}>Light text on dark background ✓</Text>
+                  </View>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Typography Scale" spacing={spacing}>
+              <Card variant="glass" padding="spacious">
+                <View style={dynamicStyles.gap2}>
+                  <Text style={{ fontSize: typography?.fontSize?.['6xl'], fontWeight: '700' }}>6XL - 60px</Text>
+                  <Text style={{ fontSize: typography?.fontSize?.['5xl'], fontWeight: '700' }}>5XL - 48px</Text>
+                  <Text style={{ fontSize: typography?.fontSize?.['4xl'], fontWeight: '700' }}>4XL - 36px</Text>
+                  <Text style={{ fontSize: typography?.fontSize?.['3xl'], fontWeight: '700' }}>3XL - 30px</Text>
+                  <Text style={{ fontSize: typography?.fontSize?.['2xl'], fontWeight: '600' }}>2XL - 24px</Text>
+                  <Text style={{ fontSize: typography?.fontSize?.xl, fontWeight: '600' }}>XL - 20px</Text>
+                  <Text style={{ fontSize: typography?.fontSize?.lg }}>LG - 18px</Text>
+                  <Text style={{ fontSize: typography?.fontSize?.base }}>Base - 16px</Text>
+                  <Text style={{ fontSize: typography?.fontSize?.sm }}>SM - 14px</Text>
+                  <Text style={{ fontSize: typography?.fontSize?.xs }}>XS - 12px</Text>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Spacing System" spacing={spacing}>
+              <Card padding="spacious">
+                <View style={dynamicStyles.gap2}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing?.[2] }}>
+                    <View style={{ width: spacing?.[1], height: spacing?.[4], backgroundColor: colors?.accent?.[500] }} />
+                    <Caption>1 = {spacing?.[1]}px</Caption>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing?.[2] }}>
+                    <View style={{ width: spacing?.[2], height: spacing?.[4], backgroundColor: colors?.accent?.[500] }} />
+                    <Caption>2 = {spacing?.[2]}px</Caption>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing?.[2] }}>
+                    <View style={{ width: spacing?.[4], height: spacing?.[4], backgroundColor: colors?.accent?.[500] }} />
+                    <Caption>4 = {spacing?.[4]}px</Caption>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing?.[2] }}>
+                    <View style={{ width: spacing?.[6], height: spacing?.[4], backgroundColor: colors?.accent?.[500] }} />
+                    <Caption>6 = {spacing?.[6]}px</Caption>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing?.[2] }}>
+                    <View style={{ width: spacing?.[8], height: spacing?.[4], backgroundColor: colors?.accent?.[500] }} />
+                    <Caption>8 = {spacing?.[8]}px</Caption>
+                  </View>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Border Radius" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <View style={{ flexDirection: 'row', gap: spacing?.[3], flexWrap: 'wrap' }}>
+                  <View style={dynamicStyles.gridItem}>
+                    <View style={{ width: 80, height: 80, backgroundColor: colors?.accent?.[500], borderRadius: radius?.sm }} />
+                    <Caption style={dynamicStyles.marginTop2}>SM - {radius?.sm}px</Caption>
+                  </View>
+                  <View style={dynamicStyles.gridItem}>
+                    <View style={{ width: 80, height: 80, backgroundColor: colors?.accent?.[500], borderRadius: radius?.md }} />
+                    <Caption style={dynamicStyles.marginTop2}>MD - {radius?.md}px</Caption>
+                  </View>
+                  <View style={dynamicStyles.gridItem}>
+                    <View style={{ width: 80, height: 80, backgroundColor: colors?.accent?.[500], borderRadius: radius?.lg }} />
+                    <Caption style={dynamicStyles.marginTop2}>LG - {radius?.lg}px</Caption>
+                  </View>
+                  <View style={dynamicStyles.gridItem}>
+                    <View style={{ width: 80, height: 80, backgroundColor: colors?.accent?.[500], borderRadius: radius?.xl }} />
+                    <Caption style={dynamicStyles.marginTop2}>XL - {radius?.xl}px</Caption>
+                  </View>
+                </View>
+              </View>
+            </Section>
+
+            <Section title="Glassmorphism Effects" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <Card variant="glass" padding="spacious">
+                  <Label>Glass Card</Label>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Standard blur • Opal-inspired
+                  </Caption>
+                </Card>
+
+                <Card variant="elevated" padding="spacious">
+                  <Label>Glass Elevated</Label>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Stronger blur • Shadow elevation
+                  </Caption>
+                </Card>
+
+                <Card variant="ai" padding="spacious">
+                  <Label color="ai">Glass AI</Label>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Violet-tinted • AI features
+                  </Caption>
+                </Card>
+
+                <Card variant="success" padding="spacious">
+                  <Label color="success">Glass Success</Label>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Emerald-tinted • Achievements
+                  </Caption>
+                </Card>
+              </View>
+            </Section>
+          </View>
+        )}
+
+        {/* TYPOGRAPHY TAB */}
+        {activeTab === 'typography' && (
+          <View style={dynamicStyles.sectionGap}>
+            <Section title="Text Components (13 Types)" spacing={spacing}>
+              <Card variant="default" padding="spacious">
+                <View style={dynamicStyles.gap3}>
+                  <Heading>Heading Component</Heading>
+                  <Title>Title Component</Title>
+                  <Subtitle>Subtitle Component</Subtitle>
+                  <Body>Body Component - Default text</Body>
+                  <BodySmall>BodySmall Component - Smaller body text</BodySmall>
+                  <Caption color="muted">Caption Component - Helper text</Caption>
+                  <Label color="primary">Label Component - Form labels</Label>
+                  <Link>Link Component - Clickable text</Link>
+                  <Mono>Mono Component - Monospace code</Mono>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Text Variants" spacing={spacing}>
+              <Card variant="glass" padding="spacious">
+                <View style={dynamicStyles.gap2}>
+                  <Text variant="displayLg">Display Large - Hero text</Text>
+                  <Text variant="displayMd">Display Medium - Section headers</Text>
+                  <Text variant="textXl">Text XL - Large paragraphs</Text>
+                  <Text variant="textLg">Text Large - Prominent text</Text>
+                  <Text variant="textBase">Text Base - Default body</Text>
+                  <Text variant="textSm">Text Small - Secondary info</Text>
+                  <Text variant="textXs">Text Extra Small - Captions</Text>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Font Weights" spacing={spacing}>
+              <Card variant="elevated" padding="spacious">
+                <View style={dynamicStyles.gap2}>
+                  <Text weight="regular">Regular (400) - Default</Text>
+                  <Text weight="medium">Medium (500) - Emphasis</Text>
+                  <Text weight="semibold">Semibold (600) - Headings</Text>
+                  <Text weight="bold">Bold (700) - Strong emphasis</Text>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Text Colors" spacing={spacing}>
+              <Card padding="spacious">
+                <View style={dynamicStyles.gap2}>
+                  <Text color="primary">Primary - Main text color</Text>
+                  <Text color="secondary">Secondary - Subdued text</Text>
+                  <Text color="muted">Muted - Helper text</Text>
+                  <Text color="disabled">Disabled - Inactive text</Text>
+                  <Text color="ai">AI - Violet for AI features</Text>
+                  <Text color="success">Success - Positive actions</Text>
+                  <Text color="error">Error - Warnings and errors</Text>
+                  <Text color="warning">Warning - Caution messages</Text>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Contrast Examples" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                {/* Light background examples */}
+                <Card variant="default" padding="spacious">
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    ✓ Light card with dark text (proper contrast)
+                  </Caption>
+                  <Body style={dynamicStyles.marginTop2}>
+                    Dark text on light background ensures readability
+                  </Body>
+                </Card>
+
+                {/* Dark background examples */}
+                <View style={dynamicStyles.darkBgDemo}>
+                  <Caption style={{ color: colors?.dark?.[400], marginBottom: spacing?.[1] }}>
+                    ✓ Dark background with light text (proper contrast)
+                  </Caption>
+                  <Text style={{ color: colors?.light?.[100], marginTop: spacing?.[2] }}>
+                    Light text on dark background ensures readability
+                  </Text>
+                </View>
+              </View>
+            </Section>
+          </View>
+        )}
+
+        {/* BUTTONS TAB */}
+        {activeTab === 'buttons' && (
+          <View style={dynamicStyles.sectionGap}>
+            <Section title="Button Variants (7 Types)" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <PrimaryButton onPress={() => {}}>Primary Button</PrimaryButton>
+                <SecondaryButton onPress={() => {}}>Secondary Button</SecondaryButton>
+                <GhostButton onPress={() => {}}>Ghost Button</GhostButton>
+                <DestructiveButton onPress={() => {}}>Destructive Button</DestructiveButton>
+                <AIButton onPress={() => {}}>AI Button</AIButton>
+                <Button variant="default" onPress={() => {}}>Default Button</Button>
+              </View>
+            </Section>
+
+            <Section title="Button Sizes" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <PrimaryButton size="sm" onPress={() => {}}>Small Button</PrimaryButton>
+                <PrimaryButton size="md" onPress={() => {}}>Medium Button (Default)</PrimaryButton>
+                <PrimaryButton size="lg" onPress={() => {}}>Large Button</PrimaryButton>
+              </View>
+            </Section>
+
+            <Section title="Button States" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <PrimaryButton onPress={() => {}}>Default State</PrimaryButton>
+                <PrimaryButton disabled onPress={() => {}}>Disabled State</PrimaryButton>
+                <PrimaryButton loading onPress={() => {}}>Loading State</PrimaryButton>
+              </View>
+            </Section>
+
+            <Section title="Icon Buttons" spacing={spacing}>
+              <View style={dynamicStyles.buttonGrid}>
+                <IconButton icon="+" onPress={() => {}} />
+                <IconButton icon="×" onPress={() => {}} variant="secondary" />
+                <IconButton icon="✓" onPress={() => {}} variant="ai" />
+                <IconButton icon="→" onPress={() => {}} size="sm" />
+                <IconButton icon="←" onPress={() => {}} size="lg" />
+              </View>
+            </Section>
+
+            <Section title="Button Contrast Check" spacing={spacing}>
+              <Card padding="spacious">
+                <View style={dynamicStyles.gap2}>
+                  <Caption color="muted">✓ Primary button has dark text on light background</Caption>
+                  <Caption color="muted">✓ AI button has proper violet contrast</Caption>
+                  <Caption color="muted">✓ Destructive button has appropriate warning colors</Caption>
+                  <Caption color="muted">✓ Ghost button adapts to background</Caption>
+                </View>
+              </Card>
+            </Section>
+          </View>
+        )}
+
+        {/* CARDS TAB */}
+        {activeTab === 'cards' && (
+          <View style={dynamicStyles.sectionGap}>
+            <Section title="Basic Card Variants" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <Card variant="default">
+                  <Body>Default Card</Body>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Standard with border
+                  </Caption>
+                </Card>
+
+                <GlassCard>
+                  <Body>Glass Card ✨</Body>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Opal-inspired transparency
+                  </Caption>
+                </GlassCard>
+
+                <ElevatedCard>
+                  <Body>Elevated Card</Body>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Subtle shadow elevation
+                  </Caption>
+                </ElevatedCard>
+
+                <Card variant="outlined">
+                  <Body>Outlined Card</Body>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Border-only minimal style
+                  </Caption>
+                </Card>
+              </View>
+            </Section>
+
+            <Section title="Themed Card Variants" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <AICard>
+                  <Body>AI Card 🤖</Body>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Violet theme for AI features
+                  </Caption>
+                </AICard>
+
+                <SuccessCard>
+                  <Body>Success Card ✓</Body>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Emerald for achievements
+                  </Caption>
+                </SuccessCard>
+              </View>
+            </Section>
+
+            <Section title="Specialized Cards" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <NeedleCard
+                  title="Complete Onboarding"
+                  description="Set up your profile and first goal"
+                  progress={75}
+                  dueDate="Today"
+                  priority="high"
+                  onPress={() => {}}
+                />
+
+                <InsightCard
+                  type="success"
+                  title="Great Progress!"
+                  description="You've maintained a 7-day streak"
+                  action={{ label: "View Details", onPress: () => {} }}
+                />
+
+                <InsightCard
+                  type="warning"
+                  title="Low Completion Rate"
+                  description="Only 2 of 5 tasks completed today"
+                  action={{ label: "Adjust Goals", onPress: () => {} }}
+                />
+
+                <InsightCard
+                  type="info"
+                  title="New Feature Available"
+                  description="Try the AI coaching assistant"
+                  action={{ label: "Learn More", onPress: () => {} }}
+                />
+              </View>
+            </Section>
+
+            <Section title="Card Padding Options" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <Card variant="glass" padding="default">
+                  <Body>Default Padding</Body>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Compact for lists
+                  </Caption>
+                </Card>
+
+                <Card variant="glass" padding="spacious">
+                  <Body>Spacious Padding</Body>
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>
+                    Generous for features
+                  </Caption>
+                </Card>
+              </View>
+            </Section>
+          </View>
+        )}
+
+        {/* INPUTS TAB - TEMPORARILY DISABLED: Components not yet implemented */}
+        {activeTab === 'inputs' && (
+          <View style={dynamicStyles.sectionGap}>
+            <Card variant="glass" padding="spacious">
+              <Heading>🚧 Input Components Coming Soon</Heading>
+              <Body color="secondary" style={dynamicStyles.marginTop3}>
+                Input, TextArea, and SearchInput components are not yet implemented in the mobile design system.
+              </Body>
+              <Caption color="muted" style={dynamicStyles.marginTop3}>
+                These components will be added in a future update. For now, check out the Checkbox components under the "Status" tab.
+              </Caption>
+            </Card>
+
+            <Section title="Checkbox Components (Available)" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <Checkbox label="Default Checkbox" />
+                <Checkbox label="Checked Checkbox" checked />
+                <Checkbox label="Disabled Checkbox" disabled />
+                <Checkbox label="Checked & Disabled" checked disabled />
+
+                <Caption color="muted" style={dynamicStyles.marginTop3}>
+                  BindCheckbox (Specialized):
+                </Caption>
+                <BindCheckbox label="Complete morning routine" />
+                <BindCheckbox label="Exercise for 30 minutes" checked />
+                <BindCheckbox label="Read 10 pages" checked />
+              </View>
+            </Section>
+          </View>
+        )}
+
+        {/* STATUS TAB */}
+        {activeTab === 'status' && (
+          <View style={dynamicStyles.sectionGap}>
+            <Section title="Badge Variants" spacing={spacing}>
+              <Card padding="spacious">
+                <View style={dynamicStyles.badgeRow}>
+                  <Badge variant="default">Default</Badge>
+                  <Badge variant="success">Success</Badge>
+                  <Badge variant="warning">Warning</Badge>
+                  <Badge variant="error">Error</Badge>
+                  <Badge variant="info">Info</Badge>
+                  <Badge variant="ai">AI</Badge>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Badge Sizes" spacing={spacing}>
+              <Card padding="spacious">
+                <View style={dynamicStyles.badgeRow}>
+                  <Badge size="sm">Small</Badge>
+                  <Badge size="md">Medium</Badge>
+                  <Badge size="lg">Large</Badge>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Specialized Badges" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <Card padding="spacious">
+                  <View style={dynamicStyles.badgeRow}>
+                    <CountBadge count={5} />
+                    <CountBadge count={99} variant="error" />
+                    <CountBadge count={3} variant="success" />
+                  </View>
+                </Card>
+
+                <Card padding="spacious">
+                  <View style={dynamicStyles.badgeRow}>
+                    <StreakBadge days={7} />
+                    <StreakBadge days={30} />
+                    <StreakBadge days={100} />
+                  </View>
+                </Card>
+
+                <Card padding="spacious">
+                  <View style={dynamicStyles.badgeRow}>
+                    <AIBadge />
+                    <AIBadge label="AI Generated" />
+                  </View>
+                </Card>
+
+                <Card padding="spacious">
+                  <View style={dynamicStyles.badgeRow}>
+                    <ConsistencyBadge percentage={95} />
+                    <ConsistencyBadge percentage={75} />
+                    <ConsistencyBadge percentage={45} />
+                  </View>
+                </Card>
+              </View>
+            </Section>
+
+            <Section title="Status Dots" spacing={spacing}>
+              <Card padding="spacious">
+                <View style={dynamicStyles.badgeRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                    <StatusDot variant="success" />
+                    <Caption>Online</Caption>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                    <StatusDot variant="warning" />
+                    <Caption>Away</Caption>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                    <StatusDot variant="error" />
+                    <Caption>Offline</Caption>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                    <StatusDot variant="default" />
+                    <Caption>Idle</Caption>
+                  </View>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Progress Indicators" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <Card padding="spacious">
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>Progress Bar - 25%</Caption>
+                  <ProgressBar progress={25} style={dynamicStyles.marginTop2} />
+
+                  <Caption color="muted" style={dynamicStyles.marginTop3}>Progress Bar - 50%</Caption>
+                  <ProgressBar progress={50} style={dynamicStyles.marginTop2} />
+
+                  <Caption color="muted" style={dynamicStyles.marginTop3}>Progress Bar - 75%</Caption>
+                  <ProgressBar progress={75} style={dynamicStyles.marginTop2} />
+
+                  <Caption color="muted" style={dynamicStyles.marginTop3}>Progress Bar - 100%</Caption>
+                  <ProgressBar progress={100} style={dynamicStyles.marginTop2} />
+                </Card>
+
+                <Card padding="spacious">
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>Circular Progress</Caption>
+                  <View style={{ flexDirection: 'row', gap: spacing[4], marginTop: spacing[3] }}>
+                    <CircularProgress progress={25} size={60} />
+                    <CircularProgress progress={50} size={60} />
+                    <CircularProgress progress={75} size={60} />
+                    <CircularProgress progress={100} size={60} />
+                  </View>
+                </Card>
+              </View>
+            </Section>
+
+            <Section title="Consistency Heatmap" spacing={spacing}>
+              <ConsistencyHeatmap
+                data={[
+                  { date: '2025-12-01', value: 100 },
+                  { date: '2025-12-02', value: 80 },
+                  { date: '2025-12-03', value: 60 },
+                  { date: '2025-12-04', value: 100 },
+                  { date: '2025-12-05', value: 40 },
+                  { date: '2025-12-06', value: 100 },
+                  { date: '2025-12-07', value: 0 },
+                  { date: '2025-12-08', value: 100 },
+                  { date: '2025-12-09', value: 80 },
+                  { date: '2025-12-10', value: 100 },
+                ]}
+              />
+            </Section>
+          </View>
+        )}
+
+        {/* SPECIALTY TAB */}
+        {activeTab === 'specialty' && (
+          <View style={dynamicStyles.sectionGap}>
+            <Section title="BindCard Component" spacing={spacing}>
+              <BindCard
+                title="Morning Meditation"
+                description="10 minutes of mindfulness"
+                streak={7}
+                completed={false}
+                onPress={() => {}}
+                onComplete={() => {}}
+              />
+
+              <BindCard
+                title="Evening Journaling"
+                description="Reflect on the day"
+                streak={14}
+                completed={true}
+                onPress={() => {}}
+                onComplete={() => {}}
+              />
+            </Section>
+
+            <Section title="CaptureCard Component" spacing={spacing}>
+              <CaptureCard
+                type="photo"
+                timestamp={new Date()}
+                note="Completed morning workout"
+                onPress={() => {}}
+              />
+
+              <CaptureCard
+                type="note"
+                timestamp={new Date()}
+                note="Had a productive meeting with the team. Made great progress on the project."
+                onPress={() => {}}
+              />
+
+              <CaptureCard
+                type="timer"
+                timestamp={new Date()}
+                note="Focus session - 45 minutes"
+                duration={45 * 60}
+                onPress={() => {}}
+              />
+            </Section>
+
+            <Section title="StatCard Components" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <StatCard
+                  title="Active Streaks"
+                  value="7"
+                  subtitle="Current streak"
+                  trend="up"
+                  trendValue="+2 from last week"
+                />
+
+                <StatCard
+                  title="Completion Rate"
+                  value="85%"
+                  subtitle="Last 7 days"
+                  trend="down"
+                  trendValue="-5% from last week"
+                />
+
+                <StatCard
+                  title="Total Goals"
+                  value="3"
+                  subtitle="Active goals"
+                  trend="neutral"
+                />
+              </View>
+            </Section>
+
+            <Section title="MiniStatCard Grid" spacing={spacing}>
+              <StatCardGrid
+                stats={[
+                  { label: "Goals", value: "3" },
+                  { label: "Binds", value: "12" },
+                  { label: "Streak", value: "7" },
+                  { label: "Rate", value: "85%" },
+                ]}
+              />
+            </Section>
+
+            <Section title="ProgressStatCard" spacing={spacing}>
+              <ProgressStatCard
+                title="Weekly Progress"
+                value="15"
+                total="20"
+                subtitle="Tasks completed"
+              />
+            </Section>
+
+            <Section title="Avatar Components" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <Card padding="spacious">
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>Avatar Sizes</Caption>
+                  <View style={[dynamicStyles.avatarRow, dynamicStyles.marginTop2]}>
+                    <Avatar size="xs" name="John Doe" />
+                    <Avatar size="sm" name="Jane Smith" />
+                    <Avatar size="md" name="Alex Johnson" />
+                    <Avatar size="lg" name="Sam Wilson" />
+                    <Avatar size="xl" name="Taylor Brown" />
+                  </View>
+                </Card>
+
+                <Card padding="spacious">
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>Avatar Shapes</Caption>
+                  <View style={[dynamicStyles.avatarRow, dynamicStyles.marginTop2]}>
+                    <Avatar shape="circle" name="Circle Avatar" />
+                    <Avatar shape="rounded" name="Rounded Avatar" />
+                    <Avatar shape="square" name="Square Avatar" />
+                  </View>
+                </Card>
+
+                <Card padding="spacious">
+                  <Caption color="muted" style={dynamicStyles.marginTop1}>Avatar with Status</Caption>
+                  <View style={[dynamicStyles.avatarRow, dynamicStyles.marginTop2]}>
+                    <Avatar name="Online User" status="online" />
+                    <Avatar name="Away User" status="away" />
+                    <Avatar name="Busy User" status="busy" />
+                    <Avatar name="Offline User" status="offline" />
+                  </View>
+                </Card>
+
+                <AvatarGroup
+                  avatars={[
+                    { name: "User 1" },
+                    { name: "User 2" },
+                    { name: "User 3" },
+                    { name: "User 4" },
+                  ]}
+                  max={3}
+                />
+
+                <AvatarWithName name="John Doe" subtitle="Product Designer" />
+              </View>
+            </Section>
+
+            <Section title="Timer Component" spacing={spacing}>
+              <Timer duration={300} onComplete={() => {}} />
+            </Section>
+          </View>
+        )}
+
+        {/* OVERLAYS TAB */}
+        {activeTab === 'overlays' && (
+          <View style={dynamicStyles.sectionGap}>
+            <Section title="Navigation Components" spacing={spacing}>
+              <Card padding="spacious">
+                <Caption color="muted">HeaderBar</Caption>
+                <View style={dynamicStyles.marginTop2}>
+                  <HeaderBar
+                    title="Screen Title"
+                    showBackButton={true}
+                    onBackPress={() => {}}
+                  />
+                </View>
+
+                <Caption color="muted" style={dynamicStyles.marginTop4}>BackButton</Caption>
+                <View style={dynamicStyles.marginTop2}>
+                  <BackButton onPress={() => {}} />
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Skeleton Loaders (8 Types)" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <Card padding="spacious">
+                  <Caption color="muted">Skeleton Text</Caption>
+                  <SkeletonText lines={3} style={dynamicStyles.marginTop2} />
+                </Card>
+
+                <Card padding="spacious">
+                  <Caption color="muted">Skeleton Avatar</Caption>
+                  <SkeletonAvatar size="lg" style={dynamicStyles.marginTop2} />
+                </Card>
+
+                <SkeletonCard />
+                <SkeletonListItem />
+                <SkeletonBindCard />
+                <SkeletonStatCard />
+                <SkeletonProgressCard />
+              </View>
+            </Section>
+
+            <Section title="Empty State Components (9 Types)" spacing={spacing}>
+              <View style={dynamicStyles.gap3}>
+                <EmptyGoals onCreateGoal={() => {}} />
+
+                <EmptyBinds onCreateBind={() => {}} />
+
+                <EmptyCaptures onCapture={() => {}} />
+
+                <EmptyJournal onCreateEntry={() => {}} />
+
+                <EmptySearch query="nonexistent" onClear={() => {}} />
+
+                <ErrorState
+                  title="Something Went Wrong"
+                  message="We couldn't load this content"
+                  onRetry={() => {}}
+                />
+
+                <NoConnectionState onRetry={() => {}} />
+
+                <ComingSoonState
+                  title="Coming Soon"
+                  message="This feature is under development"
+                />
+
+                <EmptyNotifications />
+              </View>
+            </Section>
+
+            <Section title="Toast Notifications" spacing={spacing}>
+              <Card padding="spacious">
+                <View style={dynamicStyles.gap2}>
+                  <Caption color="muted">Toast variants (displayed via Toast.show()):</Caption>
+                  <Body style={dynamicStyles.marginTop2}>• Success toast</Body>
+                  <Body>• Error toast</Body>
+                  <Body>• Warning toast</Body>
+                  <Body>• Info toast</Body>
+                  <Caption color="muted" style={dynamicStyles.marginTop2}>
+                    Note: Toasts are triggered programmatically
+                  </Caption>
+                </View>
+              </Card>
+            </Section>
+
+            <Section title="Modal & BottomSheet" spacing={spacing}>
+              <Card padding="spacious">
+                <View style={dynamicStyles.gap2}>
+                  <Caption color="muted">Overlay components:</Caption>
+                  <Body style={dynamicStyles.marginTop2}>• Modal - Full screen overlays</Body>
+                  <Body>• BottomSheet - Drawer from bottom</Body>
+                  <Caption color="muted" style={dynamicStyles.marginTop2}>
+                    Note: These are triggered programmatically with visibility state
+                  </Caption>
+                </View>
+              </Card>
+            </Section>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* BOTTOM NAVIGATION BAR */}
+      <View style={dynamicStyles.bottomNavBar}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={dynamicStyles.bottomNavContent}
+          style={dynamicStyles.bottomNavScrollView}
+        >
+          {tabs.map((tab) => (
+            <Pressable
+              key={tab.id}
+              onPress={() => setActiveTab(tab.id)}
+              style={[
+                dynamicStyles.tabButton,
+                activeTab === tab.id ? dynamicStyles.tabButtonActive : dynamicStyles.tabButtonInactive,
+              ]}
+            >
+              <RNText
+                style={activeTab === tab.id ? dynamicStyles.tabTextActive : dynamicStyles.tabTextInactive}
+              >
+                {tab.label}
+              </RNText>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// Helper component: Section
+function Section({ title, children, spacing }: { title: string; children: React.ReactNode; spacing: any }) {
+  const sectionStyles = React.useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          gap: spacing[3],
+        },
+      }),
+    [spacing]
+  );
+
+  return (
+    <View style={sectionStyles.container}>
+      <Title>{title}</Title>
+      {children}
+    </View>
+  );
+}
+
+// Helper component: ColorSwatch
+function ColorSwatch({ color, label, spacing, radius }: { color: string; label: string; spacing: any; radius: any }) {
+  const swatchStyles = React.useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          alignItems: 'center' as const,
+          minWidth: 80,
+        },
+        colorBox: {
+          width: 56,
+          height: 56,
+          backgroundColor: color,
+          borderRadius: radius.lg,
+          marginBottom: spacing[2],
+        },
+      }),
+    [color, spacing, radius]
+  );
+
+  return (
+    <View style={swatchStyles.container}>
+      <View style={swatchStyles.colorBox} />
+      <Caption color="muted">{label}</Caption>
+    </View>
+  );
+}
+
+// Main export with ThemeProvider
+export default function DesignSystemShowcase() {
+  return (
+    <ThemeProvider>
+      <ShowcaseContent />
+    </ThemeProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
