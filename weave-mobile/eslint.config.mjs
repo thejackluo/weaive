@@ -32,6 +32,7 @@ export default [
         setImmediate: 'readonly',
         clearImmediate: 'readonly',
         __DEV__: 'readonly',
+        fetch: 'readonly',
         // Jest/testing globals
         jest: 'readonly',
         describe: 'readonly',

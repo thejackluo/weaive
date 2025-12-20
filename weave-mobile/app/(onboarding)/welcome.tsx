@@ -2,6 +2,7 @@ import { View, Text, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { trackOnboardingStarted } from '@/services/analytics';
 
 /**
  * Welcome Screen - Story 1.1
@@ -30,11 +31,17 @@ export default function WelcomeScreen() {
   /**
    * Handles the "Get Started" button press
    *
-   * Triggers haptic feedback and navigates to the next onboarding screen.
-   * Route target will be implemented in Story 1.2.
+   * Triggers haptic feedback, tracks analytics event, and navigates to the next onboarding screen.
+   * Analytics tracking implemented in Story 1.1 (AC3 requirement).
    */
   const handleGetStarted = async () => {
+    // Haptic feedback for UX
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Track onboarding_started event (Story 1.1 - AC3)
+    await trackOnboardingStarted();
+
+    // Navigate to emotional state selection (Story 1.2)
     router.push('/(onboarding)/emotional-state');
   };
 

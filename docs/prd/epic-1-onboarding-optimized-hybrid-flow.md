@@ -427,115 +427,342 @@ This step:
 
 ---
 
-### US-1.7: First Needle (Goal Definition – Simple)
+### US-1.7: Commitment Ritual & Origin Story (First Bind)
 
 **Priority:** M (Must Have)
 
+**User Story:**
+
 **As a** new user
-**I want to** define one goal
-**So that** Weave can break it down into actionable steps
+**I want to** mark the beginning of my transformation in a personal, meaningful way
+**So that** I feel emotionally committed and can look back on where I started
+
+**Overview / Rationale:**
+
+This ritual transforms onboarding inputs into a permanent origin story.
+
+By reflecting the user's:
+- current struggles (from US-1.2),
+- desired future traits (from US-1.6),
+- and spoken commitment,
+
+Weave creates a time-stamped narrative artifact that:
+- reinforces identity change,
+- anchors motivation,
+- and gives future progress emotional context.
+
+This first Bind is symbolic, narrative, and irreversible.
+
+**Flow Summary:**
+
+- **Trigger:** After completion of US-1.6: Name Entry, Weave Personality & Identity Traits
+- **Total Screens:** 3
+- **Total Time:** ~45–60 seconds
+
+**Screen 1: Narrative Validation (Current → Future)**
+
+**UI Copy:**
+- **Title:** "This is where your story shifts."
+- **Body:**
+  - "Right now, you're feeling [primary struggle 1] (and [primary struggle 2], if selected)."
+  - "But you want to become someone who is [dream trait 1], [dream trait 2], and [dream trait 3]."
+  - "Weave is how you bridge that gap — one action at a time."
+- **Primary CTA:** "Take the first step →"
 
 **Acceptance Criteria:**
-- [ ] Input field: "What's one thing you want to achieve first?"
-- [ ] Suggestion chips based on painpoint chosen earlier
-- [ ] User must input or tap a suggestion
-- [ ] CTA: "Continue"
-- [ ] Completion time <10 seconds
+- [ ] Copy dynamically injects 1–2 struggles and 3 future traits
+- [ ] Copy must read naturally (use conjunction logic)
+- [ ] No user input on this screen
+- [ ] Completion time < 10 seconds
+- [ ] Track event: `origin_story_intro_viewed`
+
+**Screen 2: Origin Story Capture (Commitment Bind)**
+
+**UI Copy:**
+- **Title:** "Let's make this moment official."
+- **Body:**
+  - "Take a photo and record a short voice note saying:"
+  - *"Today is [date]. My name is [name]. I'm starting this because I'm [struggle], and I'm committed to becoming someone who is [dream traits]."*
+  - "This will be saved as the beginning of your story — something you can return to anytime."
+- **Primary CTA:** "Complete Bind"
+
+**Acceptance Criteria:**
+- [ ] Camera capture (required)
+- [ ] Voice note capture (required)
+- [ ] Display preview card: photo thumbnail + "From/To" summary + voice playback
+- [ ] User confirms before final submission
+- [ ] Track event: `origin_story_created`
 
 **Data Requirements:**
-- Store basic goal text in temporary onboarding state
-- Later transformed into tables during AI breakdown
+- Create `origin_stories` record with photo + voice asset IDs
+- Associate with first `bind_instance`
+- Immutable record (no UPDATE or DELETE)
+
+**Screen 3: Completion & Reinforcement**
+
+**UI Copy:**
+- **Title:** "This is your beginning."
+- **Body:**
+  - "You've created your origin story."
+  - "Every Bind you complete builds on this moment — strengthening your Weave and the person you're becoming."
+- **Primary CTA:** "Continue →"
+
+**Acceptance Criteria:**
+- [ ] Weave animation evolves from blank → first form
+- [ ] Confetti or subtle glow
+- [ ] Level bar animates from 0 → 1
+- [ ] Track event: `origin_bind_completed`
+- [ ] Set: `first_bind_completed_at`, `user level = 1`
+
+**Success Criteria:**
+- ≥ 95% completion rate
+- Users can articulate what a "Bind" is without explanation
+- Increased emotional attachment to early progress
+- Stronger long-term retention driven by narrative continuity
+
+---
+
+### US-1.8: Create Your First Needle (Goal + Plan)
+
+**Priority:** M (Must Have)
+
+**User Story:**
+
+**As a** new user
+**I want to** create my first Needle
+**So that** my daily actions are connected to a clear long-term goal
+
+**Overview / Rationale:**
+
+After completing the Commitment Ritual (US-1.7), the user is emotionally invested and ready for structure.
+
+This step introduces:
+- what a Needle is,
+- how Binds relate to it,
+- and provides an AI-generated plan that is explicitly flexible.
+
+**Flow Summary:**
+
+- **Trigger:** Immediately after US-1.7: Commitment Ritual & Origin Story
+- **Total Screens:** 4
+- **Total Time:** ~90 seconds
+
+**Screen 1: Introduce Needles**
+
+**UI Copy:**
+- **Title:** "Give your actions direction."
+- **Body:**
+  - "The Binds you complete each day connect to your Needles — the long-term goals you're working toward."
+  - "Let's create your first one."
+  - "You can change or refine this anytime."
+- **Primary CTA:** "Create my first Needle →"
+
+**Acceptance Criteria:**
+- [ ] Display educational card explaining Needles
+- [ ] Reassure that this is flexible (not permanent)
+- [ ] Track event: `needle_intro_viewed`
+
+**Screen 2: Choose Your First Needle (Suggested Options)**
+
+**UI Copy:**
+- **Title:** "What do you want to work on first?"
+- **Subtext:** "This doesn't have to be perfect — it's just a starting point."
+
+**Suggested Options (single-select):**
+1. Build a simple fitness routine
+2. Improve my sleep and daily energy
+3. Reduce stress and feel more balanced
+4. Get back into a healthy rhythm
+5. Improve focus and productivity
+6. Make steady progress in school
+7. Work consistently on a project
+8. Start or rebuild a creative habit
+9. Prepare for an upcoming opportunity
+10. Build discipline around my work
+
+**Secondary Option:** "Can't find yours? Type your own goal"
+
+**Acceptance Criteria:**
+- [ ] Display 10 suggested goal options as selectable cards
+- [ ] User must select exactly one option OR enter custom goal
+- [ ] Custom goal input: 10-200 characters
+- [ ] Track event: `needle_option_selected`
+
+**Screen 3: Optional Customization**
+
+**UI Copy:**
+- **Title:** "Want to make this more specific?"
+- **Input Placeholder:** "e.g. gym, writing, studying, startup"
+- **Primary CTA:** "Continue →"
+- **Secondary CTA:** "Skip"
+
+**Acceptance Criteria:**
+- [ ] Optional text input (0-100 characters)
+- [ ] User can skip this screen
+- [ ] Track event: `needle_customized` if user adds text
+
+**Screen 4: AI Plan Breakdown**
+
+**UI Copy:**
+- **Title:** "Here's how we'll work toward this."
+- **Body:**
+  - "I've broken your Needle into milestones and Binds that are realistic and sustainable."
+  - "This is a starting point — not a contract."
+  - "You can adjust anything later."
+
+**Display:**
+- [ ] Show AI-generated breakdown: Needle title + summary, 2–3 milestones, 2–4 Bind templates
+- [ ] Each item is editable (tap to edit inline)
+- [ ] Loading state: "Shaping your path..." animation during AI processing
+
+**Primary CTA:** "Looks good →"
+
+**Acceptance Criteria:**
+- [ ] AI generates structured breakdown using Onboarding Coach module
+- [ ] All outputs editable before accepting
+- [ ] Error handling with retry option
+- [ ] Track events: `needle_plan_generated`, `needle_plan_accepted`
+
+**Data Requirements:**
+- Create records in: `goals`, `qgoals`, `subtask_templates`, `ai_runs`
+
+**AI Module:** Onboarding Coach (deterministic constraints, ~70% success probability)
 
 ---
 
 ## PHASE 3 — Early Value Proof ("Wow Moment")
 
-### US-1.8: Weave Path Generation (AI-Assisted)
+### US-1.9: First Daily Reflection (Day 0 Check-In)
 
 **Priority:** M (Must Have)
 
-**As a** new user
-**I want to** see a clear, AI-generated breakdown of my goal
-**So that** I understand exactly how to begin
-
-**Acceptance Criteria:**
-- [ ] Loading animation: "Shaping your path…"
-- [ ] 1-3 second delay (UX pacing)
-- [ ] AI generates:
-  - Goal title & summary
-  - 2-3 milestones
-  - 2-4 binds (actions/habits)
-- [ ] User can accept or edit each item
-- [ ] CTA: "Looks good" → or "Edit"
-
-**AI Module:** Onboarding Coach (deterministic constraints, ~70% success probability)
-
-**Data Requirements:**
-- Write outputs to:
-  - `goals`
-  - `qgoals`
-  - `subtask_templates`
-- Create `ai_runs` record
-
----
-
-### US-1.9: First Commitment Ritual (Bind #1)
-
-**Priority:** M (Must Have)
+**User Story:**
 
 **As a** new user
-**I want to** complete a symbolic first action
-**So that** I feel emotionally invested and committed
+**I want to** complete a daily check-in
+**So that** I feel present and so Weave can begin learning how I think
+
+**Overview / Rationale:**
+
+Reflection is the third pillar of Weave:
+- **Needles** = direction
+- **Binds** = action
+- **Reflection** = meaning
+
+This lightweight Day 0 reflection introduces the reflection habit immediately after goal setup, establishing the core loop before the user leaves onboarding.
 
 **Acceptance Criteria:**
-- [ ] Display: "Today is [date]. Mark this as the start of your transformation."
-- [ ] User must tap "Complete my first Bind"
-- [ ] Accept any input type: text, photo, audio, or checkmark
-- [ ] Show micro-animation of thread tightening
-- [ ] Display: "Day 1 complete."
+- [ ] Display prompt: "How are you feeling right now about starting this journey?"
+- [ ] Text input (50-500 characters, optional)
+- [ ] Fulfillment slider (1-10): "Rate your current state"
+- [ ] Simple, non-intimidating UI - feels like a quick check-in, not heavy journaling
+- [ ] Completion time <60 seconds
+- [ ] CTA: "Done" or "Continue"
 
 **Data Requirements:**
-- Create first `subtask_instance`
-- Write `bind_completed` event
-- Set `onboarding_first_bind_completed_at`
+- Create first entry in `journal_entries` table
+- Fields: `user_id`, `local_date`, `fulfillment_score`, `reflection_text`, `created_at`
+- Set `user_profiles.first_journal_at` timestamp
+- Track analytics event: `first_journal_completed`
+
+**Technical Notes:**
+- No AI generation on submit (too early, not enough data)
+- This establishes the reflection habit pattern
+- Future reflections will be more structured with AI feedback
 
 ---
 
 ## PHASE 4 — Lightweight Orientation
 
-### US-1.10: App Mini-Tutorial (Tooltip Style)
+### US-1.10: Progress Dashboard Introduction
 
 **Priority:** M (Must Have)
 
 **As a** new user
-**I want to** see a quick, digestible tour
-**So that** I understand the core structure without feeling overwhelmed
+**I want to** understand the key parts of my progress dashboard
+**So that** I know how to track my transformation
 
 **Acceptance Criteria:**
-- [ ] 3 tooltips:
-  - Highlight Weave avatar → "This grows with your consistency."
-  - Highlight Binds → "These are your identity-building actions."
+- [ ] 3 tooltips introducing core dashboard elements:
+  - Highlight Weave visualization → "This grows with your consistency."
+  - Highlight Binds section → "These are your identity-building actions."
   - Highlight Reflection button → "Reflect nightly for deeper insights."
 - [ ] Each tooltip dismissible with "Got it"
 - [ ] Tutorial duration <20 seconds
 - [ ] Track tutorial completed vs skipped
+- [ ] Completion immediately after first reflection
+
+**Technical Notes:**
+- Simplified orientation focusing on progress visualization
+- Tooltips appear on Thread (Home) screen
+- User can skip tutorial if desired
 
 ---
 
-## PHASE 5 — Trial Activation
+## PHASE 5 — Trial Activation & Handoff
 
-### US-1.11: Welcome Into the 7-Day Journey
+### US-1.11: Housekeeping, Trial Framing & Handoff
 
 **Priority:** M (Must Have)
 
+**User Story:**
+
 **As a** new user
-**I want to** understand I'm beginning a guided 7-day experience
-**So that** I'm motivated to continue
+**I want to** complete essential setup and understand my trial
+**So that** I can start using Weave with proper context
+
+**Overview / Rationale:**
+
+This 4-screen flow combines essential housekeeping (privacy, notifications), trial framing (7-day context + soft paywall), and completion ceremony into a cohesive handoff from onboarding to active usage.
+
+**Screen 1: Privacy & Data**
+- Title: "Your data is private and secure"
+- Body: Brief explanation of data encryption and RLS
+- Checkbox: "I agree to Privacy Policy and Terms"
+- CTA: "Continue"
+
+**Screen 2: Notification Permissions**
+- Title: "Stay on track with gentle reminders"
+- Body: "Weave can send you daily nudges to complete your binds and reflect."
+- Options: "Allow Notifications" or "Skip for now"
+- Note: Can be enabled later in settings
+
+**Screen 3: Trial Framing & Soft Paywall**
+- Title: "You're starting your 7-day journey"
+- Body: "For the next 7 days, you have full access to Weave. After that, choose the plan that fits."
+- Display tier comparison: Free vs Pro vs Max
+- CTAs: "Start Free Trial" (Pro/Max) or "Continue Free"
+- **Always show "Continue free" option** - soft paywall, not blocking
+
+**Screen 4: Completion & Welcome**
+- Title: "You're all set!"
+- Body: "Your first needle is ready. Let's start building your weave."
+- Celebration animation (confetti + weave spark)
+- Banner appears: "Day 1 of your 7-day transformation"
+- CTA: "Enter Thread" → Navigate to Thread (Home)
 
 **Acceptance Criteria:**
-- [ ] Banner at top: "You're on Day 1 of your 7-day transformation."
-- [ ] No paywall
-- [ ] User enters Thread (Home)
+- [ ] 4-screen flow as specified above
+- [ ] Privacy policy checkbox required before continue
+- [ ] Notification permission request uses native iOS prompt
+- [ ] Soft paywall shows all 3 tiers clearly
+- [ ] Always allows skipping to free tier (no hard paywall)
+- [ ] Track events: `privacy_accepted`, `notifications_permission`, `paywall_presented`, `paywall_action`, `onboarding_completed`
+- [ ] Completion time <90 seconds
+- [ ] Smooth transitions between screens
+
+**Data Requirements:**
+- Set `user_profiles.onboarding_completed_at` timestamp
+- Store `privacy_policy_accepted_at` and `terms_accepted_at`
+- Store `notifications_enabled` boolean
+- If user selected paid tier: write to `subscription_tier`, `trial_started_at`, `trial_ends_at`
+- Set `user_profiles.onboarding_version` = 'hybrid_v1'
+
+**Technical Notes:**
+- This combines the old US-1.11 (Trial Activation) and US-1.16 (Soft Paywall)
+- Use RevenueCat or native StoreKit 2 for subscription management
+- Notification permission uses Expo Notifications API
+- Privacy policy and terms links open in web view or Safari
 
 ---
 
@@ -610,35 +837,7 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 - [ ] Collect: timezone, preferred hours, user type
 - [ ] Stored in `user_profiles`
 
----
-
-## PHASE 7 — Monetization
-
-### US-1.16: Soft Paywall (Day 3-4 Trigger)
-
-**Priority:** M (Must Have)
-
-**As a** trialing user
-**I want to** understand the tiers after I've had value
-**So that** upgrading feels natural and earned
-
-**Trigger:**
-- After 3 consecutive days of bind completion
-- OR when user tries to add a second Needle
-
-**Acceptance Criteria:**
-- [ ] Show Free vs Pro vs Max
-- [ ] Clear CTA: "Start 7-day free trial" (if applicable)
-- [ ] Always show "Continue free" option
-- [ ] Track `paywall_presented` and `paywall_action` events
-
-**Data Requirements:**
-- Write to `user_profiles.subscription_tier`
-- Store `subscription_started_at`, `trial_ends_at`
-
-**Technical Notes:**
-- Use RevenueCat or native StoreKit 2 for subscription management
-- Soft paywall = always allows skip to free tier
+**Note:** Phase 7 (Monetization / Soft Paywall) has been integrated into US-1.11 Screen 3 for a cohesive onboarding handoff.
 
 ---
 
@@ -646,25 +845,24 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 
 | ID | Story | Priority | Estimate |
 |----|-------|----------|----------|
-| US-1.1 | Welcome | M | 2 pts |
-| US-1.2 | Painpoint Selection | M | 3 pts |
-| US-1.3 | Insight Mirror | M | 2 pts |
-| US-1.4 | Weave Solution | M | 2 pts |
-| US-1.5 | Auth | M | 3 pts |
+| US-1.1 | Welcome & Vision Hook | M | 2 pts |
+| US-1.2 | Emotional State Selection (Painpoint) | M | 3 pts |
+| US-1.3 | Symptom Insight Screen | M | 2 pts |
+| US-1.4 | Weave Solution Screen | M | 2 pts |
+| US-1.5 | Authentication | M | 3 pts |
 | US-1.6 | Name Entry, Weave Personality & Identity Traits | M | 5 pts |
-| US-1.7 | First Needle | M | 3 pts |
-| US-1.8 | AI Path | M | 8 pts |
-| US-1.9 | First Commitment | M | 3 pts |
-| US-1.10 | Mini Tutorial | M | 3 pts |
-| US-1.11 | Trial Activation | M | 1 pt |
-| US-1.12 | Dream Self (Deferred) | S | 3 pts |
-| US-1.13 | Micro-Archetype (Deferred) | S | 3 pts |
-| US-1.14 | Motivations & Failure Modes | S | 3 pts |
-| US-1.15 | Constraints & Demographics | S | 2 pts |
-| US-1.16 | Soft Paywall (Day 3-4) | M | 5 pts |
+| US-1.7 | Commitment Ritual & Origin Story (First Bind) | M | 5 pts |
+| US-1.8 | Create Your First Needle (Goal + Plan) | M | 8 pts |
+| US-1.9 | First Daily Reflection (Day 0 Check-In) | M | 2 pts |
+| US-1.10 | Progress Dashboard Introduction | M | 2 pts |
+| US-1.11 | Housekeeping, Trial Framing & Handoff | M | 6 pts |
+| US-1.12 | Dream Self (Deferred - Day 1 Evening) | S | 3 pts |
+| US-1.13 | Archetype Micro-Assessment (Deferred - Day 2) | S | 3 pts |
+| US-1.14 | Motivations & Failure Modes (Deferred - Day 2-3) | S | 3 pts |
+| US-1.15 | Constraints & Demographics (Deferred - Day 3) | S | 2 pts |
 
-**Epic Total:** 50 story points (includes name entry + Weave Personality Selection in US-1.6)
+**Epic Total:** 51 story points
 
-**Note:** This hybrid flow increases story points from 35 to 50, but distributes complexity across the user journey, resulting in higher activation rates and lower drop-off. The deferred personalization (US-1.12 through US-1.15) can be implemented incrementally without blocking the core onboarding flow. The additional points account for name entry and Weave personality selection in US-1.6.
+**Note:** This hybrid flow maximizes completion by front-loading emotional resonance and early value delivery (Phases 1-5: 40 pts Must Have), while deferring deep personalization to Days 1-3 when users are already activated (Phase 6: 11 pts Should Have). US-1.7 introduces the Commitment Ritual as an emotional anchor before goal definition. US-1.11 combines housekeeping, trial framing, and soft paywall into a cohesive 4-screen handoff from onboarding to active usage.
 
 ---
