@@ -35,7 +35,6 @@ import {
   isValidTraitCount,
 } from '@/constants/identityTraits';
 import { storeIdentityBootup } from '@/services/onboarding';
-import { debugAuthState, debugUserProfile } from '@/services/debug-auth';
 
 // UI Constants
 const CARD_WIDTH_RATIO = 0.8;
@@ -879,44 +878,6 @@ export default function IdentityBootupScreen() {
             {formData.identity_traits.length} of {REQUIRED_TRAITS} selected
           </Text>
         </View>
-
-        {/* Debug Auth Button (DEV only) */}
-        {__DEV__ && (
-          <TouchableOpacity
-            onPress={async () => {
-              try {
-                console.log('🔍 Starting auth debug...');
-                await debugAuthState();
-                await debugUserProfile();
-                Alert.alert(
-                  'Debug Complete',
-                  'Check your console logs for detailed auth information'
-                );
-              } catch (error) {
-                console.error('❌ Debug failed:', error);
-                Alert.alert(
-                  'Debug Error',
-                  error instanceof Error ? error.message : 'Unknown error'
-                );
-              }
-            }}
-            style={{
-              backgroundColor: '#ff9800',
-              borderRadius: 12,
-              padding: 16,
-              marginBottom: 12,
-              minHeight: MIN_TOUCH_TARGET,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Debug authentication status"
-          >
-            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
-              🔍 Debug Auth Status
-            </Text>
-          </TouchableOpacity>
-        )}
 
         {/* Continue Button */}
         <TouchableOpacity
