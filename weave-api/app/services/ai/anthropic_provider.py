@@ -5,8 +5,8 @@ Implements AIProvider interface for Anthropic Claude models (direct API).
 Fallback provider when both Bedrock and OpenAI are unavailable.
 
 Primary models:
-- Claude 3.7 Sonnet: $3.00/$15.00 per MTok (complex reasoning)
-- Claude 4.5 Haiku: $1.00/$5.00 per MTok (fast, cost-effective)
+- Claude 3.5 Sonnet: $3.00/$15.00 per MTok (complex reasoning)
+- Claude 3.5 Haiku: $1.00/$5.00 per MTok (fast, cost-effective)
 """
 
 import logging
@@ -23,7 +23,7 @@ class AnthropicProvider(AIProvider):
     Anthropic Claude provider (direct API, fallback #2).
 
     Features:
-    - Latest Claude 3.7 Sonnet and 4.5 Haiku models
+    - Latest Claude 3.5 Sonnet and 3.5 Haiku models (Jan 2025)
     - Prompt caching support (5-minute TTL)
     - Manual retry with exponential backoff
     """
@@ -38,12 +38,13 @@ class AnthropicProvider(AIProvider):
         self.client = Anthropic(api_key=api_key)
 
         # Pricing per million tokens (input/output)
+        # Using currently available models (as of Jan 2025)
         self.pricing = {
-            'claude-3-7-sonnet-20250219': {
+            'claude-3-5-sonnet-20241022': {
                 'input': 3.00 / 1_000_000,
                 'output': 15.00 / 1_000_000
             },
-            'claude-4-5-haiku-20250514': {
+            'claude-3-5-haiku-20241022': {
                 'input': 1.00 / 1_000_000,
                 'output': 5.00 / 1_000_000
             },
@@ -52,7 +53,7 @@ class AnthropicProvider(AIProvider):
     def complete(
         self,
         prompt: str,
-        model: str = 'claude-3-7-sonnet-20250219',
+        model: str = 'claude-3-5-sonnet-20241022',
         **kwargs
     ) -> AIResponse:
         """
@@ -60,7 +61,7 @@ class AnthropicProvider(AIProvider):
 
         Args:
             prompt: User input text
-            model: Anthropic model name (default: Claude 3.7 Sonnet)
+            model: Anthropic model name (default: Claude 3.5 Sonnet)
             **kwargs: Additional parameters (max_tokens, temperature, system, etc.)
 
         Returns:
@@ -183,7 +184,7 @@ class AnthropicProvider(AIProvider):
         # Get pricing for model (default to Sonnet if unknown)
         pricing = self.pricing.get(
             model,
-            self.pricing['claude-3-7-sonnet-20250219']
+            self.pricing['claude-3-5-sonnet-20241022']
         )
 
         input_cost = input_tokens * pricing['input']
