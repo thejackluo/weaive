@@ -10,13 +10,13 @@ Tests AI endpoints with real-world complex questions to verify:
 Run: uv run pytest tests/test_ai_integration.py -v -s
 """
 
-import pytest
 import os
+
+import pytest
 from dotenv import load_dotenv
 
-from app.services.ai.ai_service import AIService
-from app.services.ai.rate_limiter import RateLimitError
 from app.core.deps import get_supabase_client
+from app.services.ai.ai_service import AIService
 
 load_dotenv()
 

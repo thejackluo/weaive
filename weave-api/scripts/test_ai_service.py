@@ -51,13 +51,13 @@ def test_openai():
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🎯 Model: {model}")
-    print(f"💰 Pricing: $0.15/MTok input, $0.60/MTok output")
+    print("💰 Pricing: $0.15/MTok input, $0.60/MTok output")
     print("\n⏳ Calling OpenAI API...")
 
     try:
         response = provider.complete(prompt, model=model, max_tokens=10)
 
-        print(f"\n✅ SUCCESS!")
+        print("\n✅ SUCCESS!")
         print(f"📄 Response: '{response.content}'")
         print(f"📊 Tokens: {response.input_tokens} in + {response.output_tokens} out")
         print(f"💵 Cost: ${response.cost_usd:.6f}")
@@ -87,13 +87,13 @@ def test_anthropic():
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🎯 Model: {model}")
-    print(f"💰 Pricing: $1.00/MTok input, $5.00/MTok output")
+    print("💰 Pricing: $1.00/MTok input, $5.00/MTok output")
     print("\n⏳ Calling Anthropic API...")
 
     try:
         response = provider.complete(prompt, model=model, max_tokens=10)
 
-        print(f"\n✅ SUCCESS!")
+        print("\n✅ SUCCESS!")
         print(f"📄 Response: '{response.content}'")
         print(f"📊 Tokens: {response.input_tokens} in + {response.output_tokens} out")
         print(f"💵 Cost: ${response.cost_usd:.6f}")
@@ -123,14 +123,14 @@ def test_bedrock():
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🎯 Model: {model}")
-    print(f"💰 Pricing: $0.25/MTok input, $1.25/MTok output")
+    print("💰 Pricing: $0.25/MTok input, $1.25/MTok output")
     print(f"🌍 Region: {AWS_REGION}")
     print("\n⏳ Calling AWS Bedrock API...")
 
     try:
         response = provider.complete(prompt, model=model, max_tokens=10)
 
-        print(f"\n✅ SUCCESS!")
+        print("\n✅ SUCCESS!")
         print(f"📄 Response: '{response.content}'")
         print(f"📊 Tokens: {response.input_tokens} in + {response.output_tokens} out")
         print(f"💵 Cost: ${response.cost_usd:.6f}")
@@ -155,7 +155,7 @@ def test_deterministic():
     module = 'triad'
 
     print(f"\n📦 Module: {module}")
-    print(f"💰 Cost: $0.00 (always free)")
+    print("💰 Cost: $0.00 (always free)")
     print("\n⏳ Generating response...")
 
     response = provider.complete(
@@ -167,7 +167,7 @@ def test_deterministic():
         task_3='Exercise 30min'
     )
 
-    print(f"\n✅ SUCCESS!")
+    print("\n✅ SUCCESS!")
     print(f"📄 Response:\n{response.content}")
     print(f"💵 Cost: ${response.cost_usd:.6f}")
     print(f"🏢 Provider: {response.provider}")
@@ -208,10 +208,10 @@ def main():
             total_cost += response.cost_usd
             success_count += 1
 
-    print(f"\n" + "-"*70)
+    print("\n" + "-"*70)
     print(f"💵 Total cost: ${total_cost:.6f}")
     print(f"✅ Successful tests: {success_count}/4")
-    print(f"="*70)
+    print("="*70)
 
     # Cost verification instructions
     if total_cost > 0:

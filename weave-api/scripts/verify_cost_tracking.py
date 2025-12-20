@@ -13,9 +13,9 @@ Run: uv run python scripts/verify_cost_tracking.py
 
 import os
 import sys
-from pathlib import Path
 from datetime import datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -65,7 +65,7 @@ def check_database_connection():
         # Test query
         result = client.table('ai_runs').select('id').limit(1).execute()
 
-        print(f"\n✅ Connected to Supabase")
+        print("\n✅ Connected to Supabase")
         print(f"   URL: {SUPABASE_URL}")
 
         return client

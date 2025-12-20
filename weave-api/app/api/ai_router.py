@@ -13,7 +13,7 @@ import json
 import logging
 from typing import AsyncGenerator, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -56,6 +56,7 @@ def get_ai_service() -> AIService:
     # TODO: Replace with proper dependency injection
     # For now, create a new instance (should be singleton in production)
     import os
+
     from dotenv import load_dotenv
 
     load_dotenv()

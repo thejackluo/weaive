@@ -16,8 +16,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-from app.services.ai.ai_service import AIService
+
 from app.core.deps import get_supabase_client
+from app.services.ai.ai_service import AIService
 
 # Load environment variables
 load_dotenv()
@@ -91,7 +92,7 @@ def test_complex_question():
                 max_tokens=150,
             )
 
-            print(f"\n✅ Response received!")
+            print("\n✅ Response received!")
             print(f"📄 Content: {response.content[:200]}...")
             print(f"📊 Tokens: {response.input_tokens} in + {response.output_tokens} out")
             print(f"💵 Cost: ${response.cost_usd:.6f}")
@@ -103,10 +104,10 @@ def test_complex_question():
             matches = any(keyword.lower() in content_lower for keyword in test_case['expected_contains'])
 
             if matches:
-                print(f"\n✅ PASS: Response contains expected keywords")
+                print("\n✅ PASS: Response contains expected keywords")
                 passed += 1
             else:
-                print(f"\n⚠️  PARTIAL PASS: Response received but doesn't contain expected keywords")
+                print("\n⚠️  PARTIAL PASS: Response received but doesn't contain expected keywords")
                 print(f"     Expected one of: {test_case['expected_contains']}")
                 passed += 1  # Still count as pass if response was generated
 
@@ -116,7 +117,7 @@ def test_complex_question():
 
     # Summary
     print("\n" + "="*70)
-    print(f"  📊 TEST SUMMARY")
+    print("  📊 TEST SUMMARY")
     print("="*70)
     print(f"\n✅ Passed: {passed}/{len(test_cases)}")
     print(f"❌ Failed: {failed}/{len(test_cases)}")
