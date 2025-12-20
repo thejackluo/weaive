@@ -18,15 +18,23 @@
 
 ## Component Testing Progress
 
-### Batch 1: Core Components (In Progress)
+### Batch 1: Foundation Components (In Progress)
 
 | Component | Status | Tested Date | Issues | Notes |
 |-----------|--------|-------------|--------|-------|
-| **Avatar** | 🧪 Testing | - | - | Includes Avatar, AvatarGroup, AvatarWithName |
-| **BindCard** | 🧪 Testing | - | - | Task completion card with timer |
-| **CaptureCard** | 🧪 Testing | - | - | Note, timer, audio capture variants |
+| **Button** | 🧪 Testing | - | - | All variants: primary, secondary, ghost, destructive, ai, success |
+| **Card** | 🧪 Testing | - | - | Variants: default, glass, elevated, outlined, ai, success |
+| **Checkbox** | 🧪 Testing | - | - | Interactive with animations |
 
-### Batch 2: Text & Typography
+### Batch 2: Advanced Components (Pending - Need to Create)
+
+| Component | Status | Tested Date | Issues | Notes |
+|-----------|--------|-------------|--------|-------|
+| **Avatar** | ⏳ Pending | - | - | Not yet created - includes Avatar, AvatarGroup, AvatarWithName |
+| **BindCard** | ⏳ Pending | - | - | Not yet created - task completion card with timer |
+| **CaptureCard** | ⏳ Pending | - | - | Not yet created - note, timer, audio capture variants |
+
+### Batch 3: Text & Typography
 
 | Component | Status | Tested Date | Issues | Notes |
 |-----------|--------|-------------|--------|-------|
@@ -37,19 +45,7 @@
 | **Body** | ⏳ Pending | - | - | - |
 | **Caption** | ⏳ Pending | - | - | - |
 
-### Batch 3: Buttons & Interactions
-
-| Component | Status | Tested Date | Issues | Notes |
-|-----------|--------|-------------|--------|-------|
-| **Button** | ⏳ Pending | - | - | Base button component |
-| **PrimaryButton** | ⏳ Pending | - | - | - |
-| **SecondaryButton** | ⏳ Pending | - | - | - |
-| **GhostButton** | ⏳ Pending | - | - | - |
-| **DestructiveButton** | ⏳ Pending | - | - | - |
-| **AIButton** | ⏳ Pending | - | - | - |
-| **IconButton** | ⏳ Pending | - | - | - |
-
-### Batch 4: Cards
+### Batch 4: Specialized Cards
 
 | Component | Status | Tested Date | Issues | Notes |
 |-----------|--------|-------------|--------|-------|
