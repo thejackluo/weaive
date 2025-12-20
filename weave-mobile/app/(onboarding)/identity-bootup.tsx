@@ -23,6 +23,7 @@ import {
   Animated,
   useWindowDimensions,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { PERSONAS, PersonalityType } from '@/constants/personalityContent';
@@ -32,6 +33,8 @@ import {
   IdentityTrait,
   isValidTraitCount,
 } from '@/constants/identityTraits';
+import { storeIdentityBootup } from '@/services/onboarding';
+import { debugAuthState, debugUserProfile } from '@/services/debug-auth';
 
 // UI Constants
 const CARD_WIDTH_RATIO = 0.8;
@@ -83,6 +86,9 @@ export default function IdentityBootupScreen() {
 
   // Step 3: Identity Traits State
   const [maxTraitsError, setMaxTraitsError] = useState<string | undefined>();
+
+  // Loading state for API call
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Auto-focus name input on mount (Step 1)
   const nameInputRef = useRef<TextInput>(null);
@@ -334,7 +340,7 @@ export default function IdentityBootupScreen() {
     }
   };
 
-  const handleStep3Continue = () => {
+  const handleStep3Continue = async () => {
     try {
       if (!isValidTraitCount(formData.identity_traits.length)) {
         Alert.alert(
@@ -344,16 +350,26 @@ export default function IdentityBootupScreen() {
         return;
       }
 
-      // TODO (Story 0-4): Write to database via Supabase
-      // await supabase.from('user_profiles').update({
-      //   preferred_name: formData.preferred_name,
-      //   core_personality: formData.core_personality,
-      //   personality_selected_at: formData.personality_selected_at,
-      //   identity_traits: formData.identity_traits
-      // }).eq('auth_user_id', user.id);
+      // Validate we have all required data
+      if (!formData.preferred_name || !formData.core_personality) {
+        Alert.alert('Error', 'Missing required information. Please complete all steps.');
+        return;
+      }
+
+      // Show loading state
+      setIsSubmitting(true);
+
+      // Submit identity bootup data to backend API (Story 1.6 + Story 0-4 integration)
+      await storeIdentityBootup(
+        formData.preferred_name,
+        formData.core_personality,
+        formData.identity_traits
+      );
 
       // TODO (Story 0-4): Track analytics event
       // trackEvent('identity_traits_selected', { traits: formData.identity_traits });
+
+      console.log('[ONBOARDING] ✅ Identity bootup data saved successfully');
 
       // Navigate to Story 1.7 (First Needle / Goal Input)
       router.push('/(onboarding)/first-needle');
@@ -361,7 +377,14 @@ export default function IdentityBootupScreen() {
       if (__DEV__) {
         console.error('[ONBOARDING] Step 3 error:', error);
       }
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+
+      // Show user-friendly error message
+      const errorMessage =
+        error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -875,25 +898,70 @@ export default function IdentityBootupScreen() {
           </Text>
         </View>
 
+        {/* Debug Auth Button (DEV only) */}
+        {__DEV__ && (
+          <TouchableOpacity
+            onPress={async () => {
+              try {
+                console.log('🔍 Starting auth debug...');
+                await debugAuthState();
+                await debugUserProfile();
+                Alert.alert(
+                  'Debug Complete',
+                  'Check your console logs for detailed auth information'
+                );
+              } catch (error) {
+                console.error('❌ Debug failed:', error);
+                Alert.alert('Debug Error', error instanceof Error ? error.message : 'Unknown error');
+              }
+            }}
+            style={{
+              backgroundColor: '#ff9800',
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 12,
+              minHeight: MIN_TOUCH_TARGET,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Debug authentication status"
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+              🔍 Debug Auth Status
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Continue Button */}
         <TouchableOpacity
           onPress={handleStep3Continue}
-          disabled={!canContinueStep3}
+          disabled={!canContinueStep3 || isSubmitting}
           style={{
-            backgroundColor: canContinueStep3 ? '#4CAF50' : '#CCCCCC',
+            backgroundColor: canContinueStep3 && !isSubmitting ? '#4CAF50' : '#CCCCCC',
             borderRadius: 12,
             padding: 16,
             minHeight: MIN_TOUCH_TARGET,
             justifyContent: 'center',
             alignItems: 'center',
-            opacity: canContinueStep3 ? 1 : 0.5,
+            opacity: canContinueStep3 && !isSubmitting ? 1 : 0.5,
+            flexDirection: 'row',
           }}
           accessibilityRole="button"
           accessibilityLabel="Complete identity bootup"
           accessibilityHint="Completes onboarding and saves your selections"
-          accessibilityState={{ disabled: !canContinueStep3 }}
+          accessibilityState={{ disabled: !canContinueStep3 || isSubmitting }}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
+          {isSubmitting && (
+            <ActivityIndicator
+              size="small"
+              color="#FFFFFF"
+              style={{ marginRight: 8 }}
+            />
+          )}
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
+            {isSubmitting ? 'Saving...' : 'Continue'}
+          </Text>
         </TouchableOpacity>
 
         {/* Back Button */}
