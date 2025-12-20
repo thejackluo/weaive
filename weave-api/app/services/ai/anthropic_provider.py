@@ -72,18 +72,30 @@ class AnthropicProvider(AIProvider):
         try:
             logger.info(f"Invoking Anthropic model: {model}")
 
-            # Call Anthropic Messages API
-            response = self.client.messages.create(
-                model=model,
-                max_tokens=kwargs.get('max_tokens', 2000),
-                messages=[
+            # Build request parameters
+            request_params = {
+                'model': model,
+                'max_tokens': kwargs.get('max_tokens', 2000),
+                'messages': [
                     {'role': 'user', 'content': prompt}
                 ],
-                temperature=kwargs.get('temperature'),
-                system=kwargs.get('system'),
-                **{k: v for k, v in kwargs.items()
-                   if k not in ['max_tokens', 'temperature', 'system'] and v is not None}
-            )
+            }
+
+            # Add optional parameters
+            if 'temperature' in kwargs and kwargs['temperature'] is not None:
+                request_params['temperature'] = kwargs['temperature']
+
+            # Handle system parameter (must be a list)
+            if 'system' in kwargs and kwargs['system'] is not None:
+                system = kwargs['system']
+                if isinstance(system, str):
+                    # Convert string to list format expected by Anthropic API
+                    request_params['system'] = [{'type': 'text', 'text': system}]
+                elif isinstance(system, list):
+                    request_params['system'] = system
+
+            # Call Anthropic Messages API
+            response = self.client.messages.create(**request_params)
 
             # Extract content and usage
             content = response.content[0].text
