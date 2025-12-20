@@ -168,7 +168,7 @@ export function getAuthErrorMessage(error: any): string {
   if (!error) return '';
 
   const message = error.message || '';
-  const errorCode = error.code || '';
+  const _errorCode = error.code || '';
   const errorStatus = error.status || 0;
 
   // Map common errors to user-friendly messages
@@ -184,11 +184,11 @@ export function getAuthErrorMessage(error: any): string {
     // Network errors
     'Network request failed': 'Network error. Please check your connection and try again.',
     'Failed to fetch': 'Unable to connect. Please check your internet connection.',
-    'NetworkError': 'Network error. Please check your connection and try again.',
-    'ECONNREFUSED': 'Unable to reach server. Please try again later.',
-    'ETIMEDOUT': 'Connection timed out. Please check your connection and try again.',
-    'ENOTFOUND': 'Unable to reach server. Please check your connection.',
-    'timeout': 'Request timed out. Please try again.',
+    NetworkError: 'Network error. Please check your connection and try again.',
+    ECONNREFUSED: 'Unable to reach server. Please try again later.',
+    ETIMEDOUT: 'Connection timed out. Please check your connection and try again.',
+    ENOTFOUND: 'Unable to reach server. Please check your connection.',
+    timeout: 'Request timed out. Please try again.',
     'net::ERR_INTERNET_DISCONNECTED': 'No internet connection. Please check your network.',
     'net::ERR_NAME_NOT_RESOLVED': 'Unable to reach server. Please check your connection.',
     'net::ERR_CONNECTION_REFUSED': 'Unable to connect to server. Please try again later.',
