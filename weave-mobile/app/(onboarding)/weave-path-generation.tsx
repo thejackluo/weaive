@@ -165,8 +165,8 @@ export default function WeavePathGenerationScreen() {
   const params = useLocalSearchParams();
 
   // Extract goal input from Story 1.7
-  const goalText = params.display_text as string || params.goalText as string || '';
-  const customizationText = params.customization_text as string || '';
+  const _goalText = (params.display_text as string) || (params.goalText as string) || '';
+  const _customizationText = (params.customization_text as string) || '';
 
   // Loading state
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
@@ -257,9 +257,7 @@ export default function WeavePathGenerationScreen() {
       // Ensure minimum loading time for smooth UX
       const elapsed = elapsedTimeMs;
       if (elapsed < MIN_LOADING_TIME_MS) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, MIN_LOADING_TIME_MS - elapsed)
-        );
+        await new Promise((resolve) => setTimeout(resolve, MIN_LOADING_TIME_MS - elapsed));
       }
 
       // Set mock data
@@ -316,7 +314,7 @@ export default function WeavePathGenerationScreen() {
         goal_title: title,
         goal_summary: summary,
       });
-      setEditedSections(prev => new Set(prev).add('goal'));
+      setEditedSections((prev) => new Set(prev).add('goal'));
     }
   };
 
@@ -335,7 +333,7 @@ export default function WeavePathGenerationScreen() {
         ...breakdown,
         milestones: updatedMilestones,
       });
-      setEditedSections(prev => new Set(prev).add(`milestone_${index}`));
+      setEditedSections((prev) => new Set(prev).add(`milestone_${index}`));
     }
   };
 
@@ -355,7 +353,7 @@ export default function WeavePathGenerationScreen() {
         ...breakdown,
         binds: updatedBinds,
       });
-      setEditedSections(prev => new Set(prev).add(`bind_${index}`));
+      setEditedSections((prev) => new Set(prev).add(`bind_${index}`));
     }
   };
 
@@ -377,12 +375,11 @@ export default function WeavePathGenerationScreen() {
 
     // Temporary: Show confirmation
     const message =
-      `Path Confirmed!\n\n` +
       `Goal: "${breakdown?.goal_title}"\n\n` +
       `✅ Story 1.8a complete!\n\n` +
       `[Story 1.9 (First Commitment Ritual) not yet implemented]`;
 
-    alert(message);
+    Alert.alert('Path Confirmed', message);
 
     if (__DEV__) {
       console.log('[ONBOARDING] Goal breakdown confirmed:', {
@@ -443,14 +440,12 @@ export default function WeavePathGenerationScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorTitle}>
-            {loadingState === 'timeout'
-              ? 'Taking too long...'
-              : 'Something went wrong'}
+            {loadingState === 'timeout' ? 'Taking too long...' : 'Something went wrong'}
           </Text>
           <Text style={styles.errorMessage}>
             {loadingState === 'timeout'
               ? 'This is taking longer than expected. Please try again.'
-              : 'We couldn\'t generate your path. Let\'s try again.'}
+              : "We couldn't generate your path. Let's try again."}
           </Text>
 
           {/* Retry Button */}

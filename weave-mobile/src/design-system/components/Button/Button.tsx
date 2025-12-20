@@ -13,7 +13,7 @@
 import React, { useCallback } from 'react';
 import {
   Pressable,
-  Text,
+  Text as _Text,
   View,
   StyleSheet,
   ViewStyle,
@@ -64,7 +64,7 @@ export function Button({
   onPress,
   ...pressableProps
 }: ButtonProps) {
-  const { colors, spacing, radius, typography, springs } = useTheme();
+  const { colors, spacing, radius: _radius, typography, springs } = useTheme();
 
   // Animation values
   const scale = useSharedValue(1);
