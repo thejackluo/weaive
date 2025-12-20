@@ -51,7 +51,8 @@ export async function trackEvent(
     // Collect device metadata automatically
     const eventData: EventMetadata = {
       device_type: Device.modelName || 'Unknown',
-      os_version: `${Device.osName} ${Device.osVersion}` || 'Unknown',
+      os_version:
+        Device.osName && Device.osVersion ? `${Device.osName} ${Device.osVersion}` : 'Unknown',
       app_version: Constants.expoConfig?.version || '1.0.0',
       ...metadata, // User-provided metadata overrides defaults
     };
@@ -101,8 +102,6 @@ export async function trackOnboardingCompleted(userId: string): Promise<void> {
   return trackEvent('onboarding_completed', {}, userId);
 }
 
-export async function trackSymptomInsightShown(
-  categories: string[]
-): Promise<void> {
+export async function trackSymptomInsightShown(categories: string[]): Promise<void> {
   return trackEvent('symptom_insight_shown', { categories });
 }
