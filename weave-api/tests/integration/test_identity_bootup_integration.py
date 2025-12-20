@@ -76,7 +76,7 @@ def valid_identity_bootup_data():
     return {
         "preferred_name": "Alex",
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
     }
 
 
@@ -113,7 +113,7 @@ def test_identity_bootup_full_stack_success(test_user_with_token, valid_identity
     assert data["success"] is True
     assert data["preferred_name"] == "Alex"
     assert data["core_personality"] == "supportive_direct"
-    assert data["identity_traits"] == ["Disciplined", "Focused", "Resilient"]
+    assert data["identity_traits"] == ["Clear Direction", "High Standards", "Self Aware"]
     assert "personality_selected_at" in data
     assert data["user_id"] == user_id
 
@@ -124,14 +124,14 @@ def test_identity_bootup_full_stack_success(test_user_with_token, valid_identity
     assert db_result.data is not None
     assert db_result.data["preferred_name"] == "Alex"
     assert db_result.data["core_personality"] == "supportive_direct"
-    assert db_result.data["identity_traits"] == ["Disciplined", "Focused", "Resilient"]
+    assert db_result.data["identity_traits"] == ["Clear Direction", "High Standards", "Self Aware"]
     assert db_result.data["personality_selected_at"] is not None
 
 
 @pytest.mark.integration
 def test_identity_bootup_with_minimum_traits(test_user_with_token):
     """
-    Test identity bootup with exactly 3 traits (minimum allowed).
+    Test identity bootup with exactly 3 traits (required count).
 
     GIVEN: A real authenticated user
     WHEN: User selects exactly 3 traits
@@ -144,7 +144,7 @@ def test_identity_bootup_with_minimum_traits(test_user_with_token):
     payload = {
         "preferred_name": "Min",
         "core_personality": "tough_warm",
-        "identity_traits": ["Creative", "Confident", "Calm"],  # Exactly 3
+        "identity_traits": ["Decisive Action", "Consistent Effort", "Continuous Growth"],  # Exactly 3
     }
 
     # WHEN
@@ -166,28 +166,26 @@ def test_identity_bootup_with_minimum_traits(test_user_with_token):
 
 
 @pytest.mark.integration
-def test_identity_bootup_with_maximum_traits(test_user_with_token):
+def test_identity_bootup_with_too_many_traits(test_user_with_token):
     """
-    Test identity bootup with exactly 5 traits (maximum allowed).
+    Test identity bootup with more than 3 traits (validation error expected).
 
     GIVEN: A real authenticated user
-    WHEN: User selects exactly 5 traits
-    THEN: Data is accepted and written to database
+    WHEN: User selects more than 3 traits
+    THEN: 422 validation error is returned
     """
     # GIVEN
     jwt_token = test_user_with_token["jwt_token"]
-    user_id = test_user_with_token["user_id"]
 
     payload = {
         "preferred_name": "Max",
         "core_personality": "supportive_direct",
         "identity_traits": [
-            "Disciplined",
-            "Creative",
-            "Confident",
-            "Focused",
-            "Resilient",
-        ],  # Exactly 5
+            "Clear Direction",
+            "Intentional Time",
+            "Decisive Action",
+            "Consistent Effort",
+        ],  # 4 traits - too many
     }
 
     # WHEN
@@ -198,14 +196,7 @@ def test_identity_bootup_with_maximum_traits(test_user_with_token):
     )
 
     # THEN
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data["identity_traits"]) == 5
-
-    # Verify in database
-    supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
-    db_result = supabase.table("user_profiles").select("identity_traits").eq("id", user_id).single().execute()
-    assert len(db_result.data["identity_traits"]) == 5
+    assert response.status_code == 422
 
 
 @pytest.mark.integration
@@ -224,7 +215,7 @@ def test_identity_bootup_with_apostrophe_in_name(test_user_with_token):
     payload = {
         "preferred_name": "O'Brien",  # Apostrophe allowed
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
     }
 
     # WHEN
@@ -261,7 +252,7 @@ def test_identity_bootup_with_hyphen_in_name(test_user_with_token):
     payload = {
         "preferred_name": "Mary-Jane",  # Hyphen allowed
         "core_personality": "tough_warm",
-        "identity_traits": ["Creative", "Energetic", "Balanced"],
+        "identity_traits": ["Decisive Action", "Intentional Time", "Emotionally Grounded"],
     }
 
     # WHEN
@@ -298,7 +289,7 @@ def test_identity_bootup_tough_warm_personality(test_user_with_token):
     payload = {
         "preferred_name": "Tough",
         "core_personality": "tough_warm",  # Second personality option
-        "identity_traits": ["Resilient", "Energetic", "Confident"],
+        "identity_traits": ["Consistent Effort", "Continuous Growth", "Emotionally Grounded"],
     }
 
     # WHEN
@@ -355,7 +346,7 @@ def test_identity_bootup_idempotency_update(test_user_with_token):
     first_payload = {
         "preferred_name": "First",
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
     }
 
     response1 = client.post(
@@ -369,7 +360,7 @@ def test_identity_bootup_idempotency_update(test_user_with_token):
     second_payload = {
         "preferred_name": "Second",
         "core_personality": "tough_warm",
-        "identity_traits": ["Creative", "Energetic", "Balanced"],
+        "identity_traits": ["Decisive Action", "Intentional Time", "Emotionally Grounded"],
     }
 
     response2 = client.post(
@@ -383,7 +374,7 @@ def test_identity_bootup_idempotency_update(test_user_with_token):
     data = response2.json()
     assert data["preferred_name"] == "Second"
     assert data["core_personality"] == "tough_warm"
-    assert data["identity_traits"] == ["Creative", "Energetic", "Balanced"]
+    assert data["identity_traits"] == ["Decisive Action", "Intentional Time", "Emotionally Grounded"]
 
     # THEN: Database has only the second submission (overwritten)
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
@@ -391,11 +382,11 @@ def test_identity_bootup_idempotency_update(test_user_with_token):
 
     assert db_result.data["preferred_name"] == "Second"
     assert db_result.data["core_personality"] == "tough_warm"
-    assert db_result.data["identity_traits"] == ["Creative", "Energetic", "Balanced"]
+    assert db_result.data["identity_traits"] == ["Decisive Action", "Intentional Time", "Emotionally Grounded"]
 
 
 # ============================================================================
-# Integration Tests - All 12 Allowed Traits
+# Integration Tests - All 8 Allowed Traits
 # ============================================================================
 
 
@@ -403,23 +394,19 @@ def test_identity_bootup_idempotency_update(test_user_with_token):
 @pytest.mark.parametrize(
     "trait",
     [
-        "Disciplined",
-        "Creative",
-        "Confident",
-        "Calm",
-        "Focused",
-        "Energetic",
-        "Organized",
-        "Patient",
-        "Resilient",
-        "Balanced",
-        "Intentional",
-        "Present",
+        "Clear Direction",
+        "Intentional Time",
+        "Decisive Action",
+        "Consistent Effort",
+        "High Standards",
+        "Continuous Growth",
+        "Self Aware",
+        "Emotionally Grounded",
     ],
 )
 def test_identity_bootup_all_allowed_traits(test_user_with_token, trait):
     """
-    Test that all 12 allowed traits are accepted by the API.
+    Test that all 8 allowed traits are accepted by the API.
 
     GIVEN: A real authenticated user
     WHEN: User selects a trait from the allowed list
@@ -430,10 +417,10 @@ def test_identity_bootup_all_allowed_traits(test_user_with_token, trait):
     user_id = test_user_with_token["user_id"]
 
     # Select 3 traits including the parameterized trait
-    other_traits = ["Disciplined", "Focused"]  # Default traits
+    other_traits = ["Clear Direction", "High Standards"]  # Default traits
     if trait in other_traits:
         # If parameterized trait is in defaults, use different ones
-        other_traits = ["Creative", "Resilient"]
+        other_traits = ["Decisive Action", "Self Aware"]
 
     payload = {
         "preferred_name": "TraitTest",
@@ -477,7 +464,7 @@ def test_identity_bootup_without_authentication():
     payload = {
         "preferred_name": "NoAuth",
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
     }
 
     # WHEN
@@ -501,7 +488,7 @@ def test_identity_bootup_with_invalid_jwt():
     payload = {
         "preferred_name": "BadToken",
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
     }
 
     # WHEN

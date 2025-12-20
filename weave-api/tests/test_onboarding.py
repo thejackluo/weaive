@@ -63,7 +63,7 @@ def valid_identity_bootup_payload():
     return {
         "preferred_name": "Alex",
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
     }
 
 
@@ -77,7 +77,7 @@ def test_identity_bootup_without_auth():
     payload = {
         "preferred_name": "Alex",
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
     }
 
     response = client.post("/api/onboarding/identity-bootup", json=payload)
@@ -97,7 +97,7 @@ def test_identity_bootup_success(
         "user_id": "550e8400-e29b-41d4-a716-446655440000",
         "preferred_name": "Alex",
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
         "personality_selected_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -114,7 +114,7 @@ def test_identity_bootup_success(
     assert data["success"] is True
     assert data["preferred_name"] == "Alex"
     assert data["core_personality"] == "supportive_direct"
-    assert data["identity_traits"] == ["Disciplined", "Focused", "Resilient"]
+    assert data["identity_traits"] == ["Clear Direction", "High Standards", "Self Aware"]
     assert "personality_selected_at" in data
     assert "user_id" in data
 
@@ -124,7 +124,7 @@ def test_identity_bootup_invalid_name_too_long(valid_jwt_token):
     payload = {
         "preferred_name": "A" * 51,  # 51 characters
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
     }
 
     response = client.post(
@@ -142,7 +142,7 @@ def test_identity_bootup_invalid_name_special_chars(valid_jwt_token):
     payload = {
         "preferred_name": "Alex@123!",  # Invalid characters
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
     }
 
     response = client.post(
@@ -160,7 +160,7 @@ def test_identity_bootup_invalid_personality(valid_jwt_token):
     payload = {
         "preferred_name": "Alex",
         "core_personality": "invalid_personality",  # Invalid type
-        "identity_traits": ["Disciplined", "Focused", "Resilient"],
+        "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
     }
 
     response = client.post(
@@ -178,7 +178,7 @@ def test_identity_bootup_too_few_traits(valid_jwt_token):
     payload = {
         "preferred_name": "Alex",
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused"],  # Only 2 traits
+        "identity_traits": ["Clear Direction", "High Standards"],  # Only 2 traits
     }
 
     response = client.post(
@@ -192,17 +192,15 @@ def test_identity_bootup_too_few_traits(valid_jwt_token):
 
 
 def test_identity_bootup_too_many_traits(valid_jwt_token):
-    """Test identity bootup with too many traits (> 5)."""
+    """Test identity bootup with too many traits (> 3)."""
     payload = {
         "preferred_name": "Alex",
         "core_personality": "supportive_direct",
         "identity_traits": [
-            "Disciplined",
-            "Focused",
-            "Resilient",
-            "Creative",
-            "Confident",
-            "Calm",  # 6 traits
+            "Clear Direction",
+            "High Standards",
+            "Self Aware",
+            "Decisive Action",  # 4 traits (more than required 3)
         ],
     }
 
@@ -222,8 +220,8 @@ def test_identity_bootup_invalid_trait(valid_jwt_token):
         "preferred_name": "Alex",
         "core_personality": "supportive_direct",
         "identity_traits": [
-            "Disciplined",
-            "Focused",
+            "Clear Direction",
+            "High Standards",
             "InvalidTrait",  # Not in allowed list
         ],
     }
@@ -244,9 +242,9 @@ def test_identity_bootup_duplicate_traits(valid_jwt_token):
         "preferred_name": "Alex",
         "core_personality": "supportive_direct",
         "identity_traits": [
-            "Disciplined",
-            "Focused",
-            "Disciplined",  # Duplicate
+            "Clear Direction",
+            "High Standards",
+            "Clear Direction",  # Duplicate
         ],
     }
 
