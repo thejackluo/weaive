@@ -83,7 +83,7 @@ def test_anthropic():
     provider = AnthropicProvider(api_key=ANTHROPIC_KEY)
 
     prompt = "Say 'hi' in exactly one word"
-    model = 'claude-4-5-haiku-20250514'
+    model = 'claude-3-5-haiku-20241022'  # Current available model (Jan 2025)
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🎯 Model: {model}")
