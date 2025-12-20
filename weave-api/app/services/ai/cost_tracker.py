@@ -12,7 +12,7 @@ Features:
 """
 
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 
 from supabase import Client as SupabaseClient
 
@@ -46,20 +46,23 @@ class CostTracker:
 
     def get_total_daily_cost(self) -> float:
         """
-        Get total application-wide cost for today.
+        Get total application-wide cost for today (UTC).
 
-        Sums all cost_estimate values from ai_runs where created_at is today.
+        Sums all cost_estimate values from ai_runs where created_at is today (UTC).
+        Uses UTC timezone to ensure consistent daily boundaries across all users.
 
         Returns:
             Total cost in USD for today across all users
         """
         try:
-            today_str = date.today().isoformat()
+            # Use UTC for consistent daily boundaries
+            today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            tomorrow_start = today_start + timedelta(days=1)
 
             result = self.db.table('ai_runs') \
                 .select('cost_estimate') \
-                .gte('created_at', f'{today_str}T00:00:00') \
-                .lte('created_at', f'{today_str}T23:59:59') \
+                .gte('created_at', today_start.isoformat()) \
+                .lt('created_at', tomorrow_start.isoformat()) \
                 .execute()
 
             total = sum(
@@ -67,7 +70,7 @@ class CostTracker:
                 for row in result.data
             )
 
-            logger.debug(f"Total daily cost: ${total:.6f}")
+            logger.debug(f"Total daily cost (UTC): ${total:.6f}")
             return float(total)
 
         except Exception as e:
@@ -76,9 +79,10 @@ class CostTracker:
 
     def get_user_daily_cost(self, user_id: str) -> float:
         """
-        Get per-user cost for today.
+        Get per-user cost for today (UTC).
 
-        Sums cost_estimate for specific user where created_at is today.
+        Sums cost_estimate for specific user where created_at is today (UTC).
+        Uses UTC timezone to ensure consistent daily boundaries.
 
         Args:
             user_id: User ID (from user_profiles.id)
@@ -87,13 +91,15 @@ class CostTracker:
             Total cost in USD for this user today
         """
         try:
-            today_str = date.today().isoformat()
+            # Use UTC for consistent daily boundaries
+            today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            tomorrow_start = today_start + timedelta(days=1)
 
             result = self.db.table('ai_runs') \
                 .select('cost_estimate') \
                 .eq('user_id', user_id) \
-                .gte('created_at', f'{today_str}T00:00:00') \
-                .lte('created_at', f'{today_str}T23:59:59') \
+                .gte('created_at', today_start.isoformat()) \
+                .lt('created_at', tomorrow_start.isoformat()) \
                 .execute()
 
             total = sum(
@@ -101,7 +107,7 @@ class CostTracker:
                 for row in result.data
             )
 
-            logger.debug(f"User {user_id} daily cost: ${total:.6f}")
+            logger.debug(f"User {user_id} daily cost (UTC): ${total:.6f}")
             return float(total)
 
         except Exception as e:
