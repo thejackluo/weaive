@@ -2241,6 +2241,849 @@ Users manage their account settings, identity document, and app preferences.
 
 ---
 
+## Epic DS: Design System Rebuild
+
+**User Outcome:** Complete rebuild of the Weavelight Design System with 62 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
+
+**Context:** The existing design system is "vibe-coded," buggy, and inconsistent. This epic rebuilds it from scratch with:
+- **220+ design tokens** (colors, typography, spacing, effects, animations)
+- **Tamagui-inspired architecture** (composable anatomy, theme builder, runtime theming)
+- **Atomic Design organization** (Atoms → Molecules → Organisms)
+- **Spring physics animations** (using Reanimated `withSpring()`)
+- **Dark-first aesthetic** (Opal-inspired glassmorphism, OLED optimization)
+- **75% test coverage** enforced in CI with Chromatic visual regression
+- **Full TypeScript support** with prop intellisense
+
+**Why This Order:** Design system foundation enables consistent, rapid UI development across all other epics. Must be completed early to prevent design debt and component inconsistencies.
+
+**FRs Covered:** FR-DS-1 through FR-DS-9
+
+---
+
+### User Stories
+
+#### US-DS-1: Foundation (Tokens + Theme + Animations)
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want** a comprehensive token system with runtime theme switching
+**So that** I can build consistent UIs with dark/light modes and smooth animations
+
+**Acceptance Criteria:**
+- [ ] **220+ Design Tokens** organized by category:
+  - **Colors (60+ tokens):** `dark[50-950]`, `accent[50-950]`, `violet[50-950]`, `amber[50-950]`, `rose[50-950]`, `emerald[50-950]`
+  - **Semantic colors:** `semantic.success`, `semantic.warning`, `semantic.error`, `semantic.info`
+  - **Background colors:** `background.primary`, `background.secondary`, `background.tertiary`, `background.elevated`
+  - **Text colors:** `text.primary`, `text.secondary`, `text.tertiary`, `text.disabled`, `text.inverse`
+  - **Border colors:** `border.primary`, `border.secondary`, `border.focus`, `border.error`
+  - **Heat map colors:** `heatMap.none`, `heatMap.minimal`, `heatMap.low`, `heatMap.medium`, `heatMap.high`
+  - **Gradients:** `weaveGradient.primary`, `weaveGradient.accent`, `gradients.sunset`, `gradients.ocean`, `gradients.aurora`
+  - **Typography (45+ tokens):** `fontFamily.sans`, `fontFamily.mono`, `fontSizes.xs-5xl`, `fontWeights.light-black`, `lineHeights.tight-loose`, `letterSpacing.tight-wide`
+  - **Display scale:** `display.xs-3xl` (large heading styles)
+  - **Label scale:** `label.xs-xl` (small UI text styles)
+  - **Mono scale:** `mono.xs-lg` (code/monospace styles)
+  - **Spacing (25+ tokens):** `spacing[0-24]` (0px to 96px in logical increments), `layout.screenPadding`, `layout.cardPadding`, `gap.xs-xl`, `inset.xs-xl`
+  - **Effects (35+ tokens):**
+    - **Shadows:** `shadows.sm`, `shadows.md`, `shadows.lg`, `shadows.xl`, `shadows.card`, `shadows.modal`
+    - **Glows:** `glows.sm`, `glows.md`, `glows.lg` (colored shadow tints)
+    - **Glass effects:** `glass.light`, `glass.medium`, `glass.heavy` (blur + opacity presets)
+    - **Blur:** `blur.sm`, `blur.md`, `blur.lg`, `blur.xl`
+    - **Opacity:** `opacity[10-90]` (10% increments)
+  - **Borders (20+ tokens):**
+    - **Radius:** `radius.xs-3xl`, `componentRadius.button`, `componentRadius.card`, `componentRadius.input`, `componentRadius.modal`
+    - **Border widths:** `borderWidth.thin`, `borderWidth.regular`, `borderWidth.thick`
+  - **Animations (35+ tokens):**
+    - **Durations:** `durations.instant`, `durations.fast`, `durations.normal`, `durations.slow`, `durations.slower`
+    - **Easings:** `easings.easeInOut`, `easings.easeOut`, `easings.spring`
+    - **Springs:** `springs.gentle`, `springs.snappy`, `springs.bouncy`, `springs.stiff`
+    - **Motion presets:** `motion.fadeIn`, `motion.slideUp`, `motion.scale`, `motion.pressIn`
+    - **Reduced motion:** `reducedMotion.disable` (accessibility support)
+
+- [ ] **ThemeProvider + Runtime Switching:**
+  - `ThemeProvider` wrapper component with `mode` prop (`dark` | `light`)
+  - `useTheme()` hook returns: `{ colors, spacing, typography, layout, shadows, radius, animations, mode }`
+  - `useThemeMode()` hook for toggling: `{ mode, setMode, toggleMode, isDark }`
+  - Specialized hooks: `useColors()`, `useSpacing()`, `useTypography()`, `useAnimations()`
+  - Theme switches without app reload (CSS custom properties + React Context)
+
+- [ ] **Tamagui-Inspired Theme Builder:**
+  - Nested theme support: `<Theme name="violet">...</Theme>` overrides accent color
+  - Color-matched shadows: violet button → violet shadow tint
+  - Theme inheritance: child themes merge with parent themes
+
+- [ ] **Animation Library (Reanimated):**
+  - Spring presets using `withSpring()`:
+    ```typescript
+    export const springs = {
+      gentle: { damping: 15, stiffness: 150, mass: 0.8 },
+      snappy: { damping: 20, stiffness: 300, mass: 0.5 },
+      bouncy: { damping: 10, stiffness: 200, mass: 1.2 }
+    }
+    ```
+  - Motion presets for common animations (fadeIn, slideUp, scale, pressIn)
+  - Accessibility: respect `reducedMotion` setting
+
+**Technical Notes:**
+- Use React Context for theme state management
+- CSS custom properties for runtime theme switching
+- Reanimated `useSharedValue()` + `withSpring()` for all animations
+- Token files organized by category in `src/design-system/tokens/`
+
+**Estimate:** 5 story points
+
+---
+
+#### US-DS-2: Core Primitives (Text, Buttons, Icons)
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want** foundational text, button, and icon components with variants
+**So that** I can build UIs with consistent typography and interactions
+
+**Acceptance Criteria:**
+
+**Text Components (11 total):**
+- [ ] **Text** - Base text component with variant prop
+  - Props: `variant`, `color`, `weight`, `align`, `numberOfLines`, `ellipsizeMode`
+  - Variants: `displayLg`, `displayMd`, `displaySm`, `titleLg`, `titleMd`, `titleSm`, `bodyLg`, `bodyMd`, `bodySm`, `caption`, `label`
+  - Auto-applies typography tokens based on variant
+- [ ] **AnimatedText** - Text with entrance animation support
+  - Props: Same as Text + `animation` (`fadeIn` | `slideUp` | `typewriter`)
+  - Uses Reanimated for smooth animations
+- [ ] **Heading** - Semantic heading (h1-h6 equivalent)
+  - Props: `level` (1-6), `color`, `weight`
+  - Maps to appropriate display/title variants
+- [ ] **Title** - Preset for title text (`variant="titleMd"`)
+- [ ] **Subtitle** - Preset for subtitle text (`variant="titleSm"`)
+- [ ] **Body** - Preset for body text (`variant="bodyMd"`)
+- [ ] **BodySmall** - Preset for small body text (`variant="bodySm"`)
+- [ ] **Caption** - Preset for caption text (`variant="caption"`)
+- [ ] **Label** - Preset for label text (`variant="label"`)
+- [ ] **Link** - Interactive text with underline + press animation
+  - Props: `href`, `onPress`, `external`, `disabled`
+  - Spring-based press animation
+- [ ] **Mono** - Monospace text for code/data
+  - Props: `variant` (mono.xs - mono.lg), `color`
+
+**Button Components (7 total):**
+- [ ] **Button** - Base button with composable anatomy
+  - **Unstyled variant** for full customization
+  - **Styled variants:** `primary`, `secondary`, `ghost`, `destructive`, `ai`
+  - **Composable anatomy (Radix pattern):**
+    ```typescript
+    <Button>
+      <Button.Icon name="sparkles" />
+      <Button.Text>Generate</Button.Text>
+      <Button.Spinner /> // Shows during loading
+    </Button>
+    ```
+  - Props: `variant`, `size` (`sm` | `md` | `lg`), `disabled`, `loading`, `onPress`, `fullWidth`
+  - **Spring press animation:**
+    ```typescript
+    const scale = useSharedValue(1)
+    const handlePressIn = () => { scale.value = withSpring(0.95, springs.snappy) }
+    const handlePressOut = () => { scale.value = withSpring(1, springs.snappy) }
+    ```
+  - **Color-matched shadows:** Primary button (violet) → violet glow shadow
+- [ ] **PrimaryButton** - Preset with `variant="primary"`
+- [ ] **SecondaryButton** - Preset with `variant="secondary"`
+- [ ] **GhostButton** - Preset with `variant="ghost"`
+- [ ] **DestructiveButton** - Preset with `variant="destructive"` (red accent)
+- [ ] **AIButton** - Preset with `variant="ai"` (gradient, sparkle icon, special animations)
+- [ ] **IconButton** - Square button with only icon
+  - Props: `icon` (Lucide icon name), `size`, `variant`, `onPress`
+  - Auto-centers icon, maintains square aspect ratio
+
+**Icon Wrapper (1 total):**
+- [ ] **Icon** - Lucide icon wrapper with theme colors
+  - Props: `name` (100+ curated Lucide icons), `size`, `color`, `strokeWidth`
+  - Themed colors: `color="text.primary"` maps to theme token
+
+**Technical Notes:**
+- Button pressable feedback using Reanimated `useSharedValue()` + `withSpring()`
+- Icon integration with `lucide-react-native`
+- All text components support theme color tokens via `color` prop
+- Composable anatomy allows flexible button layouts
+
+**Estimate:** 6 story points
+
+---
+
+#### US-DS-3: Form Components
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want** text inputs, textareas, search inputs, checkboxes, and toggles
+**So that** I can build forms with consistent styling and validation
+
+**Acceptance Criteria:**
+
+**Input Components (3 total):**
+- [ ] **Input** - Text input with floating label, composable anatomy
+  - **Composable anatomy:**
+    ```typescript
+    <Input>
+      <Input.Label>Email</Input.Label>
+      <Input.Field placeholder="you@example.com" />
+      <Input.Error>Invalid email format</Input.Error>
+      <Input.Helper>We'll never share your email</Input.Helper>
+    </Input>
+    ```
+  - Props: `value`, `onChangeText`, `placeholder`, `disabled`, `error`, `size` (`sm` | `md` | `lg`)
+  - **Floating label animation:**
+    ```typescript
+    const labelY = useSharedValue(16)
+    const labelScale = useSharedValue(1)
+    // When focused or has value: labelY → 0, labelScale → 0.85
+    useEffect(() => {
+      if (isFocused || value) {
+        labelY.value = withSpring(0, springs.snappy)
+        labelScale.value = withSpring(0.85, springs.snappy)
+      }
+    }, [isFocused, value])
+    ```
+  - States: default, focused (violet border), error (red border), disabled (gray)
+
+- [ ] **TextArea** - Multiline text input with auto-expanding height
+  - Props: Same as Input + `numberOfLines`, `maxHeight`
+  - Auto-expands height as user types (up to `maxHeight`)
+  - Supports floating label
+
+- [ ] **SearchInput** - Input with search icon, clear button, and debounced onChange
+  - Props: `value`, `onChangeText`, `onSearch`, `debounceMs` (default 300)
+  - Left icon: search magnifying glass
+  - Right icon: clear button (X) when has value
+  - Debounced onChange for search queries
+
+**Selection Components (4 total - includes future Radio + Toggle):**
+- [ ] **Checkbox** - Checkbox with checkmark animation
+  - Props: `checked`, `onChange`, `disabled`, `size` (`sm` | `md` | `lg`), `label`
+  - **Checkmark animation:** Scale + rotate checkmark path on check
+    ```typescript
+    const checkScale = useSharedValue(0)
+    const checkRotate = useSharedValue(-90)
+    if (checked) {
+      checkScale.value = withSpring(1, springs.bouncy)
+      checkRotate.value = withSpring(0, springs.snappy)
+    }
+    ```
+
+- [ ] **BindCheckbox** - Gamified checkbox with streak indicator
+  - Props: Same as Checkbox + `streak` (number of consecutive completions)
+  - Visual: Small flame icon + streak count when `streak > 0`
+  - Spring bounce animation on check + confetti burst
+
+- [ ] **Radio** - Radio button group (future enhancement)
+  - Props: `options`, `value`, `onChange`, `disabled`
+
+- [ ] **Toggle** - Switch toggle (future enhancement)
+  - Props: `value`, `onChange`, `disabled`, `size`
+
+**Technical Notes:**
+- All form components support theme tokens for colors
+- Floating labels use Reanimated for smooth transitions
+- Error states trigger red border + error message display
+- Composable anatomy allows flexible form layouts
+
+**Estimate:** 7 story points
+
+---
+
+#### US-DS-4: Layout & Cards
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want** cards, navigation components, badges, and avatars
+**So that** I can build layouts with consistent spacing and visual hierarchy
+
+**Acceptance Criteria:**
+
+**Card Components (4 total):**
+- [ ] **Card** - Base card with composable anatomy
+  - **Composable anatomy:**
+    ```typescript
+    <Card>
+      <Card.Header>
+        <Card.Title>Goal Progress</Card.Title>
+        <Card.Subtitle>This week</Card.Subtitle>
+      </Card.Header>
+      <Card.Content>
+        {/* Main content */}
+      </Card.Content>
+      <Card.Footer>
+        <Button>View Details</Button>
+      </Card.Footer>
+    </Card>
+    ```
+  - Props: `variant` (`elevated` | `flat` | `outlined`), `padding` (`none` | `sm` | `md` | `lg`)
+  - Variants: elevated (shadow), flat (no shadow), outlined (border only)
+
+- [ ] **GlassCard** - Glassmorphic card (Opal-inspired)
+  - Props: Same as Card + `blurIntensity` (`light` | `medium` | `heavy`)
+  - Visual: Semi-transparent background + backdrop blur + subtle border
+  - Example: `background: rgba(dark[800], 0.6)` + `blur(20px)`
+
+- [ ] **ElevatedCard** - Card with larger shadow
+  - Preset: `<Card variant="elevated" />` with `shadows.xl`
+
+- [ ] **AICard** - Card with violet gradient border + shimmer effect
+  - Visual: Animated gradient border using `LinearGradient`
+  - Shimmer animation: Subtle moving gradient overlay
+
+**Navigation Components (3 total):**
+- [ ] **BottomTabBar** - Bottom navigation bar
+  - Props: `tabs` (array of `{ id, label, icon, badge }`), `activeTab`, `onTabChange`
+  - Active tab: violet accent color + scale animation
+  - Inactive tabs: gray color
+  - Spring animation on tab press
+
+- [ ] **HeaderBar** - Top navigation header
+  - Props: `title`, `leftAction`, `rightAction`, `transparent`
+  - Left action: back button or custom component
+  - Right action: custom component (e.g., settings icon)
+  - Supports transparent mode for scroll-based reveal
+
+- [ ] **BackButton** - Back navigation button
+  - Props: `onPress`, `label`, `icon`
+  - Default: chevron-left icon + optional label
+  - Spring press animation
+
+**Badge Components (6 total):**
+- [ ] **Badge** - Small label with count or status
+  - Props: `variant` (`default` | `success` | `warning` | `error` | `info`), `size` (`sm` | `md`), `text`
+  - Variants use semantic colors
+
+- [ ] **CountBadge** - Badge showing numeric count
+  - Props: `count`, `max` (shows "99+" when exceeded), `variant`
+
+- [ ] **StatusDot** - Small colored dot for status indication
+  - Props: `status` (`online` | `offline` | `away` | `busy`), `size`
+
+- [ ] **StreakBadge** - Badge showing streak count with flame icon
+  - Props: `streak`, `size`
+  - Visual: 🔥 icon + streak number
+  - Animated pulse when streak increases
+
+- [ ] **AIBadge** - Badge with sparkle icon for AI features
+  - Visual: ✨ icon + "AI" text + violet gradient background
+
+- [ ] **ConsistencyBadge** - Badge showing consistency percentage
+  - Props: `percentage`, `size`
+  - Color scales with percentage: red (<50%) → amber (50-79%) → emerald (80-100%)
+
+**Avatar Components (3 total):**
+- [ ] **Avatar** - User avatar with image or initials fallback
+  - Props: `src` (image URL), `name` (for initials), `size` (`xs` | `sm` | `md` | `lg` | `xl`), `shape` (`circle` | `square`), `status` (optional status dot)
+  - Fallback: Show initials (first 2 letters) when no image
+  - Status dot: small colored dot overlayed in corner
+
+- [ ] **AvatarGroup** - Stack of overlapping avatars
+  - Props: `avatars` (array of avatar props), `max` (shows "+N" for overflow), `size`
+  - Visual: Avatars overlap by 25% with border
+
+- [ ] **AvatarWithName** - Avatar with name label below
+  - Props: Same as Avatar + `showName`
+  - Layout: Avatar stacked above name text
+
+**Technical Notes:**
+- All cards support nested theme contexts
+- Navigation components integrate with React Navigation
+- Badges use semantic color tokens for variants
+- Avatars handle missing images gracefully with initials
+
+**Estimate:** 6 story points
+
+---
+
+#### US-DS-5: Feedback & Overlays
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want** modals, toasts, and bottom sheets
+**So that** I can show overlays and notifications with consistent animations
+
+**Acceptance Criteria:**
+
+**Modal Component:**
+- [ ] **Modal** - Full-screen modal overlay with backdrop
+  - Props: `visible`, `onClose`, `title`, `children`, `dismissable`, `size` (`sm` | `md` | `lg` | `fullscreen`)
+  - **Entrance animation:** Backdrop fade in + modal slide up from bottom
+    ```typescript
+    const backdropOpacity = useSharedValue(0)
+    const modalY = useSharedValue(screenHeight)
+    useEffect(() => {
+      if (visible) {
+        backdropOpacity.value = withTiming(0.6, { duration: 200 })
+        modalY.value = withSpring(0, springs.snappy)
+      }
+    }, [visible])
+    ```
+  - Backdrop: Semi-transparent black with blur
+  - Dismissable: tap backdrop or swipe down to close
+  - Accessibility: traps focus within modal, restores focus on close
+
+**Toast Component:**
+- [ ] **Toast** - Temporary notification message
+  - Props: `message`, `type` (`success` | `error` | `warning` | `info`), `duration` (default 3000ms), `action` (optional action button)
+  - **Entrance animation:** Slide down from top + fade in
+    ```typescript
+    const toastY = useSharedValue(-100)
+    const toastOpacity = useSharedValue(0)
+    useEffect(() => {
+      // Enter
+      toastY.value = withSpring(0, springs.gentle)
+      toastOpacity.value = withTiming(1, { duration: 200 })
+      // Auto-dismiss after duration
+      setTimeout(() => {
+        toastY.value = withSpring(-100, springs.gentle)
+        toastOpacity.value = withTiming(0, { duration: 200 })
+      }, duration)
+    }, [])
+    ```
+  - Visual: Uses semantic colors for type (success = emerald, error = rose, etc.)
+  - Position: Top of screen with safe area padding
+  - Stacking: Multiple toasts stack vertically
+
+**Bottom Sheet Component:**
+- [ ] **BottomSheet** - Swipeable bottom sheet
+  - Props: `visible`, `onClose`, `snapPoints` (array of percentages like `[0.3, 0.7]`), `children`, `dismissable`
+  - **Gesture-driven animation:** Pan gesture + spring physics
+    ```typescript
+    const panGesture = Gesture.Pan()
+      .onUpdate((e) => {
+        sheetY.value = Math.max(0, e.translationY)
+      })
+      .onEnd((e) => {
+        const shouldClose = e.velocityY > 500 || sheetY.value > screenHeight * 0.4
+        if (shouldClose) {
+          sheetY.value = withSpring(screenHeight, springs.snappy)
+          runOnJS(onClose)()
+        } else {
+          sheetY.value = withSpring(0, springs.snappy)
+        }
+      })
+    ```
+  - Snap points: Sheet snaps to predefined heights (e.g., 30%, 70%)
+  - Backdrop: Semi-transparent black with blur
+  - Dismissable: swipe down or tap backdrop to close
+
+**Technical Notes:**
+- All overlays use React Native Gesture Handler for smooth interactions
+- Reanimated for spring physics and performance
+- Overlays render in `<Portal>` to avoid z-index issues
+- Toast notifications use a global queue (max 3 visible at once)
+
+**Estimate:** 5 story points
+
+---
+
+#### US-DS-6: Data Visualization & Progress
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want** progress bars, circular progress, stat cards, and heat maps
+**So that** I can visualize user progress and data
+
+**Acceptance Criteria:**
+
+**Progress Components (2 total):**
+- [ ] **ProgressBar** - Horizontal progress bar with gradient fill
+  - Props: `value` (0-100), `size` (`sm` | `md` | `lg`), `color` (theme color or gradient), `showLabel`, `animated`
+  - **Gradient fill animation:**
+    ```typescript
+    const progressWidth = useSharedValue(0)
+    useEffect(() => {
+      progressWidth.value = withSpring(value, springs.gentle)
+    }, [value])
+    ```
+  - Visual: Gradient from `accent[400]` to `accent[600]` for fill
+  - Label: Shows percentage when `showLabel={true}`
+
+- [ ] **CircularProgress** - Circular progress indicator
+  - Props: `value` (0-100), `size`, `strokeWidth`, `color`, `showLabel`
+  - **Arc animation:** Animated SVG arc using Reanimated
+    ```typescript
+    const animatedAngle = useSharedValue(0)
+    useEffect(() => {
+      animatedAngle.value = withSpring((value / 100) * 360, springs.gentle)
+    }, [value])
+    ```
+  - Visual: Circular stroke with animated fill
+  - Label: Shows percentage in center when `showLabel={true}`
+
+**Stat Card Components (4 total):**
+- [ ] **StatCard** - Card displaying key metric
+  - Props: `label`, `value`, `trend` (`up` | `down` | `neutral`), `trendValue`, `icon`, `color`
+  - Visual: Large value text + trend indicator (arrow + percentage)
+  - Color: Trend up = emerald, down = rose, neutral = gray
+
+- [ ] **StatCardGrid** - Grid layout for multiple stat cards
+  - Props: `stats` (array of StatCard props), `columns` (1-3)
+  - Responsive grid with equal-width cards
+
+- [ ] **MiniStatCard** - Compact stat card
+  - Props: Same as StatCard but smaller size
+  - Visual: Smaller text, icon on left
+
+- [ ] **ProgressStatCard** - Stat card with embedded progress bar
+  - Props: Same as StatCard + `progress` (0-100)
+  - Visual: Stat + horizontal progress bar below
+
+**Heat Map Component:**
+- [ ] **ConsistencyHeatmap** - GitHub-style activity heat map
+  - Props: `data` (array of `{ date: string, level: 0-4 }`), `startDate`, `endDate`, `onDayPress`
+  - **Visual:** 7-row grid (days of week) with colored squares
+  - **Color scale (5 levels):**
+    - Level 0 (none): `heatMap.none` (dark[800])
+    - Level 1 (minimal): `heatMap.minimal` (emerald[900])
+    - Level 2 (low): `heatMap.low` (emerald[700])
+    - Level 3 (medium): `heatMap.medium` (emerald[500])
+    - Level 4 (high): `heatMap.high` (emerald[400])
+  - **Tap interaction:** Spring scale animation + shows day detail tooltip
+  - **Scroll:** Horizontal scroll for viewing past months
+
+**Technical Notes:**
+- Progress components use Reanimated for smooth animations
+- Circular progress uses `react-native-svg` for arc rendering
+- Heat map uses `FlatList` with optimized rendering for large datasets
+- All components support theme color customization
+
+**Estimate:** 6 story points
+
+---
+
+#### US-DS-7: Weave-Specific Cards
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want** specialized cards for Needles, Binds, Captures, Insights, Success, and Timer
+**So that** I can display Weave-specific content with consistent styling
+
+**Acceptance Criteria:**
+
+**Weave-Specific Components (6 total):**
+
+- [ ] **NeedleCard** - Goal card with progress ring
+  - Props: `title`, `description`, `progress` (0-100), `bindsCount`, `consistencyPercentage`, `onPress`
+  - **Visual:**
+    - Circular progress ring around goal icon
+    - Title + description text
+    - Stats row: "X binds • Y% consistent"
+    - Tap to navigate to goal detail
+  - **Animation:** Progress ring animates on mount using `withSpring()`
+  - **Accessibility:** VoiceOver reads "Goal: {title}, {progress}% complete"
+
+- [ ] **BindCard** - Task card with checkbox animation
+  - Props: `title`, `goalName`, `isCompleted`, `streak`, `onComplete`, `onPress`
+  - **Visual:**
+    - Large checkbox on left (gamified with `BindCheckbox`)
+    - Title + goal name (small gray text)
+    - Streak indicator when `streak > 0` (flame icon + count)
+  - **Checkbox animation:**
+    ```typescript
+    // Spring scale + confetti burst on complete
+    const checkScale = useSharedValue(0.8)
+    const handleComplete = () => {
+      checkScale.value = withSequence(
+        withSpring(1.2, springs.bouncy),
+        withSpring(1, springs.gentle)
+      )
+      // Trigger confetti
+      confetti.show()
+    }
+    ```
+  - **Confetti:** Classy confetti burst (15-20 particles, violet/amber colors, 1s duration)
+
+- [ ] **CaptureCard** - Proof/memory card with image preview
+  - Props: `type` (`photo` | `note` | `voice` | `timer`), `thumbnailUrl`, `note`, `timestamp`, `bindTitle`, `onPress`
+  - **Visual:**
+    - Small thumbnail (if photo/video) or icon (if note/voice/timer)
+    - Note preview text (truncated to 2 lines)
+    - Timestamp + linked bind name
+  - **Animation:** Spring press animation on tap
+
+- [ ] **InsightCard** - AI insight card with gradient border
+  - Props: `type` (`affirming` | `blocker` | `triad`), `title`, `content`, `onEdit`, `onDismiss`
+  - **Visual:**
+    - Violet gradient border (uses `LinearGradient`)
+    - Icon based on type (✅ affirming, ⚠️ blocker, ✨ triad)
+    - Title + content text
+    - Action buttons: Edit, Dismiss
+  - **Animation:** Fade + slide in from bottom on mount
+
+- [ ] **SuccessCard** - Celebration card with confetti
+  - Props: `title`, `message`, `imageUrl`, `confettiEnabled`, `onClose`
+  - **Visual:**
+    - Large celebration icon or image
+    - Title + message text
+    - Confetti animation (if enabled)
+  - **Confetti:** More particles than BindCard (40-50), rainbow colors, 2s duration
+
+- [ ] **Timer** - Pomodoro-style countdown timer
+  - Props: `duration` (seconds), `onComplete`, `onPause`, `onResume`
+  - **Visual:**
+    - Large circular progress ring (counts down)
+    - Time remaining in center (MM:SS format)
+    - Play/pause button below
+    - Haptic feedback every minute
+  - **Animation:** Smooth countdown using Reanimated
+    ```typescript
+    const timeRemaining = useSharedValue(duration)
+    useEffect(() => {
+      const interval = setInterval(() => {
+        if (timeRemaining.value > 0) {
+          timeRemaining.value -= 1
+        } else {
+          clearInterval(interval)
+          onComplete()
+        }
+      }, 1000)
+    }, [])
+    ```
+  - **Completion:** Haptic burst + satisfying completion sound + visual animation
+
+**Technical Notes:**
+- All cards use spring animations for interactions
+- Confetti uses `react-native-confetti-cannon` library
+- Timer uses Reanimated for performance (60fps countdown)
+- InsightCard gradient uses `expo-linear-gradient`
+- All cards support dark mode with theme tokens
+
+**Estimate:** 8 story points (most complex components)
+
+---
+
+#### US-DS-8: Loading & Empty States
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want** skeleton loaders and empty state components
+**So that** I can show loading states and empty screens consistently
+
+**Acceptance Criteria:**
+
+**Skeleton Loader Components (8 total):**
+
+- [ ] **Skeleton** - Base rectangular skeleton with shimmer animation
+  - Props: `width`, `height`, `borderRadius`, `shimmerSpeed` (default 1500ms)
+  - **Shimmer animation:**
+    ```typescript
+    const shimmerX = useSharedValue(-screenWidth)
+    useEffect(() => {
+      shimmerX.value = withRepeat(
+        withTiming(screenWidth * 2, { duration: shimmerSpeed, easing: Easing.linear }),
+        -1, // Infinite
+        false
+      )
+    }, [])
+    ```
+  - Visual: Gray rectangle with moving shimmer gradient overlay
+
+- [ ] **SkeletonText** - Multiple text lines with varying widths
+  - Props: `lines` (number of lines), `gap` (spacing between lines)
+  - Visual: Stack of skeleton rectangles with different widths (mimics text lines)
+
+- [ ] **SkeletonAvatar** - Circular skeleton for avatars
+  - Props: `size` (`xs` | `sm` | `md` | `lg` | `xl`)
+  - Visual: Circular skeleton with shimmer
+
+- [ ] **SkeletonCard** - Card-shaped skeleton
+  - Props: `height`, `padding`
+  - Visual: Rounded rectangle skeleton (mimics Card component)
+
+- [ ] **SkeletonListItem** - List item skeleton (avatar + 2 text lines)
+  - Visual: Small circular skeleton (avatar) + 2 text line skeletons on right
+
+- [ ] **SkeletonBindCard** - Skeleton matching BindCard layout
+  - Visual: Circular skeleton (checkbox) + 2 text line skeletons on right
+
+- [ ] **SkeletonStatCard** - Skeleton matching StatCard layout
+  - Visual: Small text skeleton (label) + large text skeleton (value)
+
+- [ ] **SkeletonProgressCard** - Skeleton matching ProgressStatCard layout
+  - Visual: Stat skeleton + progress bar skeleton below
+
+**Empty State Components (10 total):**
+
+- [ ] **EmptyState** - Generic empty state with icon, message, and CTA
+  - Props: `icon`, `title`, `message`, `action` (button props), `illustration` (optional Lottie animation)
+  - Visual: Large icon/illustration + title + message + action button
+  - Center-aligned, vertically centered on screen
+
+- [ ] **EmptyGoals** - Empty state for no goals
+  - Preset: icon = target, title = "No goals yet", message = "Create your first goal to get started", action = "Create Goal"
+
+- [ ] **EmptyBinds** - Empty state for no binds today
+  - Preset: icon = checkbox, title = "No tasks for today", message = "Add binds to your goals to see them here", action = "Add Bind"
+
+- [ ] **EmptyCaptures** - Empty state for no captures
+  - Preset: icon = camera, title = "No memories yet", message = "Document your wins and progress", action = "Quick Capture"
+
+- [ ] **EmptyJournal** - Empty state for no journal entries
+  - Preset: icon = book, title = "Your journey starts today", message = "Complete your first reflection to track progress", action = "Start Reflection"
+
+- [ ] **EmptySearch** - Empty state for no search results
+  - Preset: icon = search, title = "No results found", message = "Try different keywords or filters", action = null
+
+- [ ] **EmptyNotifications** - Empty state for no notifications
+  - Preset: icon = bell, title = "All caught up!", message = "No new notifications", action = null
+
+- [ ] **ErrorState** - Generic error state
+  - Props: `title`, `message`, `onRetry`
+  - Preset: icon = alert-circle, title = "Something went wrong", action = "Try Again"
+
+- [ ] **NoConnectionState** - Offline/no connection error
+  - Preset: icon = wifi-off, title = "No internet connection", message = "Check your connection and try again", action = "Retry"
+
+- [ ] **ComingSoonState** - Feature not yet available
+  - Preset: icon = construction, title = "Coming soon", message = "We're working on this feature", action = null
+
+**Technical Notes:**
+- All skeleton components use the same shimmer animation for consistency
+- Shimmer gradient: `linear-gradient(90deg, transparent, rgba(white, 0.1), transparent)`
+- Empty states support optional Lottie animations for visual interest
+- Error states include retry functionality with automatic retry after timeout
+
+**Estimate:** 4 story points
+
+---
+
+#### US-DS-9: Testing & Storybook
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want** comprehensive testing and Storybook documentation
+**So that** I can ensure component quality and visual consistency
+
+**Acceptance Criteria:**
+
+**Storybook Setup:**
+- [ ] Storybook v7 installed and configured for React Native
+- [ ] All 62 components have Storybook stories
+- [ ] Each story demonstrates:
+  - Default state
+  - All variants
+  - Interactive controls (Storybook args)
+  - Props documentation
+  - Usage examples
+- [ ] Dark mode toggle in Storybook toolbar
+- [ ] Responsive viewport presets (iPhone SE, iPhone 14, iPhone 14 Pro Max)
+
+**Unit Testing (75% coverage enforced):**
+- [ ] Jest + React Native Testing Library configured
+- [ ] All 62 components have unit tests covering:
+  - Rendering without errors
+  - Props validation
+  - User interactions (press, type, etc.)
+  - Accessibility (VoiceOver labels, roles)
+  - Edge cases (missing props, empty states)
+- [ ] Coverage report generated on every commit
+- [ ] CI fails if coverage drops below 75%
+
+**Visual Regression Testing:**
+- [ ] Chromatic integrated for visual regression
+- [ ] Snapshots captured for:
+  - All component variants
+  - Light + dark modes
+  - Different screen sizes
+- [ ] CI fails on visual regressions without approval
+
+**Performance Testing:**
+- [ ] Bundle size analysis with `@react-native-community/cli-plugin-metro`
+- [ ] Target: Design system bundle <150KB (gzipped)
+- [ ] CI warns if bundle size increases >10%
+
+**Render performance:**
+- [ ] All animations run at 60fps (verified with React DevTools Profiler)
+- [ ] No component takes >16ms to render (1 frame at 60fps)
+
+**Accessibility Testing:**
+- [ ] All interactive components have accessibility labels
+- [ ] Screen reader navigation tested with VoiceOver (iOS)
+- [ ] Color contrast meets WCAG 2.1 AA standards (4.5:1 for normal text, 3:1 for large text)
+- [ ] Reduced motion setting respected (animations disabled when enabled)
+
+**CI/CD Quality Gates:**
+- [ ] Linting: ESLint + Prettier (100% compliance)
+- [ ] Tests: 75% coverage minimum
+- [ ] Type safety: TypeScript strict mode (0 errors)
+- [ ] Bundle size: <150KB gzipped
+- [ ] Visual regression: No unapproved changes
+
+**Documentation:**
+- [ ] README.md with:
+  - Installation instructions
+  - Quick start guide
+  - Component API reference
+  - Theme customization guide
+  - Animation guidelines
+- [ ] CONTRIBUTING.md with:
+  - Code style guide
+  - Component development workflow
+  - Testing requirements
+  - PR checklist
+
+**Technical Notes:**
+- Use `@storybook/react-native` for native Storybook support
+- Chromatic requires GitHub Actions integration
+- Bundle size tracked with `size-limit` package
+- Accessibility audit using `@react-native-community/eslint-plugin`
+
+**Estimate:** 6 story points
+
+---
+
+### Epic DS Summary
+
+| ID | Story | Priority | Estimate |
+|----|-------|----------|----------|
+| US-DS-1 | Foundation (Tokens + Theme + Animations) | M | 5 pts |
+| US-DS-2 | Core Primitives (Text, Buttons, Icons) | M | 6 pts |
+| US-DS-3 | Form Components | M | 7 pts |
+| US-DS-4 | Layout & Cards | M | 6 pts |
+| US-DS-5 | Feedback & Overlays | M | 5 pts |
+| US-DS-6 | Data Visualization & Progress | M | 6 pts |
+| US-DS-7 | Weave-Specific Cards | M | 8 pts |
+| US-DS-8 | Loading & Empty States | M | 4 pts |
+| US-DS-9 | Testing & Storybook | M | 6 pts |
+
+**Epic Total:** 53 story points
+
+**Components Delivered:** 62 total
+- Text (11): Text, AnimatedText, Heading, Title, Subtitle, Body, BodySmall, Caption, Label, Link, Mono
+- Buttons (7): Button, PrimaryButton, SecondaryButton, GhostButton, DestructiveButton, AIButton, IconButton
+- Forms (5): Input, TextArea, SearchInput, Checkbox, BindCheckbox
+- Cards (4): Card, GlassCard, ElevatedCard, AICard
+- Navigation (3): BottomTabBar, HeaderBar, BackButton
+- Badges (6): Badge, CountBadge, StatusDot, StreakBadge, AIBadge, ConsistencyBadge
+- Avatars (3): Avatar, AvatarGroup, AvatarWithName
+- Overlays (3): Modal, Toast, BottomSheet
+- Progress (2): ProgressBar, CircularProgress
+- Stats (4): StatCard, StatCardGrid, MiniStatCard, ProgressStatCard
+- Heatmap (1): ConsistencyHeatmap
+- Weave Cards (6): NeedleCard, BindCard, CaptureCard, InsightCard, SuccessCard, Timer
+- Skeletons (8): Skeleton, SkeletonText, SkeletonAvatar, SkeletonCard, SkeletonListItem, SkeletonBindCard, SkeletonStatCard, SkeletonProgressCard
+- Empty States (10): EmptyState, EmptyGoals, EmptyBinds, EmptyCaptures, EmptyJournal, EmptySearch, EmptyNotifications, ErrorState, NoConnectionState, ComingSoonState
+
+**Design Tokens:** 220+ tokens (colors, typography, spacing, effects, borders, animations)
+
+**Migration Strategy:**
+- Feature flags for gradual component rollout
+- Adapter layer for old → new component migration
+- Storybook as living documentation for developers
+- Component deprecation warnings in console (dev mode only)
+
+---
+
 ## Functional Requirements Summary
 
 ### Total Story Points by Epic
@@ -2256,7 +3099,8 @@ Users manage their account settings, identity document, and app preferences.
 | E6 | AI Coaching | 13 | 11 | 5 | 29 |
 | E7 | Notifications | 23 | 5 | 0 | 28 |
 | E8 | Settings & Profile | 20 | 3 | 0 | 23 |
-| **Total** | | **213** | **67** | **10** | **298** |
+| **EDS** | **Design System Rebuild** | **53** | **0** | **0** | **53** |
+| **Total** | | **266** | **67** | **10** | **343** |
 
 **Note:** Epic 0 (Foundation) added - includes infrastructure, auth, RLS, CI/CD, and AI service abstraction (38 pts). Epic 1 updated with optimized hybrid flow (+13 pts) that distributes personalization across Days 1-3 for higher activation. Epics 3, 4 also updated based on implementation complexity assessment and story splitting for clarity.
 

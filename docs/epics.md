@@ -722,21 +722,71 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
+### Epic DS: Design System Rebuild (53 pts)
+**User Outcome:** Complete rebuild of the Weavelight Design System with 62 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
+
+**FRs Covered:** FR-DS-1, FR-DS-2, FR-DS-3, FR-DS-4, FR-DS-5, FR-DS-6, FR-DS-7, FR-DS-8, FR-DS-9
+
+**Why This Order:** Design system foundation enables consistent, rapid UI development across all other epics. Must be completed early (ideally before or alongside Epic 1) to prevent design debt and component inconsistencies.
+
+**Context:** The existing design system is "vibe-coded," buggy, and inconsistent. This epic rebuilds it from scratch with 220+ design tokens, Tamagui-inspired composable anatomy, spring physics animations, and 75% test coverage.
+
+**Stories:**
+
+- **Story DS-1: Foundation (Tokens + Theme + Animations)** (5 pts) - FR-DS-1: Deliver 220+ design tokens (60+ colors, 45+ typography, 25+ spacing, 35+ effects, 20+ borders, 35+ animations). ThemeProvider with runtime dark/light switching. Tamagui-inspired theme builder with nested themes and color-matched shadows. Animation library with spring presets (gentle, snappy, bouncy) using Reanimated. Accessibility support for reduced motion.
+  - **AC:** All tokens exported and typed. Theme switches without reload. Spring animations run at 60fps.
+  - **DoD:** Token documentation in Storybook. Theme hooks tested. Animation presets validated on device.
+
+- **Story DS-2: Core Primitives (Text, Buttons, Icons)** (6 pts) - FR-DS-2: Build 11 text components (Text, AnimatedText, Heading, Title, Subtitle, Body, BodySmall, Caption, Label, Link, Mono) with variant system. 7 button components (Button, PrimaryButton, SecondaryButton, GhostButton, DestructiveButton, AIButton, IconButton) with composable anatomy (`Button.Icon`, `Button.Text`, `Button.Spinner`). Icon wrapper for 100+ Lucide icons with theme colors. Spring press animations. Color-matched shadows (violet button → violet glow).
+  - **AC:** All 19 components (11 text + 7 buttons + 1 icon) render correctly. Composable anatomy works. Press animations smooth.
+  - **DoD:** Storybook stories for all variants. Unit tests for interactions. VoiceOver labels work.
+
+- **Story DS-3: Form Components** (7 pts) - FR-DS-3: Build 5 form components: Input with floating label animation, TextArea with auto-expanding height, SearchInput with debouncing, Checkbox with checkmark animation, BindCheckbox with streak indicator + confetti. Composable anatomy for Input (`Input.Label`, `Input.Field`, `Input.Error`, `Input.Helper`). Support for error, focused, and disabled states.
+  - **AC:** All 5 components functional. Floating labels animate smoothly. Error states styled correctly. Confetti triggers on BindCheckbox.
+  - **DoD:** Form validation examples. Accessibility labels. Reduced motion support.
+
+- **Story DS-4: Layout & Cards** (6 pts) - FR-DS-4: Build 16 components: 4 cards (Card, GlassCard, ElevatedCard, AICard) with composable anatomy (`Card.Header`, `Card.Content`, `Card.Footer`). 3 navigation components (BottomTabBar, HeaderBar, BackButton). 6 badges (Badge, CountBadge, StatusDot, StreakBadge, AIBadge, ConsistencyBadge). 3 avatars (Avatar, AvatarGroup, AvatarWithName) with initials fallback.
+  - **AC:** All 16 components render. Glass card has blur effect. Navigation integrates with React Navigation. Avatars show initials when no image.
+  - **DoD:** Theme nesting works. Badge semantic colors correct. Avatar status dots positioned correctly.
+
+- **Story DS-5: Feedback & Overlays** (5 pts) - FR-DS-5: Build 3 overlay components: Modal with backdrop + slide-up animation, Toast with auto-dismiss + stacking, BottomSheet with gesture-driven swipe + snap points. All use React Native Gesture Handler + Reanimated for smooth interactions. Overlays render in Portal to avoid z-index issues.
+  - **AC:** Modal dismissable by backdrop tap or swipe. Toast auto-dismisses. BottomSheet snaps to defined heights. Gestures feel natural.
+  - **DoD:** Accessibility focus trap in Modal. Toast queue (max 3 visible). BottomSheet tested on various screen sizes.
+
+- **Story DS-6: Data Visualization & Progress** (6 pts) - FR-DS-6: Build 7 data viz components: 2 progress (ProgressBar with gradient fill, CircularProgress with animated arc). 4 stat cards (StatCard, StatCardGrid, MiniStatCard, ProgressStatCard) with trend indicators. 1 heat map (ConsistencyHeatmap) with GitHub-style 5-level color scale, tap interaction, horizontal scroll.
+  - **AC:** Progress animations smooth. Stat cards show trend arrows (up/down/neutral). Heat map displays 7-row grid. Tap shows tooltip.
+  - **DoD:** Heat map optimized for 365+ days. Circular progress uses SVG. Stat card grid responsive.
+
+- **Story DS-7: Weave-Specific Cards** (8 pts) - FR-DS-7: Build 6 Weave-specific components: NeedleCard (goal + progress ring), BindCard (task + checkbox + streak + confetti), CaptureCard (proof + thumbnail), InsightCard (AI insight + gradient border), SuccessCard (celebration + confetti), Timer (Pomodoro countdown). Most complex story with animations, confetti, haptics.
+  - **AC:** NeedleCard progress ring animates. BindCard checkbox triggers confetti (15-20 particles). InsightCard has violet gradient border. Timer counts down smoothly with haptic feedback every minute.
+  - **DoD:** Confetti classy (not overwhelming). Timer completion includes sound. All cards support dark mode.
+
+- **Story DS-8: Loading & Empty States** (4 pts) - FR-DS-8: Build 18 components: 8 skeletons (Skeleton, SkeletonText, SkeletonAvatar, SkeletonCard, SkeletonListItem, SkeletonBindCard, SkeletonStatCard, SkeletonProgressCard) with shimmer animation. 10 empty states (EmptyState, EmptyGoals, EmptyBinds, EmptyCaptures, EmptyJournal, EmptySearch, EmptyNotifications, ErrorState, NoConnectionState, ComingSoonState).
+  - **AC:** All skeletons use same shimmer animation. Empty states have icons + messages + optional CTAs. Error states include retry functionality.
+  - **DoD:** Shimmer runs smoothly. Empty states support Lottie animations. Presets configured for all Weave screens.
+
+- **Story DS-9: Testing & Storybook** (6 pts) - FR-DS-9: Set up Storybook v7 for all 62 components. Write unit tests achieving 75% coverage (enforced in CI). Integrate Chromatic for visual regression testing. Bundle size analysis (<150KB target). Accessibility audit (WCAG 2.1 AA). CI/CD quality gates (linting, tests, type safety, bundle size, visual regression).
+  - **AC:** Storybook shows all components with interactive controls. Test coverage ≥75%. Chromatic integrated. CI fails on regressions.
+  - **DoD:** README + CONTRIBUTING docs. All components have accessibility labels. Bundle size tracked. Performance targets met (60fps, <16ms render).
+
+---
+
 ## Epic Summary Table
 
 | Epic | Name | Story Points | Priority FRs (M) | Dependencies | Phase |
 |------|------|--------------|------------------|--------------|-------|
 | 0 | Foundation | 38 | 7 | None (True Foundation) | `[MVP]` |
-| 1 | Onboarding & Identity | 35 | 8 | Epic 0 | `[MVP]` (core) + `[v1.2]` (full) |
-| 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1 | `[v1.2]` |
-| 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 2 | `[MVP]` (basic) + `[v1.1]` (enhanced) |
-| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 2, 3 | `[v1.1]` |
-| 5 | Progress Visualization | 39 | 3 | Epic 0, 1, 2, 3, 4 | `[v1.1]` (basic) + `[v1.2]` (advanced) |
-| 6 | AI Coaching | 29 | 2 | Epic 0, 1, 2, 3, 4 | `[MVP]` (basic chat) + `[v1.2]` (advanced) |
-| 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3 | `[v1.2]` |
-| 8 | Settings & Profile | 23 | 5 | Epic 0, 1 | `[v1.2]` |
+| DS | Design System Rebuild | 53 | 9 | Epic 0 (minimal) | `[MVP]` (foundation) + All phases |
+| 1 | Onboarding & Identity | 35 | 8 | Epic 0, DS (recommended) | `[MVP]` (core) + `[v1.2]` (full) |
+| 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1, DS | `[v1.2]` |
+| 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 2, DS | `[MVP]` (basic) + `[v1.1]` (enhanced) |
+| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 2, 3, DS | `[v1.1]` |
+| 5 | Progress Visualization | 39 | 3 | Epic 0, 1, 2, 3, 4, DS | `[v1.1]` (basic) + `[v1.2]` (advanced) |
+| 6 | AI Coaching | 29 | 2 | Epic 0, 1, 2, 3, 4, DS | `[MVP]` (basic chat) + `[v1.2]` (advanced) |
+| 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3, DS | `[v1.2]` |
+| 8 | Settings & Profile | 23 | 5 | Epic 0, 1, DS | `[v1.2]` |
 
-**Total:** 285 story points across 58 FRs
+**Total:** 338 story points across 67 FRs (58 original + 9 design system)
 
 **Phase Breakdown:**
 - **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~66 pts (Sprint 1)
