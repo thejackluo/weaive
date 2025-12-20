@@ -244,3 +244,154 @@ class BedrockProvider(AIProvider):
         output_cost = output_tokens * pricing['output']
 
         return input_cost + output_cost
+
+    def stream(
+        self,
+        prompt: str,
+        model: str = 'claude-3-5-haiku',
+        **kwargs
+    ):
+        """
+        Generate streaming completion using AWS Bedrock.
+
+        Yields chunks as they arrive from Bedrock's streaming API.
+
+        Args:
+            prompt: User input text
+            model: Model name (default: 'claude-3-5-haiku')
+            **kwargs: Additional parameters (max_tokens, temperature, system, etc.)
+
+        Yields:
+            Dict with:
+            - {'type': 'chunk', 'content': 'text'} - During generation
+            - {'type': 'done', 'input_tokens': N, 'output_tokens': M, 'cost_usd': X, 'model': 'model-name'} - Final metadata
+
+        Raises:
+            AIProviderError: If Bedrock API call fails
+        """
+        try:
+            # Map user-friendly model name to inference profile ID
+            model_id = self.model_id_map.get(model, model)
+
+            # Prepare request body for Bedrock Messages API
+            body = {
+                'anthropic_version': 'bedrock-2023-05-31',
+                'max_tokens': kwargs.get('max_tokens', 2000),
+                'messages': [
+                    {'role': 'user', 'content': prompt}
+                ],
+            }
+
+            # Add optional parameters
+            if 'temperature' in kwargs and kwargs['temperature'] is not None:
+                body['temperature'] = kwargs['temperature']
+            if 'top_p' in kwargs and kwargs['top_p'] is not None:
+                body['top_p'] = kwargs['top_p']
+
+            # Handle system parameter
+            if 'system' in kwargs and kwargs['system'] is not None:
+                system = kwargs['system']
+                if isinstance(system, str):
+                    body['system'] = system
+                elif isinstance(system, list) and len(system) > 0:
+                    body['system'] = system[0].get('text', '') if isinstance(system[0], dict) else str(system[0])
+
+            logger.info(f"Streaming from Bedrock model: {model} → {model_id}")
+
+            # Invoke model with streaming
+            response = self.client.invoke_model_with_response_stream(
+                modelId=model_id,
+                body=json.dumps(body),
+                contentType='application/json',
+                accept='application/json',
+            )
+
+            # Parse streaming response
+            full_content = []
+            input_tokens = 0
+            output_tokens = 0
+
+            # Process event stream
+            stream = response.get('body')
+            if stream:
+                for event in stream:
+                    chunk = event.get('chunk')
+                    if chunk:
+                        chunk_data = json.loads(chunk.get('bytes').decode())
+
+                        # Handle different event types
+                        event_type = chunk_data.get('type')
+
+                        if event_type == 'content_block_delta':
+                            # Text content chunk
+                            delta = chunk_data.get('delta', {})
+                            if delta.get('type') == 'text_delta':
+                                text = delta.get('text', '')
+                                if text:
+                                    full_content.append(text)
+                                    yield {'type': 'chunk', 'content': text}
+
+                        elif event_type == 'message_start':
+                            # Initial message with usage info
+                            usage = chunk_data.get('message', {}).get('usage', {})
+                            input_tokens = usage.get('input_tokens', 0)
+
+                        elif event_type == 'message_delta':
+                            # Final delta with output token count
+                            usage = chunk_data.get('usage', {})
+                            output_tokens = usage.get('output_tokens', 0)
+
+            # Calculate cost
+            cost_usd = self.estimate_cost(input_tokens, output_tokens, model)
+
+            logger.info(
+                f"Bedrock streaming success: {input_tokens} input + {output_tokens} output tokens, "
+                f"cost ${cost_usd:.6f}"
+            )
+
+            # Yield final metadata
+            yield {
+                'type': 'done',
+                'input_tokens': input_tokens,
+                'output_tokens': output_tokens,
+                'cost_usd': cost_usd,
+                'model': model,
+            }
+
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            error_message = e.response.get('Error', {}).get('Message', str(e))
+
+            logger.error(f"Bedrock streaming ClientError [{error_code}]: {error_message}")
+
+            # Determine if retryable
+            retryable = error_code in [
+                'ThrottlingException',
+                'ServiceUnavailable',
+                'InternalServerException'
+            ]
+
+            raise AIProviderError(
+                f"Bedrock streaming error [{error_code}]: {error_message}",
+                provider='bedrock',
+                retryable=retryable,
+                original_error=e
+            )
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Bedrock streaming JSON decode error: {e}")
+            raise AIProviderError(
+                f"Failed to parse Bedrock streaming response: {e}",
+                provider='bedrock',
+                retryable=True,
+                original_error=e
+            )
+
+        except Exception as e:
+            logger.error(f"Bedrock unexpected streaming error: {e}")
+            raise AIProviderError(
+                f"Unexpected Bedrock streaming error: {e}",
+                provider='bedrock',
+                retryable=True,
+                original_error=e
+            )
