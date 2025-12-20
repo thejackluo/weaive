@@ -2243,7 +2243,7 @@ Users manage their account settings, identity document, and app preferences.
 
 ## Epic DS: Design System Rebuild
 
-**User Outcome:** Complete rebuild of the Weavelight Design System with 62 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
+**User Outcome:** Complete rebuild of the Weavelight Design System with 70 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
 
 **Context:** The existing design system is "vibe-coded," buggy, and inconsistent. This epic rebuilds it from scratch with:
 - **220+ design tokens** (colors, typography, spacing, effects, animations)
@@ -2968,7 +2968,7 @@ Users manage their account settings, identity document, and app preferences.
 
 **Storybook Setup:**
 - [ ] Storybook v7 installed and configured for React Native
-- [ ] All 62 components have Storybook stories
+- [ ] All 70 components have Storybook stories
 - [ ] Each story demonstrates:
   - Default state
   - All variants
@@ -2980,7 +2980,7 @@ Users manage their account settings, identity document, and app preferences.
 
 **Unit Testing (75% coverage enforced):**
 - [ ] Jest + React Native Testing Library configured
-- [ ] All 62 components have unit tests covering:
+- [ ] All 70 components have unit tests covering:
   - Rendering without errors
   - Props validation
   - User interactions (press, type, etc.)
@@ -3042,6 +3042,243 @@ Users manage their account settings, identity document, and app preferences.
 
 ---
 
+#### US-DS-10: Additional Form & Layout Components
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want** slider, radio, toggle, tabs, divider, and list item components
+**So that** I can implement all documented MVP features requiring these form primitives
+
+**Context:** Research on Tamagui and UI Kitten revealed 6 critical missing components that block 11+ documented MVP features (FR-1.13, FR-1.14, FR-2.6, FR-4.1, FR-7.6, FR-8.2, FR-8.3). Both reference libraries include these as standard form primitives. Adding these components ensures the design system is complete and prevents technical debt.
+
+**Acceptance Criteria:**
+
+**Slider Component:**
+- [ ] **Slider** - Horizontal slider with gesture control
+  - Props: `value` (number), `onChange`, `min`, `max`, `step`, `disabled`, `showValue`, `marks` (optional tick marks)
+  - **Gesture animation:**
+    ```typescript
+    const thumbX = useSharedValue(0)
+    const panGesture = Gesture.Pan()
+      .onUpdate((e) => {
+        const newX = Math.max(0, Math.min(trackWidth, thumbX.value + e.translationX))
+        thumbX.value = newX
+        const newValue = (newX / trackWidth) * (max - min) + min
+        runOnJS(onChange)(Math.round(newValue / step) * step)
+      })
+      .onEnd(() => {
+        // Snap to nearest step with spring
+        const snappedX = calculateSnappedPosition(thumbX.value)
+        thumbX.value = withSpring(snappedX, springs.snappy)
+      })
+    ```
+  - **Visual:**
+    - Track: Gray bar with active portion (violet)
+    - Thumb: Circular draggable handle with shadow
+    - Marks: Optional tick marks at intervals
+    - Value label: Shows current value when `showValue={true}`
+  - **Haptic feedback:** Light haptic on snap-to-step
+  - **Accessibility:** VoiceOver announces value changes, supports increment/decrement gestures
+  - **Use cases:**
+    - FR-4.1: Fulfillment score slider (1-10) in Daily Reflection
+    - FR-7.6: Nudging intensity slider (1-10) in Notification Preferences
+    - FR-8.2: Coaching preference slider (gentle ↔ strict) in Identity Document
+
+**Radio Components (2 total):**
+- [ ] **Radio** - Single radio button
+  - Props: `selected`, `onChange`, `value`, `disabled`, `label`, `size` (`sm` | `md` | `lg`)
+  - **Visual:**
+    - Outer circle: Border in theme color
+    - Inner dot: Filled circle when selected
+    - Label: Right-aligned text
+  - **Animation:** Inner dot scales in with spring on selection
+    ```typescript
+    const dotScale = useSharedValue(selected ? 1 : 0)
+    useEffect(() => {
+      dotScale.value = withSpring(selected ? 1 : 0, springs.bouncy)
+    }, [selected])
+    ```
+
+- [ ] **RadioGroup** - Group of radio buttons (Radix-inspired pattern)
+  - Props: `options` (array of `{ value, label, description? }`), `value`, `onChange`, `orientation` (`vertical` | `horizontal`), `disabled`
+  - **Composable anatomy:**
+    ```typescript
+    <RadioGroup value={mode} onChange={setMode}>
+      <RadioGroup.Item value="normal">
+        <RadioGroup.Radio />
+        <RadioGroup.Label>Normal</RadioGroup.Label>
+        <RadioGroup.Description>Changes require justification</RadioGroup.Description>
+      </RadioGroup.Item>
+    </RadioGroup>
+    ```
+  - **Visual:** Stack of radio options with proper spacing
+  - **Keyboard support:** Arrow keys navigate options, Enter/Space to select
+  - **Use cases:**
+    - FR-1.13: Archetype micro-assessment (Day 2) - select from 4-6 archetypes
+    - FR-1.14: Motivation drivers selection - select 2-3 from list
+    - FR-2.6: Needle change strictness modes (Normal/Strict/None)
+
+**Toggle Component:**
+- [ ] **Toggle / Switch** - Binary on/off switch
+  - Props: `value` (boolean), `onChange`, `disabled`, `size` (`sm` | `md` | `lg`), `label`, `description`
+  - **Visual:**
+    - Track: Rounded rectangle, changes color when on (violet) vs off (gray)
+    - Thumb: Circular handle that slides left/right
+    - Label + description: Optional text on right
+  - **Animation:** Thumb slides with spring physics
+    ```typescript
+    const thumbX = useSharedValue(value ? trackWidth - thumbSize : 0)
+    const trackColor = useSharedValue(value ? colors.accent[500] : colors.dark[700])
+    useEffect(() => {
+      thumbX.value = withSpring(value ? trackWidth - thumbSize : 0, springs.snappy)
+      trackColor.value = withTiming(value ? colors.accent[500] : colors.dark[700], { duration: 200 })
+    }, [value])
+    ```
+  - **Haptic feedback:** Medium haptic on toggle
+  - **Accessibility:** VoiceOver announces "on" or "off" state
+  - **Use cases:**
+    - FR-7.6: Per-notification toggles (Morning intention on/off, Bind reminders on/off, etc.)
+    - FR-8.3: Settings toggles (Quiet hours enabled, Data export enabled, etc.)
+
+**Tabs Component:**
+- [ ] **Tabs** - Tabbed navigation with animated indicator
+  - **Composable anatomy (Radix pattern):**
+    ```typescript
+    <Tabs value={activeTab} onChange={setActiveTab}>
+      <Tabs.List>
+        <Tabs.Trigger value="general">General</Tabs.Trigger>
+        <Tabs.Trigger value="identity">Identity</Tabs.Trigger>
+        <Tabs.Trigger value="subscription">Subscription</Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Content value="general">
+        {/* General settings content */}
+      </Tabs.Content>
+      <Tabs.Content value="identity">
+        {/* Identity settings content */}
+      </Tabs.Content>
+    </Tabs>
+    ```
+  - Props: `value`, `onChange`, `variant` (`default` | `pills` | `underline`), `size` (`sm` | `md` | `lg`)
+  - **Visual:**
+    - Tab list: Horizontal row of tab triggers
+    - Active indicator: Animated underline or pill background
+    - Active tab: Violet accent color
+    - Inactive tabs: Gray color
+  - **Indicator animation:**
+    ```typescript
+    const indicatorX = useSharedValue(0)
+    const indicatorWidth = useSharedValue(0)
+    useEffect(() => {
+      const activeTabLayout = tabLayouts[activeTab]
+      indicatorX.value = withSpring(activeTabLayout.x, springs.snappy)
+      indicatorWidth.value = withSpring(activeTabLayout.width, springs.snappy)
+    }, [activeTab])
+    ```
+  - **Swipe gestures:** Support swipe left/right to change tabs
+  - **Keyboard navigation:** Tab key to focus, arrow keys to navigate, Enter/Space to select
+  - **Use cases:**
+    - FR-8.3: Settings sections (General / Identity / Subscription tabs)
+    - FR-4.5: Journal history filters (7 days / 30 days / 90 days tabs)
+    - FR-5.2: Heat map filters (Overall / By Needle / By Bind Type tabs)
+
+**Divider Component:**
+- [ ] **Divider / Separator** - Visual separator line
+  - Props: `orientation` (`horizontal` | `vertical`), `thickness` (`thin` | `regular` | `thick`), `color`, `spacing` (margin around divider)
+  - **Visual:**
+    - Horizontal: Full-width line with top/bottom margin
+    - Vertical: Height-adjusted line with left/right margin
+    - Color: Uses `border.primary` or custom theme color
+  - **Variants:**
+    - Default: `border.primary` color (subtle gray)
+    - Emphasized: Thicker line or accent color
+  - **Use cases:**
+    - Universal: Visual separation in Settings sections
+    - Needles list: Separate each goal card
+    - Journal entries: Separate each day's entry
+
+**ListItem Component:**
+- [ ] **ListItem** - Structured list item with composable anatomy
+  - **Composable anatomy:**
+    ```typescript
+    <ListItem onPress={handlePress}>
+      <ListItem.Icon name="calendar" />
+      <ListItem.Content>
+        <ListItem.Title>December 16, 2025</ListItem.Title>
+        <ListItem.Subtitle>Fulfillment: 8/10 • 3 binds completed</ListItem.Subtitle>
+      </ListItem.Content>
+      <ListItem.Trailing>
+        <ListItem.Icon name="chevron-right" />
+      </ListItem.Trailing>
+    </ListItem>
+    ```
+  - Props: `onPress`, `disabled`, `variant` (`default` | `card` | `flush`), `divider` (show bottom divider)
+  - **Visual:**
+    - Leading: Optional icon or avatar (left-aligned)
+    - Content: Title + subtitle text (center, flex-grow)
+    - Trailing: Optional icon, badge, or value (right-aligned)
+    - Background: Transparent (default), card (elevated), flush (no padding)
+  - **Press animation:** Spring scale + background color change
+    ```typescript
+    const scale = useSharedValue(1)
+    const bgOpacity = useSharedValue(0)
+    const handlePressIn = () => {
+      scale.value = withSpring(0.98, springs.snappy)
+      bgOpacity.value = withTiming(0.05, { duration: 100 })
+    }
+    const handlePressOut = () => {
+      scale.value = withSpring(1, springs.snappy)
+      bgOpacity.value = withTiming(0, { duration: 200 })
+    }
+    ```
+  - **Accessibility:** Entire item is one tappable region with combined VoiceOver label
+  - **Use cases:**
+    - FR-4.5: Journal History entries (date + fulfillment preview + chevron)
+    - FR-8.1: Settings menu items (label + current value + chevron)
+    - Universal: Any structured list (Needles, Binds, Notifications)
+
+**Select Component (Dropdown):**
+- [ ] **Select** - Dropdown selection with bottom sheet picker
+  - Props: `options` (array of `{ value, label }`), `value`, `onChange`, `placeholder`, `disabled`, `searchable`
+  - **Visual (Closed state):**
+    - Looks like Input component with down chevron on right
+    - Shows selected label or placeholder
+  - **Visual (Open state):**
+    - Opens BottomSheet with list of options
+    - Each option is a ListItem with checkmark when selected
+    - Searchable: Shows SearchInput at top of sheet
+  - **Animation:**
+    - Chevron rotates 180° when opening
+    - BottomSheet slides up with spring physics
+  - **Keyboard support:** Arrow keys to navigate, Enter to select, Escape to close
+  - **Use cases:**
+    - FR-8.3: Timezone selection (dropdown of timezones)
+    - FR-5.2: Heat map filters (dropdown of Needles or Bind types)
+    - FR-1.15: User type selection (Student / Professional / etc.)
+
+**Technical Notes:**
+- All components use React Native Gesture Handler for smooth interactions
+- Reanimated for 60fps animations
+- Slider and Toggle use spring physics for natural feel
+- Tabs indicator animates smoothly when switching
+- ListItem supports both touch and keyboard interactions
+- All components support theme customization via tokens
+- All components respect reduced motion settings
+
+**Cross-References to Blocked FRs:**
+- **Slider:** FR-4.1 (fulfillment slider), FR-7.6 (nudging intensity), FR-8.2 (coaching preference)
+- **Radio:** FR-1.13 (archetype selection), FR-1.14 (motivations), FR-2.6 (strictness modes)
+- **Toggle:** FR-7.6 (notification toggles), FR-8.3 (settings toggles)
+- **Tabs:** FR-8.3 (settings sections), FR-4.5 (journal filters), FR-5.2 (heat map filters)
+- **Divider:** Universal separator for all list/section layouts
+- **ListItem:** FR-4.5 (journal entries), FR-8.1 (settings menu)
+
+**Estimate:** 21 story points
+
+**Components Delivered:** 7 total (Slider, Radio, RadioGroup, Toggle, Tabs, Divider, ListItem, Select)
+
+---
+
 ### Epic DS Summary
 
 | ID | Story | Priority | Estimate |
@@ -3055,13 +3292,14 @@ Users manage their account settings, identity document, and app preferences.
 | US-DS-7 | Weave-Specific Cards | M | 8 pts |
 | US-DS-8 | Loading & Empty States | M | 4 pts |
 | US-DS-9 | Testing & Storybook | M | 6 pts |
+| US-DS-10 | Additional Form & Layout Components | M | 21 pts |
 
-**Epic Total:** 53 story points
+**Epic Total:** 74 story points
 
-**Components Delivered:** 62 total
+**Components Delivered:** 70 total
 - Text (11): Text, AnimatedText, Heading, Title, Subtitle, Body, BodySmall, Caption, Label, Link, Mono
 - Buttons (7): Button, PrimaryButton, SecondaryButton, GhostButton, DestructiveButton, AIButton, IconButton
-- Forms (5): Input, TextArea, SearchInput, Checkbox, BindCheckbox
+- Forms (10): Input, TextArea, SearchInput, Checkbox, BindCheckbox, Slider, Radio, RadioGroup, Toggle, Select
 - Cards (4): Card, GlassCard, ElevatedCard, AICard
 - Navigation (3): BottomTabBar, HeaderBar, BackButton
 - Badges (6): Badge, CountBadge, StatusDot, StreakBadge, AIBadge, ConsistencyBadge
@@ -3073,6 +3311,7 @@ Users manage their account settings, identity document, and app preferences.
 - Weave Cards (6): NeedleCard, BindCard, CaptureCard, InsightCard, SuccessCard, Timer
 - Skeletons (8): Skeleton, SkeletonText, SkeletonAvatar, SkeletonCard, SkeletonListItem, SkeletonBindCard, SkeletonStatCard, SkeletonProgressCard
 - Empty States (10): EmptyState, EmptyGoals, EmptyBinds, EmptyCaptures, EmptyJournal, EmptySearch, EmptyNotifications, ErrorState, NoConnectionState, ComingSoonState
+- Layout (3): Tabs, Divider, ListItem
 
 **Design Tokens:** 220+ tokens (colors, typography, spacing, effects, borders, animations)
 
@@ -3099,8 +3338,8 @@ Users manage their account settings, identity document, and app preferences.
 | E6 | AI Coaching | 13 | 11 | 5 | 29 |
 | E7 | Notifications | 23 | 5 | 0 | 28 |
 | E8 | Settings & Profile | 20 | 3 | 0 | 23 |
-| **EDS** | **Design System Rebuild** | **53** | **0** | **0** | **53** |
-| **Total** | | **266** | **67** | **10** | **343** |
+| **EDS** | **Design System Rebuild** | **74** | **0** | **0** | **74** |
+| **Total** | | **287** | **67** | **10** | **364** |
 
 **Note:** Epic 0 (Foundation) added - includes infrastructure, auth, RLS, CI/CD, and AI service abstraction (38 pts). Epic 1 updated with optimized hybrid flow (+13 pts) that distributes personalization across Days 1-3 for higher activation. Epics 3, 4 also updated based on implementation complexity assessment and story splitting for clarity.
 
