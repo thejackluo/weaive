@@ -71,21 +71,79 @@ def create_test_subtask(goal_id: str = "test-goal-456", **kwargs: Any) -> Dict[s
 
 
 def create_test_journal_entry(user_id: str = "test-user-123", **kwargs: Any) -> Dict[str, Any]:
-    """Create a test journal entry fixture.
+    """Create a test journal entry fixture (Story 4.1 schema).
 
     Args:
         user_id: User ID who owns this journal entry
         **kwargs: Override default values
 
     Returns:
-        Dict with journal entry data
+        Dict with journal entry data following Story 4.1 schema
     """
     defaults = {
         "id": "test-journal-101",
         "user_id": user_id,
-        "content": "Today was productive. Completed 3 tasks.",
-        "fulfillment_score": 8,
         "local_date": datetime.now(timezone.utc).date().isoformat(),
+        "fulfillment_score": 8,
+        "default_responses": {
+            "today_reflection": "Today was productive. Completed 3 tasks and made progress on my goals.",
+            "tomorrow_focus": "Tomorrow I will focus on finishing the presentation."
+        },
+        "custom_responses": {},
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    return {**defaults, **kwargs}
+
+
+def create_test_journal_entry_with_custom_questions(
+    user_id: str = "test-user-123", **kwargs: Any
+) -> Dict[str, Any]:
+    """Create a test journal entry with custom question responses.
+
+    Args:
+        user_id: User ID who owns this journal entry
+        **kwargs: Override default values
+
+    Returns:
+        Dict with journal entry data including custom responses
+    """
+    defaults = {
+        "id": "test-journal-102",
+        "user_id": user_id,
+        "local_date": datetime.now(timezone.utc).date().isoformat(),
+        "fulfillment_score": 7,
+        "default_responses": {
+            "today_reflection": "Great day overall!",
+            "tomorrow_focus": "Continue the momentum."
+        },
+        "custom_responses": {
+            "uuid-diet": {
+                "question_text": "Did I stick to my diet?",
+                "response": "Yes"
+            },
+            "uuid-energy": {
+                "question_text": "Rate my energy level (1-10)",
+                "response": 9
+            }
+        },
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    return {**defaults, **kwargs}
+
+
+def create_custom_reflection_question(**kwargs: Any) -> Dict[str, Any]:
+    """Create a custom reflection question definition.
+
+    Args:
+        **kwargs: Override default values
+
+    Returns:
+        Dict with custom question definition
+    """
+    defaults = {
+        "id": "uuid-123",
+        "question": "Did I exercise today?",
+        "type": "yes_no",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     return {**defaults, **kwargs}
