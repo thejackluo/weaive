@@ -385,7 +385,9 @@ export default function IdentityBootupScreen() {
       } catch (backendError) {
         // Log but don't block the flow - backend integration is optional for now
         console.warn('[Onboarding] Failed to store identity bootup data:', backendError);
-        console.log('[Onboarding] Continuing with local storage only (backend integration deferred)');
+        console.log(
+          '[Onboarding] Continuing with local storage only (backend integration deferred)'
+        );
       }
 
       // Save onboarding data to AsyncStorage for Story 1.7

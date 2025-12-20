@@ -971,9 +971,7 @@ export default function OriginStoryScreen() {
           accessibilityLabel="Continue"
           accessibilityRole="button"
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
-            Continue
-          </Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
