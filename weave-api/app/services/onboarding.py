@@ -1,6 +1,7 @@
-"""Onboarding service for storing user onboarding data (Stories 1.2, 1.3)"""
+"""Onboarding service for storing user onboarding data (Stories 1.2, 1.3, 1.6)"""
 
 import logging
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -79,5 +80,108 @@ async def store_painpoint_selection(
     except Exception as e:
         logger.error(
             f"❌ Failed to store painpoint selection: {str(e)}"
+        )
+        raise
+
+
+async def store_identity_bootup(
+    supabase: Client,
+    auth_user_id: str,
+    preferred_name: str,
+    core_personality: str,
+    identity_traits: List[str],
+) -> dict:
+    """
+    Store identity bootup data for authenticated user (Story 1.6).
+
+    Updates user_profiles table with:
+    - preferred_name: User's chosen name/nickname
+    - core_personality: Selected Weave personality type
+    - personality_selected_at: Timestamp of selection
+    - identity_traits: Array of 3-5 selected traits
+
+    Args:
+        supabase: Supabase client instance
+        auth_user_id: Supabase auth user ID (from JWT)
+        preferred_name: User's preferred name (1-50 chars)
+        core_personality: Either "supportive_direct" or "tough_warm"
+        identity_traits: List of 3-5 selected traits
+
+    Returns:
+        dict: Updated user profile data with confirmation
+
+    Raises:
+        ValueError: If user profile not found or validation fails
+        Exception: If database operation fails
+    """
+    try:
+        # Get current timestamp
+        now = datetime.now(timezone.utc)
+
+        # DEBUG: Log the auth_user_id being used
+        logger.info(f"🔍 Looking up user_profile for auth_user_id: {auth_user_id}")
+
+        # First check if user profile exists
+        check_result = (
+            supabase.table("user_profiles")
+            .select("id, auth_user_id")
+            .eq("auth_user_id", auth_user_id)
+            .execute()
+        )
+
+        logger.info(f"🔍 User profile query result: {check_result.data}")
+
+        if not check_result.data or len(check_result.data) == 0:
+            logger.error(f"❌ No user_profile found for auth_user_id: {auth_user_id}")
+            raise ValueError(
+                f"User profile not found for auth_user_id: {auth_user_id}"
+            )
+
+        # Prepare update data
+        update_data = {
+            "preferred_name": preferred_name,
+            "core_personality": core_personality,
+            "personality_selected_at": now.isoformat(),
+            "identity_traits": identity_traits,
+            "updated_at": now.isoformat(),
+        }
+
+        # Update user_profiles table
+        result = (
+            supabase.table("user_profiles")
+            .update(update_data)
+            .eq("auth_user_id", auth_user_id)
+            .execute()
+        )
+
+        # Double-check update succeeded
+        if not result.data or len(result.data) == 0:
+            raise ValueError(
+                f"User profile update failed for auth_user_id: {auth_user_id}"
+            )
+
+        profile = result.data[0]
+
+        logger.info(
+            f"✅ Identity bootup data stored for user {auth_user_id}: "
+            f"name='{preferred_name}', personality='{core_personality}', "
+            f"traits={identity_traits}"
+        )
+
+        return {
+            "success": True,
+            "user_id": profile["id"],
+            "preferred_name": profile["preferred_name"],
+            "core_personality": profile["core_personality"],
+            "identity_traits": profile["identity_traits"],
+            "personality_selected_at": profile["personality_selected_at"],
+        }
+
+    except ValueError:
+        # Re-raise validation errors
+        raise
+    except Exception as e:
+        logger.error(
+            f"❌ Failed to store identity bootup data: {str(e)}"
         )
         raise
