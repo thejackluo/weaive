@@ -7,19 +7,18 @@ rate limiting, and budget enforcement.
 Run: uv run pytest tests/test_ai_service.py -v
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
-from datetime import datetime, timedelta
 
 from app.services.ai import (
-    AIService,
-    AIResponse,
     AIProviderError,
-    BedrockProvider,
-    OpenAIProvider,
+    AIService,
     AnthropicProvider,
-    DeterministicProvider,
+    BedrockProvider,
     CostTracker,
+    DeterministicProvider,
+    OpenAIProvider,
     RateLimiter,
     RateLimitError,
 )

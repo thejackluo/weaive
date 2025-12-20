@@ -26,6 +26,7 @@ Run specific provider tests:
 """
 
 import os
+
 import pytest
 from dotenv import load_dotenv
 
@@ -77,12 +78,12 @@ def test_openai_real_api():
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🤖 Model: {model}")
-    print(f"💰 Expected cost: ~$0.0001")
+    print("💰 Expected cost: ~$0.0001")
     print("\n⏳ Calling OpenAI API...")
 
     response = provider.complete(prompt, model=model, max_tokens=10)
 
-    print(f"\n✅ Response received!")
+    print("\n✅ Response received!")
     print(f"📄 Content: '{response.content}'")
     print(f"📊 Input tokens: {response.input_tokens}")
     print(f"📊 Output tokens: {response.output_tokens}")
@@ -97,8 +98,8 @@ def test_openai_real_api():
     assert response.cost_usd > 0
     assert response.cost_usd < 0.001  # Should be less than 1/10th of a cent
 
-    print(f"\n✅ All assertions passed!")
-    print(f"="*70)
+    print("\n✅ All assertions passed!")
+    print("="*70)
 
 
 @skip_anthropic
@@ -123,12 +124,12 @@ def test_anthropic_real_api():
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🤖 Model: {model}")
-    print(f"💰 Expected cost: ~$0.0001")
+    print("💰 Expected cost: ~$0.0001")
     print("\n⏳ Calling Anthropic API...")
 
     response = provider.complete(prompt, model=model, max_tokens=10)
 
-    print(f"\n✅ Response received!")
+    print("\n✅ Response received!")
     print(f"📄 Content: '{response.content}'")
     print(f"📊 Input tokens: {response.input_tokens}")
     print(f"📊 Output tokens: {response.output_tokens}")
@@ -143,8 +144,8 @@ def test_anthropic_real_api():
     assert response.cost_usd > 0
     assert response.cost_usd < 0.001  # Should be less than 1/10th of a cent
 
-    print(f"\n✅ All assertions passed!")
-    print(f"="*70)
+    print("\n✅ All assertions passed!")
+    print("="*70)
 
 
 @skip_bedrock
@@ -169,13 +170,13 @@ def test_bedrock_real_api():
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🤖 Model: {model}")
-    print(f"💰 Expected cost: ~$0.00005")
+    print("💰 Expected cost: ~$0.00005")
     print(f"🌍 Region: {AWS_REGION}")
     print("\n⏳ Calling AWS Bedrock API...")
 
     response = provider.complete(prompt, model=model, max_tokens=10)
 
-    print(f"\n✅ Response received!")
+    print("\n✅ Response received!")
     print(f"📄 Content: '{response.content}'")
     print(f"📊 Input tokens: {response.input_tokens}")
     print(f"📊 Output tokens: {response.output_tokens}")
@@ -190,8 +191,8 @@ def test_bedrock_real_api():
     assert response.cost_usd > 0
     assert response.cost_usd < 0.001  # Should be less than 1/10th of a cent
 
-    print(f"\n✅ All assertions passed!")
-    print(f"="*70)
+    print("\n✅ All assertions passed!")
+    print("="*70)
 
 
 @skip_openai
@@ -202,9 +203,9 @@ def test_fallback_chain_real_apis():
     Tests OpenAI → Deterministic fallback by passing invalid model.
     Expected cost: ~$0 (OpenAI fails, Deterministic is free)
     """
-    from app.services.ai.openai_provider import OpenAIProvider
-    from app.services.ai.deterministic_provider import DeterministicProvider
     from app.services.ai.base import AIProviderError
+    from app.services.ai.deterministic_provider import DeterministicProvider
+    from app.services.ai.openai_provider import OpenAIProvider
 
     print("\n" + "="*70)
     print("🧪 Testing Fallback Chain (REAL APIs)")
@@ -235,7 +236,7 @@ def test_fallback_chain_real_apis():
         task_3='Task C'
     )
 
-    print(f"\n✅ Deterministic response received!")
+    print("\n✅ Deterministic response received!")
     print(f"📄 Content preview: '{response.content[:100]}...'")
     print(f"💵 Cost: ${response.cost_usd:.6f} (FREE!)")
     print(f"🏢 Provider: {response.provider}")
@@ -247,8 +248,8 @@ def test_fallback_chain_real_apis():
     assert 'Task B' in response.content
     assert 'Task C' in response.content
 
-    print(f"\n✅ Fallback chain works correctly!")
-    print(f"="*70)
+    print("\n✅ Fallback chain works correctly!")
+    print("="*70)
 
 
 @skip_openai
@@ -272,12 +273,12 @@ def test_cost_tracking_accuracy():
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🤖 Model: {model}")
-    print(f"💰 Pricing: $0.15/MTok (input), $0.60/MTok (output)")
+    print("💰 Pricing: $0.15/MTok (input), $0.60/MTok (output)")
     print("\n⏳ Calling OpenAI API...")
 
     response = provider.complete(prompt, model=model, max_tokens=20)
 
-    print(f"\n✅ Response received!")
+    print("\n✅ Response received!")
     print(f"📄 Content: '{response.content}'")
     print(f"📊 Input tokens: {response.input_tokens}")
     print(f"📊 Output tokens: {response.output_tokens}")
@@ -288,7 +289,7 @@ def test_cost_tracking_accuracy():
     expected_output_cost = response.output_tokens * (0.60 / 1_000_000)
     expected_total = expected_input_cost + expected_output_cost
 
-    print(f"\n🧮 Manual verification:")
+    print("\n🧮 Manual verification:")
     print(f"   Input cost: {response.input_tokens} tokens × $0.15/MTok = ${expected_input_cost:.6f}")
     print(f"   Output cost: {response.output_tokens} tokens × $0.60/MTok = ${expected_output_cost:.6f}")
     print(f"   Expected total: ${expected_total:.6f}")
@@ -300,8 +301,8 @@ def test_cost_tracking_accuracy():
     assert response.cost_usd > 0
     assert response.cost_usd < 0.001  # Should be very cheap
 
-    print(f"\n✅ Cost tracking accurate to within $0.000001!")
-    print(f"="*70)
+    print("\n✅ Cost tracking accurate to within $0.000001!")
+    print("="*70)
 
 
 def test_deterministic_provider_free():
@@ -346,8 +347,8 @@ def test_deterministic_provider_free():
         total_cost += response.cost_usd
 
     print(f"\n💰 Total cost for 5 modules: ${total_cost:.6f} (FREE!)")
-    print(f"✅ All 5 modules work correctly!")
-    print(f"="*70)
+    print("✅ All 5 modules work correctly!")
+    print("="*70)
 
 
 if __name__ == '__main__':
