@@ -66,6 +66,13 @@ async def track_event(
     }
     ```
     """
+    # Validate event_name length (1-100 chars as per Pydantic model)
+    if not event.event_name or len(event.event_name) > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="event_name must be between 1 and 100 characters",
+        )
+
     try:
         result = await analytics.track_event(
             supabase=supabase,
@@ -83,7 +90,15 @@ async def track_event(
             timestamp=result["timestamp"],
         )
 
+    except ValueError as e:
+        # Client errors (invalid data format, validation errors)
+        logger.warning(f"⚠️  Invalid data for event '{event.event_name}': {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid event data: {str(e)}",
+        )
     except Exception as e:
+        # Server errors (database failures, connection issues)
         logger.error(f"❌ Error tracking event '{event.event_name}': {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

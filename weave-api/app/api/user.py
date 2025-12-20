@@ -120,6 +120,7 @@ async def optional_auth_example(user: dict | None = Depends(get_optional_user)):
 )
 async def create_profile(
     profile_data: UserProfileCreate,
+    user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
     """
@@ -128,12 +129,11 @@ async def create_profile(
     This endpoint should be called immediately after successful OAuth to create
     the user's profile in the user_profiles table.
 
-    **Authentication:** Not required (uses auth_user_id from request body)
-    **Note:** In production, this should validate the JWT token to ensure
-    the auth_user_id matches the authenticated user.
+    **Authentication Required:**
+    - Include JWT token in Authorization header: `Bearer <token>`
+    - The auth_user_id is extracted from the JWT 'sub' field (cannot be spoofed)
 
     **Request Body:**
-    - auth_user_id: Supabase auth user ID (required)
     - display_name: User display name (optional)
     - timezone: IANA timezone (default: UTC)
     - locale: User locale (default: en-US)
@@ -141,22 +141,47 @@ async def create_profile(
     **Status Codes:**
     - 201: Profile created successfully
     - 200: Profile already exists (idempotent)
+    - 401: Unauthorized (missing or invalid JWT token)
     - 422: Request body validation error
     - 500: Server error (database failure)
 
     **Example Request:**
     ```json
     {
-      "auth_user_id": "550e8400-e29b-41d4-a716-446655440000",
       "display_name": "John Doe",
       "timezone": "America/Los_Angeles"
     }
     ```
+
+    **Example Response:**
+    ```json
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "auth_user_id": "auth-user-123",
+      "display_name": "John Doe",
+      "timezone": "America/Los_Angeles",
+      "locale": "en-US",
+      "created_at": "2025-12-19T19:00:00Z",
+      "updated_at": "2025-12-19T19:00:00Z"
+    }
+    ```
     """
+    # Extract auth_user_id from JWT token (from 'sub' field)
+    # This ensures users can only create profiles for themselves
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+        )
+
+    logger.info(f"✅ Creating profile for authenticated user: {auth_user_id}")
+
     try:
         profile = await user_profile.create_user_profile(
             supabase=supabase,
-            auth_user_id=profile_data.auth_user_id,
+            auth_user_id=auth_user_id,
             display_name=profile_data.display_name,
             timezone=profile_data.timezone,
             locale=profile_data.locale,

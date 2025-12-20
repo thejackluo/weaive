@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import analytics, health, onboarding, user
+from app.api import ai_router, analytics, health, onboarding, user
 from app.core.config import settings
 
 app = FastAPI(

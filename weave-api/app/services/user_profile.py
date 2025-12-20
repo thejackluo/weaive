@@ -22,6 +22,10 @@ async def create_user_profile(
     This function creates a row in the user_profiles table linked to the
     authenticated user from Supabase Auth.
 
+    Race condition handling: If two concurrent requests try to create the same
+    profile, one will succeed and the other will get a unique constraint error.
+    We catch this error and return the existing profile.
+
     Args:
         supabase: Supabase client instance
         auth_user_id: Supabase auth user ID (from JWT 'sub' field)
@@ -30,25 +34,14 @@ async def create_user_profile(
         locale: User locale (default: en-US)
 
     Returns:
-        dict: Created user profile record
+        dict: Created or existing user profile record
 
     Raises:
-        Exception: If profile creation fails
+        Exception: If profile creation fails (non-duplicate errors)
     """
     try:
-        # Check if profile already exists
-        existing = (
-            supabase.table("user_profiles")
-            .select("*")
-            .eq("auth_user_id", auth_user_id)
-            .execute()
-        )
-
-        if existing.data:
-            logger.info(f"✅ User profile already exists: {auth_user_id}")
-            return existing.data[0]
-
-        # Create new profile
+        # Try to insert directly (optimistic approach)
+        # If profile already exists, we'll catch the unique constraint error
         profile_data = {
             "auth_user_id": auth_user_id,
             "display_name": display_name,
@@ -71,6 +64,35 @@ async def create_user_profile(
         return profile
 
     except Exception as e:
+        error_msg = str(e).lower()
+
+        # Check if error is due to unique constraint violation (duplicate auth_user_id)
+        # Supabase/PostgREST returns "duplicate key value violates unique constraint"
+        if "duplicate key" in error_msg or "unique constraint" in error_msg:
+            logger.info(
+                f"⚠️  Profile already exists (race condition handled): {auth_user_id}"
+            )
+
+            # Fetch and return the existing profile
+            existing = (
+                supabase.table("user_profiles")
+                .select("*")
+                .eq("auth_user_id", auth_user_id)
+                .execute()
+            )
+
+            if existing.data:
+                return existing.data[0]
+
+            # If we still can't find it, something is wrong
+            logger.error(
+                f"❌ Profile should exist but not found: {auth_user_id}"
+            )
+            raise Exception(
+                "Race condition: profile creation failed but profile not found"
+            )
+
+        # For non-duplicate errors, re-raise
         logger.error(
             f"❌ Failed to create user profile for {auth_user_id}: {str(e)}"
         )
