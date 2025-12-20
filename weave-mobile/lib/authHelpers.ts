@@ -168,23 +168,52 @@ export function getAuthErrorMessage(error: any): string {
   if (!error) return '';
 
   const message = error.message || '';
+  const _errorCode = error.code || '';
+  const errorStatus = error.status || 0;
 
   // Map common errors to user-friendly messages
   const errorMap: Record<string, string> = {
+    // Authentication errors
     'Invalid login credentials': 'Invalid email or password. Please try again.',
     'Email not confirmed': 'Please verify your email address before signing in.',
     'User already registered': 'An account with this email already exists.',
     'Password should be at least 8 characters': 'Password must be at least 8 characters long.',
     'Unable to validate email address: invalid format': 'Please enter a valid email address.',
     'Too many requests': 'Too many attempts. Please try again later.',
+
+    // Network errors
     'Network request failed': 'Network error. Please check your connection and try again.',
+    'Failed to fetch': 'Unable to connect. Please check your internet connection.',
+    NetworkError: 'Network error. Please check your connection and try again.',
+    ECONNREFUSED: 'Unable to reach server. Please try again later.',
+    ETIMEDOUT: 'Connection timed out. Please check your connection and try again.',
+    ENOTFOUND: 'Unable to reach server. Please check your connection.',
+    timeout: 'Request timed out. Please try again.',
+    'net::ERR_INTERNET_DISCONNECTED': 'No internet connection. Please check your network.',
+    'net::ERR_NAME_NOT_RESOLVED': 'Unable to reach server. Please check your connection.',
+    'net::ERR_CONNECTION_REFUSED': 'Unable to connect to server. Please try again later.',
   };
 
   // Check if error message matches any known patterns
   for (const [pattern, friendlyMessage] of Object.entries(errorMap)) {
-    if (message.includes(pattern)) {
+    if (message.toLowerCase().includes(pattern.toLowerCase())) {
       return friendlyMessage;
     }
+  }
+
+  // Handle HTTP status code errors
+  if (errorStatus >= 500) {
+    return 'Server error. Please try again later.';
+  }
+  if (errorStatus === 429) {
+    return 'Too many attempts. Please try again later.';
+  }
+  if (errorStatus === 408) {
+    return 'Request timed out. Please try again.';
+  }
+  if (errorStatus === 0 || !errorStatus) {
+    // Status 0 usually indicates network failure
+    return 'Network error. Please check your connection and try again.';
   }
 
   // Return original message if no match found

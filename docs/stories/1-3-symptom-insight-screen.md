@@ -49,10 +49,10 @@ So that **I feel deeply understood and motivated to continue with onboarding**.
    - [x] All content is local/static - NO API calls (symptomContent.ts constants)
    - [x] Deterministic mapping based on selected painpoints from previous screen (getSymptomContent function)
 
-6. **Data & Analytics** - DEFERRED (Front-end focus)
-   - [ ] Track `symptom_insight_shown` event with selected categories (TODO comment added)
-   - [ ] Store selected categories in `user_profiles.json.initial_symptoms` (TODO comment added)
-   - [ ] Event payload: `{ categories: ['clarity'], timestamp: ISO8601 }` (TODO comment added)
+6. **Data & Analytics** - COMPLETE (2025-12-19)
+   - [x] Track `symptom_insight_shown` event with selected categories (integrated in insight-reflection.tsx)
+   - [ ] Store selected categories in `user_profiles.json.initial_symptoms` (TODO: requires user_profiles update)
+   - [x] Event payload: `{ categories: ['clarity'], timestamp: ISO8601 }` (via trackSymptomInsightShown)
 
 7. **Edge Cases**
    - [x] Gracefully handle 1 or 2 selected painpoints (conditional rendering with map)
@@ -329,8 +329,14 @@ TypeScript warnings: NativeWind className prop type errors (expected behavior, d
 ✅ Task 5 (partial): Navigation from Story 1.2 and to Story 1.4
 
 **Deferred (Front-end focus):**
-⏸️ Task 4: Data tracking & storage (TODO comments added for backend integration)
 ⏸️ Task 5.3-5.4: Manual testing (requires Story 1.4 implementation)
+
+**Backend Implementation (2025-12-19):**
+✅ Task 4: Analytics tracking complete (partial data storage)
+- Integrated trackSymptomInsightShown() in insight-reflection screen
+- Event tracked with selectedPainpoints array as categories
+- Uses existing analytics infrastructure from Story 1.1
+- TODO: Store in user_profiles.json.initial_symptoms (requires user profile updates)
 
 **Notes:**
 - All core front-end functionality complete
@@ -340,11 +346,16 @@ TypeScript warnings: NativeWind className prop type errors (expected behavior, d
 ### File List
 
 **Created:**
-- `weave-mobile/app/(onboarding)/insight-reflection.tsx` - Main screen component (168 lines)
+- `weave-mobile/app/(onboarding)/insight-reflection.tsx` - Main screen component with analytics tracking
 - `weave-mobile/src/constants/symptomContent.ts` - Symptom text mapping (65 lines)
 
 **Modified:**
 - `docs/sprint-status.yaml` - Updated story status: backlog → in-progress → review
+- `weave-mobile/app/(onboarding)/insight-reflection.tsx` - Added analytics tracking (2025-12-19)
+
+**Backend (2025-12-19):**
+- Uses existing analytics infrastructure from Story 1.1 (no new backend files needed)
+- trackSymptomInsightShown() function already implemented in analytics service
 
 **Dependencies Used:**
 - `react-native-reanimated` (existing) - Animations

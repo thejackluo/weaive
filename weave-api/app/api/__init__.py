@@ -1,3 +1,3 @@
 """API routers package."""
 
-__all__ = ["health"]
+__all__ = ["ai_router", "analytics", "health", "onboarding", "user"]

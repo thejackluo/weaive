@@ -30,6 +30,7 @@ import {
   FALLBACK_SYMPTOM,
   type SymptomContent,
 } from '@/constants/symptomContent';
+import { trackSymptomInsightShown } from '@/services/analytics';
 
 // =============================================================================
 // COMPONENTS
@@ -165,6 +166,22 @@ export default function InsightReflectionScreen() {
       setReduceMotion(enabled ?? false);
     });
   }, []);
+
+  // Track analytics event when screen is shown (Story 1.3 - AC6)
+  useEffect(() => {
+    const trackEvent = async () => {
+      try {
+        await trackSymptomInsightShown(selectedPainpoints);
+        console.log('[Analytics] Symptom insight shown event tracked');
+      } catch (error) {
+        console.error('[Analytics] Failed to track symptom insight:', error);
+      }
+    };
+
+    if (selectedPainpoints.length > 0) {
+      trackEvent();
+    }
+  }, [selectedPainpoints]);
 
   // Get symptom content based on selected painpoints
   // Implements AC #2: Dynamic copy mapping
