@@ -224,6 +224,186 @@ class AIService:
         logger.error(f"🚨 {error_msg}")
         raise AIServiceError(error_msg)
 
+    async def generate_stream(
+        self,
+        user_id: str,
+        user_role: str = 'user',
+        user_tier: str = 'free',
+        module: str = 'triad',
+        prompt: str = '',
+        **kwargs
+    ):
+        """
+        Generate AI response with real-time streaming (async generator).
+
+        Yields chunks as they arrive from the AI provider (word-by-word or sentence-by-sentence).
+        Uses Anthropic's native streaming API for providers that support it.
+
+        Args:
+            user_id: User ID (from user_profiles.id)
+            user_role: User role ('admin' or 'user')
+            user_tier: User tier ('free' or 'paid')
+            module: AI module ('onboarding', 'triad', 'recap', 'dream_self', 'weekly_insights')
+            prompt: User input text
+            **kwargs: Additional parameters (model, temperature, max_tokens)
+
+        Yields:
+            Dict with:
+            - {'type': 'chunk', 'content': 'word or sentence'} - During generation
+            - {'type': 'done', 'input_tokens': N, 'output_tokens': M, 'cost_usd': X, 'provider': 'anthropic', 'run_id': 'uuid'} - Final metadata
+
+        Raises:
+            RateLimitError: If user exceeds rate limit
+            AIServiceError: If streaming not supported or all providers fail
+        """
+        logger.info(f"🌊 AI streaming request: user={user_id}, module={module}, role={user_role}, tier={user_tier}")
+
+        # 1. Check rate limit
+        try:
+            self.rate_limiter.check_user_limit(user_id, user_role, user_tier, module)
+        except RateLimitError:
+            logger.warning(f"🚫 Rate limit exceeded for user {user_id}")
+            raise
+
+        # 2. Check budgets (dual: total + per-user)
+        budget_exceeded = self._check_budgets(user_id, user_tier)
+
+        if budget_exceeded:
+            logger.warning("💰 Budget exceeded, streaming not available")
+            # Fallback to deterministic (no streaming, just return full response)
+            deterministic = self.providers[-1][1]  # Last provider is always deterministic
+            response = deterministic.complete(prompt=prompt, module=module, **kwargs)
+
+            # Yield as single chunk
+            yield {'type': 'chunk', 'content': response.content}
+            yield {
+                'type': 'done',
+                'input_tokens': response.input_tokens,
+                'output_tokens': response.output_tokens,
+                'cost_usd': 0.0,
+                'provider': 'deterministic',
+            }
+            return
+
+        # 3. Try streaming with Anthropic provider (supports native streaming)
+        anthropic_provider = None
+        for provider_name, provider in self.providers:
+            if provider_name == 'anthropic':
+                anthropic_provider = provider
+                break
+
+        if not anthropic_provider:
+            logger.error("🚨 Anthropic provider not available for streaming")
+            raise AIServiceError("Streaming not available (Anthropic provider required)")
+
+        # 4. Create ai_runs record
+        input_hash = self._compute_hash(prompt, module, kwargs.get('model', 'auto'))
+        run_id = self._create_run(user_id, module, input_hash, 'anthropic')
+
+        try:
+            # Stream from Anthropic
+            logger.info("🔄 Streaming with Anthropic provider")
+
+            # Use Anthropic's streaming API
+
+            client = anthropic_provider.client
+
+            # Prepare request
+            model = kwargs.get('model', 'claude-3-5-sonnet-20241022')
+            max_tokens = kwargs.get('max_tokens', 2000)
+            temperature = kwargs.get('temperature')
+            system = kwargs.get('system')
+
+            # Build request params
+            request_params = {
+                'model': model,
+                'max_tokens': max_tokens,
+                'messages': [{'role': 'user', 'content': prompt}],
+            }
+
+            if temperature is not None:
+                request_params['temperature'] = temperature
+
+            if system is not None:
+                if isinstance(system, str):
+                    request_params['system'] = [{'type': 'text', 'text': system}]
+                elif isinstance(system, list):
+                    request_params['system'] = system
+
+            # Stream completion
+            full_content = []
+            input_tokens = 0
+            output_tokens = 0
+
+            with client.messages.stream(**request_params) as stream:
+                for text in stream.text_stream:
+                    # Yield each text chunk
+                    full_content.append(text)
+                    yield {'type': 'chunk', 'content': text}
+
+                # Get final message with usage
+                final_message = stream.get_final_message()
+                input_tokens = final_message.usage.input_tokens
+                output_tokens = final_message.usage.output_tokens
+
+            # Calculate cost
+            cost_usd = anthropic_provider.estimate_cost(input_tokens, output_tokens, model)
+
+            # Update run as success
+            complete_content = ''.join(full_content)
+            response = AIResponse(
+                content=complete_content,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                model=model,
+                cost_usd=cost_usd,
+                provider='anthropic',
+                cached=False,
+                run_id=run_id,
+            )
+
+            self._update_run_success(run_id, response, module)
+
+            # Record cost
+            if cost_usd > 0:
+                self.cost_tracker.record_cost(
+                    run_id,
+                    input_tokens,
+                    output_tokens,
+                    model,
+                    cost_usd
+                )
+
+            # Create artifact
+            self._create_artifact(run_id, user_id, module, response)
+
+            logger.info(
+                f"✅ Anthropic streaming success: ${cost_usd:.6f}, "
+                f"{input_tokens} in + {output_tokens} out tokens"
+            )
+
+            # Yield final metadata
+            yield {
+                'type': 'done',
+                'input_tokens': input_tokens,
+                'output_tokens': output_tokens,
+                'cost_usd': cost_usd,
+                'provider': 'anthropic',
+                'run_id': run_id,
+            }
+
+        except Exception as e:
+            # Stream failed
+            self._update_run_failure(run_id, str(e))
+            logger.error(f"💥 Anthropic streaming failed: {e}")
+
+            # Yield error event
+            yield {
+                'type': 'error',
+                'message': f"Streaming failed: {e}",
+                'run_id': run_id,
+            }
+
     def _compute_hash(self, prompt: str, module: str, model: str) -> str:
         """
         Compute SHA-256 hash of prompt + module + model for caching.
