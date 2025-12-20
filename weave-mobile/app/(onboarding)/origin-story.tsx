@@ -834,14 +834,14 @@ export default function OriginStoryScreen() {
             fontSize: 30,
             fontWeight: '600',
             textAlign: 'center',
-            marginBottom: 12,
+            marginBottom: 16,
             color: '#1a1a1a',
           }}
         >
-          This is your beginning.
+          You've created your origin story.
         </Text>
 
-        {/* Subheading */}
+        {/* Body Text */}
         <Text
           style={{
             fontSize: 17,
@@ -849,9 +849,12 @@ export default function OriginStoryScreen() {
             color: '#666666',
             opacity: 0.85,
             marginBottom: 48,
+            lineHeight: 26,
+            paddingHorizontal: 8,
           }}
         >
-          You just took the first step toward your future self.
+          Every Bind you complete builds on this moment — strengthening your Weave and the person
+          you're becoming.
         </Text>
 
         {/* Weave Character Animation Placeholder */}
