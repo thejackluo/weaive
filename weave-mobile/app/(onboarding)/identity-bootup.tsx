@@ -374,11 +374,20 @@ export default function IdentityBootupScreen() {
       setIsSubmitting(true);
 
       // Submit identity bootup data to backend API (Story 1.6 + Story 0-4 integration)
-      await storeIdentityBootup(
-        formData.preferred_name,
-        formData.core_personality,
-        formData.identity_traits
-      );
+      // NOTE: Wrapped in non-blocking try-catch - backend integration is optional
+      // This allows onboarding to complete even if backend is not running
+      try {
+        await storeIdentityBootup(
+          formData.preferred_name,
+          formData.core_personality,
+          formData.identity_traits
+        );
+        console.log('[ONBOARDING] Successfully stored identity bootup data to backend');
+      } catch (backendError) {
+        // Log but don't block the flow - backend integration is optional for now
+        console.warn('[Onboarding] Failed to store identity bootup data:', backendError);
+        console.log('[Onboarding] Continuing with local storage only (backend integration deferred)');
+      }
 
       // Save onboarding data to AsyncStorage for Story 1.7
       // Merge with existing painpoints from Story 1.2
