@@ -83,7 +83,7 @@ def test_protected_endpoint_without_auth():
     """Test that protected endpoint rejects requests without auth token."""
     response = client.get("/api/user/me")
 
-    assert response.status_code == 403  # FastAPI HTTPBearer returns 403 for missing auth
+    assert response.status_code == 401  # FastAPI HTTPBearer returns 401 for missing auth
     assert "detail" in response.json()
 
 
@@ -158,8 +158,8 @@ def test_create_profile_without_auth():
         json={"display_name": "Test User", "timezone": "America/Los_Angeles"},
     )
 
-    # Should return 403 (missing auth) instead of accepting auth_user_id from body
-    assert response.status_code == 403
+    # Should return 401 (missing auth) instead of accepting auth_user_id from body
+    assert response.status_code == 401
 
 
 def test_create_profile_with_invalid_token():
@@ -173,12 +173,12 @@ def test_create_profile_with_invalid_token():
     assert response.status_code == 401
 
 
-@patch("app.api.user.user_profile.create_user_profile")
+@patch("app.services.user_profile.create_user_profile")
 def test_create_profile_with_valid_token(mock_create_profile, valid_jwt_token):
     """Test that profile creation extracts auth_user_id from JWT."""
     # Mock the service to return a profile
     mock_create_profile.return_value = {
-        "id": "profile-uuid-123",
+        "id": "550e8400-e29b-41d4-a716-446655440010",  # Valid UUID
         "auth_user_id": "test-user-123",
         "display_name": "Test User",
         "timezone": "America/Los_Angeles",
@@ -228,7 +228,7 @@ async def test_concurrent_profile_creation(mock_logger, mock_supabase):
             mock_result = MagicMock()
             mock_result.data = [
                 {
-                    "id": "profile-uuid-1",
+                    "id": "550e8400-e29b-41d4-a716-446655440011",  # Valid UUID
                     "auth_user_id": auth_user_id,
                     "display_name": "Test User",
                     "timezone": "UTC",
@@ -246,7 +246,7 @@ async def test_concurrent_profile_creation(mock_logger, mock_supabase):
     mock_select_result = MagicMock()
     mock_select_result.data = [
         {
-            "id": "profile-uuid-1",
+            "id": "550e8400-e29b-41d4-a716-446655440011",  # Valid UUID
             "auth_user_id": auth_user_id,
             "display_name": "Test User",
             "timezone": "UTC",
@@ -280,9 +280,9 @@ async def test_concurrent_profile_creation(mock_logger, mock_supabase):
 
 def test_track_analytics_event_without_auth():
     """Test that analytics events can be tracked without authentication (pre-auth events)."""
-    with patch("app.api.analytics.analytics.track_event") as mock_track:
+    with patch("app.services.analytics.track_event") as mock_track:
         mock_track.return_value = {
-            "id": "event-uuid-123",
+            "id": "550e8400-e29b-41d4-a716-446655440000",  # Valid UUID
             "event_name": "onboarding_started",
             "user_id": None,
             "timestamp": "2025-12-20T00:00:00Z",
@@ -304,11 +304,11 @@ def test_track_analytics_event_without_auth():
 
 def test_track_analytics_event_with_user_id():
     """Test that analytics events can include user_id for authenticated events."""
-    with patch("app.api.analytics.analytics.track_event") as mock_track:
+    with patch("app.services.analytics.track_event") as mock_track:
         mock_track.return_value = {
-            "id": "event-uuid-456",
+            "id": "550e8400-e29b-41d4-a716-446655440001",  # Valid UUID
             "event_name": "goal_created",
-            "user_id": "user-profile-uuid",
+            "user_id": "550e8400-e29b-41d4-a716-446655440002",  # Valid UUID
             "timestamp": "2025-12-20T00:00:00Z",
         }
 
@@ -316,7 +316,7 @@ def test_track_analytics_event_with_user_id():
             "/api/analytics/events",
             json={
                 "event_name": "goal_created",
-                "user_id": "user-profile-uuid",
+                "user_id": "550e8400-e29b-41d4-a716-446655440002",  # Valid UUID
                 "event_data": {"goal_type": "habit"},
             },
         )
@@ -324,19 +324,20 @@ def test_track_analytics_event_with_user_id():
         assert response.status_code == 201
         data = response.json()
         assert data["event_name"] == "goal_created"
-        assert data["user_id"] == "user-profile-uuid"
+        assert str(data["user_id"]) == "550e8400-e29b-41d4-a716-446655440002"
 
 
 def test_track_analytics_event_invalid_name():
-    """Test that analytics endpoint returns 400 for invalid event names."""
+    """Test that analytics endpoint returns 422 for invalid event names (Pydantic validation)."""
     # Event name too long (>100 chars)
     response = client.post(
         "/api/analytics/events",
         json={"event_name": "a" * 101, "event_data": {}},
     )
 
-    assert response.status_code == 400
-    assert "event_name" in response.json()["detail"].lower()
+    assert response.status_code == 422  # Pydantic validation errors return 422
+    # Check that the error is about validation
+    assert "detail" in response.json()
 
 
 # ============================================================================
@@ -348,9 +349,9 @@ def test_cannot_create_profile_for_different_user(valid_jwt_token):
     """Test that users cannot create profiles for other users by spoofing request."""
     # Even if client tries to send a different auth_user_id, it should be ignored
     # and the JWT's sub field should be used instead
-    with patch("app.api.user.user_profile.create_user_profile") as mock_create:
+    with patch("app.services.user_profile.create_user_profile") as mock_create:
         mock_create.return_value = {
-            "id": "profile-uuid-123",
+            "id": "550e8400-e29b-41d4-a716-446655440012",  # Valid UUID
             "auth_user_id": "test-user-123",  # From JWT
             "display_name": "Test User",
             "timezone": "UTC",

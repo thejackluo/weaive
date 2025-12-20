@@ -12,14 +12,16 @@ Only run in development/test environments.
 
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import jwt
 import pytest
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from supabase import Client, create_client
 
+from app.core.config import settings
 from app.main import app
 
 # Load environment variables from .env file
@@ -71,6 +73,28 @@ def test_user_profile_ids():
             supabase.table("user_profiles").delete().eq("id", profile_id).execute()
         except Exception as e:
             print(f"Warning: Failed to cleanup user profile {profile_id}: {e}")
+
+
+@pytest.fixture
+def valid_jwt_token_for_integration():
+    """Generate a valid JWT token for integration tests."""
+    if not settings.SUPABASE_JWT_SECRET:
+        pytest.skip("SUPABASE_JWT_SECRET not configured")
+
+    # Use a consistent test user ID for integration tests
+    test_user_id = str(uuid.uuid4())
+
+    payload = {
+        "sub": test_user_id,
+        "email": f"integration-test-{test_user_id[:8]}@example.com",
+        "role": "authenticated",
+        "iat": datetime.now(timezone.utc).timestamp(),
+        "exp": (datetime.now(timezone.utc) + timedelta(hours=1)).timestamp(),
+        "aud": "authenticated",
+    }
+
+    token = jwt.encode(payload, settings.SUPABASE_JWT_SECRET, algorithm="HS256")
+    return {"token": token, "user_id": test_user_id}
 
 
 # ============================================================================
@@ -206,23 +230,25 @@ def test_analytics_multiple_events(test_analytics_event_ids):
 # ============================================================================
 
 
-def test_user_profile_create(test_user_profile_ids):
+def test_user_profile_create(test_user_profile_ids, valid_jwt_token_for_integration):
     """Test creating a user profile via API."""
-    test_auth_user_id = str(uuid.uuid4())
     test_profile_data = {
-        "auth_user_id": test_auth_user_id,
         "display_name": "Test User",
         "timezone": "America/Los_Angeles",
         "locale": "en-US",
     }
 
-    response = client.post("/api/user/profile", json=test_profile_data)
+    response = client.post(
+        "/api/user/profile",
+        json=test_profile_data,
+        headers={"Authorization": f"Bearer {valid_jwt_token_for_integration['token']}"},
+    )
 
     assert response.status_code == 201
     data = response.json()
 
     assert "id" in data
-    assert data["auth_user_id"] == test_auth_user_id
+    assert data["auth_user_id"] == valid_jwt_token_for_integration["user_id"]
     assert data["display_name"] == "Test User"
     assert data["timezone"] == "America/Los_Angeles"
 
@@ -232,22 +258,22 @@ def test_user_profile_create(test_user_profile_ids):
     print(f"✅ User profile created: {data['id']}")
 
 
-def test_user_profile_idempotent_create(test_user_profile_ids):
+def test_user_profile_idempotent_create(test_user_profile_ids, valid_jwt_token_for_integration):
     """Test that creating the same profile twice returns the existing profile."""
-    test_auth_user_id = str(uuid.uuid4())
     test_profile_data = {
-        "auth_user_id": test_auth_user_id,
         "display_name": "Idempotent Test User",
     }
 
+    auth_header = {"Authorization": f"Bearer {valid_jwt_token_for_integration['token']}"}
+
     # First creation
-    response1 = client.post("/api/user/profile", json=test_profile_data)
+    response1 = client.post("/api/user/profile", json=test_profile_data, headers=auth_header)
     assert response1.status_code == 201
     profile_id_1 = response1.json()["id"]
     test_user_profile_ids.append(profile_id_1)
 
     # Second creation (should return existing)
-    response2 = client.post("/api/user/profile", json=test_profile_data)
+    response2 = client.post("/api/user/profile", json=test_profile_data, headers=auth_header)
     assert response2.status_code == 201
     profile_id_2 = response2.json()["id"]
 
@@ -257,16 +283,18 @@ def test_user_profile_idempotent_create(test_user_profile_ids):
     print(f"✅ User profile idempotency verified: {profile_id_1}")
 
 
-def test_user_profile_fetch(test_user_profile_ids):
+def test_user_profile_fetch(test_user_profile_ids, valid_jwt_token_for_integration):
     """Test fetching a user profile from the database."""
     # Create profile first
-    test_auth_user_id = str(uuid.uuid4())
     test_profile_data = {
-        "auth_user_id": test_auth_user_id,
         "display_name": "Fetch Test User",
     }
 
-    response = client.post("/api/user/profile", json=test_profile_data)
+    response = client.post(
+        "/api/user/profile",
+        json=test_profile_data,
+        headers={"Authorization": f"Bearer {valid_jwt_token_for_integration['token']}"},
+    )
     assert response.status_code == 201
     profile_id = response.json()["id"]
     test_user_profile_ids.append(profile_id)
@@ -281,22 +309,24 @@ def test_user_profile_fetch(test_user_profile_ids):
 
     assert len(result.data) == 1
     profile = result.data[0]
-    assert profile["auth_user_id"] == test_auth_user_id
+    assert profile["auth_user_id"] == valid_jwt_token_for_integration["user_id"]
     assert profile["display_name"] == "Fetch Test User"
 
     print(f"✅ User profile fetched: {profile_id}")
 
 
-def test_user_profile_update(test_user_profile_ids):
+def test_user_profile_update(test_user_profile_ids, valid_jwt_token_for_integration):
     """Test updating a user profile in the database."""
     # Create profile first
-    test_auth_user_id = str(uuid.uuid4())
     test_profile_data = {
-        "auth_user_id": test_auth_user_id,
         "display_name": "Original Name",
     }
 
-    response = client.post("/api/user/profile", json=test_profile_data)
+    response = client.post(
+        "/api/user/profile",
+        json=test_profile_data,
+        headers={"Authorization": f"Bearer {valid_jwt_token_for_integration['token']}"},
+    )
     assert response.status_code == 201
     profile_id = response.json()["id"]
     test_user_profile_ids.append(profile_id)
@@ -486,7 +516,7 @@ def test_database_timestamp_defaults(test_analytics_event_ids):
         else:
             # ISO format without timezone (assume UTC)
             event_timestamp = datetime.fromisoformat(timestamp_str)
-    except Exception as e:
+    except Exception:
         # If parsing fails, just verify timestamp exists
         print(f"⚠️  Timestamp format different than expected: {timestamp_str}")
         print("✅ Database timestamp defaults working (timestamp exists)")
