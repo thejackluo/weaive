@@ -17,14 +17,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  SafeAreaView,
-  StyleSheet,
-  Animated,
-  AccessibilityInfo,
-} from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, Animated, AccessibilityInfo } from 'react-native';
 
 // ============================================================================
 // DESIGN CONSTANTS
@@ -58,7 +51,7 @@ const PULSE_DURATION = 1500; // ms for thread pulse animation
 const ROTATION_DURATION = 2000; // ms for weave rotation
 
 // Timeout thresholds
-const TIMEOUT_WARNING_MS = 10000; // 10 seconds
+const _TIMEOUT_WARNING_MS = 10000; // 10 seconds
 const TIMEOUT_ERROR_MS = 15000; // 15 seconds
 
 // ============================================================================

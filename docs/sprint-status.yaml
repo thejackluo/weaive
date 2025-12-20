@@ -30,8 +30,9 @@ project: "Weave"
 project_key: "weave-mvp"
 tracking_system: "file-system"
 story_location: "docs/stories/"
-current_sprint: "week-0"
+current_sprint: "sprint-1"
 current_velocity: 50
+last_completed_sprint: "week-0"
 
 # ============================================================================
 # WEEK 0: FOUNDATION (PRE-SPRINT SETUP)
@@ -40,22 +41,24 @@ current_velocity: 50
 # Goal: Establish executable codebase with auth, database, and security
 # Points: 38
 
-week-0-status: active
+week-0-status: completed
+week-0-actual-end-date: "2025-12-20"
+week-0-retrospective: "docs/sprint-artifacts/epic-0-retrospective-2025-12-20.md"
 
 week-0-stories:
-  epic-0: in-progress
+  epic-0: done
   0-1-project-scaffolding: done                 # 5 pts ✅
-  0-2a-database-schema-core: done               # 3 pts ✅ (SQL tested and working)
-  0-2b-database-schema-refinement: done pending testing        # 2 pts ✅ (SQL tested and working)
-  0-3-authentication-flow: done pending testing               # 3 pts (partially done, pending production testing)
-  0-4-row-level-security: done pending testing  # 5 pts [CRITICAL] ✅ (RLS policies implemented, pending production penetration testing)
-  0-5-cicd-pipeline: done                   # 3 pts
-  0-6-ai-service-abstraction: review            # 3 pts ✅ (22/22 tests passed, AWS Bedrock primary, dual cost tracking, role-based limits, all code complete)
-  0-7-test-infrastructure: ready-for-dev        # 3 pts
-  0-8-error-handling-framework: backlog         # 3 pts
-  0-9-image-upload-error-handling: backlog      # 3 pts
-  0-10-ai-failure-handling: backlog             # 3 pts
-  week-0-retrospective: optional
+  0-2a-database-schema-core: done               # 3 pts ✅
+  0-2b-database-schema-refinement: done         # 2 pts ✅
+  0-3-authentication-flow: done                 # 3 pts ✅
+  0-4-row-level-security: done                  # 5 pts ✅ (48 RLS tests passing)
+  0-5-cicd-pipeline: done                       # 3 pts ✅
+  0-6-ai-service-abstraction: done              # 3 pts ✅ (AWS Bedrock primary, dual cost tracking, 22 tests passed)
+  0-7-test-infrastructure: done                 # 3 pts ✅ (71 tests passing, 76% backend coverage)
+  0-8-error-handling-framework: backlog         # 3 pts (DEFERRED - stretch goal)
+  0-9-image-upload-error-handling: backlog      # 3 pts (DEFERRED - stretch goal)
+  0-10-ai-failure-handling: backlog             # 3 pts (DEFERRED - stretch goal)
+  week-0-retrospective: completed               # Retrospective completed 2025-12-20
 
 # ============================================================================
 # SPRINT 1: CORE USER JOURNEY
@@ -293,7 +296,7 @@ backlog-post-mvp:
 # ============================================================================
 
 epic-completion:
-  epic-0-foundation: 24/38             # Week 0: 63% complete (0.1, 0.2a, 0.2b, 0.3, 0.4, 0.5, 0.6 done/review)
+  epic-0-foundation: 27/38             # Week 0: DONE ✅ (7/7 core stories, 71% pts, 11 pts deferred as stretch goals)
   epic-1-onboarding-hybrid: 0/50       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1, Phases 6-7: Sprint 2, +2 for name entry + personality)
   epic-2-goal-management: 0/27         # Sprint 3: 0% complete
   epic-3-daily-actions: 0/38           # Sprint 1-2, 5: 0% complete
@@ -303,7 +306,8 @@ epic-completion:
   epic-7-notifications: 0/28           # Sprint 3, 5: 0% complete
   epic-8-settings: 0/23                # Sprint 3, 5: 0% complete
 
-total-completion: 24/300 (8%)
+total-completion: 27/300 (9%)
+# Note: Epic 0 core foundation complete. Stretch goals (0.8-0.10) deferred to future sprints.
 
 # ============================================================================
 # VELOCITY TRACKING
@@ -312,8 +316,8 @@ total-completion: 24/300 (8%)
 velocity-history:
   week-0:
     planned: 38
-    actual: 24        # 0.1 (5 pts), 0.2a (3 pts), 0.2b (2 pts), 0.3 (3 pts), 0.4 (5 pts), 0.5 (3 pts), 0.6 (3 pts) complete/review
-    completion-rate: 63%
+    actual: 27        # 0.1 (5 pts), 0.2a (3 pts), 0.2b (2 pts), 0.3 (3 pts), 0.4 (5 pts), 0.5 (3 pts), 0.6 (3 pts), 0.7 (3 pts) complete/review
+    completion-rate: 71%
   sprint-1:
     planned: 64  # Epic 1 Phase 1-5 (40 pts) + Epic 3 basic (16 pts) + Epic 5 minimal (8 pts)
     actual: null

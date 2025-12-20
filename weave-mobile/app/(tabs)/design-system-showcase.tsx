@@ -19,7 +19,7 @@ import {
   Label,
   Mono,
   GlassView,
-  Button,
+  Button as _Button,
   showSimpleToast,
 } from '../../src/design-system';
 

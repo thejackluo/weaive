@@ -26,71 +26,150 @@ export const GOAL_TEMPLATES: GoalTemplate[] = [
   // Health Goals (IDs 1-4)
   {
     id: 1,
-    display_text: "Build a simple fitness routine",
+    display_text: 'Build a simple fitness routine',
     category: 'health',
-    keywords: ['fitness', 'exercise', 'workout', 'gym', 'health', 'physical', 'training', 'run', 'lift']
+    keywords: [
+      'fitness',
+      'exercise',
+      'workout',
+      'gym',
+      'health',
+      'physical',
+      'training',
+      'run',
+      'lift',
+    ],
   },
   {
     id: 2,
-    display_text: "Improve my sleep and daily energy",
+    display_text: 'Improve my sleep and daily energy',
     category: 'health',
-    keywords: ['sleep', 'energy', 'rest', 'tired', 'fatigue', 'night', 'morning', 'wake']
+    keywords: ['sleep', 'energy', 'rest', 'tired', 'fatigue', 'night', 'morning', 'wake'],
   },
   {
     id: 3,
-    display_text: "Reduce stress and feel more balanced",
+    display_text: 'Reduce stress and feel more balanced',
     category: 'health',
-    keywords: ['stress', 'anxiety', 'balance', 'calm', 'relaxation', 'peace', 'mental', 'wellness', 'mindfulness', 'meditation']
+    keywords: [
+      'stress',
+      'anxiety',
+      'balance',
+      'calm',
+      'relaxation',
+      'peace',
+      'mental',
+      'wellness',
+      'mindfulness',
+      'meditation',
+    ],
   },
   {
     id: 4,
-    display_text: "Get back into a healthy rhythm",
+    display_text: 'Get back into a healthy rhythm',
     category: 'health',
-    keywords: ['routine', 'rhythm', 'schedule', 'consistency', 'habit', 'structure', 'regular']
+    keywords: ['routine', 'rhythm', 'schedule', 'consistency', 'habit', 'structure', 'regular'],
   },
 
   // Productivity Goals (IDs 5, 7)
   {
     id: 5,
-    display_text: "Improve focus and productivity",
+    display_text: 'Improve focus and productivity',
     category: 'productivity',
-    keywords: ['focus', 'productivity', 'work', 'efficiency', 'concentrate', 'attention', 'distraction', 'task']
+    keywords: [
+      'focus',
+      'productivity',
+      'work',
+      'efficiency',
+      'concentrate',
+      'attention',
+      'distraction',
+      'task',
+    ],
   },
   {
     id: 7,
-    display_text: "Work consistently on a project",
+    display_text: 'Work consistently on a project',
     category: 'productivity',
-    keywords: ['project', 'build', 'create', 'work', 'side', 'startup', 'app', 'product', 'develop']
+    keywords: [
+      'project',
+      'build',
+      'create',
+      'work',
+      'side',
+      'startup',
+      'app',
+      'product',
+      'develop',
+    ],
   },
 
   // Education Goals (ID 6)
   {
     id: 6,
-    display_text: "Make steady progress in school",
+    display_text: 'Make steady progress in school',
     category: 'education',
-    keywords: ['school', 'study', 'college', 'learning', 'grades', 'class', 'exam', 'homework', 'academic', 'university']
+    keywords: [
+      'school',
+      'study',
+      'college',
+      'learning',
+      'grades',
+      'class',
+      'exam',
+      'homework',
+      'academic',
+      'university',
+    ],
   },
 
   // Creative Goals (ID 8)
   {
     id: 8,
-    display_text: "Start or rebuild a creative habit",
+    display_text: 'Start or rebuild a creative habit',
     category: 'creative',
-    keywords: ['creative', 'art', 'music', 'writing', 'hobby', 'paint', 'draw', 'compose', 'craft', 'design']
+    keywords: [
+      'creative',
+      'art',
+      'music',
+      'writing',
+      'hobby',
+      'paint',
+      'draw',
+      'compose',
+      'craft',
+      'design',
+    ],
   },
 
   // Career Goals (IDs 9-10)
   {
     id: 9,
-    display_text: "Prepare for an upcoming opportunity",
+    display_text: 'Prepare for an upcoming opportunity',
     category: 'career',
-    keywords: ['opportunity', 'interview', 'job', 'career', 'prepare', 'application', 'position', 'role']
+    keywords: [
+      'opportunity',
+      'interview',
+      'job',
+      'career',
+      'prepare',
+      'application',
+      'position',
+      'role',
+    ],
   },
   {
     id: 10,
-    display_text: "Build discipline around my work",
+    display_text: 'Build discipline around my work',
     category: 'career',
-    keywords: ['discipline', 'work', 'career', 'professional', 'commitment', 'dedication', 'responsibility']
+    keywords: [
+      'discipline',
+      'work',
+      'career',
+      'professional',
+      'commitment',
+      'dedication',
+      'responsibility',
+    ],
   },
 ];
 
@@ -147,7 +226,7 @@ export const matchCustomGoalToTemplate = (customGoal: string): number => {
  * @returns GoalTemplate or undefined if not found
  */
 export const getTemplateById = (id: number): GoalTemplate | undefined => {
-  return GOAL_TEMPLATES.find(template => template.id === id);
+  return GOAL_TEMPLATES.find((template) => template.id === id);
 };
 
 /**
@@ -159,5 +238,5 @@ export const getTemplateById = (id: number): GoalTemplate | undefined => {
 export const getTemplatesByCategory = (
   category: 'health' | 'productivity' | 'education' | 'creative' | 'career'
 ): GoalTemplate[] => {
-  return GOAL_TEMPLATES.filter(template => template.category === category);
+  return GOAL_TEMPLATES.filter((template) => template.category === category);
 };

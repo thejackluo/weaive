@@ -6,11 +6,13 @@ Tests that verify streaming support for OpenAI, Bedrock, and Anthropic providers
 Run: uv run pytest tests/test_streaming.py -v
 """
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
 import pytest
-from app.services.ai.openai_provider import OpenAIProvider
-from app.services.ai.bedrock_provider import BedrockProvider
+
 from app.services.ai.anthropic_provider import AnthropicProvider
+from app.services.ai.bedrock_provider import BedrockProvider
+from app.services.ai.openai_provider import OpenAIProvider
 
 
 def test_openai_provider_has_stream_method():
