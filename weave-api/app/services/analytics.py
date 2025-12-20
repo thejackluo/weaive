@@ -42,8 +42,11 @@ async def track_event(
             "event_data": event_data,
             "user_id": str(user_id) if user_id else None,
             "session_id": session_id,
-            "timestamp": timestamp.isoformat() if timestamp else None,
         }
+
+        # Only include timestamp if explicitly provided, otherwise let DB default to NOW()
+        if timestamp:
+            event_record["timestamp"] = timestamp.isoformat()
 
         # Insert into database
         result = (
