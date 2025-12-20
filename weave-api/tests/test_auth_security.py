@@ -89,6 +89,9 @@ def test_protected_endpoint_without_auth():
 
 def test_protected_endpoint_with_invalid_token():
     """Test that protected endpoint rejects invalid JWT tokens."""
+    if not settings.SUPABASE_JWT_SECRET:
+        pytest.skip("SUPABASE_JWT_SECRET not configured")
+
     response = client.get(
         "/api/user/me",
         headers={"Authorization": "Bearer invalid-token-12345"},
@@ -164,6 +167,9 @@ def test_create_profile_without_auth():
 
 def test_create_profile_with_invalid_token():
     """Test that profile creation rejects invalid JWT tokens."""
+    if not settings.SUPABASE_JWT_SECRET:
+        pytest.skip("SUPABASE_JWT_SECRET not configured")
+
     response = client.post(
         "/api/user/profile",
         headers={"Authorization": "Bearer invalid-token"},
