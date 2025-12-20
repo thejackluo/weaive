@@ -233,41 +233,24 @@ So that **I process what happened, track what matters to me, and receive persona
 ## Tasks / Subtasks
 
 ### Task 0: Database Migrations (NEW - AC #7, #17)
-- [ ] **Subtask 0.1**: Create database migration for journal_entries table
-  - **Migration file:** `supabase/migrations/YYYYMMDDHHMMSS_story_4_1_journal_entries.sql`
-  - **Story tracking comment:** Add header comment in migration:
-    ```sql
-    -- Migration for Story 4.1: Daily Reflection Entry
-    -- Created: YYYY-MM-DD
-    -- Updates Epic 0 schema with journal functionality
-    ```
-  - Include journal_entries table creation with ALL columns:
-    ```sql
-    CREATE TABLE journal_entries (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id UUID REFERENCES user_profiles(id) NOT NULL,
-      local_date DATE NOT NULL,
-      fulfillment_score INTEGER CHECK (fulfillment_score >= 1 AND fulfillment_score <= 10) NOT NULL,
-      default_responses JSONB,
-      custom_responses JSONB,
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT NOW(),  -- NEW: Track edit history
-      UNIQUE(user_id, local_date)
-    );
-    ```
-  - Include indexes:
-    ```sql
-    CREATE INDEX idx_journal_entries_user_date ON journal_entries(user_id, local_date DESC);
-    ```
-  - Test migration: `npx supabase db push`
+- [x] **Subtask 0.1**: Create database migration for journal_entries table
+  - **Migration file:** `supabase/migrations/20251220000001_story_4_1_journal_schema_update.sql`
+  - **Story tracking comment:** Added header comment in migration
+  - Updated existing journal_entries table schema:
+    - Dropped old `text` column
+    - Added `default_responses JSONB` for structured questions
+    - Added `custom_responses JSONB` for user-defined questions
+    - Made `fulfillment_score` NOT NULL (Story 4.1 requirement)
+  - Migration tested: ✅ Applied successfully via `npx supabase db reset`
 
-- [ ] **Subtask 0.2**: Verify user_profiles.preferences column exists
-  - Check if `user_profiles` table has `preferences JSONB` column
-  - If missing, add to migration:
+- [x] **Subtask 0.2**: Verify user_profiles.preferences column exists
+  - Verified `user_profiles` table was missing `preferences JSONB` column
+  - Added to migration:
     ```sql
     ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS preferences JSONB DEFAULT '{}'::jsonb;
     ```
-  - **Note:** This should already exist from Epic 0 Story 0.2b, but verify as safety check
+  - Added comment: 'User preferences including custom_reflection_questions array. Story 4.1 AC #13.'
+  - ✅ Tested and verified column added successfully
 
 ### Task 1: Reflection Screen UI (AC: #1-#6, #16, #17, #18)
 - [ ] **Subtask 1.1**: Create ReflectionScreen component with navigation decision
