@@ -26,6 +26,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PERSONAS, PersonalityType } from '@/constants/personalityContent';
 import {
   IDENTITY_TRAITS,
@@ -379,11 +380,27 @@ export default function IdentityBootupScreen() {
         formData.identity_traits
       );
 
+      // Save onboarding data to AsyncStorage for Story 1.7
+      // Merge with existing painpoints from Story 1.2
+      const existingDataStr = await AsyncStorage.getItem('onboarding_data');
+      const existingData = existingDataStr ? JSON.parse(existingDataStr) : {};
+
+      await AsyncStorage.setItem(
+        'onboarding_data',
+        JSON.stringify({
+          ...existingData,
+          preferred_name: formData.preferred_name,
+          core_personality: formData.core_personality,
+          personality_selected_at: formData.personality_selected_at,
+          identity_traits: formData.identity_traits,
+        })
+      );
+
       // TODO (Story 0-4): Track analytics event
       // trackEvent('identity_traits_selected', { traits: formData.identity_traits });
 
-      // Navigate to Story 1.7 (First Needle / Goal Input)
-      router.push('/(onboarding)/first-needle');
+      // Navigate to Story 1.7 (Origin Story / Commitment Ritual)
+      router.push('/(onboarding)/origin-story');
     } catch (error) {
       if (__DEV__) {
         console.error('[ONBOARDING] Step 3 error:', error);

@@ -11,6 +11,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { PainpointCard, Painpoint } from '@/components/onboarding/PainpointCard';
 import { useOnboardingStore } from '@/stores/onboardingStore';
@@ -88,11 +89,23 @@ export default function EmotionalStateScreen() {
   );
 
   // Handle continue button
-  const handleContinue = useCallback(() => {
+  const handleContinue = useCallback(async () => {
+    // Save selected painpoints to AsyncStorage for Story 1.7
+    try {
+      await AsyncStorage.setItem(
+        'onboarding_data',
+        JSON.stringify({
+          selected_painpoints: selectedPainpoints,
+        })
+      );
+    } catch (error) {
+      console.error('[EMOTIONAL_STATE] Failed to save painpoints:', error);
+    }
+
     // Navigate to next screen (US-1.3: Insight Reflection)
     // TODO: Send selected_painpoints to backend (lightweight API call)
     router.push('/(onboarding)/insight-reflection');
-  }, []);
+  }, [selectedPainpoints]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
