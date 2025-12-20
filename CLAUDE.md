@@ -338,6 +338,47 @@ weavelight/
 
 **If you encounter a bug:** Check `docs/bugs/` first - it likely has a solution.
 
+### NPM Dependency Management
+
+**🚨 CRITICAL: NEVER use `--legacy-peer-deps` or `--force` flags with npm install**
+
+**Why:** These flags are extremely dangerous and can cause:
+- Silent dependency conflicts that break production
+- Security vulnerabilities from mismatched package versions
+- Difficult-to-debug issues that only appear in specific environments
+- Package corruption that requires full `node_modules` cleanup
+
+**Correct Approach for Peer Dependency Conflicts:**
+
+```bash
+# ❌ NEVER DO THIS
+npm install --legacy-peer-deps
+npm install --force
+
+# ✅ INSTEAD, FIX THE ROOT CAUSE
+1. Identify the conflicting packages (npm will tell you)
+2. Pin exact versions to match peer dependencies
+3. Update/downgrade packages to compatible versions
+4. Run clean install: rm -rf node_modules package-lock.json && npm install
+```
+
+**Example: Fixing React Version Conflicts**
+```json
+// ❌ BAD - Allows version upgrades that break peer deps
+"react-test-renderer": "^19.1.0"
+
+// ✅ GOOD - Pins exact version to match React 19.1.0
+"react-test-renderer": "19.1.0"
+```
+
+**If npm install fails with peer dependency errors:**
+1. Read the error message carefully - it tells you exactly what's incompatible
+2. Check which package versions are required
+3. Pin exact versions in `package.json` to match
+4. Never use `--legacy-peer-deps` as a shortcut
+
+**Backend (Python/uv):** Similar principle applies - never use `--no-deps` or skip dependency resolution. Always fix conflicts at the root cause.
+
 ### Design System Usage
 
 **Always use the design system components - never hardcode styles:**
