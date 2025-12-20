@@ -187,6 +187,27 @@ export default function HomeScreen() {
           </Text>
         </Pressable>
 
+        {/* TEST: Reflection Screen (Story 4.1a) */}
+        <Pressable
+          onPress={() => router.push('/(tabs)/settings/reflection')}
+          style={{
+            backgroundColor: '#3B82F6',
+            paddingHorizontal: 24,
+            paddingVertical: 16,
+            borderRadius: 12,
+          }}
+        >
+          <Text
+            style={{
+              color: '#FAFAFA',
+              fontSize: 16,
+              fontWeight: '600',
+            }}
+          >
+            📝 Test Reflection (Story 4.1a)
+          </Text>
+        </Pressable>
+
         {/* Footer */}
         <View style={{ position: 'absolute', bottom: 32, alignItems: 'center' }}>
           <Text style={{ color: '#71717A', fontSize: 12 }}>React Native-First Design System</Text>
