@@ -57,13 +57,22 @@ class RLSPenetrationTester:
         supabase_key = os.getenv('SUPABASE_ANON_KEY')
 
         if not supabase_url or not supabase_key:
+            # Check if we're in a CI environment
+            is_ci = os.getenv('CI') or os.getenv('GITHUB_ACTIONS') or os.getenv('GITLAB_CI')
+
             logger.warning("⚠️  Supabase not configured (SUPABASE_URL or SUPABASE_ANON_KEY missing)")
             logger.info("This test requires a local Supabase instance:")
             logger.info("  1. npx supabase init")
             logger.info("  2. npx supabase start")
             logger.info("  3. npx supabase db push")
-            logger.info("\n✅ Skipping RLS security tests gracefully (for CI)...")
-            sys.exit(0)  # Exit gracefully for CI without Supabase
+
+            if is_ci:
+                logger.info("\n✅ Skipping RLS security tests gracefully (CI environment detected)...")
+                sys.exit(0)  # Exit gracefully for CI without Supabase
+            else:
+                logger.error("\n❌ FAILED: Supabase not configured in local environment!")
+                logger.error("⚠️  Configure Supabase to run security tests locally")
+                sys.exit(1)  # Exit with error in local/dev to alert developers
 
         self.supabase: Client = create_client(supabase_url, supabase_key)
         self.test_users: List[Dict[str, Any]] = []
