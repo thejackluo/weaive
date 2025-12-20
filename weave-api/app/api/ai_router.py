@@ -11,6 +11,8 @@ Both endpoints use the same AI service with fallback chain and cost tracking.
 import asyncio
 import json
 import logging
+from enum import Enum
+from functools import lru_cache
 from typing import AsyncGenerator, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -27,10 +29,22 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 
+# AI Module Enum (matches database ai_module type)
+class AIModule(str, Enum):
+    """Valid AI module identifiers."""
+    ONBOARDING = "onboarding"
+    TRIAD = "triad"
+    RECAP = "recap"
+    DREAM_SELF = "dream_self"
+    WEEKLY_INSIGHTS = "weekly_insights"
+    GOAL_BREAKDOWN = "goal_breakdown"
+    CHAT = "chat"
+
+
 # Request/Response Models
 class AIGenerateRequest(BaseModel):
     """Request body for AI generation."""
-    module: str = Field(..., description="AI module (onboarding, triad, recap, dream_self, weekly_insights)")
+    module: AIModule = Field(..., description="AI module (onboarding, triad, recap, dream_self, weekly_insights, goal_breakdown, chat)")
     prompt: str = Field(..., description="User input prompt")
     model: Optional[str] = Field(None, description="Override default model (gpt-4o-mini, claude-3-5-haiku, etc.)")
     max_tokens: Optional[int] = Field(2000, description="Maximum tokens to generate")
@@ -50,11 +64,16 @@ class AIGenerateResponse(BaseModel):
     run_id: Optional[str]
 
 
-# Dependency Injection
+# Dependency Injection (Singleton Pattern)
+@lru_cache()
 def get_ai_service() -> AIService:
-    """Get configured AI service instance."""
-    # TODO: Replace with proper dependency injection
-    # For now, create a new instance (should be singleton in production)
+    """
+    Get configured AI service instance (singleton).
+
+    Uses @lru_cache() to ensure only one AIService instance is created
+    and reused across all requests. This prevents repeatedly initializing
+    provider clients and improves performance.
+    """
     import os
 
     from dotenv import load_dotenv
@@ -69,7 +88,7 @@ def get_ai_service() -> AIService:
 
     return AIService(
         db=db,
-        bedrock_region=aws_region,  # Fixed: correct parameter name
+        bedrock_region=aws_region,
         openai_key=openai_key,
         anthropic_key=anthropic_key,
     )
