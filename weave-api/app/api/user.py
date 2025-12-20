@@ -1,10 +1,13 @@
-"""User API endpoints (Story 0.3: Authentication Flow)"""
+"""User API endpoints (Story 0.3: Authentication Flow, Story 1.5: Profile Creation)"""
 
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from supabase import Client
 
-from app.core.deps import get_current_user, get_optional_user
+from app.core.deps import get_current_user, get_optional_user, get_supabase_client
+from app.models.user_profile import UserProfileCreate, UserProfileResponse
+from app.services import user_profile
 
 logger = logging.getLogger(__name__)
 
@@ -108,3 +111,62 @@ async def optional_auth_example(user: dict | None = Depends(get_optional_user)):
             "message": "Hello, anonymous user!",
             "authenticated": False,
         }
+
+
+@router.post(
+    "/profile",
+    response_model=UserProfileResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_profile(
+    profile_data: UserProfileCreate,
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Create user profile after successful authentication (Story 1.5).
+
+    This endpoint should be called immediately after successful OAuth to create
+    the user's profile in the user_profiles table.
+
+    **Authentication:** Not required (uses auth_user_id from request body)
+    **Note:** In production, this should validate the JWT token to ensure
+    the auth_user_id matches the authenticated user.
+
+    **Request Body:**
+    - auth_user_id: Supabase auth user ID (required)
+    - display_name: User display name (optional)
+    - timezone: IANA timezone (default: UTC)
+    - locale: User locale (default: en-US)
+
+    **Status Codes:**
+    - 201: Profile created successfully
+    - 200: Profile already exists (idempotent)
+    - 422: Request body validation error
+    - 500: Server error (database failure)
+
+    **Example Request:**
+    ```json
+    {
+      "auth_user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "display_name": "John Doe",
+      "timezone": "America/Los_Angeles"
+    }
+    ```
+    """
+    try:
+        profile = await user_profile.create_user_profile(
+            supabase=supabase,
+            auth_user_id=profile_data.auth_user_id,
+            display_name=profile_data.display_name,
+            timezone=profile_data.timezone,
+            locale=profile_data.locale,
+        )
+
+        return UserProfileResponse(**profile)
+
+    except Exception as e:
+        logger.error(f"❌ Error creating user profile: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create user profile: {str(e)}",
+        )
