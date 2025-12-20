@@ -139,7 +139,7 @@ sprint-2-stories:
 
   # Epic 4: Reflection & Journaling (20 pts)
   epic-4: in-progress
-  4-1-daily-reflection-entry: ready-for-dev     # 5 pts
+  4-1-daily-reflection-entry: ready-for-dev     # 7 pts (validation applied: +edit flow +countdown timer +timezone)
   4-2-recap-before-reflection: backlog          # 3 pts
   4-3-ai-feedback-generation: backlog           # 5 pts
   4-4-edit-ai-feedback: backlog                 # 3 pts
