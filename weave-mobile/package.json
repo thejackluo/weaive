@@ -15,7 +15,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "_comment": "To use different backend ports: Update API_BASE_URL in .env, then run npm run start:clean"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -63,6 +64,7 @@
     "@typescript-eslint/parser": "^8.50.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "^54.0.8",
+    "dotenv": "^17.2.3",
     "eslint": "^9.39.2",
     "eslint-config-expo": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
