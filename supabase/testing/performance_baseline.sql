@@ -188,7 +188,8 @@ streak_calc AS (
     sc.streak_start,
     sc.streak_length + 1
   FROM date_series ds
-  JOIN streak_calc sc ON ds.local_date = sc.streak_start - INTERVAL '1 day'
+  JOIN streak_calc sc ON ds.local_date = sc.local_date - INTERVAL '1 day'
+  WHERE sc.streak_length < 90  -- Safety: prevent infinite recursion, max 90 days lookback
 )
 SELECT
   MAX(streak_length) as current_streak,
