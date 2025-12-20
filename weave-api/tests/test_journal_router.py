@@ -8,9 +8,8 @@ Coverage: AC #7, #9, #13 (Data Storage, Error Handling, Custom Responses)
 """
 
 import pytest
-from datetime import date
+from datetime import date, timedelta
 from fastapi.testclient import TestClient
-
 
 from app.main import app
 from tests.factories import create_test_user, create_test_journal_entry
@@ -462,6 +461,179 @@ class TestJournalEntryCustomResponseValidation:
 
         custom_resp = data["data"]["custom_responses"]["uuid-bool"]
         assert custom_resp["response"] in ["Yes", "No", True, False]
+
+
+class TestJournalEntryRetrieval:
+    """Edge case: Journal entry retrieval and pre-population (Issue #9)"""
+
+    def test_retrieve_existing_journal_entry_for_today(self, client):
+        """GIVEN: User already created a journal entry for today
+        WHEN: GET /api/journal-entries?local_date=2025-12-20 is called
+        THEN: Existing journal entry is returned with all saved responses
+
+        Validates: Issue #9 - Journal pre-population edge case
+        Purpose: Enable form pre-population when user returns to edit today's journal
+        """
+        # GIVEN: User already created a journal entry for today
+        today = date.today().isoformat()
+        existing_entry = create_test_journal_entry(
+            local_date=today,
+            fulfillment_score=8,
+            default_responses={
+                "today_reflection": "Great day with lots of progress!",
+                "tomorrow_focus": "Continue momentum on project"
+            },
+            custom_responses={
+                "uuid-123": {
+                    "question_text": "Did I meditate?",
+                    "response": "Yes"
+                }
+            }
+        )
+
+        # Simulate existing entry in database (will be mocked in real implementation)
+        # For now, just test the GET endpoint returns correct format
+
+        # WHEN: Retrieving journal entry for today
+        response = client.get(
+            f"/api/journal-entries?local_date={today}",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        # THEN: Existing journal entry is returned
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["data"]["local_date"] == today
+        assert data["data"]["fulfillment_score"] == 8
+        assert data["data"]["default_responses"]["today_reflection"] == "Great day with lots of progress!"
+        assert data["data"]["custom_responses"]["uuid-123"]["response"] == "Yes"
+
+    def test_retrieve_journal_entry_when_none_exists(self, client):
+        """GIVEN: No journal entry exists for today
+        WHEN: GET /api/journal-entries?local_date=2025-12-20 is called
+        THEN: 404 Not Found is returned (form should show empty state)
+
+        Validates: Issue #9 - Empty state handling
+        """
+        # GIVEN: No journal entry exists for today
+        today = date.today().isoformat()
+
+        # WHEN: Attempting to retrieve non-existent journal entry
+        response = client.get(
+            f"/api/journal-entries?local_date={today}",
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        # THEN: 404 Not Found
+        assert response.status_code == 404
+        error = response.json()
+        assert error["error"]["code"] == "JOURNAL_ENTRY_NOT_FOUND"
+        assert "No journal entry found for" in error["error"]["message"]
+
+
+class TestJournalEntryTimezoneEdgeCases:
+    """Edge case: Timezone handling near midnight (Issue #9)"""
+
+    def test_timezone_edge_case_journal_local_date(self, client):
+        """GIVEN: User in PST (UTC-8) submits journal at 11:58 PM PST (7:58 AM UTC next day)
+        WHEN: POST /api/journal-entries with local_date="2025-12-20"
+        THEN: Journal entry saved with local_date="2025-12-20" (not 2025-12-21)
+
+        Validates: Issue #9 - Timezone edge case
+        Purpose: Ensure user's local_date is respected, not server UTC date
+        Critical: Prevents duplicate entry conflicts due to timezone differences
+        """
+        # GIVEN: User in PST timezone submitting near midnight
+        # User's local time: 2025-12-20 11:58 PM PST
+        # Server UTC time: 2025-12-21 07:58 AM UTC
+        user_local_date = "2025-12-20"
+
+        payload = {
+            "local_date": user_local_date,
+            "fulfillment_score": 9,
+            "default_responses": {
+                "today_reflection": "Late night reflection before bed",
+                "tomorrow_focus": "Start fresh tomorrow"
+            },
+            "custom_responses": {}
+        }
+
+        # WHEN: Creating journal entry with user's local date
+        response = client.post(
+            "/api/journal-entries",
+            json=payload,
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        # THEN: Journal entry saved with user's local_date (not server UTC date)
+        assert response.status_code == 201
+        data = response.json()
+
+        # CRITICAL: local_date must match what user sent, not server's UTC date
+        assert data["data"]["local_date"] == user_local_date
+        assert data["data"]["fulfillment_score"] == 9
+
+        # GIVEN: User tries to submit another entry for same local_date
+        # (e.g., if they navigate back and try to submit again)
+        # WHEN: Attempting duplicate submission
+        duplicate_response = client.post(
+            "/api/journal-entries",
+            json=payload,
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        # THEN: Duplicate entry prevented (unique constraint on user_id + local_date)
+        assert duplicate_response.status_code == 409
+        error = duplicate_response.json()
+        assert error["error"]["code"] == "DUPLICATE_JOURNAL_ENTRY"
+
+    def test_local_date_validation_range(self, client):
+        """GIVEN: User submits journal entry with invalid local_date
+        WHEN: local_date is more than 7 days in past or in future
+        THEN: 422 Validation Error
+
+        Validates: Issue #9 - Timezone edge case
+        Purpose: Prevent backdating abuse and future date submissions
+        """
+        # GIVEN: local_date in future
+        future_date = (date.today() + timedelta(days=1)).isoformat()
+
+        payload = {
+            "local_date": future_date,
+            "fulfillment_score": 7,
+            "default_responses": {},
+            "custom_responses": {}
+        }
+
+        # WHEN: Attempting to create journal entry for future date
+        response = client.post(
+            "/api/journal-entries",
+            json=payload,
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        # THEN: Validation error
+        assert response.status_code == 422
+        error = response.json()
+        assert "local_date" in error["error"]["message"].lower()
+        assert "future" in error["error"]["message"].lower()
+
+        # GIVEN: local_date too far in past (>7 days)
+        old_date = (date.today() - timedelta(days=8)).isoformat()
+        payload["local_date"] = old_date
+
+        # WHEN: Attempting to create journal entry for old date
+        response = client.post(
+            "/api/journal-entries",
+            json=payload,
+            headers={"Authorization": "Bearer test-token"}
+        )
+
+        # THEN: Validation error
+        assert response.status_code == 422
+        error = response.json()
+        assert "local_date" in error["error"]["message"].lower()
 
 
 # Additional test TODOs that require database fixtures:
