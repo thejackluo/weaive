@@ -11,13 +11,26 @@ export default function HomeScreen() {
         <Text className="text-base text-text-secondary">Foundation Setup Complete ✅</Text>
       </View>
 
-      {/* Design System Preview Button */}
-      <Pressable
-        onPress={() => router.push('/(tabs)/design-system-showcase')}
-        className="bg-accent-500 px-6 py-4 rounded-lg active:opacity-80 active:scale-98"
-      >
-        <Text className="text-dark-900 text-sm font-medium tracking-wide">View Design System</Text>
-      </Pressable>
+      {/* Design System Buttons */}
+      <View className="gap-3 w-full max-w-xs">
+        <Pressable
+          onPress={() => router.push('/(tabs)/design-system-showcase')}
+          className="bg-accent-500 px-6 py-4 rounded-lg active:opacity-80 active:scale-98"
+        >
+          <Text className="text-dark-900 text-sm font-medium tracking-wide text-center">
+            View Full Design System
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push('/(tabs)/component-testing')}
+          className="bg-violet-600 px-6 py-4 rounded-lg active:opacity-80 active:scale-98 border border-violet-500"
+        >
+          <Text className="text-dark-50 text-sm font-medium tracking-wide text-center">
+            🧪 Component Testing
+          </Text>
+        </Pressable>
+      </View>
 
       <View className="absolute bottom-8 items-center">
         <Text className="text-text-muted text-xs">React Native-First Design System</Text>
