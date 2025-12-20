@@ -71,7 +71,7 @@ export interface GlassViewProps
 
 export function GlassView({
   variant = 'card',
-  disableBlur = false,
+  disableBlur: _disableBlur = false,
   className,
   children,
   ...restProps

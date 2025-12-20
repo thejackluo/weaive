@@ -35,7 +35,7 @@ export const IDENTITY_TRAITS: IdentityTrait[][] = [
   ['Decisive Action'],
   ['Consistent Effort', 'High Standards'],
   ['Emotionally Grounded'],
-  ['Self Aware', 'Continuous Growth']
+  ['Self Aware', 'Continuous Growth'],
 ];
 
 /**

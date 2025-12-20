@@ -13,12 +13,13 @@
 import React, { useCallback } from 'react';
 import {
   Pressable,
-  Text,
+  Text as _Text,
   View,
   StyleSheet,
   ViewStyle,
   TextStyle,
   PressableProps,
+  StyleProp,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -44,8 +45,8 @@ export interface ButtonProps extends Omit<PressableProps, 'style'> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   children: React.ReactNode;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 export function Button({
@@ -64,7 +65,7 @@ export function Button({
   onPress,
   ...pressableProps
 }: ButtonProps) {
-  const { colors, spacing, radius, typography, springs } = useTheme();
+  const { colors, spacing, radius: _radius, typography, springs } = useTheme();
 
   // Animation values
   const scale = useSharedValue(1);

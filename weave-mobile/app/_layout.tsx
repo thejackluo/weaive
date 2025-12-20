@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect as _useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { LogBox } from 'react-native';
 import { ThemeProvider, SimpleToastContainer } from '../src/design-system';

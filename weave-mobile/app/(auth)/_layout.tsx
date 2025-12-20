@@ -65,21 +65,23 @@ export default function AuthLayout() {
       console.log('[AUTH_LAYOUT] ✅ User authenticated, checking onboarding status...');
       setCheckingOnboarding(true);
 
-      hasCompletedOnboarding(user.id).then((completed) => {
-        setCheckingOnboarding(false);
-        if (completed) {
-          console.log('[AUTH_LAYOUT] ✅ Onboarding complete, redirecting to tabs...');
+      hasCompletedOnboarding(user.id)
+        .then((completed) => {
+          setCheckingOnboarding(false);
+          if (completed) {
+            console.log('[AUTH_LAYOUT] ✅ Onboarding complete, redirecting to tabs...');
+            router.replace('/(tabs)' as any);
+          } else {
+            console.log('[AUTH_LAYOUT] ⚠️ Onboarding incomplete, redirecting to onboarding...');
+            router.replace('/(onboarding)/identity-bootup' as any);
+          }
+        })
+        .catch((err) => {
+          console.error('[AUTH_LAYOUT] Error checking onboarding status:', err);
+          setCheckingOnboarding(false);
+          // Default to tabs on error
           router.replace('/(tabs)' as any);
-        } else {
-          console.log('[AUTH_LAYOUT] ⚠️ Onboarding incomplete, redirecting to onboarding...');
-          router.replace('/(onboarding)/identity-bootup' as any);
-        }
-      }).catch((err) => {
-        console.error('[AUTH_LAYOUT] Error checking onboarding status:', err);
-        setCheckingOnboarding(false);
-        // Default to tabs on error
-        router.replace('/(tabs)' as any);
-      });
+        });
     } else if (!user && !inAuthGroup) {
       console.log('[AUTH_LAYOUT] ℹ️ User not authenticated, staying on current screen');
     }
