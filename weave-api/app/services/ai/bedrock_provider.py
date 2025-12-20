@@ -23,10 +23,13 @@ class BedrockProvider(AIProvider):
     """
     AWS Bedrock provider for Claude models.
 
-    Models available:
+    Models available (using cross-region inference profiles):
     - Claude 3.5 Haiku: ~$0.25/$1.25 per MTok (primary for routine operations)
     - Claude 3.7 Sonnet: $3.00/$15.00 per MTok (complex reasoning)
     - Claude 4.5 Haiku: $1.00/$5.00 per MTok (alternative fast model)
+
+    Note: AWS Bedrock now requires using inference profile IDs (not direct model IDs).
+    Cross-region inference profiles have format: us.anthropic.{model-name}
 
     Authentication: AWS IAM credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION)
     """
@@ -41,17 +44,30 @@ class BedrockProvider(AIProvider):
         self.client = boto3.client('bedrock-runtime', region_name=region)
         self.region = region
 
+        # Map user-friendly model names to cross-region inference profile IDs
+        self.model_id_map = {
+            # User-friendly names → Inference profile IDs
+            'claude-3-5-haiku': 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+            'claude-3-7-sonnet': 'us.anthropic.claude-3-7-sonnet-20250219-v2:0',
+            'claude-4-5-haiku': 'us.anthropic.claude-4-5-haiku-20250514-v1:0',
+            # Also accept full inference profile IDs directly
+            'us.anthropic.claude-3-5-haiku-20241022-v1:0': 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+            'us.anthropic.claude-3-7-sonnet-20250219-v2:0': 'us.anthropic.claude-3-7-sonnet-20250219-v2:0',
+            'us.anthropic.claude-4-5-haiku-20250514-v1:0': 'us.anthropic.claude-4-5-haiku-20250514-v1:0',
+        }
+
         # Pricing per million tokens (input/output)
+        # Keys are inference profile IDs
         self.pricing = {
-            'anthropic.claude-3-5-haiku-20241022-v1:0': {
+            'us.anthropic.claude-3-5-haiku-20241022-v1:0': {
                 'input': 0.25 / 1_000_000,
                 'output': 1.25 / 1_000_000
             },
-            'anthropic.claude-3-7-sonnet-20250219-v2:0': {
+            'us.anthropic.claude-3-7-sonnet-20250219-v2:0': {
                 'input': 3.00 / 1_000_000,
                 'output': 15.00 / 1_000_000
             },
-            'anthropic.claude-4-5-haiku-20250514-v1:0': {
+            'us.anthropic.claude-4-5-haiku-20250514-v1:0': {
                 'input': 1.00 / 1_000_000,
                 'output': 5.00 / 1_000_000
             },
@@ -60,7 +76,7 @@ class BedrockProvider(AIProvider):
     def complete(
         self,
         prompt: str,
-        model: str = 'anthropic.claude-3-5-haiku-20241022-v1:0',
+        model: str = 'claude-3-5-haiku',
         **kwargs
     ) -> AIResponse:
         """
@@ -68,8 +84,10 @@ class BedrockProvider(AIProvider):
 
         Args:
             prompt: User input text
-            model: Bedrock model ID (default: Claude 3.5 Haiku)
-            **kwargs: Additional parameters (max_tokens, temperature, etc.)
+            model: Model name (default: 'claude-3-5-haiku')
+                  Can be user-friendly name like 'claude-3-5-haiku'
+                  or full inference profile ID like 'us.anthropic.claude-3-5-haiku-20241022-v1:0'
+            **kwargs: Additional parameters (max_tokens, temperature, system, etc.)
 
         Returns:
             AIResponse with content, tokens, cost
@@ -78,6 +96,9 @@ class BedrockProvider(AIProvider):
             AIProviderError: If Bedrock API call fails
         """
         try:
+            # Map user-friendly model name to inference profile ID
+            model_id = self.model_id_map.get(model, model)
+
             # Prepare request body for Bedrock Messages API
             body = {
                 'anthropic_version': 'bedrock-2023-05-31',
@@ -88,18 +109,25 @@ class BedrockProvider(AIProvider):
             }
 
             # Add optional parameters
-            if 'temperature' in kwargs:
+            if 'temperature' in kwargs and kwargs['temperature'] is not None:
                 body['temperature'] = kwargs['temperature']
-            if 'top_p' in kwargs:
+            if 'top_p' in kwargs and kwargs['top_p'] is not None:
                 body['top_p'] = kwargs['top_p']
-            if 'system' in kwargs:
-                body['system'] = kwargs['system']
 
-            logger.info(f"Invoking Bedrock model: {model}")
+            # Handle system parameter (must be a string for Bedrock, unlike Anthropic direct)
+            if 'system' in kwargs and kwargs['system'] is not None:
+                system = kwargs['system']
+                if isinstance(system, str):
+                    body['system'] = system
+                elif isinstance(system, list) and len(system) > 0:
+                    # If it's a list (Anthropic format), extract text
+                    body['system'] = system[0].get('text', '') if isinstance(system[0], dict) else str(system[0])
 
-            # Invoke model
+            logger.info(f"Invoking Bedrock model: {model} → {model_id}")
+
+            # Invoke model with inference profile ID
             response = self.client.invoke_model(
-                modelId=model,
+                modelId=model_id,
                 body=json.dumps(body),
                 contentType='application/json',
                 accept='application/json',
@@ -198,15 +226,18 @@ class BedrockProvider(AIProvider):
         Args:
             input_tokens: Number of input tokens
             output_tokens: Number of output tokens
-            model: Bedrock model ID
+            model: Model name or inference profile ID
 
         Returns:
             Cost in USD
         """
+        # Map user-friendly name to inference profile ID if needed
+        model_id = self.model_id_map.get(model, model)
+
         # Get pricing for model (default to Haiku if unknown)
         pricing = self.pricing.get(
-            model,
-            self.pricing['anthropic.claude-3-5-haiku-20241022-v1:0']
+            model_id,
+            self.pricing['us.anthropic.claude-3-5-haiku-20241022-v1:0']
         )
 
         input_cost = input_tokens * pricing['input']
