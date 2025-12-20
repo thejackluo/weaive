@@ -5,8 +5,10 @@
  * to the backend API during the onboarding flow.
  */
 
-// API endpoint (use environment variable in production)
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+import { getApiBaseUrl } from '@/utils/api';
+
+// API endpoint (loaded from .env via app.config.js)
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Valid painpoint IDs from Story 1.2
