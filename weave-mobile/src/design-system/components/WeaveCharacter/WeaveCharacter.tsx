@@ -18,17 +18,17 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions as _Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  useAnimatedProps,
+  useAnimatedProps as _useAnimatedProps,
   withTiming,
   withRepeat,
   withSequence,
   Easing,
   interpolate,
-  Extrapolate,
+  Extrapolate as _Extrapolate,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useTheme } from '../../theme/ThemeProvider';

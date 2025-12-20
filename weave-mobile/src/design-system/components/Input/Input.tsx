@@ -21,7 +21,7 @@ import {
   ViewStyle,
   TextStyle,
   TextInputProps,
-  Pressable,
+  Pressable as _Pressable,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -70,12 +70,12 @@ export function Input({
   ...textInputProps
 }: InputProps) {
   const { colors, spacing, radius, typography, springs } = useTheme();
-  const [isFocused, setIsFocused] = useState(false);
+  const [_isFocused, setIsFocused] = useState(false);
   const [characterCount, setCharacterCount] = useState(value?.length || 0);
 
   // Animation values
   const borderOpacity = useSharedValue(0.1);
-  const borderColor = useSharedValue(colors.border.muted);
+  const _borderColor = useSharedValue(colors.border.muted);
   const glassOpacity = useSharedValue(0.05);
 
   // Determine effective variant (error takes precedence)
@@ -261,7 +261,7 @@ function getVariantStyles(variant: InputVariant, colors: any) {
 }
 
 // Size styles
-function getSizeStyles(size: InputSize, spacing: any, typography: any) {
+function getSizeStyles(size: InputSize, spacing: any, _typography: any) {
   const sizes = {
     sm: {
       container: {

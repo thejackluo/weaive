@@ -22,7 +22,13 @@ export interface GoalCardProps {
   reducedMotionEnabled?: boolean;
 }
 
-export const GoalCard: React.FC<GoalCardProps> = ({ id, text, selected, onPress, reducedMotionEnabled = false }) => {
+export const GoalCard: React.FC<GoalCardProps> = ({
+  id: _id,
+  text,
+  selected,
+  onPress,
+  reducedMotionEnabled = false,
+}) => {
   // Animation for tap feedback (disabled if reduced motion is enabled)
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
@@ -55,20 +61,10 @@ export const GoalCard: React.FC<GoalCardProps> = ({ id, text, selected, onPress,
         accessibilityRole="button"
         accessibilityLabel={text}
         accessibilityState={{ selected }}
-        accessibilityHint={
-          selected
-            ? "Currently selected goal"
-            : "Tap to select this goal"
-        }
-        style={[
-          styles.card,
-          selected ? styles.cardSelected : styles.cardUnselected,
-        ]}
+        accessibilityHint={selected ? 'Currently selected goal' : 'Tap to select this goal'}
+        style={[styles.card, selected ? styles.cardSelected : styles.cardUnselected]}
       >
-        <Text style={[
-          styles.text,
-          selected ? styles.textSelected : styles.textUnselected,
-        ]}>
+        <Text style={[styles.text, selected ? styles.textSelected : styles.textUnselected]}>
           {text}
         </Text>
       </TouchableOpacity>

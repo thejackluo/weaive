@@ -161,7 +161,9 @@ export default function LoginScreen() {
       showSimpleToast('Welcome back! 🎉', 'success');
 
       // Get user ID and navigate appropriately based on onboarding status
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         await navigateAfterAuth(user.id, false);
       }
@@ -189,7 +191,9 @@ export default function LoginScreen() {
         showSimpleToast(`Signed in with ${providerName}! 🎉`, 'success');
 
         // Get user ID and navigate appropriately based on onboarding status
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
           await navigateAfterAuth(user.id, false);
         }
@@ -372,135 +376,139 @@ export default function LoginScreen() {
               <View style={styles.form}>
                 {/* Email Input */}
                 <Input
-              label="Email"
-              placeholder="your.email@example.com"
-              value={email}
-              onChangeText={handleEmailChange}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              autoCorrect={false}
-              errorText={emailError}
-              variant={emailError ? 'error' : 'default'}
-              size="lg"
-              disabled={isLoading || isOAuthLoading !== null}
-              accessibilityLabel="Email address"
-              accessibilityHint="Enter your email address"
-            />
+                  label="Email"
+                  placeholder="your.email@example.com"
+                  value={email}
+                  onChangeText={handleEmailChange}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoCorrect={false}
+                  errorText={emailError}
+                  variant={emailError ? 'error' : 'default'}
+                  size="lg"
+                  disabled={isLoading || isOAuthLoading !== null}
+                  accessibilityLabel="Email address"
+                  accessibilityHint="Enter your email address"
+                />
 
-            {/* Password Input */}
-            <Input
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={handlePasswordChange}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              autoComplete="password"
-              autoCorrect={false}
-              errorText={passwordError}
-              variant={passwordError ? 'error' : 'default'}
-              size="lg"
-              disabled={isLoading || isOAuthLoading !== null}
-              accessibilityLabel="Password"
-              accessibilityHint="Enter your password"
-              rightIcon={
-                <Pressable
-                  onPress={() => setShowPassword(!showPassword)}
-                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                  accessibilityRole="button"
+                {/* Password Input */}
+                <Input
+                  label="Password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChangeText={handlePasswordChange}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  autoCorrect={false}
+                  errorText={passwordError}
+                  variant={passwordError ? 'error' : 'default'}
+                  size="lg"
+                  disabled={isLoading || isOAuthLoading !== null}
+                  accessibilityLabel="Password"
+                  accessibilityHint="Enter your password"
+                  rightIcon={
+                    <Pressable
+                      onPress={() => setShowPassword(!showPassword)}
+                      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                      accessibilityRole="button"
+                    >
+                      <Text variant="textXs" color="muted">
+                        {showPassword ? 'Hide' : 'Show'}
+                      </Text>
+                    </Pressable>
+                  }
+                />
+
+                {/* Sign In Button */}
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onPress={handleSignIn}
+                  disabled={isLoading || isOAuthLoading !== null}
+                  loading={isLoading}
+                  fullWidth
+                  style={styles.signInButton}
+                  accessibilityLabel="Sign in"
+                  accessibilityHint="Sign in with your email and password"
                 >
-                  <Text variant="textXs" color="muted">
-                    {showPassword ? 'Hide' : 'Show'}
-                  </Text>
-                </Pressable>
-              }
-            />
+                  {isLoading ? 'Signing In...' : 'Sign In'}
+                </Button>
+              </View>
 
-            {/* Sign In Button */}
-            <Button
-              variant="primary"
-              size="lg"
-              onPress={handleSignIn}
-              disabled={isLoading || isOAuthLoading !== null}
-              loading={isLoading}
-              fullWidth
-              style={styles.signInButton}
-              accessibilityLabel="Sign in"
-              accessibilityHint="Sign in with your email and password"
-            >
-              {isLoading ? 'Signing In...' : 'Sign In'}
-            </Button>
-          </View>
+              {/* Divider */}
+              <View style={styles.divider}>
+                <View style={[styles.dividerLine, { backgroundColor: colors.border.muted }]} />
+                <Text variant="textXs" color="muted">
+                  or continue with
+                </Text>
+                <View style={[styles.dividerLine, { backgroundColor: colors.border.muted }]} />
+              </View>
 
-          {/* Divider */}
-          <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border.muted }]} />
-            <Text variant="textXs" color="muted">
-              or continue with
-            </Text>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border.muted }]} />
-          </View>
-
-          {/* OAuth Buttons */}
-          <View style={styles.oauthButtons}>
-            {/* Sign in with Google - Fully Functional */}
-            <Button
-              variant="secondary"
-              size="lg"
-              onPress={() => handleOAuthSignIn('google')}
-              disabled={isLoading || isOAuthLoading !== null}
-              loading={isOAuthLoading === 'google'}
-              fullWidth
-              style={styles.oauthButton}
-              accessibilityLabel="Sign in with Google"
-            >
-              {isOAuthLoading === 'google' ? (
-                <ActivityIndicator color={colors.accent[500]} />
-              ) : (
-                'Sign in with Google'
-              )}
-            </Button>
-
-            {/* Sign in with Apple - Disabled (requires Apple Developer Program) */}
-            {Platform.OS === 'ios' && (
-              <View>
+              {/* OAuth Buttons */}
+              <View style={styles.oauthButtons}>
+                {/* Sign in with Google - Fully Functional */}
                 <Button
                   variant="secondary"
                   size="lg"
-                  onPress={() => {}}
-                  disabled={true}
+                  onPress={() => handleOAuthSignIn('google')}
+                  disabled={isLoading || isOAuthLoading !== null}
+                  loading={isOAuthLoading === 'google'}
                   fullWidth
-                  style={[styles.oauthButton, { opacity: 0.5 }]}
-                  accessibilityLabel="Sign in with Apple (currently disabled)"
-                  accessibilityHint="Apple Sign-In requires Apple Developer Program membership"
+                  style={styles.oauthButton}
+                  accessibilityLabel="Sign in with Google"
                 >
-                  Sign in with Apple (Coming Soon)
+                  {isOAuthLoading === 'google' ? (
+                    <ActivityIndicator color={colors.accent[500]} />
+                  ) : (
+                    'Sign in with Google'
+                  )}
                 </Button>
-                <Text variant="textXs" color="muted" style={{ textAlign: 'center', marginTop: 4 }}>
-                  Requires Apple Developer Program
-                </Text>
-              </View>
-            )}
-          </View>
 
-          {/* Sign Up Link */}
-          <View style={styles.footer}>
-            <Text variant="textBase" color="secondary">
-              Don't have an account?{' '}
-            </Text>
-            <Pressable
-              onPress={handleNavigateToSignup}
-              disabled={isLoading || isOAuthLoading !== null}
-              accessibilityLabel="Navigate to sign up"
-              accessibilityRole="button"
-              style={{ opacity: isLoading || isOAuthLoading !== null ? 0.5 : 1 }}
-            >
-              <Text variant="textBase" weight="semibold" className="text-accent-500">
-                Sign Up
-              </Text>
-            </Pressable>
-          </View>
+                {/* Sign in with Apple - Disabled (requires Apple Developer Program) */}
+                {Platform.OS === 'ios' && (
+                  <View>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      onPress={() => {}}
+                      disabled={true}
+                      fullWidth
+                      style={[styles.oauthButton, { opacity: 0.5 }]}
+                      accessibilityLabel="Sign in with Apple (currently disabled)"
+                      accessibilityHint="Apple Sign-In requires Apple Developer Program membership"
+                    >
+                      Sign in with Apple (Coming Soon)
+                    </Button>
+                    <Text
+                      variant="textXs"
+                      color="muted"
+                      style={{ textAlign: 'center', marginTop: 4 }}
+                    >
+                      Requires Apple Developer Program
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Sign Up Link */}
+              <View style={styles.footer}>
+                <Text variant="textBase" color="secondary">
+                  Don't have an account?{' '}
+                </Text>
+                <Pressable
+                  onPress={handleNavigateToSignup}
+                  disabled={isLoading || isOAuthLoading !== null}
+                  accessibilityLabel="Navigate to sign up"
+                  accessibilityRole="button"
+                  style={{ opacity: isLoading || isOAuthLoading !== null ? 0.5 : 1 }}
+                >
+                  <Text variant="textBase" weight="semibold" className="text-accent-500">
+                    Sign Up
+                  </Text>
+                </Pressable>
+              </View>
 
               {/* Development Bypass Button - Only in DEV mode */}
               {__DEV__ && (
@@ -515,7 +523,11 @@ export default function LoginScreen() {
                   >
                     🔧 Skip Auth (Dev Only)
                   </Button>
-                  <Text variant="textXs" color="muted" style={{ textAlign: 'center', marginTop: 4 }}>
+                  <Text
+                    variant="textXs"
+                    color="muted"
+                    style={{ textAlign: 'center', marginTop: 4 }}
+                  >
                     Development mode only - bypasses authentication
                   </Text>
                 </View>

@@ -30,9 +30,7 @@ describe('Button', () => {
 
   it('should call onPress when tapped', () => {
     const onPress = jest.fn();
-    const { getByText } = render(
-      <SimpleButton onPress={onPress}>Click Me</SimpleButton>
-    );
+    const { getByText } = render(<SimpleButton onPress={onPress}>Click Me</SimpleButton>);
 
     fireEvent.press(getByText('Click Me'));
     expect(onPress).toHaveBeenCalledTimes(1);
