@@ -48,6 +48,16 @@ export default function WelcomeScreen() {
     router.push('/(tabs)/design-system-showcase');
   };
 
+  /**
+   * Handles the "Component Testing" button press
+   *
+   * Navigates to the component testing screen for validating individual components
+   */
+  const handleComponentTesting = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/component-testing');
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white" style={{ flex: 1, backgroundColor: '#ffffff' }}>
       <View className="flex-1 justify-center items-center px-4" style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 }}>
@@ -97,10 +107,27 @@ export default function WelcomeScreen() {
           onPress={handleViewDesignSystem}
           accessibilityRole="button"
           accessible={true}
-          style={{ backgroundColor: '#e5e5e5', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center' }}
+          style={{ backgroundColor: '#e5e5e5', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}
         >
           <Text className="text-neutral-800 text-sm font-medium tracking-wider" style={{ color: '#262626', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}>
             View Design System
+          </Text>
+        </Pressable>
+
+        {/* Component Testing Button - Dev Tool */}
+        <Pressable
+          className={({ pressed }) =>
+            `bg-violet-600 h-11 rounded-lg w-full justify-center items-center ${
+              pressed ? 'bg-violet-700 scale-[0.98]' : ''
+            }`
+          }
+          onPress={handleComponentTesting}
+          accessibilityRole="button"
+          accessible={true}
+          style={{ backgroundColor: '#7c3aed', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Text className="text-white text-sm font-medium tracking-wider" style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}>
+            🧪 Component Testing
           </Text>
         </Pressable>
       </View>
