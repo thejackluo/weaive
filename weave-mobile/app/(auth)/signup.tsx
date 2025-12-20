@@ -271,7 +271,9 @@ export default function SignupScreen() {
       showSimpleToast('Account created successfully! 🎉', 'success');
 
       // Get user ID and navigate appropriately
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         await navigateAfterAuth(user.id, false);
       }
@@ -321,7 +323,9 @@ export default function SignupScreen() {
         showSimpleToast(`Signed up with ${providerName}! 🎉`, 'success');
 
         // Get user ID and navigate appropriately
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
           await navigateAfterAuth(user.id, false);
         }
@@ -423,7 +427,7 @@ export default function SignupScreen() {
 
           {/* Already Signed In Card */}
           {user && (
-            <View style={styles.alreadySignedInCard}>
+            <View style={{ marginBottom: 24 }}>
               <View
                 style={{
                   backgroundColor: `${colors.accent[500]}15`,
@@ -528,236 +532,248 @@ export default function SignupScreen() {
 
               {/* Signup Form */}
               <View style={styles.form}>
-            {/* Email Input */}
-            <Input
-              label="Email"
-              placeholder="your.email@example.com"
-              value={email}
-              onChangeText={handleEmailChange}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              autoCorrect={false}
-              errorText={emailError}
-              variant={emailError ? 'error' : 'default'}
-              size="lg"
-              disabled={isLoading || isOAuthLoading !== null}
-              accessibilityLabel="Email address"
-              accessibilityHint="Enter your email address"
-            />
+                {/* Email Input */}
+                <Input
+                  label="Email"
+                  placeholder="your.email@example.com"
+                  value={email}
+                  onChangeText={handleEmailChange}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoCorrect={false}
+                  errorText={emailError}
+                  variant={emailError ? 'error' : 'default'}
+                  size="lg"
+                  disabled={isLoading || isOAuthLoading !== null}
+                  accessibilityLabel="Email address"
+                  accessibilityHint="Enter your email address"
+                />
 
-            {/* Password Input */}
-            <View>
-              <Input
-                label="Password"
-                placeholder="Create a password (min 8 characters)"
-                value={password}
-                onChangeText={handlePasswordChange}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoComplete="password-new"
-                autoCorrect={false}
-                errorText={passwordError}
-                helperText={
-                  !passwordError ? `Minimum ${MIN_PASSWORD_LENGTH} characters` : undefined
-                }
-                variant={passwordError ? 'error' : 'default'}
-                size="lg"
-                disabled={isLoading || isOAuthLoading !== null}
-                accessibilityLabel="Password"
-                accessibilityHint={`Enter a password with at least ${MIN_PASSWORD_LENGTH} characters`}
-                rightIcon={
-                  <Pressable
-                    onPress={() => setShowPassword(!showPassword)}
-                    accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                    accessibilityRole="button"
-                  >
-                    <Text variant="textXs" color="muted">
-                      {showPassword ? 'Hide' : 'Show'}
-                    </Text>
-                  </Pressable>
-                }
-              />
+                {/* Password Input */}
+                <View>
+                  <Input
+                    label="Password"
+                    placeholder="Create a password (min 8 characters)"
+                    value={password}
+                    onChangeText={handlePasswordChange}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoComplete="password-new"
+                    autoCorrect={false}
+                    errorText={passwordError}
+                    helperText={
+                      !passwordError ? `Minimum ${MIN_PASSWORD_LENGTH} characters` : undefined
+                    }
+                    variant={passwordError ? 'error' : 'default'}
+                    size="lg"
+                    disabled={isLoading || isOAuthLoading !== null}
+                    accessibilityLabel="Password"
+                    accessibilityHint={`Enter a password with at least ${MIN_PASSWORD_LENGTH} characters`}
+                    rightIcon={
+                      <Pressable
+                        onPress={() => setShowPassword(!showPassword)}
+                        accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                        accessibilityRole="button"
+                      >
+                        <Text variant="textXs" color="muted">
+                          {showPassword ? 'Hide' : 'Show'}
+                        </Text>
+                      </Pressable>
+                    }
+                  />
 
-              {/* Password Strength Indicator */}
-              {password && !passwordError && (
-                <View style={styles.passwordStrength} accessibilityLiveRegion="polite">
-                  {/* Progress Bar */}
-                  <View style={styles.strengthBarContainer}>
-                    <View
-                      style={[
-                        styles.strengthBar,
-                        {
-                          width: `${passwordStrength.progress * 100}%`,
-                          backgroundColor: passwordStrength.color,
-                        },
-                      ]}
-                    />
-                  </View>
+                  {/* Password Strength Indicator */}
+                  {password && !passwordError && (
+                    <View style={styles.passwordStrength} accessibilityLiveRegion="polite">
+                      {/* Progress Bar */}
+                      <View style={styles.strengthBarContainer}>
+                        <View
+                          style={[
+                            styles.strengthBar,
+                            {
+                              width: `${passwordStrength.progress * 100}%`,
+                              backgroundColor: passwordStrength.color,
+                            },
+                          ]}
+                        />
+                      </View>
 
-                  {/* Strength Label */}
-                  <Text
-                    variant="textXs"
-                    style={{ color: passwordStrength.color }}
-                    accessibilityLabel={`Password strength: ${passwordStrength.label}`}
-                  >
-                    {passwordStrength.label}
-                  </Text>
+                      {/* Strength Label */}
+                      <Text
+                        variant="textXs"
+                        style={{ color: passwordStrength.color }}
+                        accessibilityLabel={`Password strength: ${passwordStrength.label}`}
+                      >
+                        {passwordStrength.label}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
 
-            {/* Confirm Password Input */}
-            <Input
-              label="Confirm Password"
-              placeholder="Re-enter your password"
-              value={confirmPassword}
-              onChangeText={handleConfirmPasswordChange}
-              secureTextEntry={!showConfirmPassword}
-              autoCapitalize="none"
-              autoComplete="password-new"
-              autoCorrect={false}
-              errorText={confirmPasswordError}
-              variant={confirmPasswordError ? 'error' : 'default'}
-              size="lg"
-              disabled={isLoading || isOAuthLoading !== null}
-              accessibilityLabel="Confirm password"
-              accessibilityHint="Re-enter your password to confirm"
-              rightIcon={
-                <Pressable
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}
-                  accessibilityRole="button"
-                >
-                  <Text variant="textXs" color="muted">
-                    {showConfirmPassword ? 'Hide' : 'Show'}
-                  </Text>
-                </Pressable>
-              }
-            />
+                {/* Confirm Password Input */}
+                <Input
+                  label="Confirm Password"
+                  placeholder="Re-enter your password"
+                  value={confirmPassword}
+                  onChangeText={handleConfirmPasswordChange}
+                  secureTextEntry={!showConfirmPassword}
+                  autoCapitalize="none"
+                  autoComplete="password-new"
+                  autoCorrect={false}
+                  errorText={confirmPasswordError}
+                  variant={confirmPasswordError ? 'error' : 'default'}
+                  size="lg"
+                  disabled={isLoading || isOAuthLoading !== null}
+                  accessibilityLabel="Confirm password"
+                  accessibilityHint="Re-enter your password to confirm"
+                  rightIcon={
+                    <Pressable
+                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                      accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      accessibilityRole="button"
+                    >
+                      <Text variant="textXs" color="muted">
+                        {showConfirmPassword ? 'Hide' : 'Show'}
+                      </Text>
+                    </Pressable>
+                  }
+                />
 
-            {/* Terms & Privacy Agreement */}
-            <View style={styles.termsCheckbox}>
-              <Checkbox
-                checked={agreedToTerms}
-                onChange={setAgreedToTerms}
-                disabled={isLoading || isOAuthLoading !== null}
-                accessibilityLabel="Agree to Terms of Service and Privacy Policy"
-              />
-              <View style={styles.termsText}>
-                <Text variant="textSm" color="secondary">
-                  I agree to the{' '}
-                </Text>
-                <Pressable
-                  onPress={() => router.push('/(auth)/terms-of-service')}
-                  disabled={isLoading || isOAuthLoading !== null}
-                  accessibilityLabel="Read Terms of Service"
-                  accessibilityRole="link"
+                {/* Terms & Privacy Agreement */}
+                <View style={styles.termsCheckbox}>
+                  <Checkbox
+                    checked={agreedToTerms}
+                    onChange={setAgreedToTerms}
+                    disabled={isLoading || isOAuthLoading !== null}
+                    accessibilityLabel="Agree to Terms of Service and Privacy Policy"
+                  />
+                  <View style={styles.termsText}>
+                    <Text variant="textSm" color="secondary">
+                      I agree to the{' '}
+                    </Text>
+                    <Pressable
+                      onPress={() => router.push('/(auth)/terms-of-service')}
+                      disabled={isLoading || isOAuthLoading !== null}
+                      accessibilityLabel="Read Terms of Service"
+                      accessibilityRole="link"
+                    >
+                      <Text
+                        variant="textSm"
+                        weight="semibold"
+                        style={{ color: colors.accent[500] }}
+                      >
+                        Terms of Service
+                      </Text>
+                    </Pressable>
+                    <Text variant="textSm" color="secondary">
+                      {' '}
+                      and{' '}
+                    </Text>
+                    <Pressable
+                      onPress={() => router.push('/(auth)/privacy-policy')}
+                      disabled={isLoading || isOAuthLoading !== null}
+                      accessibilityLabel="Read Privacy Policy"
+                      accessibilityRole="link"
+                    >
+                      <Text
+                        variant="textSm"
+                        weight="semibold"
+                        style={{ color: colors.accent[500] }}
+                      >
+                        Privacy Policy
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                {/* Create Account Button */}
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onPress={handleSignUp}
+                  disabled={isLoading || !agreedToTerms || isOAuthLoading !== null}
+                  loading={isLoading}
+                  fullWidth
+                  style={styles.signUpButton}
+                  accessibilityLabel="Create account"
+                  accessibilityHint="Create a new account with your email and password"
                 >
-                  <Text variant="textSm" weight="semibold" style={{ color: colors.accent[500] }}>
-                    Terms of Service
-                  </Text>
-                </Pressable>
-                <Text variant="textSm" color="secondary">
-                  {' '}
-                  and{' '}
-                </Text>
-                <Pressable
-                  onPress={() => router.push('/(auth)/privacy-policy')}
-                  disabled={isLoading || isOAuthLoading !== null}
-                  accessibilityLabel="Read Privacy Policy"
-                  accessibilityRole="link"
-                >
-                  <Text variant="textSm" weight="semibold" style={{ color: colors.accent[500] }}>
-                    Privacy Policy
-                  </Text>
-                </Pressable>
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
+                </Button>
               </View>
-            </View>
 
-            {/* Create Account Button */}
-            <Button
-              variant="primary"
-              size="lg"
-              onPress={handleSignUp}
-              disabled={isLoading || !agreedToTerms || isOAuthLoading !== null}
-              loading={isLoading}
-              fullWidth
-              style={styles.signUpButton}
-              accessibilityLabel="Create account"
-              accessibilityHint="Create a new account with your email and password"
-            >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
-            </Button>
-          </View>
+              {/* Divider */}
+              <View style={styles.dividerContainer}>
+                <View style={[styles.divider, { backgroundColor: colors.border.muted }]} />
+                <Text variant="textSm" color="muted" style={styles.dividerText}>
+                  or continue with
+                </Text>
+                <View style={[styles.divider, { backgroundColor: colors.border.muted }]} />
+              </View>
 
-          {/* Divider */}
-          <View style={styles.dividerContainer}>
-            <View style={[styles.divider, { backgroundColor: colors.border.muted }]} />
-            <Text variant="textSm" color="muted" style={styles.dividerText}>
-              or continue with
-            </Text>
-            <View style={[styles.divider, { backgroundColor: colors.border.muted }]} />
-          </View>
-
-          {/* OAuth Buttons */}
-          <View style={styles.oauthButtons}>
-            {/* Sign up with Google - Fully Functional */}
-            <Button
-              variant="secondary"
-              size="lg"
-              onPress={() => handleOAuthSignIn('google')}
-              disabled={isLoading || isOAuthLoading !== null}
-              loading={isOAuthLoading === 'google'}
-              fullWidth
-              style={styles.oauthButton}
-              accessibilityLabel="Sign up with Google"
-            >
-              {isOAuthLoading === 'google' ? (
-                <ActivityIndicator color={colors.accent[500]} />
-              ) : (
-                'Sign up with Google'
-              )}
-            </Button>
-
-            {/* Sign up with Apple - Disabled (requires Apple Developer Program) */}
-            {Platform.OS === 'ios' && (
-              <View>
+              {/* OAuth Buttons */}
+              <View style={styles.oauthButtons}>
+                {/* Sign up with Google - Fully Functional */}
                 <Button
                   variant="secondary"
                   size="lg"
-                  onPress={() => {}}
-                  disabled={true}
+                  onPress={() => handleOAuthSignIn('google')}
+                  disabled={isLoading || isOAuthLoading !== null}
+                  loading={isOAuthLoading === 'google'}
                   fullWidth
-                  style={[styles.oauthButton, { opacity: 0.5 }]}
-                  accessibilityLabel="Sign up with Apple (currently disabled)"
-                  accessibilityHint="Apple Sign-In requires Apple Developer Program membership"
+                  style={styles.oauthButton}
+                  accessibilityLabel="Sign up with Google"
                 >
-                  Sign up with Apple (Coming Soon)
+                  {isOAuthLoading === 'google' ? (
+                    <ActivityIndicator color={colors.accent[500]} />
+                  ) : (
+                    'Sign up with Google'
+                  )}
                 </Button>
-                <Text variant="textXs" color="muted" style={{ textAlign: 'center', marginTop: 4 }}>
-                  Requires Apple Developer Program
-                </Text>
-              </View>
-            )}
-          </View>
 
-          {/* Login Link */}
-          <View style={styles.footer}>
-            <Text variant="textBase" color="secondary">
-              Already have an account?{' '}
-            </Text>
-            <Pressable
-              onPress={handleNavigateToLogin}
-              disabled={isLoading || isOAuthLoading !== null}
-              accessibilityLabel="Navigate to login"
-              accessibilityRole="button"
-            >
-              <Text variant="textBase" weight="semibold" className="text-accent-500">
-                Log In
-              </Text>
-            </Pressable>
-          </View>
+                {/* Sign up with Apple - Disabled (requires Apple Developer Program) */}
+                {Platform.OS === 'ios' && (
+                  <View>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      onPress={() => {}}
+                      disabled={true}
+                      fullWidth
+                      style={[styles.oauthButton, { opacity: 0.5 }]}
+                      accessibilityLabel="Sign up with Apple (currently disabled)"
+                      accessibilityHint="Apple Sign-In requires Apple Developer Program membership"
+                    >
+                      Sign up with Apple (Coming Soon)
+                    </Button>
+                    <Text
+                      variant="textXs"
+                      color="muted"
+                      style={{ textAlign: 'center', marginTop: 4 }}
+                    >
+                      Requires Apple Developer Program
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Login Link */}
+              <View style={styles.footer}>
+                <Text variant="textBase" color="secondary">
+                  Already have an account?{' '}
+                </Text>
+                <Pressable
+                  onPress={handleNavigateToLogin}
+                  disabled={isLoading || isOAuthLoading !== null}
+                  accessibilityLabel="Navigate to login"
+                  accessibilityRole="button"
+                >
+                  <Text variant="textBase" weight="semibold" className="text-accent-500">
+                    Log In
+                  </Text>
+                </Pressable>
+              </View>
             </>
           )}
         </ScrollView>
@@ -803,7 +819,6 @@ const styles = StyleSheet.create({
   strengthBar: {
     height: '100%',
     borderRadius: 2,
-    transition: 'width 0.3s ease',
   },
   termsCheckbox: {
     flexDirection: 'row',

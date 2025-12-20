@@ -22,7 +22,7 @@ import { router } from 'expo-router';
 import { Button, showSimpleToast } from '@/design-system';
 import { signInWithApple, signInWithGoogle } from '@lib/auth';
 import { bypassAuthForDev } from '@lib/authHelpers';
-import { supabase } from '@lib/supabase';
+import { supabase as _supabase } from '@lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 
 type AuthProvider = 'apple' | 'google' | 'email';
@@ -276,39 +276,39 @@ export default function AuthenticationScreen() {
               </Button>
             </View>
 
-          <View className="mb-4" style={{ marginBottom: 16 }}>
-            <Button
-              variant="secondary"
-              size="lg"
-              fullWidth
-              onPress={handleAppleSignIn}
-              disabled={loading}
-              loading={loading && activeProvider === 'apple'}
-              leftIcon={<Text style={{ fontSize: 20 }}></Text>}
-            >
-              Sign in with Apple
-            </Button>
-          </View>
+            <View className="mb-4" style={{ marginBottom: 16 }}>
+              <Button
+                variant="secondary"
+                size="lg"
+                fullWidth
+                onPress={handleAppleSignIn}
+                disabled={loading}
+                loading={loading && activeProvider === 'apple'}
+                leftIcon={<Text style={{ fontSize: 20 }}></Text>}
+              >
+                Sign in with Apple
+              </Button>
+            </View>
 
-          <View
-            className="flex-row items-center my-6"
-            style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 24 }}
-          >
             <View
-              className="flex-1 h-px bg-neutral-200"
-              style={{ flex: 1, height: 1, backgroundColor: '#e5e7eb' }}
-            />
-            <Text
-              className="mx-4 text-sm text-neutral-400 font-medium"
-              style={{ marginHorizontal: 16, fontSize: 14, color: '#9ca3af', fontWeight: '500' }}
+              className="flex-row items-center my-6"
+              style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 24 }}
             >
-              or
-            </Text>
-            <View
-              className="flex-1 h-px bg-neutral-200"
-              style={{ flex: 1, height: 1, backgroundColor: '#e5e7eb' }}
-            />
-          </View>
+              <View
+                className="flex-1 h-px bg-neutral-200"
+                style={{ flex: 1, height: 1, backgroundColor: '#e5e7eb' }}
+              />
+              <Text
+                className="mx-4 text-sm text-neutral-400 font-medium"
+                style={{ marginHorizontal: 16, fontSize: 14, color: '#9ca3af', fontWeight: '500' }}
+              >
+                or
+              </Text>
+              <View
+                className="flex-1 h-px bg-neutral-200"
+                style={{ flex: 1, height: 1, backgroundColor: '#e5e7eb' }}
+              />
+            </View>
 
             <View className="mb-4" style={{ marginBottom: 16 }}>
               <Button

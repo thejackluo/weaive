@@ -12,7 +12,7 @@ import { View, Text, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { Button, showSimpleToast } from '@/design-system';
+import { Button as _Button, showSimpleToast } from '@/design-system';
 
 export default function HomeScreen() {
   const router = useRouter();

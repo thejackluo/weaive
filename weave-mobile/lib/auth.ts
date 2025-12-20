@@ -123,7 +123,7 @@ export async function signInWithApple(): Promise<AuthResult> {
 
       console.log('[AUTH] Browser result received:', {
         type: result.type,
-        url: result.url ? result.url.substring(0, 100) + '...' : 'no URL',
+        url: result.type === 'success' ? result.url.substring(0, 100) + '...' : 'no URL',
       });
 
       if (result.type === 'cancel') {
@@ -226,7 +226,7 @@ export async function signInWithGoogle(): Promise<AuthResult> {
 
       console.log('[AUTH] Browser result received:', {
         type: result.type,
-        url: result.url ? result.url.substring(0, 100) + '...' : 'no URL',
+        url: result.type === 'success' ? result.url.substring(0, 100) + '...' : 'no URL',
       });
 
       if (result.type === 'cancel') {
