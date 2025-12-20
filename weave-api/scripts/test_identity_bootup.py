@@ -3,12 +3,13 @@ Diagnostic script to test identity bootup endpoint with real user data.
 This helps us understand why 404 errors are occurring.
 """
 
-import jwt
-import requests
 from datetime import datetime, timedelta, timezone
 
-from app.core.config import settings
+import jwt
+import requests
 from supabase import create_client
+
+from app.core.config import settings
 
 
 def create_test_jwt_for_existing_user(auth_user_id: str) -> str:
@@ -32,7 +33,7 @@ def test_identity_bootup_with_user(auth_user_id: str, user_index: int):
 
     # Create JWT token
     token = create_test_jwt_for_existing_user(auth_user_id)
-    print(f"✅ Generated JWT token")
+    print("✅ Generated JWT token")
 
     # Test data
     test_data = {
@@ -42,7 +43,7 @@ def test_identity_bootup_with_user(auth_user_id: str, user_index: int):
     }
 
     # Call API
-    print(f"📡 Calling POST /api/onboarding/identity-bootup...")
+    print("📡 Calling POST /api/onboarding/identity-bootup...")
     response = requests.post(
         "http://localhost:8000/api/onboarding/identity-bootup",
         json=test_data,

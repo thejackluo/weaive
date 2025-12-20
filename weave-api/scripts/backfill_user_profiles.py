@@ -7,6 +7,7 @@ Useful for fixing the 404 error when existing users try to submit identity bootu
 Run with: uv run python backfill_user_profiles.py
 """
 import os
+
 from supabase import create_client
 
 # Connect to Supabase with admin privileges

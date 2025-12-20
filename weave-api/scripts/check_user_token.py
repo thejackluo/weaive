@@ -3,11 +3,12 @@ Script to help diagnose why a user is getting 404 errors.
 This decodes their JWT token and checks if their auth_user_id exists in user_profiles.
 """
 
-import jwt
 import sys
 
-from app.core.config import settings
+import jwt
 from supabase import create_client
+
+from app.core.config import settings
 
 
 def decode_jwt(token: str) -> dict:
@@ -45,14 +46,14 @@ def check_user_profile(auth_user_id: str):
 
     if result.data:
         profile = result.data[0]
-        print(f"\n✅ USER PROFILE EXISTS!")
+        print("\n✅ USER PROFILE EXISTS!")
         print(f"   ID: {profile['id']}")
         print(f"   auth_user_id: {profile['auth_user_id']}")
         print(f"   preferred_name: {profile.get('preferred_name', 'None')}")
         print(f"   created_at: {profile['created_at']}")
         return True
     else:
-        print(f"\n❌ USER PROFILE NOT FOUND")
+        print("\n❌ USER PROFILE NOT FOUND")
         print(f"   auth_user_id '{auth_user_id}' does not exist in user_profiles table")
         print("\n🔍 Checking auth.users...")
 
@@ -61,13 +62,13 @@ def check_user_profile(auth_user_id: str):
             auth_result = supabase.auth.admin.get_user_by_id(auth_user_id)
             if auth_result:
                 print(f"   ✅ User EXISTS in auth.users (email: {auth_result.user.email})")
-                print(f"   ⚠️  But NO user_profile was created (trigger might have failed)")
+                print("   ⚠️  But NO user_profile was created (trigger might have failed)")
                 print("\n💡 SOLUTION: Create user_profile with migration:")
-                print(f"      INSERT INTO user_profiles (auth_user_id, timezone, locale)")
+                print("      INSERT INTO user_profiles (auth_user_id, timezone, locale)")
                 print(f"      VALUES ('{auth_user_id}', 'America/Los_Angeles', 'en-US');")
-        except:
-            print(f"   ❌ User does NOT exist in auth.users either")
-            print(f"   This JWT is for a non-existent user!")
+        except Exception:
+            print("   ❌ User does NOT exist in auth.users either")
+            print("   This JWT is for a non-existent user!")
 
         return False
 
@@ -129,7 +130,7 @@ def main():
         print("❌ User profile is missing - THIS IS THE PROBLEM")
         print("\n💡 SOLUTION: Create the missing user_profile")
         print("   Run this SQL in Supabase SQL Editor:")
-        print(f"\n   INSERT INTO user_profiles (auth_user_id, timezone, locale)")
+        print("\n   INSERT INTO user_profiles (auth_user_id, timezone, locale)")
         print(f"   VALUES ('{auth_user_id}', 'America/Los_Angeles', 'en-US');")
 
 

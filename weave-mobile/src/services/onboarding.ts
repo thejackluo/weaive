@@ -160,9 +160,10 @@ export async function storeIdentityBootup(
       console.log('❌ Response Status:', response.status);
 
       // Handle error.detail that might be an object or string
-      const errorMessage = typeof error.detail === 'string'
-        ? error.detail
-        : JSON.stringify(error.detail) || `API error: ${response.status}`;
+      const errorMessage =
+        typeof error.detail === 'string'
+          ? error.detail
+          : JSON.stringify(error.detail) || `API error: ${response.status}`;
 
       throw new Error(errorMessage);
     }

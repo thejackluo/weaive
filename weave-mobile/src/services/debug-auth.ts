@@ -3,6 +3,8 @@
  * Use this to troubleshoot 404 errors in identity bootup.
  */
 
+import { decode as base64Decode } from 'base-64';
+
 import { supabase } from '@lib/supabase';
 
 /**
@@ -51,8 +53,9 @@ export async function debugAuthState() {
     try {
       const base64Url = session.access_token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+
       const jsonPayload = decodeURIComponent(
-        atob(base64)
+        base64Decode(base64)
           .split('')
           .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
           .join('')

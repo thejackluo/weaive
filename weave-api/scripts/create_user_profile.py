@@ -3,6 +3,7 @@ Quick script to create user_profile for an existing auth user.
 Run with: uv run python create_user_profile.py
 """
 import os
+
 from supabase import create_client
 
 # Get user's auth_user_id from frontend logs or ask user
