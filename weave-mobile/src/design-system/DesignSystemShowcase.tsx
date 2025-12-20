@@ -9,7 +9,7 @@ import React, { useState } from 'react';
 import {
   View,
   ScrollView,
-  Text as RNText,
+  Text as _RNText,
   StyleSheet,
   SafeAreaView,
   StatusBar,
@@ -21,7 +21,7 @@ import { Button } from './components/Button/Button';
 import { Checkbox } from './components/Checkbox/Checkbox';
 import { Card } from './components/Card/Card';
 import { WeaveCharacter } from './components/WeaveCharacter/WeaveCharacter';
-import { Text, Heading, Title, Body, Caption } from './components/Text';
+import { Text as _Text, Heading, Title, Body, Caption } from './components/Text';
 
 function ShowcaseContent() {
   const { colors, spacing } = useTheme();
@@ -30,7 +30,7 @@ function ShowcaseContent() {
   const [checkbox1, setCheckbox1] = useState(false);
   const [checkbox2, setCheckbox2] = useState(true);
   const [checkbox3, setCheckbox3] = useState(false);
-  const [level, setLevel] = useState(25);
+  const [_level, _setLevel] = useState(25);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>

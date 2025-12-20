@@ -25,7 +25,7 @@ import {
   TextInput,
   SafeAreaView,
   StyleSheet,
-  Platform,
+  Platform as _Platform,
   AccessibilityInfo,
   Keyboard,
 } from 'react-native';
@@ -42,7 +42,7 @@ import {
 // ============================================================================
 
 // Spacing (follows 8px grid)
-const SPACING = {
+const _SPACING = {
   xs: 4,
   sm: 8,
   md: 12,
@@ -52,7 +52,7 @@ const SPACING = {
 } as const;
 
 // Typography
-const FONT_SIZE = {
+const _FONT_SIZE = {
   xs: 12,
   sm: 14,
   md: 16,
@@ -62,7 +62,7 @@ const FONT_SIZE = {
 } as const;
 
 // Colors
-const COLORS = {
+const _COLORS = {
   primary: '#4CAF50',
   primaryLight: 'rgba(76, 175, 80, 0.1)',
   text: {
@@ -83,7 +83,7 @@ const COLORS = {
 } as const;
 
 // Component sizing
-const MIN_TOUCH_TARGET = 64; // React Native minimum for accessibility
+const _MIN_TOUCH_TARGET = 64; // React Native minimum for accessibility
 const MAX_CUSTOM_GOAL_LENGTH = 80;
 const MAX_CUSTOMIZATION_LENGTH = 30;
 const MIN_CUSTOM_GOAL_LENGTH = 3;
@@ -226,15 +226,15 @@ export default function FirstNeedleScreen() {
     if (text.length <= MAX_CUSTOMIZATION_LENGTH) {
       setCustomizationText(text);
       const trimmedText = text.trim();
-      setGoalData(prev => ({
+      setGoalData((prev) => ({
         ...prev,
         customization_text: trimmedText || null, // Store trimmed or null
       }));
 
       // TODO (Story 0-4): Track analytics event 'first_needle_customization_entered'
       // Example: analytics.track('first_needle_customization_entered', {
-        //   customization_text: trimmedText
-        // });
+      //   customization_text: trimmedText
+      // });
     }
   };
 
@@ -260,8 +260,8 @@ export default function FirstNeedleScreen() {
   /**
    * Handle "Skip" customization
    */
-  const handleSkipCustomization = () => {
-    setGoalData(prev => ({
+  const _handleSkipCustomization = () => {
+    setGoalData((prev) => ({
       ...prev,
       customization_text: null,
     }));
@@ -313,7 +313,9 @@ export default function FirstNeedleScreen() {
     });
 
     // Accessible announcement for screen readers
-    AccessibilityInfo.announceForAccessibility(`Goal confirmed: ${goalData.display_text}. Loading your personalized path.`);
+    AccessibilityInfo.announceForAccessibility(
+      `Goal confirmed: ${goalData.display_text}. Loading your personalized path.`
+    );
 
     // Dev logging
     if (__DEV__) {
@@ -376,9 +378,7 @@ export default function FirstNeedleScreen() {
               accessibilityLabel="Type your own goal"
               accessibilityHint="Opens custom goal input field"
             >
-              <Text style={styles.customGoalLink}>
-                Can't find yours? Type your own goal.
-              </Text>
+              <Text style={styles.customGoalLink}>Can't find yours? Type your own goal.</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.customInputContainer}>
@@ -404,9 +404,7 @@ export default function FirstNeedleScreen() {
         {/* Optional Customization Step (AC #8-#9) - Inline */}
         {isContinueEnabled && !showCustomization && (
           <View style={styles.customizationPrompt}>
-            <Text style={styles.customizationLabel}>
-              Want to make this more specific?
-            </Text>
+            <Text style={styles.customizationLabel}>Want to make this more specific?</Text>
             <TextInput
               value={customizationText}
               onChangeText={handleCustomizationChange}
@@ -429,18 +427,17 @@ export default function FirstNeedleScreen() {
         <TouchableOpacity
           onPress={handleContinueFromSelection}
           disabled={!isContinueEnabled}
-          style={[
-            styles.continueButton,
-            !isContinueEnabled && styles.continueButtonDisabled,
-          ]}
+          style={[styles.continueButton, !isContinueEnabled && styles.continueButtonDisabled]}
           accessibilityRole="button"
           accessibilityLabel="Continue to confirmation"
           accessibilityState={{ disabled: !isContinueEnabled }}
         >
-          <Text style={[
-            styles.continueButtonText,
-            !isContinueEnabled && styles.continueButtonTextDisabled,
-          ]}>
+          <Text
+            style={[
+              styles.continueButtonText,
+              !isContinueEnabled && styles.continueButtonTextDisabled,
+            ]}
+          >
             Continue
           </Text>
         </TouchableOpacity>
@@ -471,12 +468,8 @@ export default function FirstNeedleScreen() {
 
           {/* Confirmation Content */}
           <View style={styles.confirmationContent}>
-            <Text style={styles.confirmationMessage}>
-              Ready to commit to this Needle?
-            </Text>
-            <Text style={styles.confirmationGoalText}>
-              {displayText}
-            </Text>
+            <Text style={styles.confirmationMessage}>Ready to commit to this Needle?</Text>
+            <Text style={styles.confirmationGoalText}>{displayText}</Text>
           </View>
 
           {/* Confirm Button */}
@@ -486,9 +479,7 @@ export default function FirstNeedleScreen() {
             accessibilityRole="button"
             accessibilityLabel="Confirm your first Needle"
           >
-            <Text style={styles.confirmButtonText}>
-              This will be my first Needle
-            </Text>
+            <Text style={styles.confirmButtonText}>This will be my first Needle</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

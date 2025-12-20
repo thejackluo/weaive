@@ -166,7 +166,9 @@ export default function IdentityBootupScreen() {
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (_, gestureState) => {
       // Activate when horizontal movement exceeds vertical and threshold is met
-      return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      return (
+        Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)
+      );
     },
     onPanResponderRelease: (_, gestureState) => {
       // Swipe left (next card) if moved more than 50px to the left
@@ -579,7 +581,7 @@ export default function IdentityBootupScreen() {
                         marginBottom: 16,
                         justifyContent: 'center',
                         alignItems: 'center',
-                        transform: [{ scale: iconPulseAnim }]
+                        transform: [{ scale: iconPulseAnim }],
                       }}
                     >
                       <Text style={{ fontSize: 24 }}>🧵</Text>
@@ -732,7 +734,7 @@ export default function IdentityBootupScreen() {
             justifyContent: 'center',
             alignItems: 'center',
             opacity: canContinueStep2 ? 1 : 0.5,
-            marginTop: 24
+            marginTop: 24,
           }}
           accessibilityRole="button"
           accessibilityLabel="Continue to identity traits"
@@ -806,7 +808,8 @@ export default function IdentityBootupScreen() {
             >
               {row.map((trait) => {
                 const isSelected = formData.identity_traits.includes(trait);
-                const isDisabled = !isSelected && formData.identity_traits.length >= REQUIRED_TRAITS;
+                const isDisabled =
+                  !isSelected && formData.identity_traits.length >= REQUIRED_TRAITS;
                 return (
                   <TouchableOpacity
                     key={trait}
@@ -824,7 +827,7 @@ export default function IdentityBootupScreen() {
                       justifyContent: 'center',
                       alignItems: 'center',
                       opacity: isDisabled ? 0.5 : 1,
-                      flexShrink: 0
+                      flexShrink: 0,
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={`${trait} trait`}

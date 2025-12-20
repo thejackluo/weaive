@@ -57,7 +57,7 @@ def test_openai_quick():
             elif chunk['type'] == 'done':
                 elapsed = time.time() - start
                 print("\n" + "-" * 60)
-                print(f"\n✅ Success!")
+                print("\n✅ Success!")
                 print(f"   Time: {elapsed:.2f}s")
                 print(f"   Tokens: {chunk['input_tokens']} in + {chunk['output_tokens']} out")
                 print(f"   Cost: ${chunk['cost_usd']:.6f}")
@@ -102,7 +102,7 @@ def test_bedrock_quick():
             elif chunk['type'] == 'done':
                 elapsed = time.time() - start
                 print("\n" + "-" * 60)
-                print(f"\n✅ Success!")
+                print("\n✅ Success!")
                 print(f"   Time: {elapsed:.2f}s")
                 print(f"   Tokens: {chunk['input_tokens']} in + {chunk['output_tokens']} out")
                 print(f"   Cost: ${chunk['cost_usd']:.6f}")

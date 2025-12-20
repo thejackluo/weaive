@@ -27,11 +27,7 @@ export default function PrivacyPolicyScreen() {
       style={[styles.container, { backgroundColor: colors.background.primary }]}
       edges={['top']}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        accessibilityRole="article"
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <Text variant="displayMd" weight="bold" style={{ color: colors.text.primary }}>
