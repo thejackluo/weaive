@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 
 from app.services.ai.ai_service import AIService
 from app.services.ai.rate_limiter import RateLimitError
-from app.core.database import get_db
+from app.core.deps import get_supabase_client
 
 load_dotenv()
 
@@ -35,7 +35,7 @@ def ai_service():
     anthropic_key = os.getenv('ANTHROPIC_API_KEY')
     aws_region = os.getenv('AWS_REGION', 'us-east-1')
 
-    db = get_db()
+    db = get_supabase_client()
 
     return AIService(
         db=db,
