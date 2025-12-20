@@ -8,13 +8,12 @@ from pydantic import BaseModel, Field
 
 
 class UserProfileCreate(BaseModel):
-    """Request model for creating a user profile after authentication."""
+    """Request model for creating a user profile after authentication.
 
-    auth_user_id: str = Field(
-        ...,
-        description="Supabase auth user ID (from JWT 'sub' field)",
-        min_length=1,
-    )
+    Note: auth_user_id is extracted from JWT token, not from request body.
+    This ensures users can only create profiles for themselves.
+    """
+
     display_name: Optional[str] = Field(
         None,
         description="User display name",
@@ -35,7 +34,6 @@ class UserProfileCreate(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                    "auth_user_id": "550e8400-e29b-41d4-a716-446655440000",
                     "display_name": "John Doe",
                     "timezone": "America/Los_Angeles",
                     "locale": "en-US",
