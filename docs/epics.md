@@ -723,13 +723,15 @@ This document provides the complete epic and story breakdown for Weave, decompos
 ---
 
 ### Epic DS: Design System Rebuild (74 pts)
-**User Outcome:** Complete rebuild of the Weavelight Design System with 70 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
+**User Outcome:** Complete rebuild as a new standalone package **`weave-design-system`** with 70 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
 
 **FRs Covered:** FR-DS-1, FR-DS-2, FR-DS-3, FR-DS-4, FR-DS-5, FR-DS-6, FR-DS-7, FR-DS-8, FR-DS-9, FR-DS-10
 
 **Why This Order:** Design system foundation enables consistent, rapid UI development across all other epics. Must be completed early (ideally before or alongside Epic 1) to prevent design debt and component inconsistencies.
 
-**Context:** The existing design system is "vibe-coded," buggy, and inconsistent. This epic rebuilds it from scratch with 220+ design tokens, Tamagui-inspired composable anatomy, spring physics animations, and 75% test coverage.
+**Package Structure:** New standalone package at `packages/weave-design-system/` with npm package name `@weave/design-system`. Import path: `import { Button } from '@weave/design-system'`. Old system (`src/design-system/`) will be deprecated and removed after migration.
+
+**Context:** The existing design system (`src/design-system`) is "vibe-coded," buggy, and inconsistent. This epic creates a **completely new package** from scratch with 220+ design tokens, Tamagui-inspired composable anatomy, spring physics animations, and 75% test coverage.
 
 **Stories:**
 
