@@ -77,10 +77,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/weave/weave-design-system.git"
+    "url": "https://github.com/thejackluo/weavelight.git",
+    "directory": "packages/weave-design-system"
   },
   "bugs": {
-    "url": "https://github.com/weave/weave-design-system/issues"
+    "url": "https://github.com/thejackluo/weavelight/issues"
   },
-  "homepage": "https://github.com/weave/weave-design-system#readme"
+  "homepage": "https://github.com/thejackluo/weavelight/tree/main/packages/weave-design-system#readme"
 }
