@@ -49,7 +49,7 @@ export default function CustomQuestionInput({
           </View>
         );
 
-      case 'numeric':
+      case 'numeric': {
         const numValue = typeof value === 'number' ? value : 5;
         return (
           <View>
@@ -67,8 +67,9 @@ export default function CustomQuestionInput({
             </View>
           </View>
         );
+      }
 
-      case 'yes_no':
+      case 'yes_no': {
         const boolValue = typeof value === 'boolean' ? value : false;
         return (
           <View style={styles.toggleContainer}>
@@ -90,6 +91,7 @@ export default function CustomQuestionInput({
             </TouchableOpacity>
           </View>
         );
+      }
 
       default:
         return null;
