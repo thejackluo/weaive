@@ -14,7 +14,7 @@ from app.main import app
 # Load test environment variables from .env.test
 env_path = Path(__file__).parent.parent / ".env.test"
 if env_path.exists():
-    load_dotenv(env_path)
+    load_dotenv(env_path, override=True)  # Override any existing env vars from .env
 
 
 @pytest.fixture(scope="session")
@@ -158,12 +158,14 @@ def create_auth_token():
             JWT token string
         """
         now = datetime.utcnow()
+        # Subtract 10 seconds to avoid clock skew issues with iat validation
+        issued_at = now - timedelta(seconds=10)
         payload = {
             "sub": user_id,                           # User ID (required)
             "aud": "authenticated",                    # Supabase audience (required)
             "role": "authenticated",                   # User role
             "iss": "supabase",                        # Issuer
-            "iat": int(now.timestamp()),              # Issued at
+            "iat": int(issued_at.timestamp()),        # Issued at (with clock skew buffer)
             "exp": int((now + timedelta(hours=expires_in_hours)).timestamp()),  # Expiration
         }
 
