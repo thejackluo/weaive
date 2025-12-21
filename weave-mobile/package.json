@@ -19,6 +19,7 @@
     "@react-native-community/netinfo": "^11.4.1",
     "@supabase/supabase-js": "^2.88.0",
     "@tanstack/react-query": "^5.90.12",
+    "@weave/design-system": "file:../packages/weave-design-system",
     "expo": "^54.0.30",
     "expo-constants": "~18.0.12",
     "expo-haptics": "~15.0.8",
