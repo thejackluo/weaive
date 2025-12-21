@@ -78,25 +78,47 @@ This story establishes the foundation for voice-based features and unblocks:
 
 ### AC-2: Audio Storage
 
+**Captures Table Structure:**
+- [ ] **Single table design**: `captures` table with `type` enum ('photo' | 'audio' | 'text' | 'timer' | 'link')
+- [ ] Audio captures use `type = 'audio'`
+- [ ] Image captures use `type = 'photo'` (Story 0.9)
+- [ ] Both types share same table for unified capture history
+- [ ] Type-specific columns:
+  - `storage_key`: File path in Supabase Storage (both photo and audio)
+  - `content_text`: Transcript for audio, notes for text captures
+  - `duration_sec`: Audio/video duration (NEW column, migration 20251221000002)
+- [ ] Schema validation: `CHECK` constraint ensures audio captures have `storage_key`
+
 **Upload Audio to Supabase Storage:**
-- [ ] Storage bucket: `captures` (same bucket as images from Story 0.9)
-- [ ] Folder structure: `/captures/audio/{user_id}/{filename}.m4a`
-- [ ] Unique filename generation: `voice_{timestamp}.m4a`
-- [ ] Max audio size: 25MB per file (configurable in bucket settings)
+- [ ] Storage bucket: `captures` (REUSE existing bucket from Story 0.9)
+- [ ] Folder structure: `/captures/{user_id}/voice_{timestamp}.m4a`
+- [ ] Unique filename generation: `voice_{Date.now()}.m4a`
+- [ ] Max audio size: 25MB per file (updated from 10MB via migration 20251221000002)
 - [ ] Supported formats: MP3, M4A, WAV (mobile recording formats)
-- [ ] RLS policies enforce user isolation (Story 0.4 pattern)
+- [ ] MIME types allowed: `audio/mpeg`, `audio/mp4`, `audio/x-m4a`, `audio/wav`, `audio/wave`
+- [ ] RLS policies enforce user isolation (existing policies from Story 0.9 apply to audio)
 
 **Audio Retrieval API:**
-- [ ] `GET /api/captures/audio/{audio_id}` endpoint
+- [ ] `GET /api/captures/{capture_id}` endpoint (same endpoint for audio and photos)
+- [ ] Filter by `type = 'audio'` if audio-specific query needed
 - [ ] Return signed URL with 1-hour expiration
-- [ ] Include metadata: `user_id`, `created_at`, `duration_sec`, `transcript`
+- [ ] Include metadata: `user_id`, `created_at`, `duration_sec`, `content_text` (transcript)
 - [ ] Auto-refresh expired URLs on playback
 
 **Audio Deletion API:**
-- [ ] `DELETE /api/captures/audio/{audio_id}` endpoint
+- [ ] `DELETE /api/captures/{capture_id}` endpoint (same endpoint for audio and photos)
 - [ ] Cascading cleanup: Delete from Storage + Database (`captures` table)
-- [ ] Verify user owns audio before deletion (RLS + API check)
+- [ ] Verify user owns capture before deletion (RLS + API check)
 - [ ] Return success confirmation
+
+**Re-transcribe API:**
+- [ ] `POST /api/captures/{capture_id}/re-transcribe` endpoint
+- [ ] Re-run transcription with optional provider selection (retry with Whisper if AssemblyAI failed)
+- [ ] Track re-transcription count in capture metadata
+- [ ] **Free retry policy**: First re-transcription is complementary (doesn't count against daily limit)
+- [ ] Subsequent retries count against daily limit
+- [ ] Update `captures.content_text` with new transcript
+- [ ] Return updated capture with new transcript
 
 ### AC-3: API Endpoint
 
@@ -129,23 +151,42 @@ This story establishes the foundation for voice-based features and unblocks:
 - [ ] Rate limiting: Max 50 transcriptions per user per day
 - [ ] Store transcript in `captures.content_text` field
 
-### AC-4: Voice Recording UI
+### AC-4: Voice Recording UI (Whisper Flow Inspired)
 
-**VoiceRecorder Component:**
-- [ ] Microphone button with record/stop states
-- [ ] Real-time waveform animation during recording
-- [ ] Elapsed time display (00:00 format)
-- [ ] Max recording duration: 5 minutes (enforced)
-- [ ] Warning at 4:30 ("30 seconds remaining")
-- [ ] Auto-stop at 5:00 limit
-- [ ] Cancel button (discard recording)
-- [ ] Permissions handling (request microphone access)
+**VoiceRecorder Component Design:**
+- [ ] **Recording Interface** (inspired by Whisper Flow):
+  - Circular microphone button (center, 80px diameter)
+  - **3-button layout during recording:**
+    - 🎤 Record button (center) - transforms to Stop when recording
+    - ❌ Cancel button (left) - discard recording
+    - ⏸️ Pause button (right) - pause/resume recording (optional for MVP)
+  - Visual states:
+    - Idle: Microphone icon, neutral color
+    - Recording: Pulsing red circle animation, "Recording..." text
+    - Paused: Frozen waveform, "Paused" text (optional)
+  - Real-time waveform animation during recording (see below)
+  - Elapsed time display (MM:SS format, updates every second)
+  - Max recording duration: 5 minutes (enforced)
+  - Warning at 4:30 ("⚠️ 30 seconds remaining")
+  - Auto-stop at 5:00 limit with completion animation
+  - Permissions handling (request microphone access with clear explanation)
 
 **AudioWaveform Component:**
-- [ ] Real-time visualization of audio input levels
-- [ ] Animated bars/wave pattern during recording
-- [ ] Pause state (frozen waveform)
-- [ ] Simple, performant implementation (not FFT-based)
+- [ ] **Real-time visualization** of audio input levels:
+  - Bar-based waveform (similar to Whisper Flow)
+  - 20-30 vertical bars arranged horizontally
+  - Bar height varies with audio amplitude (0-100% of container height)
+  - Smooth animation (60fps target)
+  - Color: Primary gradient (blue → violet)
+- [ ] **Recording states:**
+  - Active: Bars animate with audio input
+  - Paused: Bars frozen at last recorded state
+  - Stopped: Bars fade out gradually
+- [ ] **Performance optimization:**
+  - Simple amplitude-based visualization (not FFT-based)
+  - Use `expo-av` Audio.Recording.setOnRecordingStatusUpdate() for levels
+  - Throttle updates to 30fps for performance
+  - Maximum 30 bars to keep rendering lightweight
 
 **TranscriptPreview Component:**
 - [ ] Show transcript after transcription completes
@@ -203,16 +244,38 @@ This story establishes the foundation for voice-based features and unblocks:
 
 ### AC-6: Error Handling
 
+**Error Code Mapping:**
+
+| Scenario | Error Code | HTTP Status | User Message | Retryable |
+|----------|-----------|-------------|--------------|-----------|
+| Audio too long (>5 min) | `AUDIO_TOO_LONG` | 400 | "Audio too long (max 5 minutes)" | false |
+| Invalid format | `INVALID_AUDIO_FORMAT` | 400 | "Only MP3, M4A, and WAV formats supported" | false |
+| Storage quota exceeded | `STORAGE_QUOTA_EXCEEDED` | 507 | "Storage quota exceeded. Contact support." | false |
+| Upload timeout (>30s) | `UPLOAD_TIMEOUT` | 504 | "Upload timed out. Check connection." | true |
+| Rate limit exceeded | `STT_RATE_LIMIT_EXCEEDED` | 429 | "Daily limit reached (50/50 transcriptions)" | false |
+| STT primary failed | `STT_PRIMARY_UNAVAILABLE` | 503 | "Transcribing..." (silent fallback to Whisper) | true |
+| STT all providers failed | `STT_ALL_PROVIDERS_FAILED` | 503 | "Transcription failed. Audio saved. Retry?" | true |
+| Network error (no connection) | `NETWORK_ERROR` | 503 | "No internet connection. Recording saved locally." | true |
+| Microphone permission denied | `MICROPHONE_PERMISSION_DENIED` | 403 | "Microphone access required. Enable in Settings." | false |
+
 **Handle Scenarios:**
-- [ ] Audio too long (>5 minutes) → "Audio too long (max 5 minutes)"
-- [ ] Invalid format → "Only MP3, M4A, and WAV formats supported"
-- [ ] Storage quota exceeded → "Storage quota exceeded. Contact support."
-- [ ] Upload timeout (>30s) → "Upload timed out. Check connection."
-- [ ] Rate limit exceeded → "Daily limit reached (50/50 transcriptions)"
-- [ ] STT primary failed → "Transcribing..." (silent fallback to Whisper)
-- [ ] STT all failed → "Transcription failed. Audio saved. Retry?"
-- [ ] Network error → "No internet connection. Recording saved locally."
-- [ ] Microphone permission denied → "Microphone access required. Enable in Settings."
+- [ ] Audio too long (>5 minutes) → Error code `AUDIO_TOO_LONG`, display before upload
+- [ ] Invalid format → Error code `INVALID_AUDIO_FORMAT`, validate on file selection
+- [ ] Storage quota exceeded → Error code `STORAGE_QUOTA_EXCEEDED`, contact support CTA
+- [ ] Upload timeout (>30s) → Error code `UPLOAD_TIMEOUT`, show retry button
+- [ ] Rate limit exceeded → Error code `STT_RATE_LIMIT_EXCEEDED`, show reset time
+- [ ] STT primary failed → Error code `STT_PRIMARY_UNAVAILABLE`, **silent fallback** to Whisper (user doesn't see error)
+- [ ] STT all failed → Error code `STT_ALL_PROVIDERS_FAILED`, store audio only, show retry button
+- [ ] Network error → Error code `NETWORK_ERROR`, queue recording for upload when online
+- [ ] Microphone permission denied → Error code `MICROPHONE_PERMISSION_DENIED`, show iOS Settings deep link
+
+**Provider Fallback Triggers:**
+- [ ] AssemblyAI timeout: 30 seconds → fallback to Whisper
+- [ ] AssemblyAI HTTP 5xx errors → immediate fallback to Whisper
+- [ ] AssemblyAI rate limit (429) → wait 60s, then try Whisper
+- [ ] Whisper timeout: 15 seconds → store audio only (no transcription)
+- [ ] Whisper HTTP 5xx errors → store audio only
+- [ ] Both providers fail → store audio with `content_text = NULL`, show retry UI
 
 **Progress UI:**
 - [ ] Recording state: "Recording..." with waveform animation
