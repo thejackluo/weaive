@@ -63,7 +63,7 @@ export function Card({
         styles.card,
         variantStyles,
         { padding: paddingValue, borderRadius: radius.xl },
-        animatedStyle,
+        pressable && animatedStyle,
         style,
       ]}
       {...componentProps}
