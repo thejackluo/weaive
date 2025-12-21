@@ -3,8 +3,7 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import ai_router, analytics, health, journal_router, onboarding, user
-from app.api import ai_router, analytics, goals, health, onboarding, user
+from app.api import ai_router, analytics, goals, health, journal_router, onboarding, user
 from app.core.config import settings
 
 app = FastAPI(
