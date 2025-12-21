@@ -90,7 +90,8 @@ describe('CharacterCountTextInput Component', () => {
      * Validates: AC #3 (Live character counter)
      */
 
-    const CharacterCountTextInput = ({ maxLength: _maxLength, onChangeText: _onChangeText }: any) => null;
+    const CharacterCountTextInput = ({ maxLength: _maxLength, onChangeText: _onChangeText }: any) =>
+      null;
 
     const { getByTestId, getByText } = render(
       <CharacterCountTextInput
@@ -120,7 +121,8 @@ describe('CharacterCountTextInput Component', () => {
      * Validates: AC #3 (Hard limit enforcement)
      */
 
-    const CharacterCountTextInput = ({ maxLength: _maxLength, onChangeText: _onChangeText }: any) => null;
+    const CharacterCountTextInput = ({ maxLength: _maxLength, onChangeText: _onChangeText }: any) =>
+      null;
 
     const mockOnChange = jest.fn();
     const { getByTestId } = render(
@@ -156,7 +158,7 @@ describe('CharacterCountTextInput Component', () => {
 
     const CharacterCountTextInput = ({ placeholder: _placeholder }: any) => null;
 
-    const { getByPlaceholderText: _getByPlaceholderText } = render(
+    const { getByPlaceholderText } = render(
       <CharacterCountTextInput
         placeholder="Today I felt... The highlight was... I struggled with..."
         onChangeText={() => {}}
@@ -178,7 +180,10 @@ describe('CharacterCountTextInput Component', () => {
      * Validates: AC #3 (Multi-line input)
      */
 
-    const CharacterCountTextInput = ({ multiline: _multiline, numberOfLines: _numberOfLines }: any) => null;
+    const CharacterCountTextInput = ({
+      multiline: _multiline,
+      numberOfLines: _numberOfLines,
+    }: any) => null;
 
     const { getByTestId } = render(
       <CharacterCountTextInput
@@ -333,7 +338,12 @@ describe('CustomQuestionInput Component', () => {
      * Validates: AC #10 (Text type support)
      */
 
-    const CustomQuestionInput = ({ question: _question, type: _type, value: _value, onChange: _onChange }: any) => null;
+    const CustomQuestionInput = ({
+      question: _question,
+      type: _type,
+      value: _value,
+      onChange: _onChange,
+    }: any) => null;
 
     const { getByPlaceholderText: _getByPlaceholderText, getByTestId } = render(
       <CustomQuestionInput
@@ -359,7 +369,12 @@ describe('CustomQuestionInput Component', () => {
      * Validates: AC #10 (Numeric type support)
      */
 
-    const CustomQuestionInput = ({ question: _question, type: _type, value: _value, onChange: _onChange }: any) => null;
+    const CustomQuestionInput = ({
+      question: _question,
+      type: _type,
+      value: _value,
+      onChange: _onChange,
+    }: any) => null;
 
     const { getByTestId } = render(
       <CustomQuestionInput
@@ -385,7 +400,12 @@ describe('CustomQuestionInput Component', () => {
      * Validates: AC #10 (Yes/No type support)
      */
 
-    const CustomQuestionInput = ({ question: _question, type: _type, value: _value, onChange: _onChange }: any) => null;
+    const CustomQuestionInput = ({
+      question: _question,
+      type: _type,
+      value: _value,
+      onChange: _onChange,
+    }: any) => null;
 
     const { getByTestId } = render(
       <CustomQuestionInput
@@ -410,7 +430,12 @@ describe('CustomQuestionInput Component', () => {
      * Validates: AC #13 (Response format)
      */
 
-    const CustomQuestionInput = ({ question: _question, type: _type, value: _value, onChange: _onChange }: any) => null;
+    const CustomQuestionInput = ({
+      question: _question,
+      type: _type,
+      value: _value,
+      onChange: _onChange,
+    }: any) => null;
 
     const mockOnChange = jest.fn();
     const { getByTestId } = render(
