@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Text, Caption } from '@/design-system';
-import { SymbolView } from 'expo-symbols';
+import { SymbolView, type SFSymbol } from 'expo-symbols';
 
 interface PlaceholderScreenProps {
   /** Screen title */
@@ -13,7 +13,7 @@ interface PlaceholderScreenProps {
   /** Story number and name */
   story: string;
   /** Optional icon name from SF Symbols */
-  iconName?: string;
+  iconName?: SFSymbol;
   /** Optional icon color (defaults to white) */
   iconColor?: string;
   /** Optional background gradient colors */
