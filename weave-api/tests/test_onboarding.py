@@ -83,7 +83,7 @@ def test_identity_bootup_without_auth():
     response = client.post("/api/onboarding/identity-bootup", json=payload)
 
     assert response.status_code == 401  # Unauthorized
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 @patch("app.services.onboarding.store_identity_bootup")
@@ -134,7 +134,7 @@ def test_identity_bootup_invalid_name_too_long(valid_jwt_token):
     )
 
     assert response.status_code == 422  # Validation error
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 def test_identity_bootup_invalid_name_special_chars(valid_jwt_token):
@@ -152,7 +152,7 @@ def test_identity_bootup_invalid_name_special_chars(valid_jwt_token):
     )
 
     assert response.status_code == 422  # Validation error
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 def test_identity_bootup_invalid_personality(valid_jwt_token):
@@ -170,7 +170,7 @@ def test_identity_bootup_invalid_personality(valid_jwt_token):
     )
 
     assert response.status_code == 422  # Validation error
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 def test_identity_bootup_too_few_traits(valid_jwt_token):
@@ -188,7 +188,7 @@ def test_identity_bootup_too_few_traits(valid_jwt_token):
     )
 
     assert response.status_code == 422  # Validation error
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 def test_identity_bootup_too_many_traits(valid_jwt_token):
@@ -211,7 +211,7 @@ def test_identity_bootup_too_many_traits(valid_jwt_token):
     )
 
     assert response.status_code == 422  # Validation error
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 def test_identity_bootup_invalid_trait(valid_jwt_token):
@@ -233,7 +233,7 @@ def test_identity_bootup_invalid_trait(valid_jwt_token):
     )
 
     assert response.status_code == 422  # Validation error
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 def test_identity_bootup_duplicate_traits(valid_jwt_token):
@@ -255,7 +255,7 @@ def test_identity_bootup_duplicate_traits(valid_jwt_token):
     )
 
     assert response.status_code == 422  # Validation error
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 @patch("app.services.onboarding.store_identity_bootup")
@@ -275,8 +275,8 @@ def test_identity_bootup_user_not_found(
 
     # Assertions
     assert response.status_code == 404  # Not found
-    assert "detail" in response.json()
-    assert "not found" in response.json()["detail"].lower()
+    assert "error" in response.json()
+    assert "not found" in response.json()["error"]["message"].lower()
 
 
 def test_identity_bootup_missing_fields(valid_jwt_token):
@@ -293,4 +293,4 @@ def test_identity_bootup_missing_fields(valid_jwt_token):
     )
 
     assert response.status_code == 422  # Validation error
-    assert "detail" in response.json()
+    assert "error" in response.json()
