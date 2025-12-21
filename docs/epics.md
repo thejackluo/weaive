@@ -722,8 +722,8 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
-### Epic DS: Design System Rebuild (74 pts)
-**User Outcome:** Complete rebuild as a new standalone package **`weave-design-system`** with 70 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
+### Epic DS: Design System Rebuild (58-62 pts)
+**User Outcome:** Complete rebuild as a new standalone package **`weave-design-system`** with 70 production-ready components built on **Tamagui primitives**, following Atomic Design principles and modern animation standards.
 
 **FRs Covered:** FR-DS-1, FR-DS-2, FR-DS-3, FR-DS-4, FR-DS-5, FR-DS-6, FR-DS-7, FR-DS-8, FR-DS-9, FR-DS-10
 
@@ -731,7 +731,9 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **Package Structure:** New standalone package at `packages/weave-design-system/` with npm package name `@weave/design-system`. Import path: `import { Button } from '@weave/design-system'`. Old system (`src/design-system/`) will be deprecated and removed after migration.
 
-**Context:** The existing design system (`src/design-system`) is "vibe-coded," buggy, and inconsistent. This epic creates a **completely new package** from scratch with 220+ design tokens, Tamagui-inspired composable anatomy, spring physics animations, and 75% test coverage.
+**Context:** The existing design system (`src/design-system`) is "vibe-coded," buggy, and inconsistent. This epic creates a **completely new package** using **Tamagui as the UI primitive layer** (Button, Text, Stack, Input) with 220+ custom design tokens, composable anatomy pattern, spring physics animations, and 75% test coverage.
+
+**Technology Foundation:** Tamagui provides performance-optimized, accessible UI primitives. Weave customizes these with brand tokens, Weave-specific variants, and product-specific components (NeedleCard, BindCard, etc.).
 
 **Stories:**
 
@@ -739,15 +741,15 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **AC:** All tokens exported and typed. Theme switches without reload. Spring animations run at 60fps.
   - **DoD:** Token documentation in Storybook. Theme hooks tested. Animation presets validated on device.
 
-- **Story DS-2: Core Primitives (Text, Buttons, Icons)** (6 pts) - FR-DS-2: Build 11 text components (Text, AnimatedText, Heading, Title, Subtitle, Body, BodySmall, Caption, Label, Link, Mono) with variant system. 7 button components (Button, PrimaryButton, SecondaryButton, GhostButton, DestructiveButton, AIButton, IconButton) with composable anatomy (`Button.Icon`, `Button.Text`, `Button.Spinner`). Icon wrapper for 100+ Lucide icons with theme colors. Spring press animations. Color-matched shadows (violet button → violet glow).
+- **Story DS-2: Core Primitives (Text, Buttons, Icons)** (4-5 pts) - FR-DS-2: **Compose 11 text components using Tamagui.Text** with variant system (Heading, Title, Subtitle, Body, BodySmall, Caption, Label, Link, Mono). **Compose 7 button components using Tamagui.Button** with composable anatomy (`Button.Icon`, `Button.Text`, `Button.Spinner`). Icon wrapper for 100+ Lucide icons with theme colors. **Tamagui handles spring press animations automatically**. Add color-matched shadows using Weave shadow tokens.
   - **AC:** All 19 components (11 text + 7 buttons + 1 icon) render correctly. Composable anatomy works. Press animations smooth.
   - **DoD:** Storybook stories for all variants. Unit tests for interactions. VoiceOver labels work.
 
-- **Story DS-3: Form Components** (7 pts) - FR-DS-3: Build 5 form components: Input with floating label animation, TextArea with auto-expanding height, SearchInput with debouncing, Checkbox with checkmark animation, BindCheckbox with streak indicator + confetti. Composable anatomy for Input (`Input.Label`, `Input.Field`, `Input.Error`, `Input.Helper`). Support for error, focused, and disabled states.
+- **Story DS-3: Form Components** (5-6 pts) - FR-DS-3: **Compose 5 form components using Tamagui.Input primitives:** Input with floating label animation, TextArea with auto-expanding height, SearchInput with debouncing, Checkbox with checkmark animation, BindCheckbox with streak indicator + confetti. **Tamagui provides base input styling and focus states**. Composable anatomy for Input (`Input.Label`, `Input.Field`, `Input.Error`, `Input.Helper`). Support for error, focused, and disabled states.
   - **AC:** All 5 components functional. Floating labels animate smoothly. Error states styled correctly. Confetti triggers on BindCheckbox.
   - **DoD:** Form validation examples. Accessibility labels. Reduced motion support.
 
-- **Story DS-4: Layout & Cards** (6 pts) - FR-DS-4: Build 16 components: 4 cards (Card, GlassCard, ElevatedCard, AICard) with composable anatomy (`Card.Header`, `Card.Content`, `Card.Footer`). 3 navigation components (BottomTabBar, HeaderBar, BackButton). 6 badges (Badge, CountBadge, StatusDot, StreakBadge, AIBadge, ConsistencyBadge). 3 avatars (Avatar, AvatarGroup, AvatarWithName) with initials fallback.
+- **Story DS-4: Layout & Cards** (4-5 pts) - FR-DS-4: **Compose 16 components using Tamagui.Stack primitives:** 4 cards (Card, GlassCard, ElevatedCard, AICard) with composable anatomy (`Card.Header`, `Card.Content`, `Card.Footer`). 3 navigation components (BottomTabBar, HeaderBar, BackButton). 6 badges (Badge, CountBadge, StatusDot, StreakBadge, AIBadge, ConsistencyBadge). 3 avatars (Avatar, AvatarGroup, AvatarWithName) with initials fallback. **Tamagui.Stack provides flexbox layout primitives**. Add glass blur effects and color-matched shadows.
   - **AC:** All 16 components render. Glass card has blur effect. Navigation integrates with React Navigation. Avatars show initials when no image.
   - **DoD:** Theme nesting works. Badge semantic colors correct. Avatar status dots positioned correctly.
 
@@ -771,7 +773,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **AC:** Storybook shows all components with interactive controls. Test coverage ≥75%. Chromatic integrated. CI fails on regressions.
   - **DoD:** README + CONTRIBUTING docs. All components have accessibility labels. Bundle size tracked. Performance targets met (60fps, <16ms render).
 
-- **Story DS-10: Additional Form & Layout Components** (21 pts) - FR-DS-10: Build 8 critical missing components that block 11+ MVP features: Slider with gesture control + snap-to-step + haptic feedback (FR-4.1, FR-7.6, FR-8.2). Radio + RadioGroup with composable anatomy (FR-1.13, FR-1.14, FR-2.6). Toggle/Switch with spring physics animation (FR-7.6, FR-8.3). Tabs with animated indicator + swipe gestures (FR-8.3, FR-4.5, FR-5.2). Divider (separator). ListItem with composable anatomy (FR-4.5, FR-8.1). Select (dropdown with bottom sheet). All components use React Native Gesture Handler + Reanimated for 60fps animations, spring physics using `withSpring()`, composable anatomy pattern (Radix-inspired), VoiceOver accessibility, keyboard navigation, theme token integration.
+- **Story DS-10: Additional Form & Layout Components** (16-18 pts) - FR-DS-10: **Compose 8 critical components using Tamagui primitives:** Slider (use Tamagui.Slider with custom styling + haptic feedback - FR-4.1, FR-7.6, FR-8.2). Radio + RadioGroup (use Tamagui.RadioGroup with composable anatomy - FR-1.13, FR-1.14, FR-2.6). Toggle/Switch (use Tamagui.Switch with spring physics animation - FR-7.6, FR-8.3). Tabs (use Tamagui.Tabs with custom indicator animation - FR-8.3, FR-4.5, FR-5.2). Divider (use Tamagui.Separator). ListItem (compose with Tamagui.ListItem - FR-4.5, FR-8.1). Select (use Tamagui.Select with bottom sheet). **Tamagui provides gesture handling and accessibility out-of-box**. Customize with spring physics using `withSpring()`, composable anatomy pattern, VoiceOver accessibility, keyboard navigation, Weave theme tokens.
   - **AC:** All 8 components functional. Slider gesture smooth with snap. RadioGroup supports keyboard navigation. Toggle thumb slides with spring. Tabs indicator animates smoothly. ListItem press animation natural. Select opens BottomSheet. All respect reduced motion.
   - **DoD:** Cross-references to blocked FRs documented. All components in Storybook. Gesture interactions tested on device. Accessibility labels work. Theme customization via tokens. 75% test coverage maintained.
 

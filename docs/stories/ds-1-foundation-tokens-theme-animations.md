@@ -307,6 +307,67 @@ The following items are targets but should NOT block story completion or MVP pro
     ```
   - Configure tsconfig.json with `outDir: "dist"`
   - Add `.gitignore` entry: `dist/`
+- [ ] **1.7:** Install and Configure Tamagui (NEW - Sprint Change 2025-12-21)
+  - [ ] **1.7.1:** Install Tamagui dependencies:
+    ```bash
+    npm install tamagui @tamagui/core @tamagui/themes @tamagui/animations-reanimated
+    ```
+  - [ ] **1.7.2:** Create Tamagui config file `packages/weave-design-system/src/tamagui.config.ts`:
+    ```typescript
+    import { createTamagui } from '@tamagui/core';
+    import { config as defaultConfig } from '@tamagui/config/v3';
+
+    // Import Weave tokens (will be created in Task 2)
+    import { colors } from './tokens/colors';
+    import { spacing } from './tokens/spacing';
+    import { typography } from './tokens/typography';
+
+    export const tamaguiConfig = createTamagui({
+      ...defaultConfig,
+      themes: {
+        dark: {
+          // Map Weave tokens to Tamagui theme
+          background: colors.background.primary,
+          color: colors.text.primary,
+          // ... other mappings
+        },
+        light: {
+          background: colors.background.primary,
+          color: colors.text.primary,
+          // ... other mappings
+        },
+      },
+      tokens: {
+        color: colors,
+        space: spacing,
+        size: spacing,
+        radius: {}, // Will be populated from tokens/borders.ts
+      },
+    });
+
+    export type TamaguiConfig = typeof tamaguiConfig;
+    declare module '@tamagui/core' {
+      interface TamaguiCustomConfig extends TamaguiConfig {}
+    }
+    ```
+  - [ ] **1.7.3:** Configure Tamagui provider in ThemeProvider (Task 3.2):
+    - Wrap app with `<TamaguiProvider config={tamaguiConfig}>`
+    - Tamagui provider should be INSIDE Weave ThemeProvider (Weave controls theme mode)
+  - [ ] **1.7.4:** Set up Babel plugin for Tamagui optimization:
+    - Edit `babel.config.js`:
+      ```javascript
+      module.exports = {
+        plugins: [
+          ['@tamagui/babel-plugin', {
+            components: ['tamagui'],
+            config: './packages/weave-design-system/src/tamagui.config.ts',
+          }],
+        ],
+      };
+      ```
+  - [ ] **1.7.5:** Update Metro config for Tamagui:
+    - Add `.tamagui` to `watchFolders`
+    - Add `@tamagui` packages to `extraNodeModules` if needed
 
 ---
 
