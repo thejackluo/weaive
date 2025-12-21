@@ -25,7 +25,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as journalApi from '../../../../services/journalApi';
 
 // Test utilities
-import { generateMockUser } from '../../../../test-utils/mockData';
+import {
+  generateMockUser,
+  generateMockJournalEntry,
+  generateMockCustomQuestions,
+} from '../../../../test-utils/mockData';
+
+// Mock toast notifications
+const mockShowToast = jest.fn();
+jest.mock('../../../../utils/toast', () => ({
+  showToast: mockShowToast,
+}));
 
 // Mock the API
 jest.mock('../../../../services/journalApi');
@@ -361,11 +371,13 @@ describe('Daily Reflection Flow - E2E Integration Tests', () => {
               id: 'uuid-1',
               question: 'Did I stick to my diet?',
               type: 'yes_no',
+              created_at: new Date().toISOString(),
             },
             {
               id: 'uuid-2',
               question: 'Rate my energy level',
               type: 'numeric',
+              created_at: new Date().toISOString(),
             },
           ],
         },
