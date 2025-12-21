@@ -7,6 +7,7 @@ FastAPI router for journal entry operations:
 - PATCH /api/journal-entries/{journal_id}: Update existing journal entry
 """
 
+import asyncio
 import logging
 import traceback
 
@@ -16,7 +17,8 @@ from typing import Optional
 from datetime import date, datetime
 from uuid import UUID
 
-from app.core.deps import get_current_user, get_supabase_client
+from app.core.deps import get_current_user, get_supabase_client, get_ai_service
+from app.services.ai.ai_service import AIService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/journal-entries", tags=["journal"])
@@ -62,10 +64,82 @@ class ApiResponse(BaseModel):
     meta: dict = Field(default_factory=lambda: {"timestamp": datetime.utcnow().isoformat()})
 
 
+async def trigger_ai_feedback_generation(
+    ai_service: Optional[AIService],
+    user_id: str,
+    journal_id: str,
+    journal_data: dict
+):
+    """
+    Trigger AI feedback generation asynchronously (Story 4.1, AC #15)
+
+    This function:
+    - Generates daily recap from journal entry
+    - Includes custom question responses for pattern detection
+    - Runs async (non-blocking)
+
+    Args:
+        ai_service: AI service instance
+        user_id: User profile ID
+        journal_id: Journal entry ID
+        journal_data: Journal entry data including custom_responses
+    """
+    if not ai_service:
+        logger.warning(f"⚠️  AI service not available - skipping feedback generation for journal {journal_id}")
+        return
+
+    try:
+        # Extract data for AI prompt
+        fulfillment_score = journal_data.get('fulfillment_score', 5)
+        default_responses = journal_data.get('default_responses', {})
+        custom_responses = journal_data.get('custom_responses', {})
+
+        # Build context for AI (Story 4.1, AC #15: Pass custom responses to AI)
+        context_parts = [
+            f"Fulfillment Score: {fulfillment_score}/10",
+        ]
+
+        if default_responses:
+            today_reflection = default_responses.get('today_reflection', '')
+            tomorrow_focus = default_responses.get('tomorrow_focus', '')
+            if today_reflection:
+                context_parts.append(f"Today's Reflection: {today_reflection}")
+            if tomorrow_focus:
+                context_parts.append(f"Tomorrow's Focus: {tomorrow_focus}")
+
+        # AC #15: Include custom question responses for pattern detection
+        if custom_responses:
+            context_parts.append("\nCustom Tracking:")
+            for question_id, response_data in custom_responses.items():
+                question_text = response_data.get('question_text', 'Unknown')
+                response = response_data.get('response', 'N/A')
+                context_parts.append(f"  • {question_text}: {response}")
+
+        prompt = "\n".join(context_parts)
+
+        # Generate AI feedback using 'recap' module (Story 4.3 workflow)
+        logger.info(f"🤖 Generating AI feedback for journal {journal_id}")
+        response = ai_service.generate(
+            user_id=user_id,
+            user_role='user',  # TODO: Get from user_profiles
+            user_tier='free',  # TODO: Get from user_profiles
+            module='recap',
+            prompt=prompt
+        )
+
+        logger.info(f"✅ AI feedback generated for journal {journal_id}: {response.text[:100]}...")
+
+    except Exception as e:
+        # Don't fail the request if AI generation fails
+        logger.error(f"❌ AI feedback generation failed for journal {journal_id}: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+
+
 @router.post("", response_model=ApiResponse, status_code=status.HTTP_201_CREATED)
 async def create_journal_entry(
     entry: JournalEntryCreate,
     user: dict = Depends(get_current_user),
+    ai_service: Optional[AIService] = Depends(get_ai_service),
 ):
     """
     Create new journal entry for today
@@ -146,8 +220,15 @@ async def create_journal_entry(
         # Log error but don't fail the request
         print(f"Failed to update daily_aggregates: {str(e)}")
 
-    # TODO: Trigger AI batch job (Story 4.3)
-    # await trigger_ai_feedback_generation(profile_id, created_journal["id"])
+    # AC #15, Subtask 2.8: Trigger AI batch job asynchronously (Story 4.1/4.3)
+    asyncio.create_task(
+        trigger_ai_feedback_generation(
+            ai_service=ai_service,
+            user_id=profile_id,
+            journal_id=created_journal["id"],
+            journal_data=created_journal
+        )
+    )
 
     return ApiResponse(data=JournalEntryResponse(**created_journal))
 
@@ -200,6 +281,7 @@ async def update_journal_entry(
     journal_id: str,
     update: JournalEntryUpdate,
     user: dict = Depends(get_current_user),
+    ai_service: Optional[AIService] = Depends(get_ai_service),
 ):
     """
     Update existing journal entry (partial update)
@@ -271,7 +353,14 @@ async def update_journal_entry(
     except Exception as e:
         print(f"Failed to update daily_aggregates: {str(e)}")
 
-    # TODO: Trigger AI batch job (Story 4.3)
-    # await trigger_ai_feedback_generation(profile_id, journal_id)
+    # AC #15, Subtask 2.8: Trigger AI batch job asynchronously (Story 4.1/4.3)
+    asyncio.create_task(
+        trigger_ai_feedback_generation(
+            ai_service=ai_service,
+            user_id=profile_id,
+            journal_id=journal_id,
+            journal_data=updated_journal
+        )
+    )
 
     return ApiResponse(data=JournalEntryResponse(**updated_journal))
