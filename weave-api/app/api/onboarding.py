@@ -1,6 +1,7 @@
 """Onboarding API endpoints (Stories 1.2, 1.3, 1.6, 1.7)"""
 
 import logging
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
@@ -308,7 +309,13 @@ async def create_origin_story(
             to_text=data.to_text,
         )
 
-        return OriginStoryResponse(**result)
+        # Wrap response in standard {data, meta} format (Architecture compliance)
+        return {
+            "data": OriginStoryResponse(**result),
+            "meta": {
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
+        }
 
     except ValueError as e:
         # Validation errors (user not found, duplicate origin story, invalid data)

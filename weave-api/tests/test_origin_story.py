@@ -35,7 +35,14 @@ def test_create_origin_story_success(
     )
 
     assert response.status_code == status.HTTP_201_CREATED
-    data = response.json()
+    response_json = response.json()
+
+    # Verify response follows {data, meta} format (architecture compliance)
+    assert "data" in response_json
+    assert "meta" in response_json
+    assert "timestamp" in response_json["meta"]
+
+    data = response_json["data"]
 
     # Verify response structure
     assert data["success"] is True
