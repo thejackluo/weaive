@@ -80,10 +80,10 @@ So that **I understand my path forward and feel excited to begin my transformati
 - [x] Fixed bottom button: "Looks good" or "Start my journey"
 - [x] Button full-width, primary color, touch-optimized (min 48px height)
 - [x] Button enabled by default (user can accept immediately or edit first)
-- [ ] On tap: *(BLOCKED: Story 1.9 not implemented)*
+- [ ] On tap:
   - Store final breakdown (AI-generated + edits) in state ✅
-  - Navigate to Story 1.9 (First Commitment Ritual) ❌ *Shows alert placeholder*
-  - Smooth transition animation ❌
+  - Navigate to Story 1.8c (Daily Reflection Introduction) *(Updated: Was Story 1.9)*
+  - Smooth transition animation
 
 ### AC #8: Optional "Regenerate" / "Edit Goal" CTA
 - [x] Optional secondary button or link: "Edit my goal" or back navigation

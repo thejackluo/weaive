@@ -85,7 +85,7 @@ sprint-1-stories:
   1-7-commitment-ritual-origin-story: review          # 5 pts (3-screen flow: narrative validation, photo+voice capture, completion)
   # Phase 3: Early Value Proof
   1-8-choose-your-first-needle: review          # 8 pts (4-screen flow: intro, selection, customization, AI breakdown) - FRONT-END COMPLETE
-  1-9-first-daily-reflection: backlog           # 2 pts (Day 0 check-in with fulfillment slider)
+  1-9-first-daily-reflection: in-progress       # 2 pts (Day 0 check-in - 80% done, blocked by Story 1.10, code review complete)
   # Phase 4: Lightweight Orientation
   1-10-progress-dashboard-introduction: backlog # 2 pts (3 tooltips on progress tracking)
   # Phase 5: Trial Activation & Handoff

@@ -13,7 +13,7 @@
  *
  * Navigation:
  * - From: first-needle.tsx (Story 1.7)
- * - To: Story 1.9 (First Commitment Ritual) [NOT YET IMPLEMENTED]
+ * - To: daily-reflection-intro.tsx (Story 1.8c)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -363,26 +363,22 @@ export default function WeavePathGenerationScreen() {
   const handleFinalConfirmation = () => {
     // TODO (Story 0-4): Track analytics event 'goal_breakdown_accepted'
 
-    // TODO (Story 1.9): Navigate to First Commitment Ritual screen
-    // When Story 1.9 is implemented, uncomment:
-    // router.push({
-    //   pathname: '/(onboarding)/first-commitment-ritual',
-    //   params: {
-    //     breakdown: JSON.stringify(breakdown),
-    //     edited_sections: JSON.stringify(Array.from(editedSections)),
-    //   },
-    // });
+    // Navigate to Story 1.8c (Daily Reflection Introduction)
+    router.push({
+      pathname: '/(onboarding)/daily-reflection-intro',
+      params: {
+        breakdown: JSON.stringify(breakdown),
+        edited_sections: JSON.stringify(Array.from(editedSections)),
+      },
+    });
 
-    // Temporary: Show confirmation
-    const message =
-      `Goal: "${breakdown?.goal_title}"\n\n` +
-      `✅ Story 1.8a complete!\n\n` +
-      `[Story 1.9 (First Commitment Ritual) not yet implemented]`;
-
-    Alert.alert('Path Confirmed', message);
+    // Accessible announcement for screen readers
+    AccessibilityInfo.announceForAccessibility(
+      'Goal breakdown confirmed. Preparing your introduction to daily reflections.'
+    );
 
     if (__DEV__) {
-      console.log('[ONBOARDING] Goal breakdown confirmed:', {
+      console.log('[ONBOARDING] Goal breakdown confirmed, navigating to Story 1.8c:', {
         breakdown,
         edited_sections: Array.from(editedSections),
       });

@@ -284,7 +284,11 @@ export const setupOriginStoryFixtures = async (options?: {
   microphoneGranted?: boolean;
   withDraft?: boolean;
 }) => {
-  const { cameraGranted = true, microphoneGranted = true, withDraft = false } = options || {};
+  const {
+    cameraGranted: _cameraGranted = true,
+    microphoneGranted: _microphoneGranted = true,
+    withDraft = false,
+  } = options || {};
 
   // Setup AsyncStorage with onboarding data
   await setupAsyncStorage();
