@@ -53,8 +53,16 @@ export default function ReflectionScreen() {
 
   // Hooks
   console.log('[REFLECTION_SCREEN] 🎣 Initializing hooks...');
-  const { data: todayJournal, isLoading: isLoadingJournal, error: journalError } = useGetTodayJournal();
-  const { data: customQuestions = [], isLoading: isLoadingQuestions, error: questionsError } = useUserPreferences();
+  const {
+    data: todayJournal,
+    isLoading: isLoadingJournal,
+    error: journalError,
+  } = useGetTodayJournal();
+  const {
+    data: customQuestions = [],
+    isLoading: isLoadingQuestions,
+    error: questionsError,
+  } = useUserPreferences();
   const submitMutation = useSubmitJournal();
   const updateMutation = useUpdateJournal();
   const updateQuestionsMutation = useUpdateCustomQuestions();
@@ -79,7 +87,9 @@ export default function ReflectionScreen() {
 
     if (todayJournal) {
       // Edit mode: Pre-populate with existing data
-      console.log('[REFLECTION_SCREEN] ✏️  Entering EDIT mode - pre-populating form with existing journal');
+      console.log(
+        '[REFLECTION_SCREEN] ✏️  Entering EDIT mode - pre-populating form with existing journal'
+      );
       setIsEditMode(true);
       setExistingJournalId(todayJournal.id);
       setTodayReflection(todayJournal.default_responses?.today_reflection || '');
@@ -184,7 +194,8 @@ export default function ReflectionScreen() {
         today_reflection: todayReflection,
         tomorrow_focus: tomorrowFocus,
       },
-      custom_responses: Object.keys(formattedCustomResponses).length > 0 ? formattedCustomResponses : undefined,
+      custom_responses:
+        Object.keys(formattedCustomResponses).length > 0 ? formattedCustomResponses : undefined,
     };
 
     try {
@@ -241,7 +252,8 @@ export default function ReflectionScreen() {
             <ActivityIndicator size="large" color="#6366f1" />
             <Text style={styles.loadingText}>Loading your reflection...</Text>
             <Text style={styles.loadingDebugText}>
-              Journal: {isLoadingJournal ? 'Loading...' : 'Done'}{'\n'}
+              Journal: {isLoadingJournal ? 'Loading...' : 'Done'}
+              {'\n'}
               Questions: {isLoadingQuestions ? 'Loading...' : 'Done'}
             </Text>
           </>
@@ -252,13 +264,14 @@ export default function ReflectionScreen() {
               {journalError
                 ? `Journal error: ${journalError.message}`
                 : questionsError
-                ? `Questions error: ${questionsError.message}`
-                : 'Loading took too long. Check your connection and try again.'}
+                  ? `Questions error: ${questionsError.message}`
+                  : 'Loading took too long. Check your connection and try again.'}
             </Text>
             <Text style={styles.errorDebugText}>
-              Debug Info:{'\n'}
-              • Journal: {isLoadingJournal ? 'Still loading' : journalError ? 'Error' : 'Done'}{'\n'}
-              • Questions: {isLoadingQuestions ? 'Still loading' : questionsError ? 'Error' : 'Done'}
+              Debug Info:{'\n'}• Journal:{' '}
+              {isLoadingJournal ? 'Still loading' : journalError ? 'Error' : 'Done'}
+              {'\n'}• Questions:{' '}
+              {isLoadingQuestions ? 'Still loading' : questionsError ? 'Error' : 'Done'}
             </Text>
             <TouchableOpacity
               style={styles.retryButton}
@@ -325,19 +338,14 @@ export default function ReflectionScreen() {
 
       {/* Fulfillment Score Slider */}
       <View style={styles.questionContainer}>
-        <Text style={styles.questionLabel}>
-          Overall, how fulfilled do you feel about today?
-        </Text>
+        <Text style={styles.questionLabel}>Overall, how fulfilled do you feel about today?</Text>
         <View style={styles.sliderContainer}>
           <Text style={styles.scoreDisplay}>{fulfillmentScore}</Text>
           <View style={styles.sliderTrack}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
               <TouchableOpacity
                 key={num}
-                style={[
-                  styles.sliderDot,
-                  num <= fulfillmentScore && styles.sliderDotActive,
-                ]}
+                style={[styles.sliderDot, num <= fulfillmentScore && styles.sliderDotActive]}
                 onPress={() => setFulfillmentScore(num)}
               >
                 <Text style={styles.sliderDotText}>{num}</Text>
@@ -403,9 +411,7 @@ export default function ReflectionScreen() {
         {isLoading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.submitButtonText}>
-            {isEditMode ? 'Update Reflection' : 'Submit'}
-          </Text>
+          <Text style={styles.submitButtonText}>{isEditMode ? 'Update Reflection' : 'Submit'}</Text>
         )}
       </TouchableOpacity>
       {isLoading && (

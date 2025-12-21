@@ -124,7 +124,8 @@ export function generateMockJournalEntry(overrides?: Partial<MockJournalEntry>):
     local_date: new Date().toISOString().split('T')[0],
     fulfillment_score: 7,
     default_responses: {
-      today_reflection: 'Today was productive. I completed my morning routine and made progress on my goals.',
+      today_reflection:
+        'Today was productive. I completed my morning routine and made progress on my goals.',
       tomorrow_focus: 'Tomorrow I will finish the presentation.',
     },
     custom_responses: {},

@@ -38,7 +38,10 @@ export function useGetTodayJournal() {
       try {
         const result = await journalApi.getTodayJournal();
         const duration = (performance.now() - start).toFixed(2);
-        console.log(`[JOURNAL_HOOK] ✅ Query completed in ${duration}ms - Result:`, result ? 'Journal found' : 'No journal (null)');
+        console.log(
+          `[JOURNAL_HOOK] ✅ Query completed in ${duration}ms - Result:`,
+          result ? 'Journal found' : 'No journal (null)'
+        );
         return result;
       } catch (error) {
         const duration = (performance.now() - start).toFixed(2);
@@ -50,7 +53,9 @@ export function useGetTodayJournal() {
     // Return null instead of throwing on 404
     throwOnError: (error: any) => {
       const shouldThrow = error?.response?.status !== 404;
-      console.log(`[JOURNAL_HOOK] 🤔 throwOnError: ${shouldThrow} (status: ${error?.response?.status})`);
+      console.log(
+        `[JOURNAL_HOOK] 🤔 throwOnError: ${shouldThrow} (status: ${error?.response?.status})`
+      );
       return shouldThrow;
     },
   });

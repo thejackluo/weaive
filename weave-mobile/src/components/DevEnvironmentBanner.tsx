@@ -34,9 +34,7 @@ export function DevEnvironmentBanner() {
 
   return (
     <View style={styles.banner}>
-      <Text style={styles.text}>
-        🔧 Dev Mode - API Port: {port}
-      </Text>
+      <Text style={styles.text}>🔧 Dev Mode - API Port: {port}</Text>
       <Text style={styles.url}>{apiBaseUrl}</Text>
     </View>
   );
