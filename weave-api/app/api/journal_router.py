@@ -13,8 +13,7 @@ from typing import Optional
 from datetime import date, datetime
 from uuid import UUID
 
-from app.core.auth import get_current_user_id
-from app.core.database import get_supabase_client
+from app.core.deps import get_current_user, get_supabase_client
 
 router = APIRouter(prefix="/journal-entries", tags=["journal"])
 
@@ -62,7 +61,7 @@ class ApiResponse(BaseModel):
 @router.post("", response_model=ApiResponse, status_code=status.HTTP_201_CREATED)
 async def create_journal_entry(
     entry: JournalEntryCreate,
-    user_id: str = Depends(get_current_user_id),
+    user: dict = Depends(get_current_user),
 ):
     """
     Create new journal entry for today
@@ -72,6 +71,7 @@ async def create_journal_entry(
     - Store custom_responses as JSONB
     - Enforce UNIQUE(user_id, local_date) constraint
     """
+    user_id = user["sub"]  # Extract user ID from JWT payload
     supabase = get_supabase_client()
 
     # Get user's profile ID (convert auth_user_id → user_profiles.id)
@@ -136,7 +136,7 @@ async def create_journal_entry(
 
 @router.get("/today", response_model=ApiResponse)
 async def get_today_journal_entry(
-    user_id: str = Depends(get_current_user_id),
+    user: dict = Depends(get_current_user),
 ):
     """
     Retrieve today's journal entry for authenticated user
@@ -145,6 +145,7 @@ async def get_today_journal_entry(
     - Returns 404 if no entry exists for today
     - Returns full journal data if exists
     """
+    user_id = user["sub"]  # Extract user ID from JWT payload
     supabase = get_supabase_client()
 
     # Get user's profile ID
@@ -180,7 +181,7 @@ async def get_today_journal_entry(
 async def update_journal_entry(
     journal_id: str,
     update: JournalEntryUpdate,
-    user_id: str = Depends(get_current_user_id),
+    user: dict = Depends(get_current_user),
 ):
     """
     Update existing journal entry (partial update)
@@ -190,6 +191,7 @@ async def update_journal_entry(
     - Auto-update updated_at timestamp
     - Verify user owns the journal entry (authorization)
     """
+    user_id = user["sub"]  # Extract user ID from JWT payload
     supabase = get_supabase_client()
 
     # Get user's profile ID
