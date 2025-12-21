@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import HTTPException
 
-from app.api import ai_router, analytics, health, onboarding, user
+from app.api import ai_router, analytics, goals, health, onboarding, user
 from app.core.config import settings
 
 app = FastAPI(
@@ -9,6 +11,36 @@ app = FastAPI(
     description="Backend API for Weave MVP",
     version="0.1.0"
 )
+
+# Custom error handler for standard error response format
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Convert FastAPI HTTPException to standard error response format.
+
+    Standard format: {"error": {"code": "ERROR_CODE", "message": "..."}}
+    """
+    # Map HTTP status codes to error codes
+    error_code_map = {
+        400: "BAD_REQUEST",
+        401: "UNAUTHORIZED",
+        403: "FORBIDDEN",
+        404: "NOT_FOUND",
+        422: "VALIDATION_ERROR",
+        500: "INTERNAL_SERVER_ERROR",
+    }
+
+    error_code = error_code_map.get(exc.status_code, "UNKNOWN_ERROR")
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "code": error_code,
+                "message": exc.detail if isinstance(exc.detail, str) else str(exc.detail),
+            }
+        },
+    )
 
 # CORS - Environment-based configuration
 # ⚠️ SECURITY WARNING: NEVER use ALLOWED_ORIGINS="*" in production!
@@ -47,6 +79,7 @@ app.include_router(user.router, tags=["user"])
 app.include_router(analytics.router, tags=["analytics"])
 app.include_router(onboarding.router, tags=["onboarding"])
 app.include_router(ai_router.router, tags=["ai"])
+app.include_router(goals.router, tags=["goals"])
 
 @app.get("/")
 async def root():

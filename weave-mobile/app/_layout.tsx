@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { LogBox } from 'react-native';
 import { ThemeProvider, SimpleToastContainer } from '../src/design-system';
 import { AuthProvider } from '../src/contexts/AuthContext';
+import { QueryClientProvider } from '../src/contexts/QueryClientProvider';
 import { DevEnvironmentBanner } from '../src/components/DevEnvironmentBanner';
 import '../global.css';
 
@@ -29,6 +30,7 @@ LogBox.ignoreLogs([
  *
  * Provider Hierarchy:
  * - ThemeProvider (outermost) - Design system theme
+ * - QueryClientProvider - TanStack Query for server state (Story 2.1)
  * - AuthProvider - Authentication state and methods
  * - Stack - Navigation structure
  * - SimpleToastContainer - Simple toast notification overlay (no animations)
@@ -39,15 +41,17 @@ LogBox.ignoreLogs([
 export default function RootLayout() {
   return (
     <ThemeProvider initialMode="dark">
-      <AuthProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
-        <SimpleToastContainer />
-        <DevEnvironmentBanner />
-      </AuthProvider>
+      <QueryClientProvider>
+        <AuthProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          />
+          <SimpleToastContainer />
+          <DevEnvironmentBanner />
+        </AuthProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }
