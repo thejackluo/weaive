@@ -512,6 +512,35 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **Note:** Phase 7 (Monetization / Soft Paywall) has been integrated into Story 1.11 Screen 3 for a cohesive onboarding handoff.
 
+**Epic 1 Total: 51 points** (11 Must Have stories + 4 Should Have deferred stories)
+
+---
+
+### Epic 1.5: App Navigation Scaffolding (8-10 pts)
+
+**User Outcome:** Development team has a complete navigation structure with all routes defined, enabling parallel feature development without routing conflicts.
+
+**FRs Covered:** Infrastructure - supports all future epics (Epic 2-8)
+
+**Why This Epic:** Navigation is infrastructure - like database schema in Epic 0, the routing structure should be defined upfront before building features on top of it. Prevents technical debt and enables cleaner Epic 2-8 implementation.
+
+**Design Philosophy:** Simple, clean 3-tab structure (Thread, AI Chat, Dashboard) with magical glassmorphism AI interface inspired by new Siri.
+
+**Story:**
+
+- **Story 1.5.1: Core Navigation Architecture** (8-10 pts) - Define 3-tab navigation: Thread (left), AI Chat (center with blur), Dashboard (right). Create placeholder screens for all Epic 2-8 routes (stack screens, NOT tabs). Implement center AI button with background blur effect and glassmorphism overlay. Establish auth guards (redirect to login if not authenticated). Enable testing flow (can jump directly to main app). Document navigation architecture and screen hierarchy.
+  - **AC:** 3 tabs work; AI Chat opens with blur effect; all 15+ placeholder screens accessible and navigable; auth guards functional; testing mode enabled
+  - **DoD:** Navigation structure complete; glassmorphism AI chat implemented; documentation updated (architecture + UX design + epics); can test full app flow; no console warnings
+
+**Epic 1.5 Total: 8-10 points** (1 unified infrastructure story)
+
+**Deferred to Post-MVP:**
+- Radial menu animation (fancy fan-out options around center button)
+- Advanced AI Chat interactions and polish
+- Visual refinements and micro-interactions
+
+**Implementation Note:** All other pages (Goals, Settings, Journal History, Captures, etc.) are stack screens accessed FROM the 3 main tabs, NOT as separate tabs. This keeps the primary navigation simple and focused on the three core pillars: Action (Thread), Insight (AI Chat), Progress (Dashboard).
+
 ---
 
 ### Epic 2: Needle/Goal Management (27 pts)
@@ -720,15 +749,16 @@ This document provides the complete epic and story breakdown for Weave, decompos
 |------|------|--------------|------------------|--------------|-------|
 | 0 | Foundation | 40 | 7 | None (True Foundation) | `[MVP]` |
 | 1 | Onboarding & Identity | 52 | 8 | Epic 0 | `[MVP]` (core) + `[v1.2]` (full) |
-| 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1 | `[v1.2]` |
-| 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 2 | `[MVP]` (basic) + `[v1.1]` (enhanced) |
-| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 2, 3 | `[v1.1]` |
-| 5 | Progress Visualization | 39 | 3 | Epic 0, 1, 2, 3, 4 | `[v1.1]` (basic) + `[v1.2]` (advanced) |
-| 6 | AI Coaching | 29 | 2 | Epic 0, 1, 2, 3, 4 | `[MVP]` (basic chat) + `[v1.2]` (advanced) |
-| 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3 | `[v1.2]` |
-| 8 | Settings & Profile | 23 | 5 | Epic 0, 1 | `[v1.2]` |
+| 1.5 | App Navigation Scaffolding | 8-10 | Infrastructure | Epic 0, 1 | `[MVP]` |
+| 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1, 1.5 | `[v1.2]` |
+| 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 1.5, 2 | `[MVP]` (basic) + `[v1.1]` (enhanced) |
+| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 1.5, 2, 3 | `[v1.1]` |
+| 5 | Progress Visualization | 39 | 3 | Epic 0, 1, 1.5, 2, 3, 4 | `[v1.1]` (basic) + `[v1.2]` (advanced) |
+| 6 | AI Coaching | 29 | 2 | Epic 0, 1, 1.5, 2, 3, 4 | `[MVP]` (basic chat) + `[v1.2]` (advanced) |
+| 7 | Notifications | 28 | 5 | Epic 0, 1, 1.5, 2, 3 | `[v1.2]` |
+| 8 | Settings & Profile | 23 | 5 | Epic 0, 1, 1.5 | `[v1.2]` |
 
-**Total:** 304 story points across 58 FRs
+**Total:** 312-314 story points across 58 FRs (+ Epic 1.5 infrastructure)
 
 **Phase Breakdown:**
 - **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~70 pts (Sprint 1)
@@ -746,9 +776,13 @@ This document provides the complete epic and story breakdown for Weave, decompos
           │                │                │
           ▼                ▼                ▼
      Epic 1 (Onboarding)   │          Epic 8 (Settings)
-          │                │
-          ▼                │
-     Epic 2 (Goals) ◄──────┘
+          │                │                │
+          ▼                │                │
+   Epic 1.5 (Navigation    │                │
+    Scaffolding)           │                │
+          │                │                │
+          ▼                │                │
+     Epic 2 (Goals) ◄──────┴────────────────┘
           │
           ▼
      Epic 3 (Daily Actions) ◄───── Epic 7 (Notifications)
@@ -760,6 +794,8 @@ This document provides the complete epic and story breakdown for Weave, decompos
           ▼                  ▼
      Epic 5 (Progress)  Epic 6 (AI Coach)
 ```
+
+**Note:** Epic 1.5 (Navigation Scaffolding) is infrastructure that blocks ALL feature epics (2-8). It must be completed after Epic 1 (Onboarding) and before any feature implementation begins.
 
 **Key Principles:**
 - Epic 0 is the TRUE foundation - scaffolding, database, auth, RLS, CI/CD, AI abstraction
