@@ -159,60 +159,6 @@ gh pr create --base main
 4. **Update sprint artifacts** - Document significant decisions or blockers
 5. **Test before committing** - Mobile: test on simulator; Backend: run pytest
 
-### Wireframe-Guided Epic Implementation (Current Primary Mode)
-
-**Status:** 🚀 **ACTIVE** - Hybrid approach for deadline-driven development
-
-**Key Insight:** Epics/stories ARE still correct for functional requirements, BUT we need wireframes to guide visual design and navigation upfront.
-
-**Workflow:**
-1. **User provides:** Wireframe/screenshot of main navigation page + brief description
-2. **User explains:** "This screen shows X, when user taps Y, navigate to Z"
-3. **Then reference:** The relevant epic/story for functional requirements
-4. **Claude implements:** Using wireframe for UX/layout + epic for acceptance criteria
-5. **Build → Test → Iterate:** Complete vertical slices end-to-end
-
-**Example session:**
-```
-User: [Shows wireframe] "This is the Needles List screen (main tab).
-      Shows active goals as cards, tap to see details, FAB to add new goal.
-      Let's implement Epic 2, Story 2.1 - but use this wireframe for the layout."
-
-Claude: "Got it. I see:
-        - Wireframe: Card-based list, FAB bottom-right, tab navigation
-        - Story 2.1: Display active goals, max 3, show progress indicators
-        Questions: Should we show goal progress on the cards? Loading states?"
-
-User: [Answers]
-
-Claude: [Implements using design system, following both wireframe AND story criteria]
-```
-
-**What matters from wireframes:**
-- ✅ Visual layout and component hierarchy
-- ✅ Navigation patterns (tabs, modals, screens)
-- ✅ Primary user interactions (taps, swipes, forms)
-- ✅ Screen organization and information architecture
-
-**What matters from epics/stories:**
-- ✅ Functional requirements and acceptance criteria
-- ✅ Data model and API contracts
-- ✅ Business logic and validation rules
-- ✅ Edge cases and error handling
-
-**What Claude maintains:**
-- ✅ Consistency with existing architecture (three-layer data model, RLS patterns, API format)
-- ✅ Reuse of design system components and tokens
-- ✅ Following established patterns (state management, naming conventions)
-- ✅ Checking both wireframe AND story acceptance criteria
-
-**What we're streamlining:**
-- ⚡ No lengthy story discovery process (wireframes provide visual clarity)
-- ⚡ No formal BMAD workflow gates (but still quality-focused)
-- ⚡ Faster iteration cycles (visual + functional specs upfront)
-
-**Priority:** Ship working features that match wireframes AND meet acceptance criteria
-
 ## Project Structure (Current Reality)
 
 ```
@@ -704,7 +650,6 @@ This project uses **BMAD (Better Methodology for AI Development)** - structured 
 
 | Task | Command |
 |------|---------|
-| **Wireframe-guided implementation** | Share wireframe + reference epic/story |
 | Start mobile dev | `cd weave-mobile && npm start` |
 | Start backend dev | `cd weave-api && uv run uvicorn app.main:app --reload` |
 | View docs | `./dev/docs-viewer/scripts/serve.sh` |
@@ -726,7 +671,7 @@ This project uses **BMAD (Better Methodology for AI Development)** - structured 
 
 ### Workflow Reminders
 
-1. **Wireframe + Epic = Complete spec** - Provide wireframe for UX, reference epic for functional requirements
+1. **Always read the story file first** before implementing
 2. **Check `docs/bugs/` if you hit an error** - likely already solved
 3. **Use the design system** - import from `@/design-system`
 4. **Test locally before committing** - run the app, check for errors

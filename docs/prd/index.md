@@ -57,7 +57,6 @@ target_release: 'Q1 2026'](#documenttype-prd-project-weave-version-10-created-20
       - [US-1.7: Commitment Ritual & Origin Story (First Bind)](./epic-1-onboarding-optimized-hybrid-flow.md#us-17-commitment-ritual-origin-story-first-bind)
     - [PHASE 3 — Early Value Proof ("Wow Moment")](./epic-1-onboarding-optimized-hybrid-flow.md#phase-3-early-value-proof-wow-moment)
       - [US-1.8: Create Your First Needle (Goal + Plan)](./epic-1-onboarding-optimized-hybrid-flow.md#us-18-create-your-first-needle-goal-plan)
-      - [US-1.8c: Daily Reflection Introduction](./epic-1-onboarding-optimized-hybrid-flow.md#us-18c-daily-reflection-introduction)
       - [US-1.9: First Daily Reflection (Day 0 Check-In)](./epic-1-onboarding-optimized-hybrid-flow.md#us-19-first-daily-reflection-day-0-check-in)
     - [PHASE 4 — Lightweight Orientation](./epic-1-onboarding-optimized-hybrid-flow.md#phase-4-lightweight-orientation)
       - [US-1.10: Progress Dashboard Introduction](./epic-1-onboarding-optimized-hybrid-flow.md#us-110-progress-dashboard-introduction)
