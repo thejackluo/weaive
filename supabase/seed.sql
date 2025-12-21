@@ -216,7 +216,7 @@ INSERT INTO captures (id, user_id, subtask_instance_id, local_date, type, conten
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's journals (consistent reflections)
-INSERT INTO journal_entries (id, user_id, local_date, text, fulfillment_score, created_at) VALUES
+INSERT INTO journal_entries (id, user_id, local_date, entry_text, fulfillment_score, created_at) VALUES
 ('14111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day',
  'Solid day. Completed morning run and code reviews. The book on systems design is fascinating. Feeling 8/10 fulfilled. Tomorrow I want to focus on leading the standup with more clarity.',
  8, NOW() - INTERVAL '1 day' + INTERVAL '22 hours'),
@@ -225,7 +225,7 @@ INSERT INTO journal_entries (id, user_id, local_date, text, fulfillment_score, c
  9, NOW() - INTERVAL '2 days' + INTERVAL '23 hours');
 
 -- Jordan's journal (inconsistent - skipped yesterday)
-INSERT INTO journal_entries (id, user_id, local_date, text, fulfillment_score, created_at) VALUES
+INSERT INTO journal_entries (id, user_id, local_date, entry_text, fulfillment_score, created_at) VALUES
 ('24222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '2 days',
  'Finally shipped a feature! Feels good to see progress. Need to be more consistent with coding daily. Got distracted by social media again. 6/10 fulfilled.',
  6, NOW() - INTERVAL '2 days' + INTERVAL '21 hours');
