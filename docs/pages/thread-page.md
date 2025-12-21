@@ -27,19 +27,140 @@ The **Thread Page** is where users engage with their daily action loop. This is 
 
 ## Wireframe Requirements
 
-**Key UI Elements Expected:**
-1. **Today's Date & Day Indicator** - Clear temporal context
-2. **Binds List** - Grouped by needle (collapsible dropdowns)
-3. **Bind Items** - Checkbox, title, estimated time, optional proof indicator
-4. **Daily Reflection Card** - Evening prompt or completed status
-5. **Profile Icon** - Access to settings (top-right or menu)
-6. **Empty State** - "Next smallest win" nudge if no active binds
+### Thread Home Screen Layout
+
+**Header (Top):**
+- **Left:** Streak counter + Weave logo (e.g., "2 🔥")
+- **Center:** Time-based greeting with user's name (e.g., "good evening, eddie.")
+- **Right:** Profile button (circular avatar)
+
+**Calendar Widget:**
+- Week view (Su-Sa format)
+- Current day highlighted with white pill shape
+- Shows dates for entire week (e.g., 23, 24, 25, 26, 27, 28, 29)
+- Non-interactive (display only, no date selection)
+
+**AI Insight Card:**
+- Weave icon + daily contextual message
+- Example: "finish up the figma wireframes for the app. you said you were gonna do it so don't embarrass yourself :)"
+- **Interactive:** Card is clickable/tappable
+- Visual indicator: Subtle styling (shadow, border, or subtle animation) to show it's tappable
+- **Action:** Opens Weave AI modal with this insight as first message context
+
+**Your Needles Section:**
+- Header: "Your Needles"
+- Display up to 3 needle cards
+- **Each needle card shows:**
+  - Color-coded vertical bar (left edge: blue, green, red for visual distinction)
+  - Needle title (e.g., "Get Ripped")
+  - "Why" motivation in smaller text (e.g., "Why: to auafarm mfs")
+  - Completion status (right side: "0/2 Completed")
+  - Dropdown chevron arrow (down when collapsed, up when expanded)
+
+**Needle Dropdown Behavior (CRITICAL):**
+- **Default state:** All needles visible, all collapsed
+- **When user taps needle to expand:**
+  - Selected needle expands to reveal binds
+  - **Other needles hide completely** (only expanded needle visible on screen)
+  - Chevron changes from down to up arrow
+  - Binds appear below needle card
+- **When user taps to collapse:**
+  - Binds hide
+  - Other needles reappear
+  - Chevron returns to down arrow
+
+**Bind Items (When Needle Expanded):**
+- Circular checkbox (left)
+  - **Uncompleted:** Empty circle, full color text
+  - **Completed:** Checkmark in circle, grayed out or different visual treatment
+- Bind title (e.g., "Workout")
+- Subtitle with frequency context (e.g., "5x Per Week. Today's one of them.")
+- **Tap anywhere on bind card** → Opens Bind Screen (US-3.3 flow)
+
+**Your Thread Section:**
+- Header: "Your Thread"
+- Daily Check-In card:
+  - Red dot indicator (top-left corner)
+  - Timer display: "23:59 left to complete"
+  - "Daily Check-In" title (center, large)
+  - "Begin" button (white pill button, centered)
+- **Timer behavior:**
+  - Counts down to midnight (end of current day)
+  - **Flexible window approach:** After midnight, shows "Yesterday's Check-In" prompt
+  - Streak continues if completed within 24 hours of previous check-in
+  - Uses US-5.5 streak resilience: 3 consecutive days recovers 1 missed day
+  - Creates urgency without punishing users for missing by minutes
+- **"Begin" button action** → Opens Daily Reflection flow (Epic 4)
+
+**Bottom Navigation:**
+- **Thread** (left icon, active state)
+- **Weave AI** (center icon, Weave logo)
+- **Track/Dashboard** (right icon, bar chart)
 
 **Interaction Patterns:**
-- Swipe/scroll to view all binds
-- Tap checkbox → Opens Bind Screen
-- Tap needle header → Expand/collapse group
-- Tap reflection card → Opens Reflection Screen
+- Scroll to view all sections (header, calendar, AI insight, needles, check-in)
+- Tap needle card → Expand/collapse with hide others behavior
+- Tap bind → Opens Bind Screen
+- Tap AI insight → Opens Weave AI modal
+- Tap Daily Check-In "Begin" → Opens Reflection flow
+- Tap profile icon → Opens Profile & Settings page
+
+---
+
+### Bind Screen (Start Bind) Layout
+
+**Header:**
+- Back button (left, circular)
+- Bind title: "Workout" (center, large)
+- Week completion calendar (below title)
+  - Shows 7 days (M, T, W, T, F, S, S with dates)
+  - Completed days: Checkmark inside circle
+  - Uncompleted days: Empty dark circle
+
+**AI Context Message Card:**
+- Weave icon + motivational context
+- Example: "Remember, you are doing this to get ripped so you can auafarm some mfs. Lock in."
+- Links bind back to needle goal
+
+**Choose Accountability Section:**
+- Header: "Choose Accountability"
+- Two large buttons side-by-side:
+  - **Timer button** (left, primary white button with clock icon)
+  - **Photo button** (right, dark button with camera icon)
+- User can select one or both methods
+
+**Weave Level Progress Section:**
+- Weave character icon (left)
+- Text: "Completing this bind will strengthen your weave!"
+- Level indicator: "Level 2"
+- Horizontal progress bar (partially filled based on current progress)
+
+**Start Bind Button:**
+- Large white pill button at bottom
+- Text: "Start Bind"
+- Primary call-to-action
+
+**Bottom Navigation:** (same as Thread Home)
+
+**Interaction Flow:**
+1. User selects Timer and/or Photo for accountability
+2. User taps "Start Bind" button
+3. **If Timer selected:**
+   - Opens Pomodoro-style timer with duration presets (15/25/45/60 min)
+   - Focus mode UI (minimal distractions, clean visual)
+   - Timer runs in background if user leaves app
+   - Completion triggers confetti flow
+4. **If Photo selected:**
+   - Opens native camera
+   - User captures photo/video as proof
+   - Media uploaded to Supabase Storage
+5. **After completion:**
+   - **Magical confetti animation** (classy, celebratory)
+   - **Affirmation:** "You're getting closer to [Needle Name]!"
+   - **Level progress bar increases visually**
+   - Prompt for optional description (280 char max, trust-based, skippable)
+   - Return to Thread Home with bind marked complete
+   - Total flow: <30 seconds from start to done
 
 ---
 

@@ -31,38 +31,159 @@ The **Profile & Settings** pages are cross-cutting features accessible from the 
 
 ## Wireframe Requirements
 
-**Key UI Elements Expected:**
+### Purpose
+iOS-style settings page following Apple Settings.app patterns. Single scrollable page with grouped sections.
 
-### Profile Overview Screen
-1. **Header** - Profile photo, name, email
-2. **Quick Stats** - Active goals, current streak, total binds
-3. **Menu Items:**
-   - Identity Document
-   - Notification Preferences
-   - App Settings
-   - Subscription Management
-   - Help & Support
-   - Logout
+**Access:** Tap profile button (top-right on Thread or Dashboard)
 
-### Notification Preferences Screen
-4. **Notification Toggles** - Per-notification type (morning, bind reminders, evening)
-5. **Time Pickers** - Start time, wind-down time
-6. **Quiet Hours** - Do not disturb window
+---
 
-### App Settings Screen
-7. **Data Export** - Download user data as JSON
-8. **Delete Account** - Confirmation flow
+### Screen Layout
 
-### Subscription Management Screen
-9. **Current Plan** - Show active subscription
-10. **Plan Comparison** - Free vs. Pro vs. Max
-11. **Upgrade CTA** - Link to App Store
+**Profile Header (Top, non-scrollable):**
+- **Circular profile photo** (large, centered)
+  - Tap to change photo
+  - Upload from camera or gallery
+- **Name** (below photo, centered)
+- **Email** (below name, smaller text)
+- **Level badge** (e.g., "Level 2 - Strand") + Streak (e.g., "12 day streak 🔥")
 
-**Interaction Patterns:**
-- Tap menu item → Navigate to detail screen
-- Toggle switches → Update preferences immediately
+---
+
+**Scrollable Content (Grouped List Sections):**
+
+### Section 1: Account
+**Style:** iOS grouped list with chevrons
+
+- **Edit Profile** →
+  - Name (text input)
+  - Email (text input)
+  - Profile photo (upload button)
+  - Save button
+
+- **Identity Document** →
+  - View archetype (from onboarding)
+  - Dream self description (read-only or editable?)
+  - Motivations & failure modes
+  - Constraints & demographics
+
+- **Subscription** →
+  - Current plan badge: "Free" / "Pro" / "Max"
+  - Plan comparison table:
+    | Feature | Free | Pro | Max |
+    |---------|------|-----|-----|
+    | Goals | 1 | 3 | 5 |
+    | AI Chat | Limited | Unlimited | Unlimited |
+    | Insights | Basic | Advanced | Premium |
+  - **Upgrade button** (if not on Max)
+  - Link to App Store subscription management
+  - Cancel subscription info
+
+---
+
+### Section 2: Notifications
+**Style:** Toggle switches + time pickers
+
+- **Enable Notifications** (master toggle)
+  - If off, all below are disabled
+
+- **Morning Intention** (toggle)
+  - Time picker: "8:00 AM" (tap to change)
+  - Subtitle: "Daily plan and yesterday's recap"
+
+- **Bind Reminders** (toggle)
+  - Subtitle: "Gentle reminders for scheduled binds"
+
+- **Evening Reflection** (toggle)
+  - Time picker: "9:00 PM"
+  - Subtitle: "Daily check-in prompt"
+
+- **Streak Recovery** (toggle)
+  - Subtitle: "Compassionate nudges after missing days"
+
+- **Quiet Hours** (toggle)
+  - If on, show time range picker:
+    - Start: "10:00 PM"
+    - End: "7:00 AM"
+  - Subtitle: "No notifications during this window"
+
+**Note:** "Max 5 notifications per day" enforced automatically (not a setting)
+
+---
+
+### Section 3: Preferences
+
+- **Strictness Mode** (segmented control or picker)
+  - Options: None / Normal / Strict
+  - Subtitle: "Controls warnings when editing goals"
+  - **None:** No warnings
+  - **Normal:** Show impact summary
+  - **Strict:** Require justification text
+
+- **Theme** (if we add dark mode toggle)
+  - Options: Auto / Light / Dark
+
+---
+
+### Section 4: Data & Privacy
+
+- **Export My Data** →
+  - Button: "Download Data"
+  - Generates JSON with all user data
+  - Opens share sheet to save/send
+
+- **Weave Chat History** →
+  - List of past AI conversations
+  - Each entry: Date + first message preview
+  - Tap → Opens Weave AI modal with that history
+
+---
+
+### Section 5: Support
+
+- **Help & FAQ** →
+  - In-app FAQ section (expandable list)
+  - Topics: "How do streaks work?", "What are Q-goals?", etc.
+
+- **Contact Support** →
+  - Email link: support@weaveapp.com
+  - Or in-app form
+
+- **Rate App** →
+  - Opens App Store rating dialog
+  - (Prompt after 7 active days - US-8.5)
+
+- **Version** (non-tappable)
+  - Gray text: "Version 1.0.0 (Build 42)"
+
+---
+
+### Section 6: Account Actions
+
+- **Logout** (red text)
+  - Confirmation dialog: "Are you sure you want to logout?"
+  - Clears local session
+  - Returns to login screen
+
+- **Delete Account** (red text)
+  - Multi-step confirmation:
+    1. Warning: "This will permanently delete all your data"
+    2. Require re-authentication (Face ID / password)
+    3. Type "DELETE" to confirm
+  - Soft delete: 30-day grace period before hard delete
+  - Email sent: "Your account will be deleted in 30 days. Log back in to cancel."
+
+---
+
+### Interaction Patterns
+
+- Tap profile button → Opens Profile & Settings
+- Tap section item with chevron → Navigate to detail screen
+- Toggle switches → Update immediately (optimistic UI)
+- Time pickers → Native iOS picker
 - Logout → Confirmation dialog
-- Delete account → Multi-step confirmation (type "DELETE")
+- Delete account → Multi-step confirmation flow
+- Back button (if in detail screen) → Returns to main settings
 
 ---
 
