@@ -36,7 +36,10 @@ export default function Index() {
         {/* Dev Banner (invisible but helps debugging) */}
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }}>
           <View style={{ backgroundColor: '#FF6B00', padding: 8 }}>
-            <Text variant="textSm" style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
+            <Text
+              variant="textSm"
+              style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}
+            >
               🧪 DEV MODE: Auth Bypassed
             </Text>
           </View>
