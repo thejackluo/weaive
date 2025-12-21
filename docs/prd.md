@@ -3413,4 +3413,3 @@ See `docs/idea/ai.md` for complete AI system documentation.
 **Next Review:** 2026-01-15
 **Owner:** Jack
 
- 
