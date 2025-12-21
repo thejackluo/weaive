@@ -48,6 +48,7 @@ export default function ReflectionScreen() {
   const [existingJournalId, setExistingJournalId] = useState<string | null>(null);
   const [userName, setUserName] = useState('there'); // TODO: Fetch from user profile
   const [showManageQuestionsModal, setShowManageQuestionsModal] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
 
   // Hooks
   const { data: todayJournal, isLoading: isLoadingJournal } = useGetTodayJournal();
@@ -75,6 +76,19 @@ export default function ReflectionScreen() {
       loadDraft();
     }
   }, [todayJournal]);
+
+  // Set timeout after 10 seconds of loading
+  useEffect(() => {
+    if (isLoadingJournal || isLoadingQuestions) {
+      const timeoutId = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 10000); // 10-second timeout
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [isLoadingJournal, isLoadingQuestions]);
 
   // Auto-save draft every 5 seconds
   useEffect(() => {
@@ -188,8 +202,29 @@ export default function ReflectionScreen() {
   if (isLoadingJournal || isLoadingQuestions) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>Loading your reflection...</Text>
+        {!loadingTimeout ? (
+          <>
+            <ActivityIndicator size="large" color="#6366f1" />
+            <Text style={styles.loadingText}>Loading your reflection...</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.errorText}>⚠️ Cannot load reflection</Text>
+            <Text style={styles.errorSubtext}>
+              Check your internet connection and try again.
+            </Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => {
+                setLoadingTimeout(false);
+                // Force refetch by navigating away and back
+                router.back();
+              }}
+            >
+              <Text style={styles.retryButtonText}>Go Back</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     );
   }
@@ -361,6 +396,31 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     textAlign: 'center',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+  },
+  retryButton: {
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     marginBottom: 32,
