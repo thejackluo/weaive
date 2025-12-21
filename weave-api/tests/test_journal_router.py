@@ -7,13 +7,12 @@ Story: 4.1 - Daily Reflection Entry
 Coverage: AC #7, #9, #13 (Data Storage, Error Handling, Custom Responses)
 """
 
-import pytest
 from datetime import date, timedelta
+
 from fastapi.testclient import TestClient
 
 from app.main import app
-from tests.factories import create_test_user, create_test_journal_entry
-
+from tests.factories import create_test_journal_entry
 
 client = TestClient(app)
 
@@ -490,7 +489,7 @@ class TestJournalEntryRetrieval:
         """
         # GIVEN: User already created a journal entry for today
         today = date.today().isoformat()
-        existing_entry = create_test_journal_entry(
+        _ = create_test_journal_entry(
             local_date=today,
             fulfillment_score=8,
             default_responses={
@@ -532,7 +531,6 @@ class TestJournalEntryRetrieval:
         Validates: Issue #9 - Empty state handling
         """
         # GIVEN: No journal entry exists for today
-        today = date.today().isoformat()
 
         # WHEN: Attempting to retrieve non-existent journal entry
         token = create_auth_token(user_id="test-user-123")
