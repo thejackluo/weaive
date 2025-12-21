@@ -92,7 +92,7 @@ const MIN_CUSTOM_GOAL_LENGTH = 3;
 // TYPE DEFINITIONS
 // ============================================================================
 
-type CurrentStep = 'selection' | 'confirmation';
+type CurrentStep = 'intro' | 'selection' | 'confirmation';
 
 interface GoalData {
   template_id: number | null;
@@ -108,8 +108,8 @@ interface GoalData {
 export default function FirstNeedleScreen() {
   const router = useRouter();
 
-  // Step state machine: 'selection' | 'confirmation'
-  const [currentStep, setCurrentStep] = useState<CurrentStep>('selection');
+  // Step state machine: 'intro' | 'selection' | 'confirmation'
+  const [currentStep, setCurrentStep] = useState<CurrentStep>('intro');
 
   // Goal data state
   const [goalData, setGoalData] = useState<GoalData>({
@@ -338,7 +338,43 @@ export default function FirstNeedleScreen() {
   const isContinueEnabled = Boolean(goalData.display_text);
 
   /**
-   * Render Selection Step
+   * Render Intro Step (Screen 1)
+   */
+  const renderIntroStep = () => (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.introContainer}>
+        {/* Title */}
+        <Text style={styles.introTitle}>Give your actions direction.</Text>
+
+        {/* Body Text */}
+        <View style={styles.introBody}>
+          <Text style={styles.introBodyText}>
+            The Binds you complete each day connect to your Needles — the long-term goals you're
+            working toward.
+          </Text>
+          <Text style={[styles.introBodyText, { marginTop: 20 }]}>
+            Let's create your first one.
+          </Text>
+          <Text style={[styles.introBodyText, { marginTop: 20, fontStyle: 'italic' }]}>
+            You can change or refine this anytime.
+          </Text>
+        </View>
+
+        {/* CTA Button */}
+        <TouchableOpacity
+          onPress={() => setCurrentStep('selection')}
+          style={styles.introContinueButton}
+          accessibilityRole="button"
+          accessibilityLabel="Create my first Needle"
+        >
+          <Text style={styles.introContinueButtonText}>Create my first Needle →</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+
+  /**
+   * Render Selection Step (Screen 2)
    */
   const renderSelectionStep = () => (
     <SafeAreaView style={styles.container}>
@@ -492,6 +528,7 @@ export default function FirstNeedleScreen() {
 
   return (
     <>
+      {currentStep === 'intro' && renderIntroStep()}
       {currentStep === 'selection' && renderSelectionStep()}
       {currentStep === 'confirmation' && renderConfirmationStep()}
     </>
@@ -613,6 +650,43 @@ const styles = StyleSheet.create({
   },
   continueButtonTextDisabled: {
     color: '#666666',
+  },
+
+  // Intro Step Styles
+  introContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+    justifyContent: 'center',
+  },
+  introTitle: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  introBody: {
+    marginBottom: 48,
+  },
+  introBodyText: {
+    fontSize: 17,
+    lineHeight: 26,
+    color: '#333333',
+    textAlign: 'center',
+    opacity: 0.9,
+  },
+  introContinueButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    minHeight: 48,
+  },
+  introContinueButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 
   // Confirmation Step Styles
