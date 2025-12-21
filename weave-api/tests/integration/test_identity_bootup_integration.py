@@ -472,7 +472,7 @@ def test_identity_bootup_without_authentication():
 
     # THEN
     assert response.status_code == 401
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 @pytest.mark.integration
@@ -500,7 +500,7 @@ def test_identity_bootup_with_invalid_jwt():
 
     # THEN
     assert response.status_code == 401
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 # ============================================================================

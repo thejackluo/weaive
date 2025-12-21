@@ -166,26 +166,50 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Design System Preview Button */}
-        <Pressable
-          onPress={() => router.push('/(tabs)/design-system-showcase')}
-          style={{
-            backgroundColor: '#8B5CF6',
-            paddingHorizontal: 24,
-            paddingVertical: 16,
-            borderRadius: 12,
-          }}
-        >
-          <Text
+        {/* Navigation Buttons */}
+        <View style={{ gap: 12, width: '100%', maxWidth: 300 }}>
+          <Pressable
+            onPress={() => router.push('/(tabs)/needles')}
             style={{
-              color: '#FAFAFA',
-              fontSize: 16,
-              fontWeight: '600',
+              backgroundColor: '#10B981',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
             }}
           >
-            View Design System
-          </Text>
-        </Pressable>
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+                textAlign: 'center',
+              }}
+            >
+              📍 View Needles (Story 2.1)
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/(tabs)/design-system-showcase')}
+            style={{
+              backgroundColor: '#8B5CF6',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+                textAlign: 'center',
+              }}
+            >
+              🎨 View Design System
+            </Text>
+          </Pressable>
+        </View>
 
         {/* Footer */}
         <View style={{ position: 'absolute', bottom: 32, alignItems: 'center' }}>
