@@ -7,7 +7,10 @@
 
 import { supabase } from '@lib/supabase';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+import { getApiBaseUrl } from '@/utils/api';
+
+// API endpoint (loaded from .env via app.config.js)
+const API_BASE_URL = getApiBaseUrl();
 
 export interface JournalEntryCreate {
   fulfillment_score: number;
