@@ -144,6 +144,16 @@ export interface AuthContextType {
    * Call this to dismiss error messages after user acknowledges
    */
   clearError: () => void;
+
+  /**
+   * Get current auth token (access_token from session)
+   * @returns Promise<string> - JWT access token
+   * @throws {Error} If not authenticated
+   *
+   * Use this instead of calling supabase.auth.getSession() directly
+   * to avoid duplicate network calls and request queueing.
+   */
+  getAuthToken: () => Promise<string>;
 }
 
 /**
@@ -578,6 +588,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null);
   };
 
+  /**
+   * Get current auth token from cached session
+   * Avoids duplicate supabase.auth.getSession() calls
+   */
+  const getAuthToken = async (): Promise<string> => {
+    // First try to use cached session from context
+    if (session?.access_token) {
+      return session.access_token;
+    }
+
+    // If session expired or not in context, refresh it
+    const {
+      data: { session: freshSession },
+    } = await supabase.auth.getSession();
+
+    if (!freshSession?.access_token) {
+      throw new Error('Not authenticated');
+    }
+
+    return freshSession.access_token;
+  };
+
   // Context value
   const value: AuthContextType = {
     user,
@@ -589,6 +621,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signOut,
     signInWithOAuth,
     clearError,
+    getAuthToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
