@@ -1,9 +1,18 @@
 # Sprint Status Tracking
-# Generated: 2025-12-16 (Updated: 2025-12-19 for story status updates)
+# Generated: 2025-12-16 (Updated: 2025-12-21 for Sprint Change Proposal - AI Services + Observability)
 # Project: Weave MVP
-# Total Scope: 300 story points across 9 epics (+28 pts from Epic 1 hybrid flow, includes name entry + personality)
+# Total Scope: 334 story points across 9.5 epics (+28 pts Epic 1, +10 pts Epic 0 expansion, +6 pts Epic 0.5)
 # Sprint Length: 2 weeks (10 work days)
 # Team Capacity: 50 points/sprint
+#
+# SPRINT CHANGE 2025-12-21:
+# - Story 0.9: EXPANDED from 3 pts to 8 pts (basic upload → full AI-powered image service with Gemini 3.0 Flash)
+# - Story 0.11: NEW - Voice/STT Infrastructure (5 pts) with AssemblyAI primary + Whisper fallback
+# - Epic 0.5: NEW - Post-Development Observability (6 pts)
+#   - Story 0.12: LogRocket session replay (3 pts)
+#   - Story 0.13: Sentry error tracking (3 pts)
+# - Epic 0 Total: 40 pts → 50 pts (+10 pts)
+# - AI Infrastructure Cost Impact: +$276/mo (Vision $90 + STT $186), well within budget
 
 # STATUS DEFINITIONS:
 # ==================
@@ -56,9 +65,16 @@ week-0-stories:
   0-6-ai-service-abstraction: done              # 3 pts ✅ (AWS Bedrock primary, dual cost tracking, 22 tests passed)
   0-7-test-infrastructure: done                 # 3 pts ✅ (71 tests passing, 76% backend coverage)
   0-8-error-handling-framework: backlog         # 3 pts (DEFERRED - stretch goal)
-  0-9-image-upload-error-handling: backlog      # 3 pts (DEFERRED - stretch goal)
-  0-10-ai-failure-handling: backlog             # 3 pts (DEFERRED - stretch goal)
+  0-9-ai-powered-image-service: ready-for-dev   # 8 pts ⚡ EXPANDED (2025-12-21) - Full image service + Gemini 3.0 Flash vision analysis
+  0-10-memory-system-architecture: backlog      # 2 pts (Simple PostgreSQL TEXT[] arrays, no vector DB for MVP)
+  0-11-voice-stt-infrastructure: planned        # 5 pts ⚡ NEW (2025-12-21) - AssemblyAI primary + Whisper fallback
   week-0-retrospective: completed               # Retrospective completed 2025-12-20
+
+# Epic 0.5: Post-Development Observability (6 pts)
+epic-0.5-status: planned
+epic-0.5-stories:
+  0-12-logrocket-session-replay: planned        # 3 pts ⚡ NEW (2025-12-21) - Session replay and debugging
+  0-13-sentry-error-tracking: planned           # 3 pts ⚡ NEW (2025-12-21) - Error tracking and performance monitoring
 
 # ============================================================================
 # SPRINT 1: CORE USER JOURNEY
@@ -296,7 +312,7 @@ backlog-post-mvp:
 # ============================================================================
 
 epic-completion:
-  epic-0-foundation: 27/38             # Week 0: DONE ✅ (7/7 core stories, 71% pts, 11 pts deferred as stretch goals)
+  epic-0-foundation: 27/41             # Week 0: DONE ✅ (7/7 core stories, 66% pts, 14 pts deferred as stretch goals: 0.8 error framework, 0.9 image handling, 0.10 AI failure)
   epic-1-onboarding-hybrid: 0/50       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1, Phases 6-7: Sprint 2, +2 for name entry + personality)
   epic-2-goal-management: 0/27         # Sprint 3: 0% complete
   epic-3-daily-actions: 0/38           # Sprint 1-2, 5: 0% complete
@@ -306,7 +322,7 @@ epic-completion:
   epic-7-notifications: 0/28           # Sprint 3, 5: 0% complete
   epic-8-settings: 0/23                # Sprint 3, 5: 0% complete
 
-total-completion: 27/300 (9%)
+total-completion: 27/305 (9%)
 # Note: Epic 0 core foundation complete. Stretch goals (0.8-0.10) deferred to future sprints.
 
 # ============================================================================
