@@ -10,14 +10,13 @@ FastAPI router for journal entry operations:
 import asyncio
 import logging
 import traceback
+from datetime import date, datetime
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
-from typing import Optional
-from datetime import date, datetime
-from uuid import UUID
 
-from app.core.deps import get_current_user, get_supabase_client, get_ai_service
+from app.core.deps import get_ai_service, get_current_user, get_supabase_client
 from app.services.ai.ai_service import AIService
 
 logger = logging.getLogger(__name__)
