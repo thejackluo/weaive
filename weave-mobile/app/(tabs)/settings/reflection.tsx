@@ -35,6 +35,7 @@ import ManageQuestionsModal from '@/components/features/journal/ManageQuestionsM
 const DRAFT_KEY = '@weave_reflection_draft';
 
 export default function ReflectionScreen() {
+  console.log('[REFLECTION_SCREEN] 🎬 Component mounting...');
   const router = useRouter();
 
   // Form state
@@ -51,11 +52,19 @@ export default function ReflectionScreen() {
   const [loadingTimeout, setLoadingTimeout] = useState(false);
 
   // Hooks
-  const { data: todayJournal, isLoading: isLoadingJournal } = useGetTodayJournal();
-  const { data: customQuestions = [], isLoading: isLoadingQuestions } = useUserPreferences();
+  console.log('[REFLECTION_SCREEN] 🎣 Initializing hooks...');
+  const { data: todayJournal, isLoading: isLoadingJournal, error: journalError } = useGetTodayJournal();
+  const { data: customQuestions = [], isLoading: isLoadingQuestions, error: questionsError } = useUserPreferences();
   const submitMutation = useSubmitJournal();
   const updateMutation = useUpdateJournal();
   const updateQuestionsMutation = useUpdateCustomQuestions();
+
+  console.log('[REFLECTION_SCREEN] 📊 Loading states:', {
+    isLoadingJournal,
+    isLoadingQuestions,
+    hasJournalError: !!journalError,
+    hasQuestionsError: !!questionsError,
+  });
 
   // Character counts
   const reflectionCount = todayReflection.length;
@@ -63,8 +72,14 @@ export default function ReflectionScreen() {
 
   // Load existing journal or draft on mount
   useEffect(() => {
+    console.log('[REFLECTION_SCREEN] 📝 Journal data changed:', {
+      hasJournal: !!todayJournal,
+      journalId: todayJournal?.id,
+    });
+
     if (todayJournal) {
       // Edit mode: Pre-populate with existing data
+      console.log('[REFLECTION_SCREEN] ✏️  Entering EDIT mode - pre-populating form with existing journal');
       setIsEditMode(true);
       setExistingJournalId(todayJournal.id);
       setTodayReflection(todayJournal.default_responses?.today_reflection || '');
@@ -73,6 +88,7 @@ export default function ReflectionScreen() {
       setCustomResponses(todayJournal.custom_responses || {});
     } else {
       // Create mode: Try to restore draft
+      console.log('[REFLECTION_SCREEN] ➕ Entering CREATE mode - loading draft if exists');
       loadDraft();
     }
   }, [todayJournal]);
@@ -80,15 +96,31 @@ export default function ReflectionScreen() {
   // Set timeout after 10 seconds of loading
   useEffect(() => {
     if (isLoadingJournal || isLoadingQuestions) {
+      console.log('[REFLECTION_SCREEN] ⏱️  Loading in progress - starting 10s timeout timer');
+      const startTime = performance.now();
+
       const timeoutId = setTimeout(() => {
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+        console.error(`[REFLECTION_SCREEN] ⚠️  TIMEOUT after ${elapsed}s!`);
+        console.error('[REFLECTION_SCREEN] 🔍 Debug info:', {
+          isLoadingJournal,
+          isLoadingQuestions,
+          journalError: journalError?.message,
+          questionsError: questionsError?.message,
+        });
         setLoadingTimeout(true);
       }, 10000); // 10-second timeout
 
-      return () => clearTimeout(timeoutId);
+      return () => {
+        clearTimeout(timeoutId);
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+        console.log(`[REFLECTION_SCREEN] ⏱️  Timeout cleared after ${elapsed}s`);
+      };
     } else {
+      console.log('[REFLECTION_SCREEN] ✅ Loading complete - both queries finished');
       setLoadingTimeout(false);
     }
-  }, [isLoadingJournal, isLoadingQuestions]);
+  }, [isLoadingJournal, isLoadingQuestions, journalError, questionsError]);
 
   // Auto-save draft every 5 seconds
   useEffect(() => {
@@ -200,24 +232,39 @@ export default function ReflectionScreen() {
   };
 
   if (isLoadingJournal || isLoadingQuestions) {
+    console.log('[REFLECTION_SCREEN] 🔄 Rendering loading state...');
+
     return (
       <View style={styles.loadingContainer}>
         {!loadingTimeout ? (
           <>
             <ActivityIndicator size="large" color="#6366f1" />
             <Text style={styles.loadingText}>Loading your reflection...</Text>
+            <Text style={styles.loadingDebugText}>
+              Journal: {isLoadingJournal ? 'Loading...' : 'Done'}{'\n'}
+              Questions: {isLoadingQuestions ? 'Loading...' : 'Done'}
+            </Text>
           </>
         ) : (
           <>
             <Text style={styles.errorText}>⚠️ Cannot load reflection</Text>
             <Text style={styles.errorSubtext}>
-              Check your internet connection and try again.
+              {journalError
+                ? `Journal error: ${journalError.message}`
+                : questionsError
+                ? `Questions error: ${questionsError.message}`
+                : 'Loading took too long. Check your connection and try again.'}
+            </Text>
+            <Text style={styles.errorDebugText}>
+              Debug Info:{'\n'}
+              • Journal: {isLoadingJournal ? 'Still loading' : journalError ? 'Error' : 'Done'}{'\n'}
+              • Questions: {isLoadingQuestions ? 'Still loading' : questionsError ? 'Error' : 'Done'}
             </Text>
             <TouchableOpacity
               style={styles.retryButton}
               onPress={() => {
+                console.log('[REFLECTION_SCREEN] 🔄 User clicked Go Back - navigating away');
                 setLoadingTimeout(false);
-                // Force refetch by navigating away and back
                 router.back();
               }}
             >
@@ -228,6 +275,8 @@ export default function ReflectionScreen() {
       </View>
     );
   }
+
+  console.log('[REFLECTION_SCREEN] ✅ Rendering main form');
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -397,6 +446,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
+  loadingDebugText: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 8,
+    fontSize: 12,
+    textAlign: 'center',
+    fontFamily: 'monospace',
+  },
   errorText: {
     color: '#ef4444',
     fontSize: 18,
@@ -410,6 +466,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
     paddingHorizontal: 40,
+  },
+  errorDebugText: {
+    color: 'rgba(255, 255, 255, 0.4)',
+    fontSize: 11,
+    marginBottom: 20,
+    textAlign: 'left',
+    paddingHorizontal: 40,
+    fontFamily: 'monospace',
   },
   retryButton: {
     backgroundColor: '#6366f1',
