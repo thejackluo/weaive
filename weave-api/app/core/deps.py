@@ -12,11 +12,15 @@ from openai import OpenAI
 from supabase import Client, create_client
 
 from app.core.config import settings
+from app.services.ai.ai_service import AIService
 
 logger = logging.getLogger(__name__)
 
 # HTTPBearer scheme for extracting JWT from Authorization header
 security = HTTPBearer()
+
+# Global AI service instance (initialized once)
+_ai_service_instance: Optional[AIService] = None
 
 
 @lru_cache(maxsize=1)
@@ -41,6 +45,36 @@ def get_anthropic_client() -> Optional[Anthropic]:
     if not settings.ANTHROPIC_API_KEY:
         return None
     return Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+
+def get_ai_service() -> Optional[AIService]:
+    """
+    Get AI service instance (lazy initialization, singleton pattern).
+
+    Story 4.1: Used for journal feedback generation
+    Story 4.3: Used for daily recap and insights
+
+    Returns:
+        AIService instance or None if Supabase is not configured
+    """
+    global _ai_service_instance
+
+    if _ai_service_instance is None:
+        supabase = get_supabase_client()
+        if supabase is None:
+            logger.warning("⚠️  AI Service not initialized: Supabase client unavailable")
+            return None
+
+        # Initialize AI service with all available providers
+        _ai_service_instance = AIService(
+            db=supabase,
+            bedrock_region=getattr(settings, 'AWS_REGION', 'us-east-1'),
+            openai_key=settings.OPENAI_API_KEY,
+            anthropic_key=settings.ANTHROPIC_API_KEY
+        )
+        logger.info("✅ AI Service initialized")
+
+    return _ai_service_instance
 
 
 # ============================================================================
