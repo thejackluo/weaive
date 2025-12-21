@@ -30,5 +30,6 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@react-native/js-polyfills(.*)$': '<rootDir>/__mocks__/@react-native/js-polyfills.js',
   },
 };
