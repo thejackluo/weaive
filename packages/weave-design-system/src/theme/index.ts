@@ -11,7 +11,7 @@
  */
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { colors, typography, spacing, borders, shadows, animations } from '../tokens';
+import { colors, typography, spacing, borders, shadows, glows, glass, blur, opacity, animations } from '../tokens';
 
 // =============================================================================
 // TYPES
@@ -64,6 +64,10 @@ export interface Theme {
   spacing: typeof spacing;
   borders: typeof borders;
   shadows: typeof shadows;
+  glows: typeof glows;
+  glass: typeof glass;
+  blur: typeof blur;
+  opacity: typeof opacity;
   animations: typeof animations;
 }
 
@@ -118,6 +122,10 @@ export const darkTheme: Theme = {
   spacing,
   borders,
   shadows,
+  glows,
+  glass,
+  blur,
+  opacity,
   animations,
 };
 
@@ -166,6 +174,10 @@ export const lightTheme: Theme = {
   spacing,
   borders,
   shadows,
+  glows,
+  glass,
+  blur,
+  opacity,
   animations,
 };
 
@@ -236,6 +248,111 @@ export function useTheme(): Theme & { mode: ThemeMode; setTheme: (mode: ThemeMod
 }
 
 /**
+ * Access the theme mode and toggle function
+ *
+ * @example
+ * ```tsx
+ * function ThemeToggle() {
+ *   const { mode, setTheme } = useThemeMode();
+ *
+ *   return (
+ *     <Button onPress={() => setTheme(mode === 'dark' ? 'light' : 'dark')}>
+ *       Toggle Theme
+ *     </Button>
+ *   );
+ * }
+ * ```
+ */
+export function useThemeMode(): { mode: ThemeMode; setTheme: (mode: ThemeMode) => void } {
+  const context = useContext(ThemeContext);
+
+  if (!context) {
+    throw new Error('useThemeMode must be used within a ThemeProvider');
+  }
+
+  return {
+    mode: context.mode,
+    setTheme: context.setTheme,
+  };
+}
+
+/**
+ * Access theme colors
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const colors = useColors();
+ *
+ *   return <View style={{ backgroundColor: colors.bg.primary }} />;
+ * }
+ * ```
+ */
+export function useColors() {
+  const theme = useTheme();
+  return theme.colors;
+}
+
+/**
+ * Access spacing tokens
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const spacing = useSpacing();
+ *
+ *   return <View style={{ padding: spacing[4] }} />;
+ * }
+ * ```
+ */
+export function useSpacing() {
+  const theme = useTheme();
+  return theme.spacing;
+}
+
+/**
+ * Access typography tokens
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const typography = useTypography();
+ *
+ *   return <Text style={{ fontSize: typography.fontSize.lg }} />;
+ * }
+ * ```
+ */
+export function useTypography() {
+  const theme = useTheme();
+  return theme.typography;
+}
+
+/**
+ * Access animation tokens
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const animations = useAnimations();
+ *
+ *   return (
+ *     <Animated.View
+ *       style={[
+ *         {
+ *           opacity: fadeAnim,
+ *         },
+ *       ]}
+ *     />
+ *   );
+ * }
+ * ```
+ */
+export function useAnimations() {
+  const theme = useTheme();
+  return theme.animations;
+}
+
+/**
  * Create a custom theme by merging with base theme
  *
  * @example
@@ -261,7 +378,296 @@ export function createTheme(overrides: Partial<Theme>): Theme {
 }
 
 // =============================================================================
+// NESTED THEME COMPONENT (AC-3)
+// =============================================================================
+
+/**
+ * Named theme presets for nested theme contexts
+ */
+export type ThemeName =
+  | 'default'
+  | 'violet'
+  | 'amber'
+  | 'rose'
+  | 'emerald'
+  | 'ocean'
+  | 'sunset'
+  | 'aurora';
+
+/**
+ * Get color-matched shadow for an accent color
+ * Algorithm: Take accent color at 500 shade, apply 40% opacity for shadow tint
+ */
+function getColorMatchedShadow(accentColor: string) {
+  return {
+    shadowColor: accentColor,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
+  };
+}
+
+/**
+ * Create theme overrides for named themes
+ */
+function getThemeOverrides(name: ThemeName, parentTheme: Theme): Partial<Theme> {
+  switch (name) {
+    case 'violet':
+      return {
+        colors: {
+          ...parentTheme.colors,
+          accent: {
+            primary: colors.violet[500],
+            amber: colors.violet[400],
+            violet: colors.violet[600],
+          },
+          text: {
+            ...parentTheme.colors.text,
+            accent: colors.violet[400],
+            ai: colors.violet[300],
+          },
+          border: {
+            ...parentTheme.colors.border,
+            accent: colors.violet[500],
+          },
+        },
+        glows: {
+          ...parentTheme.glows,
+          primary: getColorMatchedShadow(colors.violet[500]),
+        },
+      };
+
+    case 'amber':
+      return {
+        colors: {
+          ...parentTheme.colors,
+          accent: {
+            primary: colors.amber[400],
+            amber: colors.amber[500],
+            violet: colors.amber[300],
+          },
+          text: {
+            ...parentTheme.colors.text,
+            accent: colors.amber[400],
+            warning: colors.amber[500],
+          },
+          border: {
+            ...parentTheme.colors.border,
+            accent: colors.amber[400],
+          },
+        },
+        glows: {
+          ...parentTheme.glows,
+          primary: getColorMatchedShadow(colors.amber[400]),
+        },
+      };
+
+    case 'rose':
+      return {
+        colors: {
+          ...parentTheme.colors,
+          accent: {
+            primary: colors.rose[500],
+            amber: colors.rose[400],
+            violet: colors.rose[600],
+          },
+          text: {
+            ...parentTheme.colors.text,
+            accent: colors.rose[500],
+            error: colors.rose[600],
+          },
+          border: {
+            ...parentTheme.colors.border,
+            accent: colors.rose[500],
+            error: colors.rose[600],
+          },
+        },
+        glows: {
+          ...parentTheme.glows,
+          primary: getColorMatchedShadow(colors.rose[500]),
+        },
+      };
+
+    case 'emerald':
+      return {
+        colors: {
+          ...parentTheme.colors,
+          accent: {
+            primary: colors.emerald[400],
+            amber: colors.emerald[500],
+            violet: colors.emerald[300],
+          },
+          text: {
+            ...parentTheme.colors.text,
+            accent: colors.emerald[400],
+            success: colors.emerald[500],
+          },
+          border: {
+            ...parentTheme.colors.border,
+            accent: colors.emerald[400],
+          },
+        },
+        glows: {
+          ...parentTheme.glows,
+          primary: getColorMatchedShadow(colors.emerald[400]),
+        },
+      };
+
+    case 'ocean':
+      return {
+        colors: {
+          ...parentTheme.colors,
+          accent: {
+            primary: colors.accent[500],
+            amber: colors.accent[400],
+            violet: colors.accent[600],
+          },
+          text: {
+            ...parentTheme.colors.text,
+            accent: colors.accent[500],
+          },
+          border: {
+            ...parentTheme.colors.border,
+            accent: colors.accent[500],
+          },
+        },
+        glows: {
+          ...parentTheme.glows,
+          primary: getColorMatchedShadow(colors.accent[500]),
+        },
+      };
+
+    case 'sunset':
+      return {
+        colors: {
+          ...parentTheme.colors,
+          accent: {
+            primary: colors.amber[500],
+            amber: colors.amber[600],
+            violet: colors.rose[400],
+          },
+          text: {
+            ...parentTheme.colors.text,
+            accent: colors.amber[500],
+          },
+          border: {
+            ...parentTheme.colors.border,
+            accent: colors.amber[500],
+          },
+        },
+        glows: {
+          ...parentTheme.glows,
+          primary: getColorMatchedShadow(colors.amber[500]),
+        },
+      };
+
+    case 'aurora':
+      return {
+        colors: {
+          ...parentTheme.colors,
+          accent: {
+            primary: colors.violet[400],
+            amber: colors.emerald[400],
+            violet: colors.violet[500],
+          },
+          text: {
+            ...parentTheme.colors.text,
+            accent: colors.violet[400],
+          },
+          border: {
+            ...parentTheme.colors.border,
+            accent: colors.violet[400],
+          },
+        },
+        glows: {
+          ...parentTheme.glows,
+          primary: getColorMatchedShadow(colors.violet[400]),
+        },
+      };
+
+    case 'default':
+    default:
+      return {};
+  }
+}
+
+export interface ThemeComponentProps {
+  children: ReactNode;
+  name?: ThemeName;
+  theme?: Partial<Theme>;
+}
+
+/**
+ * Nested Theme component for theme inheritance and accent color overrides
+ *
+ * @example
+ * ```tsx
+ * <Theme name="default">
+ *   <Button>Default Theme</Button>
+ *
+ *   <Theme name="violet">
+ *     <Button>Violet Accent</Button>
+ *   </Theme>
+ *
+ *   <Theme name="amber">
+ *     <Button>Amber Accent</Button>
+ *   </Theme>
+ * </Theme>
+ * ```
+ */
+export function Theme({ children, name = 'default', theme: customTheme }: ThemeComponentProps) {
+  const parentTheme = useTheme();
+
+  // Merge parent theme with overrides
+  const overrides = name ? getThemeOverrides(name, parentTheme) : {};
+  const mergedOverrides = customTheme
+    ? {
+        ...overrides,
+        colors: {
+          ...(overrides.colors || {}),
+          ...(customTheme.colors || {}),
+        },
+      }
+    : overrides;
+
+  // Create nested theme by deep merging with parent
+  const nestedTheme: Theme = {
+    ...parentTheme,
+    ...mergedOverrides,
+    colors: {
+      ...parentTheme.colors,
+      ...(mergedOverrides.colors || {}),
+      bg: {
+        ...parentTheme.colors.bg,
+        ...((mergedOverrides.colors as any)?.bg || {}),
+      },
+      text: {
+        ...parentTheme.colors.text,
+        ...((mergedOverrides.colors as any)?.text || {}),
+      },
+      border: {
+        ...parentTheme.colors.border,
+        ...((mergedOverrides.colors as any)?.border || {}),
+      },
+      accent: {
+        ...parentTheme.colors.accent,
+        ...((mergedOverrides.colors as any)?.accent || {}),
+      },
+    },
+  };
+
+  const value: ThemeContextValue = {
+    theme: nestedTheme,
+    mode: parentTheme.mode,
+    setTheme: parentTheme.setTheme,
+  };
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
+// =============================================================================
 // EXPORTS
 // =============================================================================
 
-export { colors, typography, spacing, borders, shadows, animations };
+export { colors, typography, spacing, borders, shadows, glows, glass, blur, opacity, animations };
