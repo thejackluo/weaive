@@ -65,7 +65,7 @@ export function NeedlesListScreen() {
           </Text>
         </View>
 
-        <View style={styles.listContainer}>
+        <View style={styles.listContainer} testID="goals-skeleton-loader">
           <GoalCardSkeleton />
           <GoalCardSkeleton />
           <GoalCardSkeleton />

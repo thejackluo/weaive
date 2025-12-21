@@ -20,7 +20,7 @@ export function GoalCardSkeleton() {
   const skeletonColor = colors.border.subtle;
 
   return (
-    <View style={{ marginBottom: spacing[4] }} testID="goals-skeleton-loader">
+    <View style={{ marginBottom: spacing[4] }}>
       {/* Using plain View instead of Card to avoid React 19 compatibility issues */}
       <View
         style={[
