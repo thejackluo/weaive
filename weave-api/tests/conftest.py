@@ -1,15 +1,15 @@
 """Pytest configuration and shared fixtures."""
 
-import base64
-import jwt
-import pytest
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, Mock
-from fastapi.testclient import TestClient
+from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock
 from uuid import uuid4
 
+import jwt
+import pytest
+from fastapi.testclient import TestClient
+
+from app.core.deps import get_current_user
 from app.main import app
-from app.core.deps import get_current_user, get_supabase_client
 
 # Import integration test fixtures (for tests/integration/)
 try:
@@ -72,13 +72,15 @@ def another_user_token() -> str:
 
 
 @pytest.fixture
-def authenticated_client(client, test_user_token):
+def authenticated_client(client, test_user_token, mock_supabase_client):
     """
-    Create an authenticated test client with JWT token.
+    Create an authenticated test client with JWT token and mock database.
 
-    This fixture overrides the get_current_user dependency to bypass
-    JWT validation and return a mock user payload.
+    This fixture overrides both get_current_user and get_supabase_client
+    dependencies to bypass JWT validation and use mock database client.
     """
+    from app.core.deps import get_supabase_client
+
     def mock_get_current_user():
         return {
             "sub": TEST_USER_ID,
@@ -87,6 +89,7 @@ def authenticated_client(client, test_user_token):
         }
 
     app.dependency_overrides[get_current_user] = mock_get_current_user
+    app.dependency_overrides[get_supabase_client] = lambda: mock_supabase_client
     yield client
     app.dependency_overrides.clear()
 
@@ -94,11 +97,11 @@ def authenticated_client(client, test_user_token):
 @pytest.fixture
 def valid_origin_story_data():
     """Sample valid origin story request data."""
-    # Minimal valid base64-encoded JPEG (1x1 pixel)
-    sample_photo = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA3wAA="
+    # Minimal valid base64-encoded JPEG (104 bytes)
+    sample_photo = "data:image/jpeg;base64,/9j/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
-    # Minimal valid AAC audio
-    sample_audio = "data:audio/aac;base64,AAAAGZ0eXBNNEEgAAAAAE00NEFtcDQyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    # Minimal valid AAC audio (112 bytes)
+    sample_audio = "data:audio/aac;base64,AAAAGGZ0eXBNNEEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
 
     return {
         "photo_base64": sample_photo,
@@ -134,16 +137,81 @@ def mock_supabase_client():
     mock_storage.from_.return_value = mock_bucket
     mock_client.storage = mock_storage
 
-    # Mock database methods
-    mock_table = MagicMock()
-    mock_table.insert.return_value.execute.return_value = {
-        "data": [{"id": str(uuid4()), "user_id": TEST_USER_ID}]
-    }
-    mock_table.select.return_value.eq.return_value.execute.return_value = {"data": []}
-    mock_table.update.return_value.eq.return_value.execute.return_value = {"data": []}
+    # Track state for origin_stories to enable duplicate detection
+    origin_stories_state = []
 
-    mock_client.table.return_value = mock_table
-    mock_client.from_.return_value = mock_table
+    # Mock database methods with proper table-specific responses
+    def mock_table_call(table_name):
+        mock_table = MagicMock()
+
+        # Create mock response objects with .data attribute
+        def create_response(data):
+            response = MagicMock()
+            response.data = data
+            return response
+
+        if table_name == "user_profiles":
+            # Mock user profile with all required fields
+            profile_data = [{
+                "id": TEST_USER_ID,
+                "auth_user_id": TEST_USER_ID,
+                "first_bind_completed_at": None,
+                "user_level": 0,
+                "preferred_name": "Test User",
+                "core_personality": "supportive_direct",
+                "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
+                "personality_selected_at": "2025-12-20T10:00:00Z",
+                "updated_at": "2025-12-20T10:00:00Z",
+            }]
+            mock_table.select.return_value.eq.return_value.execute.return_value = create_response(profile_data)
+
+            update_data = [{
+                "id": TEST_USER_ID,
+                "first_bind_completed_at": datetime.now(timezone.utc).isoformat(),
+                "user_level": 1,
+            }]
+            mock_table.update.return_value.eq.return_value.execute.return_value = create_response(update_data)
+        elif table_name == "origin_stories":
+            # Mock origin story creation with state tracking
+            # SELECT queries return current state
+            mock_select = MagicMock()
+            mock_select_eq = MagicMock()
+            mock_select_eq.execute.return_value = create_response(origin_stories_state[:])
+            mock_select.eq.return_value = mock_select_eq
+            mock_table.select.return_value = mock_select
+
+            # INSERT adds to state
+            def mock_insert_execute():
+                origin_data = {
+                    "id": str(uuid4()),
+                    "user_id": TEST_USER_ID,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                }
+                origin_stories_state.append(origin_data)
+                return create_response([origin_data])
+
+            mock_insert = MagicMock()
+            mock_insert.execute.side_effect = mock_insert_execute
+            mock_table.insert.return_value = mock_insert
+        elif table_name == "subtask_instances":
+            # Mock bind instance creation
+            bind_data = [{
+                "id": str(uuid4()),
+                "user_id": TEST_USER_ID,
+                "status": "done",
+            }]
+            mock_table.insert.return_value.execute.return_value = create_response(bind_data)
+        else:
+            # Default mock for other tables
+            mock_table.select.return_value.eq.return_value.execute.return_value = create_response([])
+            default_insert_data = [{"id": str(uuid4()), "user_id": TEST_USER_ID}]
+            mock_table.insert.return_value.execute.return_value = create_response(default_insert_data)
+            mock_table.update.return_value.eq.return_value.execute.return_value = create_response([])
+
+        return mock_table
+
+    mock_client.table = mock_table_call
+    mock_client.from_ = mock_table_call
 
     return mock_client
 

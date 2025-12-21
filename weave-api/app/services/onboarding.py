@@ -378,7 +378,7 @@ async def create_origin_story(
 
         if not bind_instance_result.data or len(bind_instance_result.data) == 0:
             logger.warning(
-                f"⚠️  Failed to create subtask_instance for first bind (non-fatal)"
+                "⚠️  Failed to create subtask_instance for first bind (non-fatal)"
             )
         else:
             bind_instance = bind_instance_result.data[0]
@@ -404,7 +404,7 @@ async def create_origin_story(
 
             if not profile_update.data or len(profile_update.data) == 0:
                 logger.warning(
-                    f"⚠️  Failed to update user_profiles for first bind (non-fatal)"
+                    "⚠️  Failed to update user_profiles for first bind (non-fatal)"
                 )
 
         logger.info(

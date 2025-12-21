@@ -230,7 +230,6 @@ async def store_identity_bootup(
 
 @router.post(
     "/origin-story",
-    response_model=OriginStoryResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_origin_story(
