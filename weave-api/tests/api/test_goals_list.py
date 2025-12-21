@@ -244,11 +244,13 @@ class TestGoalsListEndpoint:
         # Create subtask_templates with mixed active/archived status
         # Note: Schema uses is_archived (not is_active)
         goal_id = sample_goals[0]["id"]
+        user_id = sample_goals[0]["user_id"]
         subtasks = []
 
         # 3 active subtasks (not archived)
         for i in range(3):
             subtasks.append({
+                "user_id": user_id,
                 "goal_id": goal_id,
                 "title": f"Active Bind {i+1}",
                 "default_estimated_minutes": 15,
@@ -258,6 +260,7 @@ class TestGoalsListEndpoint:
         # 2 archived subtasks
         for i in range(2):
             subtasks.append({
+                "user_id": user_id,
                 "goal_id": goal_id,
                 "title": f"Archived Bind {i+1}",
                 "default_estimated_minutes": 15,

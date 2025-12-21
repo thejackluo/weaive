@@ -20,6 +20,37 @@ jest.mock('react-native-reanimated', () => ({
 // Mock Animated API
 jest.mock('react-native/Libraries/Animated/AnimatedImplementation');
 
+// Mock FlatList to avoid VirtualizedList context issues in tests
+jest.mock('react-native/Libraries/Lists/FlatList', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  class MockFlatList extends React.Component {
+    render() {
+      const { data, renderItem, keyExtractor, ListFooterComponent, contentContainerStyle } = this.props;
+
+      return React.createElement(
+        View,
+        { style: contentContainerStyle, testID: 'flat-list' },
+        data && data.map((item, index) => {
+          const key = keyExtractor ? keyExtractor(item, index) : item.key || item.id || index;
+          return React.createElement(View, { key }, renderItem({ item, index }));
+        }),
+        ListFooterComponent
+      );
+    }
+  }
+
+  // Add static properties to satisfy react-native-css's copyComponentProperties
+  MockFlatList.displayName = 'FlatList';
+
+  return {
+    __esModule: true,
+    default: MockFlatList,
+    FlatList: MockFlatList,
+  };
+});
+
 // Mock expo modules
 jest.mock('expo-constants', () => ({
   expoConfig: {
