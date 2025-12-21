@@ -26,6 +26,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ActivityIndicator, View } from 'react-native';
 import { useTheme } from '@/design-system';
 import { hasCompletedOnboarding } from '@lib/authHelpers';
+import Constants from 'expo-constants';
 
 /**
  * Auth Layout Component
@@ -38,8 +39,12 @@ export default function AuthLayout() {
   const { colors } = useTheme();
   const [checkingOnboarding, setCheckingOnboarding] = useState(false);
 
+  // Check if testing mode is enabled (bypass all auth checks)
+  const devSkipAuth = __DEV__ && Constants.expoConfig?.extra?.devSkipAuth === true;
+
   /**
    * Redirect Logic:
+   * - If devSkipAuth enabled → always redirect to tabs (testing mode)
    * - If user is authenticated and on auth screens → check onboarding status
    * - If onboarding incomplete → redirect to onboarding
    * - If onboarding complete → redirect to tabs
@@ -58,7 +63,15 @@ export default function AuthLayout() {
       userId: user?.id,
       inAuthGroup,
       currentSegments: segments,
+      devSkipAuth,
     });
+
+    // TESTING MODE: Skip all auth/onboarding checks
+    if (devSkipAuth && user && inAuthGroup) {
+      console.log('[AUTH_LAYOUT] 🧪 DEV MODE: Skipping auth checks, redirecting to tabs...');
+      router.replace('/(tabs)' as any);
+      return;
+    }
 
     if (user && inAuthGroup) {
       // User is authenticated but on auth screens → check onboarding status
@@ -85,7 +98,7 @@ export default function AuthLayout() {
     } else if (!user && !inAuthGroup) {
       console.log('[AUTH_LAYOUT] ℹ️ User not authenticated, staying on current screen');
     }
-  }, [user, isLoading, segments, router, checkingOnboarding]);
+  }, [user, isLoading, segments, router, checkingOnboarding, devSkipAuth]);
 
   /**
    * Show loading screen while checking auth state or onboarding status
