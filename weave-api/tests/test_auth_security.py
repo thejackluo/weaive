@@ -84,7 +84,8 @@ def test_protected_endpoint_without_auth():
     response = client.get("/api/user/me")
 
     assert response.status_code == 401  # FastAPI HTTPBearer returns 401 for missing auth
-    assert "detail" in response.json()
+    assert "error" in response.json()
+    assert response.json()["error"]["code"] == "UNAUTHORIZED"
 
 
 def test_protected_endpoint_with_invalid_token():
@@ -98,7 +99,7 @@ def test_protected_endpoint_with_invalid_token():
     )
 
     assert response.status_code == 401
-    assert "Invalid authentication token" in response.json()["detail"]
+    assert "Invalid authentication token" in response.json()["error"]["message"]
 
 
 def test_protected_endpoint_with_expired_token(expired_jwt_token):
@@ -109,7 +110,7 @@ def test_protected_endpoint_with_expired_token(expired_jwt_token):
     )
 
     assert response.status_code == 401
-    assert "expired" in response.json()["detail"].lower()
+    assert "expired" in response.json()["error"]["message"].lower()
 
 
 def test_protected_endpoint_with_valid_token(valid_jwt_token):
@@ -343,7 +344,7 @@ def test_track_analytics_event_invalid_name():
 
     assert response.status_code == 422  # Pydantic validation errors return 422
     # Check that the error is about validation
-    assert "detail" in response.json()
+    assert "error" in response.json()
 
 
 # ============================================================================
@@ -395,4 +396,4 @@ def test_jwt_secret_not_configured():
             )
 
             assert response.status_code == 500
-            assert "not configured" in response.json()["detail"].lower()
+            assert "not configured" in response.json()["error"]["message"].lower()

@@ -1,6 +1,6 @@
 # Story 1.6: Name Entry, Weave Personality Selection & Identity Traits
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -984,21 +984,22 @@ console.log('[ONBOARDING] All data collected, navigating to Story 1.7');
 ### File List
 
 **Created:**
-- [x] `weave-mobile/app/(onboarding)/identity-bootup.tsx` - Main screen with 3 steps (883 lines)
+- [x] `weave-mobile/app/(onboarding)/identity-bootup.tsx` - Main screen with 3 steps (976 lines)
   - Implements full step state machine with Step 1, 2, and 3 inline
   - Name validation logic
-  - Swipeable persona cards with Animated.View
+  - Swipeable persona cards with Animated.View (swipe-only, no arrows per AC #15)
   - Weave icon with pulse animation
   - Identity traits selection with exactly 3 enforcement
   - Progress indicator UI at top
   - Comprehensive accessibility support (VoiceOver, reduced motion)
-- [x] `weave-mobile/src/constants/personalityContent.ts` - Persona data structure (62 lines)
+  - Runtime validation for 2-1-2-1-2 trait layout pattern (AC #17)
+- [x] `weave-mobile/src/constants/personalityContent.ts` - Persona data structure (61 lines)
   - PersonalityType type definition
   - PERSONAS array with 2 personas
   - Helper function getPersonaById
-- [x] `weave-mobile/src/constants/identityTraits.ts` - Identity traits data (60 lines)
+- [x] `weave-mobile/src/constants/identityTraits.ts` - Identity traits data (63 lines)
   - IdentityTrait type definition
-  - IDENTITY_TRAITS 2D array (3 rows × 4 traits)
+  - IDENTITY_TRAITS 2D array (5 rows: 2-1-2-1-2 layout)
   - Validation helpers (isValidTraitCount, isValidTrait)
 
 **Modified:**
@@ -1043,6 +1044,15 @@ console.log('[ONBOARDING] All data collected, navigating to Story 1.7');
   - Fixed useEffect race condition with viewedPersonas dependency
   - Updated file line counts (755 → 883 lines)
 - **2025-12-19**: Status: Code review fixes applied, ready for final testing
+- **2025-12-20**: Second code review completed - Fixed 6 issues (3 High, 3 Medium):
+  - **HIGH #1**: Removed "✓ Selected" text indicator (AC #15 violation)
+  - **HIGH #2**: Removed arrow navigation buttons (AC #15 violation - swipe-only navigation)
+  - **HIGH #3**: Fixed AC #12 - Continue button now requires only selection, not viewing both personas
+  - **MEDIUM #4**: Removed production console.log statement at line 372
+  - **MEDIUM #5**: Updated File List with accurate line counts (976, 61, 63 lines)
+  - **MEDIUM #6**: Added runtime validation for 2-1-2-1-2 trait layout pattern (AC #17)
+  - File reduced from 1020 → 976 lines after removing unnecessary UI elements
+- **2025-12-20**: Status: All HIGH and MEDIUM issues resolved, ready for user testing
 
 ---
 

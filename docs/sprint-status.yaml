@@ -81,10 +81,10 @@ sprint-1-stories:
   1-4-weave-solution: review                    # 2 pts (code review complete, tests created)
   1-5-authentication: review                    # 3 pts (front-end UI complete, pending manual testing on device)
   # Phase 2: Light Identity Bootup
-  1-6-name-and-identity-traits: review          # 5 pts (name entry + personality + traits)
-  1-7-commitment-ritual-origin-story: review    # 5 pts (3-screen flow: narrative validation, photo+voice capture, completion)
+  1-6-name-and-identity-traits: done          # 5 pts (name entry + personality + traits)
+  1-7-commitment-ritual-origin-story: review          # 5 pts (3-screen flow: narrative validation, photo+voice capture, completion)
   # Phase 3: Early Value Proof
-  1-8-create-your-first-needle: backlog         # 8 pts (4-screen flow: intro, selection, customization, AI breakdown)
+  1-8-choose-your-first-needle: review          # 8 pts (4-screen flow: intro, selection, customization, AI breakdown) - FRONT-END COMPLETE
   1-9-first-daily-reflection: backlog           # 2 pts (Day 0 check-in with fulfillment slider)
   # Phase 4: Lightweight Orientation
   1-10-progress-dashboard-introduction: backlog # 2 pts (3 tooltips on progress tracking)

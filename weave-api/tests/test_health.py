@@ -8,14 +8,19 @@ client = TestClient(app)
 
 
 def test_health_endpoint():
-    """Test health endpoint returns 200 OK."""
+    """Test health endpoint returns 200 OK with service info."""
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {
-        "status": "ok",
-        "service": "weave-api",
-        "version": "0.1.0",
-    }
+    data = response.json()
+
+    # Check required fields
+    assert data["status"] == "ok"
+    assert data["service"] == "weave-api"
+    assert data["version"] == "0.1.0"
+
+    # Check optional debug fields
+    assert "port" in data
+    assert "environment" in data
 
 
 def test_root_endpoint():
