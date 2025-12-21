@@ -30,7 +30,7 @@ describe('ReflectionHeader Component', () => {
      */
 
     // Mock component (will be replaced with actual implementation)
-    const ReflectionHeader = ({ userName }: { userName: string }) => null;
+    const ReflectionHeader = ({ userName: _userName }: { userName: string }) => null;
 
     // WHEN: Rendering header with user name
     const { getByText } = render(<ReflectionHeader userName="Jack" />);
@@ -48,7 +48,7 @@ describe('ReflectionHeader Component', () => {
      * Validates: AC #2 (Subheading display)
      */
 
-    const ReflectionHeader = ({ userName }: { userName: string }) => null;
+    const ReflectionHeader = ({ userName: _userName }: { userName: string }) => null;
 
     const { getByText } = render(<ReflectionHeader userName="Jack" />);
 
@@ -69,7 +69,7 @@ describe('ReflectionHeader Component', () => {
      * Validates: AC #2 (Left alignment)
      */
 
-    const ReflectionHeader = ({ userName }: { userName: string }) => null;
+    const ReflectionHeader = ({ userName: _userName }: { userName: string }) => null;
 
     const { getByText } = render(<ReflectionHeader userName="Jack" />);
 
@@ -90,7 +90,7 @@ describe('CharacterCountTextInput Component', () => {
      * Validates: AC #3 (Live character counter)
      */
 
-    const CharacterCountTextInput = ({ maxLength, onChangeText }: any) => null;
+    const CharacterCountTextInput = ({ maxLength: _maxLength, onChangeText: _onChangeText }: any) => null;
 
     const { getByTestId, getByText } = render(
       <CharacterCountTextInput
@@ -120,7 +120,7 @@ describe('CharacterCountTextInput Component', () => {
      * Validates: AC #3 (Hard limit enforcement)
      */
 
-    const CharacterCountTextInput = ({ maxLength, onChangeText }: any) => null;
+    const CharacterCountTextInput = ({ maxLength: _maxLength, onChangeText: _onChangeText }: any) => null;
 
     const mockOnChange = jest.fn();
     const { getByTestId } = render(
@@ -154,9 +154,9 @@ describe('CharacterCountTextInput Component', () => {
      * Validates: AC #3 (Placeholder guidance)
      */
 
-    const CharacterCountTextInput = ({ placeholder }: any) => null;
+    const CharacterCountTextInput = ({ placeholder: _placeholder }: any) => null;
 
-    const { getByPlaceholderText } = render(
+    const { getByPlaceholderText: _getByPlaceholderText } = render(
       <CharacterCountTextInput
         placeholder="Today I felt... The highlight was... I struggled with..."
         onChangeText={() => {}}
@@ -178,7 +178,7 @@ describe('CharacterCountTextInput Component', () => {
      * Validates: AC #3 (Multi-line input)
      */
 
-    const CharacterCountTextInput = ({ multiline, numberOfLines }: any) => null;
+    const CharacterCountTextInput = ({ multiline: _multiline, numberOfLines: _numberOfLines }: any) => null;
 
     const { getByTestId } = render(
       <CharacterCountTextInput
@@ -207,9 +207,9 @@ describe('FulfillmentSlider Component', () => {
      * Validates: AC #5 (Current value display)
      */
 
-    const FulfillmentSlider = ({ value, onValueChange }: any) => null;
+    const FulfillmentSlider = ({ value: _value, onValueChange: _onValueChange }: any) => null;
 
-    const { getByText, getByTestId } = render(
+    const { getByText, getByTestId: _getByTestId } = render(
       <FulfillmentSlider value={7} onValueChange={() => {}} />
     );
 
@@ -232,7 +232,7 @@ describe('FulfillmentSlider Component', () => {
      * Validates: AC #5 (Low fulfillment visual feedback)
      */
 
-    const FulfillmentSlider = ({ value, onValueChange }: any) => null;
+    const FulfillmentSlider = ({ value: _value, onValueChange: _onValueChange }: any) => null;
 
     const { getByTestId } = render(<FulfillmentSlider value={2} onValueChange={() => {}} />);
 
@@ -253,7 +253,7 @@ describe('FulfillmentSlider Component', () => {
      * Validates: AC #5 (Medium fulfillment visual feedback)
      */
 
-    const FulfillmentSlider = ({ value, onValueChange }: any) => null;
+    const FulfillmentSlider = ({ value: _value, onValueChange: _onValueChange }: any) => null;
 
     const { getByTestId } = render(<FulfillmentSlider value={5} onValueChange={() => {}} />);
 
@@ -271,7 +271,7 @@ describe('FulfillmentSlider Component', () => {
      * Validates: AC #5 (High fulfillment visual feedback)
      */
 
-    const FulfillmentSlider = ({ value, onValueChange }: any) => null;
+    const FulfillmentSlider = ({ value: _value, onValueChange: _onValueChange }: any) => null;
 
     const { getByTestId } = render(<FulfillmentSlider value={9} onValueChange={() => {}} />);
 
@@ -289,7 +289,7 @@ describe('FulfillmentSlider Component', () => {
      * Validates: AC #5 (Default position)
      */
 
-    const FulfillmentSlider = ({ value, onValueChange }: any) => null;
+    const FulfillmentSlider = ({ value: _value, onValueChange: _onValueChange }: any) => null;
 
     const { getByTestId } = render(<FulfillmentSlider onValueChange={() => {}} />);
 
@@ -308,7 +308,7 @@ describe('FulfillmentSlider Component', () => {
      * Validates: AC #5 (Interactive slider)
      */
 
-    const FulfillmentSlider = ({ value, onValueChange }: any) => null;
+    const FulfillmentSlider = ({ value: _value, onValueChange: _onValueChange }: any) => null;
 
     const mockOnChange = jest.fn();
     const { getByTestId } = render(<FulfillmentSlider value={5} onValueChange={mockOnChange} />);
@@ -333,9 +333,9 @@ describe('CustomQuestionInput Component', () => {
      * Validates: AC #10 (Text type support)
      */
 
-    const CustomQuestionInput = ({ question, type, value, onChange }: any) => null;
+    const CustomQuestionInput = ({ question: _question, type: _type, value: _value, onChange: _onChange }: any) => null;
 
-    const { getByPlaceholderText, getByTestId } = render(
+    const { getByPlaceholderText: _getByPlaceholderText, getByTestId } = render(
       <CustomQuestionInput
         question="What did I learn today?"
         type="text"
@@ -359,7 +359,7 @@ describe('CustomQuestionInput Component', () => {
      * Validates: AC #10 (Numeric type support)
      */
 
-    const CustomQuestionInput = ({ question, type, value, onChange }: any) => null;
+    const CustomQuestionInput = ({ question: _question, type: _type, value: _value, onChange: _onChange }: any) => null;
 
     const { getByTestId } = render(
       <CustomQuestionInput
@@ -385,7 +385,7 @@ describe('CustomQuestionInput Component', () => {
      * Validates: AC #10 (Yes/No type support)
      */
 
-    const CustomQuestionInput = ({ question, type, value, onChange }: any) => null;
+    const CustomQuestionInput = ({ question: _question, type: _type, value: _value, onChange: _onChange }: any) => null;
 
     const { getByTestId } = render(
       <CustomQuestionInput
@@ -410,7 +410,7 @@ describe('CustomQuestionInput Component', () => {
      * Validates: AC #13 (Response format)
      */
 
-    const CustomQuestionInput = ({ question, type, value, onChange }: any) => null;
+    const CustomQuestionInput = ({ question: _question, type: _type, value: _value, onChange: _onChange }: any) => null;
 
     const mockOnChange = jest.fn();
     const { getByTestId } = render(
@@ -451,10 +451,10 @@ describe('Issue #9: Edge Cases - CharacterCountTextInput Component', () => {
      */
 
     // Component stub for testing (to be implemented in Story 4.1)
-    const CharacterCountTextInput = ({ maxLength, onChange }: any) => null;
+    const CharacterCountTextInput = ({ maxLength: _maxLength, onChange: _onChange }: any) => null;
 
     const mockOnChange = jest.fn();
-    const { getByTestId, rerender } = render(
+    const { getByTestId, rerender: _rerender } = render(
       <CharacterCountTextInput maxLength={500} onChange={mockOnChange} />
     );
 
@@ -505,7 +505,7 @@ describe('Issue #9: Edge Cases - CharacterCountTextInput Component', () => {
      * Purpose: Ensure users can edit text after hitting limit
      */
 
-    const CharacterCountTextInput = ({ maxLength, onChange }: any) => null;
+    const CharacterCountTextInput = ({ maxLength: _maxLength, onChange: _onChange }: any) => null;
 
     const { getByTestId } = render(<CharacterCountTextInput maxLength={500} onChange={() => {}} />);
 
