@@ -195,9 +195,9 @@ export async function createJournalEntry(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.error?.message || `Failed to create journal: ${response.statusText}`
-      );
+      // FastAPI returns errors in "detail" field, not "error.message"
+      const errorMessage = errorData?.detail || errorData?.error?.message || response.statusText;
+      throw new Error(`Failed to create journal: ${errorMessage}`);
     }
 
     const result = await response.json();
@@ -230,9 +230,9 @@ export async function updateJournalEntry(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.error?.message || `Failed to update journal: ${response.statusText}`
-      );
+      // FastAPI returns errors in "detail" field, not "error.message"
+      const errorMessage = errorData?.detail || errorData?.error?.message || response.statusText;
+      throw new Error(`Failed to update journal: ${errorMessage}`);
     }
 
     const result = await response.json();
