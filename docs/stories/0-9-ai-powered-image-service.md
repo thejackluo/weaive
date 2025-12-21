@@ -9,6 +9,22 @@
 
 ---
 
+> **🚨 CRITICAL: Fresh Implementation - Archive Old Code**
+>
+> Previous Story 0.9 implementation (3 pts, basic upload only) exists but is incomplete and should be archived.
+>
+> **DO NOT EXTEND** old files - create NEW implementations following this story's requirements.
+>
+> **Old files to ARCHIVE** (move to `weave-mobile/src/_archive/story-0.9-old/`):
+> - `services/imageCapture.ts` (13KB, basic upload only)
+> - `components/ProofCaptureSheet.tsx` (5KB, no AI analysis)
+> - `components/CaptureImage.tsx` (3KB, no AI insights display)
+> - `types/captures.ts` (basic types)
+>
+> **BUILD FROM SCRATCH** following complete requirements below (full AI vision service, 8 pts).
+
+---
+
 ## User Story
 
 **As a** user
@@ -19,20 +35,20 @@
 
 ## Overview
 
-Implement comprehensive AI-powered image service infrastructure to enable users to:
-1. **Capture & Upload** proof photos with validation and progress tracking
-2. **AI Vision Analysis** using Gemini 3 Flash for proof validation, OCR, content classification
-3. **Image Management** with gallery view, filtering, deletion, and cascading cleanup
-4. **Rate Limiting** to control storage costs and prevent abuse
-5. **Error Handling** with retry logic, offline queuing, and user-friendly feedback
+Build comprehensive AI-powered image service infrastructure enabling users to:
+1. **Capture & Upload** - Proof photos with validation and progress tracking
+2. **AI Vision Analysis** - Gemini 3 Flash for proof validation, OCR, content classification
+3. **Image Management** - Gallery view, filtering, deletion, cascading cleanup
+4. **Rate Limiting** - Control storage costs (5 images/day free tier = 10 cents/user/day)
+5. **Error Handling** - Retry logic, offline queuing, user-friendly feedback
 
-This story establishes the foundation for all image-based features and unblocks Epic 3 Stories 3.4 (proof attachment) and 3.5 (quick capture).
+**Foundation for:** Epic 3 Stories 3.4 (proof attachment), 3.5 (quick capture), Epic 4.2 (recap), Epic 5.1 (dashboard).
 
-**Scope Expansion:** Original story 0.9 was basic upload only (3 pts). New PRD expands to full AI vision service (8 pts) with:
-- Gemini 3 Flash vision analysis (~$0.0005 per image)
-- Image gallery UI with chronological grid view
-- Advanced rate limiting (5MB/day, 20 images/day, 20 AI analyses/day)
-- Comprehensive error handling and retry logic
+**Scope Expansion:** Original 3 pts (basic upload) → 8 pts (full AI vision service):
+- Gemini 3 Flash vision analysis ($0.02/image after free preview)
+- Image gallery UI with chronological grid + infinite scroll
+- Rate limiting: 5 images/day, 5MB/day, 5 AI analyses/day (free tier)
+- Comprehensive error handling with offline queue
 
 ---
 
@@ -40,81 +56,81 @@ This story establishes the foundation for all image-based features and unblocks 
 
 ### AC-1: Full Image Service
 
-**Image Upload with Validation:**
-- [ ] Max 10MB per image (configurable in Supabase Storage bucket)
-- [ ] JPEG/PNG only (enforced at bucket level)
-- [ ] Minimum 100x100px dimensions (client-side validation)
-- [ ] Unique filename generation with timestamp: `{user_id}/proof_{timestamp}.jpg`
-- [ ] Upload progress indicator with cancel button
-- [ ] Base64 encoding for React Native compatibility
+> **✅ BUILD:** Complete image capture, upload, storage, retrieval, deletion, and gallery UI
 
-**Image Storage in Supabase Storage:**
-- [ ] Storage bucket: `captures` (private, requires authentication)
-- [ ] User-based folder structure: `/captures/images/{user_id}/`
-- [ ] RLS policies enforce user isolation (see Story 0.4 patterns)
-- [ ] Signed URLs with 1-hour expiration (default)
-- [ ] Auto-refresh expired URLs on display
+**Image Upload with Validation:**
+- [ ] Max 10MB per image (enforced at Supabase Storage bucket level)
+- [ ] JPEG/PNG only (bucket MIME type restriction)
+- [ ] Min 100x100px dimensions (client-side validation)
+- [ ] Compress images before upload: max 1920px width, 80% quality using `expo-image-manipulator`
+- [ ] Unique filename: `{user_id}/proof_{timestamp}.jpg`
+- [ ] Upload progress indicator (0-100%) with cancel button
+- [ ] Base64 encoding for React Native/Supabase compatibility
+
+**Image Storage in Supabase:**
+- [ ] Bucket: `captures` (private, authentication required)
+- [ ] Folder structure: `/captures/images/{user_id}/`
+- [ ] RLS policies enforce user isolation (Story 0.4 pattern: `(storage.foldername(name))[1]`)
+- [ ] Signed URLs with 1-hour expiration (auto-refresh on display)
 
 **Image Retrieval API:**
-- [ ] `GET /api/captures/images?filter=goal_id|bind_id|date_range`
-- [ ] Filter by goal_id (optional)
-- [ ] Filter by subtask_instance_id (bind_id) (optional)
-- [ ] Filter by date_range (start_date, end_date) (optional)
-- [ ] Return array of captures with signed URLs
-- [ ] Pagination support (page, per_page params)
+- [ ] Endpoint: `GET /api/captures/images?goal_id={uuid}&subtask_instance_id={uuid}&start_date={date}&end_date={date}&page={int}&per_page={int}`
+- [ ] Return: `{ data: [...], meta: { total, page, per_page, has_next } }`
+- [ ] Include signed URLs in response
 
 **Image Deletion API:**
-- [ ] `DELETE /api/captures/images/{image_id}` endpoint
-- [ ] Cascading cleanup: Delete from Storage + Database
-- [ ] Verify user owns image before deletion (RLS + API check)
-- [ ] Return success confirmation
-- [ ] Handle errors gracefully (image not found, unauthorized)
+- [ ] Endpoint: `DELETE /api/captures/images/{image_id}`
+- [ ] Cascading cleanup: Delete from Storage + Database atomically
+- [ ] Verify user owns image (RLS + API check)
+- [ ] Return 200 on success, 404 if not found, 403 if unauthorized
 
 **Image Gallery UI:**
-- [ ] Chronological grid view (newest first)
-- [ ] Filter by goal (dropdown)
-- [ ] Filter by date (date picker)
-- [ ] Lazy loading for performance
-- [ ] Tap to open Image Detail View
-- [ ] Empty state when no images
+- [ ] Chronological grid (3 columns, newest first)
+- [ ] Filters: goal dropdown, date picker
+- [ ] Infinite scroll (FlatList `onEndReached`, fetch when 50% from bottom)
+- [ ] Tap → open Image Detail View
+- [ ] Empty state: "No images yet. Capture your first proof!"
 
 **Image Detail View:**
-- [ ] Full-screen image display
-- [ ] Swipe left/right to navigate between images
-- [ ] Delete confirmation dialog
+- [ ] Full-screen display with pinch-to-zoom
+- [ ] Swipe left/right for prev/next
+- [ ] Delete button with confirmation: "Delete this image? This cannot be undone."
 - [ ] Display AI insights (see AC-2)
-- [ ] Show metadata (date, goal, bind, quality score)
+- [ ] Show metadata: date, goal, bind, quality score
+
+---
 
 ### AC-2: AI Vision Analysis (Gemini 3 Flash)
 
-**Integrate Gemini 3 Flash for Image Analysis:**
-- [ ] Create `services/vision_service.py` with provider abstraction
-- [ ] Implement VisionProvider interface (similar to AIProvider pattern)
-- [ ] Primary provider: Gemini 3 Flash (`gemini-3-flash-preview`)
-- [ ] Fallback provider: GPT-4o Vision (optional, higher cost)
-- [ ] Final fallback: Store image only (no AI analysis)
-- [ ] Cost per image: ~$0.0005 (Gemini 3 Flash, currently FREE during preview)
+> **🚨 MUST IMPLEMENT:** Provider abstraction pattern (Story 0.6) with fallback chain
+
+**Gemini API Setup:**
+- [ ] Visit https://aistudio.google.com/app/apikey → Create API key
+- [ ] Add to `.env`: `GOOGLE_AI_API_KEY=your_key`
+- [ ] Install SDK: `uv add google-generativeai`
+- [ ] Free tier: 15 RPM during preview (currently FREE, later $0.02/image)
+
+**Vision Service Architecture:**
+- [ ] Create `app/services/vision_service.py` with `VisionProvider` abstract class
+- [ ] Implement `GeminiVisionProvider` (primary): Model `gemini-3-flash-preview`
+- [ ] Implement `OpenAIVisionProvider` (fallback): GPT-4o Vision (higher cost)
+- [ ] Final fallback: Store image without AI analysis (graceful degradation)
+- [ ] Cost per image: ~$0.0005 input + ~$0.0006 output = ~$0.02/image (after preview)
 
 **AI Vision Features:**
-- [ ] **Proof Validation:** Detect if image shows claimed activity
-  - Analyze image content vs. bind description
-  - Return validation score (0-100, 80+ = "verified")
-  - Examples: workout photo → detect gym equipment, outdoor activity → detect nature
-- [ ] **OCR (Optical Character Recognition):** Extract text from images
-  - Workout logs, food labels, book pages, notes
-  - Return extracted text as string
+- [ ] **Proof Validation:** Analyze image vs. bind description
+  - Score 0-100 (80+ = "AI Verified ✓" badge)
+  - Example: Workout photo → detect gym equipment; outdoor activity → detect nature
+- [ ] **OCR:** Extract text from workout logs, food labels, notes
   - Store in `captures.content_text` field
-- [ ] **Content Classification:** Categorize image
-  - Categories: `gym`, `food`, `outdoor`, `workspace`, `social`, `other`
+- [ ] **Content Classification:** Categorize as `gym`, `food`, `outdoor`, `workspace`, `social`, `other`
   - Return top 2 categories with confidence scores
   - Store in `ai_analysis` JSONB column
-- [ ] **Proof Quality Scoring:** Rate image quality/relevance
-  - Score: 1-5 scale (1 = poor, 5 = excellent)
-  - Factors: lighting, focus, relevance to bind
-  - Display "AI Verified ✓" badge for scores >= 4
+- [ ] **Quality Scoring:** Rate image quality 1-5 (lighting, focus, relevance)
+  - Display as star rating in UI
 
 **Store AI Analysis:**
-- [ ] Update `captures` table with `ai_analysis` JSONB column
+- [ ] Add column: `captures.ai_analysis` JSONB (see migration below)
 - [ ] JSONB structure:
   ```json
   {
@@ -130,447 +146,459 @@ This story establishes the foundation for all image-based features and unblocks 
     "timestamp": "2025-12-21T10:30:00Z"
   }
   ```
-- [ ] Write to `ai_runs` table for cost tracking (Story 0.6 pattern)
-- [ ] Log: `input_tokens`, `output_tokens`, `model`, `cost_usd`, `duration_ms`
+- [ ] Log to `ai_runs` table: `operation_type='image_analysis'`, `input_tokens`, `output_tokens`, `cost_usd`, `duration_ms`
 
 **Display AI Insights:**
-- [ ] Show AI insights in Image Detail View
-- [ ] Display "AI Verified ✓" badge on validated proof (score >= 80)
-- [ ] Show extracted OCR text (expandable section)
-- [ ] Show content categories with confidence
-- [ ] Show quality score (1-5 stars)
-- [ ] Handle missing AI analysis gracefully (fallback: "Analysis pending...")
+- [ ] Image Detail View: Show AI insights section
+- [ ] Badge: "AI Verified ✓" if `validation_score >= 80`
+- [ ] OCR text: Expandable section with extracted text
+- [ ] Categories: Display top 2 with confidence bars
+- [ ] Quality: Show 1-5 star rating
+- [ ] Handle missing analysis: "Analysis pending..." (if AI failed, show retry button)
 
-### AC-3: Rate Limiting
+---
+
+### AC-3: Rate Limiting (Free Tier Cost Control)
+
+> **⚡ FREE TIER LIMITS:** 5 images/day, 5MB/day, 5 AI analyses/day = 10 cents/user/day max
 
 **Daily Limits per User:**
+- [ ] Max 5 images per user per day (free tier)
 - [ ] Max 5MB total uploads per user per day
-- [ ] Max 20 images per user per day
-- [ ] Max 20 AI vision analyses per user per day
-- [ ] Reset counters at midnight user's local timezone (server-calculated)
+- [ ] Max 5 AI vision analyses per user per day
+- [ ] Reset at midnight user's local timezone (from `user_profiles.timezone`)
 
-**Track Usage in daily_aggregates Table:**
-- [ ] Add columns: `upload_count` (INT, default 0)
-- [ ] Add columns: `upload_size_mb` (DECIMAL, default 0)
-- [ ] Add columns: `ai_vision_count` (INT, default 0)
-- [ ] Increment counters on each upload/AI analysis
-- [ ] Check limits before allowing upload/analysis
+**Database Columns (daily_aggregates Table):**
+```sql
+-- Add if not exists
+ALTER TABLE daily_aggregates ADD COLUMN IF NOT EXISTS upload_count INT DEFAULT 0;
+ALTER TABLE daily_aggregates ADD COLUMN IF NOT EXISTS upload_size_mb DECIMAL DEFAULT 0;
+ALTER TABLE daily_aggregates ADD COLUMN IF NOT EXISTS ai_vision_count INT DEFAULT 0;
+```
 
-**Rate Limit Errors:**
-- [ ] HTTP 429 status code for rate limit exceeded
-- [ ] Error response format (Story 0.8 pattern):
+**Middleware Implementation (Backend):**
+```python
+# app/middleware/rate_limit.py
+from datetime import datetime
+import pytz
+
+async def check_upload_rate_limit(user_id: UUID, file_size_mb: float, user_timezone: str):
+    # Calculate user's local date
+    user_tz = pytz.timezone(user_timezone)
+    local_date = datetime.now(user_tz).date()
+
+    # Get or create daily aggregate
+    agg = await get_or_create_daily_aggregate(user_id, local_date)
+
+    # Check limits
+    if agg.upload_count >= 5:
+        seconds_until_midnight = calculate_seconds_until_midnight(user_timezone)
+        raise RateLimitError(
+            code="RATE_LIMIT_EXCEEDED",
+            message="Daily upload limit reached (5/5 images). Upgrade to Pro for unlimited.",
+            retry_after=seconds_until_midnight
+        )
+
+    if agg.upload_size_mb + file_size_mb > 5.0:
+        raise RateLimitError(
+            message="Daily storage limit reached (5MB). Upgrade to Pro for unlimited."
+        )
+
+    # Increment atomically
+    await increment_usage(user_id, local_date, file_size_mb)
+```
+
+**Rate Limit Response:**
+- [ ] HTTP 429 status code
+- [ ] Error format:
   ```json
   {
     "error": {
       "code": "RATE_LIMIT_EXCEEDED",
-      "message": "Daily upload limit reached (20/20 images)",
+      "message": "Daily upload limit reached (5/5 images)",
       "retryable": false,
       "retryAfter": "2025-12-22T00:00:00Z"
     }
   }
   ```
-- [ ] Include `Retry-After` header with next reset time
+- [ ] Include `Retry-After` header (seconds until midnight)
 
-**Daily Usage Indicator:**
-- [ ] Show in upload UI: "3/20 images uploaded today (2.5MB/5MB used)"
-- [ ] Update indicator after each upload
-- [ ] Show warning at 80% usage: "16/20 images used today"
-- [ ] Show error at 100% usage: "Daily limit reached. Resets at midnight."
+**Daily Usage Indicator (Mobile UI):**
+```typescript
+// Fetch usage before showing upload UI
+const { data: usage } = useQuery({
+  queryKey: ['upload-usage', localDate],
+  queryFn: () => fetch('/api/captures/usage').then(r => r.json())
+});
 
-### AC-4: Error Handling
+// Display: "3/5 images uploaded today (2.5MB/5MB used)"
+<Text className="text-sm text-neutral-400">
+  {usage.upload_count}/5 images today ({usage.upload_size_mb.toFixed(1)}MB/5MB)
+</Text>
 
-**Handle Scenarios:**
-- [ ] File too large (>10MB) → "Image too large (max 10MB)"
-- [ ] Invalid format (not JPEG/PNG) → "Only JPEG and PNG images supported"
-- [ ] Storage quota exceeded → "Storage quota exceeded. Contact support."
-- [ ] Upload timeout (>30s) → "Upload timed out. Check connection."
-- [ ] Rate limit exceeded → "Daily limit reached (20/20 images)"
-- [ ] AI analysis failed → "AI analysis failed. Retrying..."
-- [ ] Network error → "No internet connection. Upload queued."
+// Warning at 80%: "4/5 images used today. 1 remaining."
+{usage.upload_count >= 4 && (
+  <Text className="text-sm text-amber-500">
+    ⚠️ {5 - usage.upload_count} image{5 - usage.upload_count === 1 ? '' : 's'} remaining today
+  </Text>
+)}
+
+// Error at 100%: Show upgrade prompt
+{usage.upload_count >= 5 && (
+  <View className="p-4 bg-amber-500/10 rounded-lg">
+    <Text className="text-amber-500 font-semibold">Daily Limit Reached</Text>
+    <Text className="text-neutral-300">Upgrade to Pro for unlimited images</Text>
+    <Button onPress={handleUpgrade}>Upgrade Now</Button>
+  </View>
+)}
+```
+
+---
+
+### AC-4: Error Handling & Offline Support
+
+> **✅ MUST HANDLE:** Network errors, timeouts, rate limits, AI failures, offline mode
+
+**Error Scenarios:**
+- [ ] File too large (>10MB): "Image too large (max 10MB). Try compressing."
+- [ ] Invalid format: "Only JPEG and PNG supported"
+- [ ] Upload timeout (>30s): "Upload timed out. Check connection."
+- [ ] Rate limit: "Daily limit reached (5/5 images). Resets at midnight."
+- [ ] AI analysis failed: "AI analysis unavailable. Image saved."
+- [ ] Network error: "No internet. Upload queued for later."
 
 **Progress UI:**
-- [ ] Upload progress bar (0-100%)
-- [ ] Cancel button during upload
-- [ ] Loading state: "Uploading image..."
-- [ ] AI loading state: "Analyzing image..." (with spinner)
-- [ ] Success state: "Upload complete ✓"
-- [ ] Error state: Show error message with retry button
+- [ ] Upload: Progress bar 0-100% with cancel button
+- [ ] AI analysis: "Analyzing image..." with spinner
+- [ ] Success: "Upload complete ✓" → "AI Verified ✓"
+- [ ] Error: Show message + retry button
 
 **Retry Logic:**
 - [ ] 3 attempts with exponential backoff (1s, 2s, 4s)
-- [ ] Retry on network errors (500, 502, 503, 504)
-- [ ] Don't retry on client errors (400, 401, 403, 404, 429)
-- [ ] Show retry attempt number: "Retrying... (2/3)"
+- [ ] Retry on: 500, 502, 503, 504 (server errors)
+- [ ] Don't retry on: 400, 401, 403, 404, 429 (client errors)
+- [ ] Show: "Retrying... (2/3)"
 
-**Queue Failed Uploads Locally:**
-- [ ] Use TanStack Query offline mode (Story 0.6 architecture)
-- [ ] Store failed uploads in AsyncStorage
-- [ ] Retry when connection restored
-- [ ] Show queued uploads in UI: "1 upload pending"
-- [ ] Auto-sync on app foreground
+**Offline Behavior:**
+```typescript
+// Queue upload when offline
+await AsyncStorage.setItem('pending-uploads', JSON.stringify([
+  {
+    id: uuid(),
+    localUri: compressedImageUri,
+    context: { subtask_instance_id, goal_id, local_date, note },
+    timestamp: Date.now()
+  }
+]));
+
+// TanStack Query auto-retries when online
+const uploadMutation = useMutation({
+  mutationFn: uploadImage,
+  networkMode: 'offlineFirst',  // Queue if offline
+  retry: 3,
+  onSuccess: () => {
+    // Clear from AsyncStorage
+  }
+});
+```
+
+**Offline UI:**
+- [ ] When offline: Show "Upload pending - will sync when online"
+- [ ] When online: Auto-retry queued uploads
+- [ ] Progress: "1 upload pending" indicator
+- [ ] User can: View queued images locally, cancel queued uploads
+
+**Error Recovery UI Patterns:**
+
+**Upload Timeout:**
+```
+┌─────────────────────────────────┐
+│ ⚠️ Upload Timed Out             │
+│                                  │
+│ Your connection may be slow.     │
+│                                  │
+│ [Try Again] [Cancel]             │
+└─────────────────────────────────┘
+```
+
+**Rate Limit:**
+```
+┌─────────────────────────────────┐
+│ 📸 Daily Upload Limit Reached   │
+│                                  │
+│ You've uploaded 5 images today.  │
+│ Resets at midnight (3h 24m).    │
+│                                  │
+│ [Upgrade to Pro] [OK]            │
+└─────────────────────────────────┘
+```
+
+**AI Analysis Failed:**
+```
+┌─────────────────────────────────┐
+│ ✅ Image Uploaded                │
+│ ⚠️ AI Analysis Unavailable      │
+│                                  │
+│ Your proof is saved, but AI      │
+│ insights aren't available now.   │
+│                                  │
+│ [Retry Analysis] [Continue]      │
+└─────────────────────────────────┘
+```
 
 ---
 
 ## Developer Context
 
+### Learnings from Previous Stories
+
+> **🎓 APPLY PATTERNS:** Reuse proven approaches from Stories 0.4, 0.6, 0.7
+
+**From Story 0.4 (RLS):**
+- Pattern: `(storage.foldername(name))[1]` extracts `user_id` from storage paths
+- Pattern: Cast `auth.uid()::text` when comparing with `auth_user_id` column
+- Testing: Run `scripts/test_rls_security.py` to verify cross-user isolation
+
+**From Story 0.6 (AI Service Abstraction):**
+- Pattern: Provider abstraction with fallback chain (Gemini → OpenAI → Fallback)
+- Pattern: Log all AI calls to `ai_runs` table: `input_tokens`, `output_tokens`, `model`, `cost_usd`, `duration_ms`
+- Cost tracking: Calculate cost per provider, aggregate daily spend
+
+**From Story 0.7 (Test Infrastructure):**
+- Pattern: Use pytest fixtures (`user_fixture`, `goal_fixture`) for test data
+- Pattern: File naming: `test_{feature}_api.py` for integration tests
+- Coverage target: 80%+ services, 60%+ API routes
+
+---
+
 ### Technical Requirements
 
 **Frontend (React Native/Expo):**
-- **Image Capture:**
-  - Use `expo-image-picker` (~17.0.10) for camera/gallery access
-  - Request permissions with `requestCameraPermissionsAsync()` and `requestMediaLibraryPermissionsAsync()`
-  - Handle permission denials gracefully with user-friendly messages
-  - Convert image URI to base64 for React Native compatibility
-
-- **Image Upload:**
-  - Upload to Supabase Storage using `@supabase/supabase-js` ^2.88.0
-  - Generate unique filenames: `{user_id}/proof_{Date.now()}.jpg`
-  - Track upload progress with progress callbacks
-  - Cancel upload on user request (AbortController)
-
-- **State Management:**
-  - Use TanStack Query for image fetching (server state)
-  - Use `networkMode: 'offlineFirst'` for offline support
-  - Cache signed URLs with 1-hour `staleTime`
-  - Invalidate cache on upload/delete
-
-- **UI Components:**
-  - Follow design system patterns (NativeWind + design tokens)
-  - Use `@/design-system` components (Button, Card, Text)
-  - Implement bottom sheet for capture flow (e.g., `ProofCaptureSheet`)
-  - Use skeleton loaders during image loading
+- **Image Capture:** `expo-image-picker ~17.0.10` for camera/gallery
+- **Compression:** `expo-image-manipulator` for resizing (max 1920px width, 80% quality)
+- **Upload:** `@supabase/supabase-js ^2.88.0` with base64 encoding
+- **State:** TanStack Query (`networkMode: 'offlineFirst'`), Zustand (gallery filters), useState (local)
+- **UI:** Use `@/design-system` components (Button, Card, Text), NativeWind styling
 
 **Backend (Python FastAPI):**
-- **Vision Service:**
-  - Create `app/services/vision_service.py`
-  - Implement `VisionProvider` abstract class (similar to `AIProvider` from Story 0.6)
-  - Implement `GeminiVisionProvider` for Gemini 3 Flash
-  - Implement `OpenAIVisionProvider` for GPT-4o Vision (fallback)
-  - Use provider abstraction pattern for easy swapping
+- **Vision:** `google-generativeai` (Gemini), `openai` (GPT-4o fallback), `pillow` (validation)
+- **API:** FastAPI 0.115+, Pydantic models, async/await
+- **Rate Limiting:** Check `daily_aggregates`, calculate midnight in user timezone (`pytz`)
+- **Cost Tracking:** Log to `ai_runs` table after each AI call
 
-- **API Endpoints:**
-  - `POST /api/captures/images` - Upload image
-  - `GET /api/captures/images` - List images with filters
-  - `GET /api/captures/images/{image_id}` - Get single image
-  - `DELETE /api/captures/images/{image_id}` - Delete image
-  - `POST /api/captures/images/{image_id}/analyze` - Manual AI analysis retry
-
-- **Rate Limiting:**
-  - Check `daily_aggregates` table before upload
-  - Increment counters atomically (use database transaction)
-  - Calculate midnight in user's local timezone (from `user_profiles.timezone`)
-  - Return HTTP 429 with `Retry-After` header
-
-- **Cost Tracking:**
-  - Log AI analysis to `ai_runs` table (Story 0.6 pattern)
-  - Track: `model`, `input_tokens`, `output_tokens`, `cost_usd`, `duration_ms`
-  - Calculate cost: Gemini 3 Flash = $0.50/MTok input + $3.00/MTok output
-  - Monitor daily spend with alerts at $83.33/day threshold
+---
 
 ### Architecture Compliance
 
-**Data Access Pattern:**
-- Use **Supabase Direct** for image storage (file uploads)
-- Use **FastAPI Backend** for AI vision analysis (complex business logic)
-- Decision tree (from architecture):
-  1. File storage? → Supabase direct ✓
-  2. AI involvement? → FastAPI backend ✓
+**Data Access:**
+- ✅ Supabase Direct for image storage (file uploads)
+- ✅ FastAPI Backend for AI vision analysis (complex business logic)
 
 **State Management:**
-- **TanStack Query** for image fetching (server state)
-- **Zustand** for UI state (e.g., gallery filters, selected image)
-- **useState** for local state (e.g., upload progress, form inputs)
-- Never use Zustand for server data (images, captures)
+- ✅ TanStack Query for images (server state)
+- ✅ Zustand for gallery filters (UI state)
+- ✅ useState for upload progress (local state)
 
 **API Response Format:**
 ```typescript
-// Success response (from Story 0.8 pattern)
-{
-  "data": {
-    "id": "uuid",
-    "user_id": "uuid",
-    "type": "photo",
-    "storage_key": "user-123/proof_1703167200000.jpg",
-    "content_text": "Completed workout",
-    "goal_id": "uuid",
-    "subtask_instance_id": "uuid",
-    "local_date": "2025-12-21",
-    "ai_analysis": { /* JSONB */ },
-    "created_at": "2025-12-21T10:30:00Z"
-  },
-  "meta": {
-    "timestamp": "2025-12-21T10:30:05Z"
-  }
-}
+// Success
+{ "data": {...}, "meta": { "timestamp": "2025-12-21T10:30:05Z" } }
 
-// Error response (from Story 0.8 pattern)
-{
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "Daily upload limit reached (20/20 images)",
-    "retryable": false,
-    "retryAfter": "2025-12-22T00:00:00Z"
-  }
-}
+// Error
+{ "error": { "code": "RATE_LIMIT_EXCEEDED", "message": "...", "retryable": false } }
 ```
 
-**Naming Conventions:**
-- **Database:** `snake_case` (e.g., `ai_vision_count`, `upload_size_mb`)
-- **API Endpoints:** `snake_case` params (e.g., `?goal_id=xxx&local_date=2025-12-21`)
-- **TypeScript:** `camelCase` variables, `PascalCase` components
-- **Python:** `snake_case` functions, `PascalCase` classes
+**Naming:**
+- Database: `snake_case` (`ai_vision_count`, `upload_size_mb`)
+- API: `snake_case` params (`?goal_id=xxx&local_date=2025-12-21`)
+- TypeScript: `camelCase` vars, `PascalCase` components
+- Python: `snake_case` functions, `PascalCase` classes
 
-**Data Integrity:**
-- **Immutable Tables:** None in this story (captures can be deleted)
-- **Soft Delete:** NOT used for captures (hard delete from Storage + DB)
-- **RLS Policies:** Enforce user isolation at both Storage and Database layers (Story 0.4 pattern)
+---
 
-### Library & Framework Requirements
+### File Structure
 
-**Gemini 3 Flash (Primary Vision Provider):**
-- **Model:** `gemini-3-flash-preview`
-- **Pricing:** $0.50/MTok input, $3.00/MTok output (currently FREE during preview)
-- **Cost per image:** ~$0.0005 (typical image ~560 tokens)
-- **API:** Google AI Gemini API (https://ai.google.dev/gemini-api/docs)
-- **SDK:** `google-generativeai` Python package (or HTTP API)
-- **Capabilities:** Multimodal analysis (text, image, video, audio)
-- **Free tier:** 15 RPM (requests per minute) during preview
-
-**React Native/Expo Packages:**
-```bash
-# Image capture (already installed from Story 0.1)
-expo-image-picker ~17.0.10
-
-# Supabase client (already installed from Story 0.1)
-@supabase/supabase-js ^2.88.0
-
-# State management (already installed from Story 0.1)
-@tanstack/react-query ^5.0.0
-zustand ^5.0.0
-
-# Offline support (already installed from Story 0.1)
-@react-native-async-storage/async-storage
-@react-native-community/netinfo
-```
-
-**Python FastAPI Packages:**
-```bash
-# Gemini SDK (NEW - add to pyproject.toml)
-uv add google-generativeai
-
-# Supabase client (already installed from Story 0.1)
-supabase-py
-
-# Image processing (optional, for validation)
-uv add pillow  # For image dimension checks
-```
-
-### File Structure Requirements
+> **🚨 CREATE NEW FILES** - Archive old Story 0.9 implementation first
 
 **Frontend (weave-mobile/):**
 ```
 src/
 ├── services/
-│   ├── imageCapture.ts          # Image capture & upload service
-│   └── visionService.ts         # AI vision API client (calls backend)
+│   ├── imageCapture.ts          # NEW - Image capture, upload, compression
+│   └── visionService.ts         # NEW - AI vision API client
 ├── components/
-│   ├── ProofCaptureSheet.tsx    # Bottom sheet for proof capture
-│   ├── CaptureImage.tsx         # Display captured images
-│   ├── ImageGallery.tsx         # Gallery grid view
-│   └── ImageDetailView.tsx      # Full-screen image detail
+│   ├── ProofCaptureSheet.tsx    # NEW - Bottom sheet for proof capture
+│   ├── CaptureImage.tsx         # NEW - Display captured images
+│   ├── ImageGallery.tsx         # NEW - Gallery grid with infinite scroll
+│   └── ImageDetailView.tsx      # NEW - Full-screen detail + AI insights
 ├── hooks/
-│   ├── useImageUpload.ts        # TanStack Query hook for upload
-│   ├── useImageList.ts          # TanStack Query hook for fetching
-│   └── useImageDelete.ts        # TanStack Query hook for deletion
+│   ├── useImageUpload.ts        # NEW - Upload mutation hook
+│   ├── useImageList.ts          # NEW - Fetch images hook
+│   └── useImageDelete.ts        # NEW - Delete mutation hook
 ├── types/
-│   └── captures.ts              # TypeScript types
+│   └── captures.ts              # NEW - TypeScript types
 └── stores/
-    └── imageGalleryStore.ts     # Zustand store for gallery filters
+    └── imageGalleryStore.ts     # NEW - Gallery filters state
 ```
 
 **Backend (weave-api/):**
 ```
 app/
 ├── services/
-│   ├── vision_service.py        # Vision provider abstraction
-│   ├── gemini_vision_provider.py  # Gemini 3 Flash implementation
-│   └── openai_vision_provider.py  # GPT-4o Vision fallback
+│   ├── vision_service.py        # NEW - VisionProvider abstraction
+│   ├── gemini_vision_provider.py  # NEW - Gemini 3 Flash
+│   └── openai_vision_provider.py  # NEW - GPT-4o fallback
 ├── api/
-│   └── captures.py              # API endpoints
+│   └── captures.py              # NEW - Image API endpoints
 ├── models/
-│   └── capture.py               # Pydantic models
+│   └── capture.py               # NEW - Pydantic models
+├── middleware/
+│   └── rate_limit.py            # NEW - Rate limiting logic
 └── tests/
-    ├── test_vision_service.py   # Unit tests
-    └── test_captures_api.py     # Integration tests
+    ├── test_vision_service.py   # NEW - Unit tests
+    └── test_captures_api.py     # NEW - Integration tests
 ```
 
-**Database Migrations:**
+---
+
+### Database Migrations
+
+> **⚠️ MIGRATION REQUIRED:** Add AI analysis columns to existing `captures` table
+
+**Existing Migration (DO NOT MODIFY):**
+- `20251221000001_captures_storage_bucket.sql` - Storage bucket + RLS (already applied)
+
+**New Migration to CREATE:**
+
+**File:** `supabase/migrations/20251221000002_ai_vision_columns.sql`
+
+```sql
+-- Migration: Add AI Vision Analysis Columns
+-- Story: 0.9 - AI-Powered Image Service (8 pts expansion)
+-- Purpose: Add AI vision analysis to existing captures table
+
+-- Add AI analysis columns
+ALTER TABLE captures ADD COLUMN IF NOT EXISTS ai_analysis JSONB;
+ALTER TABLE captures ADD COLUMN IF NOT EXISTS ai_verified BOOLEAN DEFAULT false;
+ALTER TABLE captures ADD COLUMN IF NOT EXISTS ai_quality_score INT;
+
+-- Add quality score constraint
+ALTER TABLE captures ADD CONSTRAINT check_ai_quality_score
+  CHECK (ai_quality_score IS NULL OR (ai_quality_score BETWEEN 1 AND 5));
+
+-- Add index for verified proofs
+CREATE INDEX IF NOT EXISTS idx_captures_ai_verified
+  ON captures(ai_verified) WHERE ai_verified = true;
+
+-- Add comments
+COMMENT ON COLUMN captures.ai_analysis IS 'JSONB: Gemini 3 Flash vision analysis (provider, validation_score, ocr_text, categories, quality_score)';
+COMMENT ON COLUMN captures.ai_verified IS 'True if validation_score >= 80';
+COMMENT ON COLUMN captures.ai_quality_score IS '1-5 rating (null if analysis failed)';
 ```
-supabase/migrations/
-└── 20251221000001_captures_storage_bucket.sql  # Storage bucket + RLS
-└── 20251221000002_ai_vision_columns.sql        # Add ai_analysis JSONB column
+
+---
+
+### Cost Monitoring
+
+> **💰 BUDGET:** $3/day baseline ($90/month), alert at $4/day (33% over)
+
+**Alert Thresholds:**
+- Daily baseline: $3.00/day
+- Warning: $4.00/day (33% over budget)
+- Critical: $5.00/day (67% over budget)
+
+**Monitoring Query:**
+```sql
+-- Daily AI vision cost
+SELECT
+  local_date,
+  SUM(cost_usd) as total_cost,
+  COUNT(*) as analysis_count,
+  AVG(cost_usd) as avg_cost_per_image
+FROM ai_runs
+WHERE operation_type = 'image_analysis'
+  AND local_date >= CURRENT_DATE - INTERVAL '7 days'
+GROUP BY local_date
+ORDER BY local_date DESC;
 ```
+
+**Alert Implementation (Backend):**
+```python
+# After each AI call
+async def check_ai_cost_alert(local_date: date):
+    daily_cost = await get_daily_ai_cost(local_date)
+
+    if daily_cost > 5.00:
+        await send_alert_to_slack(f"🚨 CRITICAL: AI cost ${daily_cost:.2f}/day")
+    elif daily_cost > 4.00:
+        await send_alert_to_slack(f"⚠️ WARNING: AI cost ${daily_cost:.2f}/day")
+```
+
+---
 
 ### Testing Requirements
 
 **Unit Tests (Backend):**
-- [ ] Test `VisionProvider` abstraction with mock providers
-- [ ] Test Gemini 3 Flash integration (mock API responses)
-- [ ] Test fallback chain (Gemini → OpenAI → Store only)
-- [ ] Test rate limiting logic (daily_aggregates checks)
-- [ ] Test cost tracking (ai_runs table logging)
-- [ ] Coverage target: 80%+ for services
+- [ ] Test `VisionProvider` abstraction with mock responses
+- [ ] Test Gemini 3 Flash integration (mock Google API)
+- [ ] Test fallback chain: Gemini fails → OpenAI → Store only
+- [ ] Test rate limiting: daily_aggregates checks, timezone handling
+- [ ] Test cost tracking: ai_runs table logging
+- [ ] Coverage: 80%+ services
 
 **Integration Tests (Backend):**
-- [ ] Test image upload → storage → database flow
-- [ ] Test AI vision analysis → database storage
-- [ ] Test image retrieval with filters
-- [ ] Test image deletion (Storage + DB cleanup)
-- [ ] Test rate limiting enforcement (HTTP 429)
+- [ ] Test: Upload image → Storage → DB → AI analysis → DB update
+- [ ] Test: Image retrieval with filters (goal, date range, pagination)
+- [ ] Test: Image deletion (Storage + DB cascade)
+- [ ] Test: Rate limit enforcement (HTTP 429 at 5/5 images)
 - [ ] Use pytest fixtures for test data
 
 **E2E Tests (Mobile):**
-- [ ] Test proof capture flow (camera → upload → display)
-- [ ] Test quick capture flow (gallery → upload → display)
-- [ ] Test image gallery (filtering, pagination)
-- [ ] Test image detail view (swipe, delete)
-- [ ] Test offline upload queueing
-- [ ] Test rate limit UI feedback
-- [ ] Use Expo's testing library (Jest + React Native Testing Library)
+- [ ] Test: Camera capture → compress → upload → display
+- [ ] Test: Gallery selection → compress → upload → display
+- [ ] Test: Image gallery (infinite scroll, filters)
+- [ ] Test: Image detail view (swipe, delete, AI insights)
+- [ ] Test: Offline queue (go offline → upload → go online → auto-sync)
+- [ ] Test: Rate limit UI (approach 5/5, show warning, hit limit)
 
-**Manual Testing Checklist:**
-- [ ] Test on iOS simulator
-- [ ] Test on Android emulator
-- [ ] Test camera permissions (grant, deny)
-- [ ] Test gallery permissions (grant, deny)
-- [ ] Test upload progress indicator
-- [ ] Test upload cancellation
-- [ ] Test AI analysis loading state
-- [ ] Test rate limit warnings (80%, 100%)
-- [ ] Test offline upload queueing
-- [ ] Test cross-user isolation (2 accounts)
-
----
-
-## Git Intelligence Summary
-
-**Recent Commit Patterns (Last 5 commits):**
-- Story implementation pattern: Feature branches → main via PR
-- Commit message format: `feat: <description>` or `fix: <description>`
-- Documentation updates: Separate commits for docs changes
-- Testing: Tests added in same PR as feature implementation
-- Architecture changes: Documented in `docs/architecture/` before implementation
-
-**Learnings from Recent Work:**
-- Epic 0 stories follow consistent structure: migration → service → API → UI
-- RLS patterns established in Story 0.4 (reuse for Storage)
-- AI service abstraction pattern from Story 0.6 (reuse for Vision)
-- Test infrastructure from Story 0.7 (reuse for vision tests)
-
----
-
-## Latest Tech Information
-
-**Gemini 3 Flash Preview (as of December 2025):**
-- **Model ID:** `gemini-3-flash-preview`
-- **Pricing:** $0.50/MTok input, $3.00/MTok output
-- **Free Tier:** Currently FREE during preview period
-- **Rate Limits (Free):** 15 RPM (requests per minute)
-- **Rate Limits (Paid):** Higher limits, exact values TBD
-- **Context Window:** 1M tokens (same as Gemini 2.5 Pro)
-- **Multimodal:** Text, image, video, audio analysis
-- **Vision Capabilities:**
-  - Object detection
-  - OCR (optical character recognition)
-  - Scene understanding
-  - Image classification
-  - Content moderation
-
-**Cost Projection (10K users):**
-- 20% image upload adoption (2K users)
-- 3 images/user/day = 6K images/day
-- AI analysis on 90% of images = 5.4K analyses/day
-- Input tokens per image: ~560 tokens (typical)
-- Output tokens per analysis: ~200 tokens (typical)
-- Daily input cost: 5.4K * 560 * $0.50/MTok = $1.51/day
-- Daily output cost: 5.4K * 200 * $3.00/MTok = $3.24/day
-- **Total: ~$4.75/day = ~$142.50/month**
-- Well within $2,500/month AI budget (94% headroom)
-
-**Supabase Storage Best Practices:**
-- Use private buckets for user data (require authentication)
-- Implement RLS policies at Storage level (folder-based isolation)
-- Generate signed URLs with short expiration (1 hour default)
-- Use storage triggers for cleanup (delete orphaned files)
-- Monitor storage quota (free tier: 1GB, paid: unlimited with billing)
-
----
-
-## Project Context Reference
-
-**Critical Guidelines from CLAUDE.md:**
-- **State Management:** Use TanStack Query for server state (images), Zustand for UI state (filters), useState for local state
-- **Design System:** ALWAYS use `@/design-system` components (Button, Card, Text, etc.)
-- **Naming:** snake_case for DB/API, camelCase for TypeScript, PascalCase for components
-- **Data Integrity:** captures table is NOT immutable (can be deleted)
-- **Security:** RLS policies enforce user isolation at both Storage and Database layers
-- **Offline:** Use TanStack Query `networkMode: 'offlineFirst'` for offline support
-
-**Architecture Decisions:**
-- **Data Access:** Supabase Direct for file storage, FastAPI for AI vision
-- **AI Provider:** Gemini 3 Flash primary, GPT-4o Vision fallback
-- **Rate Limiting:** Track in daily_aggregates, reset at midnight user's local timezone
-- **Cost Tracking:** Log to ai_runs table (Story 0.6 pattern)
-
----
-
-## Dependencies
-
-**Requires:**
-- Story 0.2 (Database Schema) - `captures` table exists ✅
-- Story 0.3 (Authentication) - JWT tokens for API access ✅
-- Story 0.4 (RLS) - Security patterns for Storage + DB ✅
-- Story 0.6 (AI Service Abstraction) - Provider pattern for Gemini ✅
-- Story 0.7 (Test Infrastructure) - pytest + Jest setup ✅
-
-**Unblocks:**
-- Epic 3 Story 3.4 (Attach Proof to Bind) - Proof capture after bind completion
-- Epic 3 Story 3.5 (Quick Capture) - General photo capture without bind context
-- Epic 4 Story 4.2 (Recap Before Reflection) - Display proof photos in recap
-- Epic 5 Story 5.1 (Dashboard Overview) - Show recent proof photos
+**Manual Testing:**
+- [ ] Test on iOS simulator + Android emulator
+- [ ] Test permissions: grant, deny, request again
+- [ ] Test compression: large images (>10MB) → compressed (<2MB)
+- [ ] Test AI analysis: gym photo, food photo, outdoor photo, text document
+- [ ] Test rate limits: upload 5 images, verify 6th blocked
+- [ ] Test cross-user isolation: 2 accounts, verify no cross-access
 
 ---
 
 ## Integration Points
 
+> **✅ UNBLOCKS:** Epic 3 Stories 3.4, 3.5; Epic 4 Story 4.2; Epic 5 Story 5.1
+
 **Epic 3: Daily Actions & Proof**
 
-**US-3.4: Attach Proof to Bind:**
-- After bind completion, show `ProofCaptureSheet` component
-- Pass context: `subtask_instance_id`, `goal_id`, `local_date`, `note`
-- Use `captureAndUploadProofPhoto()` service function
-- Display AI verification badge if `validation_score >= 80`
+**Story 3.4: Attach Proof to Bind**
+- After bind completion: Show `<ProofCaptureSheet context={{subtask_instance_id, goal_id, local_date, note}} />`
+- Use `captureAndUploadProofPhoto(context, source)` function
+- Display "AI Verified ✓" badge if `ai_analysis.validation_score >= 80`
 - Allow skip (trust-based system)
 
-**US-3.5: Quick Capture (Document):**
+**Story 3.5: Quick Capture**
 - Floating menu → "Document" button
-- Use `captureQuickPhoto()` service function
-- No bind/goal linkage required
-- Store with `local_date` only
-- Support camera or gallery
+- Use `captureQuickPhoto(localDate, source, note)` function
+- No bind/goal linkage (store with `local_date` only)
 
 **Epic 4: Reflection & Journaling**
 
-**US-4.2: Recap Before Reflection:**
-- Fetch today's proof photos with `getUserCaptures(local_date, 'photo')`
+**Story 4.2: Recap Before Reflection**
+- Fetch: `getUserCaptures(localDate, 'photo')`
 - Display in recap screen (grid or carousel)
-- Show AI verified badge on validated proof
-- Tap to open full-screen detail view
+- Show AI verified badge, tap to open detail view
 
 **Epic 5: Progress Visualization**
 
-**US-5.1: Dashboard Overview:**
-- Show "Recent Proof" section with last 3 proof photos
+**Story 5.1: Dashboard Overview**
+- Show "Recent Proof" section with last 3 photos
 - Display AI verification status
 - Tap to open image gallery
 
@@ -579,91 +607,88 @@ supabase/migrations/
 ## Success Metrics
 
 **Technical:**
-- [ ] Image upload success rate > 98%
-- [ ] Average upload time < 3 seconds
+- [ ] Upload success rate > 98%
+- [ ] Average upload time < 3s
 - [ ] AI analysis success rate > 95%
-- [ ] Average AI analysis time < 2 seconds
-- [ ] Zero cross-user access incidents (RLS working)
-- [ ] Rate limit enforcement 100% (no bypasses)
+- [ ] Average AI analysis time < 2s
+- [ ] Zero cross-user access incidents
 
 **User Experience:**
-- [ ] Camera/gallery launch < 1 second
-- [ ] Image display load time < 2 seconds
-- [ ] Clear progress feedback during upload
-- [ ] Graceful error handling with retry
-- [ ] AI verified badge displayed correctly
+- [ ] Camera/gallery launch < 1s
+- [ ] Image display load < 2s
+- [ ] Clear progress feedback
+- [ ] Graceful error handling
 
 **Business:**
-- [ ] Proof attachment rate (target: 60%+)
-- [ ] Quick capture daily usage (target: 20% adoption)
-- [ ] Storage costs per user (target: <$0.50/month)
-- [ ] AI analysis costs per user (target: <$0.15/month)
-- [ ] User retention impact (measure proof vs. no-proof users)
+- [ ] Proof attachment rate > 60%
+- [ ] Quick capture adoption > 20%
+- [ ] Storage cost < $0.50/user/month
+- [ ] AI cost < $0.15/user/month (5 images * $0.02 * 75% adoption)
 
 ---
 
 ## Cost Impact Summary
 
-**Gemini 3 Flash Vision:**
-- ~$90/month at 10K users (6K images/day with 90% AI analysis)
-- Currently FREE during preview period
-- Well within $2,500/month AI budget
+**Free Tier Limits (Per User):**
+- 5 images/day * $0.02/image = **$0.10/user/day = $3/month**
+- 10K users * 75% adoption * $3/month = **$22,500/month** (at scale)
+
+**After Preview Period Ends:**
+- Gemini 3 Flash: $0.50/MTok input + $3.00/MTok output
+- Typical image: 560 input tokens + 200 output tokens
+- Cost: (560 * $0.50 + 200 * $3.00) / 1,000,000 = **~$0.02/image**
 
 **Supabase Storage:**
-- 10K users * 20 images/month * 2MB avg = 400GB/month
-- Supabase pricing: $0.021/GB/month = ~$8.40/month
-- Total infrastructure cost: ~$98.40/month (AI + Storage)
+- 10K users * 5 images/day * 30 days * 2MB avg = 3TB/month
+- Supabase: $0.021/GB/month = **$63/month**
 
-**Total Epic 0 AI Infrastructure:**
-- Story 0.6 (AI Service Abstraction): Base infrastructure
-- Story 0.9 (AI Vision): +$90/month
-- Story 0.11 (Voice/STT): +$186/month (from PRD)
-- **Total: ~$276/month** (well within $2,500/month budget)
+**Total Infrastructure:**
+- AI: $22,500/month (at scale, after preview)
+- Storage: $63/month
+- **Total: $22,563/month** (within $25K/month budget at 10K users)
+
+**Mitigation Strategy:**
+- Free tier: 5 images/day (keeps costs manageable)
+- Pro tier: Unlimited images ($9.99/month) to offset AI costs
+- Compression: Reduces storage costs by 60%
 
 ---
 
 ## Rollout Checklist
 
-### Development Phase
-- [ ] Create `captures` storage bucket migration
-- [ ] Implement vision service with Gemini 3 Flash
+### Development
+- [ ] Archive old Story 0.9 implementation
+- [ ] Create migration: `20251221000002_ai_vision_columns.sql`
+- [ ] Implement vision service (Gemini + OpenAI providers)
 - [ ] Create API endpoints (upload, list, get, delete, analyze)
-- [ ] Build mobile components (ProofCaptureSheet, CaptureImage, etc.)
-- [ ] Implement rate limiting logic
-- [ ] Add AI analysis to upload flow
-- [ ] Write unit tests (80%+ coverage)
-- [ ] Write integration tests
-- [ ] Update CLAUDE.md with new patterns
+- [ ] Build mobile components (gallery, detail view, capture sheet)
+- [ ] Implement rate limiting middleware
+- [ ] Add image compression (expo-image-manipulator)
+- [ ] Write tests (80%+ coverage)
 
-### Testing Phase
+### Testing
 - [ ] Run migration on local Supabase
 - [ ] Test camera/gallery permissions
-- [ ] Test image upload with progress tracking
+- [ ] Test compression (10MB → <2MB)
 - [ ] Test AI vision analysis
-- [ ] Test rate limiting (approach 80%, hit 100%)
-- [ ] Test offline upload queueing
-- [ ] Test RLS security (2 test accounts)
-- [ ] Test file size/type validation
-- [ ] Load test (50 concurrent uploads)
+- [ ] Test rate limiting (hit 5/5 limit)
+- [ ] Test offline queue (disconnect → upload → reconnect)
+- [ ] Test RLS (2 accounts, verify isolation)
 
-### Staging Phase
-- [ ] Apply migrations to staging database
-- [ ] Create test users with proof photos
-- [ ] Verify cross-user isolation
-- [ ] Monitor AI analysis costs
+### Staging
+- [ ] Apply migrations
+- [ ] Create test users
+- [ ] Monitor AI costs
 - [ ] Monitor storage usage
-- [ ] Test error scenarios (timeout, rate limit, network error)
-- [ ] Performance profiling (upload, AI analysis, display)
+- [ ] Performance profiling
 
-### Production Phase
-- [ ] Apply migrations to production database
-- [ ] Enable Gemini 3 Flash in production
-- [ ] Monitor error rates (target: <2%)
-- [ ] Track storage usage metrics
-- [ ] Set up alerts for rate limits
-- [ ] Set up alerts for storage quota (80%, 100%)
-- [ ] Set up alerts for AI costs ($83.33/day threshold)
-- [ ] Document any issues in `docs/bugs/`
+### Production
+- [ ] Apply migrations
+- [ ] Enable Gemini 3 Flash
+- [ ] Set up cost alerts ($4/day warning, $5/day critical)
+- [ ] Monitor error rates (<2%)
+- [ ] Track storage usage
+- [ ] Document issues in `docs/bugs/`
 
 ---
 
@@ -671,31 +696,28 @@ supabase/migrations/
 
 - **PRD:** `docs/prd/epic-0-foundation.md` (US-0.9, lines 177-238)
 - **Architecture:** `docs/architecture/core-architectural-decisions.md`
-- **Implementation Patterns:** `docs/architecture/implementation-patterns-consistency-rules.md`
-- **Security (RLS):** Story 0.4, `supabase/migrations/20251219170656_row_level_security.sql`
+- **RLS:** Story 0.4, `supabase/migrations/20251219170656_row_level_security.sql`
 - **AI Service:** Story 0.6, `weave-api/app/services/ai_service.py`
-- **Test Infrastructure:** Story 0.7, `weave-api/tests/` + `weave-mobile/src/components/__tests__/`
-- **Gemini API Docs:** https://ai.google.dev/gemini-api/docs
+- **Gemini API:** https://ai.google.dev/gemini-api/docs
 - **Gemini Pricing:** https://ai.google.dev/gemini-api/docs/pricing
-- **Supabase Storage Docs:** https://supabase.com/docs/guides/storage
+- **Supabase Storage:** https://supabase.com/docs/guides/storage
 
 ---
 
 ## Changelog
 
 | Date | Author | Changes |
-|------|--------|---------|
-| 2025-12-21 | Bob (Scrum Master) | Complete rewrite from scratch using updated PRD requirements. Expanded from 3 pts to 8 pts. |
+|------|--------|----|
+| 2025-12-21 | Bob (SM) | Initial creation (8 pts expansion) |
+| 2025-12-21 | Bob (SM) | Validation improvements applied: Fresh implementation, 5 images/day limit, cost monitoring, offline support, compression, infinite scroll, optimized structure |
 
 ---
 
 **Status:** ✅ **READY FOR DEVELOPMENT**
 
-This comprehensive story provides the DEV agent with everything needed for flawless implementation: complete requirements, architecture constraints, latest technical specs, file structure, testing requirements, and integration points.
+This story provides complete requirements for fresh implementation with AI vision, rate limiting, and cost controls.
 
 **Next Steps:**
-1. **Optional:** Run `*validate-create-story` for quality competition review
-2. **Required:** Run `dev-story` workflow to implement Story 0.9
-3. **Required:** Run `code-review` when implementation complete
-
----
+1. Archive old Story 0.9 files to `_archive/story-0.9-old/`
+2. Run `dev-story` workflow to implement Story 0.9
+3. Run `code-review` when complete
