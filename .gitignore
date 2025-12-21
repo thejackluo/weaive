@@ -13,6 +13,17 @@ bmad-custom-src/
 # MCP configuration with sensitive API keys
 .mcp.json      # Active config (has API keys)
 .env
+.env.*
+.env.local
+.env.test
+.env.development
+.env.production
+
+# Project-specific env files
+weave-api/.env
+weave-api/.env.*
+weave-mobile/.env
+weave-mobile/.env.*
 
 # MCP platform-specific configs (tracked in git - no keys hardcoded)
 # .mcp.json.windows - Windows PowerShell version (safe to commit)
