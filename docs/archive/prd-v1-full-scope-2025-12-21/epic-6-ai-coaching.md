@@ -104,6 +104,25 @@ Users interact with the Dream Self Advisor for personalized coaching, clarificat
 
 ---
 
+### US-6.5: AI Goal Suggestions
+
+**Priority:** C (Could Have)
+
+**As a** user
+**I want to** receive suggestions for new goals
+**So that** I continue growing after completing goals
+
+**Acceptance Criteria:**
+- [ ] After archiving a goal, AI suggests related goals
+- [ ] Based on user's interests and patterns
+- [ ] User can accept, modify, or dismiss
+
+**Technical Notes:**
+- Post-MVP enhancement
+- Requires goal completion data
+
+---
+
 ## Epic 6 Summary
 
 | ID | Story | Priority | Estimate |
@@ -112,10 +131,8 @@ Users interact with the Dream Self Advisor for personalized coaching, clarificat
 | US-6.2 | Contextual AI Responses | M | 8 pts |
 | US-6.3 | Edit AI Chat Responses | S | 3 pts |
 | US-6.4 | AI Weekly Insights | S | 8 pts |
+| US-6.5 | AI Goal Suggestions | C | 5 pts |
 
-**Epic Total:** 24 story points
-
-**Changes from Original:**
-- Removed US-6.5 (AI Goal Suggestions)
+**Epic Total:** 29 story points
 
 ---

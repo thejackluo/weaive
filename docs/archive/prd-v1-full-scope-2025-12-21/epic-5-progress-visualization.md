@@ -155,6 +155,63 @@ Users view their progress through the Weave Dashboard, including consistency met
 
 ---
 
+### US-5.6: Badge System
+
+**Priority:** S (Should Have)
+
+**As a** user
+**I want to** earn badges for milestones
+**So that** I have tangible achievements
+
+**Acceptance Criteria:**
+- [ ] Badge triggers:
+  - 7-day streak
+  - 10-day streak
+  - 30-day streak
+  - 10 binds completed
+  - 50 binds completed
+  - 100 binds completed
+  - First goal archived (completed)
+  - First proof captured
+- [ ] Badges displayed in Profile
+- [ ] Push notification when badge earned
+- [ ] Shareable badge card
+
+**Data Requirements:**
+- Write to `user_badges` table
+- Fields: `user_id`, `badge_type`, `earned_at`
+
+---
+
+### US-5.7: Day 10 Snapshot (Shareable)
+
+**Priority:** S (Should Have)
+
+**As a** user
+**I want to** see a "before vs after" summary at day 10
+**So that** I can share my progress and feel accomplished
+
+**Acceptance Criteria:**
+- [ ] Triggered at 10 active days with proof
+- [ ] Show:
+  - Consistency score
+  - Rank achieved
+  - Badges earned
+  - Top 3 wins (AI-selected)
+  - Identity shift summary (AI-generated)
+- [ ] Shareable card format (image export)
+- [ ] "Share" button (native share sheet)
+- [ ] Also generated at 30, 60, 90 days
+
+**Data Requirements:**
+- Compute from `daily_aggregates`, `user_stats`, `ai_artifacts`
+- Store snapshot in `milestone_snapshots` table
+
+**Technical Notes:**
+- This is the viral distribution wedge
+- Image generation can be client-side (Canvas/SVG)
+
+---
 
 ## Epic 5 Summary
 
@@ -165,12 +222,9 @@ Users view their progress through the Weave Dashboard, including consistency met
 | US-5.3 | Fulfillment Trend Chart | M | 5 pts |
 | US-5.4 | Weave Character Progression | S | 8 pts |
 | US-5.5 | Streak Tracking | M | 3 pts |
+| US-5.6 | Badge System | S | 5 pts |
+| US-5.7 | Day 10 Snapshot | S | 8 pts |
 
-**Epic Total:** 26 story points
-
-**Changes from Original:**
-- Removed US-5.6 (Badge System)
-- Removed US-5.7 (Day 10 Snapshot)
-- Note: US-5.4 level progress bar is referenced in US-3.3 completion flow
+**Epic Total:** 39 story points
 
 ---
