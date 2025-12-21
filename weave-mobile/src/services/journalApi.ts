@@ -250,8 +250,47 @@ export async function updateJournalEntry(
   }
 }
 
+/**
+ * Wrapper function for creating journal entries (used by tests)
+ * Maps to createJournalEntry or updateJournalEntry based on whether entry exists
+ */
+export async function submitJournalEntry(entry: JournalEntryCreate): Promise<JournalEntryResponse> {
+  // Check if today's journal exists
+  const existingJournal = await getTodayJournal();
+
+  if (existingJournal) {
+    // Update existing entry
+    return updateJournalEntry(existingJournal.id, entry);
+  } else {
+    // Create new entry
+    return createJournalEntry(entry);
+  }
+}
+
+/**
+ * Get journal entry for a specific date
+ * Currently only supports "today" - to be expanded for historical dates
+ */
+export async function getJournalEntryForDate(_date: string): Promise<JournalEntryResponse | null> {
+  // For now, only supports today's date
+  // Future: Add backend endpoint for historical dates
+  return getTodayJournal();
+}
+
+/**
+ * Get current authenticated user
+ * Note: This is a stub for tests - actual user data comes from AuthContext
+ */
+export async function getCurrentUser(): Promise<{ id: string; preferred_name?: string }> {
+  // This is a test stub - real implementation would get user from AuthContext
+  throw new Error('getCurrentUser should not be called in production - use AuthContext instead');
+}
+
 export const journalApi = {
   getTodayJournal,
   createJournalEntry,
   updateJournalEntry,
+  submitJournalEntry,
+  getJournalEntryForDate,
+  getCurrentUser,
 };
