@@ -15,13 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 
 interface CountdownTimerProps {
@@ -52,7 +46,7 @@ interface CountdownTimerProps {
  * Calculate milliseconds until midnight in given timezone
  * Uses date-fns-tz for timezone handling
  */
-function calculateMsUntilMidnight(timezone?: string): number {
+function calculateMsUntilMidnight(_timezone?: string): number {
   const now = new Date();
 
   // Calculate tomorrow's midnight
@@ -75,9 +69,6 @@ function formatCountdown(ms: number): {
   const totalMinutes = Math.floor(ms / (1000 * 60));
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-
-  // Urgent if less than 1 hour remaining
-  const isUrgent = hours < 1;
 
   // Different formats based on time remaining
   if (hours === 0 && minutes <= 0) {
@@ -106,9 +97,7 @@ export default function CountdownTimer({
   debug = false,
 }: CountdownTimerProps) {
   const router = useRouter();
-  const [msRemaining, setMsRemaining] = useState(() =>
-    calculateMsUntilMidnight(timezone)
-  );
+  const [msRemaining, setMsRemaining] = useState(() => calculateMsUntilMidnight(timezone));
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
   // Update countdown every minute
@@ -156,9 +145,7 @@ export default function CountdownTimer({
         <Text style={[styles.icon, isUrgent && styles.iconUrgent]}>⏰</Text>
 
         {/* Countdown Text */}
-        <Text style={[styles.text, isUrgent && styles.textUrgent]}>
-          {text}
-        </Text>
+        <Text style={[styles.text, isUrgent && styles.textUrgent]}>{text}</Text>
 
         {/* Arrow Indicator */}
         <Text style={[styles.arrow, isUrgent && styles.arrowUrgent]}>→</Text>
