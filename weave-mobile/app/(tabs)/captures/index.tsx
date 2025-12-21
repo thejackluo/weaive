@@ -1,6 +1,4 @@
-import { View } from 'react-native';
-import { Card, Text, Button } from '@/design-system';
-import { Link } from 'expo-router';
+import PlaceholderScreen from '@/components/PlaceholderScreen';
 
 /**
  * Capture Gallery Screen
@@ -9,26 +7,13 @@ import { Link } from 'expo-router';
  */
 export default function CaptureGalleryScreen() {
   return (
-    <View className="flex-1 bg-background p-4">
-      <Card variant="glass" padding="default">
-        <Text variant="displayLg" className="text-foreground mb-2 font-bold">
-          Capture Gallery
-        </Text>
-        <Text variant="textBase" className="text-muted mb-4">
-          Epic 3: Daily Actions & Proof
-        </Text>
-        <Text variant="textSm" className="text-muted mb-4">
-          Story 3.5: Quick Capture (Document)
-        </Text>
-        <Text variant="textSm" className="text-muted mb-6">
-          This page has not been developed
-        </Text>
-        <Link href="/sitemap" asChild>
-          <Button variant="ghost" size="md">
-            ← Back to Sitemap
-          </Button>
-        </Link>
-      </Card>
-    </View>
+    <PlaceholderScreen
+      title="Capture Gallery"
+      epic="Epic 3: Daily Actions & Proof"
+      story="Story 3.5: Quick Capture"
+      iconName="camera.fill"
+      iconColor="#34d399"
+      backgroundColors={{ from: '#065f46', to: '#022c22' }}
+    />
   );
 }
