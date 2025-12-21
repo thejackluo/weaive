@@ -29,28 +29,224 @@ The **Dashboard Page** is where users manage their goals (needles) and visualize
 
 ## Wireframe Requirements
 
-**Key UI Elements Expected:**
+### Dashboard Screen Layout
 
-### Top Section: "Emotional Mirror"
-1. **Weave Level Visualization** - Mathematical curve showing progression
-2. **Active Needles Summary** - Card-based list (max 3)
-3. **Dream Self Reminder** - Identity document reference
+**Header (Top):**
+- **Left:** "Level 2" text
+- **Center:** Weave character visualization (animated mathematical curve)
+  - Changes in real-time as user completes binds/reflections
+  - Uses US-5.4 progression: Thread → Strand → Cord → Braid → Weave
+  - **NOT interactive** (no tap action)
+- **Right Top:** Streak counter (e.g., "2 🔥")
+- **Right Below:** Profile button (circular avatar)
 
-### Bottom Section: "Data Mirror"
-4. **Consistency Heat Map** - GitHub-style contribution graph
-5. **Fulfillment Trend Chart** - Line chart with rolling average
-6. **Streak Counter** - Current streak, longest streak
+**Your Needles Section:**
+- Up to 3 needle cards displayed
+- **Each needle card shows:**
+  - Color-coded vertical bar (left edge)
+  - Needle title (e.g., "Get Ripped")
+  - "Why" motivation (smaller text below title)
+  - Chevron/arrow (right side)
 
-### Actions
-7. **Add Goal Button** - FAB or prominent CTA (disabled if 3 active goals)
-8. **Profile Icon** - Access to settings
+**Needle Arrow Click Behavior:**
+- **Opens:** Combined View/Edit Needle Screen (see section below)
+- This screen shows US-2.2 (View Goal Details) + US-2.4 (Edit Needle) combined
+
+**Overall Consistency Section:**
+- Header: "Overall Consistency"
+- Large percentage: "69%" (with trend indicator: "+17%" in green)
+- Timeframe dropdown (right): "7d" with chevron
+  - Options: 7 days, 2 weeks, 1 month, 90 days
+- **Filter tabs:**
+  - Overall | Needle | Bind | Thread
+  - Active tab highlighted (white pill)
+- **Visualization:**
+  - **7 days:** Vertical table with days as rows, binds as columns, checkmarks for completion
+  - **>7 days:** GitHub-style heat map (squares colored by intensity)
+    - Darker green = higher completion %
+    - Lighter/gray = lower completion %
+- **AI Insight card** (below graph):
+  - Weave icon + contextual message
+  - Example: "you were super small five months ago. now look at you :)"
+  - **Clickable:** Opens Weave AI modal
+
+**Consistency Filter Details:**
+1. **Overall:** Tracks all active binds + daily reflections
+   - Shows % of total potential completions in timeframe
+2. **Needle:** Shows one needle at a time
+   - **Pagination dots** at bottom (swipe to see other needles)
+   - Displays: Needle name, "Why", consistency % with trend
+   - Graph shows all binds for that needle
+3. **Bind:** Shows one bind at a time
+   - Horizontal scrollable/searchable chips to select bind
+   - Graph shows only that bind's completion pattern
+4. **Thread:** Shows daily reflection consistency only
+   - Single row: "Daily Reflection" with completion checkmarks
+
+**Average Fulfillment Section:**
+- Header: "Average Fulfillment"
+- Large number: "7.7" (with trend indicator)
+- Timeframe dropdown (right): "7d"
+- **Line chart:**
+  - X-axis: Days (Mon, Tue, Wed...)
+  - Y-axis: Fulfillment score (0-10)
+  - Line with data points
+  - 7-day rolling average (smoothed line)
+- **AI Insight card** (below chart):
+  - Clickable, opens Weave AI modal
+
+**History Section:**
+- Header: "History"
+- **Filter chips (scrollable):**
+  - Days | Weeks | Months
+  - Needles | Binds | Photos | Threads
+- Search box: "🔍 Search..."
+- **Empty state:** "No entries found"
+- **When populated:** List of entries with dates
+  - Tap entry → Opens Daily Record Screen (read-only)
+
+**Bottom Navigation:**
+- Thread (left icon)
+- Weave AI (center icon, Weave logo)
+- Track/Dashboard (right icon, active state)
 
 **Interaction Patterns:**
 - Scroll to view all sections
-- Tap needle card → View/edit goal details
-- Tap "Add Goal" → AI-assisted creation flow
-- Tap heat map date → Navigate to day's journal entry
-- Pull to refresh → Update metrics
+- Tap needle arrow → Opens Combined View/Edit Needle Screen
+- Tap AI insight → Opens Weave AI modal
+- Tap graph day → Shows popup → Opens Daily Record Screen
+- Tap history entry → Opens Daily Record Screen
+- Tap profile icon → Opens Profile & Settings page
+
+---
+
+### Graph Interaction Patterns
+
+**Consistency Graph:**
+- **Tap on day:** Shows popup with date + completion summary
+  - Example: "Dec 25 - 3/4 binds completed"
+  - Tap popup → Opens Daily Record Screen
+- **7-day view:** Tap checkmark/cell → Same popup behavior
+
+**Average Fulfillment Chart:**
+- **Drag across chart:** Vertical bar follows finger/cursor
+  - Popup shows: Date + fulfillment score (e.g., "Dec 25 - 8.2")
+  - Tap popup → Opens Daily Record Screen
+
+**Both graphs link to:** Standardized Daily Record Screen (see section below)
+
+---
+
+### Combined View/Edit Needle Screen
+
+**Purpose:** Single screen for US-2.2 (View Goal Details) + US-2.4 (Edit Needle)
+
+**Header:**
+- Back button (left)
+- Needle title (center) - becomes editable in edit mode
+- "Edit" / "Done" toggle button (right)
+
+**View Mode (Default):**
+
+1. **Needle Title Section:**
+   - Large title (e.g., "Get Ripped")
+   - Color-coded bar accent
+
+2. **Why Section:**
+   - Label: "Why this matters"
+   - Text: User's motivation (e.g., "to auafarm mfs")
+
+3. **Stats Row:**
+   - 7-day consistency: "73%"
+   - Total completions: "24"
+   - Current streak: "12 days"
+
+4. **Milestones (Q-goals) Section:**
+   - Header: "Milestones"
+   - Expandable list with progress bars:
+     - "Reach 180 lbs" - 60% progress bar
+     - "Bench 225 lbs" - 30% progress bar
+   - Each milestone shows: Title, current value, target value, progress %
+
+5. **Binds Section:**
+   - Header: "Your Binds"
+   - List of active binds for this needle:
+     - Bind title (e.g., "Workout")
+     - Frequency (e.g., "5x per week")
+     - Recent completion pattern (mini calendar or checkmarks)
+     - Today's status: ✓ or incomplete
+
+6. **Archive Needle Button:**
+   - Bottom of screen
+   - Red/warning style
+   - Shows confirmation: "Are you sure? You can reactivate later."
+
+**Edit Mode (After tapping "Edit"):**
+- All fields become editable:
+  - Needle title → Text input
+  - Why section → Text area (multi-line)
+  - Milestones → Add/edit/delete buttons next to each
+  - Binds → Add/edit/delete buttons, drag handles to reorder
+- **"Ask AI to Help" floating button** (bottom-right, circular FAB)
+  - Tap → Opens Weave AI modal
+  - User can ask: "Add a morning stretch bind" or "Adjust workout frequency"
+  - AI suggests changes, user approves/edits
+- "Done" button saves changes
+
+**Adding New Needle:**
+- From Dashboard, if <3 needles: Show "Add Needle" button
+- Opens this screen with blank fields
+- Edit mode enabled by default
+- "Ask AI to Help" available for AI-assisted creation (US-2.3)
+
+**Navigation:**
+- From Dashboard needle card → This screen (View mode)
+- From this screen "Ask AI" → Weave AI modal overlay
+- Back button → Returns to Dashboard
+
+---
+
+### Daily Record Screen (Standardized)
+
+**Purpose:** Read-only view of a specific day's activity. Accessed from:
+- History section (tap entry)
+- Consistency graph (tap day popup)
+- Fulfillment chart (tap day popup)
+
+**Layout:**
+
+**Header:**
+- Back button (left)
+- Date: "Tuesday, December 25" (center)
+
+**Sections:**
+
+1. **Daily Stats Summary:**
+   - Binds completed: "3/4 (75%)"
+   - Fulfillment score: "8.2/10"
+   - Streak status: "Day 12 of streak"
+
+2. **Completed Binds:**
+   - List of binds completed that day:
+     - Bind title
+     - Needle it belongs to
+     - Time completed
+     - Proof indicator (timer/photo icon if present)
+   - Tap bind → Show proof details (timer duration, photo viewer)
+
+3. **Daily Reflection:**
+   - Fulfillment score (large number with /10)
+   - Journal entry text (read-only)
+   - Tomorrow's intention (if user set one)
+
+4. **Missed Binds (if any):**
+   - List of scheduled binds not completed
+   - Grayed out style
+
+**Interaction:**
+- All content is **read-only** (no editing past data)
+- Tap proof indicators → View timer details or photos
+- Back button → Returns to previous screen
 
 ---
 

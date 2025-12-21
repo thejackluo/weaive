@@ -28,21 +28,131 @@ The **Weave AI Page** is the conversational interface for the Dream Self Advisor
 
 ## Wireframe Requirements
 
-**Key UI Elements Expected:**
-1. **Chat Header** - Weave branding, user's Dream Self persona
-2. **Message Bubbles** - User messages (right), AI responses (left)
-3. **Quick Action Chips** - Pre-defined prompts for common tasks
-4. **Text Input** - Free-form message entry
-5. **Streaming Indicator** - Shows AI is "thinking" or typing
-6. **Message Actions** - Long-press for edit, regenerate, or "not helpful"
+### Concept
 
-**Interaction Patterns:**
-- Scroll to view chat history
-- Tap quick action chip → Auto-fill message
-- Type free-form message → Send button activates
-- Streaming response → Shows typing indicator, then text appears progressively
-- Long-press AI message → Show edit/regenerate options
-- Links in AI responses → Deep link to relevant screens (e.g., goal details)
+iOS Siri-style modal overlay that appears over current screen. Keeps user in context while chatting with AI.
+
+**Trigger Points:**
+1. Bottom nav center button (Weave icon)
+2. Clicking any AI insight card (Thread, Dashboard)
+3. "Ask AI to Help" button (Needle Edit screen)
+4. Any other AI interaction points
+
+---
+
+### Modal Layout
+
+**Backdrop:**
+- Heavy blur effect (iOS Siri-style)
+- Dark overlay (40-50% opacity)
+- User can vaguely see screen content behind
+- Tap outside modal → Does NOT dismiss (require explicit X button)
+
+**Modal Container:**
+- Centered on screen (doesn't cover entire screen)
+- Rounded corners (large radius, ~24px)
+- Dark background (matches app theme)
+
+**Top Section:**
+- **Weave Character Visualization:**
+  - User's current Weave mathematical shape (animated)
+  - Same visual as Dashboard header (Level 2 → Strand pattern)
+  - Subtle animation/pulse while AI is "thinking"
+- **X Button (top-right corner):**
+  - Dismisses modal
+  - Returns to previous screen
+
+**Chat Area (Middle, scrollable):**
+- Message bubbles:
+  - **Weave messages:** Left-aligned, Weave icon avatar
+  - **User messages:** Right-aligned, user's profile photo avatar
+- Message styling:
+  - Weave: Dark bubble with white text
+  - User: Lighter bubble (blue/accent color)
+- **Streaming effect:** Weave responses appear word-by-word (typewriter)
+- **Scroll behavior:** Auto-scroll to latest message
+
+**Quick Action Chips (above input):**
+- Horizontal scrollable row of chips:
+  - "Plan my day"
+  - "I'm stuck"
+  - "Edit my goal"
+  - "Explain this bind"
+- **Collapsible:** Arrow or X button to hide/show
+  - Default: Shown on first open
+  - Hidden after user sends first message
+  - User can toggle visibility with arrow button
+- Tap chip → Auto-fills message + sends
+
+**Input Area (Bottom):**
+- Text input field:
+  - Placeholder: "Start typing..."
+  - Multi-line support (grows as user types)
+  - Max ~4 lines, then scrollable
+- **Microphone button (right of input):**
+  - Tap to toggle voice input
+  - While recording:
+    - Red dot indicator
+    - Voice waveform visualization (animated)
+    - Tap again to stop recording
+  - Speech-to-text: Converts to text in input field
+  - User can edit before sending
+- **Send button:** Paper plane icon, appears when text is entered
+
+---
+
+### Context Handling
+
+**When opened from AI Insight click:**
+1. Insight text appears as first message in chat (Weave message)
+2. Weave also references it in next message:
+   - Example: "You wanted to talk about [insight topic]. Let's dive in..."
+3. User can see full context and continue conversation
+
+**When opened from "Ask AI to Help" (Needle Edit):**
+1. First message: "I'm looking at your [Needle Name] goal. How can I help?"
+2. User asks to modify binds/milestones
+3. AI suggests changes
+4. User approves → Changes apply to needle
+5. Modal shows confirmation: "Updated [Needle Name]!"
+
+**When opened from Bottom Nav (cold start):**
+1. Weave greets user contextually:
+   - "Hey eddie, how's your day going?"
+   - Or references recent activity: "I see you crushed your workout earlier! 💪"
+2. Quick action chips visible
+3. User can start any conversation
+
+---
+
+### Chat History
+
+**Behavior:**
+- Each modal session is a **fresh chat** (starts blank or with context)
+- Previous conversations saved to database
+- **Accessing past chats:**
+  - Settings → "Weave Chat History" (from Profile & Settings)
+  - Opens list of past conversations (by date/topic)
+  - Tap conversation → Opens modal with that history loaded
+
+**Rate Limiting:**
+- 10 AI messages per hour per user (enforced at API level)
+- Show warning when approaching limit
+- Block when limit reached: "You've reached your chat limit. Try again in [X] minutes."
+
+---
+
+### Interaction Patterns
+
+- Tap Weave icon (bottom nav) → Opens modal with fresh chat
+- Tap AI insight card → Opens modal with insight as first message
+- Tap "Ask AI to Help" → Opens modal with needle context
+- Type message → Send button appears
+- Tap microphone → Voice recording starts
+- Tap quick action chip → Auto-fills and sends message
+- Tap X button → Dismisses modal, returns to previous screen
+- Scroll chat → View message history
+- Streaming response → Word-by-word typewriter effect
 
 ---
 
