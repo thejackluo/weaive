@@ -1,0 +1,26 @@
+# Table of Contents
+
+1. [Product Vision](#product-vision)
+2. [User Personas](#user-personas)
+3. [Functional Requirements](#functional-requirements)
+   - [Epic 0: Foundation](#epic-0-foundation)
+   - [Epic 1: Onboarding & Identity](#epic-1-onboarding--identity)
+   - [Epic 2: Goal Management](#epic-2-goal-management)
+   - [Epic 3: Daily Actions & Proof](#epic-3-daily-actions--proof)
+   - [Epic 4: Reflection & Journaling](#epic-4-reflection--journaling)
+   - [Epic 5: Progress Visualization](#epic-5-progress-visualization)
+   - [Epic 6: AI Coaching](#epic-6-ai-coaching)
+   - [Epic 7: Notifications](#epic-7-notifications)
+   - [Epic 8: Settings & Profile](#epic-8-settings--profile)
+4. [Cross-Cutting UX Concerns](#cross-cutting-ux-concerns)
+5. [Non-Functional Requirements](#non-functional-requirements)
+6. [Data Requirements](#data-requirements)
+7. [AI System Requirements](#ai-system-requirements)
+8. [Security & Privacy Requirements](#security--privacy-requirements)
+9. [Analytics & Success Metrics](#analytics--success-metrics)
+10. [Constraints & Assumptions](#constraints--assumptions)
+11. [Dependencies & Risks](#dependencies--risks)
+12. [Release Plan](#release-plan)
+13. [Appendices](#appendices)
+
+---

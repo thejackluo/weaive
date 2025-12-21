@@ -29,6 +29,36 @@ Users manage their account settings, identity document, and app preferences.
 
 ---
 
+### US-8.2: Edit Identity Document
+
+**Priority:** M (Must Have)
+
+**As a** user
+**I want to** update my identity document
+**So that** the AI evolves with me
+
+**Acceptance Criteria:**
+- [ ] View current identity doc:
+  - Archetype (with option to retake assessment)
+  - Dream self description (editable)
+  - Motivations (editable)
+  - Failure mode (editable)
+  - Coaching preference slider (gentle ↔ strict)
+  - Constraints (editable)
+- [ ] Save changes creates new version
+- [ ] AI uses latest version for coaching
+
+**Data Requirements:**
+- Read/Write `identity_docs` table
+- Version control (each edit creates new row)
+- Store `version` and `created_at`
+
+**Technical Notes:**
+- Editing identity doc may affect AI personality
+- Consider showing "personality preview" before save
+
+---
+
 ### US-8.3: General Settings
 
 **Priority:** M (Must Have)
@@ -38,6 +68,10 @@ Users manage their account settings, identity document, and app preferences.
 **So that** I customize my experience
 
 **Acceptance Criteria:**
+- [ ] Timezone (auto-detect with override)
+- [ ] Preferred working hours
+- [ ] Goal change strictness mode
+- [ ] Nudging intensity slider
 - [ ] Data export (JSON download)
 - [ ] Delete account (with confirmation)
 
@@ -123,14 +157,12 @@ Users manage their account settings, identity document, and app preferences.
 | ID | Story | Priority | Estimate |
 |----|-------|----------|----------|
 | US-8.1 | Profile Overview | M | 3 pts |
+| US-8.2 | Edit Identity Document | M | 5 pts |
 | US-8.3 | General Settings | M | 5 pts |
 | US-8.4 | Subscription Management | M | 5 pts |
 | US-8.5 | Help and Support | S | 3 pts |
 | US-8.6 | Logout and Security | M | 2 pts |
 
-**Epic Total:** 18 story points
-
-**Changes from Original:**
-- Removed US-8.2 (Edit Identity Document)
+**Epic Total:** 23 story points
 
 ---
