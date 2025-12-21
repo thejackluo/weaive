@@ -57,12 +57,14 @@ jest.mock('@/components/GoalCard', () => ({
 
     // Handle null consistency_7d (new goals show "New" instead of percentage)
     // Format to 1 decimal place to match test expectations (72.0% not 72%)
-    const consistencyText = goal.consistency_7d !== null && goal.consistency_7d !== undefined
-      ? `${Number(goal.consistency_7d).toFixed(1)}%`
-      : 'New';
-    const accessibilityConsistency = goal.consistency_7d !== null && goal.consistency_7d !== undefined
-      ? `${Number(goal.consistency_7d).toFixed(1)} percent consistency`
-      : 'New goal';
+    const consistencyText =
+      goal.consistency_7d !== null && goal.consistency_7d !== undefined
+        ? `${Number(goal.consistency_7d).toFixed(1)}%`
+        : 'New';
+    const accessibilityConsistency =
+      goal.consistency_7d !== null && goal.consistency_7d !== undefined
+        ? `${Number(goal.consistency_7d).toFixed(1)} percent consistency`
+        : 'New goal';
 
     const handlePress = () => {
       router.push(`/needles/${goal.id}`);
@@ -73,9 +75,11 @@ jest.mock('@/components/GoalCard', () => ({
       {
         testID: `goal-card-${goal.id}`,
         accessibilityLabel: `${goal.title}, ${accessibilityConsistency}`,
-        onPress: handlePress
+        onPress: handlePress,
       },
-      React.createElement(View, {},
+      React.createElement(
+        View,
+        {},
         React.createElement(Text, { key: 'title' }, goal.title),
         React.createElement(Text, { key: 'consistency' }, consistencyText),
         React.createElement(Text, { key: 'binds' }, `${goal.active_binds_count} binds`)
@@ -90,21 +94,32 @@ jest.mock('@/design-system/components/Button/Button', () => {
   const { Pressable, Text } = require('react-native');
 
   return {
-    Button: jest.fn(({ children, onPress, disabled, testID, accessibilityLabel, accessibilityHint, accessibilityState, style }) => {
-      return React.createElement(
-        Pressable,
-        {
-          onPress: disabled ? undefined : onPress,
-          testID,
-          accessibilityLabel,
-          accessibilityHint,
-          accessibilityState,
-          style,
-          disabled,
-        },
-        React.createElement(Text, {}, children)
-      );
-    }),
+    Button: jest.fn(
+      ({
+        children,
+        onPress,
+        disabled,
+        testID,
+        accessibilityLabel,
+        accessibilityHint,
+        accessibilityState,
+        style,
+      }) => {
+        return React.createElement(
+          Pressable,
+          {
+            onPress: disabled ? undefined : onPress,
+            testID,
+            accessibilityLabel,
+            accessibilityHint,
+            accessibilityState,
+            style,
+            disabled,
+          },
+          React.createElement(Text, {}, children)
+        );
+      }
+    ),
   };
 });
 
@@ -114,7 +129,7 @@ import { useActiveGoals } from '../../hooks/useActiveGoals';
 import { showSimpleToast } from '@/design-system/components/SimpleToast';
 
 const mockUseActiveGoals = useActiveGoals as jest.MockedFunction<typeof useActiveGoals>;
-const mockShowSimpleToast = showSimpleToast as jest.MockedFunction<typeof showSimpleToast>;
+const _mockShowSimpleToast = showSimpleToast as jest.MockedFunction<typeof showSimpleToast>;
 
 // Access global mock functions set up in jest.setup.js
 declare const global: {
@@ -582,7 +597,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       await waitFor(() => {
         expect(getByTestId('empty-state')).toBeTruthy();
         expect(getByText("You haven't set any goals yet")).toBeTruthy();
-        expect(getByText("What do you want to achieve?")).toBeTruthy();
+        expect(getByText('What do you want to achieve?')).toBeTruthy();
       });
     });
 
@@ -624,7 +639,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       await waitFor(() => {
         expect(getByTestId('error-state')).toBeTruthy();
         expect(getByText("Couldn't load your goals")).toBeTruthy();
-        expect(getByText("Check your connection and try again")).toBeTruthy();
+        expect(getByText('Check your connection and try again')).toBeTruthy();
       });
     });
 
