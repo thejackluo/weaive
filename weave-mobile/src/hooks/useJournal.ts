@@ -135,7 +135,7 @@ export function useUpdateJournal() {
       journalApi.updateJournalEntry(journalId, data),
 
     // Optimistic update
-    onMutate: async ({ journalId, data }) => {
+    onMutate: async ({ journalId: _journalId, data }) => {
       await queryClient.cancelQueries({ queryKey: journalKeys.today() });
 
       const previousJournal = queryClient.getQueryData(journalKeys.today());

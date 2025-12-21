@@ -47,7 +47,7 @@ export default function ReflectionScreen() {
   // UI state
   const [isEditMode, setIsEditMode] = useState(false);
   const [existingJournalId, setExistingJournalId] = useState<string | null>(null);
-  const [userName, setUserName] = useState('there'); // TODO: Fetch from user profile
+  const [userName, _setUserName] = useState('there'); // TODO: Fetch from user profile
   const [showManageQuestionsModal, setShowManageQuestionsModal] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
 
