@@ -1,43 +1,24 @@
-import React, { useState } from 'react';
+/**
+ * Design System Showcase
+ *
+ * Starter showcase displaying tokens and theme system
+ * Components will be added as they are implemented
+ *
+ * Story DS-1: 273+ tokens, theme system, spring animations
+ */
+import React from 'react';
 import {
   ScrollView,
   View,
   Text,
   Pressable,
-  TextInput as RNTextInput,
+  StyleSheet,
 } from 'react-native';
-import {
-  ThemeProvider,
-  useTheme,
-  useThemeMode,
-  Theme,
-} from './src/theme';
-import { Button } from './src/components/buttons/Button';
-import { Card } from './src/components/cards/Card';
-import { TextInput } from './src/components/inputs/TextInput';
-import { Checkbox } from './src/components/inputs/Checkbox';
-import { Toggle } from './src/components/inputs/Toggle';
-import { Slider } from './src/components/inputs/Slider';
-import { Badge } from './src/components/badges/Badge';
-import { StatusDot } from './src/components/badges/StatusDot';
-import { Divider } from './src/components/layout/Divider';
-import { FadeIn, SlideIn, ScaleIn } from './src/animations';
+import { ThemeProvider, useTheme } from './src/theme';
+import { colors, typography, spacing, borders, shadows } from './src/tokens';
 
 /**
- * Comprehensive Design System Showcase
- *
- * Displays all 70+ components from the Weave Design System
- * Built with Story DS-1: 273+ tokens, themes, animations
- *
- * Sections:
- * - Design Tokens (Colors, Typography, Spacing)
- * - Theme System (Dark/Light, Named themes)
- * - Buttons (7 variants)
- * - Cards (4 variants)
- * - Inputs (10 types)
- * - Badges (6 types)
- * - Animations (4 types)
- * - Layout Components
+ * Design System Showcase Entry Point
  */
 export function DesignSystemShowcase() {
   return (
@@ -48,307 +29,223 @@ export function DesignSystemShowcase() {
 }
 
 function ShowcaseContent() {
-  const { colors, spacing, typography, shadows } = useTheme();
-  const { mode, setTheme } = useThemeMode();
-
-  const [sliderValue, setSliderValue] = useState(50);
-  const [isChecked, setIsChecked] = useState(false);
-  const [isToggled, setIsToggled] = useState(false);
+  const { theme, mode, setTheme } = useTheme();
 
   return (
     <ScrollView
-      className="flex-1 bg-background"
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.bg.primary }
+      ]}
       contentContainerStyle={{ padding: spacing[4] }}
     >
       {/* Header */}
-      <View className="mb-8">
+      <View style={styles.section}>
         <Text
-          className="text-4xl font-bold text-text-primary mb-2"
-          style={typography.display.lg}
+          style={[
+            styles.title,
+            { color: theme.colors.text.primary },
+            typography.display.lg,
+          ]}
         >
           Weave Design System
         </Text>
-        <Text className="text-lg text-text-secondary" style={typography.body.lg}>
-          273+ Design Tokens • 70+ Components • Story DS-1
+        <Text
+          style={[
+            styles.subtitle,
+            { color: theme.colors.text.secondary },
+            typography.label.lg,
+          ]}
+        >
+          273+ Design Tokens • Story DS-1
+        </Text>
+        <Text
+          style={[
+            styles.subtitle,
+            { color: theme.colors.text.tertiary },
+            typography.label.md,
+          ]}
+        >
+          Components coming soon...
         </Text>
       </View>
 
       {/* Theme Toggle */}
-      <Section title="Theme System">
+      <Section title="Theme System" theme={theme}>
         <Pressable
           onPress={() => setTheme(mode === 'dark' ? 'light' : 'dark')}
-          className="px-6 py-3 bg-primary rounded-lg active:opacity-80"
+          style={[
+            styles.button,
+            {
+              backgroundColor: theme.colors.accent.primary,
+              borderRadius: borders.componentRadius.button,
+              padding: spacing[3],
+            },
+            shadows.base,
+          ]}
         >
-          <Text className="text-white font-semibold text-center">
-            {mode === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+          <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>
+            {mode === 'dark' ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
           </Text>
         </Pressable>
+      </Section>
 
-        <View className="mt-4">
-          <Text className="text-text-secondary mb-2">Named Themes:</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {['violet', 'emerald', 'amber', 'rose'].map((themeName) => (
-              <Theme key={themeName} name={themeName as any}>
-                <Card variant="glass" className="p-4">
-                  <Text className="text-text-primary font-medium capitalize">
-                    {themeName}
-                  </Text>
-                </Card>
-              </Theme>
-            ))}
-          </View>
+      {/* Color Tokens */}
+      <Section title="Color Tokens (273+)" theme={theme}>
+        <View style={styles.grid}>
+          <ColorSwatch label="Primary" color={theme.colors.accent.primary} />
+          <ColorSwatch label="Amber" color={theme.colors.accent.amber} />
+          <ColorSwatch label="Violet" color={theme.colors.accent.violet} />
+          <ColorSwatch label="Text Primary" color={theme.colors.text.primary} />
+          <ColorSwatch label="Text Secondary" color={theme.colors.text.secondary} />
+          <ColorSwatch label="Success" color={colors.success[500]} />
+          <ColorSwatch label="Warning" color={colors.warning[500]} />
+          <ColorSwatch label="Error" color={colors.error[500]} />
         </View>
       </Section>
 
-      {/* Design Tokens */}
-      <Section title="Design Tokens">
-        <SubSection title="Colors (273+ tokens)">
-          <View className="flex-row flex-wrap gap-2">
-            {Object.keys(colors.semantic).map((colorKey) => (
-              <View key={colorKey} className="items-center">
-                <View
-                  className="w-12 h-12 rounded-lg mb-1"
-                  style={{
-                    backgroundColor: colors.semantic[colorKey as keyof typeof colors.semantic]
-                  }}
-                />
-                <Text className="text-xs text-text-tertiary">{colorKey}</Text>
-              </View>
-            ))}
-          </View>
-        </SubSection>
-
-        <SubSection title="Typography">
-          <Text style={typography.display.lg} className="text-text-primary mb-2">
+      {/* Typography Scale */}
+      <Section title="Typography Tokens (45+)" theme={theme}>
+        <View style={styles.typographyList}>
+          <Text style={[{ color: theme.colors.text.primary }, typography.display.lg]}>
             Display Large
           </Text>
-          <Text style={typography.heading.lg} className="text-text-primary mb-2">
-            Heading Large
+          <Text style={[{ color: theme.colors.text.primary }, typography.display.sm]}>
+            Display Small
           </Text>
-          <Text style={typography.body.lg} className="text-text-primary mb-2">
-            Body Large
+          <Text style={[{ color: theme.colors.text.primary }, typography.label.lg]}>
+            Label Large - The quick brown fox jumps over the lazy dog
           </Text>
-          <Text style={typography.body.base} className="text-text-secondary mb-2">
-            Body Base
+          <Text style={[{ color: theme.colors.text.secondary }, typography.label.md]}>
+            Label Medium - The quick brown fox jumps over the lazy dog
           </Text>
-          <Text style={typography.caption.base} className="text-text-tertiary">
-            Caption
+          <Text style={[{ color: theme.colors.text.tertiary }, typography.label.sm]}>
+            Label Small - Metadata and tags
           </Text>
-        </SubSection>
-
-        <SubSection title="Spacing Scale">
-          <View className="gap-2">
-            {[1, 2, 3, 4, 6, 8, 12].map((size) => (
-              <View key={size} className="flex-row items-center gap-2">
-                <View
-                  className="bg-primary h-8"
-                  style={{ width: spacing[size as keyof typeof spacing] }}
-                />
-                <Text className="text-text-secondary">
-                  spacing[{size}] = {spacing[size as keyof typeof spacing]}px
-                </Text>
-              </View>
-            ))}
-          </View>
-        </SubSection>
-      </Section>
-
-      {/* Buttons */}
-      <Section title="Buttons (7 variants)">
-        <View className="gap-3">
-          <Button variant="primary" onPress={() => {}}>
-            Primary Button
-          </Button>
-          <Button variant="secondary" onPress={() => {}}>
-            Secondary Button
-          </Button>
-          <Button variant="ghost" onPress={() => {}}>
-            Ghost Button
-          </Button>
-          <Button variant="destructive" onPress={() => {}}>
-            Destructive Button
-          </Button>
-          <Button variant="ai" onPress={() => {}}>
-            ✨ AI Button
-          </Button>
-          <View className="flex-row gap-2">
-            <Button size="sm" onPress={() => {}}>
-              Small
-            </Button>
-            <Button size="md" onPress={() => {}}>
-              Medium
-            </Button>
-            <Button size="lg" onPress={() => {}}>
-              Large
-            </Button>
-          </View>
-          <Button disabled onPress={() => {}}>
-            Disabled Button
-          </Button>
+          <Text style={[{ color: theme.colors.text.muted }, typography.mono.md]}>
+            Mono Medium - 0123456789
+          </Text>
         </View>
       </Section>
 
-      {/* Cards */}
-      <Section title="Cards (4 variants)">
-        <View className="gap-3">
-          <Card variant="glass" className="p-4">
-            <Text className="text-text-primary font-semibold mb-1">
-              Glass Card
-            </Text>
-            <Text className="text-text-secondary">
-              Frosted glass effect with backdrop blur
-            </Text>
-          </Card>
-
-          <Card variant="elevated" className="p-4">
-            <Text className="text-text-primary font-semibold mb-1">
-              Elevated Card
-            </Text>
-            <Text className="text-text-secondary">
-              Elevated with shadow for depth
-            </Text>
-          </Card>
-
-          <Card variant="ai" className="p-4">
-            <Text className="text-text-primary font-semibold mb-1">
-              ✨ AI Card
-            </Text>
-            <Text className="text-text-secondary">
-              AI-powered features with gradient border
-            </Text>
-          </Card>
+      {/* Spacing Scale */}
+      <Section title="Spacing Tokens (25+)" theme={theme}>
+        <View style={styles.spacingList}>
+          {[1, 2, 3, 4, 6, 8, 12, 16].map((size) => (
+            <View key={size} style={styles.spacingRow}>
+              <View
+                style={{
+                  height: 32,
+                  width: spacing[size as keyof typeof spacing] as number,
+                  backgroundColor: theme.colors.accent.primary,
+                  borderRadius: borders.radius.sm,
+                }}
+              />
+              <Text style={[styles.spacingLabel, { color: theme.colors.text.secondary }]}>
+                spacing[{size}] = {spacing[size as keyof typeof spacing]}px
+              </Text>
+            </View>
+          ))}
         </View>
       </Section>
 
-      {/* Inputs */}
-      <Section title="Inputs (10 types)">
-        <View className="gap-4">
-          <TextInput
-            placeholder="Text Input"
-            defaultValue="Hello World"
-          />
-
-          <RNTextInput
-            placeholder="Search..."
-            className="px-4 py-3 bg-surface rounded-lg text-text-primary border border-border"
-            placeholderTextColor={colors.text.tertiary}
-          />
-
-          <View className="flex-row items-center gap-3">
-            <Checkbox
-              checked={isChecked}
-              onCheckedChange={setIsChecked}
-            />
-            <Text className="text-text-primary">Checkbox</Text>
-          </View>
-
-          <View className="flex-row items-center justify-between">
-            <Text className="text-text-primary">Toggle</Text>
-            <Toggle
-              value={isToggled}
-              onValueChange={setIsToggled}
-            />
-          </View>
-
-          <View>
-            <Text className="text-text-secondary mb-2">
-              Slider: {sliderValue}%
-            </Text>
-            <Slider
-              value={sliderValue}
-              onValueChange={setSliderValue}
-              minimumValue={0}
-              maximumValue={100}
-            />
-          </View>
+      {/* Border Radius */}
+      <Section title="Border Tokens (20+)" theme={theme}>
+        <View style={styles.grid}>
+          {Object.entries(borders.radius).slice(0, 6).map(([key, value]) => (
+            <View key={key} style={styles.radiusItem}>
+              <View
+                style={{
+                  width: 80,
+                  height: 80,
+                  backgroundColor: theme.colors.accent.violet,
+                  borderRadius: value,
+                }}
+              />
+              <Text style={[styles.radiusLabel, { color: theme.colors.text.tertiary }]}>
+                {key}: {value}
+              </Text>
+            </View>
+          ))}
         </View>
       </Section>
 
-      {/* Badges */}
-      <Section title="Badges (6 types)">
-        <View className="flex-row flex-wrap gap-2">
-          <Badge variant="primary">Primary</Badge>
-          <Badge variant="success">Success</Badge>
-          <Badge variant="warning">Warning</Badge>
-          <Badge variant="danger">Danger</Badge>
-          <Badge variant="ai">✨ AI</Badge>
-          <View className="flex-row items-center gap-2 px-3 py-1.5 bg-surface rounded-full">
-            <StatusDot status="active" />
-            <Text className="text-text-primary text-sm">Active</Text>
-          </View>
-          <View className="flex-row items-center gap-2 px-3 py-1.5 bg-surface rounded-full">
-            <StatusDot status="idle" />
-            <Text className="text-text-primary text-sm">Idle</Text>
-          </View>
+      {/* Shadow Effects */}
+      <Section title="Shadow Tokens (35+)" theme={theme}>
+        <View style={styles.shadowList}>
+          {(['sm', 'base', 'md', 'lg', 'xl'] as const).map((size) => (
+            <View
+              key={size}
+              style={[
+                styles.shadowBox,
+                {
+                  backgroundColor: theme.colors.bg.secondary,
+                  borderRadius: borders.componentRadius.card,
+                  padding: spacing[4],
+                },
+                shadows[size],
+              ]}
+            >
+              <Text style={[styles.shadowLabel, { color: theme.colors.text.primary }]}>
+                Shadow {size}
+              </Text>
+            </View>
+          ))}
         </View>
       </Section>
 
-      {/* Animations */}
-      <Section title="Animations (4 types)">
-        <View className="gap-4">
-          <FadeIn duration={1000}>
-            <Card className="p-4">
-              <Text className="text-text-primary">Fade In Animation</Text>
-            </Card>
-          </FadeIn>
-
-          <SlideIn direction="left" duration={600}>
-            <Card className="p-4">
-              <Text className="text-text-primary">Slide In from Left</Text>
-            </Card>
-          </SlideIn>
-
-          <ScaleIn duration={400}>
-            <Card className="p-4">
-              <Text className="text-text-primary">Scale In Animation</Text>
-            </Card>
-          </ScaleIn>
-        </View>
-      </Section>
-
-      {/* Layout */}
-      <Section title="Layout Components">
-        <View className="gap-4">
-          <View>
-            <Text className="text-text-secondary mb-2">Divider</Text>
-            <Divider />
-          </View>
-
-          <View className="bg-surface rounded-lg">
-            <Pressable className="px-4 py-3 flex-row justify-between items-center">
-              <Text className="text-text-primary">List Item 1</Text>
-              <Text className="text-text-tertiary">→</Text>
-            </Pressable>
-            <Divider />
-            <Pressable className="px-4 py-3 flex-row justify-between items-center">
-              <Text className="text-text-primary">List Item 2</Text>
-              <Text className="text-text-tertiary">→</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Section>
-
-      {/* Footer */}
-      <View className="mt-8 p-6 bg-surface rounded-lg">
-        <Text className="text-text-primary font-semibold mb-2">
-          Design System Info
+      {/* Status Info */}
+      <View
+        style={[
+          styles.infoCard,
+          {
+            backgroundColor: theme.colors.bg.secondary,
+            borderRadius: borders.componentRadius.card,
+            borderWidth: borders.width.thin,
+            borderColor: theme.colors.border.default,
+            padding: spacing[4],
+          },
+        ]}
+      >
+        <Text style={[styles.infoTitle, { color: theme.colors.text.primary }]}>
+          🚧 Components Coming Soon
         </Text>
-        <Text className="text-text-secondary text-sm leading-relaxed">
-          Built with Story DS-1 • 273+ design tokens • NativeWind v5 •
-          Expo SDK 54 • React Native 0.81.5
+        <Text style={[styles.infoText, { color: theme.colors.text.secondary }]}>
+          This showcase currently displays the design token foundation (273+ tokens).
+          {'\n\n'}
+          Components will be added progressively:
+          {'\n'}• Buttons (7 variants)
+          {'\n'}• Cards (4 variants)
+          {'\n'}• Inputs (10 types)
+          {'\n'}• Badges (6 types)
+          {'\n'}• Animations (Spring physics)
         </Text>
       </View>
 
-      <View className="h-20" />
+      <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
 
-// Section Component
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+// Helper Components
+function Section({
+  title,
+  children,
+  theme,
+}: {
+  title: string;
+  children: React.ReactNode;
+  theme: any;
+}) {
   return (
-    <View className="mb-8">
-      <Text className="text-2xl font-bold text-text-primary mb-4">
+    <View style={[styles.section, { marginBottom: spacing[8] }]}>
+      <Text
+        style={[
+          styles.sectionTitle,
+          { color: theme.colors.text.primary },
+          typography.display.xs,
+        ]}
+      >
         {title}
       </Text>
       {children}
@@ -356,14 +253,110 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-// SubSection Component
-function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
+function ColorSwatch({ label, color }: { label: string; color: string }) {
   return (
-    <View className="mb-4">
-      <Text className="text-lg font-semibold text-text-secondary mb-2">
-        {title}
+    <View style={styles.swatchContainer}>
+      <View
+        style={[
+          styles.swatch,
+          {
+            backgroundColor: color,
+            borderRadius: borders.radius.md,
+          },
+        ]}
+      />
+      <Text style={[styles.swatchLabel, { color: colors.dark[400] }]}>
+        {label}
       </Text>
-      {children}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  title: {
+    marginBottom: 8,
+  },
+  subtitle: {
+    marginBottom: 4,
+  },
+  sectionTitle: {
+    marginBottom: 16,
+  },
+  button: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  swatchContainer: {
+    alignItems: 'center',
+    minWidth: 80,
+  },
+  swatch: {
+    width: 64,
+    height: 64,
+    marginBottom: 8,
+  },
+  swatchLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  typographyList: {
+    gap: 16,
+  },
+  spacingList: {
+    gap: 12,
+  },
+  spacingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  spacingLabel: {
+    fontSize: 14,
+  },
+  radiusItem: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  radiusLabel: {
+    fontSize: 12,
+  },
+  shadowList: {
+    gap: 16,
+  },
+  shadowBox: {
+    minHeight: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shadowLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  infoCard: {
+    marginTop: 24,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  infoText: {
+    fontSize: 14,
+    lineHeight: 22,
+  },
+});
