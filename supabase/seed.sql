@@ -213,21 +213,22 @@ INSERT INTO captures (id, user_id, subtask_instance_id, local_date, type, conten
 
 -- ═══════════════════════════════════════════════════════════════════════
 -- JOURNAL ENTRIES (Daily reflection - 14 = journals)
+-- Story 4.1: Updated schema with default_responses and custom_responses JSONB
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's journals (consistent reflections)
-INSERT INTO journal_entries (id, user_id, local_date, text, fulfillment_score, created_at) VALUES
+INSERT INTO journal_entries (id, user_id, local_date, default_responses, fulfillment_score, created_at) VALUES
 ('14111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day',
- 'Solid day. Completed morning run and code reviews. The book on systems design is fascinating. Feeling 8/10 fulfilled. Tomorrow I want to focus on leading the standup with more clarity.',
+ '{"today_reflection": "Solid day. Completed morning run and code reviews. The book on systems design is fascinating.", "tomorrow_focus": "Focus on leading the standup with more clarity"}'::jsonb,
  8, NOW() - INTERVAL '1 day' + INTERVAL '22 hours'),
 ('14111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days',
- 'Amazing day! Hit all my binds. Morning energy was high. Led standup well, team seemed engaged. Book insights are clicking. 9/10 fulfilled.',
+ '{"today_reflection": "Amazing day! Hit all my binds. Morning energy was high. Led standup well, team seemed engaged. Book insights are clicking.", "tomorrow_focus": "Continue the momentum"}'::jsonb,
  9, NOW() - INTERVAL '2 days' + INTERVAL '23 hours');
 
 -- Jordan's journal (inconsistent - skipped yesterday)
-INSERT INTO journal_entries (id, user_id, local_date, text, fulfillment_score, created_at) VALUES
+INSERT INTO journal_entries (id, user_id, local_date, default_responses, fulfillment_score, created_at) VALUES
 ('24222211-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '2 days',
- 'Finally shipped a feature! Feels good to see progress. Need to be more consistent with coding daily. Got distracted by social media again. 6/10 fulfilled.',
+ '{"today_reflection": "Finally shipped a feature! Feels good to see progress. Need to be more consistent with coding daily. Got distracted by social media again.", "tomorrow_focus": "Code for at least 30 minutes without distractions"}'::jsonb,
  6, NOW() - INTERVAL '2 days' + INTERVAL '21 hours');
 
 -- ═══════════════════════════════════════════════════════════════════════
@@ -285,7 +286,7 @@ INSERT INTO triad_tasks (id, user_id, date_for, rank, title, rationale, is_user_
 -- AI RUNS (Cost tracking and caching - 1a = ai_runs)
 -- ═══════════════════════════════════════════════════════════════════════
 
--- Alex's AI runs (Triad generation)
+-- Alex's AI runs (Triad generation) - UPDATED: tokens_input → input_tokens, tokens_output → output_tokens
 INSERT INTO ai_runs (id, user_id, module, model, prompt_version, input_hash, status, cost_estimate, input_tokens, output_tokens, execution_time_ms, provider, created_at, completed_at) VALUES
 ('1a111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
  'triad', 'gpt-4o-mini', 'triad-v1.0', 'hash_alex_day1_completions_3_journal_yes', 'success', 0.015, 1200, 450, 3000, 'openai', NOW() - INTERVAL '1 day' + INTERVAL '22 hours', NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '3 seconds'),

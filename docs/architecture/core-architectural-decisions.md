@@ -275,3 +275,191 @@ npm install @tanstack/query-async-storage-persister @tanstack/react-query-persis
 ```
 
 ---
+
+## Rate Limiting Architecture
+
+**Purpose:** Control storage costs and prevent abuse for image uploads and voice transcriptions.
+
+### Rate Limit Strategy
+
+| Resource | Per-User Daily Limit | Rationale |
+|----------|---------------------|-----------|
+| **Image Uploads (count)** | 20 images/day | Prevents spam; industry standard (Discord: throttled) |
+| **Image Uploads (size)** | 5MB total/day | Cost control: 10K users = 50GB/day max |
+| **Voice Transcriptions** | 50 requests/day | Prevents STT API abuse; 2-3x normal usage buffer |
+| **Voice Duration** | 5 min/request | Prevents excessive per-request costs |
+
+### Implementation Pattern
+
+**Tracking:**
+- Store daily counters in `daily_aggregates` table:
+  - `upload_count` (INT, default 0)
+  - `upload_size_mb` (DECIMAL, default 0)
+  - `transcription_count` (INT, default 0)
+- Reset at midnight user's local timezone (calculated server-side)
+
+**Enforcement:**
+- Server-side validation in FastAPI middleware
+- Check limits before processing upload/transcription
+- Return HTTP 429 (Too Many Requests) with headers:
+  - `Retry-After: {seconds_until_midnight}` (RFC 7231)
+  - `X-RateLimit-Limit: {daily_limit}`
+  - `X-RateLimit-Remaining: {remaining_quota}`
+  - `X-RateLimit-Reset: {unix_timestamp_midnight}`
+
+**Error Response Format:**
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Daily upload limit reached (20 images or 5MB). Try again in 6h 23m.",
+    "retryable": true,
+    "retryAfter": 22980
+  }
+}
+```
+
+**Mobile UI:**
+- Show usage indicator in Quick Capture UI: "3/20 images uploaded today (2.5MB/5MB used)"
+- Display friendly rate limit message with countdown timer
+- Gray out upload buttons when limits reached
+
+**Cost Protection:**
+- 10K users * 5MB/day = **50GB/day max** = **1.5TB/month max**
+- Supabase Storage pricing: $0.021/GB/month = ~$31.50/month for storage
+- Compare to unlimited: Potential 10K users * 100MB/day = 1TB/day = catastrophic costs
+
+---
+
+## Speech-to-Text Provider Architecture
+
+**Purpose:** Enable voice recording features for captures and origin stories with cost-effective, accurate transcription.
+
+### Provider Selection: AssemblyAI
+
+**Decision:** Use AssemblyAI as primary STT provider
+
+**Rationale:**
+- **Accuracy:** 2nd place in 2025 benchmarks (behind only Whisper/Gemini, ahead of AWS/Azure/Deepgram)
+- **Cost:** $0.15/hour (3x cheaper than Deepgram, 10x cheaper than AWS/Azure)
+- **Ease of integration:** Simple REST API, excellent docs, 10+ SDKs
+- **Free tier:** $50 credits = 333 hours of testing (covers full MVP development)
+- **Features:** Speaker diarization, punctuation, confidence scores, multi-language support
+- **Better than:** Apple's on-device STT, comparable to best-in-class B2B services
+
+### STT Fallback Chain
+
+```
+1. Primary: AssemblyAI API ($0.15/hr)
+   ↓ (timeout/error)
+2. Secondary: OpenAI Whisper API ($0.36/hr)
+   ↓ (timeout/error)
+3. Tertiary: Store audio only, defer transcription
+   → User can manually transcribe later or retry
+```
+
+### Integration Architecture
+
+**Backend Service:**
+```python
+# weave-api/app/services/stt_service.py
+class STTService:
+    async def transcribe(self, audio_file: bytes, format: str) -> dict:
+        """
+        Transcribe audio using fallback chain.
+        Returns: {transcript: str, confidence: float, duration_sec: float, provider: str}
+        """
+        # Try AssemblyAI
+        # If fails, try Whisper
+        # If fails, return audio URL only
+```
+
+**API Endpoint:**
+```
+POST /api/transcribe
+Content-Type: multipart/form-data
+Body: { audio_file: File }
+
+Response: {
+  "data": {
+    "transcript": "This is my commitment to becoming...",
+    "confidence": 0.94,
+    "duration_sec": 45.2,
+    "audio_url": "https://storage.supabase.co/..."
+  }
+}
+```
+
+**Cost Tracking:**
+- Log in `ai_runs` table:
+  - `operation_type = 'transcription'`
+  - `provider = 'assemblyai'`
+  - `audio_duration_sec = 45.2`
+  - `cost_usd = 0.00188` (calculated: 45.2s / 3600s * $0.15)
+
+### Storage Pattern
+
+**Audio Files:**
+- Store in Supabase Storage: `/captures/audio/{user_id}/{uuid}.m4a`
+- Max file size: 10MB (same as images)
+- Supported formats: MP3, M4A, WAV (common iOS/Android formats)
+
+**Transcripts:**
+- Store in `captures` table:
+  - `transcript` (TEXT, nullable) - STT output
+  - `transcript_confidence` (DECIMAL, nullable) - 0.0-1.0 confidence score
+  - `audio_duration_sec` (INT, nullable) - for cost tracking
+
+### Cost Projections
+
+**MVP Assumptions (10K users):**
+- 20% voice adoption rate = 2K users recording voice
+- 2 recordings/user/day (origin story + 1 daily capture)
+- Average recording length: 30 seconds
+
+**Daily Cost Calculation:**
+```
+4K recordings/day * 30 sec/recording = 120,000 sec = 33.3 hours
+33.3 hours * $0.15/hour = $5.00/day = $150/month
+```
+
+**Budget Impact:**
+- STT: $150/month
+- AI (GPT/Claude): ~$2,000/month (existing)
+- **Total AI Budget:** $2,150/month (within $2,500 limit)
+
+**Scaling Considerations:**
+- At 100K users: $1,500/month STT (still affordable)
+- At 1M users: $15,000/month (may need volume discounts)
+
+### Rate Limiting
+
+**Transcription Limits:**
+- Max 50 transcription requests per user per day (2-3x normal usage)
+- Max 5 minutes audio per request (prevents $1+ single-request costs)
+- Enforced via same middleware pattern as image uploads (HTTP 429)
+
+### Dependencies
+
+**NPM Packages:**
+```bash
+# AssemblyAI SDK (optional, can use REST API directly)
+npm install assemblyai
+```
+
+**Python Packages:**
+```bash
+# AssemblyAI SDK
+uv add assemblyai
+
+# Alternative: Use httpx for direct REST API calls
+uv add httpx
+```
+
+**Environment Variables:**
+```bash
+ASSEMBLYAI_API_KEY=your_api_key_here
+OPENAI_API_KEY=your_whisper_fallback_key  # Already configured
+```
+
+---

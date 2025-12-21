@@ -442,13 +442,19 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **DoD:** Error handling smoke tests pass; user-facing messages are friendly
 
 - **Story 0.9: Image Upload Error Handling** (3 pts) **[NEW - Implementation Readiness Gap]**
-  - Implement file validation: Max 10MB, JPEG/PNG only, min 100x100px
-  - Error scenarios: File too large, invalid format, storage quota exceeded, upload timeout
+  - Implement file validation: Max 10MB per image, JPEG/PNG only, min 100x100px
+  - Implement rate limiting:
+    - Max 5MB total uploads per user per day
+    - Max 20 images per user per day
+    - Track daily usage in `daily_aggregates` table (columns: `upload_count`, `upload_size_mb`)
+    - Reset counters at midnight user's local timezone
+  - Error scenarios: File too large (per-file), invalid format, storage quota exceeded, upload timeout, rate limit exceeded (daily)
   - Progress UI: Upload progress bar with cancel button
+  - Show daily usage indicator: "3/20 images uploaded today (2.5MB/5MB used)"
   - Retry logic: 3 attempts with exponential backoff
   - Store failed uploads locally for retry when online
-  - **AC:** User sees clear error messages; failed uploads queue for retry
-  - **DoD:** All error scenarios tested; Supabase Storage integration complete
+  - **AC:** User sees clear error messages; failed uploads queue for retry; rate limits enforced server-side; HTTP 429 with Retry-After header
+  - **DoD:** All error scenarios tested; Supabase Storage integration complete; rate limiting prevents abuse
 
 - **Story 0.10: Memory System Architecture Decision** (2 pts) **[NEW - Implementation Readiness Gap]**
   - **Decision:** Simple approach, no fancy vector DB for MVP
@@ -459,7 +465,20 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **AC:** Memory storage works; retrieval returns relevant memories for AI context
   - **DoD:** Decision documented; schema ready for Sprint 2 implementation
 
-**Epic 0 Total: 40 points** (increased from 38 after adding 4 critical tables to Story 0.2b)
+- **Story 0.11: Voice/Speech-to-Text Infrastructure** (3 pts) **[NEW - Sprint Change]**
+  - Research and select B2B speech-to-text provider (recommended: AssemblyAI)
+  - Create `services/stt_service.py` with provider abstraction
+  - Implement STT fallback chain: AssemblyAI → Whisper API → Store audio only (manual transcript later)
+  - Add STT cost tracking to `ai_runs` table (columns: `audio_duration_sec`, `provider`, `cost_usd`)
+  - Support audio formats: MP3, M4A, WAV (mobile recording formats)
+  - Create `/api/transcribe` POST endpoint accepting audio upload
+  - Return: `{transcript: string, confidence: number, duration_sec: number}`
+  - Rate limiting: Max 50 transcription requests per user per day, max 5 minutes audio per request
+  - Track usage in `daily_aggregates` table
+  - **AC:** Voice recordings upload and transcribe successfully; costs tracked; fallback chain tested
+  - **DoD:** AssemblyAI integration complete ($0.15/hr); unblocks Epic 1 FR-1.7 (voice commitment) and Epic 3 FR-3.5 (voice capture)
+
+**Epic 0 Total: 43 points** (increased from 40 after adding rate limiting to Story 0.9 and new Story 0.11)
 
 ---
 
@@ -502,6 +521,35 @@ This document provides the complete epic and story breakdown for Weave, decompos
 - **Story 1.15: Constraints & Demographics (Day 3)** (2 pts) - FR-1.15: **Deferred personalization.** Optional "Improve your recommendations" modal after Day 3 reflection. Collect: timezone, preferred hours, user type. Stored in `user_profiles`
 
 **Note:** Phase 7 (Monetization / Soft Paywall) has been integrated into Story 1.11 Screen 3 for a cohesive onboarding handoff.
+
+**Epic 1 Total: 51 points** (11 Must Have stories + 4 Should Have deferred stories)
+
+---
+
+### Epic 1.5: App Navigation Scaffolding (8-10 pts)
+
+**User Outcome:** Development team has a complete navigation structure with all routes defined, enabling parallel feature development without routing conflicts.
+
+**FRs Covered:** Infrastructure - supports all future epics (Epic 2-8)
+
+**Why This Epic:** Navigation is infrastructure - like database schema in Epic 0, the routing structure should be defined upfront before building features on top of it. Prevents technical debt and enables cleaner Epic 2-8 implementation.
+
+**Design Philosophy:** Simple, clean 3-tab structure (Thread, AI Chat, Dashboard) with magical glassmorphism AI interface inspired by new Siri.
+
+**Story:**
+
+- **Story 1.5.1: Core Navigation Architecture** (8-10 pts) - Define 3-tab navigation: Thread (left), AI Chat (center with blur), Dashboard (right). Create placeholder screens for all Epic 2-8 routes (stack screens, NOT tabs). Implement center AI button with background blur effect and glassmorphism overlay. Establish auth guards (redirect to login if not authenticated). Enable testing flow (can jump directly to main app). Document navigation architecture and screen hierarchy.
+  - **AC:** 3 tabs work; AI Chat opens with blur effect; all 15+ placeholder screens accessible and navigable; auth guards functional; testing mode enabled
+  - **DoD:** Navigation structure complete; glassmorphism AI chat implemented; documentation updated (architecture + UX design + epics); can test full app flow; no console warnings
+
+**Epic 1.5 Total: 8-10 points** (1 unified infrastructure story)
+
+**Deferred to Post-MVP:**
+- Radial menu animation (fancy fan-out options around center button)
+- Advanced AI Chat interactions and polish
+- Visual refinements and micro-interactions
+
+**Implementation Note:** All other pages (Goals, Settings, Journal History, Captures, etc.) are stack screens accessed FROM the 3 main tabs, NOT as separate tabs. This keeps the primary navigation simple and focused on the three core pillars: Action (Thread), Insight (AI Chat), Progress (Dashboard).
 
 ---
 
@@ -745,9 +793,13 @@ This document provides the complete epic and story breakdown for Weave, decompos
           │                │                │
           ▼                ▼                ▼
      Epic 1 (Onboarding)   │          Epic 8 (Settings)
-          │                │
-          ▼                │
-     Epic 2 (Goals) ◄──────┘
+          │                │                │
+          ▼                │                │
+   Epic 1.5 (Navigation    │                │
+    Scaffolding)           │                │
+          │                │                │
+          ▼                │                │
+     Epic 2 (Goals) ◄──────┴────────────────┘
           │
           ▼
      Epic 3 (Daily Actions) ◄───── Epic 7 (Notifications)
@@ -759,6 +811,8 @@ This document provides the complete epic and story breakdown for Weave, decompos
           ▼                  ▼
      Epic 5 (Progress)  Epic 6 (AI Coach)
 ```
+
+**Note:** Epic 1.5 (Navigation Scaffolding) is infrastructure that blocks ALL feature epics (2-8). It must be completed after Epic 1 (Onboarding) and before any feature implementation begins.
 
 **Key Principles:**
 - Epic 0 is the TRUE foundation - scaffolding, database, auth, RLS, CI/CD, AI abstraction

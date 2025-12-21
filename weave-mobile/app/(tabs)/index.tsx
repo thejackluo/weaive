@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Button as _Button, showSimpleToast } from '@/design-system';
+import CountdownTimer from '@/components/features/journal/CountdownTimer';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -166,6 +167,21 @@ export default function HomeScreen() {
           )}
         </View>
 
+        {/* Story 4.1c: Countdown Timer (Section C) */}
+        <View style={{ width: '100%', maxWidth: 400, paddingHorizontal: 16 }}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: '#71717A',
+              marginBottom: 8,
+              textAlign: 'center',
+            }}
+          >
+            Story 4.1c: Countdown Timer Demo
+          </Text>
+          <CountdownTimer debug={true} />
+        </View>
+
         {/* Navigation Buttons */}
         <View style={{ gap: 12, width: '100%', maxWidth: 300 }}>
           <Pressable
@@ -210,6 +226,48 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
         </View>
+
+        {/* Settings Screen */}
+        <Pressable
+          onPress={() => router.push('/(tabs)/settings')}
+          style={{
+            backgroundColor: '#10B981',
+            paddingHorizontal: 24,
+            paddingVertical: 16,
+            borderRadius: 12,
+          }}
+        >
+          <Text
+            style={{
+              color: '#FAFAFA',
+              fontSize: 16,
+              fontWeight: '600',
+            }}
+          >
+            ⚙️ Settings (with Reflection)
+          </Text>
+        </Pressable>
+
+        {/* TEST: Direct Reflection Link (Story 4.1a) */}
+        <Pressable
+          onPress={() => router.push('/(tabs)/settings/reflection')}
+          style={{
+            backgroundColor: '#3B82F6',
+            paddingHorizontal: 24,
+            paddingVertical: 16,
+            borderRadius: 12,
+          }}
+        >
+          <Text
+            style={{
+              color: '#FAFAFA',
+              fontSize: 16,
+              fontWeight: '600',
+            }}
+          >
+            📝 Test Reflection (Direct)
+          </Text>
+        </Pressable>
 
         {/* Footer */}
         <View style={{ position: 'absolute', bottom: 32, alignItems: 'center' }}>

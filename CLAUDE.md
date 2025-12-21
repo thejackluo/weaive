@@ -291,11 +291,36 @@ weavelight/
 │   │   ├── 0-2a-database-schema-core.md
 │   │   ├── 0-3-authentication-flow.md
 │   │   ├── 1-1-welcome-vision-hook.md
-│   │   └── ...                  # 15+ story files
+│   │   ├── ...                  # 15+ story files
+│   │   └── validation-reports/  # Post-implementation validation
+│   │       ├── validation-report-story-0.4-20251219.md
+│   │       └── ...              # 4 validation reports
 │   │
-│   ├── sprint-artifacts/        # Implementation summaries
-│   │   ├── story-0.3-implementation-summary.md
-│   │   └── ...
+│   ├── testing/                 # 📁 Testing documentation
+│   │   ├── README.md            # Testing structure guide
+│   │   ├── test-design.md       # Overall testing strategy
+│   │   ├── atdd/                # Story-level ATDD checklists
+│   │   │   ├── atdd-checklist-story-1.6.md
+│   │   │   └── ...              # 4 ATDD checklists
+│   │   └── epic/                # Epic-level test design
+│   │       ├── test-design-epic-0.md
+│   │       └── ...              # 3 epic test designs
+│   │
+│   ├── sprint-artifacts/        # 📁 Implementation summaries & change proposals
+│   │   ├── README.md            # Sprint workflow guide
+│   │   ├── sprint-change-proposals/  # Scope changes during sprint
+│   │   │   ├── sprint-change-proposal-story-1.7-2025-12-18.md
+│   │   │   └── ...              # 5 change proposals
+│   │   ├── epic-retrospectives/ # Post-epic learnings
+│   │   │   └── epic-0-retrospective-2025-12-20.md
+│   │   ├── design-system-old/   # Archived design system docs
+│   │   │   └── ...              # 3 archived files
+│   │   ├── story-0.3-implementation-summary.md  # Active story artifacts
+│   │   └── ...                  # 14 story files at root
+│   │
+│   ├── meta/                    # 📁 Documentation about documentation
+│   │   ├── README.md            # Meta-documentation guide
+│   │   └── documentation-reorganization-2025-12-21.md
 │   │
 │   ├── idea/                    # Original deep specs (1000+ lines each)
 │   │   ├── mvp.md               # Complete product MVP spec
@@ -363,6 +388,14 @@ weavelight/
 | API patterns | `docs/architecture/implementation-patterns-consistency-rules.md` | Code conventions and guardrails |
 | Design system usage | `docs/dev/design-system-guide.md` | Components, tokens, examples |
 | Git workflow | `docs/dev/git-workflow-guide.md` | Branching, commits, PRs |
+| **ATDD checklist for a story** | `docs/testing/atdd/atdd-checklist-story-[X.X].md` | Acceptance criteria and test scenarios |
+| **Epic-level test design** | `docs/testing/epic/test-design-epic-[X].md` | Strategic test plans spanning multiple stories |
+| **Overall testing strategy** | `docs/testing/test-design.md` | Testing methodology and standards |
+| **Story implementation notes** | `docs/sprint-artifacts/story-[X.X]-*.md` | Implementation decisions and outcomes |
+| **Sprint scope changes** | `docs/sprint-artifacts/sprint-change-proposals/` | Mid-sprint scope adjustments |
+| **Epic retrospective** | `docs/sprint-artifacts/epic-retrospectives/` | Post-epic learnings and insights |
+| **Story validation results** | `docs/stories/validation-reports/` | Post-implementation validation |
+| **Documentation organization** | `docs/meta/` | How docs are structured and why |
 | Debugging common issues | `docs/bugs/[issue-name].md` | Known bugs and solutions |
 | Deep product context | `docs/idea/mvp.md` | 1600-line comprehensive spec (only if needed) |
 

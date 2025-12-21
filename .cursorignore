@@ -1,0 +1,35 @@
+# Cursor AI Ignore File
+# Prevents Cursor from indexing sensitive files
+
+# Environment files
+.env
+.env.*
+.env.local
+.env.test
+.env.development
+.env.production
+
+# Project-specific env files
+weave-api/.env
+weave-api/.env.*
+weave-mobile/.env
+weave-mobile/.env.*
+
+# Secrets directory
+secrets/
+*.secret
+
+# Private keys
+*.key
+*.pem
+*.p12
+*.pfx
+
+# API credentials
+*credentials*
+*apikey*
+*api-key*
+
+# Database credentials
+*database.yml
+*database.json
