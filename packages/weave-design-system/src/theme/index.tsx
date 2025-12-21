@@ -16,8 +16,9 @@
  * @packageDocumentation
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode, Component, ErrorInfo } from 'react';
 import { TamaguiProvider, useThemeName, Theme as TamaguiTheme } from '@tamagui/core';
+import { View, Text as RNText } from 'react-native';
 import { colors, typography, spacing, borders, shadows, glows, glass, blur, opacity, animations } from '../tokens';
 import tamaguiConfig from '../tamagui.config';
 
@@ -190,6 +191,58 @@ export const lightTheme: Theme = {
 };
 
 // =============================================================================
+// ERROR BOUNDARY
+// =============================================================================
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+/**
+ * Error boundary for theme system
+ * Catches theme-related errors and provides fallback UI
+ */
+class ThemeErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ThemeProvider error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      // Default fallback with dark theme
+      return (
+        <View style={{ flex: 1, backgroundColor: '#030712', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <RNText style={{ color: '#F9FAFB', fontSize: 16, textAlign: 'center' }}>
+            Theme system failed to load. Using default theme.
+          </RNText>
+        </View>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// =============================================================================
 // CONTEXT
 // =============================================================================
 
@@ -224,21 +277,27 @@ export function ThemeProvider({
 
   const theme = customTheme || (mode === 'dark' ? darkTheme : lightTheme);
 
-  const value: ThemeContextValue = {
-    theme,
-    mode,
-    setTheme: setMode,
-  };
+  // Optimize: Memoize context value to prevent unnecessary re-renders
+  const value: ThemeContextValue = useMemo(
+    () => ({
+      theme,
+      mode,
+      setTheme: setMode,
+    }),
+    [theme, mode]
+  );
 
   return (
-    <ThemeContext.Provider value={value}>
-      <TamaguiProvider config={tamaguiConfig} defaultTheme={mode}>
-        <TamaguiTheme name={mode}>
-          <TamaguiThemeSync mode={mode} />
-          {children}
-        </TamaguiTheme>
-      </TamaguiProvider>
-    </ThemeContext.Provider>
+    <ThemeErrorBoundary>
+      <ThemeContext.Provider value={value}>
+        <TamaguiProvider config={tamaguiConfig} defaultTheme={mode}>
+          <TamaguiTheme name={mode}>
+            <TamaguiThemeSync mode={mode} />
+            {children}
+          </TamaguiTheme>
+        </TamaguiProvider>
+      </ThemeContext.Provider>
+    </ThemeErrorBoundary>
   );
 }
 

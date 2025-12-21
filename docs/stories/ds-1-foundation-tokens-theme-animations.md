@@ -755,22 +755,34 @@ Claude Sonnet 4.5 (global.anthropic.claude-sonnet-4-5-20250929-v1:0)
 
 **Sprint Change Applied:** Successfully integrated Tamagui per approved sprint change proposal (2025-12-21), reducing Epic DS from 74 to 58-62 points.
 
+**Code Review Fixes Applied (2025-12-21):**
+- [x] **AC-1 Compliance:** Tokens separated into 6 category files (colors, typography, spacing, borders, effects, animations) per acceptance criteria requirement
+- [x] **Repository URL Fix:** Corrected package.json repository URLs from `weave/weave-design-system` to `thejackluo/weavelight` with proper monorepo directory field
+- [x] **Error Boundary:** Added `ThemeErrorBoundary` class component to gracefully handle theme system failures with fallback UI
+- [x] **Performance Optimization:** Wrapped ThemeProvider context value in `useMemo` to prevent unnecessary re-renders on theme changes
+
 ### File List
 
 **[CREATED] New Files:**
 - `packages/weave-design-system/src/tamagui.config.ts` - Tamagui configuration with Weave token mapping
 - `packages/weave-design-system/METRO-SETUP.md` - Metro bundler configuration guide for consuming apps
+- `packages/weave-design-system/src/tokens/colors.ts` - 60+ color tokens (primary, accent, semantic, gradients) - **Code Review Fix**
+- `packages/weave-design-system/src/tokens/typography.ts` - 45+ typography tokens (families, sizes, weights, scales) - **Code Review Fix**
+- `packages/weave-design-system/src/tokens/spacing.ts` - 25+ spacing tokens (scale, layout, gaps, insets) - **Code Review Fix**
+- `packages/weave-design-system/src/tokens/borders.ts` - 20+ border tokens (widths, radii, component presets) - **Code Review Fix**
+- `packages/weave-design-system/src/tokens/effects.ts` - 35+ effect tokens (shadows, glows, glass, blur, opacity) - **Code Review Fix**
+- `packages/weave-design-system/src/tokens/animations.ts` - 35+ animation tokens (durations, springs, motion presets) - **Code Review Fix**
 
 **[MODIFIED] Configuration & Test Files:**
 - `packages/weave-design-system/.babelrc.js` - Added @tamagui/babel-plugin for compile-time optimization
 - `packages/weave-design-system/jest.setup.js` - Added Tamagui mocks for Jest test environment
 - `packages/weave-design-system/src/animations/__tests__/animations.test.ts` - Fixed reduced motion test mocking
-- `packages/weave-design-system/src/theme/index.tsx` - Integrated TamaguiProvider with Weave ThemeProvider
+- `packages/weave-design-system/src/theme/index.tsx` - Integrated TamaguiProvider + added error boundary + useMemo optimization - **Code Review Fixes**
+- `packages/weave-design-system/src/tokens/index.ts` - Rewritten as re-export module (reduced from 699 to 45 lines) - **Code Review Fix**
+- `packages/weave-design-system/package.json` - Corrected repository URLs to thejackluo/weavelight - **Code Review Fix**
 
 **[VERIFIED] Existing Implementation:**
-- `packages/weave-design-system/src/tokens/` - All token files (220+ tokens already implemented)
 - `packages/weave-design-system/src/animations/index.ts` - Spring animations and reduced motion support
-- `packages/weave-design-system/src/theme/index.tsx` - Theme context and hooks
 - `packages/weave-design-system/package.json` - Tamagui dependencies (v1.141.5)
 
 ---
