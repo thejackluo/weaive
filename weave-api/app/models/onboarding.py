@@ -1,4 +1,4 @@
-"""Onboarding models (Stories 1.2, 1.3, 1.6)"""
+"""Onboarding models (Stories 1.2, 1.3, 1.6, 1.7)"""
 
 from datetime import datetime
 from typing import List, Literal, Optional
@@ -152,6 +152,85 @@ class IdentityBootupResponse(BaseModel):
                     "core_personality": "supportive_direct",
                     "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
                     "personality_selected_at": "2025-12-20T10:00:00Z",
+                }
+            ]
+        }
+    }
+
+
+class OriginStoryData(BaseModel):
+    """Request model for creating origin story (Story 1.7)."""
+
+    photo_base64: str = Field(
+        ...,
+        description="Base64-encoded photo (JPEG/PNG, max 10MB after encoding)",
+    )
+    audio_base64: str = Field(
+        ...,
+        description="Base64-encoded audio (AAC/MP4/M4A, max 10MB after encoding)",
+    )
+    audio_duration_seconds: int = Field(
+        ...,
+        description="Duration of voice recording in seconds (max 60)",
+        ge=1,
+        le=60,
+    )
+    from_text: str = Field(
+        ...,
+        description="Current struggle narrative from painpoint selection",
+        min_length=10,
+        max_length=500,
+    )
+    to_text: str = Field(
+        ...,
+        description="Aspirational identity traits text",
+        min_length=10,
+        max_length=500,
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "photo_base64": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
+                    "audio_base64": "data:audio/aac;base64,AAAAGGZ0eXBp...",
+                    "audio_duration_seconds": 42,
+                    "from_text": "You've been feeling scattered — like there's too much to do, but no clear direction.",
+                    "to_text": "You want to become someone with Clear Direction, High Standards, and Self Aware — someone who acts with purpose.",
+                }
+            ]
+        }
+    }
+
+
+class OriginStoryResponse(BaseModel):
+    """Response model for origin story creation."""
+
+    success: bool = Field(..., description="Whether the operation succeeded")
+    origin_story_id: UUID = Field(..., description="UUID of created origin story record")
+    user_id: UUID = Field(..., description="User profile UUID")
+    photo_url: str = Field(..., description="Public URL of uploaded photo")
+    audio_url: str = Field(..., description="Public URL of uploaded audio")
+    first_bind_completed: bool = Field(
+        ..., description="Whether this was the user's first bind"
+    )
+    user_level: int = Field(..., description="User's current level (should be 1)")
+    created_at: datetime = Field(
+        ..., description="Timestamp when origin story was created"
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "success": True,
+                    "origin_story_id": "660e8400-e29b-41d4-a716-446655440000",
+                    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "photo_url": "https://supabase.co/storage/v1/object/public/origin-stories/550e8400.../photo.jpg",
+                    "audio_url": "https://supabase.co/storage/v1/object/public/origin-stories/550e8400.../audio.aac",
+                    "first_bind_completed": True,
+                    "user_level": 1,
+                    "created_at": "2025-12-20T10:30:00Z",
                 }
             ]
         }

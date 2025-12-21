@@ -293,8 +293,8 @@ Aspiration: "You want to become someone Disciplined, Confident, and Intentional 
 ### Screen 3: Completion & Reinforcement (AC #19-#27)
 
 **Title & Messaging (AC #19)**
-- [x] Display title: "This is your beginning."
-- [x] Display subheading: "You just took the first step toward your future self."
+- [x] Display title: "You've completed your first bind!" *(Updated from "This is your beginning." to emphasize first bind completion)*
+- [x] Display subheading: "The origin story you've just made is the first of many actions you'll take that strengthens us both." *(Updated to emphasize user-Weave relationship)*
 - [x] Typography: Title semi-bold (28-32px), subheading medium (16-18px) at 85% opacity
 - [x] Text alignment: Center
 
@@ -330,7 +330,7 @@ Aspiration: "You want to become someone Disciplined, Confident, and Intentional 
 - [x] Card purpose: Reinforce accomplishment
 
 **CTA & Navigation (AC #24)**
-- [x] Display "Continue to set your first goal →" button at bottom
+- [x] Display "Continue" button at bottom *(Simplified from "Continue to set your first goal →" for cleaner UX)*
 - [x] Button enabled immediately (no waiting for animations)
 - [x] Button styling: Primary color, full-width, min 48px height
 - [x] On continue: Navigate to Story 1.8 using router.push('/(onboarding)/first-needle')
@@ -1347,6 +1347,13 @@ console.log('[ORIGIN_STORY] Screen 3: Origin story complete, navigating to Story
 - ✅ Wrote component tests for all 3 screens
 - ✅ Fixed all linting errors (0 errors, 3 warnings in test fixtures only)
 - ⏸️ Backend integration (Supabase uploads, origin_stories table) deferred to Story 0-4
+
+**2025-12-20 - Post-Completion Enhancement (Screen 3 Copy Update)**
+- ✅ Updated Screen 3 title: "This is your beginning." → "You've completed your first bind!"
+- ✅ Updated Screen 3 subheading to emphasize user-Weave relationship
+- ✅ Simplified button text: "Continue to set your first goal →" → "Continue"
+- **Rationale**: Better emphasizes that origin story capture IS the first bind, aligning with product terminology and setting up the gamification system
+- **Related**: This led to adding an intro screen in Story 1.8 to explain Binds → Needles relationship before goal selection
 
 ---
 
