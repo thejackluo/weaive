@@ -2243,9 +2243,9 @@ Users manage their account settings, identity document, and app preferences.
 
 ## Epic DS: Design System Rebuild
 
-**User Outcome:** Complete rebuild of the Weavelight Design System with 70 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
+**User Outcome:** Complete rebuild as a new standalone package **`weave-design-system`** with 70 production-ready components following Tamagui patterns, Atomic Design principles, and modern animation standards.
 
-**Context:** The existing design system is "vibe-coded," buggy, and inconsistent. This epic rebuilds it from scratch with:
+**Context:** The existing design system (`src/design-system`) is "vibe-coded," buggy, and inconsistent. This epic creates a **completely new package** called `weave-design-system` from scratch with:
 - **220+ design tokens** (colors, typography, spacing, effects, animations)
 - **Tamagui-inspired architecture** (composable anatomy, theme builder, runtime theming)
 - **Atomic Design organization** (Atoms → Molecules → Organisms)
@@ -2256,7 +2256,21 @@ Users manage their account settings, identity document, and app preferences.
 
 **Why This Order:** Design system foundation enables consistent, rapid UI development across all other epics. Must be completed early to prevent design debt and component inconsistencies.
 
-**FRs Covered:** FR-DS-1 through FR-DS-9
+**Package Structure:**
+- **Location:** `packages/weave-design-system/` (new standalone package)
+- **Old system:** `src/design-system/` (deprecated, will be removed after migration)
+- **Import path:** `import { Button, Card } from '@weave/design-system'`
+- **Package name:** `@weave/design-system`
+- **Versioning:** Semantic versioning starting at `v0.1.0` (pre-release)
+
+**Migration Strategy:**
+1. Build new `weave-design-system` package alongside old system
+2. Create adapter layer for gradual component migration
+3. Use feature flags for component rollout
+4. Remove old `src/design-system` after all features migrated
+5. Publish to npm for potential reuse across future Weave products
+
+**FRs Covered:** FR-DS-1 through FR-DS-10
 
 ---
 
