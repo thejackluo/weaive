@@ -450,20 +450,35 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **AC:** All API endpoints return consistent error format; mobile handles gracefully
   - **DoD:** Error handling smoke tests pass; user-facing messages are friendly
 
-- **Story 0.9: Image Upload Error Handling** (3 pts) **[NEW - Implementation Readiness Gap]**
-  - Implement file validation: Max 10MB per image, JPEG/PNG only, min 100x100px
-  - Implement rate limiting:
+- **Story 0.9: AI-Powered Image Service** (8 pts) **[EXPANDED - Sprint Change 2025-12-21]**
+  - **Full Image Service:**
+    - Image upload with validation: Max 10MB per image, JPEG/PNG only, min 100x100px
+    - Image storage in Supabase Storage (`/captures/images/{user_id}/`)
+    - Image retrieval API: `GET /api/captures/images?filter=goal_id|bind_id|date_range`
+    - Image deletion API: `DELETE /api/captures/images/{image_id}` with cascading cleanup
+    - Image Gallery UI: Chronological grid view, filter by goal/date
+    - Image Detail View: Full-screen, swipe navigation, delete confirmation
+  - **AI Vision Analysis (Gemini 3.0 Flash):**
+    - Integrate Gemini 3.0 Flash for image analysis ($0.0005/image)
+    - Create `services/vision_service.py` with provider abstraction
+    - Fallback chain: Gemini 3.0 Flash → GPT-4o Vision → Store image only
+    - AI vision features: Proof validation, OCR, content classification, quality scoring
+    - Store results in `captures` table (`ai_analysis` JSONB column)
+    - Display AI insights in Image Detail View
+  - **Rate Limiting:**
     - Max 5MB total uploads per user per day
     - Max 20 images per user per day
-    - Track daily usage in `daily_aggregates` table (columns: `upload_count`, `upload_size_mb`)
+    - Max 20 AI vision analyses per user per day
+    - Track usage in `daily_aggregates` table
     - Reset counters at midnight user's local timezone
-  - Error scenarios: File too large (per-file), invalid format, storage quota exceeded, upload timeout, rate limit exceeded (daily)
-  - Progress UI: Upload progress bar with cancel button
-  - Show daily usage indicator: "3/20 images uploaded today (2.5MB/5MB used)"
-  - Retry logic: 3 attempts with exponential backoff
-  - Store failed uploads locally for retry when online
-  - **AC:** User sees clear error messages; failed uploads queue for retry; rate limits enforced server-side; HTTP 429 with Retry-After header
-  - **DoD:** All error scenarios tested; Supabase Storage integration complete; rate limiting prevents abuse
+  - **Error Handling:**
+    - File too large, invalid format, storage quota exceeded, upload timeout, rate limit exceeded
+    - Progress UI with upload progress bar and cancel button
+    - Daily usage indicator: "3/20 images uploaded today (2.5MB/5MB used)"
+    - Retry logic: 3 attempts with exponential backoff
+    - Store failed uploads locally for retry when online
+  - **AC:** Images upload, analyze, display with AI verification badge; Gallery and Detail views work; Rate limits enforced; Costs tracked
+  - **DoD:** All features tested; Gemini integration complete; Unblocks Epic 3 proof validation (Stories 3.4, 3.5)
 
 - **Story 0.10: Memory System Architecture Decision** (2 pts) **[NEW - Implementation Readiness Gap]**
   - **Decision:** Simple approach, no fancy vector DB for MVP
@@ -474,20 +489,78 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **AC:** Memory storage works; retrieval returns relevant memories for AI context
   - **DoD:** Decision documented; schema ready for Sprint 2 implementation
 
-- **Story 0.11: Voice/Speech-to-Text Infrastructure** (3 pts) **[NEW - Sprint Change]**
-  - Research and select B2B speech-to-text provider (recommended: AssemblyAI)
-  - Create `services/stt_service.py` with provider abstraction
-  - Implement STT fallback chain: AssemblyAI → Whisper API → Store audio only (manual transcript later)
-  - Add STT cost tracking to `ai_runs` table (columns: `audio_duration_sec`, `provider`, `cost_usd`)
-  - Support audio formats: MP3, M4A, WAV (mobile recording formats)
-  - Create `/api/transcribe` POST endpoint accepting audio upload
-  - Return: `{transcript: string, confidence: number, duration_sec: number}`
-  - Rate limiting: Max 50 transcription requests per user per day, max 5 minutes audio per request
-  - Track usage in `daily_aggregates` table
-  - **AC:** Voice recordings upload and transcribe successfully; costs tracked; fallback chain tested
-  - **DoD:** AssemblyAI integration complete ($0.15/hr); unblocks Epic 1 FR-1.7 (voice commitment) and Epic 3 FR-3.5 (voice capture)
+- **Story 0.11: Voice/Speech-to-Text Infrastructure** (5 pts) **[NEW - Sprint Change 2025-12-21]**
+  - **Core STT Integration:**
+    - Integrate **AssemblyAI** as primary provider ($0.15/hr = $0.0025/min, 58% cheaper than Whisper)
+    - Integrate **OpenAI Whisper API** as fallback provider ($0.006/min, handles edge cases)
+    - Create `services/stt_service.py` with provider abstraction
+    - Implement STT fallback chain: AssemblyAI → Whisper API → Store audio only (manual transcript)
+    - Add STT cost tracking to `ai_runs` table (columns: `audio_duration_sec`, `provider`, `cost_usd`)
+    - Support audio formats: MP3, M4A, WAV (mobile recording formats)
+  - **Audio Storage:**
+    - Upload audio to Supabase Storage (`/captures/audio/{user_id}/{filename}.m4a`)
+    - Retrieval API: `GET /api/captures/audio/{audio_id}`
+    - Deletion API: `DELETE /api/captures/audio/{audio_id}`
+  - **API Endpoint:**
+    - Create `/api/transcribe` POST endpoint accepting audio file (multipart/form-data)
+    - Return: `{transcript: string, confidence: number, duration_sec: number}`
+    - Handle transcription errors gracefully (return audio URL if STT fails)
+  - **Voice Recording UI:**
+    - VoiceRecorder component: Microphone button, waveform animation, elapsed time, Stop button
+    - AudioWaveform component: Real-time visualization during recording
+    - TranscriptPreview component: Show transcript with edit capability
+    - Playback controls: Play/pause, scrubbing, volume
+    - Voice Note Badge: Indicator on captures with audio
+  - **Rate Limiting:**
+    - Max 50 transcription requests per user per day
+    - Max 5 minutes audio length per request
+    - Track usage in `daily_aggregates` table
+  - **AC:** Voice recordings upload, transcribe successfully; UI components functional; Costs tracked in AI runs; Fallback chain tested
+  - **DoD:** AssemblyAI + Whisper integration complete; Unblocks Epic 1 FR-1.7 (voice commitment), Epic 3 FR-3.5 (voice capture), Epic 4 FR-4.2 (voice journal)
 
-**Epic 0 Total: 43 points** (increased from 40 after adding rate limiting to Story 0.9 and new Story 0.11)
+**Epic 0 Total: 50 points** (increased from 40 pts: Story 0.9 expanded from 3→8 pts, Story 0.11 expanded from 3→5 pts)
+
+**Cost Impact:**
+- Story 0.9 (AI Vision): ~$90/month at 10K users (Gemini 3.0 Flash)
+- Story 0.11 (STT): ~$186/month at 10K users (AssemblyAI 90% + Whisper 10%)
+- **Total AI infrastructure cost: +$276/month** (well within $2,500/month AI budget)
+
+---
+
+### Epic 0.5: Post-Development Observability (6 pts)
+**User Outcome:** Production team has comprehensive visibility into user behavior, errors, and performance metrics for fast debugging and optimization.
+
+**Why This Epic:** Essential infrastructure for production launch. Without observability, bugs are hard to reproduce, performance issues go undetected, and support requires guesswork. Must be deployed before public launch.
+
+**Stories:**
+
+- **Story 0.12: LogRocket Session Replay & Debugging** (3 pts) **[NEW - Sprint Change 2025-12-21]**
+  - Create LogRocket account and obtain API key
+  - Install LogRocket React Native SDK in mobile app (`weave-mobile/`)
+  - Configure LogRocket with user identification (user_id from Supabase Auth)
+  - Implement privacy controls: Mask sensitive fields (passwords, auth tokens)
+  - Set up LogRocket dashboard: Session replay video, console logs, network requests, performance metrics (FPS, memory), user actions (taps, navigation)
+  - Add LogRocket initialization to `app/_layout.tsx` (root layout)
+  - Track custom events: `goal_created`, `bind_completed`, `proof_captured`, `journal_submitted`, `triad_generated`
+  - Track screen views automatically using Expo Router
+  - Privacy: Mask input fields (password, auth token, sensitive profile data), disable recording for settings/profile screens (optional toggle), 30-day data retention
+  - **AC:** Session recordings appear in LogRocket dashboard; Sensitive fields masked; Custom events tracked correctly
+  - **DoD:** LogRocket plan active ($99/mo, 10K sessions); Reduces support cost by 50%+
+
+- **Story 0.13: Error Tracking & Performance Monitoring** (3 pts) **[NEW - Sprint Change 2025-12-21]**
+  - Create Sentry account and obtain DSN keys (frontend + backend)
+  - Install Sentry React Native SDK in mobile app
+  - Install Sentry FastAPI SDK in backend (`weave-api/`)
+  - Configure Sentry: Automatic error capture (unhandled exceptions, promise rejections), performance monitoring (screen load times, API response times), breadcrumbs (user actions leading to errors), release tracking (link errors to app versions)
+  - **Frontend monitoring:** Track screen load times for key screens (Thread/Home, Goal Details, Journal Entry, Triad View); Track API call performance (`GET /api/goals`, `POST /api/completions`, `POST /api/journal-entries`)
+  - **Backend monitoring:** Track API endpoint performance (P50, P95, P99 latencies), error rates by endpoint
+  - Set up alerts: Error rate > 1% of sessions (frontend), API error rate > 0.5% (backend), Database query time > 2 seconds, AI API failures
+  - **AC:** Test errors appear in Sentry; Performance metrics tracked; Alerts configured correctly
+  - **DoD:** Sentry free tier active (5K errors/month); Proactive issue detection enabled
+
+**Epic 0.5 Total: 6 points**
+
+**Cost Impact:** $99/month (LogRocket) + $0/month (Sentry free tier) = **$99/month** observability infrastructure
 
 ---
 
