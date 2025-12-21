@@ -455,6 +455,31 @@ npm install nativewind
 npx pod-install
 ```
 
+### Mobile UI Foundation
+
+**Tamagui (v1.x)** - Performance-optimized UI primitive library
+
+**Purpose:** Provides base components (Button, Text, Input, Stack) with built-in theming and animations
+
+**Why chosen over alternatives:**
+- Better performance than styled-components (compile-time optimizations)
+- Built-in accessibility support (VoiceOver, reduced motion)
+- Token-based theming aligns with Weave design system
+- Reanimated integration for 60fps animations
+- Active community and excellent documentation
+
+**Weave usage:** All components built on Tamagui primitives, customized with Weave tokens and variants
+
+**Integration:**
+- Tamagui primitives (Button, Text, Input, Stack) provide foundation
+- Weave design system (`@weave/design-system` package) wraps Tamagui with custom styling
+- 220+ design tokens define brand (colors, spacing, typography, animations)
+- Product-specific components (NeedleCard, BindCard, etc.) compose Tamagui primitives with Weave styling
+
+**Sprint Change Note:** Adopted 2025-12-21 during Story DS-1 planning to accelerate Epic DS (58-62 pts vs 74 pts original estimate)
+
+---
+
 ### State Management Architecture
 
 **Three-Layer Strategy:**
