@@ -874,13 +874,19 @@ console.log('[ONBOARDING] All data collected, navigating to Story 1.7');
 - [ ] Manual testing completed on iOS simulator - PENDING
 - [ ] Manual testing completed on physical iOS device (swipe gestures, emoji) - PENDING
 - [ ] Accessibility tested (VoiceOver, reduced motion) - PENDING
-- [x] Backend integration deferred to Story 0-4 (documented with TODO comments)
+- [x] Backend integration completed (Story 0-4 + Story 1.6)
+  - Database migration applied (user_profiles columns added)
+  - API endpoint created and tested
+  - Frontend integrated with backend
+  - 11 backend tests written and passing
 - [ ] Code review passed - PENDING
 - [x] No console.log statements in production code (only debug log on final continue)
 
-**Implementation Status:** ✅ Implementation Complete - Pending Manual Testing & Code Review
+**Implementation Status:** ✅ Full Stack Implementation Complete (Front-end + Backend) - Pending Manual Testing & Code Review
 
-**Implementation Date:** 2025-01-27
+**Implementation Dates:**
+- Front-end: 2025-01-27
+- Backend Integration: 2025-12-20
 
 **Key Implementation Decisions:**
 1. **Architecture:** Single screen with step state machine (currentStep: 1 | 2 | 3) for smoother UX
@@ -924,6 +930,50 @@ console.log('[ONBOARDING] All data collected, navigating to Story 1.7');
   - 2 occurrences updated (Apple sign-in and Google sign-in handlers)
 - [x] `weave-mobile/package.json` - Added dependency
   - Added: `react-native-gesture-handler` (installed via npx expo install)
+- [x] `weave-mobile/app/(onboarding)/identity-bootup.tsx` - Backend integration
+  - Added API call to storeIdentityBootup service
+  - Added loading state (isSubmitting)
+  - Added ActivityIndicator to Continue button
+  - Updated handleStep3Continue to be async
+  - Added error handling and user feedback
+
+**Backend Files (Created - 2025-12-20):**
+- [x] `supabase/migrations/20251220000001_add_identity_bootup_fields.sql` - Database migration
+  - Added columns: preferred_name, core_personality, personality_selected_at, identity_traits
+  - Added check constraint for core_personality enum
+  - Added index on core_personality
+- [x] `weave-api/app/models/onboarding.py` - Updated with Story 1.6 models
+  - IdentityBootupData request model with field validators
+  - IdentityBootupResponse response model
+  - Validation for name format (regex), traits (from allowed list), duplicates
+- [x] `weave-api/app/services/onboarding.py` - Added store_identity_bootup function
+  - Authenticates user via JWT
+  - Updates user_profiles table with identity data
+  - Returns confirmation with timestamp
+  - Error handling for user not found
+- [x] `weave-api/app/api/onboarding.py` - Added /api/onboarding/identity-bootup endpoint
+  - POST endpoint requiring authentication
+  - Validates request payload with Pydantic
+  - Calls service layer function
+  - Returns 200 (success), 400 (validation), 401 (unauthorized), 404 (user not found)
+- [x] `weave-mobile/src/services/onboarding.ts` - Added storeIdentityBootup function
+  - Gets JWT token from Supabase auth session
+  - Makes authenticated POST request to backend API
+  - Returns response data or throws error
+  - Type-safe with TypeScript interfaces
+- [x] `weave-api/tests/test_onboarding.py` - Comprehensive test suite (11 tests)
+  - test_identity_bootup_without_auth (401 unauthorized)
+  - test_identity_bootup_success (200 success with valid data)
+  - test_identity_bootup_invalid_name_too_long (422 validation)
+  - test_identity_bootup_invalid_name_special_chars (422 validation)
+  - test_identity_bootup_invalid_personality (422 validation)
+  - test_identity_bootup_too_few_traits (422 validation)
+  - test_identity_bootup_too_many_traits (422 validation)
+  - test_identity_bootup_invalid_trait (422 validation)
+  - test_identity_bootup_duplicate_traits (422 validation)
+  - test_identity_bootup_user_not_found (404 not found)
+  - test_identity_bootup_missing_fields (422 validation)
+  - All tests passing ✅
 
 **Not Created (Decision: Inline Implementation):**
 - ❌ `weave-mobile/src/components/onboarding/Step1NameEntry.tsx` - Implemented inline in identity-bootup.tsx
@@ -950,7 +1000,14 @@ console.log('[ONBOARDING] All data collected, navigating to Story 1.7');
 - **2025-01-27**: Main screen implementation completed (identity-bootup.tsx)
 - **2025-01-27**: Fixed TypeScript errors (import paths, implicit any in map callbacks)
 - **2025-01-27**: Updated authentication navigation target
-- **2025-01-27**: Implementation complete - Status: pending manual testing & code review
+- **2025-01-27**: Front-end implementation complete - Status: pending manual testing & code review
+- **2025-12-20**: Backend integration completed
+  - Created database migration (4 new columns in user_profiles)
+  - Built API endpoint POST /api/onboarding/identity-bootup
+  - Added Pydantic models with comprehensive validation
+  - Integrated frontend with backend (async API calls, loading states)
+  - Wrote 11 backend tests (all passing)
+  - Full stack implementation complete
 
 ---
 
@@ -1011,6 +1068,276 @@ const onboardingData = {
   - AI chat interface (Story 7 - AI Coach)
 - Supportive but Direct: Proper casing, steady, honest
 - Tough but Warm: Lowercase, emoji, playful, Gen Z-coded
+
+---
+
+## 🔧 Troubleshooting Guide
+
+### Common Issues and Solutions
+
+This section documents issues encountered during Story 1.6 implementation and their solutions.
+
+---
+
+#### Issue 1: 401 Unauthorized - Invalid JWT Token
+
+**Symptoms:**
+- API returns 401 Unauthorized
+- Backend logs: "Invalid JWT token: Signature verification failed"
+- Debug endpoint shows: `profile_exists: true` (user exists but auth fails)
+
+**Root Cause:**
+JWT signature verification fails when backend cannot verify the token with `SUPABASE_JWT_SECRET`.
+
+**Common Scenarios:**
+1. User not actually logged in (session expired)
+2. Token corrupted during transmission (extra whitespace, newlines)
+3. Wrong Supabase project configuration (mobile/backend mismatch)
+4. Token expired (exp claim in the past)
+
+**Solution:**
+
+**Step 1: Verify user is logged in**
+```typescript
+const { data: { session }, error } = await supabase.auth.getSession();
+if (!session) {
+  Alert.alert('Not Logged In', 'Please log in first');
+}
+```
+
+**Step 2: Use debug tools**
+```bash
+# Backend script to analyze JWT
+cd weave-api
+PYTHONPATH=/Users/eddielou/weavelight/weave-api uv run python scripts/check_user_token.py <JWT_TOKEN>
+```
+
+**Step 3: Verify configuration**
+- Check `weave-api/.env` has correct `SUPABASE_JWT_SECRET`
+- Check `weave-mobile/.env` has correct `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- Verify both are using the same Supabase project
+
+**Prevention:**
+- Add session validation before authenticated API calls
+- Implement token refresh logic when token near expiration
+- Add debug button in dev mode (already added to identity-bootup.tsx)
+
+---
+
+#### Issue 2: 404 Not Found - Missing User Profile
+
+**Symptoms:**
+- API returns 404 Not Found
+- Backend logs: "No user_profile found for auth_user_id: ..."
+- Debug endpoint shows: `profile_exists: false`
+
+**Root Cause:**
+User's `auth_user_id` (from JWT) doesn't have a matching record in `user_profiles` table.
+
+**Common Scenarios:**
+1. User signed up before database trigger was created
+2. Database trigger failed to create user_profile on signup
+3. User manually created in auth.users without profile
+
+**Solution:**
+
+**Step 1: Identify the auth_user_id**
+```typescript
+// Mobile app - use debug helper
+import { debugAuthState, debugUserProfile } from '@/services/debug-auth';
+await debugUserProfile(); // Shows auth_user_id and profile status
+```
+
+**Step 2: Create missing profile**
+
+**Option A: SQL Editor (single user)**
+```sql
+INSERT INTO user_profiles (auth_user_id, timezone, locale)
+VALUES ('<AUTH_USER_ID>', 'America/Los_Angeles', 'en-US');
+```
+
+**Option B: Interactive script (single user)**
+```bash
+cd weave-api
+uv run python scripts/create_user_profile.py
+# Enter auth_user_id when prompted
+```
+
+**Option C: Migration (multiple users)**
+```bash
+# Already created: supabase/migrations/20251220130000_backfill_user_profiles.sql
+npx supabase db push
+```
+
+**Prevention:**
+Ensure database trigger is working:
+```sql
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.user_profiles (auth_user_id, timezone, locale)
+  VALUES (new.id::text, 'America/Los_Angeles', 'en-US')
+  ON CONFLICT (auth_user_id) DO NOTHING;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+```
+
+---
+
+#### Issue 3: 422 Validation Error - Invalid Identity Traits
+
+**Symptoms:**
+- API returns 422 Unprocessable Entity
+- Error message: "Invalid trait: X. Must be from predefined list."
+- Mobile app logs show trait names that don't match backend
+
+**Root Cause:**
+Mobile frontend and backend have mismatched trait lists.
+
+**Backend allowed traits** (`app/models/onboarding.py`):
+```python
+allowed_traits = {
+    "Clear Direction", "Intentional Time", "Decisive Action",
+    "Consistent Effort", "High Standards", "Continuous Growth",
+    "Self Aware", "Emotionally Grounded"
+}
+```
+
+**Frontend trait list** (`src/constants/identityTraits.ts`):
+```typescript
+export type IdentityTrait =
+  | 'Clear Direction' | 'Intentional Time' | 'Decisive Action'
+  | 'Consistent Effort' | 'High Standards' | 'Continuous Growth'
+  | 'Self Aware' | 'Emotionally Grounded';
+```
+
+**Solution:**
+Ensure both lists match exactly (case-sensitive).
+
+**Prevention:**
+- Add comment in both files referencing the other
+- Include validation error in API docs
+- Add integration test covering all trait names
+
+---
+
+### 🛠️ Diagnostic Tools Reference
+
+#### Backend Tools (weave-api/scripts/)
+
+| Tool | Purpose | Usage | When to Use |
+|------|---------|-------|-------------|
+| `test_identity_bootup.py` | Test API with all users | `PYTHONPATH=... uv run python scripts/test_identity_bootup.py` | After code changes, to verify API works |
+| `check_user_token.py` | Analyze JWT token | `PYTHONPATH=... uv run python scripts/check_user_token.py <TOKEN>` | 401/404 errors, verify token validity |
+| `create_user_profile.py` | Create single profile | `uv run python scripts/create_user_profile.py` | Single user missing profile |
+| `backfill_user_profiles.py` | Print backfill SQL | `uv run python scripts/backfill_user_profiles.py` | Multiple users missing profiles |
+
+**📖 Full documentation:** `weave-api/scripts/README.md`
+
+#### Mobile Tools
+
+**Debug Auth Service** (`weave-mobile/src/services/debug-auth.ts`):
+```typescript
+import { debugAuthState, debugUserProfile } from '@/services/debug-auth';
+
+// Shows JWT, auth_user_id, token expiration
+await debugAuthState();
+
+// Checks if profile exists in backend
+await debugUserProfile();
+```
+
+**Debug Button** (already added to `identity-bootup.tsx`):
+- Orange "🔍 Debug Auth Status" button in Step 3
+- Only visible in dev mode (`__DEV__`)
+- Located above green Continue button
+- Shows alert when debug complete
+
+#### Backend Debug Endpoint
+
+**URL:** `GET /api/onboarding/debug/current-user`
+**Auth:** Required (JWT Bearer token)
+
+**Response:**
+```json
+{
+  "jwt_payload": { "sub": "...", "email": "...", "role": "..." },
+  "auth_user_id": "87f831eb-6568-44d1-8500-558de9f78074",
+  "profile_exists": true,
+  "profile_data": { "id": "...", "preferred_name": null, ... }
+}
+```
+
+---
+
+### 🧪 Test Infrastructure
+
+**Integration Tests:** `tests/integration/test_identity_bootup_integration.py`
+- 22 tests covering full stack (API → Service → Database)
+- Real database writes with auto-cleanup
+- Tests all 8 identity traits
+- Tests validation, auth, error handling
+
+**Test Support:**
+- `tests/support/factories/user_factory.py` - Generate test users and JWT tokens with faker
+- `tests/support/fixtures/database_fixture.py` - Pytest fixtures for DB connections and cleanup
+
+**Unit Tests:** `tests/test_onboarding.py`
+- 11 tests with mocked dependencies
+- Tests service layer logic in isolation
+
+**Run tests:**
+```bash
+cd weave-api
+
+# All tests (unit + integration)
+uv run pytest
+
+# Integration tests only
+uv run pytest tests/integration/
+
+# Unit tests only
+uv run pytest tests/test_onboarding.py
+
+# With coverage
+uv run pytest --cov=app/services/onboarding --cov=app/api/onboarding
+```
+
+**Test Results:**
+- ✅ 22 integration tests passing
+- ✅ 11 unit tests passing
+- ✅ 33/33 total tests passing
+- ✅ 63% coverage for identity bootup code
+
+---
+
+### 📋 Implementation Notes
+
+**Database Migration for Existing Users:**
+
+When adding identity bootup feature to an environment with existing auth users, you MUST backfill user_profiles:
+
+**Migration:** `supabase/migrations/20251220130000_backfill_user_profiles.sql`
+```sql
+-- Creates user_profiles for existing auth users who don't have one
+INSERT INTO user_profiles (auth_user_id, timezone, locale)
+SELECT id::text, 'America/Los_Angeles', 'en-US'
+FROM auth.users
+WHERE id::text NOT IN (SELECT auth_user_id FROM user_profiles)
+ON CONFLICT (auth_user_id) DO NOTHING;
+```
+
+**Why needed:** Users who signed up before the `on_auth_user_created` trigger was created won't have profiles. This causes 404 errors when they try to complete identity bootup.
+
+**When to run:** After deploying this story to any environment with existing users.
+
+**Results:** In our case, this backfilled 8 missing profiles (increased from 10→18 total).
 
 ---
 

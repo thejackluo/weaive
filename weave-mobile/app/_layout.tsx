@@ -65,6 +65,7 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
  *
  * Provider Hierarchy:
  * - ThemeProvider (outermost) - Design system theme
+ * - QueryClientProvider - TanStack Query for server state (Story 2.1)
  * - AuthProvider - Authentication state and methods
  * - QueryClientProvider - TanStack Query for server state management (Story 4.1)
  * - ApiInitializer - Connects AuthContext to API services

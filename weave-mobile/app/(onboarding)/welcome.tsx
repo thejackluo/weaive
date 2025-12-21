@@ -56,6 +56,16 @@ export default function WelcomeScreen() {
   };
 
   /**
+   * Handles the "View Needles" button press
+   *
+   * Navigates to the Needles List screen (Story 2.1)
+   */
+  const handleViewNeedles = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/needles');
+  };
+
+  /**
    * Handles the "Skip to Main App" button press (DEV TESTING ONLY)
    *
    * Bypasses onboarding and goes directly to the main app tabs
@@ -138,7 +148,29 @@ export default function WelcomeScreen() {
           </Text>
         </Pressable>
 
-        {/* Design System Preview Button - Dev Tool */}
+        {/* Dev Preview Buttons */}
+        <Pressable
+          className={({ pressed }) =>
+            `h-11 rounded-lg w-full justify-center items-center ${pressed ? 'scale-[0.98]' : ''}`
+          }
+          onPress={handleViewNeedles}
+          accessibilityRole="button"
+          accessible={true}
+          style={{
+            backgroundColor: '#10B981',
+            height: 44,
+            borderRadius: 8,
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 8,
+          }}
+        >
+          <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600', letterSpacing: 1 }}>
+            📍 View Needles (Story 2.1)
+          </Text>
+        </Pressable>
+
         <Pressable
           className={({ pressed }) =>
             `bg-neutral-200 h-11 rounded-lg w-full justify-center items-center ${
@@ -162,7 +194,7 @@ export default function WelcomeScreen() {
             className="text-neutral-800 text-sm font-medium tracking-wider"
             style={{ color: '#262626', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
           >
-            View Design System
+            🎨 View Design System
           </Text>
         </Pressable>
 

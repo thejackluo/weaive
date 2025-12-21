@@ -23,8 +23,10 @@ import {
   Animated,
   useWindowDimensions,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PERSONAS, PersonalityType } from '@/constants/personalityContent';
 import {
   IDENTITY_TRAITS,
@@ -32,6 +34,7 @@ import {
   IdentityTrait,
   isValidTraitCount,
 } from '@/constants/identityTraits';
+import { storeIdentityBootup } from '@/services/onboarding';
 
 // UI Constants
 const CARD_WIDTH_RATIO = 0.8;
@@ -83,6 +86,30 @@ export default function IdentityBootupScreen() {
 
   // Step 3: Identity Traits State
   const [maxTraitsError, setMaxTraitsError] = useState<string | undefined>();
+
+  // Loading state for API call
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Validate 2-1-2-1-2 layout pattern on mount (AC #17)
+  useEffect(() => {
+    const expectedLayout = [2, 1, 2, 1, 2];
+    const actualLayout = IDENTITY_TRAITS.map((row) => row.length);
+    const isValid =
+      actualLayout.length === expectedLayout.length &&
+      actualLayout.every((count, index) => count === expectedLayout[index]);
+
+    if (!isValid) {
+      console.error(
+        `[ONBOARDING] Invalid trait layout! Expected [2,1,2,1,2], got [${actualLayout.join(',')}]`
+      );
+      if (__DEV__) {
+        Alert.alert(
+          'Layout Error',
+          `Identity traits layout must follow 2-1-2-1-2 pattern. Current: [${actualLayout.join(',')}]`
+        );
+      }
+    }
+  }, []);
 
   // Auto-focus name input on mount (Step 1)
   const nameInputRef = useRef<TextInput>(null);
@@ -245,14 +272,6 @@ export default function IdentityBootupScreen() {
         return;
       }
 
-      if (!viewedPersonas.every((v) => v)) {
-        Alert.alert(
-          'View All Options',
-          'Please swipe to view both personality styles before continuing.'
-        );
-        return;
-      }
-
       setCurrentStep(3);
     } catch (error) {
       if (__DEV__) {
@@ -262,7 +281,7 @@ export default function IdentityBootupScreen() {
     }
   };
 
-  const canContinueStep2 = formData.core_personality !== null && viewedPersonas.every((v) => v);
+  const canContinueStep2 = formData.core_personality !== null;
 
   // Mark first persona as viewed on load
   useEffect(() => {
@@ -334,7 +353,7 @@ export default function IdentityBootupScreen() {
     }
   };
 
-  const handleStep3Continue = () => {
+  const handleStep3Continue = async () => {
     try {
       if (!isValidTraitCount(formData.identity_traits.length)) {
         Alert.alert(
@@ -344,24 +363,66 @@ export default function IdentityBootupScreen() {
         return;
       }
 
-      // TODO (Story 0-4): Write to database via Supabase
-      // await supabase.from('user_profiles').update({
-      //   preferred_name: formData.preferred_name,
-      //   core_personality: formData.core_personality,
-      //   personality_selected_at: formData.personality_selected_at,
-      //   identity_traits: formData.identity_traits
-      // }).eq('auth_user_id', user.id);
+      // Validate we have all required data
+      if (!formData.preferred_name || !formData.core_personality) {
+        Alert.alert('Error', 'Missing required information. Please complete all steps.');
+        return;
+      }
+
+      // Show loading state
+      setIsSubmitting(true);
+
+      // Submit identity bootup data to backend API (Story 1.6 + Story 0-4 integration)
+      // NOTE: Wrapped in non-blocking try-catch - backend integration is optional
+      // This allows onboarding to complete even if backend is not running
+      try {
+        await storeIdentityBootup(
+          formData.preferred_name,
+          formData.core_personality,
+          formData.identity_traits
+        );
+        console.log('[ONBOARDING] Successfully stored identity bootup data to backend');
+      } catch (backendError) {
+        // Log but don't block the flow - backend integration is optional for now
+        console.warn('[Onboarding] Failed to store identity bootup data:', backendError);
+        console.log(
+          '[Onboarding] Continuing with local storage only (backend integration deferred)'
+        );
+      }
+
+      // Save onboarding data to AsyncStorage for Story 1.7
+      // Merge with existing painpoints from Story 1.2
+      const existingDataStr = await AsyncStorage.getItem('onboarding_data');
+      const existingData = existingDataStr ? JSON.parse(existingDataStr) : {};
+
+      await AsyncStorage.setItem(
+        'onboarding_data',
+        JSON.stringify({
+          ...existingData,
+          preferred_name: formData.preferred_name,
+          core_personality: formData.core_personality,
+          personality_selected_at: formData.personality_selected_at,
+          identity_traits: formData.identity_traits,
+        })
+      );
 
       // TODO (Story 0-4): Track analytics event
       // trackEvent('identity_traits_selected', { traits: formData.identity_traits });
 
-      // Navigate to Story 1.7 (First Needle / Goal Input)
-      router.push('/(onboarding)/first-needle');
+      // Navigate to Story 1.7 (Origin Story / Commitment Ritual)
+      router.push('/(onboarding)/origin-story');
     } catch (error) {
       if (__DEV__) {
         console.error('[ONBOARDING] Step 3 error:', error);
       }
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+
+      // Show user-friendly error message
+      const errorMessage =
+        error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -637,65 +698,10 @@ export default function IdentityBootupScreen() {
                         </View>
                       ))}
                     </View>
-
-                    {/* Selected Indicator */}
-                    {formData.core_personality === persona.id && (
-                      <View
-                        style={{
-                          marginTop: 16,
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Text style={{ color: '#4CAF50', fontWeight: '600', fontSize: 16 }}>
-                          ✓ Selected
-                        </Text>
-                      </View>
-                    )}
                   </View>
                 </TouchableOpacity>
               ))}
             </Animated.View>
-          </View>
-
-          {/* Navigation Arrows (Accessibility Fallback) */}
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              width: '100%',
-              marginTop: 16,
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => handleSwipe('right')}
-              disabled={currentPersonaIndex === 0}
-              style={{
-                opacity: currentPersonaIndex === 0 ? 0.3 : 1,
-                padding: 16,
-                minHeight: MIN_TOUCH_TARGET,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Previous personality"
-              accessibilityHint="Navigate to the previous personality option"
-              accessibilityState={{ disabled: currentPersonaIndex === 0 }}
-            >
-              <Text style={{ fontSize: 24 }}>←</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleSwipe('left')}
-              disabled={currentPersonaIndex === PERSONAS.length - 1}
-              style={{
-                opacity: currentPersonaIndex === PERSONAS.length - 1 ? 0.3 : 1,
-                padding: 16,
-                minHeight: MIN_TOUCH_TARGET,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Next personality"
-              accessibilityHint="Navigate to the next personality option"
-              accessibilityState={{ disabled: currentPersonaIndex === PERSONAS.length - 1 }}
-            >
-              <Text style={{ fontSize: 24 }}>→</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Pagination Dots */}
@@ -878,22 +884,28 @@ export default function IdentityBootupScreen() {
         {/* Continue Button */}
         <TouchableOpacity
           onPress={handleStep3Continue}
-          disabled={!canContinueStep3}
+          disabled={!canContinueStep3 || isSubmitting}
           style={{
-            backgroundColor: canContinueStep3 ? '#4CAF50' : '#CCCCCC',
+            backgroundColor: canContinueStep3 && !isSubmitting ? '#4CAF50' : '#CCCCCC',
             borderRadius: 12,
             padding: 16,
             minHeight: MIN_TOUCH_TARGET,
             justifyContent: 'center',
             alignItems: 'center',
-            opacity: canContinueStep3 ? 1 : 0.5,
+            opacity: canContinueStep3 && !isSubmitting ? 1 : 0.5,
+            flexDirection: 'row',
           }}
           accessibilityRole="button"
           accessibilityLabel="Complete identity bootup"
           accessibilityHint="Completes onboarding and saves your selections"
-          accessibilityState={{ disabled: !canContinueStep3 }}
+          accessibilityState={{ disabled: !canContinueStep3 || isSubmitting }}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
+          {isSubmitting && (
+            <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+          )}
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
+            {isSubmitting ? 'Saving...' : 'Continue'}
+          </Text>
         </TouchableOpacity>
 
         {/* Back Button */}

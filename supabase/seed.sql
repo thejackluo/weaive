@@ -287,23 +287,23 @@ INSERT INTO triad_tasks (id, user_id, date_for, rank, title, rationale, is_user_
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- Alex's AI runs (Triad generation) - UPDATED: tokens_input → input_tokens, tokens_output → output_tokens
-INSERT INTO ai_runs (id, user_id, module, model, prompt_version, input_hash, status, cost_estimate, input_tokens, output_tokens, execution_time_ms, created_at, completed_at, provider) VALUES
+INSERT INTO ai_runs (id, user_id, module, model, prompt_version, input_hash, status, cost_estimate, input_tokens, output_tokens, execution_time_ms, provider, created_at, completed_at) VALUES
 ('1a111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
- 'triad', 'gpt-4o-mini', 'triad-v1.0', 'hash_alex_day1_completions_3_journal_yes', 'success', 0.015, 1200, 450, 3000, NOW() - INTERVAL '1 day' + INTERVAL '22 hours', NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '3 seconds', 'openai'),
+ 'triad', 'gpt-4o-mini', 'triad-v1.0', 'hash_alex_day1_completions_3_journal_yes', 'success', 0.015, 1200, 450, 3000, 'openai', NOW() - INTERVAL '1 day' + INTERVAL '22 hours', NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '3 seconds'),
 ('1a111112-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
- 'recap', 'gpt-4o-mini', 'recap-v1.0', 'hash_alex_day1_journal_8', 'success', 0.012, 1000, 380, 2000, NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '5 minutes', NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '5 minutes' + INTERVAL '2 seconds', 'openai');
+ 'recap', 'gpt-4o-mini', 'recap-v1.0', 'hash_alex_day1_journal_8', 'success', 0.012, 1000, 380, 2000, 'openai', NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '5 minutes', NOW() - INTERVAL '1 day' + INTERVAL '22 hours' + INTERVAL '5 minutes' + INTERVAL '2 seconds');
 
 -- Jordan's AI runs (Triad generation - reused cached result)
-INSERT INTO ai_runs (id, user_id, module, model, prompt_version, input_hash, status, cost_estimate, input_tokens, output_tokens, execution_time_ms, created_at, completed_at, provider) VALUES
+INSERT INTO ai_runs (id, user_id, module, model, prompt_version, input_hash, status, cost_estimate, input_tokens, output_tokens, execution_time_ms, provider, created_at, completed_at) VALUES
 ('2a222221-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
- 'triad', 'gpt-4o-mini', 'triad-v1.0', 'hash_jordan_day2_completions_1_journal_no', 'success', 0.016, 1300, 470, 3000, NOW() - INTERVAL '2 days' + INTERVAL '21 hours', NOW() - INTERVAL '2 days' + INTERVAL '21 hours' + INTERVAL '3 seconds', 'openai');
+ 'triad', 'gpt-4o-mini', 'triad-v1.0', 'hash_jordan_day2_completions_1_journal_no', 'success', 0.016, 1300, 470, 3000, 'openai', NOW() - INTERVAL '2 days' + INTERVAL '21 hours', NOW() - INTERVAL '2 days' + INTERVAL '21 hours' + INTERVAL '3 seconds');
 
 -- Sam's AI runs (Onboarding - Claude Sonnet for quality)
-INSERT INTO ai_runs (id, user_id, module, model, prompt_version, input_hash, status, cost_estimate, input_tokens, output_tokens, execution_time_ms, created_at, completed_at, provider) VALUES
+INSERT INTO ai_runs (id, user_id, module, model, prompt_version, input_hash, status, cost_estimate, input_tokens, output_tokens, execution_time_ms, provider, created_at, completed_at) VALUES
 ('3a333331-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
- 'goal_breakdown', 'claude-3.7-sonnet', 'goal-breakdown-v1.0', 'hash_sam_onboarding_ml_goal', 'success', 0.085, 2000, 1200, 5000, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days' + INTERVAL '5 seconds', 'anthropic'),
+ 'goal_breakdown', 'claude-3.7-sonnet', 'goal-breakdown-v1.0', 'hash_sam_onboarding_ml_goal', 'success', 0.085, 2000, 1200, 5000, 'anthropic', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days' + INTERVAL '5 seconds'),
 ('3a333332-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
- 'triad', 'gpt-4o-mini', 'triad-v1.0', 'hash_sam_day1_new_user', 'success', 0.014, 1100, 420, 3000, NOW() - INTERVAL '1 hour', NOW() - INTERVAL '1 hour' + INTERVAL '3 seconds', 'openai');
+ 'triad', 'gpt-4o-mini', 'triad-v1.0', 'hash_sam_day1_new_user', 'success', 0.014, 1100, 420, 3000, 'openai', NOW() - INTERVAL '1 hour', NOW() - INTERVAL '1 hour' + INTERVAL '3 seconds');
 
 -- ═══════════════════════════════════════════════════════════════════════
 -- AI ARTIFACTS (Editable AI outputs - 1f = artifacts)
