@@ -66,21 +66,37 @@ export async function trackEvent(
       timestamp: new Date().toISOString(),
     };
 
-    const response = await fetch(`${API_BASE_URL}/api/analytics/events`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    // Create AbortController for timeout (Story 4.1 fix)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30-second timeout
 
-    if (!response.ok) {
-      throw new Error(`Analytics API error: ${response.status}`);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/analytics/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Analytics API error: ${response.status}`);
+      }
+
+      console.log(`[Analytics] Event tracked: ${eventName}`);
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.warn(`[Analytics] Event '${eventName}' timed out after 30s (non-blocking)`);
+      } else {
+        throw fetchError;
+      }
     }
-
-    console.log(`[Analytics] Event tracked: ${eventName}`);
   } catch (error) {
-    // Log error but don't crash the app
+    // Log error but don't crash the app or block navigation
     console.error(`[Analytics] Failed to track event '${eventName}':`, error);
   }
 }
