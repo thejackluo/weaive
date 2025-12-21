@@ -6,12 +6,20 @@
  * - Nested theme contexts
  * - Color-matched shadows
  * - Automatic accessible contrast
+ * - Tamagui integration for UI primitives
+ *
+ * Architecture:
+ * - Weave ThemeProvider (outer) controls theme mode
+ * - TamaguiProvider (inner) consumes theme from Weave
+ * - Theme mode changes propagate Weave → Tamagui automatically
  *
  * @packageDocumentation
  */
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { TamaguiProvider, useThemeName, Theme as TamaguiTheme } from '@tamagui/core';
 import { colors, typography, spacing, borders, shadows, glows, glass, blur, opacity, animations } from '../tokens';
+import tamaguiConfig from '../tamagui.config';
 
 // =============================================================================
 // TYPES
@@ -197,6 +205,16 @@ export interface ThemeProviderProps {
   theme?: Theme;
 }
 
+/**
+ * Inner component that handles Tamagui theme synchronization
+ * This must be inside TamaguiProvider to use Tamagui hooks
+ */
+function TamaguiThemeSync({ mode }: { mode: ThemeMode }) {
+  // Note: Tamagui theme name must match mode ('dark' or 'light')
+  // Theme switching happens automatically through TamaguiProvider's defaultTheme prop
+  return null;
+}
+
 export function ThemeProvider({
   children,
   initialTheme = 'dark',
@@ -213,7 +231,14 @@ export function ThemeProvider({
   };
 
   return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>
+      <TamaguiProvider config={tamaguiConfig} defaultTheme={mode}>
+        <TamaguiTheme name={mode}>
+          <TamaguiThemeSync mode={mode} />
+          {children}
+        </TamaguiTheme>
+      </TamaguiProvider>
+    </ThemeContext.Provider>
   );
 }
 
