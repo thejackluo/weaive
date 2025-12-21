@@ -331,6 +331,494 @@ npm install @tanstack/query-async-storage-persister @tanstack/react-query-persis
 
 ---
 
+## AI Vision Service Architecture
+
+**Purpose:** Enable AI-powered image analysis for proof validation, OCR, content classification, and quality scoring.
+
+### Provider Selection: Gemini 3.0 Flash
+
+**Decision:** Use Gemini 3.0 Flash as primary vision provider
+
+**Rationale:**
+- **Cost:** $0.50 per 1M input tokens (~$0.0005 per image) - 10x cheaper than GPT-4o Vision ($5/1M tokens)
+- **Performance:** Fast inference (<2 seconds per image), low latency
+- **Quality:** Excellent for proof validation, OCR, classification tasks
+- **Scalability:** Can handle high volume (6K+ images/day)
+- **Preview status:** Currently free during preview period (but budget for paid pricing post-preview)
+- **Integration:** Simple Google Cloud Console setup
+
+### Vision Fallback Chain
+
+```
+1. Primary: Gemini 3.0 Flash ($0.50/1M tokens)
+   ↓ (timeout/error)
+2. Secondary: GPT-4o Vision ($5.00/1M tokens)
+   ↓ (timeout/error)
+3. Tertiary: Store image only, defer analysis
+   → User can retry later or view without AI insights
+```
+
+### Integration Architecture
+
+**Backend Service:**
+```python
+# weave-api/app/services/vision_service.py
+class VisionService:
+    async def analyze_image(self, image_url: str, bind_context: dict) -> dict:
+        """
+        Analyze image using fallback chain.
+        Returns: {
+            proof_validated: bool,
+            extracted_text: str,
+            content_classification: str,
+            quality_score: int (1-5),
+            provider: str
+        }
+        """
+        # Try Gemini 3.0 Flash
+        # If fails, try GPT-4o Vision
+        # If fails, return null analysis
+```
+
+**API Endpoints:**
+```
+POST /api/captures/images/analyze
+Body: { image_id: str, bind_context?: dict }
+
+Response: {
+  "data": {
+    "image_id": "uuid",
+    "analysis": {
+      "proof_validated": true,
+      "extracted_text": "200 lbs x 8 reps",
+      "content_classification": "gym_equipment",
+      "quality_score": 4,
+      "insights": "Image shows barbell with weights, matches workout bind"
+    }
+  }
+}
+```
+
+**Cost Tracking:**
+- Log in `ai_runs` table:
+  - `operation_type = 'image_analysis'`
+  - `provider = 'gemini_3.0_flash'`
+  - `image_count = 1`
+  - `cost_usd = 0.0005`
+
+### Storage Pattern
+
+**Image Files:**
+- Store in Supabase Storage: `/captures/images/{user_id}/{uuid}.jpg`
+- Max file size: 10MB per image
+- Supported formats: JPEG, PNG
+- Minimum dimensions: 100x100px
+
+**AI Analysis Results:**
+- Store in `captures` table:
+  - `ai_analysis` (JSONB, nullable) - Vision API output
+  - `ai_verified` (BOOLEAN, default false) - True if proof validated
+  - `ai_quality_score` (INT, nullable) - 1-5 quality rating
+
+### Vision Analysis Features
+
+| Feature | Purpose | Example Output |
+|---------|---------|----------------|
+| **Proof Validation** | Detect if image shows claimed activity | "Image shows gym equipment matching workout bind" |
+| **OCR** | Extract text from images | "200 lbs x 8 reps, Bench Press" from workout log |
+| **Content Classification** | Categorize image type | "gym_equipment", "food", "outdoor_activity", "workspace" |
+| **Quality Scoring** | Rate image relevance (1-5) | 5 = Clear, relevant proof; 1 = Blurry, irrelevant |
+
+### Cost Projections
+
+**MVP Assumptions (10K users):**
+- 30% capture proof daily = 3K users
+- Average 2 proof captures/user/day
+- 6K images/day requiring analysis
+
+**Daily Cost Calculation:**
+```
+6K images/day * $0.0005/image = $3/day = $90/month
+```
+
+**Budget Impact:**
+- Vision: $90/month
+- STT: $186/month (from Story 0.11)
+- AI Coaching: ~$2,000/month (existing)
+- **Total AI Budget:** $2,276/month (within $2,500 limit, $224 headroom)
+
+### Rate Limiting
+
+**Image Analysis Limits:**
+- Max 20 AI vision analyses per user per day
+- Track in `daily_aggregates` table: `ai_vision_count` (INT)
+- Enforced via same middleware pattern (HTTP 429)
+
+### UI Components
+
+**AI Analysis Display:**
+- **AIAnalysisBadge:** "AI Verified ✓" badge on validated proof
+- **ImageDetailView:** Show extracted text, classification, quality score
+- **Loading State:** "Analyzing image..." with progress indicator
+
+### Dependencies
+
+**Python Packages:**
+```bash
+# Google Generative AI SDK for Gemini
+uv add google-generativeai
+
+# Alternative: Use OpenAI SDK for GPT-4o Vision fallback (already installed)
+```
+
+**Environment Variables:**
+```bash
+GOOGLE_AI_API_KEY=your_gemini_api_key_here
+OPENAI_API_KEY=your_gpt4o_fallback_key  # Already configured
+```
+
+---
+
+## Full Image Service Architecture
+
+**Purpose:** Complete image lifecycle management (upload, store, retrieve, analyze, delete) with gallery UI.
+
+### Image Upload Validation
+
+**Pre-Upload Checks:**
+- File type: JPEG, PNG only
+- File size: Max 10MB per image
+- Dimensions: Minimum 100x100px
+- Rate limit: Max 20 images/day per user
+
+**Upload Flow:**
+```
+Mobile → POST /api/captures/images
+      → Validate (type, size, rate limit)
+      → Upload to Supabase Storage
+      → Trigger AI analysis (async)
+      → Return image_id + presigned URL
+```
+
+### Storage Strategy
+
+**File Storage:**
+- **Location:** Supabase Storage bucket `captures`
+- **Path Pattern:** `/captures/images/{user_id}/{uuid}.{ext}`
+- **Access Control:** RLS policies (user can only access own images)
+- **Presigned URLs:** 1-hour expiry for client downloads
+
+**Metadata Storage:**
+- Store in `captures` table:
+  - `capture_type = 'image'`
+  - `file_url` (TEXT) - Supabase Storage path
+  - `file_size_bytes` (INT) - For quota tracking
+  - `ai_analysis` (JSONB) - Vision API results
+  - `ai_verified` (BOOLEAN) - Proof validation result
+
+### Image Retrieval API
+
+**List Images:**
+```
+GET /api/captures/images?filter=goal_id|bind_id|date_range
+
+Query Params:
+- goal_id (optional): Filter by specific goal
+- bind_id (optional): Filter by specific bind
+- start_date, end_date (optional): Date range filter
+- limit, offset (pagination)
+
+Response: {
+  "data": [
+    {
+      "id": "uuid",
+      "file_url": "https://storage.supabase.co/...",
+      "captured_at": "2025-12-21T10:00:00Z",
+      "ai_verified": true,
+      "ai_quality_score": 4,
+      "bind_id": "uuid"
+    }
+  ],
+  "meta": { "total": 42, "page": 1 }
+}
+```
+
+**Get Single Image:**
+```
+GET /api/captures/images/{image_id}
+
+Response: {
+  "data": {
+    "id": "uuid",
+    "file_url": "https://...",
+    "ai_analysis": {
+      "proof_validated": true,
+      "extracted_text": "...",
+      "content_classification": "gym",
+      "quality_score": 4
+    }
+  }
+}
+```
+
+### Image Deletion
+
+**Cascade Cleanup:**
+```
+DELETE /api/captures/images/{image_id}
+
+Backend Actions:
+1. Check ownership (RLS policy)
+2. Delete from Supabase Storage
+3. Soft delete from captures table (set deleted_at)
+4. Update daily_aggregates (decrement upload_count, upload_size_mb)
+```
+
+### UI Components
+
+**Image Gallery View:**
+- Chronological grid layout (3 columns on mobile)
+- Filters: By goal, by date range
+- AI verification badge overlay
+- Tap to open full-screen detail view
+
+**Image Detail View:**
+- Full-screen image with pinch-to-zoom
+- Swipe left/right for prev/next image
+- AI insights panel (extracted text, classification, quality)
+- Delete button with confirmation dialog
+- Share option (export image with AI insights)
+
+### Error Handling
+
+**Error Scenarios:**
+| Error | HTTP Code | Message | Retry Strategy |
+|-------|-----------|---------|----------------|
+| File too large | 400 | "Image must be under 10MB" | None - user must resize |
+| Invalid format | 400 | "Only JPEG/PNG supported" | None |
+| Rate limit | 429 | "Daily limit reached (20 images)" | Retry after midnight |
+| Storage quota | 507 | "Storage full" | Contact support |
+| Upload timeout | 408 | "Upload timed out" | 3 retries with exponential backoff |
+
+**Retry Logic:**
+- 3 attempts with exponential backoff (1s, 2s, 4s)
+- Queue failed uploads locally in AsyncStorage
+- Auto-retry when back online (via TanStack Query mutation queue)
+
+---
+
+## Observability Architecture
+
+**Purpose:** Production debugging, error tracking, and user experience monitoring for fast issue resolution.
+
+### LogRocket: Session Replay & Debugging
+
+**Purpose:** Reproduce bugs by watching user sessions, understand user behavior, track performance.
+
+**Integration Points:**
+
+**Frontend (React Native):**
+```typescript
+// weave-mobile/app/_layout.tsx
+import LogRocket from '@logrocket/react-native';
+
+LogRocket.init('weave/production');
+
+// Identify user after auth
+LogRocket.identify(userId, {
+  name: userName,
+  email: userEmail,
+  subscriptionTier: 'free' | 'pro' | 'max'
+});
+```
+
+**Custom Event Tracking:**
+```typescript
+// Track key user actions
+LogRocket.track('goal_created', { goalId, goalTitle });
+LogRocket.track('bind_completed', { bindId, goalId, proofType });
+LogRocket.track('proof_captured', { captureType: 'image' | 'voice' });
+LogRocket.track('journal_submitted', { fulfillmentScore, wordCount });
+LogRocket.track('triad_generated', { triadDate, bindCount });
+```
+
+**Screen Tracking:**
+```typescript
+// Automatic with Expo Router
+// LogRocket captures navigation events
+```
+
+**Privacy Controls:**
+
+**Sensitive Field Masking:**
+```typescript
+// Mask password inputs, auth tokens, sensitive profile data
+LogRocket.redactText('.password-input');
+LogRocket.redactText('.auth-token');
+LogRocket.redactText('.sensitive-profile-field');
+```
+
+**Disable Recording (Settings/Profile):**
+```typescript
+// Optional: Disable session recording for settings screens
+LogRocket.stopRecording(); // Pause recording
+LogRocket.startRecording(); // Resume recording
+```
+
+**Data Retention:**
+- 30 days (LogRocket default)
+- Session videos automatically deleted after retention period
+
+**Cost:**
+- **Plan:** $99/month (up to 10K sessions/month)
+- **ROI:** Reduces support cost by 50%+ (fewer blind debugging sessions)
+
+### Sentry: Error Tracking & Performance Monitoring
+
+**Purpose:** Catch errors before users report them, monitor performance, track releases.
+
+**Integration Points:**
+
+**Frontend (React Native):**
+```typescript
+// weave-mobile/app/_layout.tsx
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  environment: process.env.EXPO_PUBLIC_ENV,
+  tracesSampleRate: 0.2, // 20% of transactions monitored
+  enableAutoSessionTracking: true,
+  sessionTrackingIntervalMillis: 30000, // 30 seconds
+});
+```
+
+**Backend (FastAPI):**
+```python
+# weave-api/app/main.py
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),
+    environment=os.getenv("ENVIRONMENT", "development"),
+    traces_sample_rate=0.2,
+    integrations=[FastApiIntegration()],
+)
+```
+
+**Performance Monitoring:**
+
+**Frontend - Key Screens:**
+```typescript
+// Track screen load times
+const transaction = Sentry.startTransaction({
+  name: 'ThreadHomeScreen',
+  op: 'screen.load',
+});
+
+// ... screen loads ...
+
+transaction.finish();
+```
+
+**Tracked Screens:**
+- Thread (Home) - Target <1s load time
+- Goal Details - Target <1s load time
+- Journal Entry - Target <1s load time
+- Triad View - Target <1s load time
+
+**Frontend - API Calls:**
+```typescript
+// Automatic via Sentry.Http integration
+// Tracks GET /api/goals, POST /api/completions, etc.
+```
+
+**Backend - API Endpoints:**
+```python
+# Automatic via FastApiIntegration
+# Tracks P50, P95, P99 latencies for all endpoints
+```
+
+**Error Tracking:**
+
+**Frontend Alerts:**
+- Error rate > 1% of sessions
+- API response time > 5 seconds
+- App crash rate > 1%
+
+**Backend Alerts:**
+- API error rate > 0.5%
+- Database query time > 2 seconds
+- AI API failures (Gemini, AssemblyAI, Whisper, OpenAI)
+
+**Breadcrumbs:**
+```typescript
+// Automatic user action tracking leading to errors
+Sentry.addBreadcrumb({
+  category: 'user.action',
+  message: 'User tapped "Complete Bind" button',
+  level: 'info',
+});
+```
+
+**Release Tracking:**
+```typescript
+// Link errors to specific app versions
+Sentry.setRelease(`weave-mobile@${version}`);
+Sentry.setDist(buildNumber);
+```
+
+**Cost:**
+- **Plan:** Free tier (5K errors/month) or $26/month (50K errors)
+- **ROI:** Proactive issue detection, faster debugging
+
+### Monitoring Dashboard Access
+
+**LogRocket Dashboard:** https://app.logrocket.com/weave/production
+- Session replays
+- User actions
+- Console logs
+- Network requests
+- Performance metrics
+
+**Sentry Dashboard:** https://sentry.io/organizations/weave/projects/
+- Error tracking
+- Performance monitoring
+- Alerts
+- Release tracking
+
+### Dependencies
+
+**Frontend:**
+```bash
+# LogRocket React Native SDK
+npm install @logrocket/react-native
+
+# Sentry React Native SDK
+npm install @sentry/react-native
+npx @sentry/wizard -i reactNative
+```
+
+**Backend:**
+```bash
+# Sentry FastAPI SDK
+uv add sentry-sdk[fastapi]
+```
+
+**Environment Variables:**
+```bash
+# LogRocket
+EXPO_PUBLIC_LOGROCKET_APP_ID=weave/production
+
+# Sentry
+EXPO_PUBLIC_SENTRY_DSN=https://...@sentry.io/...
+SENTRY_DSN=https://...@sentry.io/...  # Backend
+EXPO_PUBLIC_ENV=production  # or staging
+```
+
+---
+
 ## Speech-to-Text Provider Architecture
 
 **Purpose:** Enable voice recording features for captures and origin stories with cost-effective, accurate transcription.
