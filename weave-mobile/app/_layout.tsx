@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
-import { ThemeProvider } from '../src/design-system';
+import { ThemeProvider } from '../src/design-system-old';
 import '../global.css';
 
 /**
