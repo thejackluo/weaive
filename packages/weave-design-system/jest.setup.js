@@ -68,6 +68,35 @@ jest.mock('react-native', () => ({
   },
 }));
 
+// Mock Tamagui for test environment
+jest.mock('@tamagui/core', () => {
+  const React = require('react');
+
+  return {
+    __esModule: true,
+    createTamagui: jest.fn((config) => config),
+    createTokens: jest.fn((tokens) => tokens),
+    TamaguiProvider: ({ children }) => React.createElement(React.Fragment, {}, children),
+    Theme: ({ children }) => React.createElement(React.Fragment, {}, children),
+    useThemeName: jest.fn(() => 'dark'),
+    useTheme: jest.fn(() => ({})),
+    styled: jest.fn(() => () => null),
+  };
+});
+
+jest.mock('@tamagui/themes', () => ({
+  themes: {},
+  tokens: {},
+}));
+
+jest.mock('@tamagui/animations-reanimated', () => ({
+  createAnimations: jest.fn((config) => config),
+}));
+
+jest.mock('@tamagui/shorthands', () => ({
+  shorthands: {},
+}));
+
 // Silence console warnings in tests
 global.console = {
   ...console,
