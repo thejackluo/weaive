@@ -56,13 +56,13 @@ export default function WelcomeScreen() {
   };
 
   /**
-   * Handles the "View Needles" button press
+   * Handles the "Go to Main App" button press
    *
-   * Navigates to the Needles List screen (Story 2.1)
+   * Navigates to the main app tabs (home screen)
    */
-  const handleViewNeedles = async () => {
+  const handleGoToMainApp = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/(tabs)/needles');
+    router.push('/(tabs)');
   };
 
   return (
@@ -142,7 +142,7 @@ export default function WelcomeScreen() {
           className={({ pressed }) =>
             `h-11 rounded-lg w-full justify-center items-center ${pressed ? 'scale-[0.98]' : ''}`
           }
-          onPress={handleViewNeedles}
+          onPress={handleGoToMainApp}
           accessibilityRole="button"
           accessible={true}
           style={{
@@ -156,7 +156,7 @@ export default function WelcomeScreen() {
           }}
         >
           <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600', letterSpacing: 1 }}>
-            📍 View Needles (Story 2.1)
+            Go to Main App
           </Text>
         </Pressable>
 
