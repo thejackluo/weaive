@@ -80,6 +80,243 @@ npx supabase gen types typescript --project-id <project-ref> > lib/database.type
 - Use `deleted_at` timestamp instead of hard DELETE
 - Preserves audit trail, enables undo
 
+## Navigation Architecture
+
+**Implementation:** Epic 1.5 - App Navigation Scaffolding
+
+### Overview
+
+Weave uses **Expo Router** (file-based routing) with a **3-tab structure** and a magical center AI button that opens a glassmorphism overlay. This design is inspired by iOS 18 Siri's elevated, translucent interface.
+
+| Tab | Route | Purpose |
+|-----|-------|---------|
+| **Thread** | `/(tabs)/index` | Daily Binds, Journal, Captures (Epic 3, 4) |
+| **AI Chat** | `/(tabs)/ai-chat` | Hidden tab - accessed via center button |
+| **Dashboard** | `/(tabs)/dashboard` | Progress visualization, Goals, Settings (Epic 2, 5, 8) |
+
+### Route Hierarchy
+
+```
+app/
+├── index.tsx                    # Root entry with auth guards
+├── (auth)/                      # Auth flow (Route Group 1)
+│   ├── login.tsx
+│   └── signup.tsx
+├── (onboarding)/                # Onboarding flow (Route Group 2)
+│   ├── index.tsx               # Redirect to welcome
+│   ├── welcome.tsx
+│   ├── vision.tsx
+│   └── identity-generation.tsx
+└── (tabs)/                      # Main app (Route Group 3)
+    ├── _layout.tsx             # 3-tab nav + center AI button
+    ├── index.tsx               # Thread tab (home)
+    ├── ai-chat.tsx             # AI Coach (hidden from tabs)
+    ├── dashboard.tsx           # Dashboard tab
+    ├── goals/                  # Epic 2: Goal Management
+    │   ├── index.tsx           # Goals list
+    │   ├── [id].tsx            # Goal detail
+    │   ├── new.tsx             # Create goal
+    │   └── edit/[id].tsx       # Edit goal
+    ├── binds/                  # Epic 3: Daily Actions
+    │   ├── [id].tsx            # Bind detail
+    │   └── proof/[id].tsx      # Attach proof
+    ├── journal/                # Epic 4: Reflection
+    │   ├── index.tsx           # Daily reflection
+    │   ├── history.tsx         # Journal history
+    │   └── [date].tsx          # Past entry
+    ├── captures/               # Epic 3: Memory Capture
+    │   ├── index.tsx           # Gallery
+    │   └── [id].tsx            # Detail
+    └── settings/               # Epic 8: Settings
+        ├── index.tsx           # Settings home
+        ├── identity.tsx        # Identity document
+        └── subscription.tsx    # Subscription
+```
+
+### Center AI Button & Glassmorphism
+
+**Design Specs:**
+- **Position:** Absolute, bottom 20px, horizontally centered
+- **Size:** 56x56px circular button
+- **Color:** Primary blue (#3B72F6)
+- **Icon:** ✨ sparkle emoji (displayMd variant)
+- **Elevation:** 8px shadow (iOS) / elevation 8 (Android)
+- **Animation:** Spring scale 0.95 on press
+- **Haptics:** Medium impact feedback
+
+**Glassmorphism Overlay:**
+- **Blur:** BlurView with 20 blur amount, dark type
+- **Card:** Translucent dark (`rgba(26, 26, 26, 0.95)`)
+- **Border:** 1px white/20% opacity, 24px border radius
+- **Height:** 60% of screen
+- **Animation:** Slide up with spring physics
+- **Dismissal:** Tap outside or close button
+
+**Code Example:**
+```tsx
+// app/(tabs)/_layout.tsx
+function CenterAIButton({ onPress }: { onPress: () => void }) {
+  const scale = useSharedValue(1);
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onPress();
+  };
+
+  return (
+    <View style={styles.centerButtonContainer}>
+      <Animated.View style={[{ transform: [{ scale: scale.value }] }]}>
+        <TouchableOpacity onPress={handlePress} style={styles.centerButton}>
+          <Text variant="displayMd" className="text-white">✨</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+}
+```
+
+### Auth Guards & Routing Logic
+
+**Three-Level Protection:**
+
+```tsx
+// app/index.tsx
+export default function Index() {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const devSkipAuth = __DEV__ && Constants.expoConfig?.extra?.devSkipAuth === true;
+
+  // Level 0: Testing Mode (bypasses all checks)
+  if (devSkipAuth) return <Redirect href="/(tabs)" />;
+
+  // Level 1: Loading State
+  if (isLoading) return <LoadingScreen />;
+
+  // Level 2: Authentication Required
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
+
+  // Level 3: Onboarding Required
+  const onboardingComplete = user?.onboarding_completed_at != null;
+  if (!onboardingComplete) return <Redirect href="/(onboarding)/welcome" />;
+
+  // All checks passed → Main app
+  return <Redirect href="/(tabs)" />;
+}
+```
+
+### Testing Mode Pattern
+
+**Purpose:** Allow developers to bypass auth during navigation development
+
+**Configuration:**
+```json
+// app.json
+{
+  "expo": {
+    "extra": {
+      "devSkipAuth": false  // Set to true in local dev
+    }
+  }
+}
+
+// .env (local only)
+EXPO_PUBLIC_DEV_SKIP_AUTH=true
+```
+
+**Dev Banner:**
+When `devSkipAuth` is enabled, a visible banner appears at the top of the screen:
+```
+🧪 DEV MODE: Auth Bypassed
+```
+
+**Important:** Never enable this in production builds.
+
+### Navigation Usage
+
+**Link Component (Recommended):**
+```tsx
+import { Link } from 'expo-router';
+
+<Link href="/goals/new" asChild>
+  <TouchableOpacity>
+    <Text>Create New Goal</Text>
+  </TouchableOpacity>
+</Link>
+```
+
+**Programmatic Navigation:**
+```tsx
+import { router } from 'expo-router';
+
+// Navigate forward
+router.push('/goals/123');
+
+// Replace (no back button)
+router.replace('/(tabs)/dashboard');
+
+// Go back
+router.back();
+```
+
+**Dynamic Routes:**
+```tsx
+// Navigate to: /goals/abc-123
+<Link href="/goals/abc-123">View Goal</Link>
+
+// Access params in screen
+import { useLocalSearchParams } from 'expo-router';
+const { id } = useLocalSearchParams();
+```
+
+### Stack vs Tabs vs Modal
+
+| Pattern | Use Case | Example |
+|---------|----------|---------|
+| **Tabs** | Primary navigation (3 main sections) | Thread, Dashboard |
+| **Stack** | Drill-down within a section | Goals list → Goal detail → Edit goal |
+| **Modal** | Overlay without navigation | AI Chat overlay, Create goal form |
+
+**Modal Pattern:**
+```tsx
+// Present as modal
+<Link href="/goals/new" asChild>
+  <TouchableOpacity>
+    <Text>Create Goal</Text>
+  </TouchableOpacity>
+</Link>
+
+// Screen configured as modal in _layout.tsx
+<Stack.Screen
+  name="new"
+  options={{
+    presentation: 'modal',
+    title: 'New Goal',
+  }}
+/>
+```
+
+### Navigation State Persistence
+
+Expo Router automatically persists navigation state across app restarts. Users return to the exact screen they left.
+
+**Disable for specific screens:**
+```tsx
+// app/_layout.tsx
+<Stack screenOptions={{ freezeOnBlur: true }} />
+```
+
+### Deep Linking
+
+**Supported URL schemes:**
+```
+weave://goals/123              # Open goal detail
+weave://journal                # Open today's journal
+weave://settings/subscription  # Open subscription settings
+```
+
+**Configuration:** See `app.json` → `scheme: "weave"`
+
+---
+
 ## Party Mode Review Enhancements
 
 The following action items were validated by multi-agent review (Winston, Amelia, Barry, Murat):
