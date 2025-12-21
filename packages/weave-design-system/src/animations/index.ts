@@ -12,6 +12,8 @@
  */
 
 import { withSpring, WithSpringConfig, withTiming, WithTimingConfig } from 'react-native-reanimated';
+import { AccessibilityInfo } from 'react-native';
+import { useEffect, useState } from 'react';
 
 // =============================================================================
 // SPRING PRESETS
@@ -131,13 +133,54 @@ export function timing(
   return withTiming(toValue, presets[preset]);
 }
 
+// =============================================================================
+// REDUCED MOTION SUPPORT
+// =============================================================================
+
 /**
- * Get reduced motion setting
- * Checks system accessibility preference for reduced motion
+ * React hook to check if user prefers reduced motion
+ * Automatically subscribes to system accessibility changes
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const reducedMotion = useReducedMotion();
+ *
+ *   return (
+ *     <Animated.View
+ *       entering={reducedMotion ? undefined : FadeIn.duration(300)}
+ *     />
+ *   );
+ * }
+ * ```
+ */
+export function useReducedMotion(): boolean {
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    // Get initial value
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+
+    // Subscribe to changes
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
+
+  return reduceMotion;
+}
+
+/**
+ * Get reduced motion setting synchronously
+ * Note: This returns a cached value. For React components, use useReducedMotion() hook instead.
+ *
+ * @deprecated Use useReducedMotion() hook in React components for real-time updates
  */
 export function shouldReduceMotion(): boolean {
-  // In React Native, we'll use AccessibilityInfo at runtime
-  // For now, return false as default - components will check this dynamically
+  // This is a synchronous fallback that won't have real-time updates
+  // Components should use the useReducedMotion() hook instead
   return false;
 }
 
@@ -242,6 +285,7 @@ export const animations = {
   timings,
   spring,
   timing,
+  useReducedMotion,
   shouldReduceMotion,
   getAccessibleSpringConfig,
   getAccessibleTimingConfig,
