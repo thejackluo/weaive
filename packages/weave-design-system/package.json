@@ -36,8 +36,13 @@
   },
   "dependencies": {
     "@react-native-community/blur": "^4.4.1",
+    "@tamagui/animations-reanimated": "^1.122.6",
+    "@tamagui/babel-plugin": "^1.141.5",
+    "@tamagui/core": "^1.141.5",
+    "@tamagui/themes": "^1.141.5",
     "expo-linear-gradient": "~13.0.2",
-    "react-native-svg": "^15.8.0"
+    "react-native-svg": "^15.8.0",
+    "tamagui": "^1.141.5"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
