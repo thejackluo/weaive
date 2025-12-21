@@ -30,14 +30,11 @@ export function SimpleToast({ message, type, duration = 3000, onDismiss }: Simpl
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    console.log('[SIMPLE_TOAST] Toast mounted with message:', message);
     const timer = setTimeout(() => {
-      console.log('[SIMPLE_TOAST] Auto-dismissing after', duration, 'ms');
       onDismiss();
     }, duration);
 
     return () => {
-      console.log('[SIMPLE_TOAST] Toast unmounting, clearing timer');
       clearTimeout(timer);
     };
   }, [duration, onDismiss, message]);
@@ -142,27 +139,16 @@ class SimpleToastManager {
   private listener: ((config: SimpleToastConfig | null) => void) | null = null;
 
   setListener(listener: (config: SimpleToastConfig | null) => void) {
-    console.log('[SIMPLE_TOAST_MANAGER] Listener registered:', !!listener);
     this.listener = listener;
   }
 
   show(message: string, type: SimpleToastType = 'info', duration?: number) {
-    console.log('[SIMPLE_TOAST_MANAGER] show() called:', {
-      message,
-      type,
-      duration,
-      hasListener: !!this.listener,
-    });
     if (this.listener) {
       this.listener({ message, type, duration });
-      console.log('[SIMPLE_TOAST_MANAGER] Toast config sent to listener');
-    } else {
-      console.warn('[SIMPLE_TOAST_MANAGER] No listener registered! Toast will not display.');
     }
   }
 
   hide() {
-    console.log('[SIMPLE_TOAST_MANAGER] hide() called');
     if (this.listener) {
       this.listener(null);
     }
@@ -178,10 +164,8 @@ export function SimpleToastContainer() {
   const [toastConfig, setToastConfig] = useState<SimpleToastConfig | null>(null);
 
   useEffect(() => {
-    console.log('[SIMPLE_TOAST_CONTAINER] Mounted, registering listener');
     simpleToastManager.setListener(setToastConfig);
     return () => {
-      console.log('[SIMPLE_TOAST_CONTAINER] Unmounting, removing listener');
       simpleToastManager.setListener(() => {});
     };
   }, []);
@@ -189,8 +173,6 @@ export function SimpleToastContainer() {
   if (!toastConfig) {
     return null;
   }
-
-  console.log('[SIMPLE_TOAST_CONTAINER] Rendering SimpleToast with:', toastConfig);
 
   return (
     <SimpleToast
@@ -210,6 +192,5 @@ export function showSimpleToast(
   type: SimpleToastType = 'info',
   duration?: number
 ) {
-  console.log('[SHOW_SIMPLE_TOAST] Function called with:', { message, type, duration });
   simpleToastManager.show(message, type, duration);
 }

@@ -75,7 +75,11 @@ def test_create_origin_story_duplicate_fails(
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
     assert response2.status_code == status.HTTP_400_BAD_REQUEST
-    assert "already exists" in response2.json()["detail"].lower()
+    # Verify architecture-compliant error format: {"error": {"code": "...", "message": "..."}}
+    response_json = response2.json()
+    assert "error" in response_json
+    assert "message" in response_json["error"]
+    assert "already exists" in response_json["error"]["message"].lower()
 
 
 def test_create_origin_story_unauthenticated_fails(

@@ -20,6 +20,37 @@ jest.mock('react-native-reanimated', () => ({
 // Mock Animated API
 jest.mock('react-native/Libraries/Animated/AnimatedImplementation');
 
+// Mock FlatList to avoid VirtualizedList context issues in tests
+jest.mock('react-native/Libraries/Lists/FlatList', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  class MockFlatList extends React.Component {
+    render() {
+      const { data, renderItem, keyExtractor, ListFooterComponent, contentContainerStyle } = this.props;
+
+      return React.createElement(
+        View,
+        { style: contentContainerStyle, testID: 'flat-list' },
+        data && data.map((item, index) => {
+          const key = keyExtractor ? keyExtractor(item, index) : item.key || item.id || index;
+          return React.createElement(View, { key }, renderItem({ item, index }));
+        }),
+        ListFooterComponent
+      );
+    }
+  }
+
+  // Add static properties to satisfy react-native-css's copyComponentProperties
+  MockFlatList.displayName = 'FlatList';
+
+  return {
+    __esModule: true,
+    default: MockFlatList,
+    FlatList: MockFlatList,
+  };
+});
+
 // Mock expo modules
 jest.mock('expo-constants', () => ({
   expoConfig: {
@@ -49,15 +80,24 @@ jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(),
 }));
 
+const mockPush = jest.fn();
+const mockReplace = jest.fn();
+const mockBack = jest.fn();
+
 jest.mock('expo-router', () => ({
   useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    back: jest.fn(),
+    push: mockPush,
+    replace: mockReplace,
+    back: mockBack,
   }),
   useSegments: () => [],
   usePathname: () => '/',
 }));
+
+// Export mock functions for tests to access
+global.mockRouterPush = mockPush;
+global.mockRouterReplace = mockReplace;
+global.mockRouterBack = mockBack;
 
 // Mock Supabase
 jest.mock('@supabase/supabase-js', () => ({
