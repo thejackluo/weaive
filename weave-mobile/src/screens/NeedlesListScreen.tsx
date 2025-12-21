@@ -14,7 +14,7 @@
  */
 
 import React from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, FlatList, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Button, Text } from '@/design-system';
@@ -23,11 +23,10 @@ import { useActiveGoals } from '@/hooks/useActiveGoals';
 import { GoalCard } from '@/components/GoalCard';
 import { GoalCardSkeleton } from '@/components/GoalCardSkeleton';
 import { showSimpleToast } from '@/design-system/components/SimpleToast';
-import type { Goal } from '@/types/goals';
 
 export function NeedlesListScreen() {
   const router = useRouter();
-  const { colors, spacing } = useTheme();
+  const { colors } = useTheme();
   const { data, isLoading, isError, error, refetch, isFetching } = useActiveGoals();
 
   const goals = data?.data || [];

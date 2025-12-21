@@ -29,7 +29,7 @@
  * });
  */
 
-import { createGoal, createGoals, Goal } from '../factories/goal.factory';
+import { createGoals, Goal } from '../factories/goal.factory';
 
 /**
  * Creates mock response for successful goals fetch

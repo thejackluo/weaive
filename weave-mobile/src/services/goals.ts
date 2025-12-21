@@ -20,9 +20,7 @@ import type { GoalsResponse, ApiErrorResponse } from '@/types/goals';
  * // Returns: {data: Goal[], meta: {total: 2, active_goal_limit: 3}}
  * ```
  */
-export async function fetchActiveGoals(
-  accessToken: string
-): Promise<GoalsResponse> {
+export async function fetchActiveGoals(accessToken: string): Promise<GoalsResponse> {
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}/api/goals?status=active&include_stats=true`;
 
@@ -39,8 +37,7 @@ export async function fetchActiveGoals(
     const errorData: ApiErrorResponse = await response.json();
     console.error('[GOALS_SERVICE] API error:', response.status, errorData);
     throw new Error(
-      errorData.error?.message ||
-        `Failed to fetch goals: ${response.status} ${response.statusText}`
+      errorData.error?.message || `Failed to fetch goals: ${response.status} ${response.statusText}`
     );
   }
 

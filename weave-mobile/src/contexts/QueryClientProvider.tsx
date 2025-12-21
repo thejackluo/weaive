@@ -11,7 +11,10 @@
  */
 
 import React from 'react';
-import { QueryClient, QueryClientProvider as TanStackQueryClientProvider } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider as TanStackQueryClientProvider,
+} from '@tanstack/react-query';
 
 // Create QueryClient with app-wide configuration
 const queryClient = new QueryClient({
@@ -41,11 +44,7 @@ interface QueryClientProviderProps {
  * ```
  */
 export function QueryClientProvider({ children }: QueryClientProviderProps) {
-  return (
-    <TanStackQueryClientProvider client={queryClient}>
-      {children}
-    </TanStackQueryClientProvider>
-  );
+  return <TanStackQueryClientProvider client={queryClient}>{children}</TanStackQueryClientProvider>;
 }
 
 // Export queryClient for direct access (e.g., in tests, manual invalidation)
