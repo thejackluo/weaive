@@ -40,14 +40,12 @@ export default function CustomQuestionInput({
             <TextInput
               style={styles.textInput}
               maxLength={100}
-              value={value as string || ''}
+              value={(value as string) || ''}
               onChangeText={onChange}
               placeholder="Your answer..."
               placeholderTextColor="#999"
             />
-            <Text style={styles.characterCount}>
-              {((value as string) || '').length} / 100
-            </Text>
+            <Text style={styles.characterCount}>{((value as string) || '').length} / 100</Text>
           </View>
         );
 
@@ -60,10 +58,7 @@ export default function CustomQuestionInput({
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                 <TouchableOpacity
                   key={num}
-                  style={[
-                    styles.sliderDot,
-                    num <= numValue && styles.sliderDotActive,
-                  ]}
+                  style={[styles.sliderDot, num <= numValue && styles.sliderDotActive]}
                   onPress={() => onChange(num)}
                 >
                   <Text style={styles.sliderDotText}>{num}</Text>
@@ -78,34 +73,18 @@ export default function CustomQuestionInput({
         return (
           <View style={styles.toggleContainer}>
             <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                !boolValue && styles.toggleButtonActive,
-              ]}
+              style={[styles.toggleButton, !boolValue && styles.toggleButtonActive]}
               onPress={() => onChange(false)}
             >
-              <Text
-                style={[
-                  styles.toggleButtonText,
-                  !boolValue && styles.toggleButtonTextActive,
-                ]}
-              >
+              <Text style={[styles.toggleButtonText, !boolValue && styles.toggleButtonTextActive]}>
                 No
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                boolValue && styles.toggleButtonActive,
-              ]}
+              style={[styles.toggleButton, boolValue && styles.toggleButtonActive]}
               onPress={() => onChange(true)}
             >
-              <Text
-                style={[
-                  styles.toggleButtonText,
-                  boolValue && styles.toggleButtonTextActive,
-                ]}
-              >
+              <Text style={[styles.toggleButtonText, boolValue && styles.toggleButtonTextActive]}>
                 Yes
               </Text>
             </TouchableOpacity>

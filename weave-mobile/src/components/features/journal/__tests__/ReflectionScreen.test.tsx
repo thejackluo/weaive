@@ -57,9 +57,7 @@ describe('ReflectionHeader Component', () => {
     expect(subheading).toBeTruthy();
 
     // Check opacity (90% = 0.9)
-    expect(subheading.props.style).toMatchObject(
-      expect.objectContaining({ opacity: 0.9 })
-    );
+    expect(subheading.props.style).toMatchObject(expect.objectContaining({ opacity: 0.9 }));
   });
 
   it('should use left text alignment for better reading flow', () => {
@@ -78,9 +76,7 @@ describe('ReflectionHeader Component', () => {
     const header = getByText(/How did today go/);
 
     // THEN: Left-aligned text (AC #2)
-    expect(header.props.style).toMatchObject(
-      expect.objectContaining({ textAlign: 'left' })
-    );
+    expect(header.props.style).toMatchObject(expect.objectContaining({ textAlign: 'left' }));
   });
 });
 
@@ -238,9 +234,7 @@ describe('FulfillmentSlider Component', () => {
 
     const FulfillmentSlider = ({ value, onValueChange }: any) => null;
 
-    const { getByTestId } = render(
-      <FulfillmentSlider value={2} onValueChange={() => {}} />
-    );
+    const { getByTestId } = render(<FulfillmentSlider value={2} onValueChange={() => {}} />);
 
     // THEN: Low fulfillment indicator shown (AC #5)
     const feedbackElement = getByTestId('fulfillment-feedback');
@@ -261,9 +255,7 @@ describe('FulfillmentSlider Component', () => {
 
     const FulfillmentSlider = ({ value, onValueChange }: any) => null;
 
-    const { getByTestId } = render(
-      <FulfillmentSlider value={5} onValueChange={() => {}} />
-    );
+    const { getByTestId } = render(<FulfillmentSlider value={5} onValueChange={() => {}} />);
 
     // THEN: Medium fulfillment indicator shown (AC #5)
     const feedbackElement = getByTestId('fulfillment-feedback');
@@ -281,9 +273,7 @@ describe('FulfillmentSlider Component', () => {
 
     const FulfillmentSlider = ({ value, onValueChange }: any) => null;
 
-    const { getByTestId } = render(
-      <FulfillmentSlider value={9} onValueChange={() => {}} />
-    );
+    const { getByTestId } = render(<FulfillmentSlider value={9} onValueChange={() => {}} />);
 
     // THEN: High fulfillment indicator shown (AC #5)
     const feedbackElement = getByTestId('fulfillment-feedback');
@@ -301,9 +291,7 @@ describe('FulfillmentSlider Component', () => {
 
     const FulfillmentSlider = ({ value, onValueChange }: any) => null;
 
-    const { getByTestId } = render(
-      <FulfillmentSlider onValueChange={() => {}} />
-    );
+    const { getByTestId } = render(<FulfillmentSlider onValueChange={() => {}} />);
 
     const slider = getByTestId('fulfillment-slider');
 
@@ -323,9 +311,7 @@ describe('FulfillmentSlider Component', () => {
     const FulfillmentSlider = ({ value, onValueChange }: any) => null;
 
     const mockOnChange = jest.fn();
-    const { getByTestId } = render(
-      <FulfillmentSlider value={5} onValueChange={mockOnChange} />
-    );
+    const { getByTestId } = render(<FulfillmentSlider value={5} onValueChange={mockOnChange} />);
 
     const slider = getByTestId('fulfillment-slider');
 
@@ -521,9 +507,7 @@ describe('Issue #9: Edge Cases - CharacterCountTextInput Component', () => {
 
     const CharacterCountTextInput = ({ maxLength, onChange }: any) => null;
 
-    const { getByTestId } = render(
-      <CharacterCountTextInput maxLength={500} onChange={() => {}} />
-    );
+    const { getByTestId } = render(<CharacterCountTextInput maxLength={500} onChange={() => {}} />);
 
     const input = getByTestId('reflection-text-input');
 

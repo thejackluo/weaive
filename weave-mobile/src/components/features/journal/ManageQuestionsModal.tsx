@@ -235,10 +235,7 @@ export default function ManageQuestionsModal({
               <Text style={styles.inputLabel}>Question Type</Text>
               <View style={styles.typeSelector}>
                 <TouchableOpacity
-                  style={[
-                    styles.typeButton,
-                    newQuestionType === 'text' && styles.typeButtonActive,
-                  ]}
+                  style={[styles.typeButton, newQuestionType === 'text' && styles.typeButtonActive]}
                   onPress={() => setNewQuestionType('text')}
                 >
                   <Text

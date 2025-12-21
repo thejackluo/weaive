@@ -85,7 +85,7 @@ async function getAuthToken(): Promise<string> {
  */
 export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
   const overallStart = performance.now();
-  console.log('[JOURNAL_API] 📖 Fetching today\'s journal...');
+  console.log("[JOURNAL_API] 📖 Fetching today's journal...");
   console.log('[JOURNAL_API] 🌐 API Base URL:', API_BASE_URL);
 
   try {
@@ -116,10 +116,14 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
       clearTimeout(timeoutId);
 
       const fetchDuration = (performance.now() - fetchStart).toFixed(2);
-      console.log(`[JOURNAL_API] 📡 Response received in ${fetchDuration}ms - Status: ${response.status}`);
+      console.log(
+        `[JOURNAL_API] 📡 Response received in ${fetchDuration}ms - Status: ${response.status}`
+      );
 
       if (response.status === 404) {
-        console.log('[JOURNAL_API] ℹ️  No journal entry found for today (404 - this is normal for first entry)');
+        console.log(
+          '[JOURNAL_API] ℹ️  No journal entry found for today (404 - this is normal for first entry)'
+        );
         const totalDuration = (performance.now() - overallStart).toFixed(2);
         console.log(`[JOURNAL_API] ✅ Total operation time: ${totalDuration}ms`);
         return null;
@@ -138,7 +142,10 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
 
       const totalDuration = (performance.now() - overallStart).toFixed(2);
       console.log(`[JOURNAL_API] ✅ Journal loaded successfully in ${totalDuration}ms`);
-      console.log('[JOURNAL_API] 📊 Journal data:', { id: result.data?.id, local_date: result.data?.local_date });
+      console.log('[JOURNAL_API] 📊 Journal data:', {
+        id: result.data?.id,
+        local_date: result.data?.local_date,
+      });
 
       return result.data;
     } catch (fetchError) {
@@ -159,7 +166,9 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
     // Enhanced error diagnostics
     if (error instanceof TypeError && error.message.includes('Network request failed')) {
       console.error('[JOURNAL_API] 🔴 NETWORK ERROR: Cannot reach backend server');
-      console.error('[JOURNAL_API] 💡 Check: 1) Backend is running, 2) API URL is correct, 3) Network connectivity');
+      console.error(
+        '[JOURNAL_API] 💡 Check: 1) Backend is running, 2) API URL is correct, 3) Network connectivity'
+      );
     } else if (error instanceof Error && error.message.includes('timeout')) {
       console.error('[JOURNAL_API] ⏱️  TIMEOUT ERROR: Request took too long');
     }
@@ -172,9 +181,7 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
  * POST /api/journal-entries
  * Create new journal entry
  */
-export async function createJournalEntry(
-  entry: JournalEntryCreate
-): Promise<JournalEntryResponse> {
+export async function createJournalEntry(entry: JournalEntryCreate): Promise<JournalEntryResponse> {
   try {
     const token = await getAuthToken();
 

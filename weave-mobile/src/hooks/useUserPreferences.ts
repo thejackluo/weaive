@@ -66,7 +66,10 @@ export function useUserPreferences() {
       const queryDuration = (performance.now() - queryStart).toFixed(2);
 
       if (error) {
-        console.error(`[PREFERENCES_HOOK] ❌ Supabase query failed after ${queryDuration}ms:`, error);
+        console.error(
+          `[PREFERENCES_HOOK] ❌ Supabase query failed after ${queryDuration}ms:`,
+          error
+        );
         throw error;
       }
 
@@ -77,7 +80,9 @@ export function useUserPreferences() {
       const questions = preferences?.custom_reflection_questions || [];
 
       const totalDuration = (performance.now() - overallStart).toFixed(2);
-      console.log(`[PREFERENCES_HOOK] ✅ Total operation: ${totalDuration}ms - Questions found: ${questions.length}`);
+      console.log(
+        `[PREFERENCES_HOOK] ✅ Total operation: ${totalDuration}ms - Questions found: ${questions.length}`
+      );
 
       return questions;
     },

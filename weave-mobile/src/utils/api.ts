@@ -15,9 +15,9 @@ export function getApiBaseUrl(): string {
   if (!apiBaseUrl) {
     throw new Error(
       '❌ API_BASE_URL is not configured.\n' +
-      '   1. Create .env file in weave-mobile/\n' +
-      '   2. Add: API_BASE_URL=http://localhost:8000\n' +
-      '   3. Restart Expo with: npm run start:clean'
+        '   1. Create .env file in weave-mobile/\n' +
+        '   2. Add: API_BASE_URL=http://localhost:8000\n' +
+        '   3. Restart Expo with: npm run start:clean'
     );
   }
 

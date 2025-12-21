@@ -707,9 +707,7 @@ describe('Daily Reflection Flow - E2E Integration Tests', () => {
       // THEN: Entry synced successfully
       await waitFor(() => {
         expect(journalApi.submitJournalEntry).toHaveBeenCalled();
-        expect(mockShowToast).toHaveBeenCalledWith(
-          expect.stringMatching(/synced|uploaded/i)
-        );
+        expect(mockShowToast).toHaveBeenCalledWith(expect.stringMatching(/synced|uploaded/i));
       });
 
       // THEN: AsyncStorage queue cleared
