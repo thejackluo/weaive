@@ -42,7 +42,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ### Functional Requirements
 
-**Epic 1: Onboarding (Optimized Hybrid Flow) (52 pts)**
+**Epic 1: Onboarding (Optimized Hybrid Flow) (53 pts)**
 - FR-1.1: Welcome & Vision Hook - Display Weave logo + tagline ("See who you're becoming"), short value prop (1 sentence), Get Started CTA. Loads <2s (M)
 - FR-1.2: Emotional State Selection (Painpoint) - Display 4 cards: Clarity, Action, Consistency, Alignment. User selects 1-2. Sends `selected_painpoints` to backend (M)
 - FR-1.3: Symptom Insight Screen (Dynamic Mirror) - Display 1-2 short, high-impact paragraphs describing user's symptom(s). If two painpoints selected, show both symptom cards stacked in glass panels. Title: "Why this feels so hard". Design: glass-paneled cards with animations, soft shadows, thread-lines background. Completion <10s (M)
@@ -51,7 +51,8 @@ This document provides the complete epic and story breakdown for Weave, decompos
 - FR-1.6: Identity Traits Selection - Display 12 selectable traits (chips), user selects 3-5. Stored immediately. Completion <15s (M)
 - FR-1.7: Commitment Ritual & Origin Story (First Bind) - 3-screen flow: (1) Narrative Validation showing user's current struggles vs aspirational traits, (2) Origin Story Capture with required photo + voice note commitment, (3) Completion & Reinforcement with weave animation and level up. Creates immutable `origin_stories` record. This emotional anchor precedes goal definition (M, 5 pts)
 - FR-1.8: Create Your First Needle (Goal + Plan) - 4-screen flow: (1) Introduce Needles concept, (2) Choose from 10 suggested goal options or custom input, (3) Optional customization text, (4) AI Plan Breakdown with generated milestones and binds (editable). AI Module: Onboarding Coach. Combines goal selection and AI generation (M, 8 pts)
-- FR-1.9: First Daily Reflection (Day 0 Check-In) - Introduces reflection pillar immediately after goal setup. Prompt: "How are you feeling right now about starting this journey?" Text input (50-500 chars, optional) + fulfillment slider (1-10). Creates first `journal_entries` record. Establishes core loop before leaving onboarding (M, 2 pts)
+- FR-1.8c: Daily Reflection Introduction - Transitionary screen between goal creation and first reflection. Title: "One more thing: your daily check-ins". 3-paragraph body text positioning reflections as equal to completing binds. CTA: "Got it — let's begin". Single-screen intro with journal icon. Shown ONCE via AsyncStorage flag. Completion <15s (M, 2 pts)
+- FR-1.9: First Daily Reflection (Day 0 Check-In) - Introduces reflection pillar after daily reflection introduction (FR-1.8c). Prompt: "How are you feeling right now about starting this journey?" Text input (50-500 chars, optional) + fulfillment slider (1-10). Creates first `journal_entries` record. Establishes core loop before leaving onboarding (M, 2 pts)
 - FR-1.10: Progress Dashboard Introduction - 3 tooltips introducing core dashboard elements: Weave visualization, Binds section, Reflection button. Each dismissible with "Got it". Duration <20s. Simplified orientation focusing on progress tracking. Completion immediately after first reflection (M, 2 pts)
 - FR-1.11: Housekeeping, Trial Framing & Handoff - 4-screen flow: (1) Privacy & Data consent, (2) Notification Permissions, (3) Trial Framing & Soft Paywall (Free/Pro/Max tiers, always allows skip), (4) Completion & Welcome with celebration animation. Combines housekeeping, trial context, and onboarding completion ceremony (M, 6 pts)
 - FR-1.12: Dream Self (Day 1 Evening Prompt) - **Deferred personalization.** Triggered inside nightly reflection. Text input: "Describe the person you're becoming" (200 char min). Stored in identity_docs (S)
@@ -303,6 +304,7 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | FR-1.6 | Epic 1 | First Needle/Goal Setup (AI) |
 | FR-1.7 | Epic 1 | Commitment Ritual & Origin Story |
 | FR-1.8 | Epic 1 | Create Your First Needle (Goal + Plan) |
+| FR-1.8c | Epic 1 | Daily Reflection Introduction |
 | FR-1.9 | Epic 1 | First Daily Reflection |
 | FR-1.10 | Epic 1 | Progress Dashboard Introduction |
 | FR-1.11 | Epic 1 | Housekeeping, Trial Framing & Handoff |
@@ -472,10 +474,10 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
-### Epic 1: Onboarding (Optimized Hybrid Flow) (51 pts)
+### Epic 1: Onboarding (Optimized Hybrid Flow) (53 pts)
 **User Outcome:** New users experience streamlined onboarding that gets them to their first "win" within 3 minutes, then progressively gathers deeper personalization over Days 1-3 of actual usage. Maximizes completion → emotional resonance → early activation.
 
-**FRs Covered:** FR-1.1, FR-1.2, FR-1.3, FR-1.4, FR-1.5, FR-1.6, FR-1.7, FR-1.8, FR-1.9, FR-1.10, FR-1.11, FR-1.12, FR-1.13, FR-1.14, FR-1.15
+**FRs Covered:** FR-1.1, FR-1.2, FR-1.3, FR-1.4, FR-1.5, FR-1.6, FR-1.7, FR-1.8, FR-1.8c, FR-1.9, FR-1.10, FR-1.11, FR-1.12, FR-1.13, FR-1.14, FR-1.15
 
 **Why This Epic First:** Users cannot do anything without completing onboarding. This establishes emotional connection, first goal, and trial activation - the foundation for everything else. The hybrid approach front-loads value delivery while deferring heavy personalization.
 
@@ -496,7 +498,8 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **PHASE 3: Early Value Proof ("Wow Moment")**
 - **Story 1.8: Create Your First Needle (Goal + Plan)** (8 pts) - FR-1.8: 4-screen flow combining goal selection and AI generation. **Screen 1:** Educational card: "Give your actions direction." Explains Needles concept, reassures flexibility. **Screen 2:** Title: "What do you want to work on first?" Display 10 suggested goal options (single-select) or custom goal input. **Screen 3:** Optional customization: "Want to make this more specific?" Optional text input (0-100 chars) or skip. **Screen 4:** AI Plan Breakdown: "Here's how we'll work toward this." Loading state: "Shaping your path..." AI generates: needle title + summary, 2-3 milestones, 2-4 bind templates. All outputs editable before accepting. AI Module: Onboarding Coach with fallback chain (GPT-4o-mini → Claude Sonnet → Templates → Static). Track events: `needle_intro_viewed`, `needle_option_selected`, `needle_customized`, `needle_plan_generated`, `needle_plan_accepted`. Data: Create records in `goals`, `qgoals`, `subtask_templates`, `ai_runs`
-- **Story 1.9: First Daily Reflection (Day 0 Check-In)** (2 pts) - FR-1.9: Introduces reflection pillar immediately after goal setup. Title: "How are you feeling right now about starting this journey?" Text input (50-500 chars, optional) + fulfillment slider (1-10). Simple, non-intimidating UI - quick check-in feel. CTA: "Done" or "Continue". Completion <60s. Data: Create first entry in `journal_entries` table (fields: `user_id`, `local_date`, `fulfillment_score`, `reflection_text`, `created_at`). Set `user_profiles.first_journal_at`. Track event: `first_journal_completed`. No AI generation on submit (too early). Establishes reflection habit pattern before leaving onboarding
+- **Story 1.8c: Daily Reflection Introduction** (2 pts) - FR-1.8c: Transitionary screen between goal creation and first reflection. Title: "One more thing: your daily check-ins". Body: 3 paragraphs positioning reflections as equal to completing binds: (1) "Completing binds is one way... Daily reflection is the other", (2) "Each evening, Weave will ask: How did today go?...", (3) "Your honest answers help Weave understand you better...". CTA: "Got it — let's begin". Single-screen intro with journal/reflection icon (80-120px, subtle fade-in animation). AsyncStorage flag: `daily_reflection_intro_seen` prevents re-display. Completion <15s. Track events: `daily_reflection_intro_viewed`, `daily_reflection_intro_completed`. Follows Story 1.7/1.8 patterns (inline styles, SafeAreaView). Establishes reflections as core pillar alongside binds and needles before first use
+- **Story 1.9: First Daily Reflection (Day 0 Check-In)** (2 pts) - FR-1.9: Introduces reflection pillar after daily reflection introduction (Story 1.8c). Title: "How are you feeling right now about starting this journey?" Text input (50-500 chars, optional) + fulfillment slider (1-10). Simple, non-intimidating UI - quick check-in feel. CTA: "Done" or "Continue". Completion <60s. Data: Create first entry in `journal_entries` table (fields: `user_id`, `local_date`, `fulfillment_score`, `reflection_text`, `created_at`). Set `user_profiles.first_journal_at`. Track event: `first_journal_completed`. No AI generation on submit (too early). Establishes reflection habit pattern before leaving onboarding
 
 **PHASE 4: Lightweight Orientation**
 - **Story 1.10: Progress Dashboard Introduction** (2 pts) - FR-1.10: 3 tooltips introducing core dashboard elements immediately after first reflection. (1) Highlight Weave visualization → "This grows with your consistency", (2) Highlight Binds section → "These are your identity-building actions", (3) Highlight Reflection button → "Reflect nightly for deeper insights". Each dismissible with "Got it". Duration <20s. Simplified orientation focusing on progress visualization. Tooltips appear on Thread (Home) screen. Track tutorial completed vs skipped. User can skip if desired

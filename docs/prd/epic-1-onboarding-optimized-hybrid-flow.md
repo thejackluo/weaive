@@ -630,6 +630,63 @@ This step introduces:
 
 ---
 
+### US-1.8c: Daily Reflection Introduction
+
+**Priority:** M (Must Have)
+
+**User Story:**
+
+**As a** new user who has just accepted their AI-generated goal breakdown
+**I want to** understand how daily reflections strengthen my binds
+**So that** I'm prepared to engage with the daily reflection feature as a core part of my Weave experience
+
+**Overview / Rationale:**
+
+After completing Story 1.7 (first bind via origin story) and Story 1.8 (first needle creation), users understand:
+- What binds are (completed actions)
+- What needles are (long-term goals)
+- How binds connect to needles
+
+However, **daily reflections** are the third pillar of Weave's core loop. This brief intro screen positions reflections as equally important to completing binds — another primary way to strengthen commitment and receive guidance.
+
+**Why This Screen Matters:**
+- Prevents confusion when users are suddenly asked to reflect (without context)
+- Establishes reflections as a core feature, not optional
+- Sets expectation for what comes next (first daily reflection)
+- Completes the "Binds + Needles + Reflections" mental model
+
+**Acceptance Criteria:**
+- [ ] Display immediately after user accepts AI goal breakdown in Story 1.8a
+- [ ] Title: "One more thing: your daily check-ins"
+- [ ] Body text (3 short paragraphs):
+  - "Completing binds is one way to strengthen your commitment. Daily reflection is the other."
+  - "Each evening, Weave will ask: How did today go? What's on your mind? What matters tomorrow?"
+  - "Your honest answers help Weave understand you better — and shape tomorrow's path with you."
+- [ ] Visual element: Icon or illustration (journal, thought bubble, or reflection icon)
+- [ ] CTA: "Got it — let's begin" (navigates to US-1.9)
+- [ ] Shown ONCE during onboarding (flag stored in AsyncStorage)
+- [ ] Completion time: 10-15 seconds
+- [ ] Track events: `daily_reflection_intro_viewed`, `daily_reflection_intro_completed`
+
+**Data Requirements:**
+- Set flag in AsyncStorage: `daily_reflection_intro_seen: true`
+- Track analytics event (deferred to backend integration)
+
+**Technical Notes:**
+- Simple single-screen component (no multi-step state machine)
+- Follows Story 1.7/1.8 patterns (inline styles, SafeAreaView, accessibility)
+- No API calls (purely educational screen)
+- Backend integration deferred to Story 0-4
+
+**Design Specification:**
+- Clean, centered layout with ample whitespace
+- Icon positioned above title (80-120px size)
+- Typography: Title 24-28px semi-bold, body 16-18px medium
+- CTA button: Full-width, primary color, min 48px height
+- Subtle background pattern (thread-lines, consistent with Story 1.7)
+
+---
+
 ## PHASE 3 — Early Value Proof ("Wow Moment")
 
 ### US-1.9: First Daily Reflection (Day 0 Check-In)
@@ -649,7 +706,9 @@ Reflection is the third pillar of Weave:
 - **Binds** = action
 - **Reflection** = meaning
 
-This lightweight Day 0 reflection introduces the reflection habit immediately after goal setup, establishing the core loop before the user leaves onboarding.
+This lightweight Day 0 reflection introduces the reflection habit immediately after goal setup and reflection intro (US-1.8c), establishing the core loop before the user leaves onboarding.
+
+**Note:** Users reach this screen after US-1.8c (Daily Reflection Introduction), so they already understand WHY they're being asked to reflect.
 
 **Acceptance Criteria:**
 - [ ] Display prompt: "How are you feeling right now about starting this journey?"
@@ -853,6 +912,7 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 | US-1.6 | Name Entry, Weave Personality & Identity Traits | M | 5 pts |
 | US-1.7 | Commitment Ritual & Origin Story (First Bind) | M | 5 pts |
 | US-1.8 | Create Your First Needle (Goal + Plan) | M | 8 pts |
+| US-1.8c | Daily Reflection Introduction | M | 2 pts |
 | US-1.9 | First Daily Reflection (Day 0 Check-In) | M | 2 pts |
 | US-1.10 | Progress Dashboard Introduction | M | 2 pts |
 | US-1.11 | Housekeeping, Trial Framing & Handoff | M | 6 pts |
@@ -861,8 +921,8 @@ These replace the earlier heavy pre-auth screens and are delivered contextually 
 | US-1.14 | Motivations & Failure Modes (Deferred - Day 2-3) | S | 3 pts |
 | US-1.15 | Constraints & Demographics (Deferred - Day 3) | S | 2 pts |
 
-**Epic Total:** 51 story points
+**Epic Total:** 53 story points
 
-**Note:** This hybrid flow maximizes completion by front-loading emotional resonance and early value delivery (Phases 1-5: 40 pts Must Have), while deferring deep personalization to Days 1-3 when users are already activated (Phase 6: 11 pts Should Have). US-1.7 introduces the Commitment Ritual as an emotional anchor before goal definition. US-1.11 combines housekeeping, trial framing, and soft paywall into a cohesive 4-screen handoff from onboarding to active usage.
+**Note:** This hybrid flow maximizes completion by front-loading emotional resonance and early value delivery (Phases 1-5: 42 pts Must Have), while deferring deep personalization to Days 1-3 when users are already activated (Phase 6: 11 pts Should Have). US-1.7 introduces the Commitment Ritual as an emotional anchor before goal definition. US-1.8c bridges goal creation with daily reflections by introducing reflections as a core pillar alongside binds and needles. US-1.11 combines housekeeping, trial framing, and soft paywall into a cohesive 4-screen handoff from onboarding to active usage.
 
 ---
