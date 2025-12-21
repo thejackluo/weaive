@@ -26,6 +26,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PERSONAS, PersonalityType } from '@/constants/personalityContent';
 import {
   IDENTITY_TRAITS,
@@ -34,7 +35,6 @@ import {
   isValidTraitCount,
 } from '@/constants/identityTraits';
 import { storeIdentityBootup } from '@/services/onboarding';
-import { debugAuthState, debugUserProfile } from '@/services/debug-auth';
 
 // UI Constants
 const CARD_WIDTH_RATIO = 0.8;
@@ -373,17 +373,44 @@ export default function IdentityBootupScreen() {
       setIsSubmitting(true);
 
       // Submit identity bootup data to backend API (Story 1.6 + Story 0-4 integration)
-      await storeIdentityBootup(
-        formData.preferred_name,
-        formData.core_personality,
-        formData.identity_traits
+      // NOTE: Wrapped in non-blocking try-catch - backend integration is optional
+      // This allows onboarding to complete even if backend is not running
+      try {
+        await storeIdentityBootup(
+          formData.preferred_name,
+          formData.core_personality,
+          formData.identity_traits
+        );
+        console.log('[ONBOARDING] Successfully stored identity bootup data to backend');
+      } catch (backendError) {
+        // Log but don't block the flow - backend integration is optional for now
+        console.warn('[Onboarding] Failed to store identity bootup data:', backendError);
+        console.log(
+          '[Onboarding] Continuing with local storage only (backend integration deferred)'
+        );
+      }
+
+      // Save onboarding data to AsyncStorage for Story 1.7
+      // Merge with existing painpoints from Story 1.2
+      const existingDataStr = await AsyncStorage.getItem('onboarding_data');
+      const existingData = existingDataStr ? JSON.parse(existingDataStr) : {};
+
+      await AsyncStorage.setItem(
+        'onboarding_data',
+        JSON.stringify({
+          ...existingData,
+          preferred_name: formData.preferred_name,
+          core_personality: formData.core_personality,
+          personality_selected_at: formData.personality_selected_at,
+          identity_traits: formData.identity_traits,
+        })
       );
 
       // TODO (Story 0-4): Track analytics event
       // trackEvent('identity_traits_selected', { traits: formData.identity_traits });
 
-      // Navigate to Story 1.7 (First Needle / Goal Input)
-      router.push('/(onboarding)/first-needle');
+      // Navigate to Story 1.7 (Origin Story / Commitment Ritual)
+      router.push('/(onboarding)/origin-story');
     } catch (error) {
       if (__DEV__) {
         console.error('[ONBOARDING] Step 3 error:', error);
@@ -853,44 +880,6 @@ export default function IdentityBootupScreen() {
             {formData.identity_traits.length} of {REQUIRED_TRAITS} selected
           </Text>
         </View>
-
-        {/* Debug Auth Button (DEV only) */}
-        {__DEV__ && (
-          <TouchableOpacity
-            onPress={async () => {
-              try {
-                console.log('🔍 Starting auth debug...');
-                await debugAuthState();
-                await debugUserProfile();
-                Alert.alert(
-                  'Debug Complete',
-                  'Check your console logs for detailed auth information'
-                );
-              } catch (error) {
-                console.error('❌ Debug failed:', error);
-                Alert.alert(
-                  'Debug Error',
-                  error instanceof Error ? error.message : 'Unknown error'
-                );
-              }
-            }}
-            style={{
-              backgroundColor: '#ff9800',
-              borderRadius: 12,
-              padding: 16,
-              marginBottom: 12,
-              minHeight: MIN_TOUCH_TARGET,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Debug authentication status"
-          >
-            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
-              🔍 Debug Auth Status
-            </Text>
-          </TouchableOpacity>
-        )}
 
         {/* Continue Button */}
         <TouchableOpacity
