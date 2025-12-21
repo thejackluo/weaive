@@ -123,7 +123,7 @@ def cleanup_test_data(supabase_client):
             supabase_client.table(table).delete().neq(
                 "id", "00000000-0000-0000-0000-000000000000"
             ).execute()
-        except Exception as e:
+        except Exception:
             # Ignore errors - table might not exist or might be empty
             # This is expected during early development when not all tables exist
             pass
