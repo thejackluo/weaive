@@ -3,6 +3,7 @@
 import pytest
 import os
 import jwt
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
@@ -120,6 +121,28 @@ def mock_supabase_client():
     pass
 
 
+@pytest.fixture(scope="function")
+def test_user(supabase_client):
+    """Create a test user profile for integration tests.
+
+    Returns:
+        dict: Test user profile with id and auth_user_id
+    """
+    # Create test user profile
+    user_data = {
+        "auth_user_id": "test-user-123",
+        "email": "test@example.com",
+        "created_at": datetime.utcnow().isoformat(),
+    }
+
+    response = supabase_client.table("user_profiles").insert(user_data).execute()
+
+    if response.data:
+        return response.data[0]
+    else:
+        pytest.fail("Failed to create test user profile")
+
+
 @pytest.fixture
 def create_auth_token():
     """Create a real JWT token for testing authenticated endpoints.
@@ -157,16 +180,17 @@ def create_auth_token():
         Returns:
             JWT token string
         """
-        now = datetime.utcnow()
-        # Subtract 10 seconds to avoid clock skew issues with iat validation
-        issued_at = now - timedelta(seconds=10)
+        # Use time.time() for pure Unix timestamps to avoid timezone issues
+        now = int(time.time())
+        # Set iat to 1 hour ago to avoid any clock skew issues
+        issued_at = now - 3600  # 1 hour in seconds
         payload = {
             "sub": user_id,                           # User ID (required)
             "aud": "authenticated",                    # Supabase audience (required)
             "role": "authenticated",                   # User role
             "iss": "supabase",                        # Issuer
-            "iat": int(issued_at.timestamp()),        # Issued at (with clock skew buffer)
-            "exp": int((now + timedelta(hours=expires_in_hours)).timestamp()),  # Expiration
+            "iat": issued_at,                         # Issued at (with clock skew buffer)
+            "exp": now + (expires_in_hours * 3600),  # Expiration
         }
 
         token = jwt.encode(payload, jwt_secret, algorithm="HS256")
