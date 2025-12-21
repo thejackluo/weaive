@@ -65,7 +65,7 @@ async def store_painpoint_selection(
         )
 
         if not result.data:
-            raise Exception("Failed to store painpoint selection")
+            raise RuntimeError("Failed to store painpoint selection to database")
 
         logger.info(
             f"✅ Painpoint selection stored: {painpoints} "
@@ -219,6 +219,9 @@ async def create_origin_story(
         ValueError: If user profile not found or validation fails
         Exception: If upload or database operation fails
     """
+    # Track uploaded files for potential rollback (must be before try block)
+    uploaded_files = []
+
     try:
         now = datetime.now(timezone.utc)
 
@@ -284,7 +287,9 @@ async def create_origin_story(
         )
 
         if not photo_upload:
-            raise Exception("Photo upload failed")
+            raise RuntimeError("Photo upload to Supabase Storage failed")
+
+        uploaded_files.append(("origin-stories", photo_filename))
 
         # Upload audio to Supabase Storage
         logger.info(f"📤 Uploading audio to: origin-stories/{audio_filename}")
@@ -295,11 +300,27 @@ async def create_origin_story(
         )
 
         if not audio_upload:
-            raise Exception("Audio upload failed")
+            raise RuntimeError("Audio upload to Supabase Storage failed")
 
-        # Get public URLs (signed URLs for private bucket)
-        photo_url = supabase.storage.from_("origin-stories").get_public_url(photo_filename)
-        audio_url = supabase.storage.from_("origin-stories").get_public_url(audio_filename)
+        uploaded_files.append(("origin-stories", audio_filename))
+
+        # Get signed URLs for private bucket (1 year expiration)
+        photo_signed = supabase.storage.from_("origin-stories").create_signed_url(
+            path=photo_filename,
+            expires_in=31536000  # 1 year (365 days * 24 hours * 3600 seconds)
+        )
+        audio_signed = supabase.storage.from_("origin-stories").create_signed_url(
+            path=audio_filename,
+            expires_in=31536000  # 1 year
+        )
+
+        if not photo_signed or "signedURL" not in photo_signed:
+            raise RuntimeError("Failed to generate signed URL for photo from Supabase Storage")
+        if not audio_signed or "signedURL" not in audio_signed:
+            raise RuntimeError("Failed to generate signed URL for audio from Supabase Storage")
+
+        photo_url = photo_signed["signedURL"]
+        audio_url = audio_signed["signedURL"]
 
         logger.info("✅ Files uploaded successfully")
         logger.info(f"📷 Photo URL: {photo_url}")
@@ -324,12 +345,46 @@ async def create_origin_story(
         )
 
         if not origin_story_result.data or len(origin_story_result.data) == 0:
-            raise Exception("Failed to create origin_stories record")
+            raise RuntimeError("Failed to create origin_stories record in database")
 
         origin_story = origin_story_result.data[0]
         logger.info(
             f"✅ Origin story record created: {origin_story['id']}"
         )
+
+        # Create subtask_instance record for first bind (AC #25)
+        # The origin story IS the user's first bind - a symbolic commitment action
+        today_date = now.date().isoformat()
+        bind_instance_data = {
+            "id": str(uuid4()),
+            "user_id": user_id,
+            "template_id": None,  # No template for origin bind
+            "goal_id": None,  # No goal yet, this is pre-goals
+            "scheduled_for_date": today_date,
+            "status": "done",  # Completed immediately
+            "completed_at": now.isoformat(),
+            "estimated_minutes": 5,  # Nominal value for origin bind
+            "actual_minutes": None,
+            "title_override": "Commitment Ritual: Origin Story",
+            "notes": "First bind - origin story commitment",
+            "created_at": now.isoformat(),
+        }
+
+        bind_instance_result = (
+            supabase.table("subtask_instances")
+            .insert(bind_instance_data)
+            .execute()
+        )
+
+        if not bind_instance_result.data or len(bind_instance_result.data) == 0:
+            logger.warning(
+                f"⚠️  Failed to create subtask_instance for first bind (non-fatal)"
+            )
+        else:
+            bind_instance = bind_instance_result.data[0]
+            logger.info(
+                f"✅ First bind (subtask_instance) created: {bind_instance['id']}"
+            )
 
         # Update user_profiles with first_bind completion
         is_first_bind = profile["first_bind_completed_at"] is None
@@ -370,8 +425,22 @@ async def create_origin_story(
         }
 
     except ValueError:
-        # Re-raise validation errors
+        # Re-raise validation errors (from Pydantic models, service validation)
         raise
-    except Exception as e:
+    except (RuntimeError, Exception) as e:
+        # Rollback: Delete any uploaded files if database operations failed
+        if uploaded_files:
+            logger.warning(
+                f"⚠️  Rolling back transaction - deleting {len(uploaded_files)} uploaded file(s)"
+            )
+            for bucket, path in uploaded_files:
+                try:
+                    supabase.storage.from_(bucket).remove([path])
+                    logger.info(f"🗑️  Deleted orphaned file: {bucket}/{path}")
+                except Exception as cleanup_error:
+                    logger.error(
+                        f"❌ Failed to delete orphaned file {bucket}/{path}: {cleanup_error}"
+                    )
+
         logger.error(f"❌ Failed to create origin story: {str(e)}")
         raise

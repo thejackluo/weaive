@@ -188,6 +188,76 @@ class OriginStoryData(BaseModel):
         max_length=500,
     )
 
+    @field_validator("photo_base64")
+    @classmethod
+    def validate_photo_base64(cls, v: str) -> str:
+        """Validate photo is a valid data URI with allowed MIME type and size."""
+        import base64
+        import re
+
+        # Check data URI format
+        match = re.match(r"^data:(image/(?:jpeg|jpg|png));base64,(.+)$", v)
+        if not match:
+            raise ValueError(
+                "Photo must be a data URI with format: data:image/(jpeg|jpg|png);base64,..."
+            )
+
+        mime_type, base64_data = match.groups()
+
+        # Validate base64 encoding
+        try:
+            decoded = base64.b64decode(base64_data)
+        except Exception:
+            raise ValueError("Photo base64 data is invalid or corrupted")
+
+        # Check file size (10MB = 10485760 bytes)
+        if len(decoded) > 10485760:
+            raise ValueError(
+                f"Photo file size ({len(decoded)} bytes) exceeds 10MB limit (10485760 bytes)"
+            )
+
+        # Minimum size check (at least 100 bytes for valid image)
+        if len(decoded) < 100:
+            raise ValueError("Photo file is too small to be a valid image")
+
+        return v
+
+    @field_validator("audio_base64")
+    @classmethod
+    def validate_audio_base64(cls, v: str) -> str:
+        """Validate audio is a valid data URI with allowed MIME type and size."""
+        import base64
+        import re
+
+        # Check data URI format
+        match = re.match(
+            r"^data:(audio/(?:aac|mp4|mpeg|x-m4a));base64,(.+)$", v
+        )
+        if not match:
+            raise ValueError(
+                "Audio must be a data URI with format: data:audio/(aac|mp4|mpeg|x-m4a);base64,..."
+            )
+
+        mime_type, base64_data = match.groups()
+
+        # Validate base64 encoding
+        try:
+            decoded = base64.b64decode(base64_data)
+        except Exception:
+            raise ValueError("Audio base64 data is invalid or corrupted")
+
+        # Check file size (10MB = 10485760 bytes)
+        if len(decoded) > 10485760:
+            raise ValueError(
+                f"Audio file size ({len(decoded)} bytes) exceeds 10MB limit (10485760 bytes)"
+            )
+
+        # Minimum size check (at least 100 bytes for valid audio)
+        if len(decoded) < 100:
+            raise ValueError("Audio file is too small to be valid")
+
+        return v
+
     model_config = {
         "json_schema_extra": {
             "examples": [
