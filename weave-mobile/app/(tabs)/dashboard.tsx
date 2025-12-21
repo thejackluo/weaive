@@ -117,7 +117,8 @@ export default function DashboardScreen() {
         {/* Info Card */}
         <Card variant="glass" padding="default">
           <Text variant="textSm" className="text-muted/70">
-            Placeholder navigation for Epic 1.5 testing. Tap any card above to navigate to that screen.
+            Placeholder navigation for Epic 1.5 testing. Tap any card above to navigate to that
+            screen.
           </Text>
         </Card>
       </View>

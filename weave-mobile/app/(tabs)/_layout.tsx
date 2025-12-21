@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Text } from '@/design-system';
 import * as Haptics from 'expo-haptics';
+import { SymbolView } from 'expo-symbols';
 
 /**
  * Center AI Button Component
@@ -47,9 +48,7 @@ function CenterAIButton({ onPress }: { onPress: () => void }) {
           style={styles.centerButton}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Text variant="displayMd" className="text-white">
-            ✨
-          </Text>
+          <SymbolView name="sparkles" size={28} tintColor="#ffffff" resizeMode="center" />
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -61,8 +60,10 @@ function CenterAIButton({ onPress }: { onPress: () => void }) {
  *
  * Magical blur effect with translucent card
  * Dismissible via tap outside or swipe down
+ * Features: Input field, send button, example messages, glow effect
  */
 function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const [messageInput, setMessageInput] = React.useState('');
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(300);
 
@@ -84,15 +85,24 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
     transform: [{ translateY: translateY.value }],
   }));
 
+  const handleSendMessage = () => {
+    if (messageInput.trim()) {
+      // Future: Send message to AI
+      setMessageInput('');
+    }
+  };
+
+  const exampleMessages = [
+    'What should I focus on today?',
+    'Help me break down my goal',
+    'Why did I miss my bind yesterday?',
+    'Show my progress this week',
+  ];
+
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
         <BlurView
           style={StyleSheet.absoluteFill}
@@ -108,24 +118,58 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
           <View style={styles.aiChatCard}>
             {/* Header */}
             <View style={styles.aiChatHeader}>
-              <Text variant="displayMd" className="text-white font-bold">
-                AI Chat Interface
-              </Text>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Text variant="displayMd" className="text-white/60">
-                  ✕
+              <View className="flex-row items-center gap-2">
+                <SymbolView name="sparkles" size={24} tintColor="#a78bfa" />
+                <Text variant="displayMd" className="text-white font-bold">
+                  AI Coach
                 </Text>
+              </View>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <SymbolView name="xmark" size={20} tintColor="rgba(255, 255, 255, 0.6)" />
               </TouchableOpacity>
             </View>
 
             {/* Content */}
             <View style={styles.aiChatContent}>
-              <Text variant="textLg" className="text-white/90 mb-4">
-                Epic 6: AI Coaching
+              <Text variant="textBase" className="text-white/70 mb-4">
+                Epic 6: AI Coaching (Coming Soon)
               </Text>
-              <Text variant="textBase" className="text-white/70">
-                This page has not been developed
+
+              {/* Example Messages */}
+              <Text variant="textSm" className="text-white/50 mb-2">
+                Try asking:
               </Text>
+              <View className="gap-2 mb-6">
+                {exampleMessages.map((message, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => setMessageInput(message)}
+                    className="p-3 bg-white/5 rounded-lg border border-white/10 active:bg-white/10"
+                  >
+                    <Text variant="textSm" className="text-white/80">
+                      {message}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Input Area (at bottom) */}
+            <View style={styles.aiChatInputContainer}>
+              <View style={styles.aiChatInputWrapper}>
+                <View style={styles.aiChatInput}>
+                  <Text variant="textBase" className="text-white/40">
+                    {messageInput || 'Type a message...'}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={handleSendMessage}
+                  style={[styles.sendButton, !messageInput.trim() && styles.sendButtonDisabled]}
+                  disabled={!messageInput.trim()}
+                >
+                  <SymbolView name="arrow.up" size={20} tintColor="#ffffff" weight="bold" />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Pressable>
@@ -180,7 +224,7 @@ export default function TabLayout() {
           options={{
             title: 'Home',
             tabBarIcon: ({ color }) => (
-              <Text style={{ fontSize: 24, color }}>🏠</Text>
+              <SymbolView name="house.fill" size={24} tintColor={color} resizeMode="center" />
             ),
           }}
         />
@@ -189,7 +233,7 @@ export default function TabLayout() {
           options={{
             title: 'Dashboard',
             tabBarIcon: ({ color }) => (
-              <Text style={{ fontSize: 24, color }}>📊</Text>
+              <SymbolView name="chart.bar.fill" size={24} tintColor={color} resizeMode="center" />
             ),
           }}
         />
@@ -245,12 +289,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(26, 26, 26, 0.95)',
     borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 32,
+    borderWidth: 2,
+    borderColor: 'rgba(167, 139, 250, 0.3)', // Purple glow border
+    shadowColor: '#a78bfa', // Purple glow shadow
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
     padding: 20,
   },
   aiChatHeader: {
@@ -264,5 +308,40 @@ const styles = StyleSheet.create({
   },
   aiChatContent: {
     flex: 1,
+  },
+  aiChatInputContainer: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  aiChatInputWrapper: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  aiChatInput: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#3B72F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#3B72F6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  sendButtonDisabled: {
+    backgroundColor: 'rgba(59, 114, 246, 0.3)',
+    shadowOpacity: 0,
   },
 });
