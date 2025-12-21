@@ -2,6 +2,8 @@
 
 import pytest
 import os
+import jwt
+from datetime import datetime, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -116,3 +118,56 @@ def mock_supabase_client():
     # TODO: Implement mock Supabase client for unit tests
     # Example: Use unittest.mock.MagicMock to mock Supabase responses
     pass
+
+
+@pytest.fixture
+def create_auth_token():
+    """Create a real JWT token for testing authenticated endpoints.
+
+    This fixture generates valid JWT tokens signed with the SUPABASE_JWT_SECRET
+    for realistic integration testing of protected endpoints.
+
+    Returns:
+        Function that generates JWT tokens with custom user_id
+
+    Usage:
+        def test_protected_endpoint(client, create_auth_token):
+            token = create_auth_token(user_id="test-user-123")
+            response = client.post(
+                "/api/endpoint",
+                json={...},
+                headers={"Authorization": f"Bearer {token}"}
+            )
+    """
+    jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
+
+    if not jwt_secret:
+        pytest.skip(
+            "SUPABASE_JWT_SECRET not configured in .env.test. "
+            "Add: SUPABASE_JWT_SECRET=super-secret-jwt-token-with-at-least-32-characters-long"
+        )
+
+    def _create_token(user_id: str = "test-user-123", expires_in_hours: int = 24) -> str:
+        """Generate a valid JWT token.
+
+        Args:
+            user_id: User ID to include in 'sub' claim
+            expires_in_hours: Token expiration time (default 24 hours)
+
+        Returns:
+            JWT token string
+        """
+        now = datetime.utcnow()
+        payload = {
+            "sub": user_id,                           # User ID (required)
+            "aud": "authenticated",                    # Supabase audience (required)
+            "role": "authenticated",                   # User role
+            "iss": "supabase",                        # Issuer
+            "iat": int(now.timestamp()),              # Issued at
+            "exp": int((now + timedelta(hours=expires_in_hours)).timestamp()),  # Expiration
+        }
+
+        token = jwt.encode(payload, jwt_secret, algorithm="HS256")
+        return token
+
+    return _create_token
