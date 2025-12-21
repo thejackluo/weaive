@@ -1,5 +1,5 @@
 /**
- * Story 4.1a: Daily Reflection Entry - Default Questions
+ * Story 4.1a + 4.1b: Daily Reflection Entry - Default + Custom Questions
  *
  * TEMPORARY LOCATION: Settings tab (for development testing)
  * PRODUCTION LOCATION: Move to app/(tabs)/thread/reflection.tsx when Story 3.1 complete
@@ -8,6 +8,8 @@
  * - Reflect on their day (Question 1: multi-line text)
  * - Set tomorrow's focus (Question 2: single-line text)
  * - Rate daily fulfillment (1-10 slider)
+ * - Answer custom tracking questions (text, numeric, yes/no)
+ * - Manage custom questions (add/edit/delete)
  * - Edit existing journal entries
  */
 
@@ -23,7 +25,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSubmitJournal, useUpdateJournal, useGetTodayJournal } from '@/hooks/useJournal';
+import { useUserPreferences, useUpdateCustomQuestions } from '@/hooks/useUserPreferences';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import CustomQuestionInput, {
+  CustomQuestion,
+} from '@/components/features/journal/CustomQuestionInput';
+import ManageQuestionsModal from '@/components/features/journal/ManageQuestionsModal';
 
 const DRAFT_KEY = '@weave_reflection_draft';
 
@@ -34,16 +41,20 @@ export default function ReflectionScreen() {
   const [todayReflection, setTodayReflection] = useState('');
   const [tomorrowFocus, setTomorrowFocus] = useState('');
   const [fulfillmentScore, setFulfillmentScore] = useState(5);
+  const [customResponses, setCustomResponses] = useState<Record<string, any>>({});
 
   // UI state
   const [isEditMode, setIsEditMode] = useState(false);
   const [existingJournalId, setExistingJournalId] = useState<string | null>(null);
   const [userName, setUserName] = useState('there'); // TODO: Fetch from user profile
+  const [showManageQuestionsModal, setShowManageQuestionsModal] = useState(false);
 
   // Hooks
   const { data: todayJournal, isLoading: isLoadingJournal } = useGetTodayJournal();
+  const { data: customQuestions = [], isLoading: isLoadingQuestions } = useUserPreferences();
   const submitMutation = useSubmitJournal();
   const updateMutation = useUpdateJournal();
+  const updateQuestionsMutation = useUpdateCustomQuestions();
 
   // Character counts
   const reflectionCount = todayReflection.length;
@@ -58,6 +69,7 @@ export default function ReflectionScreen() {
       setTodayReflection(todayJournal.default_responses?.today_reflection || '');
       setTomorrowFocus(todayJournal.default_responses?.tomorrow_focus || '');
       setFulfillmentScore(todayJournal.fulfillment_score);
+      setCustomResponses(todayJournal.custom_responses || {});
     } else {
       // Create mode: Try to restore draft
       loadDraft();
@@ -108,12 +120,25 @@ export default function ReflectionScreen() {
   };
 
   const handleSubmit = async () => {
+    // Build custom responses with question text (AC #13)
+    const formattedCustomResponses: Record<string, any> = {};
+    Object.keys(customResponses).forEach((questionId) => {
+      const question = customQuestions.find((q) => q.id === questionId);
+      if (question) {
+        formattedCustomResponses[questionId] = {
+          question_text: question.question,
+          response: customResponses[questionId],
+        };
+      }
+    });
+
     const payload = {
       fulfillment_score: fulfillmentScore,
       default_responses: {
         today_reflection: todayReflection,
         tomorrow_focus: tomorrowFocus,
       },
+      custom_responses: Object.keys(formattedCustomResponses).length > 0 ? formattedCustomResponses : undefined,
     };
 
     try {
@@ -141,7 +166,26 @@ export default function ReflectionScreen() {
   const isSubmitEnabled = fulfillmentScore >= 1 && fulfillmentScore <= 10;
   const isLoading = submitMutation.isPending || updateMutation.isPending;
 
-  if (isLoadingJournal) {
+  // Handle custom question response change (AC #10)
+  const handleCustomResponseChange = (questionId: string, value: string | number | boolean) => {
+    setCustomResponses((prev) => ({
+      ...prev,
+      [questionId]: value,
+    }));
+  };
+
+  // Handle saving custom questions from modal (AC #11)
+  const handleSaveCustomQuestions = async (questions: CustomQuestion[]) => {
+    try {
+      await updateQuestionsMutation.mutateAsync(questions);
+      setShowManageQuestionsModal(false);
+    } catch (error) {
+      console.error('Failed to save custom questions:', error);
+      // TODO: Show error toast
+    }
+  };
+
+  if (isLoadingJournal || isLoadingQuestions) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" />
@@ -228,6 +272,44 @@ export default function ReflectionScreen() {
         </Text>
       </View>
 
+      {/* Custom Questions (AC #10) */}
+      {customQuestions.length > 0 && (
+        <View style={styles.customQuestionsSection}>
+          <View style={styles.customQuestionsHeader}>
+            <Text style={styles.customQuestionsSectionTitle}>Your Custom Questions</Text>
+            <TouchableOpacity onPress={() => setShowManageQuestionsModal(true)}>
+              <Text style={styles.manageQuestionsLink}>Manage</Text>
+            </TouchableOpacity>
+          </View>
+          {customQuestions.map((question) => (
+            <CustomQuestionInput
+              key={question.id}
+              question={question}
+              value={customResponses[question.id]}
+              onChange={(value) => handleCustomResponseChange(question.id, value)}
+            />
+          ))}
+        </View>
+      )}
+
+      {/* Add Custom Questions Link (AC #11) */}
+      {customQuestions.length === 0 && (
+        <TouchableOpacity
+          style={styles.addCustomQuestionsButton}
+          onPress={() => setShowManageQuestionsModal(true)}
+        >
+          <Text style={styles.addCustomQuestionsText}>+ Add custom tracking questions</Text>
+        </TouchableOpacity>
+      )}
+      {customQuestions.length > 0 && customQuestions.length < 5 && (
+        <TouchableOpacity
+          style={styles.addMoreQuestionsButton}
+          onPress={() => setShowManageQuestionsModal(true)}
+        >
+          <Text style={styles.addMoreQuestionsText}>+ Add more questions</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Submit Button */}
       <TouchableOpacity
         style={[styles.submitButton, !isSubmitEnabled && styles.submitButtonDisabled]}
@@ -247,6 +329,14 @@ export default function ReflectionScreen() {
           {isEditMode ? 'Updating your reflection...' : 'Submitting your reflection...'}
         </Text>
       )}
+
+      {/* Manage Questions Modal */}
+      <ManageQuestionsModal
+        visible={showManageQuestionsModal}
+        questions={customQuestions}
+        onClose={() => setShowManageQuestionsModal(false)}
+        onSave={handleSaveCustomQuestions}
+      />
     </ScrollView>
   );
 }
@@ -385,5 +475,49 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  customQuestionsSection: {
+    marginTop: 32,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#2a2a2a',
+  },
+  customQuestionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  customQuestionsSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  manageQuestionsLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#3b82f6',
+  },
+  addCustomQuestionsButton: {
+    marginTop: 20,
+    marginBottom: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  addCustomQuestionsText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#10b981',
+  },
+  addMoreQuestionsButton: {
+    marginTop: 8,
+    marginBottom: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  addMoreQuestionsText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(16, 185, 129, 0.8)',
   },
 });

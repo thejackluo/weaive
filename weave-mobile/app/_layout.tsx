@@ -1,10 +1,27 @@
 import React, { useEffect as _useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { LogBox } from 'react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, SimpleToastContainer } from '../src/design-system';
 import { AuthProvider } from '../src/contexts/AuthContext';
 import { DevEnvironmentBanner } from '../src/components/DevEnvironmentBanner';
 import '../global.css';
+
+// Create QueryClient instance (singleton)
+// Story 4.1: Added for journal and user preferences queries
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      retry: 1, // Retry once on failure (offline-friendly)
+      refetchOnWindowFocus: false, // Mobile doesn't have window focus concept
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 // Suppress Reanimated React 19 compatibility warning (known issue, fix pending upgrade)
 LogBox.ignoreLogs([
@@ -24,12 +41,14 @@ LogBox.ignoreLogs([
  * - Headers hidden by default (screens can override if needed)
  * - Wrapped with ThemeProvider for design system support
  * - Wrapped with AuthProvider for authentication state management (Story 0.3)
+ * - Wrapped with QueryClientProvider for TanStack Query (Story 4.1)
  * - SimpleToastContainer for global toast notifications (Story 0.3)
  * - DevEnvironmentBanner for showing API endpoint in dev mode (multi-worktree setup)
  *
  * Provider Hierarchy:
  * - ThemeProvider (outermost) - Design system theme
  * - AuthProvider - Authentication state and methods
+ * - QueryClientProvider - TanStack Query for server state management (Story 4.1)
  * - Stack - Navigation structure
  * - SimpleToastContainer - Simple toast notification overlay (no animations)
  * - DevEnvironmentBanner - Dev-only overlay showing API base URL (top of screen)
@@ -40,13 +59,15 @@ export default function RootLayout() {
   return (
     <ThemeProvider initialMode="dark">
       <AuthProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
-        <SimpleToastContainer />
-        <DevEnvironmentBanner />
+        <QueryClientProvider client={queryClient}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          />
+          <SimpleToastContainer />
+          <DevEnvironmentBanner />
+        </QueryClientProvider>
       </AuthProvider>
     </ThemeProvider>
   );
