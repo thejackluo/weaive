@@ -25,7 +25,7 @@ describe('Design Tokens', () => {
     it('should have violet AI accent color', () => {
       expect(colors.violet).toBeDefined();
       expect(colors.violet[400]).toBe('#A78BFA');
-      expect(Object.keys(colors.violet).length).toBe(10);
+      expect(Object.keys(colors.violet).length).toBe(11); // Updated: Added violet[950]
     });
 
     it('should have semantic colors', () => {
@@ -45,10 +45,16 @@ describe('Design Tokens', () => {
         Object.keys(colors.primary).length +
         Object.keys(colors.amber).length +
         Object.keys(colors.violet).length +
+        Object.keys(colors.rose).length + // Added
+        Object.keys(colors.emerald).length + // Added
+        Object.keys(colors.accent).length + // Added
         Object.keys(colors.success).length +
         Object.keys(colors.warning).length +
         Object.keys(colors.error).length +
-        Object.keys(colors.dark).length;
+        Object.keys(colors.dark).length +
+        Object.keys(colors.heatMap).length + // Added
+        2 + // weaveGradient (primary, accent)
+        3; // gradients (sunset, ocean, aurora)
 
       expect(colorCount).toBeGreaterThanOrEqual(60);
     });
