@@ -1,6 +1,7 @@
-"""Onboarding API endpoints (Stories 1.2, 1.3, 1.6)"""
+"""Onboarding API endpoints (Stories 1.2, 1.3, 1.6, 1.7)"""
 
 import logging
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
@@ -9,6 +10,8 @@ from app.core.deps import get_current_user, get_supabase_client
 from app.models.onboarding import (
     IdentityBootupData,
     IdentityBootupResponse,
+    OriginStoryData,
+    OriginStoryResponse,
     PainpointSelection,
     PainpointSelectionResponse,
 )
@@ -222,4 +225,127 @@ async def store_identity_bootup(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to store identity bootup data: {str(e)}",
+        )
+
+
+@router.post(
+    "/origin-story",
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_origin_story(
+    data: OriginStoryData,
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Create origin story with photo and voice recording (Story 1.7).
+
+    This endpoint stores the user's origin story - their first "bind" commitment.
+    Uploads photo and audio to Supabase Storage, creates origin_stories record,
+    and updates user_profiles with first_bind_completed_at and user_level = 1.
+
+    **Authentication:** Required (user must be logged in)
+
+    **Request Body:**
+    - photo_base64: Base64-encoded photo with data URI prefix (JPEG/PNG, max 10MB)
+    - audio_base64: Base64-encoded audio with data URI prefix (AAC/MP4/M4A, max 10MB)
+    - audio_duration_seconds: Duration in seconds (1-60)
+    - from_text: Current struggle narrative (10-500 chars)
+    - to_text: Aspirational identity traits (10-500 chars)
+
+    **Validation:**
+    - Only one origin story allowed per user
+    - Photo and audio must be valid base64
+    - Audio duration: 1-60 seconds
+    - Text fields: 10-500 characters
+
+    **Status Codes:**
+    - 201: Origin story created successfully
+    - 400: Validation error (duplicate origin story, invalid data)
+    - 401: Unauthorized (no valid JWT token)
+    - 404: User profile not found
+    - 413: Payload too large (files exceed 10MB)
+    - 422: Request body validation error
+    - 500: Server error (upload or database failure)
+
+    **Example Request:**
+    ```json
+    {
+      "photo_base64": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
+      "audio_base64": "data:audio/aac;base64,AAAAGGZ0eXBp...",
+      "audio_duration_seconds": 42,
+      "from_text": "You've been feeling scattered — like there's too much to do, but no clear direction.",
+      "to_text": "You want to become someone with Clear Direction, High Standards, and Self Aware."
+    }
+    ```
+
+    **Example Response:**
+    ```json
+    {
+      "success": true,
+      "origin_story_id": "660e8400-e29b-41d4-a716-446655440000",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "photo_url": "https://...supabase.co/storage/v1/object/public/origin-stories/.../photo.jpg",
+      "audio_url": "https://...supabase.co/storage/v1/object/public/origin-stories/.../audio.aac",
+      "first_bind_completed": true,
+      "user_level": 1,
+      "created_at": "2025-12-20T10:30:00Z"
+    }
+    ```
+    """
+    try:
+        # Extract auth_user_id from JWT payload
+        auth_user_id = user["sub"]
+
+        # Create origin story
+        result = await onboarding.create_origin_story(
+            supabase=supabase,
+            auth_user_id=auth_user_id,
+            photo_base64=data.photo_base64,
+            audio_base64=data.audio_base64,
+            audio_duration_seconds=data.audio_duration_seconds,
+            from_text=data.from_text,
+            to_text=data.to_text,
+        )
+
+        # Wrap response in standard {data, meta} format (Architecture compliance)
+        return {
+            "data": OriginStoryResponse(**result),
+            "meta": {
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
+        }
+
+    except ValueError as e:
+        # Validation errors (user not found, duplicate origin story, invalid data)
+        error_msg = str(e)
+        logger.warning(f"⚠️  Validation error: {error_msg}")
+
+        # User profile not found
+        if "not found" in error_msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=error_msg,
+            )
+
+        # Duplicate origin story or other validation errors
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_msg,
+        )
+    except Exception as e:
+        # Upload or database errors
+        error_msg = str(e)
+        logger.error(f"❌ Error creating origin story: {error_msg}")
+
+        # Check for payload size error
+        if "payload" in error_msg.lower() or "too large" in error_msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Files too large. Maximum 10MB per file.",
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create origin story: {error_msg}",
         )
