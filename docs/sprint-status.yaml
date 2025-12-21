@@ -47,6 +47,7 @@ week-0-stories:
   0-1-project-scaffolding: done                 # 5 pts ✅
   0-2a-database-schema-core: ready-for-dev      # 3 pts
   0-2b-database-schema-refinement: ready-for-dev # 2 pts
+  DS-1-foundation-tokens-theme: review          # 5 pts (Design System) ✅
   0-3-authentication-flow: backlog              # 3 pts
   0-4-row-level-security: backlog               # 5 pts [CRITICAL]
   0-5-cicd-pipeline: backlog                    # 3 pts

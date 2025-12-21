@@ -1,0 +1,33 @@
+# Source files
+src/**/__tests__
+
+# Test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__
+coverage
+
+# Config files
+jest.config.js
+jest.setup.js
+.babelrc.js
+tsconfig.json
+
+# Documentation
+TESTING.md
+STORY-DS-1-COMPLETION.md
+
+# Build artifacts
+*.log
+*.tgz
+node_modules
+.DS_Store
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~

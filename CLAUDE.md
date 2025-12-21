@@ -232,12 +232,19 @@ Product terms used in UI/docs vs. technical database terms:
 
 ## Design System
 
-Weave uses a **custom Opal-inspired dark-first design system** built for React Native.
+Weave uses **`@weave/design-system`** - a custom Opal-inspired dark-first design system built as a standalone package for React Native.
+
+### Package Information
+
+- **Package name:** `@weave/design-system`
+- **Location:** `packages/weave-design-system/`
+- **Version:** Starting at `v0.1.0` (pre-release)
+- **Old system:** `src/design-system/` (deprecated, being replaced)
 
 ### Quick Usage
 
 ```tsx
-import { Button, Card, Text, Input, useTheme } from '@/design-system';
+import { Button, Card, Text, Input, useTheme } from '@weave/design-system';
 
 function MyScreen() {
   const { colors, spacing } = useTheme();
@@ -251,19 +258,22 @@ function MyScreen() {
 }
 ```
 
-### Available Components
-- **Text**: `Text`, `Heading`, `Title`, `Body`, `Caption`, `Label`, `Mono`
-- **Buttons**: `Button`, `PrimaryButton`, `SecondaryButton`, `GhostButton`, `AIButton`, `IconButton`
-- **Cards**: `Card`, `GlassCard`, `ElevatedCard`, `AICard`, `NeedleCard`, `InsightCard`
-- **Inputs**: `Input`, `TextArea`, `SearchInput`
-- **Form**: `Checkbox`, `BindCheckbox`
-- **Status**: `Badge`, `ConsistencyBadge`, `StreakBadge`, `AIBadge`, `StatusDot`
+### Available Components (70 total)
+- **Text (11)**: `Text`, `AnimatedText`, `Heading`, `Title`, `Subtitle`, `Body`, `BodySmall`, `Caption`, `Label`, `Link`, `Mono`
+- **Buttons (7)**: `Button`, `PrimaryButton`, `SecondaryButton`, `GhostButton`, `DestructiveButton`, `AIButton`, `IconButton`
+- **Cards (4)**: `Card`, `GlassCard`, `ElevatedCard`, `AICard`
+- **Inputs (10)**: `Input`, `TextArea`, `SearchInput`, `Checkbox`, `BindCheckbox`, `Slider`, `Radio`, `RadioGroup`, `Toggle`, `Select`
+- **Navigation (3)**: `BottomTabBar`, `HeaderBar`, `BackButton`
+- **Badges (6)**: `Badge`, `CountBadge`, `StatusDot`, `StreakBadge`, `AIBadge`, `ConsistencyBadge`
+- **Weave-Specific (6)**: `NeedleCard`, `BindCard`, `CaptureCard`, `InsightCard`, `SuccessCard`, `Timer`
+- **Layout (3)**: `Tabs`, `Divider`, `ListItem`
 
 ### Key Principles
 1. **Always use theme hooks** - Never hardcode colors/spacing
 2. **Use semantic color names** - `colors.text.primary` not `colors.dark[100]`
 3. **Prefer pre-built components** - Don't recreate buttons/cards
 4. **Use spacing tokens** - `spacing[4]` not `16`
+5. **Import from package** - Use `@weave/design-system`, not relative paths
 
 📖 **Full guide:** `docs/dev/design-system-guide.md`
 
