@@ -47,9 +47,7 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
   // Accessibility label (AC8)
   const accessibilityLabel = `${goal.title}, ${consistencyDisplay} consistency${
     isNewGoal ? ' (new goal)' : ''
-  }, ${goal.active_binds_count} active ${
-    goal.active_binds_count === 1 ? 'bind' : 'binds'
-  }`;
+  }, ${goal.active_binds_count} active ${goal.active_binds_count === 1 ? 'bind' : 'binds'}`;
 
   // Handle press with navigation and haptics (AC2)
   const handlePress = () => {
@@ -112,17 +110,8 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
               </Text>
               <View style={styles.consistencyContainer}>
                 {isNewGoal ? (
-                  <View
-                    style={[
-                      styles.newBadge,
-                      { backgroundColor: colors.semantic.ai.bg },
-                    ]}
-                  >
-                    <Text
-                      variant="labelBase"
-                      color="ai"
-                      style={styles.newBadgeText}
-                    >
+                  <View style={[styles.newBadge, { backgroundColor: colors.semantic.ai.bg }]}>
+                    <Text variant="labelBase" color="ai" style={styles.newBadgeText}>
                       NEW
                     </Text>
                   </View>
@@ -143,12 +132,7 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
               </View>
               {/* Visual progress bar */}
               {!isNewGoal && (
-                <View
-                  style={[
-                    styles.progressBar,
-                    { backgroundColor: colors.border.subtle },
-                  ]}
-                >
+                <View style={[styles.progressBar, { backgroundColor: colors.border.subtle }]}>
                   <View
                     style={[
                       styles.progressFill,

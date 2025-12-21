@@ -140,9 +140,7 @@ export default function WelcomeScreen() {
         {/* Dev Preview Buttons */}
         <Pressable
           className={({ pressed }) =>
-            `h-11 rounded-lg w-full justify-center items-center ${
-              pressed ? 'scale-[0.98]' : ''
-            }`
+            `h-11 rounded-lg w-full justify-center items-center ${pressed ? 'scale-[0.98]' : ''}`
           }
           onPress={handleViewNeedles}
           accessibilityRole="button"
@@ -157,9 +155,7 @@ export default function WelcomeScreen() {
             marginBottom: 8,
           }}
         >
-          <Text
-            style={{ color: '#ffffff', fontSize: 14, fontWeight: '600', letterSpacing: 1 }}
-          >
+          <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600', letterSpacing: 1 }}>
             📍 View Needles (Story 2.1)
           </Text>
         </Pressable>

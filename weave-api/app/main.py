@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import HTTPException
 
 from app.api import ai_router, analytics, goals, health, onboarding, user
 from app.core.config import settings
@@ -38,6 +38,36 @@ async def http_exception_handler(request: Request, exc: HTTPException):
             "error": {
                 "code": error_code,
                 "message": exc.detail if isinstance(exc.detail, str) else str(exc.detail),
+            }
+        },
+    )
+
+
+# Custom handler for Pydantic validation errors
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Convert Pydantic RequestValidationError to standard error response format.
+
+    Standard format: {"error": {"code": "VALIDATION_ERROR", "message": "..."}}
+    """
+    # Extract validation error details
+    errors = exc.errors()
+    error_messages = []
+
+    for error in errors:
+        field = " -> ".join(str(loc) for loc in error["loc"] if loc not in ["body", "query", "path"])
+        message = error["msg"]
+        error_messages.append(f"{field}: {message}" if field else message)
+
+    combined_message = "; ".join(error_messages)
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": combined_message,
             }
         },
     )

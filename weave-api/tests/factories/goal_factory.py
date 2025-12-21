@@ -7,9 +7,9 @@ Follows data-factories.md patterns from TEA knowledge base.
 Generated: 2025-12-20
 """
 
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
 import random
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
 # TODO: Install faker
 # pip install faker

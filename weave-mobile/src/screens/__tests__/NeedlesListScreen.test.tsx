@@ -13,6 +13,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@/design-system/theme/ThemeProvider';
 import { NeedlesListScreen } from '../NeedlesListScreen';
 
 // Create a new QueryClient for each test to ensure isolation
@@ -26,29 +27,43 @@ const createTestQueryClient = () =>
     },
   });
 
-// Mock navigation
-const mockNavigate = jest.fn();
-jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    push: mockNavigate,
-    navigate: mockNavigate,
-  }),
-}));
+// Helper function to render component with all necessary providers
+const renderWithProviders = (component: React.ReactElement, queryClient: QueryClient) => {
+  return render(
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>{component}</QueryClientProvider>
+    </ThemeProvider>
+  );
+};
 
 // Mock the useActiveGoals hook (will be implemented)
 jest.mock('../../hooks/useActiveGoals', () => ({
   useActiveGoals: jest.fn(),
 }));
 
+// Mock SimpleToast
+jest.mock('@/design-system/components/SimpleToast', () => ({
+  showSimpleToast: jest.fn(),
+}));
+
+// Note: expo-router and expo-haptics are mocked in jest.setup.js
+// Import after mocks are set up
 import { useActiveGoals } from '../../hooks/useActiveGoals';
+
 const mockUseActiveGoals = useActiveGoals as jest.MockedFunction<typeof useActiveGoals>;
+
+// Access global mock functions set up in jest.setup.js
+declare const global: {
+  mockRouterPush: jest.Mock;
+  mockRouterReplace: jest.Mock;
+  mockRouterBack: jest.Mock;
+};
 
 describe('NeedlesListScreen - Story 2.1', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
     queryClient = createTestQueryClient();
-    mockNavigate.mockClear();
     jest.clearAllMocks();
   });
 
@@ -87,11 +102,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId, getByText } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByText } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Both goals are displayed with their data
       await waitFor(() => {
@@ -132,11 +143,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getAllByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getAllByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Goals appear in order with most recent first
       await waitFor(() => {
@@ -155,11 +162,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Skeleton loader is visible
       expect(getByTestId('goals-skeleton-loader')).toBeTruthy();
@@ -190,11 +193,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: User taps on the goal card
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       await waitFor(() => {
         const goalCard = getByTestId('goal-card-goal-1');
@@ -202,7 +201,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       });
 
       // THEN: Navigation to detail view is triggered with goal_id
-      expect(mockNavigate).toHaveBeenCalledWith('/needles/goal-1');
+      expect(global.mockRouterPush).toHaveBeenCalledWith('/needles/goal-1');
     });
 
     test('should show tap animation when goal card is pressed', async () => {
@@ -225,11 +224,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: User presses on the goal card
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       await waitFor(() => {
         const goalCard = getByTestId('goal-card-goal-1');
@@ -249,8 +244,22 @@ describe('NeedlesListScreen - Story 2.1', () => {
     test('should enable Add Goal button when user has less than 3 active goals', async () => {
       // GIVEN: User has 2 active goals (less than limit)
       const mockGoals = [
-        { id: 'goal-1', title: 'Goal 1', status: 'active', consistency_7d: 80, active_binds_count: 2, updated_at: '2025-01-15T10:00:00Z' },
-        { id: 'goal-2', title: 'Goal 2', status: 'active', consistency_7d: 70, active_binds_count: 1, updated_at: '2025-01-14T10:00:00Z' },
+        {
+          id: 'goal-1',
+          title: 'Goal 1',
+          status: 'active',
+          consistency_7d: 80,
+          active_binds_count: 2,
+          updated_at: '2025-01-15T10:00:00Z',
+        },
+        {
+          id: 'goal-2',
+          title: 'Goal 2',
+          status: 'active',
+          consistency_7d: 70,
+          active_binds_count: 1,
+          updated_at: '2025-01-14T10:00:00Z',
+        },
       ];
 
       mockUseActiveGoals.mockReturnValue({
@@ -260,11 +269,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Add Goal button is enabled
       await waitFor(() => {
@@ -276,9 +281,30 @@ describe('NeedlesListScreen - Story 2.1', () => {
     test('should disable Add Goal button when user has 3 active goals', async () => {
       // GIVEN: User has 3 active goals (at limit)
       const mockGoals = [
-        { id: 'goal-1', title: 'Goal 1', status: 'active', consistency_7d: 80, active_binds_count: 2, updated_at: '2025-01-15T10:00:00Z' },
-        { id: 'goal-2', title: 'Goal 2', status: 'active', consistency_7d: 70, active_binds_count: 1, updated_at: '2025-01-14T10:00:00Z' },
-        { id: 'goal-3', title: 'Goal 3', status: 'active', consistency_7d: 90, active_binds_count: 3, updated_at: '2025-01-13T10:00:00Z' },
+        {
+          id: 'goal-1',
+          title: 'Goal 1',
+          status: 'active',
+          consistency_7d: 80,
+          active_binds_count: 2,
+          updated_at: '2025-01-15T10:00:00Z',
+        },
+        {
+          id: 'goal-2',
+          title: 'Goal 2',
+          status: 'active',
+          consistency_7d: 70,
+          active_binds_count: 1,
+          updated_at: '2025-01-14T10:00:00Z',
+        },
+        {
+          id: 'goal-3',
+          title: 'Goal 3',
+          status: 'active',
+          consistency_7d: 90,
+          active_binds_count: 3,
+          updated_at: '2025-01-13T10:00:00Z',
+        },
       ];
 
       mockUseActiveGoals.mockReturnValue({
@@ -288,11 +314,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Add Goal button is disabled
       await waitFor(() => {
@@ -304,9 +326,30 @@ describe('NeedlesListScreen - Story 2.1', () => {
     test('should show tooltip when disabled Add Goal button is tapped', async () => {
       // GIVEN: User has 3 active goals (button disabled)
       const mockGoals = [
-        { id: 'goal-1', title: 'Goal 1', status: 'active', consistency_7d: 80, active_binds_count: 2, updated_at: '2025-01-15T10:00:00Z' },
-        { id: 'goal-2', title: 'Goal 2', status: 'active', consistency_7d: 70, active_binds_count: 1, updated_at: '2025-01-14T10:00:00Z' },
-        { id: 'goal-3', title: 'Goal 3', status: 'active', consistency_7d: 90, active_binds_count: 3, updated_at: '2025-01-13T10:00:00Z' },
+        {
+          id: 'goal-1',
+          title: 'Goal 1',
+          status: 'active',
+          consistency_7d: 80,
+          active_binds_count: 2,
+          updated_at: '2025-01-15T10:00:00Z',
+        },
+        {
+          id: 'goal-2',
+          title: 'Goal 2',
+          status: 'active',
+          consistency_7d: 70,
+          active_binds_count: 1,
+          updated_at: '2025-01-14T10:00:00Z',
+        },
+        {
+          id: 'goal-3',
+          title: 'Goal 3',
+          status: 'active',
+          consistency_7d: 90,
+          active_binds_count: 3,
+          updated_at: '2025-01-13T10:00:00Z',
+        },
       ];
 
       mockUseActiveGoals.mockReturnValue({
@@ -316,11 +359,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: User taps disabled button
-      const { getByTestId, getByText } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId, getByText } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       await waitFor(() => {
         const addButton = getByTestId('add-goal-button');
@@ -338,7 +377,14 @@ describe('NeedlesListScreen - Story 2.1', () => {
     test('should navigate to Create Goal flow when enabled button is tapped', async () => {
       // GIVEN: User has 1 active goal (button enabled)
       const mockGoals = [
-        { id: 'goal-1', title: 'Goal 1', status: 'active', consistency_7d: 80, active_binds_count: 2, updated_at: '2025-01-15T10:00:00Z' },
+        {
+          id: 'goal-1',
+          title: 'Goal 1',
+          status: 'active',
+          consistency_7d: 80,
+          active_binds_count: 2,
+          updated_at: '2025-01-15T10:00:00Z',
+        },
       ];
 
       mockUseActiveGoals.mockReturnValue({
@@ -348,11 +394,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: User taps Add Goal button
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       await waitFor(() => {
         const addButton = getByTestId('add-goal-button');
@@ -360,7 +402,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       });
 
       // THEN: Navigation to Create Goal flow is triggered
-      expect(mockNavigate).toHaveBeenCalledWith('/needles/create');
+      expect(global.mockRouterPush).toHaveBeenCalledWith('/needles/create');
     });
   });
 
@@ -388,11 +430,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByText } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByText } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Consistency percentage is displayed
       await waitFor(() => {
@@ -420,11 +458,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByText } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByText } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: "New" label is displayed instead of percentage
       await waitFor(() => {
@@ -440,7 +474,14 @@ describe('NeedlesListScreen - Story 2.1', () => {
     test('should load and render goals in less than 1 second', async () => {
       // GIVEN: User has active goals
       const mockGoals = [
-        { id: 'goal-1', title: 'Goal 1', status: 'active', consistency_7d: 80, active_binds_count: 2, updated_at: '2025-01-15T10:00:00Z' },
+        {
+          id: 'goal-1',
+          title: 'Goal 1',
+          status: 'active',
+          consistency_7d: 80,
+          active_binds_count: 2,
+          updated_at: '2025-01-15T10:00:00Z',
+        },
       ];
 
       mockUseActiveGoals.mockReturnValue({
@@ -482,16 +523,14 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId, getByText } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId, getByText } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Empty state is displayed
       await waitFor(() => {
         expect(getByTestId('empty-state')).toBeTruthy();
-        expect(getByText("You haven't set any goals yet. What do you want to achieve?")).toBeTruthy();
+        expect(
+          getByText("You haven't set any goals yet. What do you want to achieve?")
+        ).toBeTruthy();
       });
     });
 
@@ -504,11 +543,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Create First Goal button is visible
       await waitFor(() => {
@@ -531,16 +566,14 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId, getByText } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId, getByText } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Error message is displayed
       await waitFor(() => {
         expect(getByTestId('error-state')).toBeTruthy();
-        expect(getByText("Couldn't load your goals. Check your connection and try again.")).toBeTruthy();
+        expect(
+          getByText("Couldn't load your goals. Check your connection and try again.")
+        ).toBeTruthy();
       });
     });
 
@@ -555,11 +588,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Retry button is visible
       await waitFor(() => {
@@ -579,11 +608,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: User taps retry button
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       await waitFor(() => {
         const retryButton = getByTestId('retry-button');
@@ -619,11 +644,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Goal card has meaningful accessibility label
       await waitFor(() => {
@@ -636,7 +657,14 @@ describe('NeedlesListScreen - Story 2.1', () => {
     test('should have accessible label for Add Goal button', async () => {
       // GIVEN: User has 1 active goal
       const mockGoals = [
-        { id: 'goal-1', title: 'Goal 1', status: 'active', consistency_7d: 80, active_binds_count: 2, updated_at: '2025-01-15T10:00:00Z' },
+        {
+          id: 'goal-1',
+          title: 'Goal 1',
+          status: 'active',
+          consistency_7d: 80,
+          active_binds_count: 2,
+          updated_at: '2025-01-15T10:00:00Z',
+        },
       ];
 
       mockUseActiveGoals.mockReturnValue({
@@ -646,11 +674,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Button has clear accessibility label
       await waitFor(() => {
@@ -662,9 +686,30 @@ describe('NeedlesListScreen - Story 2.1', () => {
     test('should announce disabled state for Add Goal button when at limit', async () => {
       // GIVEN: User has 3 active goals
       const mockGoals = [
-        { id: 'goal-1', title: 'Goal 1', status: 'active', consistency_7d: 80, active_binds_count: 2, updated_at: '2025-01-15T10:00:00Z' },
-        { id: 'goal-2', title: 'Goal 2', status: 'active', consistency_7d: 70, active_binds_count: 1, updated_at: '2025-01-14T10:00:00Z' },
-        { id: 'goal-3', title: 'Goal 3', status: 'active', consistency_7d: 90, active_binds_count: 3, updated_at: '2025-01-13T10:00:00Z' },
+        {
+          id: 'goal-1',
+          title: 'Goal 1',
+          status: 'active',
+          consistency_7d: 80,
+          active_binds_count: 2,
+          updated_at: '2025-01-15T10:00:00Z',
+        },
+        {
+          id: 'goal-2',
+          title: 'Goal 2',
+          status: 'active',
+          consistency_7d: 70,
+          active_binds_count: 1,
+          updated_at: '2025-01-14T10:00:00Z',
+        },
+        {
+          id: 'goal-3',
+          title: 'Goal 3',
+          status: 'active',
+          consistency_7d: 90,
+          active_binds_count: 3,
+          updated_at: '2025-01-13T10:00:00Z',
+        },
       ];
 
       mockUseActiveGoals.mockReturnValue({
@@ -674,11 +719,7 @@ describe('NeedlesListScreen - Story 2.1', () => {
       } as any);
 
       // WHEN: Screen renders
-      const { getByTestId } = render(
-        <QueryClientProvider client={queryClient}>
-          <NeedlesListScreen />
-        </QueryClientProvider>
-      );
+      const { getByTestId } = renderWithProviders(<NeedlesListScreen />, queryClient);
 
       // THEN: Button announces disabled state
       await waitFor(() => {

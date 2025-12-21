@@ -9,7 +9,6 @@ Implements AC1 and AC4 from Story 2.1
 
 import logging
 from datetime import date, timedelta
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client
@@ -162,9 +161,8 @@ async def _enrich_goals_with_stats(
         try:
             aggregates_response = (
                 supabase.table("daily_aggregates")
-                .select("consistency_score")
+                .select("active_day_with_proof, completed_count")
                 .eq("user_id", user_id)
-                .eq("goal_id", goal_id)
                 .gte("local_date", seven_days_ago)
                 .execute()
             )
@@ -174,13 +172,12 @@ async def _enrich_goals_with_stats(
                 f"📊 Goal {goal_id}: Found {len(aggregates)} daily aggregates"
             )
 
-            # Calculate consistency_7d (average of consistency_score)
+            # Calculate consistency_7d (% of active days with proof)
             if len(aggregates) >= 7:
                 # Goal has at least 7 days of data
-                total_consistency = sum(
-                    agg["consistency_score"] for agg in aggregates
-                )
-                consistency_7d = round(total_consistency / len(aggregates), 2)
+                # Consistency = % of days that were active (had completions and proof)
+                active_days = sum(1 for agg in aggregates if agg.get("active_day_with_proof"))
+                consistency_7d = round((active_days / len(aggregates)) * 100, 2)
             else:
                 # New goal (less than 7 days of data) -> null
                 consistency_7d = None
@@ -192,12 +189,13 @@ async def _enrich_goals_with_stats(
             goal["consistency_7d"] = None
 
         # Count active subtask_templates (binds)
+        # Note: Schema uses is_archived, not is_active (inverted logic)
         try:
             binds_response = (
                 supabase.table("subtask_templates")
                 .select("id", count="exact")
                 .eq("goal_id", goal_id)
-                .eq("is_active", True)
+                .eq("is_archived", False)  # Not archived = active
                 .execute()
             )
 

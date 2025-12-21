@@ -49,15 +49,24 @@ jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(),
 }));
 
+const mockPush = jest.fn();
+const mockReplace = jest.fn();
+const mockBack = jest.fn();
+
 jest.mock('expo-router', () => ({
   useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    back: jest.fn(),
+    push: mockPush,
+    replace: mockReplace,
+    back: mockBack,
   }),
   useSegments: () => [],
   usePathname: () => '/',
 }));
+
+// Export mock functions for tests to access
+global.mockRouterPush = mockPush;
+global.mockRouterReplace = mockReplace;
+global.mockRouterBack = mockBack;
 
 // Mock Supabase
 jest.mock('@supabase/supabase-js', () => ({

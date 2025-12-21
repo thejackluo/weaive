@@ -33,42 +33,25 @@ export function GoalCardSkeleton() {
       >
         <View style={styles.container}>
           {/* Title skeleton */}
-          <View
-            style={[
-              styles.titleSkeleton,
-              { backgroundColor: skeletonColor, opacity: 0.4 },
-            ]}
-          />
+          <View style={[styles.titleSkeleton, { backgroundColor: skeletonColor, opacity: 0.4 }]} />
 
           {/* Stats row skeleton */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <View
-                style={[
-                  styles.statLabelSkeleton,
-                  { backgroundColor: skeletonColor, opacity: 0.4 },
-                ]}
+                style={[styles.statLabelSkeleton, { backgroundColor: skeletonColor, opacity: 0.4 }]}
               />
               <View
-                style={[
-                  styles.statValueSkeleton,
-                  { backgroundColor: skeletonColor, opacity: 0.4 },
-                ]}
+                style={[styles.statValueSkeleton, { backgroundColor: skeletonColor, opacity: 0.4 }]}
               />
             </View>
 
             <View style={styles.statItem}>
               <View
-                style={[
-                  styles.statLabelSkeleton,
-                  { backgroundColor: skeletonColor, opacity: 0.4 },
-                ]}
+                style={[styles.statLabelSkeleton, { backgroundColor: skeletonColor, opacity: 0.4 }]}
               />
               <View
-                style={[
-                  styles.statValueSkeleton,
-                  { backgroundColor: skeletonColor, opacity: 0.4 },
-                ]}
+                style={[styles.statValueSkeleton, { backgroundColor: skeletonColor, opacity: 0.4 }]}
               />
             </View>
           </View>
