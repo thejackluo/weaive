@@ -7,6 +7,9 @@ FastAPI router for journal entry operations:
 - PATCH /api/journal-entries/{journal_id}: Update existing journal entry
 """
 
+import logging
+import traceback
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -15,6 +18,7 @@ from uuid import UUID
 
 from app.core.deps import get_current_user, get_supabase_client
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/journal-entries", tags=["journal"])
 
 
@@ -74,6 +78,12 @@ async def create_journal_entry(
     user_id = user["sub"]  # Extract user ID from JWT payload
     supabase = get_supabase_client()
 
+    if not supabase:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database connection not configured. Check SUPABASE_URL and SUPABASE_SERVICE_KEY in .env"
+        )
+
     # Get user's profile ID (convert auth_user_id → user_profiles.id)
     profile_response = supabase.table("user_profiles").select("id").eq("auth_user_id", user_id).single().execute()
 
@@ -96,8 +106,16 @@ async def create_journal_entry(
 
     # Insert journal entry
     try:
+        logger.info(f"📝 Attempting to insert journal entry: user_id={profile_id}, local_date={entry.local_date}")
+        logger.debug(f"Journal data: {journal_data}")
+
         response = supabase.table("journal_entries").insert(journal_data).execute()
+
+        logger.info(f"✅ Supabase insert response received: {response}")
     except Exception as e:
+        logger.error(f"❌ EXCEPTION during journal insert: {type(e).__name__}: {str(e)}")
+        logger.error(f"Full traceback:\n{traceback.format_exc()}")
+
         # Handle duplicate entry error (409)
         if "duplicate key value violates unique constraint" in str(e):
             raise HTTPException(

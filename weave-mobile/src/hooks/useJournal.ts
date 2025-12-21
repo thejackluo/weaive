@@ -102,6 +102,10 @@ export function useSubmitJournal() {
 
     // Refetch on success
     onSuccess: (data) => {
+      // CRITICAL: Replace the temp-id optimistic cache with real server response
+      // This fixes the bug where the screen tries to PATCH /api/journal-entries/temp-id
+      queryClient.setQueryData(journalKeys.today(), data);
+
       queryClient.invalidateQueries({ queryKey: journalKeys.all });
       queryClient.invalidateQueries({ queryKey: ['daily-aggregates'] });
 
