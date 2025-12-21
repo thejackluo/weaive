@@ -3,14 +3,27 @@
  *
  * HTTP client for journal entry operations
  * Communicates with FastAPI backend: /api/journal-entries
+ *
+ * PERFORMANCE FIX: Uses shared getAuthToken from AuthContext
+ * instead of calling supabase.auth.getSession() independently.
+ * This avoids network request queueing and timeouts on mobile devices.
  */
-
-import { supabase } from '@lib/supabase';
 
 import { getApiBaseUrl } from '@/utils/api';
 
 // API endpoint (loaded from .env via app.config.js)
 const API_BASE_URL = getApiBaseUrl();
+
+// Auth token getter (set by initJournalApi)
+let getAuthTokenFn: (() => Promise<string>) | null = null;
+
+/**
+ * Initialize journal API with auth token getter from AuthContext
+ * MUST be called before using any API methods
+ */
+export function initJournalApi(getAuthToken: () => Promise<string>) {
+  getAuthTokenFn = getAuthToken;
+}
 
 export interface JournalEntryCreate {
   fulfillment_score: number;
@@ -45,18 +58,24 @@ export interface JournalEntryResponse {
 }
 
 /**
- * Get authenticated user's access token
+ * Get authenticated user's access token from AuthContext
+ * Uses cached session to avoid duplicate network calls
  */
 async function getAuthToken(): Promise<string> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const start = performance.now();
+  console.log('[JOURNAL_API] 🔑 Getting auth token...');
 
-  if (!session?.access_token) {
-    throw new Error('Not authenticated');
+  if (!getAuthTokenFn) {
+    console.error('[JOURNAL_API] ❌ journalApi not initialized!');
+    throw new Error(
+      'journalApi not initialized. Call initJournalApi(getAuthToken) in app/_layout.tsx'
+    );
   }
 
-  return session.access_token;
+  const token = await getAuthTokenFn();
+  const duration = (performance.now() - start).toFixed(2);
+  console.log(`[JOURNAL_API] ✅ Auth token retrieved in ${duration}ms`);
+  return token;
 }
 
 /**
@@ -65,29 +84,86 @@ async function getAuthToken(): Promise<string> {
  * Returns null if no entry exists (404)
  */
 export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
+  const overallStart = performance.now();
+  console.log('[JOURNAL_API] 📖 Fetching today\'s journal...');
+  console.log('[JOURNAL_API] 🌐 API Base URL:', API_BASE_URL);
+
   try {
+    // Step 1: Get auth token
     const token = await getAuthToken();
 
-    const response = await fetch(`${API_BASE_URL}/api/journal-entries/today`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    // Step 2: Make API request with timeout
+    const fetchStart = performance.now();
+    console.log('[JOURNAL_API] 🚀 Sending GET request to /api/journal-entries/today');
 
-    if (response.status === 404) {
-      return null;
+    // Create AbortController for 10-second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.error('[JOURNAL_API] ⏱️  Request timeout - aborting after 10s');
+      controller.abort();
+    }, 10000);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/journal-entries/today`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const fetchDuration = (performance.now() - fetchStart).toFixed(2);
+      console.log(`[JOURNAL_API] 📡 Response received in ${fetchDuration}ms - Status: ${response.status}`);
+
+      if (response.status === 404) {
+        console.log('[JOURNAL_API] ℹ️  No journal entry found for today (404 - this is normal for first entry)');
+        const totalDuration = (performance.now() - overallStart).toFixed(2);
+        console.log(`[JOURNAL_API] ✅ Total operation time: ${totalDuration}ms`);
+        return null;
+      }
+
+      if (!response.ok) {
+        console.error(`[JOURNAL_API] ❌ API error: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch journal: ${response.statusText}`);
+      }
+
+      // Step 3: Parse response
+      const parseStart = performance.now();
+      const result = await response.json();
+      const parseDuration = (performance.now() - parseStart).toFixed(2);
+      console.log(`[JOURNAL_API] 📄 Response parsed in ${parseDuration}ms`);
+
+      const totalDuration = (performance.now() - overallStart).toFixed(2);
+      console.log(`[JOURNAL_API] ✅ Journal loaded successfully in ${totalDuration}ms`);
+      console.log('[JOURNAL_API] 📊 Journal data:', { id: result.data?.id, local_date: result.data?.local_date });
+
+      return result.data;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+
+      // Handle abort error specially
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.error('[JOURNAL_API] ⏱️  Request aborted after 10s timeout');
+        throw new Error('Request timeout - backend not responding');
+      }
+
+      throw fetchError;
     }
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch journal: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result.data;
   } catch (error) {
-    console.error('getTodayJournal error:', error);
+    const totalDuration = (performance.now() - overallStart).toFixed(2);
+    console.error(`[JOURNAL_API] ❌ getTodayJournal error after ${totalDuration}ms:`, error);
+
+    // Enhanced error diagnostics
+    if (error instanceof TypeError && error.message.includes('Network request failed')) {
+      console.error('[JOURNAL_API] 🔴 NETWORK ERROR: Cannot reach backend server');
+      console.error('[JOURNAL_API] 💡 Check: 1) Backend is running, 2) API URL is correct, 3) Network connectivity');
+    } else if (error instanceof Error && error.message.includes('timeout')) {
+      console.error('[JOURNAL_API] ⏱️  TIMEOUT ERROR: Request took too long');
+    }
+
     throw error;
   }
 }

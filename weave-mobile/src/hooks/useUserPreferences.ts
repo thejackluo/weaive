@@ -24,35 +24,62 @@ export const preferencesKeys = {
 
 /**
  * Fetch user preferences (custom reflection questions)
+ * Uses Supabase client directly (no AuthContext needed)
  */
 export function useUserPreferences() {
+  console.log('[PREFERENCES_HOOK] 🎣 useUserPreferences initialized');
+
   return useQuery({
     queryKey: preferencesKeys.customQuestions(),
     queryFn: async (): Promise<CustomQuestion[]> => {
-      // Get current user
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const overallStart = performance.now();
+      console.log('[PREFERENCES_HOOK] 🔄 Query function executing...');
 
-      if (!session) {
+      // Step 1: Get current user from Supabase client
+      const authStart = performance.now();
+      console.log('[PREFERENCES_HOOK] 🔑 Calling supabase.auth.getUser()...');
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const authDuration = (performance.now() - authStart).toFixed(2);
+      console.log(`[PREFERENCES_HOOK] ✅ Auth user retrieved in ${authDuration}ms`);
+
+      if (!user) {
+        console.error('[PREFERENCES_HOOK] ❌ Not authenticated!');
         throw new Error('Not authenticated');
       }
 
-      // Fetch user profile with preferences
+      console.log('[PREFERENCES_HOOK] 👤 User ID:', user.id);
+
+      // Step 2: Fetch user profile with preferences
+      const queryStart = performance.now();
+      console.log('[PREFERENCES_HOOK] 🗄️  Querying user_profiles...');
+
       const { data: profile, error } = await supabase
         .from('user_profiles')
         .select('preferences')
-        .eq('auth_user_id', session.user.id)
+        .eq('auth_user_id', user.id)
         .single();
 
+      const queryDuration = (performance.now() - queryStart).toFixed(2);
+
       if (error) {
-        console.error('Failed to fetch user preferences:', error);
+        console.error(`[PREFERENCES_HOOK] ❌ Supabase query failed after ${queryDuration}ms:`, error);
         throw error;
       }
 
-      // Extract custom_reflection_questions from preferences JSONB
+      console.log(`[PREFERENCES_HOOK] ✅ Profile fetched in ${queryDuration}ms`);
+
+      // Step 3: Extract custom_reflection_questions from preferences JSONB
       const preferences = profile?.preferences as UserPreferences | null;
-      return preferences?.custom_reflection_questions || [];
+      const questions = preferences?.custom_reflection_questions || [];
+
+      const totalDuration = (performance.now() - overallStart).toFixed(2);
+      console.log(`[PREFERENCES_HOOK] ✅ Total operation: ${totalDuration}ms - Questions found: ${questions.length}`);
+
+      return questions;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
@@ -61,18 +88,19 @@ export function useUserPreferences() {
 
 /**
  * Update custom reflection questions in user preferences
+ * Uses Supabase client directly (no AuthContext needed)
  */
 export function useUpdateCustomQuestions() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (questions: CustomQuestion[]) => {
-      // Get current user
+      // Get current user from Supabase client (uses cached session)
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      if (!session) {
+      if (!user) {
         throw new Error('Not authenticated');
       }
 
@@ -84,7 +112,7 @@ export function useUpdateCustomQuestions() {
             custom_reflection_questions: questions,
           },
         })
-        .eq('auth_user_id', session.user.id)
+        .eq('auth_user_id', user.id)
         .select()
         .single();
 

@@ -27,13 +27,31 @@ export const journalKeys = {
  * Returns null if no entry exists for today
  */
 export function useGetTodayJournal() {
+  console.log('[JOURNAL_HOOK] 🎣 useGetTodayJournal initialized');
+
   return useQuery({
     queryKey: journalKeys.today(),
-    queryFn: journalApi.getTodayJournal,
+    queryFn: async () => {
+      console.log('[JOURNAL_HOOK] 🔄 Query function executing...');
+      const start = performance.now();
+
+      try {
+        const result = await journalApi.getTodayJournal();
+        const duration = (performance.now() - start).toFixed(2);
+        console.log(`[JOURNAL_HOOK] ✅ Query completed in ${duration}ms - Result:`, result ? 'Journal found' : 'No journal (null)');
+        return result;
+      } catch (error) {
+        const duration = (performance.now() - start).toFixed(2);
+        console.error(`[JOURNAL_HOOK] ❌ Query failed after ${duration}ms:`, error);
+        throw error;
+      }
+    },
     retry: 1,
     // Return null instead of throwing on 404
     throwOnError: (error: any) => {
-      return error?.response?.status !== 404;
+      const shouldThrow = error?.response?.status !== 404;
+      console.log(`[JOURNAL_HOOK] 🤔 throwOnError: ${shouldThrow} (status: ${error?.response?.status})`);
+      return shouldThrow;
     },
   });
 }
