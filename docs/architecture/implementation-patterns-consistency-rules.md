@@ -161,3 +161,57 @@ if (isLoading) return <GoalCardSkeleton />  // Initial load
 - Database constraints prevent invalid operations
 
 ---
+
+## Development Infrastructure Standardization (Epic 1.5)
+
+**Epic 1.5: Development Infrastructure** established comprehensive patterns for ALL development. Agents implementing ANY story should reference these standards:
+
+### Frontend Standardization (Story 1.5.1)
+**When:** Creating screens, navigation flows, or UI components
+**Reference:** `docs/stories/1-5-1-navigation-architecture.md`
+**Patterns:**
+- File-based routing with Expo Router (`app/` directory structure)
+- 3-tab navigation: Thread, AI Chat, Dashboard
+- Design system component usage (`@/design-system`)
+- State management boundaries (TanStack Query, Zustand, useState)
+
+### Backend Standardization (Story 1.5.2)
+**When:** Creating API endpoints, database models, or backend services
+**Reference:** `docs/stories/1-5-2-backend-standardization.md` + `docs/dev/backend-patterns-guide.md`
+**Patterns:**
+- API endpoint naming: `GET /api/{resources}`, `POST /api/{resources}`
+- Pydantic models: `{Resource}Create`, `{Resource}Response`
+- Database conventions: `snake_case`, plural tables, soft delete with `deleted_at`
+- Error handling: Standard codes (VALIDATION_ERROR, NOT_FOUND, RATE_LIMIT_EXCEEDED)
+- Testing: Pytest fixtures, integration test patterns
+
+**Templates Available:**
+- API endpoint template (`scripts/templates/api_router_template.py`)
+- Database model template (SQLAlchemy `BaseModel` with timestamps)
+- Pydantic schema template (request/response models)
+
+### AI Services Standardization (Story 1.5.3)
+**When:** Integrating AI features (text generation, image analysis, voice transcription)
+**Reference:** `docs/stories/1-5-3-ai-services-standardization.md` + `docs/dev/ai-services-guide.md`
+**Patterns:**
+- Unified `AIProviderBase` abstraction for all AI modalities
+- Provider fallback chains: Primary → Secondary → Graceful degradation
+- Cost tracking: Log ALL AI calls to `ai_runs` table
+- Rate limiting: Check `daily_aggregates` before AI calls
+- React Native hooks: `useAIChat()`, `useImageAnalysis()`, `useVoiceTranscription()`
+
+**Provider Decision Tree:**
+| Use Case | Primary Provider | Fallback | Cost |
+|----------|------------------|----------|------|
+| Text Generation (routine) | GPT-4o-mini | Claude 3.7 Sonnet | $0.15/$0.60/MTok |
+| Complex Reasoning | Claude 3.7 Sonnet | GPT-4o | $3.00/$15.00/MTok |
+| Image Analysis | Gemini 3.0 Flash | GPT-4o Vision | $0.02/image |
+| Voice Transcription | AssemblyAI | Whisper API | $0.15/hr |
+
+**Before Writing Code:**
+1. Identify work type: Frontend? Backend? AI?
+2. Read relevant standardization story
+3. Use templates and conventions
+4. Don't reinvent patterns
+
+---

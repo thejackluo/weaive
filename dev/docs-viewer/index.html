@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weavelight Documentation</title>
+    <title>Documentation Viewer</title>
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -418,6 +418,140 @@
             height: 16px;
         }
 
+        /* Status & Priority Controls */
+        .doc-controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-btn, .priority-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 5px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .status-btn:hover, .priority-btn:hover {
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .status-btn.active, .priority-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .status-btn.status-in-progress.active {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+
+        .status-btn.status-archived.active {
+            background: var(--text-tertiary);
+            border-color: var(--text-tertiary);
+        }
+
+        .status-btn.status-finished.active {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .priority-btn.priority-high.active {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .priority-btn.priority-medium.active {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+
+        .priority-btn.priority-low.active {
+            background: var(--text-tertiary);
+            border-color: var(--text-tertiary);
+        }
+
+        /* Status badges in navigation */
+        .nav-item-badges {
+            position: absolute;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .status-badge {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-badge.in-progress {
+            background: var(--accent-orange);
+        }
+
+        .status-badge.archived {
+            background: var(--text-tertiary);
+        }
+
+        .status-badge.finished {
+            background: var(--accent-green);
+        }
+
+        .priority-indicator {
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .priority-indicator.high {
+            color: #ef4444;
+        }
+
+        .priority-indicator.medium {
+            color: var(--accent-orange);
+        }
+
+        .priority-indicator.low {
+            color: var(--text-tertiary);
+        }
+
+        /* Folder completion badge */
+        .folder-completion-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: var(--accent-green);
+            color: white;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
         /* Scroll Reading Progress */
         .scroll-progress-bar {
             position: fixed;
@@ -628,6 +762,111 @@
         .progress-stats-text {
             font-size: 12px;
             color: var(--text-secondary);
+        }
+
+        /* Table of Contents */
+        .toc-container {
+            position: fixed;
+            right: 32px;
+            top: 120px;
+            width: 240px;
+            max-height: calc(100vh - 160px);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-y: auto;
+            display: none;
+            z-index: 50;
+        }
+
+        .toc-container.visible {
+            display: block;
+        }
+
+        .toc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .toc-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .toc-toggle {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s;
+        }
+
+        .toc-toggle:hover {
+            color: var(--text-primary);
+        }
+
+        .toc-toggle-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc-item {
+            margin: 0;
+            padding: 0;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 6px 8px 6px 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            transition: all 0.15s;
+            cursor: pointer;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            border-left-color: var(--text-tertiary);
+        }
+
+        .toc-link.active {
+            color: var(--primary);
+            border-left-color: var(--primary);
+            background: var(--primary-subtle);
+        }
+
+        .toc-link.level-1 {
+            padding-left: 12px;
+            font-weight: 600;
+        }
+
+        .toc-link.level-2 {
+            padding-left: 24px;
+        }
+
+        .toc-link.level-3 {
+            padding-left: 36px;
+            font-size: 12px;
         }
 
         /* Markdown */
@@ -1078,6 +1317,22 @@
             .content-meta {
                 flex-wrap: wrap;
             }
+
+            .toc-container {
+                right: 12px;
+                left: 12px;
+                width: auto;
+                top: auto;
+                bottom: 80px;
+                max-height: 50vh;
+            }
+        }
+
+        @media (max-width: 1400px) {
+            .toc-container {
+                width: 200px;
+                right: 16px;
+            }
         }
     </style>
 </head>
@@ -1088,7 +1343,7 @@
             <div class="sidebar-header">
                 <div class="logo">
                     <i data-lucide="book-open" class="logo-icon"></i>
-                    <span class="logo-text">Weavelight Docs</span>
+                    <span class="logo-text">Documentation</span>
                 </div>
             </div>
 
@@ -1182,6 +1437,17 @@
                 <i data-lucide="x" style="width: 14px; height: 14px;"></i>
             </button>
         </div>
+
+        <!-- Table of Contents -->
+        <div class="toc-container" id="toc-container">
+            <div class="toc-header">
+                <span class="toc-title">On This Page</span>
+                <button class="toc-toggle" onclick="toggleTOC()" title="Hide table of contents">
+                    <i data-lucide="x" class="toc-toggle-icon"></i>
+                </button>
+            </div>
+            <ul class="toc-list" id="toc-list"></ul>
+        </div>
     </div>
 
     <script>
@@ -1197,12 +1463,16 @@
             totalLines: 0,
             totalReadingTime: 0
         };
+        let tocVisible = false;
+        let currentTOCHeadings = [];
 
         // LocalStorage keys
         const STORAGE_KEYS = {
             COMPLETED: 'docs_completed',
             HIGHLIGHTS: 'docs_highlights',
-            DOC_STATS: 'docs_stats'
+            STATUS: 'docs_status', // in-progress, archived, finished
+            PRIORITY: 'docs_priority', // high, medium, low
+            FOLDER_STATUS: 'folder_status' // folder completion tracking
         };
 
         // Get completed documents from localStorage
@@ -1216,12 +1486,95 @@
             const completedDocs = getCompletedDocs();
             if (completed) {
                 completedDocs[path] = new Date().toISOString();
+                // Also set status to finished
+                setDocStatus(path, 'finished');
             } else {
                 delete completedDocs[path];
             }
             localStorage.setItem(STORAGE_KEYS.COMPLETED, JSON.stringify(completedDocs));
             updateProgressStats();
+            checkFolderCompletion();
             renderNav(); // Re-render to show checkmarks
+        }
+
+        // Get document status (in-progress, archived, finished)
+        function getDocStatus(path) {
+            const data = localStorage.getItem(STORAGE_KEYS.STATUS);
+            const allStatuses = data ? JSON.parse(data) : {};
+            return allStatuses[path] || null;
+        }
+
+        // Set document status
+        function setDocStatus(path, status) {
+            const data = localStorage.getItem(STORAGE_KEYS.STATUS);
+            const allStatuses = data ? JSON.parse(data) : {};
+            if (status) {
+                allStatuses[path] = { status, updatedAt: new Date().toISOString() };
+            } else {
+                delete allStatuses[path];
+            }
+            localStorage.setItem(STORAGE_KEYS.STATUS, JSON.stringify(allStatuses));
+            checkFolderCompletion();
+            renderNav();
+        }
+
+        // Get document priority (high, medium, low)
+        function getDocPriority(path) {
+            const data = localStorage.getItem(STORAGE_KEYS.PRIORITY);
+            const allPriorities = data ? JSON.parse(data) : {};
+            return allPriorities[path] || 'medium'; // default to medium
+        }
+
+        // Set document priority
+        function setDocPriority(path, priority) {
+            const data = localStorage.getItem(STORAGE_KEYS.PRIORITY);
+            const allPriorities = data ? JSON.parse(data) : {};
+            allPriorities[path] = priority;
+            localStorage.setItem(STORAGE_KEYS.PRIORITY, JSON.stringify(allPriorities));
+            renderNav();
+        }
+
+        // Check if all docs in a folder are completed
+        function checkFolderCompletion() {
+            const completedDocs = getCompletedDocs();
+            const folderStatus = {};
+
+            function checkFolder(structure, folderPath = '') {
+                let totalFiles = 0;
+                let completedFiles = 0;
+
+                for (const file of structure.files) {
+                    totalFiles++;
+                    if (completedDocs[file.path]) {
+                        completedFiles++;
+                    }
+                }
+
+                for (const folderName in structure.folders) {
+                    const subPath = folderPath ? `${folderPath}/${folderName}` : folderName;
+                    const subResult = checkFolder(structure.folders[folderName], subPath);
+                    totalFiles += subResult.total;
+                    completedFiles += subResult.completed;
+                }
+
+                const isComplete = totalFiles > 0 && totalFiles === completedFiles;
+                if (folderPath) {
+                    folderStatus[folderPath] = { total: totalFiles, completed: completedFiles, isComplete };
+                }
+
+                return { total: totalFiles, completed: completedFiles };
+            }
+
+            checkFolder(docsStructure);
+            localStorage.setItem(STORAGE_KEYS.FOLDER_STATUS, JSON.stringify(folderStatus));
+            return folderStatus;
+        }
+
+        // Get folder completion status
+        function getFolderStatus(folderPath) {
+            const data = localStorage.getItem(STORAGE_KEYS.FOLDER_STATUS);
+            const allStatuses = data ? JSON.parse(data) : {};
+            return allStatuses[folderPath] || null;
         }
 
         // Get highlights for a document
@@ -1237,6 +1590,31 @@
             const allHighlights = data ? JSON.parse(data) : {};
             allHighlights[path] = highlights;
             localStorage.setItem(STORAGE_KEYS.HIGHLIGHTS, JSON.stringify(allHighlights));
+        }
+
+        // Simple hash function for content identification
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return hash.toString(36);
+        }
+
+        // Get context hash for a text node (paragraph or block)
+        function getContextHash(textNode) {
+            // Find parent paragraph or block element
+            let context = textNode.parentElement;
+            while (context && !['P', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TD'].includes(context.tagName)) {
+                context = context.parentElement;
+            }
+            if (!context || context.id === 'markdown-content') {
+                // Fallback: use parent element
+                context = textNode.parentElement;
+            }
+            return simpleHash(context.textContent.trim());
         }
 
         // Calculate reading time (words per minute)
@@ -1321,7 +1699,7 @@
 
                 // Calculate time remaining
                 const timeRemaining = Math.ceil(currentDocReadingTime * (1 - scrollPercent / 100));
-                
+
                 // Show indicator if scrolled past 5%
                 if (scrollPercent > 5 && timeRemaining > 0) {
                     readingTimeIndicator.classList.add('visible');
@@ -1336,51 +1714,32 @@
                     readingTimeIndicator.classList.remove('visible');
                 }
 
+                // Update TOC active state
+                updateTOCActiveState();
+
                 lucide.createIcons();
             });
         }
 
-        // Cache document stats
-        async function cacheDocumentStats() {
-            // Try to load from localStorage first
-            const cached = localStorage.getItem(STORAGE_KEYS.DOC_STATS);
-            if (cached) {
-                docStats = JSON.parse(cached);
-                updateDocStats();
-                return;
-            }
-
-            // Calculate stats for all documents
-            let totalWords = 0;
-            let totalLines = 0;
-            let totalReadingTime = 0;
-
-            for (const doc of allDocs) {
-                try {
-                    const fullPath = `../../${doc.path}`;
-                    const response = await fetch(fullPath);
-                    if (response.ok) {
-                        const markdown = await response.text();
-                        const stats = calculateDocStats(markdown);
-                        totalWords += stats.words;
-                        totalLines += stats.lines;
-                        totalReadingTime += stats.readingTime;
-                    }
-                } catch (error) {
-                    console.warn(`Could not load stats for ${doc.path}`);
+        // Load document stats from server (always fresh)
+        async function loadDocumentStats() {
+            try {
+                const response = await fetch('/api/stats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    docStats = {
+                        totalDocs: stats.totalFiles,
+                        totalWords: stats.totalWords,
+                        totalLines: stats.totalLines,
+                        totalReadingTime: stats.totalReadingTime
+                    };
+                    updateDocStats();
+                } else {
+                    console.warn('Could not load stats from server');
                 }
+            } catch (error) {
+                console.error('Error loading stats:', error);
             }
-
-            docStats = {
-                totalDocs: allDocs.length,
-                totalWords,
-                totalLines,
-                totalReadingTime
-            };
-
-            // Cache for future sessions
-            localStorage.setItem(STORAGE_KEYS.DOC_STATS, JSON.stringify(docStats));
-            updateDocStats();
         }
 
         // Fetch documents dynamically from server
@@ -1399,7 +1758,7 @@
                 renderWelcome();
                 
                 // Calculate and display stats
-                cacheDocumentStats();
+                loadDocumentStats();
                 
                 // Setup scroll tracking
                 setupScrollTracking();
@@ -1455,14 +1814,26 @@
                     
                     const subFolderId = `${folderId}-${folderName}`;
                     const isExpanded = expandedFolders.has(subFolderId);
-                    
+
+                    // Check folder completion
+                    const folderPath = subFolderId.replace('root-', '');
+                    const folderStatus = getFolderStatus(folderPath);
+
                     // Folder header
                     const folderHeader = document.createElement('div');
                     folderHeader.className = 'nav-folder-header';
+                    let completionBadge = '';
+                    if (folderStatus && folderStatus.isComplete) {
+                        completionBadge = '<span class="folder-completion-badge">✓</span>';
+                    } else if (folderStatus && folderStatus.completed > 0) {
+                        completionBadge = `<span class="folder-completion-badge" style="background: var(--accent-orange)">${folderStatus.completed}/${folderStatus.total}</span>`;
+                    }
+
                     folderHeader.innerHTML = `
                         <i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="folder-chevron"></i>
                         <i data-lucide="folder" class="nav-item-icon"></i>
                         <span>${folderName}</span>
+                        ${completionBadge}
                     `;
                     folderHeader.onclick = () => toggleFolder(subFolderId);
                     
@@ -1492,9 +1863,26 @@
                     }
                     item.dataset.path = file.path;
                     item.style.paddingLeft = `${(level * 12) + 24}px`; // Extra indent for files
+
+                    // Get status and priority for badges
+                    const docStatus = getDocStatus(file.path);
+                    const docPriority = getDocPriority(file.path);
+
+                    let badgesHtml = '<div class="nav-item-badges">';
+                    // Status badge
+                    if (docStatus && docStatus.status) {
+                        badgesHtml += `<div class="status-badge ${docStatus.status}"></div>`;
+                    }
+                    // Priority indicator
+                    if (docPriority && docPriority !== 'medium') {
+                        badgesHtml += `<span class="priority-indicator ${docPriority}">${docPriority === 'high' ? '!' : docPriority === 'low' ? '↓' : ''}</span>`;
+                    }
+                    badgesHtml += '</div>';
+
                     item.innerHTML = `
                         <i data-lucide="${file.icon}" class="nav-item-icon"></i>
                         <span>${file.title}</span>
+                        ${badgesHtml}
                     `;
                     item.onclick = () => {
                         loadDoc(file.path);
@@ -1610,7 +1998,11 @@
                 // Check if completed
                 const completedDocs = getCompletedDocs();
                 const isCompleted = !!completedDocs[path];
-                
+
+                // Get status and priority
+                const docStatus = getDocStatus(path);
+                const docPriority = getDocPriority(path);
+
                 // Extract YAML frontmatter (handle different line endings)
                 let frontmatter = '';
                 const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/m;
@@ -1675,6 +2067,10 @@
                                 <i data-lucide="clock" class="meta-badge-icon"></i>
                                 ${readingTime} min read
                             </span>
+                            <button class="meta-badge" onclick="toggleTOC()" style="cursor: pointer; border: 1px solid var(--border-subtle); background: var(--bg-tertiary);">
+                                <i data-lucide="list" class="meta-badge-icon"></i>
+                                Table of Contents
+                            </button>
                         </div>
                     </div>
                     <div class="progress-header">
@@ -1688,6 +2084,38 @@
                             <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}" class="complete-btn-icon"></i>
                             ${isCompleted ? 'Completed' : 'Mark as Complete'}
                         </button>
+                    </div>
+                    <div class="doc-controls">
+                        <div class="control-group">
+                            <span class="control-label">Status</span>
+                            <button class="status-btn status-in-progress ${docStatus?.status === 'in-progress' ? 'active' : ''}"
+                                    onclick="setDocStatus('${path}', '${docStatus?.status === 'in-progress' ? '' : 'in-progress'}'); loadDoc('${path}')">
+                                In Progress
+                            </button>
+                            <button class="status-btn status-archived ${docStatus?.status === 'archived' ? 'active' : ''}"
+                                    onclick="setDocStatus('${path}', '${docStatus?.status === 'archived' ? '' : 'archived'}'); loadDoc('${path}')">
+                                Archived
+                            </button>
+                            <button class="status-btn status-finished ${docStatus?.status === 'finished' ? 'active' : ''}"
+                                    onclick="setDocStatus('${path}', '${docStatus?.status === 'finished' ? '' : 'finished'}'); loadDoc('${path}')">
+                                Finished
+                            </button>
+                        </div>
+                        <div class="control-group">
+                            <span class="control-label">Priority</span>
+                            <button class="priority-btn priority-high ${docPriority === 'high' ? 'active' : ''}"
+                                    onclick="setDocPriority('${path}', 'high'); loadDoc('${path}')">
+                                High
+                            </button>
+                            <button class="priority-btn priority-medium ${docPriority === 'medium' ? 'active' : ''}"
+                                    onclick="setDocPriority('${path}', 'medium'); loadDoc('${path}')">
+                                Medium
+                            </button>
+                            <button class="priority-btn priority-low ${docPriority === 'low' ? 'active' : ''}"
+                                    onclick="setDocPriority('${path}', 'low'); loadDoc('${path}')">
+                                Low
+                            </button>
+                        </div>
                     </div>
                     ${frontmatterHtml}
                     <div class="markdown-content" id="markdown-content">${html}</div>
@@ -1713,6 +2141,12 @@
 
                 // Setup text selection handler
                 setupTextSelection();
+
+                // Generate table of contents
+                setTimeout(() => {
+                    generateTOC();
+                    updateTOCActiveState();
+                }, 100);
 
                 document.querySelectorAll('.nav-item').forEach(item => {
                     item.classList.toggle('active', item.dataset.path === path);
@@ -1845,47 +2279,101 @@
             document.getElementById('highlight-toolbar').classList.remove('visible');
         }
 
-        // Save current highlights
+        // Save current highlights with context hashing
         function saveCurrentHighlights() {
             if (!currentDocPath) return;
-            
+
             const markdownContent = document.getElementById('markdown-content');
             if (!markdownContent) return;
-            
+
             const highlights = [];
             markdownContent.querySelectorAll('mark.highlight').forEach((mark, index) => {
-                // Get text path (simple approach using text content)
-                const text = mark.textContent;
+                // Get text content
+                const text = mark.textContent.trim();
                 const colorClass = Array.from(mark.classList).find(c => c.startsWith('highlight-') && c !== 'highlight');
                 const color = colorClass ? colorClass.replace('highlight-', '') : 'yellow';
-                
+
+                // Get context for persistent matching
+                const textNode = mark.firstChild;
+                let contextHash = null;
+                let contextText = '';
+
+                if (textNode) {
+                    try {
+                        // Find parent block element
+                        let context = mark.parentElement;
+                        while (context && !['P', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TD', 'DIV'].includes(context.tagName)) {
+                            context = context.parentElement;
+                        }
+                        if (context && context.id !== 'markdown-content') {
+                            contextText = context.textContent.trim();
+                            contextHash = simpleHash(contextText);
+                        }
+                    } catch (e) {
+                        console.warn('Could not get context for highlight', e);
+                    }
+                }
+
                 highlights.push({
                     text: text,
                     color: color,
+                    contextHash: contextHash,
+                    contextSnippet: contextText.substring(0, 100), // First 100 chars for debugging
                     index: index
                 });
             });
-            
+
             saveHighlights(currentDocPath, highlights);
         }
 
-        // Restore highlights
+        // Restore highlights with context-aware matching
         function restoreHighlights(path) {
             const highlights = getHighlights(path);
             if (highlights.length === 0) return;
-            
+
             const markdownContent = document.getElementById('markdown-content');
             if (!markdownContent) return;
-            
-            // Simple approach: find and highlight text
+
+            // Build context map for efficient lookup
+            const contextMap = new Map();
+            const allBlocks = markdownContent.querySelectorAll('p, li, blockquote, h1, h2, h3, h4, h5, h6, td, div');
+
+            allBlocks.forEach(block => {
+                const text = block.textContent.trim();
+                if (text.length > 0) {
+                    const hash = simpleHash(text);
+                    if (!contextMap.has(hash)) {
+                        contextMap.set(hash, []);
+                    }
+                    contextMap.get(hash).push(block);
+                }
+            });
+
+            // Restore each highlight
             highlights.forEach(highlight => {
-                highlightText(markdownContent, highlight.text, highlight.color);
+                let restored = false;
+
+                // Strategy 1: Try to find by context hash first (most reliable)
+                if (highlight.contextHash && contextMap.has(highlight.contextHash)) {
+                    const blocks = contextMap.get(highlight.contextHash);
+                    for (const block of blocks) {
+                        if (highlightTextInElement(block, highlight.text, highlight.color)) {
+                            restored = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Strategy 2: Fallback to global search if context not found
+                if (!restored) {
+                    highlightTextInElement(markdownContent, highlight.text, highlight.color);
+                }
             });
         }
 
-        // Helper to highlight text in DOM
-        function highlightText(container, searchText, color) {
-            if (!searchText) return;
+        // Helper to highlight text in a specific element (returns true if successful)
+        function highlightTextInElement(container, searchText, color) {
+            if (!searchText) return false;
             
             const walker = document.createTreeWalker(
                 container,
@@ -1915,23 +2403,114 @@
             for (let textNode of textNodes) {
                 const text = textNode.textContent;
                 const index = text.indexOf(searchText);
-                
+
                 if (index !== -1) {
                     const range = document.createRange();
                     range.setStart(textNode, index);
                     range.setEnd(textNode, index + searchText.length);
-                    
+
                     const mark = document.createElement('mark');
                     mark.className = `highlight highlight-${color}`;
-                    
+
                     try {
                         range.surroundContents(mark);
-                        break; // Only highlight first occurrence
+                        return true; // Success
                     } catch (e) {
                         console.warn('Could not restore highlight:', e);
+                        return false;
                     }
                 }
             }
+
+            return false; // Not found
+        }
+
+        // Toggle table of contents visibility
+        function toggleTOC() {
+            tocVisible = !tocVisible;
+            const tocContainer = document.getElementById('toc-container');
+            if (tocVisible) {
+                tocContainer.classList.add('visible');
+            } else {
+                tocContainer.classList.remove('visible');
+            }
+        }
+
+        // Generate table of contents from headings
+        function generateTOC() {
+            const markdownContent = document.getElementById('markdown-content');
+            if (!markdownContent) return;
+
+            const headings = markdownContent.querySelectorAll('h1, h2, h3');
+            const tocList = document.getElementById('toc-list');
+            tocList.innerHTML = '';
+            currentTOCHeadings = [];
+
+            if (headings.length === 0) {
+                document.getElementById('toc-container').classList.remove('visible');
+                tocVisible = false;
+                return;
+            }
+
+            headings.forEach((heading, index) => {
+                const level = parseInt(heading.tagName.substring(1));
+                const text = heading.textContent.replace('#', '').trim();
+                const id = heading.id;
+
+                currentTOCHeadings.push({ id, element: heading });
+
+                const li = document.createElement('li');
+                li.className = 'toc-item';
+
+                const link = document.createElement('a');
+                link.className = `toc-link level-${level}`;
+                link.textContent = text;
+                link.dataset.headingId = id;
+                link.onclick = (e) => {
+                    e.preventDefault();
+                    heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    updateTOCActiveState();
+                };
+
+                li.appendChild(link);
+                tocList.appendChild(li);
+            });
+
+            // Show TOC if there are headings
+            if (headings.length > 0) {
+                document.getElementById('toc-container').classList.add('visible');
+                tocVisible = true;
+            }
+
+            lucide.createIcons();
+        }
+
+        // Update TOC active state based on scroll position
+        function updateTOCActiveState() {
+            if (!tocVisible || currentTOCHeadings.length === 0) return;
+
+            const mainContent = document.getElementById('main-content');
+            const scrollTop = mainContent.scrollTop;
+
+            let activeIndex = 0;
+
+            // Find the currently visible heading
+            for (let i = currentTOCHeadings.length - 1; i >= 0; i--) {
+                const heading = currentTOCHeadings[i].element;
+                if (heading.offsetTop - 100 <= scrollTop) {
+                    activeIndex = i;
+                    break;
+                }
+            }
+
+            // Update active class
+            document.querySelectorAll('.toc-link').forEach((link, index) => {
+                if (index === activeIndex) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
         }
 
         // Search

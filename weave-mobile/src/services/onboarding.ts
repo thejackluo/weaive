@@ -6,9 +6,10 @@
  */
 
 import { supabase } from '@lib/supabase';
+import { getApiBaseUrl } from '../utils/api';
 
 // API endpoint (use environment variable in production)
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Valid painpoint IDs from Story 1.2
