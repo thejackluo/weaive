@@ -41,7 +41,9 @@ export default function DayDetailScreen() {
   const { data: dailyData, isLoading: isLoadingDaily } = useQuery({
     queryKey: ['daily-aggregate', date],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data: profile } = await supabase
@@ -69,7 +71,9 @@ export default function DayDetailScreen() {
   const { data: completions, isLoading: isLoadingCompletions } = useQuery({
     queryKey: ['day-completions', date],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data: profile } = await supabase
@@ -82,7 +86,8 @@ export default function DayDetailScreen() {
 
       const { data, error } = await supabase
         .from('subtask_completions')
-        .select(`
+        .select(
+          `
           id,
           subtask_instance_id,
           completed_at,
@@ -90,13 +95,20 @@ export default function DayDetailScreen() {
             id,
             label
           )
-        `)
+        `
+        )
         .eq('user_id', profile.id)
         .eq('local_date', date)
         .order('completed_at', { ascending: true });
 
       if (error) throw error;
-      return data as SubtaskCompletion[];
+      // Fix type: subtask_instance comes as array from Supabase join
+      return (data?.map((item) => ({
+        ...item,
+        subtask_instance: Array.isArray(item.subtask_instance)
+          ? item.subtask_instance[0]
+          : item.subtask_instance,
+      })) || []) as SubtaskCompletion[];
     },
     enabled: !!date,
   });
@@ -105,7 +117,9 @@ export default function DayDetailScreen() {
   const { data: allSubtasks, isLoading: isLoadingSubtasks } = useQuery({
     queryKey: ['active-subtasks', date],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data: profile } = await supabase
@@ -132,7 +146,9 @@ export default function DayDetailScreen() {
   const { data: journalEntry, isLoading: isLoadingJournal } = useQuery({
     queryKey: ['journal-entry', date],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data: profile } = await supabase
@@ -169,7 +185,7 @@ export default function DayDetailScreen() {
   if (!date) {
     return (
       <View className="flex-1 bg-background items-center justify-center p-6">
-        <Text variant="bodyLg" className="text-neutral-400 text-center">
+        <Text variant="textLg" className="text-neutral-400 text-center">
           No date specified
         </Text>
       </View>
@@ -182,36 +198,37 @@ export default function DayDetailScreen() {
   const formattedDate = format(parsedDate, 'MMMM d, yyyy');
 
   // Determine which subtasks were completed and which were not
-  const completedSubtaskIds = new Set(
-    completions?.map(c => c.subtask_instance_id) || []
-  );
+  const completedSubtaskIds = new Set(completions?.map((c) => c.subtask_instance_id) || []);
 
-  const completedSubtasks = completions?.map(c => ({
-    id: c.subtask_instance_id,
-    label: c.subtask_instance.label,
-    completed: true,
-  })) || [];
-
-  const incompleteSubtasks = allSubtasks
-    ?.filter(st => !completedSubtaskIds.has(st.id))
-    .map(st => ({
-      id: st.id,
-      label: st.label,
-      completed: false,
+  const completedSubtasks =
+    completions?.map((c) => ({
+      id: c.subtask_instance_id,
+      label: c.subtask_instance.label,
+      completed: true,
     })) || [];
+
+  const incompleteSubtasks =
+    allSubtasks
+      ?.filter((st) => !completedSubtaskIds.has(st.id))
+      .map((st) => ({
+        id: st.id,
+        label: st.label,
+        completed: false,
+      })) || [];
 
   const allBinds = [...completedSubtasks, ...incompleteSubtasks];
 
   // Get fulfillment score
-  const fulfillmentScore = journalEntry?.fulfillment_score ?? dailyData?.avg_fulfillment_score ?? null;
+  const fulfillmentScore =
+    journalEntry?.fulfillment_score ?? dailyData?.avg_fulfillment_score ?? null;
 
   // Determine fulfillment color
   const getFulfillmentColor = (score: number | null) => {
     if (score === null) return colors.neutral[600];
-    if (score >= 8) return colors.success[500];
-    if (score >= 6) return colors.brand[500];
-    if (score >= 4) return colors.warning[500];
-    return colors.error[500];
+    if (score >= 8) return colors.semantic.success.base;
+    if (score >= 6) return colors.accent[500];
+    if (score >= 4) return colors.semantic.warning.base;
+    return colors.semantic.error.base;
   };
 
   const fulfillmentColor = getFulfillmentColor(fulfillmentScore);
@@ -220,31 +237,33 @@ export default function DayDetailScreen() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View className="px-6 pt-16 pb-6 border-b border-neutral-800">
-        <Pressable
-          onPress={() => router.back()}
-          className="flex-row items-center mb-4"
-        >
+        <Pressable onPress={() => router.back()} className="flex-row items-center mb-4">
           <Ionicons name="chevron-back" size={24} color={colors.neutral[400]} />
-          <Text variant="bodyMd" className="text-neutral-400 ml-1">
+          <Text variant="textBase" className="text-neutral-400 ml-1">
             Back
           </Text>
         </Pressable>
 
         <View className="flex-row items-center mb-2">
-          <Ionicons name="calendar-outline" size={20} color={colors.neutral[400]} style={{ marginRight: 8 }} />
-          <Text variant="displaySm" className="text-white">
+          <Ionicons
+            name="calendar-outline"
+            size={20}
+            color={colors.neutral[400]}
+            style={{ marginRight: 8 }}
+          />
+          <Text variant="displayLg" className="text-white">
             {dayOfWeek}
           </Text>
         </View>
-        <Text variant="bodyLg" className="text-neutral-400">
+        <Text variant="textLg" className="text-neutral-400">
           {formattedDate}
         </Text>
       </View>
 
       <ScrollView className="flex-1 px-6 pt-6">
         {/* Fulfillment Score */}
-        <Card variant="glass" className="mb-4 p-6">
-          <Text variant="headingMd" className="text-white mb-4">
+        <Card variant="glass" style={{ marginBottom: 16, padding: 24 }}>
+          <Text variant="displayMd" className="text-white mb-4">
             Fulfillment Score
           </Text>
 
@@ -254,36 +273,33 @@ export default function DayDetailScreen() {
                 className="w-16 h-16 rounded-full items-center justify-center mr-4"
                 style={{ backgroundColor: `${fulfillmentColor}20` }}
               >
-                <Text
-                  variant="displayLg"
-                  style={{ color: fulfillmentColor }}
-                >
+                <Text variant="displayLg" style={{ color: fulfillmentColor }}>
                   {fulfillmentScore}
                 </Text>
               </View>
               <View className="flex-1">
-                <Text variant="bodyMd" className="text-neutral-400">
-                  {fulfillmentScore >= 8 && "Highly fulfilled"}
-                  {fulfillmentScore >= 6 && fulfillmentScore < 8 && "Good fulfillment"}
-                  {fulfillmentScore >= 4 && fulfillmentScore < 6 && "Moderate fulfillment"}
-                  {fulfillmentScore < 4 && "Low fulfillment"}
+                <Text variant="textBase" className="text-neutral-400">
+                  {fulfillmentScore >= 8 && 'Highly fulfilled'}
+                  {fulfillmentScore >= 6 && fulfillmentScore < 8 && 'Good fulfillment'}
+                  {fulfillmentScore >= 4 && fulfillmentScore < 6 && 'Moderate fulfillment'}
+                  {fulfillmentScore < 4 && 'Low fulfillment'}
                 </Text>
               </View>
             </View>
           ) : (
-            <Text variant="bodyMd" className="text-neutral-500">
+            <Text variant="textBase" className="text-neutral-500">
               No fulfillment score recorded for this day
             </Text>
           )}
         </Card>
 
         {/* Binds Completion */}
-        <Card variant="glass" className="mb-4 p-6">
+        <Card variant="glass" style={{ marginBottom: 16, padding: 24 }}>
           <View className="flex-row items-center justify-between mb-4">
-            <Text variant="headingMd" className="text-white">
+            <Text variant="displayMd" className="text-white">
               Daily Binds
             </Text>
-            <Text variant="bodySm" className="text-neutral-400">
+            <Text variant="textSm" className="text-neutral-400">
               {completedSubtasks.length} / {allBinds.length} completed
             </Text>
           </View>
@@ -291,15 +307,12 @@ export default function DayDetailScreen() {
           {allBinds.length > 0 ? (
             <View className="space-y-3">
               {allBinds.map((bind) => (
-                <View
-                  key={bind.id}
-                  className="flex-row items-center py-2"
-                >
+                <View key={bind.id} className="flex-row items-center py-2">
                   {bind.completed ? (
                     <Ionicons
                       name="checkmark-circle"
                       size={24}
-                      color={colors.success[500]}
+                      color={colors.semantic.success.base}
                       style={{ marginRight: 12 }}
                     />
                   ) : (
@@ -311,8 +324,8 @@ export default function DayDetailScreen() {
                     />
                   )}
                   <Text
-                    variant="bodyMd"
-                    className={bind.completed ? "text-white" : "text-neutral-500"}
+                    variant="textBase"
+                    className={bind.completed ? 'text-white' : 'text-neutral-500'}
                   >
                     {bind.label}
                   </Text>
@@ -320,15 +333,15 @@ export default function DayDetailScreen() {
               ))}
             </View>
           ) : (
-            <Text variant="bodyMd" className="text-neutral-500">
+            <Text variant="textBase" className="text-neutral-500">
               No binds active on this day
             </Text>
           )}
         </Card>
 
         {/* Daily Reflection */}
-        <Card variant="glass" className="mb-6 p-6">
-          <Text variant="headingMd" className="text-white mb-4">
+        <Card variant="glass" style={{ marginBottom: 24, padding: 24 }}>
+          <Text variant="displayMd" className="text-white mb-4">
             Daily Reflection
           </Text>
 
@@ -336,10 +349,10 @@ export default function DayDetailScreen() {
             <View className="space-y-4">
               {journalEntry.journal_text && (
                 <View>
-                  <Text variant="bodySm" className="text-neutral-400 mb-2">
+                  <Text variant="textSm" className="text-neutral-400 mb-2">
                     Your Entry
                   </Text>
-                  <Text variant="bodyMd" className="text-white leading-6">
+                  <Text variant="textBase" className="text-white leading-6">
                     {journalEntry.journal_text}
                   </Text>
                 </View>
@@ -347,23 +360,23 @@ export default function DayDetailScreen() {
 
               {journalEntry.reflection_insights && (
                 <View className="mt-4 p-4 bg-brand-500/10 rounded-lg border border-brand-500/20">
-                  <Text variant="bodySm" className="text-brand-400 mb-2">
+                  <Text variant="textSm" className="text-brand-400 mb-2">
                     AI Insights
                   </Text>
-                  <Text variant="bodyMd" className="text-neutral-200 leading-6">
+                  <Text variant="textBase" className="text-neutral-200 leading-6">
                     {journalEntry.reflection_insights}
                   </Text>
                 </View>
               )}
 
               {!journalEntry.journal_text && !journalEntry.reflection_insights && (
-                <Text variant="bodyMd" className="text-neutral-500">
+                <Text variant="textBase" className="text-neutral-500">
                   No reflection recorded for this day
                 </Text>
               )}
             </View>
           ) : (
-            <Text variant="bodyMd" className="text-neutral-500">
+            <Text variant="textBase" className="text-neutral-500">
               No reflection recorded for this day
             </Text>
           )}
