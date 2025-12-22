@@ -159,12 +159,16 @@ export function VoiceRecorder({
   });
 
   /**
-   * Waveform bar animation style
+   * Waveform bar animation styles
+   * IMPORTANT: Must create all 24 styles unconditionally to follow Rules of Hooks
+   * Cannot be created dynamically in loops or conditionals
    */
-  const createWaveformBarStyle = (index: number, total: number) => {
+  const barCount = 24;
+  const waveformBarStyles = Array.from({ length: barCount }, (_, index) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useAnimatedStyle(() => {
       // Offset each bar slightly for wave effect
-      const _offset = (index / total) * 0.3;
+      const _offset = (index / barCount) * 0.3;
       const amplitude = interpolate(
         waveformAmplitude.value,
         [0, 1],
@@ -176,7 +180,7 @@ export function VoiceRecorder({
         height: `${amplitude * 100}%`,
       };
     });
-  };
+  });
 
   /**
    * Handle press to start/stop recording
@@ -256,12 +260,11 @@ export function VoiceRecorder({
   const renderWaveform = () => {
     if (!showWaveform || !isRecording) return null;
 
-    const barCount = 24; // 24 bars around circle
     const bars = [];
 
     for (let i = 0; i < barCount; i++) {
       const angle = (i / barCount) * 360;
-      const barStyle = createWaveformBarStyle(i, barCount);
+      const barStyle = waveformBarStyles[i]; // Use pre-created style (no hook call)
 
       bars.push(
         <Animated.View
@@ -343,7 +346,7 @@ export function VoiceRecorder({
       {/* Permission prompt */}
       {!hasPermission && !isRequestingPermission && (
         <View style={[styles.permissionPrompt, { marginTop: spacing[4] }]}>
-          <Text variant="textSm" style={{ color: colors.text.secondary, textAlign: 'center' }}>
+          <Text variant="textSm" style={{ color: colors.text.primary, textAlign: 'center' }}>
             Microphone access required
           </Text>
         </View>
