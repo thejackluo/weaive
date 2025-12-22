@@ -315,11 +315,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 8, // ✅ Changed from '5%' to fixed 8px to maximize chat width
     marginBottom: 0,
     height: '70%',
+    width: undefined, // ✅ Ensure no width constraint
+    alignSelf: 'stretch', // ✅ Force full width within parent
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
   chatCardInner: {
     flex: 1,
+    width: '100%', // ✅ Explicit 100% width
     backgroundColor: 'rgba(26, 26, 26, 0.98)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

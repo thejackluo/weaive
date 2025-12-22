@@ -149,7 +149,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   bubble: {
-    maxWidth: '98%', // ✅ Increased to 98% to maximize usable width
+    // ✅ CRITICAL: Explicit width needed because parent Pressable has alignItems: flex-start/flex-end
+    // Without this, bubble shrinks to minimum content width (~10% screen)
+    // 88% provides good balance: wide enough for text, narrow enough for visual separation
+    width: '88%',
     minWidth: 60,
   },
   blurContainer: {
@@ -187,6 +190,7 @@ const styles = StyleSheet.create({
   messageContentRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
+    width: '100%', // ✅ Force row to stretch full width (fixes text wrapping issue)
   },
   messageText: {
     fontSize: 15,
