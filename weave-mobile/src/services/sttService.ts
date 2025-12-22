@@ -11,8 +11,6 @@
  * - Rate limit detection
  */
 
-/* global XMLHttpRequest */
-
 import { supabase } from '@lib/supabase';
 import { getApiBaseUrl } from '@/utils/api';
 
