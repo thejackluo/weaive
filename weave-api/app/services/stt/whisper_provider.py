@@ -89,8 +89,9 @@ class WhisperProvider(STTProvider):
             logger.info(f"[WHISPER] File magic bytes (hex): {magic_bytes.hex()}")
 
             # Create file-like object from bytes
+            # Note: audio_file is now MP3 format after conversion in transcribe.py
             audio_buffer = io.BytesIO(audio_file)
-            audio_buffer.name = "audio.m4a"  # Whisper needs a filename with extension
+            audio_buffer.name = "audio.mp3"  # Whisper needs a filename with extension
 
             # Call Whisper API
             # Note: Whisper doesn't provide confidence scores, so we default to 0.9

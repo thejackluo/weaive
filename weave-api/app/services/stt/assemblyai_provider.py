@@ -9,10 +9,14 @@ API Docs: https://www.assemblyai.com/docs
 """
 
 import os
+import io
 import asyncio
 from typing import Optional
+import logging
 import assemblyai as aai
 from .base import STTProvider, TranscriptionResult, STTProviderError
+
+logger = logging.getLogger(__name__)
 
 
 class AssemblyAIProvider(STTProvider):
@@ -79,6 +83,21 @@ class AssemblyAIProvider(STTProvider):
             STTProviderError: If upload, polling, or transcription fails
         """
         try:
+            # Log audio file metadata for debugging
+            logger.info(f"[ASSEMBLYAI] Received audio bytes: {len(audio_file)} bytes")
+
+            # Check file magic bytes to detect actual format
+            magic_bytes = audio_file[:12] if len(audio_file) >= 12 else audio_file
+            logger.info(f"[ASSEMBLYAI] File magic bytes (hex): {magic_bytes.hex()}")
+
+            # Wrap bytes in BytesIO with filename (AssemblyAI SDK needs .name for format detection)
+            # This matches the pattern used by Whisper provider and is required for proper upload
+            # Note: audio_file is now MP3 format after conversion in transcribe.py
+            audio_buffer = io.BytesIO(audio_file)
+            audio_buffer.name = "audio.mp3"  # AssemblyAI will detect format from extension
+
+            logger.info(f"[ASSEMBLYAI] Created BytesIO buffer with name: {audio_buffer.name}")
+
             # Configure transcription settings
             config = aai.TranscriptionConfig(
                 language_code=language,
@@ -92,7 +111,7 @@ class AssemblyAIProvider(STTProvider):
             # Transcribe (blocks until complete - AssemblyAI SDK handles upload + polling)
             transcript = await asyncio.to_thread(
                 transcriber.transcribe,
-                audio_file
+                audio_buffer  # Pass BytesIO buffer, not raw bytes
             )
 
             # Check for errors
