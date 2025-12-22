@@ -8,13 +8,15 @@ Story: 0.11 - Voice/Speech-to-Text Infrastructure
 API Docs: https://www.assemblyai.com/docs
 """
 
-import os
-import io
 import asyncio
-from typing import Optional
+import io
 import logging
+import os
+from typing import Optional
+
 import assemblyai as aai
-from .base import STTProvider, TranscriptionResult, STTProviderError
+
+from .base import STTProvider, STTProviderError, TranscriptionResult
 
 logger = logging.getLogger(__name__)
 

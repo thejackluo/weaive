@@ -6,7 +6,18 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import admin, ai_router, analytics, goals, health, journal_router, onboarding, transcribe, user
+from app.api import (
+    admin,
+    ai_router,
+    analytics,
+    captures,
+    goals,
+    health,
+    journal_router,
+    onboarding,
+    transcribe,
+    user,
+)
 from app.core.config import settings
 
 # Log environment status on startup
