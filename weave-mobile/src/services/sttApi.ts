@@ -144,68 +144,17 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
     // Step 1: Get auth token
     const token = await getAuthToken();
 
-    // Step 2: Validate audio file
-    console.log('[STT_API] 📂 Validating audio file from:', options.audioUri);
-    const fileReadStart = performance.now();
+    // Step 2: Prepare file upload using React Native FormData pattern
+    console.log('[STT_API] 📎 Preparing audio upload from:', options.audioUri);
 
-    // Use FileSystem.getInfoAsync to check file existence and size
-    // NOTE: React Native FormData is different from web - it expects { name, type, uri }
-    const FileSystem = await import('expo-file-system');
-    const fileInfo = await FileSystem.getInfoAsync(options.audioUri);
-
-    // Verify file exists
-    if (!fileInfo.exists) {
-      throw new Error('Audio file does not exist at the specified URI');
-    }
-
-    const fileSize = fileInfo.size || 0;
-    const fileReadDuration = (performance.now() - fileReadStart).toFixed(2);
-    console.log('[STT_API] ✅ File validated in', fileReadDuration, 'ms');
-    console.log(`  - Size: ${(fileSize / 1024).toFixed(1)}KB`);
-    console.log(`  - URI: ${options.audioUri}`);
-
-    // Step 3: Validate file size (25MB max)
-    const maxSize = 25 * 1024 * 1024; // 25MB
-    if (fileSize > maxSize) {
-      throw new Error(
-        `Audio file too large (max 25MB, got ${(fileSize / (1024 * 1024)).toFixed(1)}MB)`
-      );
-    }
-
-    // Step 4: Read file data explicitly (React Native FormData {uri} pattern is unreliable)
-    console.log('[STT_API] 📖 Reading audio file bytes from URI...');
-    const readStart = performance.now();
-
-    // Read file as base64, then convert to blob
-    const fileContent = await FileSystem.readAsStringAsync(options.audioUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    const readDuration = (performance.now() - readStart).toFixed(2);
-    console.log(`[STT_API] ✅ File read in ${readDuration}ms`);
-    console.log(`  - Base64 length: ${fileContent.length} chars`);
-    console.log(`  - Estimated bytes: ${Math.floor((fileContent.length * 3) / 4)}`);
-
-    // Validate we actually read data
-    if (!fileContent || fileContent.length === 0) {
-      throw new Error('Failed to read audio file - file is empty or unreadable');
-    }
-
-    // Create blob from base64 data
-    const blob = await (async () => {
-      const response = await fetch(`data:audio/m4a;base64,${fileContent}`);
-      return response.blob();
-    })();
-
-    console.log('[STT_API] 📦 Created blob:', {
-      size: blob.size,
-      type: blob.type,
-    });
-
-    // Step 5: Create multipart form data with actual blob
+    // Step 3: Create multipart form data with React Native file descriptor
+    // React Native FormData accepts { uri, name, type } and reads file automatically during upload
     const formData = new FormData();
-    // Pass actual blob data, not just URI reference
-    formData.append('audio', blob, 'audio.m4a');
+    formData.append('audio', {
+      uri: options.audioUri,
+      name: 'audio.m4a',
+      type: 'audio/x-m4a',
+    } as any);
     formData.append('language', options.language ?? 'en');
 
     if (options.captureId) {
@@ -218,7 +167,7 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
       formData.append('goal_id', options.goalId);
     }
 
-    // Step 6: Upload and transcribe
+    // Step 4: Upload and transcribe
     console.log('[STT_API] 🚀 Uploading to /api/transcribe');
     const uploadStart = performance.now();
 
@@ -266,7 +215,7 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
         throw new Error(`Transcription failed: ${errorMessage}`);
       }
 
-      // Step 6: Parse response
+      // Step 5: Parse response
       const parseStart = performance.now();
       const result = await uploadResponse.json();
       const parseDuration = (performance.now() - parseStart).toFixed(2);
