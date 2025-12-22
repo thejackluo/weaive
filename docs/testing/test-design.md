@@ -532,6 +532,84 @@ class GoalFactory(factory.Factory):
 | **Long Streaks** | Overflow handling | 365+ day streak |
 | **Unicode Text** | Emoji, special chars | Goal title: "健康 💪 Fitness" |
 
+### Story 4.1: Daily Reflection Entry - Additional Edge Cases
+
+**NOTE:** These edge cases identified during Story 4.1 validation but not written as automated tests yet.
+
+| Edge Case | Why Important | Expected Behavior | Priority |
+|-----------|---------------|-------------------|----------|
+| **Edit existing journal** | User should be able to update same-day reflection | GET retrieves existing → form pre-populates → PATCH updates | P0 |
+| **Offline submission** | Users reflect in subway/elevator | Submission queued → reconnect → auto-sync successful | P0 |
+| **Max custom questions** | Prevent unbounded data growth | 5 questions exist → attempt 6th → toast "Max 5 questions" | P1 |
+| **Character limit enforcement** | Prevent excessive input | Type 500 chars → typing disabled at 500 | P1 |
+| **Timezone near midnight** | Date boundary calculation | User at 11:59 PM → journal saves to correct local_date | P0 |
+| **Edit after AI feedback** | Verify AI batch re-triggers | Update journal → verify new AI batch job triggered | P1 |
+| **Custom question deletion** | Historical data preservation | Delete question → past responses still in custom_responses JSONB | P1 |
+| **Auto-save draft recovery** | App crash during entry | App crashes → reopen → draft restored from AsyncStorage | P0 |
+| **Duplicate submission prevention** | Unique constraint handling | Submit twice rapidly → second call returns 409 or edit mode | P1 |
+
+**Test Status:** ❌ Not yet implemented - marked for future test coverage improvement sprint.
+
+---
+
+### Story 0.9: Image Upload Rate Limiting - Test Cases
+
+**NOTE:** Test cases for rate limiting added during Sprint Change Proposal 2025-12-21.
+
+| Test Case | Type | Description | Expected Behavior | Priority |
+|-----------|------|-------------|-------------------|----------|
+| **Rate limit enforcement** | Integration | Upload 21st image in same day | HTTP 429 with Retry-After header, error message | P0 |
+| **Size limit enforcement** | Integration | Upload images totaling 5.1MB in same day | HTTP 429 after 5MB reached, remaining uploads rejected | P0 |
+| **Counter reset at midnight** | Integration | Upload 20 images → wait until midnight (user timezone) → upload again | New day allows 20 more uploads | P0 |
+| **Usage indicator accuracy** | Unit | Track uploads 3/20 images (2.5MB/5MB) | UI shows correct remaining quota | P1 |
+| **Multiple concurrent uploads** | Integration | Upload 5 images simultaneously when quota is 3 remaining | 3 succeed, 2 fail with rate limit error | P1 |
+| **Retry-After header calculation** | Unit | Rate limit at 6:00 PM, user timezone PST | Retry-After = 21,600 seconds (6 hours until midnight) | P0 |
+| **Per-file validation still enforced** | Integration | Upload 11MB single file (under daily 5MB limit) | Rejected with 413 Payload Too Large (per-file limit) | P0 |
+| **daily_aggregates tracking** | Integration | Upload 3 images (1MB each) → check DB | `upload_count=3`, `upload_size_mb=3.0` in daily_aggregates | P0 |
+| **Offline upload queueing** | Integration | Go offline → attempt upload → reconnect | Upload queued locally, syncs when online, counts toward daily limit | P1 |
+| **Cross-user isolation** | Security | User A uploads 20 images → User B uploads | User B has full 20 image quota (not shared) | P0 |
+
+**Backend Test File:** `weave-api/tests/integration/test_rate_limiting.py`
+**Frontend Test File:** `weave-mobile/tests/integration/upload-rate-limiting.test.ts`
+
+**Test Status:** 🟡 To be implemented in Story 0.9
+
+---
+
+### Story 0.11: Speech-to-Text Infrastructure - Test Cases
+
+**NOTE:** Test cases for STT integration added during Sprint Change Proposal 2025-12-21.
+
+| Test Case | Type | Description | Expected Behavior | Priority |
+|-----------|------|-------------|-------------------|----------|
+| **AssemblyAI transcription** | Integration | Upload 30-second audio file → call /api/transcribe | Returns transcript, confidence ≥0.85, duration_sec=30 | P0 |
+| **Fallback to Whisper** | Integration | Mock AssemblyAI timeout → upload audio | Falls back to Whisper API, returns transcript | P0 |
+| **Audio-only storage fallback** | Integration | Mock both AssemblyAI + Whisper failures → upload | Stores audio URL, transcript=null, no error to user | P1 |
+| **Supported formats** | Unit | Upload MP3, M4A, WAV files | All formats accepted and transcribed | P0 |
+| **Unsupported format rejection** | Unit | Upload .exe or .txt file | HTTP 400 Bad Request, "Invalid audio format" | P1 |
+| **Transcription rate limiting** | Integration | Make 51st transcription request in same day | HTTP 429 with Retry-After header | P0 |
+| **Audio duration limit** | Unit | Upload 6-minute audio file | HTTP 413 Payload Too Large, "Max 5 minutes audio" | P0 |
+| **Cost tracking in ai_runs** | Integration | Transcribe 45-second audio → check DB | ai_runs row: audio_duration_sec=45, provider='assemblyai', cost_usd=0.00188 | P0 |
+| **Confidence score handling** | Unit | Receive low confidence (0.60) from STT | Store transcript with warning flag, display to user with caution | P1 |
+| **Concurrent transcription** | Integration | Upload 3 audio files simultaneously | All processed in parallel, results returned correctly | P1 |
+| **Empty audio file** | Unit | Upload 0-byte or silent audio | HTTP 400 Bad Request, "No audio detected" | P1 |
+| **daily_aggregates tracking** | Integration | Make 5 transcriptions → check DB | `transcription_count=5` in daily_aggregates | P0 |
+| **API endpoint contract** | Integration | POST /api/transcribe with valid audio | Returns JSON: {transcript, confidence, duration_sec, audio_url} | P0 |
+| **Provider abstraction** | Unit | Switch provider from AssemblyAI to Whisper | Service layer handles switch transparently, no client changes | P1 |
+
+**Backend Test Files:**
+- `weave-api/tests/unit/test_stt_service.py` (service logic)
+- `weave-api/tests/integration/test_transcribe_endpoint.py` (API contract)
+
+**Frontend Test File:** `weave-mobile/tests/integration/voice-recording.test.ts`
+
+**Cost Projection Tests:**
+- Mock 10K users, 20% adoption (2K users)
+- 2 recordings/user/day, 30 sec average
+- Verify daily cost calculation: $5/day = $150/month
+
+**Test Status:** 🟡 To be implemented in Story 0.11
+
 ---
 
 ## CI/CD Integration
