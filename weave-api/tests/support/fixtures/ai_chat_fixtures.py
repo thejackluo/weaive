@@ -3,18 +3,18 @@ AI Chat Test Fixtures - Story 6.1
 Provides setup/teardown with auto-cleanup for tests
 Follows fixture-architecture.md patterns
 """
+from typing import Any, AsyncGenerator, Dict
+
 import pytest
-from typing import AsyncGenerator, Dict, Any
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-import uuid
 
 from app.main import app
 from tests.support.factories.ai_chat_factory import (
-    create_user_profile,
+    create_admin_headers,
     create_conversation,
     create_message,
-    create_admin_headers,
+    create_user_profile,
 )
 
 
@@ -191,7 +191,7 @@ def mock_aiservice(monkeypatch):
     Yields:
         Mock AIService instance with tracked calls
     """
-    from unittest.mock import Mock, AsyncMock
+    from unittest.mock import AsyncMock, Mock
 
     mock_service = Mock()
     mock_service.generate = AsyncMock(
@@ -223,7 +223,6 @@ def mock_failing_providers(monkeypatch):
     Yields:
         Mock controller with setup() method
     """
-    from unittest.mock import AsyncMock
 
     class FailingProviderMock:
         def __init__(self):

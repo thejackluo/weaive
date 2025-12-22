@@ -5,11 +5,10 @@ Request/response schemas for AI chat endpoints.
 """
 
 from datetime import datetime
-from typing import Optional, List, Literal
+from typing import List, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
-
 
 # ============================================================
 # REQUEST MODELS

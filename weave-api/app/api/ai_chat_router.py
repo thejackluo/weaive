@@ -17,26 +17,25 @@ import logging
 import os
 from datetime import datetime
 from typing import AsyncGenerator, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from supabase import Client as SupabaseClient
 
 from app.core.deps import get_current_user
 from app.core.supabase import get_supabase_client
 from app.models.ai_chat_models import (
+    ChatMessage,
     ChatMessageCreate,
     ChatMessageResponse,
     ChatMessageResponseWrapper,
-    ConversationListResponseWrapper,
-    ConversationDetailResponseWrapper,
-    ConversationSummary,
     ConversationDetail,
-    ChatMessage,
-    UsageStatsResponseWrapper,
+    ConversationDetailResponseWrapper,
+    ConversationListResponseWrapper,
+    ConversationSummary,
     UsageStats,
-    TriggerCheckinRequest
+    UsageStatsResponseWrapper,
 )
 from app.services.ai import AIService
 from app.services.ai.tiered_rate_limiter import TieredRateLimiter
@@ -752,11 +751,11 @@ async def trigger_checkin(
         # Create contextual check-in message
         hour = datetime.now().hour
         if hour < 12:
-            message = f"Good morning! Ready to make today count?"
+            message = "Good morning! Ready to make today count?"
         elif hour < 17:
-            message = f"Hey! How's your day going so far?"
+            message = "Hey! How's your day going so far?"
         else:
-            message = f"Evening check-in: How did today go?"
+            message = "Evening check-in: How did today go?"
 
         # Save system message
         save_message(

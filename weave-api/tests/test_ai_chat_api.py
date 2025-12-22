@@ -3,10 +3,11 @@ AI Chat API Tests - Story 6.1
 RED Phase: Tests written BEFORE implementation
 All tests should FAIL initially (missing implementation)
 """
+import uuid
+from datetime import timedelta
+
 import pytest
 from httpx import AsyncClient
-from datetime import datetime, timedelta
-import uuid
 
 
 class TestAIChatMessagesEndpoint:

@@ -3,9 +3,10 @@ AI Chat Data Factories - Story 6.1
 Use faker for random test data generation
 Supports overrides for specific test scenarios
 """
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
 import uuid
+from datetime import datetime
+from typing import Any, Dict, Optional
+
 from faker import Faker
 
 fake = Faker()
