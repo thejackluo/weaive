@@ -67,9 +67,7 @@ export default function RateLimitIndicator({
           // Rate Limited View
           <View style={styles.rateLimitedContainer}>
             <Text style={styles.rateLimitedTitle}>⏳ Rate Limit Reached</Text>
-            <Text style={styles.rateLimitedText}>
-              Resets in {timeToReset}
-            </Text>
+            <Text style={styles.rateLimitedText}>Resets in {timeToReset}</Text>
           </View>
         ) : (
           // Usage Stats View
@@ -117,9 +115,7 @@ export default function RateLimitIndicator({
             {/* Monthly Total */}
             <View style={[styles.statRow, styles.monthlyRow]}>
               <View style={styles.statHeader}>
-                <Text style={[styles.statLabel, styles.monthlyLabel]}>
-                  Monthly Total
-                </Text>
+                <Text style={[styles.statLabel, styles.monthlyLabel]}>Monthly Total</Text>
                 <Text style={[styles.statValue, styles.monthlyValue]}>
                   {monthlyUsed}/{monthlyLimit}
                 </Text>

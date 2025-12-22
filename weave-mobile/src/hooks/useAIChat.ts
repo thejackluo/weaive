@@ -9,7 +9,7 @@
  * - React Query integration for caching
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/services/apiClient';
 
 // Types matching backend Pydantic models
@@ -66,13 +66,10 @@ export function useAIChat() {
     message: string;
     conversation_id?: string;
   }): Promise<ChatMessageResponse> => {
-    const response = await apiClient.post<{ data: ChatMessageResponse }>(
-      '/api/ai-chat/messages',
-      {
-        message,
-        conversation_id,
-      }
-    );
+    const response = await apiClient.post<{ data: ChatMessageResponse }>('/api/ai-chat/messages', {
+      message,
+      conversation_id,
+    });
 
     return response.data.data;
   };
@@ -98,9 +95,7 @@ export function useAIChat() {
   /**
    * Get full conversation thread
    */
-  const getConversation = async (
-    conversationId: string
-  ): Promise<ConversationDetail> => {
+  const getConversation = async (conversationId: string): Promise<ConversationDetail> => {
     const response = await apiClient.get<{ data: ConversationDetail }>(
       `/api/ai-chat/conversations/${conversationId}`
     );

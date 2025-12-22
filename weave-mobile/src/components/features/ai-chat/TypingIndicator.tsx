@@ -28,10 +28,7 @@ export default function TypingIndicator() {
   useEffect(() => {
     // Bouncing animation with stagger
     const animation = withRepeat(
-      withSequence(
-        withTiming(1.3, { duration: 300 }),
-        withTiming(1, { duration: 300 })
-      ),
+      withSequence(withTiming(1.3, { duration: 300 }), withTiming(1, { duration: 300 })),
       -1, // Infinite loop
       false
     );

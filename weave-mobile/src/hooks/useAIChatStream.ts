@@ -10,7 +10,7 @@
  * NOTE: React Native doesn't have native EventSource, so we use fetch with streaming
  */
 
-import { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import apiClient from '@/services/apiClient';
 
 export interface StreamChunk {
@@ -51,7 +51,7 @@ export function useAIChatStream(): UseAIChatStreamReturn {
   }>({});
 
   const abortControllerRef = useRef<AbortController | null>(null);
-  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-clear error after 5 seconds to allow retry
   React.useEffect(() => {
@@ -143,6 +143,7 @@ export function useAIChatStream(): UseAIChatStreamReturn {
 
         // Read SSE stream
         const reader = response.body.getReader();
+        // eslint-disable-next-line no-undef
         const decoder = new TextDecoder();
         let buffer = '';
 

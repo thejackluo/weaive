@@ -10,14 +10,7 @@
  */
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Clipboard,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Clipboard, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, {
   FadeIn,
@@ -53,11 +46,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
   // Animated cursor for streaming messages
   React.useEffect(() => {
     if (isStreaming) {
-      cursorOpacity.value = withRepeat(
-        withTiming(0, { duration: 500 }),
-        -1,
-        true
-      );
+      cursorOpacity.value = withRepeat(withTiming(0, { duration: 500 }), -1, true);
     } else {
       cursorOpacity.value = 0;
     }
@@ -91,10 +80,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
       onPressOut={() => {
         scale.value = 1;
       }}
-      style={[
-        styles.container,
-        isUser ? styles.userContainer : styles.assistantContainer,
-      ]}
+      style={[styles.container, isUser ? styles.userContainer : styles.assistantContainer]}
     >
       <Animated.View style={[styles.bubble, animatedStyle]}>
         {/* Glassmorphism Background */}
@@ -103,11 +89,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
           tint="dark"
           style={[
             styles.blurContainer,
-            isUser
-              ? styles.userBubble
-              : isSystem
-              ? styles.systemBubble
-              : styles.assistantBubble,
+            isUser ? styles.userBubble : isSystem ? styles.systemBubble : styles.assistantBubble,
           ]}
         >
           {/* System message indicator */}
@@ -119,12 +101,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
 
           {/* Message Content */}
           <View style={styles.messageContentRow}>
-            <Text
-              style={[
-                styles.messageText,
-                isUser ? styles.userText : styles.assistantText,
-              ]}
-            >
+            <Text style={[styles.messageText, isUser ? styles.userText : styles.assistantText]}>
               {message.content}
             </Text>
 
@@ -138,10 +115,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
 
           {/* Timestamp (shown on long-press) */}
           {showTimestamp && (
-            <Animated.View
-              style={styles.timestampContainer}
-              entering={FadeIn.duration(200)}
-            >
+            <Animated.View style={styles.timestampContainer} entering={FadeIn.duration(200)}>
               <Text style={styles.timestamp}>
                 {message.timestamp.toLocaleTimeString('en-US', {
                   hour: 'numeric',

@@ -31,7 +31,9 @@ describe('QuickActionChips Component', () => {
   it('calls onChipPress with correct prompt when "Plan my day" tapped', () => {
     // GIVEN: QuickActionChips with mock callback
     const mockOnChipPress = jest.fn();
-    const { getByTestId } = render(<QuickActionChips onChipPress={mockOnChipPress} visible={true} />);
+    const { getByTestId } = render(
+      <QuickActionChips onChipPress={mockOnChipPress} visible={true} />
+    );
 
     // WHEN: User taps "Plan my day" chip
     const planDayChip = getByTestId('chip-plan-day');
@@ -44,14 +46,18 @@ describe('QuickActionChips Component', () => {
   it('calls onChipPress with correct prompt when "I\'m stuck" tapped', () => {
     // GIVEN: QuickActionChips with mock callback
     const mockOnChipPress = jest.fn();
-    const { getByTestId } = render(<QuickActionChips onChipPress={mockOnChipPress} visible={true} />);
+    const { getByTestId } = render(
+      <QuickActionChips onChipPress={mockOnChipPress} visible={true} />
+    );
 
     // WHEN: User taps "I'm stuck" chip
     const stuckChip = getByTestId('chip-im-stuck');
     fireEvent.press(stuckChip);
 
     // THEN: Callback fired with predefined prompt
-    expect(mockOnChipPress).toHaveBeenCalledWith('I\'m stuck and need help figuring out what to do next.');
+    expect(mockOnChipPress).toHaveBeenCalledWith(
+      "I'm stuck and need help figuring out what to do next."
+    );
   });
 
   /**
@@ -76,7 +82,9 @@ describe('QuickActionChips Component', () => {
   it('does not trigger onChipPress when disabled', () => {
     // GIVEN: Disabled chips
     const mockOnChipPress = jest.fn();
-    const { getByTestId } = render(<QuickActionChips onChipPress={mockOnChipPress} visible={true} disabled={true} />);
+    const { getByTestId } = render(
+      <QuickActionChips onChipPress={mockOnChipPress} visible={true} disabled={true} />
+    );
 
     // WHEN: User taps chip
     const chip = getByTestId('chip-plan-day');
@@ -115,7 +123,7 @@ describe('QuickActionChips Component', () => {
 
     // THEN: Labels are correct
     expect(getByText('Plan my day')).toBeTruthy();
-    expect(getByText('I\'m stuck')).toBeTruthy();
+    expect(getByText("I'm stuck")).toBeTruthy();
     expect(getByText('Edit my goal')).toBeTruthy();
     expect(getByText('Explain this bind')).toBeTruthy();
   });
