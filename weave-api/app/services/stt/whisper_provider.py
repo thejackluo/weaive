@@ -8,11 +8,13 @@ Story: 0.11 - Voice/Speech-to-Text Infrastructure
 API Docs: https://platform.openai.com/docs/guides/speech-to-text
 """
 
-import os
 import io
+import os
 from typing import Optional
+
 from openai import AsyncOpenAI
-from .base import STTProvider, TranscriptionResult, STTProviderError
+
+from .base import STTProvider, STTProviderError, TranscriptionResult
 
 
 class WhisperProvider(STTProvider):

@@ -10,18 +10,17 @@ FastAPI router for STT operations:
 Provider fallback: AssemblyAI → Whisper → Store audio only
 """
 
-import io
 import logging
 import subprocess
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional, Tuple
 from uuid import UUID
 
+import imageio_ffmpeg
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 from supabase import Client
-import imageio_ffmpeg
 
 from app.core.deps import get_current_user, get_supabase_client
 from app.services.stt import STTService, TranscriptionResult
@@ -311,7 +310,7 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
 
         # Validate audio_bytes before processing
         if not audio_bytes or len(audio_bytes) == 0:
-            logger.error(f"[FFMPEG] Received empty audio_bytes!")
+            logger.error("[FFMPEG] Received empty audio_bytes!")
             return audio_bytes, "Empty audio data received"
 
         # Check magic bytes to verify it's actually audio
@@ -358,7 +357,7 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
             try:
                 input_file.close()
                 output_file.close()
-            except:
+            except Exception:
                 pass
             return audio_bytes, f"Temp file write failed: {str(write_error)}"
 
@@ -388,7 +387,7 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
             logger.error(f"[FFMPEG] STDOUT (full): {result.stdout}")
 
             # Try WAV fallback (doesn't require MP3 encoder)
-            logger.info(f"[FFMPEG] Trying WAV fallback (no encoding required)...")
+            logger.info("[FFMPEG] Trying WAV fallback (no encoding required)...")
 
             import os
             wav_output = output_path.replace('.mp3', '.wav')
@@ -422,7 +421,7 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
                 return audio_bytes, f"ffmpeg failed (code {result.returncode}): {error_summary}"
 
             # WAV conversion succeeded!
-            logger.info(f"[FFMPEG] ✅ WAV fallback successful")
+            logger.info("[FFMPEG] ✅ WAV fallback successful")
             output_path = wav_output  # Use WAV file
 
             # Clean up MP3 attempt
@@ -442,20 +441,20 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
         try:
             os.remove(input_path)
             os.remove(output_path)
-            logger.info(f"[FFMPEG] Cleaned up temp files")
+            logger.info("[FFMPEG] Cleaned up temp files")
         except Exception as e:
             logger.warning(f"[FFMPEG] Failed to clean temp files: {e}")
 
         return converted_bytes, None
 
     except subprocess.TimeoutExpired:
-        logger.error(f"[FFMPEG] Conversion timeout (>30s)")
+        logger.error("[FFMPEG] Conversion timeout (>30s)")
         # Clean up temp files on timeout
         try:
             import os
             os.remove(input_path)
             os.remove(output_path)
-        except:
+        except Exception:
             pass
         return audio_bytes, "ffmpeg timeout"
 
@@ -468,7 +467,7 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
                 os.remove(input_path)
             if 'output_path' in locals():
                 os.remove(output_path)
-        except:
+        except Exception:
             pass
         return audio_bytes, f"Conversion error: {str(e)}"
 
@@ -521,7 +520,7 @@ async def transcribe_audio(
         user_id, user_timezone = get_user_profile(user, supabase)
 
         # Log received audio metadata for debugging
-        logger.info(f"[TRANSCRIBE] Received audio file:")
+        logger.info("[TRANSCRIBE] Received audio file:")
         logger.info(f"  - Filename: {audio.filename}")
         logger.info(f"  - Content-Type: {audio.content_type}")
         logger.info(f"  - Size: {audio.size if hasattr(audio, 'size') else 'unknown'} bytes")
@@ -546,7 +545,7 @@ async def transcribe_audio(
         # CRITICAL: Log audio_bytes immediately after read
         logger.info(f"[TRANSCRIBE] Read audio file: {len(audio_bytes)} bytes")
         if len(audio_bytes) == 0:
-            logger.error(f"[TRANSCRIBE] ❌ Audio read returned EMPTY bytes!")
+            logger.error("[TRANSCRIBE] ❌ Audio read returned EMPTY bytes!")
             logger.error(f"[TRANSCRIBE] UploadFile details: filename={audio.filename}, content_type={audio.content_type}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -586,7 +585,7 @@ async def transcribe_audio(
         storage_key = f"{user_id}/voice_{timestamp}.m4a"
 
         try:
-            upload_result = supabase.storage.from_('captures').upload(
+            supabase.storage.from_('captures').upload(
                 path=storage_key,
                 file=audio_bytes,
                 file_options={"content-type": audio.content_type}
@@ -605,14 +604,14 @@ async def transcribe_audio(
             )
 
         # Convert audio to MP3 for STT compatibility (fixes iOS/Expo format issues)
-        logger.info(f"[TRANSCRIBE] Converting audio to MP3 format for STT compatibility")
+        logger.info("[TRANSCRIBE] Converting audio to MP3 format for STT compatibility")
         converted_bytes, conversion_error = await convert_audio_to_mp3(audio_bytes, audio.filename)
 
         if conversion_error:
             logger.warning(f"[TRANSCRIBE] Audio conversion failed: {conversion_error}, using original bytes")
             # Continue with original bytes (might still work for some formats)
         else:
-            logger.info(f"[TRANSCRIBE] Audio converted successfully, using MP3 for transcription")
+            logger.info("[TRANSCRIBE] Audio converted successfully, using MP3 for transcription")
             audio_bytes = converted_bytes  # Use converted MP3 for transcription
 
         # Transcribe with fallback
@@ -646,12 +645,10 @@ async def transcribe_audio(
 
         if capture_id:
             # Update existing capture
-            capture_result = supabase.table('captures').update(capture_data).eq('id', capture_id).execute()
+            supabase.table('captures').update(capture_data).eq('id', capture_id).execute()
         else:
             # Create new capture
-            capture_result = supabase.table('captures').insert(capture_data).execute()
-
-        capture = capture_result.data[0]
+            supabase.table('captures').insert(capture_data).execute()
 
         # Increment usage counters
         if transcription_result:

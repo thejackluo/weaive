@@ -6,10 +6,10 @@ Provider abstraction for STT operations with fallback chain.
 Story: 0.11 - Voice/Speech-to-Text Infrastructure
 """
 
-from .base import STTProvider, TranscriptionResult, STTProviderError
 from .assemblyai_provider import AssemblyAIProvider
-from .whisper_provider import WhisperProvider
+from .base import STTProvider, STTProviderError, TranscriptionResult
 from .stt_service import STTService
+from .whisper_provider import WhisperProvider
 
 __all__ = [
     'STTProvider',

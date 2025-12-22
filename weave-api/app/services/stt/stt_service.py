@@ -11,8 +11,9 @@ Story: 0.11 - Voice/Speech-to-Text Infrastructure
 
 import asyncio
 from typing import Optional
-from .base import STTProvider, TranscriptionResult, STTProviderError
+
 from .assemblyai_provider import AssemblyAIProvider
+from .base import STTProvider, STTProviderError, TranscriptionResult
 from .whisper_provider import WhisperProvider
 
 
