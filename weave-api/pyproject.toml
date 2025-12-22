@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=0.75.0",
+    "assemblyai>=0.48.4",
     "boto3>=1.42.14",
     "fastapi>=0.124.4",
     "openai>=2.13.0",
@@ -13,6 +14,7 @@ dependencies = [
     "pydantic-settings>=2.12.0",
     "pyjwt>=2.10.1",
     "python-dotenv>=1.2.1",
+    "python-multipart>=0.0.21",
     "sqlalchemy>=2.0.45",
     "supabase>=2.27.0",
     "tiktoken>=0.12.0",
