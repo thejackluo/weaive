@@ -6,7 +6,7 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import ai_router, analytics, goals, health, journal_router, onboarding, transcribe, user
+from app.api import admin, ai_router, analytics, goals, health, journal_router, onboarding, transcribe, user
 from app.core.config import settings
 
 # Log environment status on startup
@@ -125,6 +125,8 @@ app.include_router(ai_router.router, tags=["ai"])
 app.include_router(journal_router.router, prefix="/api", tags=["journal"])
 app.include_router(transcribe.router, tags=["stt"])
 app.include_router(goals.router, tags=["goals"])
+app.include_router(captures.router, tags=["captures"])
+app.include_router(admin.router, tags=["admin"])  # Cost monitoring and system maintenance
 
 @app.get("/")
 async def root():
