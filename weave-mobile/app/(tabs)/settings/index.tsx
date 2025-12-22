@@ -10,6 +10,7 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { UserAvatarMenu } from '@/components/UserAvatarMenu';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -21,6 +22,9 @@ export default function SettingsScreen() {
         backgroundColor: '#0F0F10',
       }}
     >
+      {/* User Avatar Menu - Top Right */}
+      <UserAvatarMenu />
+
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{

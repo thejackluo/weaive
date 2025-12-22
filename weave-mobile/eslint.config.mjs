@@ -36,6 +36,10 @@ export default [
         // Browser/React Native globals
         performance: 'readonly',
         AbortController: 'readonly',
+        Blob: 'readonly',
+        FormData: 'readonly',
+        URLSearchParams: 'readonly',
+        FileReader: 'readonly',
         // Jest/testing globals
         jest: 'readonly',
         describe: 'readonly',
@@ -64,6 +68,25 @@ export default [
           ignoreRestSiblings: true,
         },
       ],
+
+      // ===================================================================
+      // Configuration Consistency Rules (Story 0.9 - Critical)
+      // ===================================================================
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'MemberExpression[object.object.name="process"][object.property.name="env"][property.name=/^EXPO_PUBLIC_API/]',
+          message:
+            '❌ Do not use process.env.EXPO_PUBLIC_API_* for API URLs. Use getApiBaseUrl() from @/utils/api instead. This ensures consistent configuration across all services.',
+        },
+        {
+          selector:
+            'VariableDeclarator[id.name="API_BASE_URL"][init.type="LogicalExpression"][init.left.object.object.name="process"]',
+          message:
+            '❌ Do not hardcode API_BASE_URL with process.env fallback. Use: const API_BASE_URL = getApiBaseUrl();',
+        },
+      ],
     },
   },
   {
@@ -89,6 +112,7 @@ export default [
       'build',
       '.vscode',
       'tailwind.config.js',  // CommonJS config file
+      'src/_archive/**',  // Archived code from old implementations
     ],
   },
 ];

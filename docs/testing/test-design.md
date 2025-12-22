@@ -344,6 +344,233 @@ async def test_ai_cache_hit():
     assert ai_service._api_call_count == 1
 ```
 
+#### Backend ↔ AI Vision (Story 0.9)
+
+| Scenario ID | Description | Test Focus | Success Criteria |
+|------------|-------------|------------|------------------|
+| **INT-IMG-001** | Upload image → Gemini analysis | Vision service | Returns proof validation, OCR, classification, quality score |
+| **INT-IMG-002** | Vision fallback chain | Gemini → GPT-4o | Falls back to GPT-4o Vision if Gemini fails |
+| **INT-IMG-003** | Image deletion cascade | Supabase Storage + DB | Deletes file and marks capture as deleted |
+| **INT-IMG-004** | Image upload rate limiting | Rate limiter | HTTP 429 after 20 images/day |
+| **INT-IMG-005** | Image gallery retrieval | Query filtering | Returns images filtered by goal/bind/date |
+
+**Example Test (INT-IMG-001):**
+
+```python
+# api/tests/integration/test_vision_service.py
+import pytest
+from app.services.vision_service import VisionService
+
+@pytest.mark.asyncio
+async def test_gemini_vision_analysis():
+    """Upload image and analyze with Gemini 3.0 Flash"""
+
+    vision_service = VisionService()
+
+    # Arrange: Upload test image to Supabase Storage
+    test_image_url = "https://storage.supabase.co/.../workout.jpg"
+    bind_context = {
+        "bind_id": "uuid",
+        "bind_title": "Complete 3x8 bench press",
+        "goal_type": "fitness"
+    }
+
+    # Act: Analyze image
+    result = await vision_service.analyze_image(
+        image_url=test_image_url,
+        bind_context=bind_context
+    )
+
+    # Assert: Check analysis structure
+    assert result['proof_validated'] in [True, False]
+    assert 'extracted_text' in result
+    assert result['content_classification'] in ['gym_equipment', 'food', 'outdoor_activity', 'workspace', 'other']
+    assert 1 <= result['quality_score'] <= 5
+    assert result['provider'] == 'gemini_3.0_flash'
+
+    # Verify cost tracking
+    assert result['cost_usd'] > 0
+```
+
+**Example Test (INT-IMG-004):**
+
+```python
+# api/tests/integration/test_image_rate_limiting.py
+import pytest
+from app.routers import captures
+from fastapi.testclient import TestClient
+
+def test_image_upload_rate_limit():
+    """Enforce max 20 images per user per day"""
+
+    client = TestClient(app)
+    user_token = get_test_user_token()
+
+    # Upload 20 images (should succeed)
+    for i in range(20):
+        response = client.post(
+            "/api/captures/images",
+            files={"file": ("test.jpg", open("test.jpg", "rb"), "image/jpeg")},
+            headers={"Authorization": f"Bearer {user_token}"}
+        )
+        assert response.status_code == 200
+
+    # 21st image should be rate limited
+    response = client.post(
+        "/api/captures/images",
+        files={"file": ("test.jpg", open("test.jpg", "rb"), "image/jpeg")},
+        headers={"Authorization": f"Bearer {user_token}"}
+    )
+    assert response.status_code == 429
+    assert "RATE_LIMIT_EXCEEDED" in response.json()['error']['code']
+    assert 'Retry-After' in response.headers
+```
+
+#### Backend ↔ Speech-to-Text (Story 0.11)
+
+| Scenario ID | Description | Test Focus | Success Criteria |
+|------------|-------------|------------|------------------|
+| **INT-STT-001** | Upload voice → AssemblyAI transcription | STT service | Returns accurate transcript with confidence score |
+| **INT-STT-002** | STT fallback chain | AssemblyAI → Whisper | Falls back to Whisper if AssemblyAI fails |
+| **INT-STT-003** | Voice duration limit | Rate limiter | Rejects audio > 5 minutes |
+| **INT-STT-004** | Voice rate limiting | Rate limiter | HTTP 429 after 50 transcriptions/day |
+| **INT-STT-005** | Audio storage and retrieval | Supabase Storage | Stores audio file, retrieves with presigned URL |
+
+**Example Test (INT-STT-001):**
+
+```python
+# api/tests/integration/test_stt_service.py
+import pytest
+from app.services.stt_service import STTService
+
+@pytest.mark.asyncio
+async def test_assemblyai_transcription():
+    """Upload voice recording and transcribe with AssemblyAI"""
+
+    stt_service = STTService()
+
+    # Arrange: Load test audio file (30 seconds, M4A format)
+    with open("tests/fixtures/test_voice.m4a", "rb") as f:
+        audio_bytes = f.read()
+
+    # Act: Transcribe audio
+    result = await stt_service.transcribe(
+        audio_file=audio_bytes,
+        format="m4a"
+    )
+
+    # Assert: Check transcription structure
+    assert len(result['transcript']) > 0
+    assert 0.0 <= result['confidence'] <= 1.0
+    assert result['duration_sec'] > 0
+    assert result['provider'] in ['assemblyai', 'whisper']
+
+    # Verify cost tracking
+    assert result['cost_usd'] > 0
+
+    # Verify transcript quality (sample phrase detection)
+    assert "commitment" in result['transcript'].lower() or "goal" in result['transcript'].lower()
+```
+
+**Example Test (INT-STT-002):**
+
+```python
+# api/tests/integration/test_stt_fallback.py
+import pytest
+from app.services.stt_service import STTService
+from unittest.mock import patch, AsyncMock
+
+@pytest.mark.asyncio
+async def test_stt_fallback_chain():
+    """STT should fall back to Whisper if AssemblyAI fails"""
+
+    stt_service = STTService()
+
+    with open("tests/fixtures/test_voice.m4a", "rb") as f:
+        audio_bytes = f.read()
+
+    # Mock AssemblyAI to fail
+    with patch.object(stt_service, '_transcribe_assemblyai', side_effect=Exception("API timeout")):
+        # Mock Whisper to succeed
+        with patch.object(stt_service, '_transcribe_whisper', return_value={
+            'transcript': 'This is my commitment',
+            'confidence': 0.92,
+            'duration_sec': 30.0,
+            'provider': 'whisper',
+            'cost_usd': 0.003
+        }):
+            result = await stt_service.transcribe(audio_bytes, format="m4a")
+
+            # Should use Whisper fallback
+            assert result['provider'] == 'whisper'
+            assert len(result['transcript']) > 0
+```
+
+#### Observability Integration (Epic 0.5)
+
+| Scenario ID | Description | Test Focus | Success Criteria |
+|------------|-------------|------------|------------------|
+| **OBS-001** | LogRocket session capture | Session replay | Session recorded with user actions |
+| **OBS-002** | Sentry error tracking | Error capture | Errors logged to Sentry dashboard |
+| **OBS-003** | Sentry performance monitoring | Screen load time tracking | Transactions logged with timing data |
+| **OBS-004** | Privacy field masking | Sensitive data redaction | Password fields not captured in replays |
+| **OBS-005** | Custom event tracking | User action logging | Goal/bind events tracked in LogRocket |
+
+**Example Test (OBS-002):**
+
+```python
+# api/tests/integration/test_sentry_integration.py
+import pytest
+import sentry_sdk
+from fastapi.testclient import TestClient
+
+def test_sentry_error_capture():
+    """Errors should be automatically captured by Sentry"""
+
+    client = TestClient(app)
+
+    # Trigger an intentional error (divide by zero)
+    response = client.get("/api/debug/trigger-error")
+
+    # Should return 500 error
+    assert response.status_code == 500
+
+    # Verify error was sent to Sentry (check last_event_id)
+    last_event = sentry_sdk.last_event_id()
+    assert last_event is not None
+
+    # In real tests, would verify via Sentry API that error appeared in dashboard
+```
+
+**Example Test (OBS-001):**
+
+```typescript
+// mobile/tests/integration/logrocket.test.ts
+import LogRocket from '@logrocket/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
+import { GoalCard } from '@/components/features/GoalCard';
+
+describe('LogRocket Session Tracking', () => {
+  it('should track goal_created event', async () => {
+    // Mock LogRocket.track
+    const trackSpy = jest.spyOn(LogRocket, 'track');
+
+    // Render component and trigger goal creation
+    const { getByText } = render(<CreateGoalScreen />);
+
+    fireEvent.press(getByText('Create Goal'));
+    fireEvent.changeText(getByPlaceholderText('Goal title'), 'Workout 3x/week');
+    fireEvent.press(getByText('Save'));
+
+    // Verify LogRocket tracked the event
+    expect(trackSpy).toHaveBeenCalledWith('goal_created', {
+      goalId: expect.any(String),
+      goalTitle: 'Workout 3x/week'
+    });
+  });
+});
+```
+
 ---
 
 ## E2E Testing Strategy

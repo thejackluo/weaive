@@ -30,7 +30,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
+import { BlurView } from '@react-native-community/blur';
 import { Text } from './Text/Text';
 import { useTheme } from '../theme/ThemeProvider';
 

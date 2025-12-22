@@ -1,12 +1,20 @@
-# Epic 1.5: App Navigation Scaffolding
+# Epic 1.5: Development Infrastructure
 
 ## Overview
 
-**Goal:** Establish complete app navigation structure with simple 3-tab design and magical glassmorphism AI interface, enabling Epic 2-8 feature development without routing conflicts.
+**Goal:** Establish complete development infrastructure (frontend navigation, backend patterns, AI service standards) to accelerate Epic 2-8 implementation by 20-30%.
 
-**User Outcome:** Development team has all routes defined with placeholder screens, allowing features to be implemented by simply replacing placeholders with real content.
+**Rationale:** Story 1.5.1 demonstrated that upfront standardization dramatically accelerates development. Epic 2-8 will require 40+ API endpoints, 12+ database models, and 15+ AI integrations. Without standardized patterns, each story involves redundant architectural decisions, inconsistent code, and higher maintenance burden.
 
-**Design Philosophy:** Simple, clean 3-tab structure (Thread, AI Chat, Dashboard) with magical glassmorphism AI interface inspired by new Siri.
+**User Outcome:** Development team has:
+1. **Frontend Infrastructure** - All routes defined with placeholder screens (Story 1.5.1)
+2. **Backend Infrastructure** - API/model templates, scaffolding scripts, testing conventions (Story 1.5.2)
+3. **AI Infrastructure** - Unified provider abstraction, cost tracking, rate limiting patterns (Story 1.5.3)
+
+**Design Philosophy:**
+- **Frontend:** Simple, clean 3-tab structure (Thread, AI Chat, Dashboard) with magical glassmorphism AI interface inspired by new Siri
+- **Backend:** Consistent REST patterns, Pydantic schemas, FastAPI templates with minimal boilerplate
+- **AI Services:** Single abstraction layer for text/image/audio AI with fallback chains and cost controls
 
 ---
 
@@ -584,20 +592,315 @@ Choose Option 1 for simplicity unless custom tab bar is needed for other reasons
 
 ---
 
+## Story 1.5.2: Backend API/Model Standardization
+
+### Priority: S (Should Have)
+
+**Estimate:** 5-6 story points
+**Type:** Infrastructure
+
+**As a** developer
+**I want to** have standardized backend patterns and templates
+**So that** I can implement Epic 2-8 APIs without architectural decisions
+
+---
+
+### Overview / Rationale
+
+Backend standardization prevents pattern divergence across 40+ API endpoints and 12+ database models in Epic 2-8. Like Story 1.5.1 established navigation templates, this story establishes backend templates, enabling developers to scaffold new APIs in minutes instead of hours.
+
+This story establishes:
+1. **API Endpoint Templates** - FastAPI router patterns with auth, validation, error handling
+2. **Database Model Conventions** - SQLAlchemy BaseModel with timestamps, soft delete
+3. **Pydantic Schema Standards** - Request/response models with consistent naming
+4. **Service Layer Decision Tree** - When to create service classes vs inline logic
+5. **Error Handling Patterns** - Standard error codes (VALIDATION_ERROR, NOT_FOUND, etc.)
+6. **Testing Conventions** - Pytest fixtures, integration test patterns
+7. **Scaffolding Scripts** - Generate new API endpoints from templates
+
+---
+
+### Acceptance Criteria
+
+#### AC-1: API Endpoint Standardization
+
+**REST Naming Conventions:**
+- [ ] Document REST resource naming: `GET /api/{resources}`, `POST /api/{resources}`, `GET /api/{resources}/{id}`
+- [ ] Document query parameter patterns: `?user_id=xxx&local_date=2025-12-21` (snake_case)
+- [ ] Document HTTP status codes: 200 (success), 201 (created), 400 (validation), 401 (auth), 404 (not found), 429 (rate limit), 500 (server error)
+
+**FastAPI Router Template:**
+- [ ] Create template file: `scripts/templates/api_router_template.py`
+- [ ] Include: Auth dependency injection, Pydantic request/response models, error handling, logging
+- [ ] Example endpoints: GET list, GET by ID, POST create, PUT update, DELETE (soft delete)
+
+**Response Wrapper Format:**
+- [ ] All success responses: `{"data": {...}, "meta": {"timestamp": "..."}}`
+- [ ] All error responses: `{"error": {"code": "...", "message": "...", "retryable": bool}}`
+- [ ] All list responses: `{"data": [...], "meta": {"total": N, "page": 1, "per_page": 20}}`
+
+#### AC-2: Database Model Standardization
+
+**SQLAlchemy Base Model:**
+- [ ] Create `BaseModel` class with common fields: `id` (UUID), `created_at`, `updated_at`, `deleted_at` (soft delete)
+- [ ] Document table naming: `snake_case`, plural (e.g., `user_profiles`, `journal_entries`)
+- [ ] Document column naming: `snake_case` (e.g., `user_id`, `local_date`, `scheduled_for_date`)
+- [ ] Document foreign key naming: `{table}_id` (e.g., `user_id`, `goal_id`)
+- [ ] Document index naming: `idx_{table}_{columns}` (e.g., `idx_completions_user_date`)
+
+**Soft Delete Pattern:**
+- [ ] Document soft delete convention: Set `deleted_at` timestamp instead of hard DELETE
+- [ ] Document query filtering: Exclude `deleted_at IS NOT NULL` records by default
+- [ ] Provide soft delete mixin class
+
+#### AC-3: Pydantic Schema Conventions
+
+**Request/Response Models:**
+- [ ] Naming pattern: `{Resource}Create`, `{Resource}Update`, `{Resource}Response`
+- [ ] Example: `GoalCreate`, `GoalUpdate`, `GoalResponse`
+- [ ] Document field validation patterns (min/max length, regex, custom validators)
+- [ ] Document nested model patterns for related entities
+
+**Template File:**
+- [ ] Create `scripts/templates/pydantic_schema_template.py`
+- [ ] Include: Create schema, update schema, response schema with relationships
+
+#### AC-4: Service Layer Decision Tree
+
+**Decision Tree:**
+- [ ] **Inline logic** (default): Simple CRUD, <20 lines, single table operations
+- [ ] **Service class**: Complex business logic, multi-table transactions, >20 lines, reusable across endpoints
+- [ ] Document when NOT to create services (avoid premature abstraction)
+
+**Service Template (when needed):**
+- [ ] Create `scripts/templates/service_template.py`
+- [ ] Include: Async methods, error handling, transaction management
+
+#### AC-5: Error Handling Patterns
+
+**Standard Error Codes:**
+- [ ] Document error codes: `VALIDATION_ERROR`, `NOT_FOUND`, `UNAUTHORIZED`, `RATE_LIMIT_EXCEEDED`, `INTERNAL_ERROR`
+- [ ] Create error response utility: `format_error_response(code, message, retryable=False)`
+- [ ] Document HTTP status mapping: 400 → VALIDATION_ERROR, 404 → NOT_FOUND, 429 → RATE_LIMIT_EXCEEDED
+
+**Error Handling Middleware:**
+- [ ] Create FastAPI exception handlers for common errors
+- [ ] Log errors with request context (user_id, endpoint, timestamp)
+
+#### AC-6: Testing Patterns
+
+**Pytest Fixtures:**
+- [ ] Document fixture naming: `user_fixture`, `goal_fixture`, `subtask_fixture`
+- [ ] Create reusable fixtures in `tests/conftest.py`
+- [ ] Document test database setup/teardown
+
+**Integration Test Template:**
+- [ ] Create `tests/test_example_api.py` demonstrating integration test pattern
+- [ ] Include: Auth setup, API calls, response validation, cleanup
+- [ ] Document coverage targets: 80%+ for services, 60%+ for routes
+
+#### AC-7: Scaffolding Scripts
+
+**API Scaffolding Script:**
+- [ ] Create `scripts/generate_api.py` to scaffold new API endpoints
+- [ ] Input: Resource name (e.g., "goal")
+- [ ] Output: Router file, Pydantic schemas, test file (with TODO placeholders)
+- [ ] Usage: `python scripts/generate_api.py goal` → generates `api/routers/goals.py`, `api/schemas/goal.py`, `tests/test_goals_api.py`
+
+#### AC-8: Documentation
+
+**Backend Patterns Guide:**
+- [ ] Create `docs/dev/backend-patterns-guide.md`
+- [ ] Sections: API Patterns, Model Conventions, Pydantic Schemas, Error Handling, Testing, Service Layer Decision Tree
+- [ ] Include 2-3 complete examples (simple CRUD, complex multi-table operation)
+- [ ] Link from CLAUDE.md standardization section
+
+**Update Architecture Docs:**
+- [ ] Update `docs/architecture/implementation-patterns-consistency-rules.md` with backend standardization reference
+- [ ] Add section: "Backend Standardization (Story 1.5.2)" with link to patterns guide
+
+---
+
+### Story Points Breakdown
+
+| Task | Estimate | Rationale |
+|------|----------|-----------|
+| API templates + docs | 2 pts | FastAPI router template, response format standardization |
+| Model/schema templates | 1 pt | BaseModel, Pydantic templates |
+| Error handling + service patterns | 1 pt | Error codes, decision tree |
+| Testing conventions + fixtures | 1 pt | Pytest fixtures, integration test template |
+| Backend patterns guide | 1-2 pts | Comprehensive developer documentation |
+
+**Total: 5-6 story points**
+
+---
+
+## Story 1.5.3: AI Services Standardization (Text/Image/Audio)
+
+### Priority: S (Should Have)
+
+**Estimate:** 4-5 story points
+**Type:** Infrastructure
+
+**As a** developer
+**I want to** have unified AI service patterns across text, image, and audio
+**So that** I can implement Epic 2-8 AI features with consistent cost tracking and error handling
+
+---
+
+### Overview / Rationale
+
+Stories 0.6 (AI Service), 0.9 (Image Service), and 0.11 (Voice STT) implemented text, image, and audio AI integrations separately. This story extracts common patterns into a unified abstraction (`AIProviderBase`), ensuring all future AI integrations follow consistent patterns for:
+- Provider fallback chains (Primary → Secondary → Graceful degradation)
+- Cost tracking (unified logging to `ai_runs` table)
+- Rate limiting (check `daily_aggregates` before AI calls)
+- Error handling (standard loading states, retry logic)
+- Frontend hooks (React Native hooks for all AI modalities)
+
+**Epic 2-8 Benefits:**
+- 15+ AI integrations use single pattern
+- Cost tracking automatic for all modalities
+- Rate limiting enforced consistently
+- Frontend developers use standard hooks (`useAIChat`, `useImageAnalysis`, `useVoiceTranscription`)
+
+---
+
+### Acceptance Criteria
+
+#### AC-1: Unified AI Provider Abstraction
+
+**AIProviderBase Abstract Class:**
+- [ ] Create `weave-api/app/services/ai_provider_base.py`
+- [ ] Abstract methods: `call_ai(input, context) -> dict`, `estimate_cost(input) -> float`, `get_provider_name() -> str`
+- [ ] Common methods: `log_to_ai_runs(operation_type, input_tokens, output_tokens, cost_usd, duration_ms)`, `check_rate_limit(user_id, operation_type)`
+
+**Provider Implementation Pattern:**
+- [ ] All AI providers inherit from `AIProviderBase`
+- [ ] Implement fallback chain: Primary provider → Secondary provider → Graceful degradation (return None or default)
+- [ ] Document provider initialization (API keys, config)
+
+#### AC-2: Text AI Standardization
+
+**Text AI Providers:**
+- [ ] Primary: OpenAI GPT-4o-mini ($0.15/$0.60 per MTok) - 90% of text generation
+- [ ] Secondary: Claude 3.7 Sonnet ($3.00/$15.00 per MTok) - Complex reasoning, fallback
+- [ ] Tertiary: Deterministic/cached responses (when both providers fail)
+
+**Text AI Pattern:**
+- [ ] Document when to use GPT-4o-mini vs Claude (routine vs complex reasoning)
+- [ ] Standard request format: `{"messages": [...], "context": {...}}`
+- [ ] Standard response format: `{"text": "...", "provider": "gpt-4o-mini", "tokens_used": {...}, "cost_usd": 0.0025}`
+
+#### AC-3: Image AI Standardization
+
+**Image AI Providers:**
+- [ ] Primary: Gemini 3.0 Flash (~$0.0005 per image) - Proof validation, OCR, classification
+- [ ] Secondary: GPT-4o Vision ($5/MTok, ~$0.02 per image) - Fallback for complex analysis
+- [ ] Tertiary: Store image without AI analysis (graceful degradation)
+
+**Image AI Pattern:**
+- [ ] Standard request: `{"image_url": "...", "prompt": "Analyze this image...", "operations": ["proof_validation", "ocr", "classification"]}`
+- [ ] Standard response: `{"proof_validated": bool, "extracted_text": "...", "categories": [...], "quality_score": int, "provider": "gemini-3-flash"}`
+
+#### AC-4: Audio AI Standardization
+
+**Audio AI Providers:**
+- [ ] Primary: AssemblyAI ($0.15/hr) - Speech-to-text transcription
+- [ ] Secondary: OpenAI Whisper API ($0.006/min = $0.36/hr) - Fallback for edge cases
+- [ ] Tertiary: Store audio without transcript (manual transcription later)
+
+**Audio AI Pattern:**
+- [ ] Standard request: `{"audio_file": bytes, "format": "m4a", "language": "en"}`
+- [ ] Standard response: `{"transcript": "...", "confidence": 0.94, "duration_sec": 45.2, "provider": "assemblyai"}`
+
+#### AC-5: Cost Tracking Standardization
+
+**Unified Cost Logging:**
+- [ ] All AI calls log to `ai_runs` table with:
+  - `operation_type`: "text_generation", "image_analysis", "transcription"
+  - `provider`: "gpt-4o-mini", "gemini-3-flash", "assemblyai"
+  - `input_tokens` (or `image_count`, `audio_duration_sec`)
+  - `output_tokens`
+  - `model`: Specific model name
+  - `cost_usd`: Calculated per-provider pricing
+  - `duration_ms`: API call latency
+
+**Cost Calculation:**
+- [ ] Document per-provider pricing: GPT-4o-mini ($0.15/$0.60/MTok), Gemini ($0.02/image), AssemblyAI ($0.15/hr)
+- [ ] Create cost calculator utility: `calculate_cost(provider, input, output)`
+
+#### AC-6: Rate Limiting Patterns
+
+**Rate Limit Checks:**
+- [ ] Before text AI: Check `daily_aggregates.ai_text_count` (10 calls/hour per user)
+- [ ] Before image AI: Check `daily_aggregates.ai_vision_count` (5 analyses/day per user)
+- [ ] Before audio AI: Check `daily_aggregates.transcription_count` (50 transcriptions/day per user)
+
+**Rate Limit Enforcement:**
+- [ ] HTTP 429 response: `{"error": {"code": "RATE_LIMIT_EXCEEDED", "message": "Daily limit reached (5/5 images)", "retryAfter": 22980}}`
+- [ ] Include `Retry-After` header (seconds until midnight user timezone)
+
+#### AC-7: Hooks & Frontend Integration
+
+**React Native Hooks:**
+- [ ] Create `weave-mobile/src/hooks/useAIChat.ts` - Text generation with loading/error states
+- [ ] Create `weave-mobile/src/hooks/useImageAnalysis.ts` - Image upload + analysis
+- [ ] Create `weave-mobile/src/hooks/useVoiceTranscription.ts` - Audio upload + transcription
+
+**Hook Pattern:**
+```typescript
+const { generate, isGenerating, error } = useAIChat();
+const result = await generate({ prompt: "...", context: {...} });
+```
+
+**Loading States:**
+- [ ] Standard loading messages: "Generating...", "Analyzing image...", "Transcribing audio..."
+- [ ] Standard error messages: "AI service unavailable. Try again.", "Daily limit reached."
+
+#### AC-8: Documentation
+
+**AI Services Guide:**
+- [ ] Create `docs/dev/ai-services-guide.md`
+- [ ] Sections: Provider Abstraction, Text AI Patterns, Image AI Patterns, Audio AI Patterns, Cost Tracking, Rate Limiting, Frontend Hooks
+- [ ] Include provider decision tree (when to use which provider)
+- [ ] Include complete integration examples for all 3 modalities
+- [ ] Link from CLAUDE.md standardization section
+
+**Update Architecture Docs:**
+- [ ] Update `docs/architecture/core-architectural-decisions.md` with unified AI architecture section
+- [ ] Add section: "Unified AI Service Architecture (Story 1.5.3)" with provider fallback diagram
+
+---
+
+### Story Points Breakdown
+
+| Task | Estimate | Rationale |
+|------|----------|-----------|
+| AIProviderBase abstraction | 1 pt | Abstract class, common methods |
+| Provider standardization (text/image/audio) | 2 pts | Extract patterns from Stories 0.6, 0.9, 0.11 |
+| React Native hooks | 1 pt | 3 hooks with loading/error states |
+| AI services guide | 1-2 pts | Comprehensive developer documentation |
+
+**Total: 4-5 story points**
+
+---
+
 ## Epic 1.5 Summary
 
 | ID | Story | Priority | Estimate |
 |----|-------|----------|----------|
 | 1.5.1 | Core Navigation Architecture | M | 8-10 pts |
+| 1.5.2 | Backend API/Model Standardization | S | 5-6 pts |
+| 1.5.3 | AI Services Standardization (Text/Image/Audio) | S | 4-5 pts |
 
-**Epic Total:** 8-10 story points (1 unified story)
+**Epic Total:** 17-21 story points (3 infrastructure stories)
 
 **Key Deliverables:**
-- 3-tab navigation structure (Thread, AI Chat, Dashboard)
-- Magical glassmorphism AI Chat with blur effect
-- 15+ placeholder screens for Epic 2-8
-- Auth guards for protected routes
-- Complete navigation documentation
+- **Story 1.5.1:** 3-tab navigation structure (Thread, AI Chat, Dashboard), magical glassmorphism AI Chat with blur effect, 15+ placeholder screens for Epic 2-8, auth guards, navigation documentation
+- **Story 1.5.2:** Backend API/model templates, FastAPI router scaffolding, Pydantic schema standards, error handling patterns, testing conventions, `docs/dev/backend-patterns-guide.md`
+- **Story 1.5.3:** Unified `AIProviderBase` abstraction, text/image/audio AI standardization, cost tracking patterns, rate limiting, React Native AI hooks, `docs/dev/ai-services-guide.md`
+
+**ROI:** 20-30% velocity improvement for Epic 2-8 stories (40+ future stories benefit from standardization)
 
 **Deferred to Post-MVP:**
 - Radial menu animation (fancy fan-out options)
@@ -609,20 +912,18 @@ Choose Option 1 for simplicity unless custom tab bar is needed for other reasons
 ## Dependencies
 
 **Epic 1.5 depends on:**
-- ✅ Epic 0: Foundation (complete)
-- ✅ Epic 1: Onboarding (complete or in progress)
+- ✅ Epic 0: Foundation (complete) - Stories 0.6, 0.9, 0.11 provide AI implementations that Story 1.5.3 standardizes
 
 **Epic 1.5 blocks:**
-- Epic 2: Needle/Goal Management (needs routes defined)
-- Epic 3: Daily Actions & Proof (needs Thread/Bind routes)
-- Epic 4: Reflection & Journaling (needs Journal routes)
-- Epic 5: Progress Visualization (needs Dashboard routes)
-- Epic 6: AI Coaching (needs Coach/AI Chat routes)
-- Epic 7: Notifications (needs deep link routes)
-- Epic 8: Settings & Profile (needs Settings routes)
+- Epic 2-8: Feature Development (need navigation routes, backend patterns, AI service standards)
+
+**Epic 1.5 provides:**
+- **Story 1.5.1:** Frontend navigation scaffolding (routes, screens, auth guards)
+- **Story 1.5.2:** Backend development templates (API patterns, model conventions, testing standards)
+- **Story 1.5.3:** AI integration patterns (unified provider abstraction, cost tracking, rate limiting)
 
 **Can run in parallel with:**
-- Nothing (infrastructure must be complete before Epic 2-8)
+- Nothing (infrastructure must be complete before Epic 2-8 begins)
 
 ---
 

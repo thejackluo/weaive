@@ -108,6 +108,16 @@ jest.mock('expo-blur', () => {
   };
 });
 
+jest.mock('@react-native-community/blur', () => {
+  const React = require('react');
+  return {
+    BlurView: React.forwardRef((props, ref) => {
+      const { View } = require('react-native');
+      return React.createElement(View, { ...props, ref, testID: 'blur-view-community' });
+    }),
+  };
+});
+
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockBack = jest.fn();

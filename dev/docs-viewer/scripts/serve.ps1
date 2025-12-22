@@ -1,4 +1,4 @@
-# Weavelight Documentation Viewer - PowerShell Launcher
+# Documentation Viewer - PowerShell Launcher
 # Run from project root: .\dev\docs-viewer\scripts\serve.ps1
 
 $PORT = 3030
@@ -7,7 +7,7 @@ $ProjectRoot = Split-Path (Split-Path (Split-Path $ScriptDir -Parent) -Parent) -
 
 Write-Host ""
 Write-Host "┌──────────────────────────────────────────┐" -ForegroundColor Cyan
-Write-Host "│  📚 Weavelight Documentation Viewer     │" -ForegroundColor Cyan
+Write-Host "│  📚 Documentation Viewer                │" -ForegroundColor Cyan
 Write-Host "└──────────────────────────────────────────┘" -ForegroundColor Cyan
 Write-Host ""
 

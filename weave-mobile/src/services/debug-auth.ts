@@ -6,6 +6,7 @@
 import { decode as base64Decode } from 'base-64';
 
 import { supabase } from '@lib/supabase';
+import { getApiBaseUrl } from '../utils/api';
 
 /**
  * Debug current auth session and JWT token.
@@ -116,7 +117,7 @@ export async function debugUserProfile() {
       return;
     }
 
-    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+    const API_BASE_URL = getApiBaseUrl();
 
     const response = await fetch(`${API_BASE_URL}/api/onboarding/debug/current-user`, {
       method: 'GET',
