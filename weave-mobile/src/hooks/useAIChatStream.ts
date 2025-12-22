@@ -156,10 +156,24 @@ export function useAIChatStream(): UseAIChatStreamReturn {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
+        // ✅ DEBUG: Check what response object contains
+        console.log('[STREAM_DEBUG] 🔍 Response object keys:', Object.keys(response));
+        console.log('[STREAM_DEBUG] 🔍 response.body type:', typeof response.body);
+        console.log('[STREAM_DEBUG] 🔍 response.body value:', response.body);
+
         // Check if response body is readable
         if (!response.body) {
-          throw new Error('Response body is not readable');
+          console.error('[STREAM_DEBUG] ❌ response.body is falsy, cannot stream');
+          throw new Error('Response body is not readable - streaming not supported in this environment');
         }
+
+        // Check if body has getReader method
+        if (typeof response.body.getReader !== 'function') {
+          console.error('[STREAM_DEBUG] ❌ response.body does not have getReader method');
+          throw new Error('Response body does not support streaming - getReader not available');
+        }
+
+        console.log('[STREAM_DEBUG] ✅ response.body is readable, starting stream...');
 
         // Read SSE stream
         const reader = response.body.getReader();
