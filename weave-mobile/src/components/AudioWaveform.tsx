@@ -91,7 +91,7 @@ export function AudioWaveform({
 }: AudioWaveformProps) {
   const { colors } = useTheme();
 
-  const waveformColor = color ?? colors.brand.primary.default;
+  const waveformColor = color ?? colors.accent[500];
 
   /**
    * Normalize dB value (-160 to 0) to 0.0-1.0 scale

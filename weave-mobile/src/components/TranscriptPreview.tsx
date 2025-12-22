@@ -135,9 +135,9 @@ export function TranscriptPreview({
    * Get confidence color based on score
    */
   const getConfidenceColor = (): string => {
-    if (confidence >= 0.9) return colors.success.default;
-    if (confidence >= 0.7) return colors.warning.default;
-    return colors.error.default;
+    if (confidence >= 0.9) return colors.text.success;
+    if (confidence >= 0.7) return colors.text.warning;
+    return colors.text.error;
   };
 
   /**
@@ -166,9 +166,9 @@ export function TranscriptPreview({
   };
 
   return (
-    <Card variant="glass" style={{ padding: spacing.md }}>
+    <Card variant="glass" style={{ padding: spacing[4] }}>
       {/* Header with confidence and provider */}
-      <View style={[styles.header, { marginBottom: spacing.sm }]}>
+      <View style={[styles.header, { marginBottom: spacing[3] }]}>
         <View style={styles.headerLeft}>
           {/* Confidence indicator */}
           <View style={styles.confidenceIndicator}>
@@ -177,7 +177,7 @@ export function TranscriptPreview({
               size={16}
               color={getConfidenceColor()}
             />
-            <Text variant="bodySm" style={{ color: getConfidenceColor(), marginLeft: spacing.xs }}>
+            <Text variant="textSm" style={{ color: getConfidenceColor(), marginLeft: spacing[2] }}>
               {getConfidenceLabel()} confidence
             </Text>
           </View>
@@ -187,15 +187,15 @@ export function TranscriptPreview({
             style={[
               styles.providerBadge,
               {
-                backgroundColor: colors.neutral.tertiary,
-                paddingHorizontal: spacing.sm,
-                paddingVertical: spacing.xs,
+                backgroundColor: colors.neutral[700],
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[2],
                 borderRadius: radius.sm,
-                marginLeft: spacing.sm,
+                marginLeft: spacing[3],
               },
             ]}
           >
-            <Text variant="bodyXs" style={{ color: colors.text.secondary }}>
+            <Text variant="textXs" style={{ color: colors.text.secondary }}>
               {getProviderName()}
             </Text>
           </View>
@@ -203,9 +203,9 @@ export function TranscriptPreview({
 
         {/* Character count */}
         <Text
-          variant="bodyXs"
+          variant="textXs"
           style={{
-            color: editedText.length > maxLength ? colors.error.default : colors.text.secondary,
+            color: editedText.length > maxLength ? colors.text.error : colors.text.secondary,
           }}
         >
           {editedText.length}/{maxLength}
@@ -214,9 +214,9 @@ export function TranscriptPreview({
 
       {/* Transcript text */}
       {isLoading ? (
-        <View style={[styles.loadingContainer, { paddingVertical: spacing.xl }]}>
-          <ActivityIndicator size="large" color={colors.brand.primary.default} />
-          <Text variant="bodyMd" style={{ color: colors.text.secondary, marginTop: spacing.md }}>
+        <View style={[styles.loadingContainer, { paddingVertical: spacing[8] }]}>
+          <ActivityIndicator size="large" color={colors.accent[500]} />
+          <Text variant="textBase" style={{ color: colors.text.secondary, marginTop: spacing[4] }}>
             Transcribing audio...
           </Text>
         </View>
@@ -225,17 +225,17 @@ export function TranscriptPreview({
           style={[
             styles.textInput,
             {
-              borderColor: colors.neutral.border,
+              borderColor: colors.border.muted,
               borderRadius: radius.md,
               color: colors.text.primary,
-              padding: spacing.md,
+              padding: spacing[4],
               minHeight: 120,
             },
           ]}
           value={editedText}
           onChangeText={handleTextChange}
           placeholder="Transcript will appear here..."
-          placeholderTextColor={colors.text.tertiary}
+          placeholderTextColor={colors.text.muted}
           multiline
           editable={isEditable}
           maxLength={maxLength}
@@ -244,7 +244,7 @@ export function TranscriptPreview({
 
       {/* Action buttons */}
       {isEditable && hasChanges && !isLoading && (
-        <View style={[styles.actions, { marginTop: spacing.md, gap: spacing.sm }]}>
+        <View style={[styles.actions, { marginTop: spacing[4], gap: spacing[3] }]}>
           <Button variant="secondary" size="sm" onPress={handleCancel} style={{ flex: 1 }}>
             Cancel
           </Button>
