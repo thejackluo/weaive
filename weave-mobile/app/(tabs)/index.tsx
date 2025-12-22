@@ -129,6 +129,27 @@ export default function HomeScreen() {
           </Text>
 
           <Pressable
+            onPress={() => router.push('/(tabs)/voice-demo')}
+            style={{
+              backgroundColor: '#a855f7',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
+              marginBottom: 16,
+            }}
+          >
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+              }}
+            >
+              🎤 Voice Demo (Story 0.11)
+            </Text>
+          </Pressable>
+
+          <Pressable
             onPress={() => router.push('/(tabs)/settings')}
             style={{
               backgroundColor: '#10B981',
