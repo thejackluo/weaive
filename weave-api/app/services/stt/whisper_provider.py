@@ -78,6 +78,16 @@ class WhisperProvider(STTProvider):
             STTProviderError: If transcription fails
         """
         try:
+            import logging
+            logger = logging.getLogger(__name__)
+
+            # Log audio file metadata
+            logger.info(f"[WHISPER] Received audio bytes: {len(audio_file)} bytes")
+
+            # Check file magic bytes to detect actual format
+            magic_bytes = audio_file[:12] if len(audio_file) >= 12 else audio_file
+            logger.info(f"[WHISPER] File magic bytes (hex): {magic_bytes.hex()}")
+
             # Create file-like object from bytes
             audio_buffer = io.BytesIO(audio_file)
             audio_buffer.name = "audio.m4a"  # Whisper needs a filename with extension

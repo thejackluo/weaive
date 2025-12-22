@@ -314,8 +314,14 @@ async def transcribe_audio(
         # Get user profile ID (auth.uid() → user_profiles.id)
         user_id, user_timezone = get_user_profile(user, supabase)
 
+        # Log received audio metadata for debugging
+        logger.info(f"[TRANSCRIBE] Received audio file:")
+        logger.info(f"  - Filename: {audio.filename}")
+        logger.info(f"  - Content-Type: {audio.content_type}")
+        logger.info(f"  - Size: {audio.size if hasattr(audio, 'size') else 'unknown'} bytes")
+
         # Validate audio format
-        allowed_types = ['audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/wav', 'audio/wave', 'audio/flac', 'audio/ogg']
+        allowed_types = ['audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/wav', 'audio/wave', 'audio/flac', 'audio/ogg', 'audio/m4a']
         if audio.content_type not in allowed_types:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
