@@ -10,14 +10,12 @@ Tests cover:
 - AC-6: Error Handling (error codes, fallbacks)
 """
 
-import io
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
 
 from app.services.stt.base import TranscriptionResult
-
 
 # ============================================================================
 # FIXTURES

@@ -12,10 +12,10 @@ Tests cover:
 """
 
 from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from app.services.stt.base import STTProvider, TranscriptionResult
-
 
 # ============================================================================
 # STTProvider ABSTRACT CLASS TESTS

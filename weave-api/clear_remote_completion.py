@@ -4,8 +4,9 @@ Clear one bind completion from REMOTE Supabase for testing purposes.
 """
 
 import os
-from supabase import create_client, Client
+
 from dotenv import load_dotenv
+from supabase import Client, create_client
 
 # Load environment variables from .env
 load_dotenv()
@@ -60,7 +61,7 @@ def main():
             print(f"✅ Deleted completion: {completion_id}")
             print("   You can now retest the bind completion flow")
         except Exception as delete_error:
-            print(f"❌ Cannot delete from remote (immutability protection is working)")
+            print("❌ Cannot delete from remote (immutability protection is working)")
             print(f"   Error: {delete_error}")
             print("")
             print("📝 To test bind completion, you need to:")

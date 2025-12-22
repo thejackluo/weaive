@@ -5,6 +5,7 @@ This script finds test.weave@anthropic.com and marks them as onboarding_complete
 Run with: uv run python scripts/setup_test_user.py
 """
 import os
+
 from supabase import create_client
 
 # Test user email
@@ -55,7 +56,7 @@ except Exception as e:
     auth_user_id = None
 
 # Step 2: Check if user_profile exists
-print(f"\n🔍 Checking for user_profile...")
+print("\n🔍 Checking for user_profile...")
 existing = supabase.table("user_profiles").select("*").eq("auth_user_id", auth_user_id).execute()
 
 if existing.data:
@@ -63,27 +64,27 @@ if existing.data:
     profile_id = existing.data[0]['id']
     current_status = existing.data[0].get('onboarding_completed', False)
 
-    print(f"✅ User profile exists:")
+    print("✅ User profile exists:")
     print(f"   Profile ID: {profile_id}")
     print(f"   Current onboarding status: {current_status}")
 
     if current_status:
-        print(f"\n✅ User already has onboarding_completed=True!")
+        print("\n✅ User already has onboarding_completed=True!")
     else:
-        print(f"\n🔄 Updating onboarding_completed to True...")
+        print("\n🔄 Updating onboarding_completed to True...")
         update_result = supabase.table("user_profiles").update({
             "onboarding_completed": True,
             "updated_at": "now()"
         }).eq("id", profile_id).execute()
 
         if update_result.data:
-            print(f"✅ Updated user profile!")
-            print(f"   onboarding_completed: True")
+            print("✅ Updated user profile!")
+            print("   onboarding_completed: True")
         else:
             print(f"❌ Failed to update: {update_result}")
 else:
     # Profile doesn't exist - create it
-    print(f"⚠️  No user_profile found - creating new profile...")
+    print("⚠️  No user_profile found - creating new profile...")
 
     create_result = supabase.table("user_profiles").insert({
         "auth_user_id": auth_user_id,
@@ -94,9 +95,9 @@ else:
     }).execute()
 
     if create_result.data:
-        print(f"✅ Created new user_profile!")
+        print("✅ Created new user_profile!")
         print(f"   Profile ID: {create_result.data[0]['id']}")
-        print(f"   onboarding_completed: True")
+        print("   onboarding_completed: True")
     else:
         print(f"❌ Failed to create profile: {create_result}")
 
