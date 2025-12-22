@@ -123,7 +123,6 @@ app.include_router(journal_router.router, prefix="/api", tags=["journal"])
 app.include_router(goals.router, tags=["goals"])
 app.include_router(captures.router, tags=["captures"])
 app.include_router(admin.router, tags=["admin"])  # Cost monitoring and system maintenance
-app.include_router(stats.router, tags=["stats"])
 
 @app.get("/")
 async def root():
