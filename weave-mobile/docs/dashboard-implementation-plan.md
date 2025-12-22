@@ -159,7 +159,7 @@ After implementing each chunk, follow this process:
 1. **HIGH:** Removed 3 console.log statements from production code (NeedleDetailScreen.tsx)
 2. **HIGH:** Fixed unsafe 'any' type - Added proper TypeScript types (GoalDetail, GoalDetailResponse, Milestone, Bind)
 3. **HIGH:** Updated documentation with complete file list (added missing modified files)
-4. **MEDIUM:** Replaced 6+ hardcoded hex colors with theme tokens (colors.text.*, colors.border.*)
+4. **MEDIUM:** Replaced 6+ hardcoded hex colors with theme tokens (colors.text._, colors.border._)
 5. **MEDIUM:** Wired up timeframe dropdown functionality (cycles through 7d/2w/1m/90d)
 6. **MEDIUM:** Added skeleton loaders for needles loading state (3 placeholder cards)
 
@@ -636,34 +636,30 @@ EOF
 
 | Chunk                                | Status      | Stories                | Commit                 | Date       |
 | ------------------------------------ | ----------- | ---------------------- | ---------------------- | ---------- |
-| **Chunk 1: Needles Management**      | ✅ COMPLETE | US-2.1, US-2.2         | Pending manual testing | 2025-12-21 |
-| **Chunk 2: Goal Mutations**          | ⏳ PENDING  | US-2.3, US-2.4, US-2.5 | -                      | -          |
-| **Chunk 3: Progress Visualizations** | ⏳ PENDING  | US-5.2, US-5.3         | -                      | -          |
-| **Chunk 4: Weave Character**         | ⏳ PENDING  | US-5.1, US-5.4, US-5.5 | -                      | -          |
-| **Final Integration**                | ⏳ PENDING  | All                    | -                      | -          |
+| **Chunk 1: Needles Management**      | ✅ COMPLETE | US-2.1, US-2.2         | Code review fixes done | 2025-12-22 |
+| **Chunk 2: Goal Mutations**          | ✅ COMPLETE | US-2.3, US-2.4, US-2.5 | Code review fixes done | 2025-12-22 |
+| **Chunk 3: Progress Visualizations** | ✅ COMPLETE | US-5.2, US-5.3         | Code review fixes done | 2025-12-22 |
+| **Chunk 4: Weave Character**         | ✅ COMPLETE | US-5.1, US-5.4, US-5.5 | Code review fixes done | 2025-12-22 |
+| **Final Integration**                | ⏳ PENDING  | All                    | Ready for commit       | -          |
 
 ### Blockers / Notes
 
-- **Chunk 1:** ✅ Complete. Ready for manual testing. Expo server running on port 8081.
-  - Leverages existing: goals table, RLS policies, `GET /api/goals` endpoint
+- **Chunk 1-4:** ✅ All Complete. All backend endpoints implemented, all frontend components built.
 
-- **Chunk 2:** Requires 4 new backend endpoints in `goals/router.py`:
-  - `GET /api/goals/{goal_id}` - Detail view (exists in frontend, missing backend)
-  - `POST /api/goals` - Create (DB trigger enforces 3-goal limit)
-  - `PATCH /api/goals/{goal_id}` - Update
-  - `PATCH /api/goals/{goal_id}/archive` - Archive
-  - Database and RLS already exist ✅
+- **Package Changes:**
+  - ✅ Added `victory-native@41.20.2` for FulfillmentChart component
 
-- **Chunk 3:** Requires 2 new query endpoints + charting library:
-  - `GET /api/daily-aggregates?start_date=X&end_date=Y` - Query existing table ✅
-  - `GET /api/journal-entries?start_date=X&end_date=Y` - Query existing table ✅
-  - Database tables already exist ✅
-  - Need to install: `victory-native` or `react-native-chart-kit`
+- **Code Review Fixes Applied (2025-12-22):**
+  - ✅ Fixed FORCE_SAMPLE_DATA flags (set to false for production)
+  - ✅ Removed all console.error statements from service files
+  - ✅ Added loading state to Archive button
+  - ✅ Added client-side validation for goal title (empty check + max 200 chars)
+  - ✅ Confirmed URLSearchParams workaround (manual query string building)
 
-- **Chunk 4:** Requires 2 new computed endpoints:
-  - `GET /api/user/stats` - Compute level/streak from existing tables ✅
-  - `GET /api/history?limit=20` - Query completions + journal entries
-  - All source data tables exist ✅
+- **Remaining Low-Priority Items:**
+  - Test coverage: Create component tests for DashboardScreen, NeedleDetailScreen, ConsistencyHeatmap, FulfillmentChart
+  - Error boundaries: Add React error boundaries at route level
+  - Q-goals backend: Complete implementation (currently TODOed in backend)
 
 ---
 

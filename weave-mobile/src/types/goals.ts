@@ -118,7 +118,6 @@ export interface BindCreate {
 export interface CreateGoalRequest {
   title: string;
   description?: string; // "Why it matters"
-  priority?: 'low' | 'medium' | 'high';
   qgoals?: QGoalCreate[];
   binds?: BindCreate[];
 }
@@ -129,6 +128,5 @@ export interface CreateGoalRequest {
 export interface UpdateGoalRequest {
   title?: string;
   description?: string;
-  priority?: 'low' | 'medium' | 'high';
   status?: 'active' | 'archived';
 }
