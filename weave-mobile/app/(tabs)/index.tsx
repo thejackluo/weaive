@@ -241,6 +241,7 @@ export default function HomeScreen() {
             >
               <ImageGallery
                 onImagePress={(capture) => setSelectedImage(capture)}
+                scrollEnabled={false} // Disable scroll - let outer ScrollView handle it
               />
             </View>
           </View>
