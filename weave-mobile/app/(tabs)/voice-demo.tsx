@@ -10,15 +10,14 @@
  * 6. RateLimitIndicator (usage display)
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import BottomSheet from '@gorhom/bottom-sheet';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { Text } from '@/design-system/components/Text/Text';
 import { Button } from '@/design-system/components/Button/Button';
 import { Card } from '@/design-system/components/Card/Card';
 import {
-  VoiceRecordSheet,
+  VoiceRecordModal, // NEW: Alternative modal without bottom-sheet dependency
   VoiceRecorder,
   AudioWaveform,
   TranscriptPreview,
@@ -29,7 +28,9 @@ import { RecordingResult } from '@/services/audioRecording';
 
 export default function VoiceDemoScreen() {
   const { colors, spacing } = useTheme();
-  const sheetRef = useRef<BottomSheet>(null);
+
+  // Modal visibility state
+  const [modalVisible, setModalVisible] = useState(false);
 
   // State for standalone component testing
   const [recordingResult, setRecordingResult] = useState<RecordingResult | null>(null);
@@ -41,21 +42,23 @@ export default function VoiceDemoScreen() {
   const [durationMinutes] = useState(45);
 
   /**
-   * Test 1: VoiceRecordSheet (Complete Workflow)
+   * Test 1: VoiceRecordModal (Complete Workflow)
+   * NEW: Using React Native Modal instead of bottom-sheet
    */
-  const handleOpenSheet = () => {
-    console.log('[DEMO] Opening VoiceRecordSheet...');
-    sheetRef.current?.expand();
+  const handleOpenModal = () => {
+    console.log('[DEMO] Opening VoiceRecordModal...');
+    setModalVisible(true);
   };
 
-  const handleSheetSave = (transcript: string, audioUri: string) => {
-    console.log('[DEMO] ✅ Saved from sheet:', { transcript, audioUri });
+  const handleModalSave = (transcript: string, audioUri: string) => {
+    console.log('[DEMO] ✅ Saved from modal:', { transcript, audioUri });
+    setAudioUri(audioUri);
+    setTranscript(transcript);
     Alert.alert(
       'Recording Saved!',
       `Transcript: ${transcript.substring(0, 50)}...\n\nAudio: ${audioUri}`,
       [{ text: 'OK' }]
     );
-    sheetRef.current?.close();
   };
 
   /**
@@ -103,16 +106,18 @@ export default function VoiceDemoScreen() {
           Test all Story 0.11 voice components
         </Text>
 
-        {/* Test 1: VoiceRecordSheet */}
+        {/* Test 1: VoiceRecordModal - Complete Workflow */}
         <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
           <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
             Test 1: Complete Workflow
           </Text>
           <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
-            Opens bottom sheet with 4-step workflow: Record → Transcribe → Preview → Save
+            Test full recording workflow: Record → Transcribe → Preview → Save
+            {'\n\n'}
+            ✅ Using React Native Modal (no bottom-sheet dependency)
           </Text>
-          <Button variant="primary" onPress={handleOpenSheet}>
-            Open VoiceRecordSheet
+          <Button variant="primary" onPress={handleOpenModal}>
+            Open Voice Recording Modal
           </Button>
         </Card>
 
@@ -155,7 +160,7 @@ export default function VoiceDemoScreen() {
               height={80}
             />
           ) : (
-            <Text variant="textXs" style={{ color: colors.text.muted, textAlign: 'center' }}>
+            <Text variant="textXs" style={{ color: colors.text.secondary, textAlign: 'center' }}>
               Record audio above to see waveform
             </Text>
           )}
@@ -188,7 +193,7 @@ export default function VoiceDemoScreen() {
           {audioUri ? (
             <AudioPlayer audioUri={audioUri} onPlaybackComplete={handlePlaybackComplete} />
           ) : (
-            <Text variant="textXs" style={{ color: colors.text.muted, textAlign: 'center' }}>
+            <Text variant="textXs" style={{ color: colors.text.secondary, textAlign: 'center' }}>
               Record audio above to enable playback
             </Text>
           )}
@@ -222,10 +227,10 @@ export default function VoiceDemoScreen() {
 
         {/* Testing Tips */}
         <Card variant="subtle" style={{ padding: spacing[4], marginBottom: spacing[8] }}>
-          <Text variant="textBase" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
+          <Text variant="textBase" style={{ fontWeight: '600', marginBottom: spacing[3], color: colors.text.primary }}>
             📋 Testing Checklist
           </Text>
-          <Text variant="textSm" style={{ color: colors.text.secondary, lineHeight: 20 }}>
+          <Text variant="textSm" style={{ color: colors.text.primary, lineHeight: 20 }}>
             1. Check microphone permissions (Settings → Expo Go → Microphone){'\n'}
             2. Test on real device (simulator has no mic){'\n'}
             3. Verify audio recording quality{'\n'}
@@ -238,8 +243,14 @@ export default function VoiceDemoScreen() {
         </Card>
       </ScrollView>
 
-      {/* VoiceRecordSheet (hidden until opened) */}
-      <VoiceRecordSheet ref={sheetRef} onSave={handleSheetSave} maxDuration={300} language="en" />
+      {/* VoiceRecordModal - Alternative to bottom-sheet */}
+      <VoiceRecordModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSave={handleModalSave}
+        maxDuration={300}
+        language="en"
+      />
     </View>
   );
 }
