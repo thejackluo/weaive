@@ -127,14 +127,10 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
     const handlePress = () => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-      // Navigate based on type
-      if (item.type === 'journal') {
-        // Navigate to journal entry
-        router.push(`/(tabs)/thread`);
-      } else if (item.type === 'completion' && item.related_goal_id) {
-        // Navigate to goal detail
-        router.push(`/needles/${item.related_goal_id}`);
-      }
+      // Navigate to day detail page for the item's date
+      const date = new Date(item.timestamp);
+      const dateStr = date.toISOString().split('T')[0];
+      router.push(`/(tabs)/progress/${dateStr}`);
     };
 
     return (
@@ -187,7 +183,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
           <FlatList
             data={items}
             renderItem={renderHistoryItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => `${item.id}-${index}-${date}`}
             scrollEnabled={false}
             contentContainerStyle={styles.listContent}
           />

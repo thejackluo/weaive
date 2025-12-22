@@ -249,7 +249,7 @@ export function ConsistencyHeatmap({
   const handleViewDayEntries = () => {
     if (selectedDayData) {
       setShowDayDetailsModal(false);
-      router.push(`/history/${selectedDayData.date}`);
+      router.push(`/(tabs)/progress/${selectedDayData.date}`);
     }
   };
 
