@@ -24,3 +24,6 @@ export type { VoiceRecordModalProps } from '../VoiceRecordModal';
 
 export { RateLimitIndicator } from '../RateLimitIndicator';
 export type { RateLimitIndicatorProps } from '../RateLimitIndicator';
+
+export { RecordingHistory } from '../RecordingHistory';
+export type { RecordingHistoryProps } from '../RecordingHistory';
