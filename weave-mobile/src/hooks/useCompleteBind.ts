@@ -33,6 +33,8 @@ async function completeBind(
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}/api/binds/${request.bindId}/complete`;
 
+  console.log('[COMPLETE_BIND] Request:', { url, bindId: request.bindId, timerDuration: request.timerDuration });
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -47,10 +49,13 @@ async function completeBind(
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || 'Failed to complete bind');
+    console.error('[COMPLETE_BIND] API error:', response.status, error);
+    throw new Error(error.detail || error.message || 'Failed to complete bind');
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log('[COMPLETE_BIND] API success:', result);
+  return result;
 }
 
 export function useCompleteBind() {
