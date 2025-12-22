@@ -107,6 +107,13 @@ export default function ChatScreen() {
     setMessages([initialMessage]);
   };
 
+  // Effect: Update conversation ID as soon as metadata arrives (prevents desync)
+  useEffect(() => {
+    if (streamMetadata.conversationId && !currentConversationId) {
+      setCurrentConversationId(streamMetadata.conversationId);
+    }
+  }, [streamMetadata.conversationId, currentConversationId]);
+
   // Effect: Update streaming message in real-time
   useEffect(() => {
     if (isStreaming && streamingContent) {
