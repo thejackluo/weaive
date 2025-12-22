@@ -59,7 +59,9 @@ export function useImageList(filters: ImageFilters = {}) {
         undefined, // localDate (not used for range queries)
         'photo' as CaptureType,
         filters.goalId,
-        filters.subtaskInstanceId
+        filters.subtaskInstanceId,
+        filters.startDate, // Pass date range filters
+        filters.endDate
       );
 
       // TODO: API should return pagination metadata
