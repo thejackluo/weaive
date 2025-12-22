@@ -1,61 +1,18 @@
-import { View, ScrollView, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, ScrollView, TouchableOpacity, Pressable } from 'react-native';
 import { Text, Button } from '@/design-system';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
+import CountdownTimer from '@/components/features/journal/CountdownTimer';
 
 /**
  * Thread (Home) Tab
  * Epic 3: Daily Actions & Proof
  * Story 3.1: View Today's Binds
  */
-
-import React, { useState } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
-import { Button as _Button, showSimpleToast } from '@/design-system';
-import CountdownTimer from '@/components/features/journal/CountdownTimer';
-
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  /**
-   * Handle logout with confirmation
-   */
-  const handleLogout = async () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            setIsLoggingOut(true);
-            await signOut();
-
-            // Show success toast
-            console.log('[HOME] Calling showSimpleToast for logout...');
-            showSimpleToast('Signed out successfully. See you soon! 👋', 'success');
-
-            // Redirect handled automatically by auth state change in _layout.tsx
-          } catch (error) {
-            console.error('[HOME] Logout error:', error);
-            Alert.alert('Error', 'Failed to sign out. Please try again.');
-          } finally {
-            setIsLoggingOut(false);
-            setShowUserMenu(false);
-          }
-        },
-      },
-    ]);
-  };
 
   return (
     <ScrollView className="flex-1 bg-background">
@@ -92,6 +49,41 @@ export default function HomeScreen() {
               Complete your 30-minute strength training session
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
+            <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 rounded-full bg-purple-500/20 items-center justify-center">
+                  <SymbolView name="book.fill" size={20} tintColor="#a78bfa" />
+                </View>
+                <Text variant="textLg" className="text-white font-semibold">
+                  Deep Work Block
+                </Text>
+              </View>
+              <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
+            </View>
+            <Text variant="textSm" className="text-white/60 ml-13">
+              2 hours of focused project work
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity className="p-5 bg-white/5 rounded-xl border border-white/10 active:bg-white/10">
+            <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 rounded-full bg-emerald-500/20 items-center justify-center">
+                  <SymbolView name="sparkles" size={20} tintColor="#34d399" />
+                </View>
+                <Text variant="textLg" className="text-white font-semibold">
+                  Evening Meditation
+                </Text>
+              </View>
+              <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
+            </View>
+            <Text variant="textSm" className="text-white/60 ml-13">
+              10-minute mindfulness practice
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Story 4.1c: Countdown Timer (Section C) */}
         <View style={{ width: '100%', maxWidth: 400, paddingHorizontal: 16 }}>
@@ -149,39 +141,8 @@ export default function HomeScreen() {
               }}
             >
               📍 View Needles (Story 2.1)
-          <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
-            <View className="flex-row items-center justify-between mb-2">
-              <View className="flex-row items-center gap-3">
-                <View className="w-10 h-10 rounded-full bg-purple-500/20 items-center justify-center">
-                  <SymbolView name="book.fill" size={20} tintColor="#a78bfa" />
-                </View>
-                <Text variant="textLg" className="text-white font-semibold">
-                  Deep Work Block
-                </Text>
-              </View>
-              <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
-            </View>
-            <Text variant="textSm" className="text-white/60 ml-13">
-              2 hours of focused project work
             </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="p-5 bg-white/5 rounded-xl border border-white/10 active:bg-white/10">
-            <View className="flex-row items-center justify-between mb-2">
-              <View className="flex-row items-center gap-3">
-                <View className="w-10 h-10 rounded-full bg-emerald-500/20 items-center justify-center">
-                  <SymbolView name="sparkles" size={20} tintColor="#34d399" />
-                </View>
-                <Text variant="textLg" className="text-white font-semibold">
-                  Evening Meditation
-                </Text>
-              </View>
-              <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
-            </View>
-            <Text variant="textSm" className="text-white/60 ml-13">
-              10-minute mindfulness practice
-            </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Settings Screen */}
@@ -231,6 +192,9 @@ export default function HomeScreen() {
           <Text style={{ color: '#71717A', fontSize: 12 }}>React Native-First Design System</Text>
           <Text style={{ color: '#71717A', fontSize: 12 }}>
             NativeWind v5 • Tailwind v4 • Liquid Glass UI
+          </Text>
+        </View>
+
         {/* Quick Actions */}
         <View className="mb-8">
           <Text variant="textLg" className="text-white mb-4 font-semibold">
