@@ -218,9 +218,7 @@ export default function HomeScreen() {
               📷 Capture & Upload Image
             </RNText>
           </Pressable>
-          <Pressable
-            onPress={() => router.push('/(tabs)/settings')}
-          </Pressable>
+
           {/* Mini Gallery Preview */}
           <View style={{ gap: 8 }}>
             <RNText style={{ color: '#A1A1AA', fontSize: 14, fontWeight: '500' }}>
