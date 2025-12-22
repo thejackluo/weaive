@@ -1,3 +1,6 @@
+import logging
+import os
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,6 +8,16 @@ from fastapi.responses import JSONResponse
 
 from app.api import ai_router, analytics, goals, health, journal_router, onboarding, transcribe, user
 from app.core.config import settings
+
+# Log environment status on startup
+logger = logging.getLogger(__name__)
+logger.info("=" * 60)
+logger.info("ENVIRONMENT VARIABLES CHECK")
+logger.info("=" * 60)
+logger.info(f"OPENAI_API_KEY: {'✅ Set' if os.getenv('OPENAI_API_KEY') else '❌ Not set'}")
+logger.info(f"ANTHROPIC_API_KEY: {'✅ Set' if os.getenv('ANTHROPIC_API_KEY') else '❌ Not set'}")
+logger.info(f"ASSEMBLYAI_API_KEY: {'✅ Set' if os.getenv('ASSEMBLYAI_API_KEY') else '❌ Not set'}")
+logger.info("=" * 60)
 
 app = FastAPI(
     title="Weave API",
