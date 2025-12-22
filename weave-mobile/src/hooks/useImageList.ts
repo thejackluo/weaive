@@ -8,7 +8,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { getUserCaptures } from '../services/imageCapture';
 import { Capture, CaptureType } from '../types/captures';
 
-interface ImageFilters {
+export interface ImageFilters {
   goalId?: string;
   subtaskInstanceId?: string;
   startDate?: string;
