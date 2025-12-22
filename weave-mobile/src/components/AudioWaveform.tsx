@@ -33,11 +33,7 @@
 
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 
 export interface AudioWaveformProps {
@@ -179,7 +175,6 @@ export function AudioWaveform({
    * Render animated waveform bar (for live mode)
    */
   const renderAnimatedBar = (amplitude: number, index: number) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const animatedHeight = useSharedValue(minBarHeight * height);
 
     // Animate to new height with spring
@@ -193,7 +188,6 @@ export function AudioWaveform({
       animatedHeight.value = targetHeight;
     }
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const animatedStyle = useAnimatedStyle(() => {
       return {
         height: animatedHeight.value,

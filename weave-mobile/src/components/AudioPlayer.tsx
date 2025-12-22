@@ -21,7 +21,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, Pressable, ActivityIndicator, Slider } from 'react-native';
+import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -244,15 +245,15 @@ export function AudioPlayer({
    * Get speed button color
    */
   const getSpeedButtonColor = (speed: PlaybackSpeed): string => {
-    return speed === playbackSpeed ? colors.brand.primary.default : colors.text.secondary;
+    return speed === playbackSpeed ? colors.accent[500] : colors.text.secondary;
   };
 
   if (error) {
     return (
-      <Card variant="glass" style={{ padding: spacing.md }}>
+      <Card variant="glass" style={{ padding: spacing[4] }}>
         <View style={styles.errorContainer}>
-          <MaterialIcons name="error" size={32} color={colors.error.default} />
-          <Text variant="bodyMd" style={{ color: colors.error.default, marginTop: spacing.sm }}>
+          <MaterialIcons name="error" size={32} color={colors.text.error} />
+          <Text variant="textBase" style={{ color: colors.text.error, marginTop: spacing[3] }}>
             {error}
           </Text>
         </View>
@@ -261,7 +262,7 @@ export function AudioPlayer({
   }
 
   return (
-    <Card variant="glass" style={{ padding: spacing.md }}>
+    <Card variant="glass" style={{ padding: spacing[4] }}>
       <View style={styles.container}>
         {/* Play/pause button */}
         <Pressable
@@ -270,7 +271,7 @@ export function AudioPlayer({
           style={[
             styles.playButton,
             {
-              backgroundColor: colors.brand.primary.default,
+              backgroundColor: colors.accent[500],
               borderRadius: radius.full,
             },
           ]}
@@ -289,10 +290,10 @@ export function AudioPlayer({
         {/* Seek bar and time */}
         <View style={styles.seekContainer}>
           <View style={styles.timeContainer}>
-            <Text variant="bodyXs" style={{ color: colors.text.secondary }}>
+            <Text variant="textXs" style={{ color: colors.text.secondary }}>
               {formatTime(position)}
             </Text>
-            <Text variant="bodyXs" style={{ color: colors.text.secondary }}>
+            <Text variant="textXs" style={{ color: colors.text.secondary }}>
               {formatTime(duration)}
             </Text>
           </View>
@@ -300,16 +301,16 @@ export function AudioPlayer({
           <Slider
             style={styles.slider}
             value={duration > 0 ? position / duration : 0}
-            onValueChange={(value) => {
+            onValueChange={(value: number) => {
               isSeeking.current = true;
               setPosition(value * duration);
             }}
             onSlidingComplete={handleSeek}
             minimumValue={0}
             maximumValue={1}
-            minimumTrackTintColor={colors.brand.primary.default}
-            maximumTrackTintColor={colors.neutral.border}
-            thumbTintColor={colors.brand.primary.default}
+            minimumTrackTintColor={colors.accent[500]}
+            maximumTrackTintColor={colors.border.muted}
+            thumbTintColor={colors.accent[500]}
             disabled={isLoading || duration === 0}
           />
         </View>
@@ -325,15 +326,15 @@ export function AudioPlayer({
                 style={[
                   styles.speedButton,
                   {
-                    backgroundColor: colors.neutral.tertiary,
+                    backgroundColor: colors.neutral[700],
                     borderRadius: radius.sm,
-                    paddingHorizontal: spacing.sm,
-                    paddingVertical: spacing.xs,
+                    paddingHorizontal: spacing[3],
+                    paddingVertical: spacing[2],
                   },
                 ]}
               >
                 <Text
-                  variant="bodyXs"
+                  variant="textXs"
                   style={{
                     color: getSpeedButtonColor(speed),
                     fontWeight: speed === playbackSpeed ? '600' : '400',
