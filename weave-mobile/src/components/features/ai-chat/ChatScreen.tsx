@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { ScrollView, View, StyleSheet, Keyboard } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import Animated, { FadeIn, FadeInDown, SlideInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -182,6 +182,9 @@ export default function ChatScreen() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
+    // ✅ FIX: Dismiss keyboard when sending message
+    Keyboard.dismiss();
+
     // Hide quick chips when user sends message
     setShowQuickChips(false);
 
@@ -227,11 +230,7 @@ export default function ChatScreen() {
     : false;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
+    <View style={styles.container}>
       {/* Rate Limit Indicator */}
       {usageStats && (
         <Animated.View entering={FadeInDown.duration(300)}>
@@ -254,6 +253,8 @@ export default function ChatScreen() {
         contentContainerStyle={styles.messagesContent}
         onContentSizeChange={scrollToBottom}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         {messages.map((message) => (
           <Animated.View
@@ -292,7 +293,7 @@ export default function ChatScreen() {
         disabled={isRateLimited || isStreaming}
         placeholder={isRateLimited ? 'Rate limit reached' : 'Talk to Weave...'}
       />
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
