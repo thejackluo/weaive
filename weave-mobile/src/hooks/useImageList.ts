@@ -15,8 +15,8 @@ interface ImageFilters {
   endDate?: string;
 }
 
-interface ImagePage {
-  data: Capture[];
+export interface ImagePage {
+  data: (Capture & { signed_url: string })[];
   meta: {
     total: number;
     page: number;
