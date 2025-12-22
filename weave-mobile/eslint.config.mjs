@@ -36,6 +36,10 @@ export default [
         // Browser/React Native globals
         performance: 'readonly',
         AbortController: 'readonly',
+        Blob: 'readonly',
+        FormData: 'readonly',
+        URLSearchParams: 'readonly',
+        FileReader: 'readonly',
         // Jest/testing globals
         jest: 'readonly',
         describe: 'readonly',
