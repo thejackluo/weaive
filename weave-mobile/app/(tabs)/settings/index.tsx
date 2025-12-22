@@ -1,19 +1,140 @@
-import PlaceholderScreen from '@/components/PlaceholderScreen';
-
 /**
- * Settings Home Screen
- * Epic 8: Settings & Profile
- * Story 8.3: General Settings
+ * Settings Screen
+ *
+ * Story 4.1: Added Reflection Preferences link
+ *
+ * Future: Will contain user preferences, account settings, etc.
  */
+
+import React from 'react';
+import { View, Text, Pressable, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+
 export default function SettingsScreen() {
+  const router = useRouter();
+
   return (
-    <PlaceholderScreen
-      title="Settings"
-      epic="Epic 8: Settings & Profile"
-      story="Story 8.3: General Settings"
-      iconName="gearshape.fill"
-      iconColor="#9ca3af"
-      backgroundColors={{ from: '#1f2937', to: '#111827' }}
-    />
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: '#0F0F10',
+      }}
+    >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          padding: 24,
+          gap: 24,
+        }}
+      >
+        {/* Header */}
+        <View>
+          <Text
+            style={{
+              fontSize: 32,
+              fontWeight: 'bold',
+              color: '#FAFAFA',
+              marginBottom: 8,
+            }}
+          >
+            Settings
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: '#71717A',
+            }}
+          >
+            Manage your preferences and account
+          </Text>
+        </View>
+
+        {/* Reflection Preferences Section */}
+        <View
+          style={{
+            backgroundColor: '#1F1F23',
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: '#27272A',
+            overflow: 'hidden',
+          }}
+        >
+          <View
+            style={{
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: '#27272A',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: '#FAFAFA',
+              }}
+            >
+              Reflection & Journaling
+            </Text>
+          </View>
+
+          {/* Daily Reflection Link */}
+          <Pressable
+            onPress={() => router.push('/(tabs)/settings/reflection')}
+            style={{
+              padding: 16,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: '#FAFAFA',
+                  marginBottom: 4,
+                }}
+              >
+                📝 Daily Reflection
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: '#71717A',
+                }}
+              >
+                Answer questions and track your progress
+              </Text>
+            </View>
+            <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
+          </Pressable>
+        </View>
+
+        {/* Placeholder for Future Settings */}
+        <View
+          style={{
+            backgroundColor: '#1F1F23',
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: '#27272A',
+            padding: 20,
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 14,
+              color: '#71717A',
+              textAlign: 'center',
+            }}
+          >
+            More settings coming soon...
+            {'\n'}
+            Account • Notifications • Privacy
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

@@ -1,11 +1,28 @@
-import React, { useEffect as _useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { LogBox } from 'react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, SimpleToastContainer } from '../src/design-system';
-import { AuthProvider } from '../src/contexts/AuthContext';
-import { QueryClientProvider } from '../src/contexts/QueryClientProvider';
+import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
 import { DevEnvironmentBanner } from '../src/components/DevEnvironmentBanner';
+import { initJournalApi } from '../src/services/journalApi';
 import '../global.css';
+
+// Create QueryClient instance (singleton)
+// Story 4.1: Added for journal and user preferences queries
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      retry: 1, // Retry once on failure (offline-friendly)
+      refetchOnWindowFocus: false, // Mobile doesn't have window focus concept
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 // Suppress Reanimated React 19 compatibility warning (known issue, fix pending upgrade)
 LogBox.ignoreLogs([
@@ -13,6 +30,22 @@ LogBox.ignoreLogs([
   'deepFreezeAndThrowOnMutationInDev',
   'immutable',
 ]);
+
+/**
+ * Initialize API services with AuthContext
+ * Must be inside AuthProvider to access getAuthToken
+ */
+function ApiInitializer({ children }: { children: React.ReactNode }) {
+  const { getAuthToken } = useAuth();
+
+  useEffect(() => {
+    // Initialize journalApi with shared auth token getter
+    // Reduces duplicate supabase.auth.getSession() calls
+    initJournalApi(getAuthToken);
+  }, [getAuthToken]);
+
+  return <>{children}</>;
+}
 
 /**
  * Root layout component for Expo Router
@@ -25,6 +58,8 @@ LogBox.ignoreLogs([
  * - Headers hidden by default (screens can override if needed)
  * - Wrapped with ThemeProvider for design system support
  * - Wrapped with AuthProvider for authentication state management (Story 0.3)
+ * - Wrapped with QueryClientProvider for TanStack Query (Story 4.1)
+ * - ApiInitializer for connecting auth to API services
  * - SimpleToastContainer for global toast notifications (Story 0.3)
  * - DevEnvironmentBanner for showing API endpoint in dev mode (multi-worktree setup)
  *
@@ -32,6 +67,8 @@ LogBox.ignoreLogs([
  * - ThemeProvider (outermost) - Design system theme
  * - QueryClientProvider - TanStack Query for server state (Story 2.1)
  * - AuthProvider - Authentication state and methods
+ * - QueryClientProvider - TanStack Query for server state management (Story 4.1)
+ * - ApiInitializer - Connects AuthContext to API services
  * - Stack - Navigation structure
  * - SimpleToastContainer - Simple toast notification overlay (no animations)
  * - DevEnvironmentBanner - Dev-only overlay showing API base URL (top of screen)
@@ -41,17 +78,19 @@ LogBox.ignoreLogs([
 export default function RootLayout() {
   return (
     <ThemeProvider initialMode="dark">
-      <QueryClientProvider>
-        <AuthProvider>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          />
-          <SimpleToastContainer />
-          <DevEnvironmentBanner />
-        </AuthProvider>
-      </QueryClientProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <ApiInitializer>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+              }}
+            />
+            <SimpleToastContainer />
+            <DevEnvironmentBanner />
+          </ApiInitializer>
+        </QueryClientProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

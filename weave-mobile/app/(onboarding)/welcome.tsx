@@ -65,6 +65,17 @@ export default function WelcomeScreen() {
     router.push('/(tabs)');
   };
 
+  /**
+   * Handles the "Skip to Main App" button press (DEV TESTING ONLY)
+   *
+   * Bypasses onboarding and goes directly to the main app tabs
+   * Useful for testing Story 4.1 reflection screen without completing onboarding
+   */
+  const handleSkipToMainApp = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.replace('/(tabs)');
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white" style={{ flex: 1, backgroundColor: '#ffffff' }}>
       <View
@@ -176,6 +187,7 @@ export default function WelcomeScreen() {
             width: '100%',
             justifyContent: 'center',
             alignItems: 'center',
+            marginBottom: 12,
           }}
         >
           <Text
@@ -183,6 +195,33 @@ export default function WelcomeScreen() {
             style={{ color: '#262626', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
           >
             🎨 View Design System
+          </Text>
+        </Pressable>
+
+        {/* Skip to Main App Button - Dev Testing Tool (Story 4.1) */}
+        <Pressable
+          className={({ pressed }) =>
+            `bg-green-600 h-11 rounded-lg w-full justify-center items-center ${
+              pressed ? 'bg-green-700 scale-[0.98]' : ''
+            }`
+          }
+          onPress={handleSkipToMainApp}
+          accessibilityRole="button"
+          accessible={true}
+          style={{
+            backgroundColor: '#10b981',
+            height: 44,
+            borderRadius: 8,
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            className="text-white text-sm font-medium tracking-wider"
+            style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
+          >
+            Skip to Main App (Dev)
           </Text>
         </Pressable>
       </View>

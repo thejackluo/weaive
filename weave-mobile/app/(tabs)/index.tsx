@@ -8,7 +8,55 @@ import { SymbolView } from 'expo-symbols';
  * Epic 3: Daily Actions & Proof
  * Story 3.1: View Today's Binds
  */
-export default function ThreadScreen() {
+
+import React, { useState } from 'react';
+import { View, Text, Pressable, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/hooks/useAuth';
+import { Button as _Button, showSimpleToast } from '@/design-system';
+import CountdownTimer from '@/components/features/journal/CountdownTimer';
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  /**
+   * Handle logout with confirmation
+   */
+  const handleLogout = async () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setIsLoggingOut(true);
+            await signOut();
+
+            // Show success toast
+            console.log('[HOME] Calling showSimpleToast for logout...');
+            showSimpleToast('Signed out successfully. See you soon! 👋', 'success');
+
+            // Redirect handled automatically by auth state change in _layout.tsx
+          } catch (error) {
+            console.error('[HOME] Logout error:', error);
+            Alert.alert('Error', 'Failed to sign out. Please try again.');
+          } finally {
+            setIsLoggingOut(false);
+            setShowUserMenu(false);
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <ScrollView className="flex-1" style={{ backgroundColor: '#0a0a0a' }}>
       <View className="p-6">
@@ -45,6 +93,41 @@ export default function ThreadScreen() {
             </Text>
           </TouchableOpacity>
 
+        {/* Story 4.1c: Countdown Timer (Section C) */}
+        <View style={{ width: '100%', maxWidth: 400, paddingHorizontal: 16 }}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: '#71717A',
+              marginBottom: 8,
+              textAlign: 'center',
+            }}
+          >
+            Story 4.1c: Countdown Timer Demo
+          </Text>
+          <CountdownTimer debug={true} />
+        </View>
+
+        {/* Navigation Buttons */}
+        <View style={{ gap: 12, width: '100%', maxWidth: 300 }}>
+          <Pressable
+            onPress={() => router.push('/(tabs)/needles')}
+            style={{
+              backgroundColor: '#10B981',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+                textAlign: 'center',
+              }}
+            >
+              📍 View Needles (Story 2.1)
           <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center gap-3">
@@ -80,6 +163,53 @@ export default function ThreadScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Settings Screen */}
+        <Pressable
+          onPress={() => router.push('/(tabs)/settings')}
+          style={{
+            backgroundColor: '#10B981',
+            paddingHorizontal: 24,
+            paddingVertical: 16,
+            borderRadius: 12,
+          }}
+        >
+          <Text
+            style={{
+              color: '#FAFAFA',
+              fontSize: 16,
+              fontWeight: '600',
+            }}
+          >
+            ⚙️ Settings (with Reflection)
+          </Text>
+        </Pressable>
+
+        {/* TEST: Direct Reflection Link (Story 4.1a) */}
+        <Pressable
+          onPress={() => router.push('/(tabs)/settings/reflection')}
+          style={{
+            backgroundColor: '#3B82F6',
+            paddingHorizontal: 24,
+            paddingVertical: 16,
+            borderRadius: 12,
+          }}
+        >
+          <Text
+            style={{
+              color: '#FAFAFA',
+              fontSize: 16,
+              fontWeight: '600',
+            }}
+          >
+            📝 Test Reflection (Direct)
+          </Text>
+        </Pressable>
+
+        {/* Footer */}
+        <View style={{ position: 'absolute', bottom: 32, alignItems: 'center' }}>
+          <Text style={{ color: '#71717A', fontSize: 12 }}>React Native-First Design System</Text>
+          <Text style={{ color: '#71717A', fontSize: 12 }}>
+            NativeWind v5 • Tailwind v4 • Liquid Glass UI
         {/* Quick Actions */}
         <View className="mb-8">
           <Text variant="textLg" className="text-white mb-4 font-semibold">
