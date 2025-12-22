@@ -47,6 +47,7 @@ Return your analysis as valid JSON with this EXACT structure:
 {{
   "validation_score": <number 0-100>,
   "validation_reasoning": "<brief explanation>",
+  "summary": "<concise 1-2 sentence description of what's in the image>",
   "ocr_text": "<extracted text or null>",
   "categories": [
     {{"label": "gym|food|outdoor|workspace|social|other", "confidence": <0.0-1.0>}},
@@ -58,6 +59,7 @@ Return your analysis as valid JSON with this EXACT structure:
 
 RULES:
 - validation_score: How well does this image match the expected content? 0=completely unrelated, 100=perfect match
+- summary: 1-2 sentence description of the image content (e.g., "A person at the gym doing bicep curls with dumbbells")
 - ocr_text: Extract visible text up to 300 characters max (workout logs, food labels, notes). Summarize if longer. Return null if no text visible.
 - categories: Return top 2 categories with confidence scores
 - quality_score: 1=poor (blurry/dark), 3=acceptable, 5=excellent (clear/well-lit/relevant)
