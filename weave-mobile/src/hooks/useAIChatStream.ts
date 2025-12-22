@@ -134,7 +134,12 @@ export function useAIChatStream(): UseAIChatStreamReturn {
         if (apiClient.adminKey) {
           // @ts-ignore
           headers['X-Admin-Key'] = apiClient.adminKey;
+          console.log('[STREAM_DEBUG] 🔑 Admin key added to headers:', apiClient.adminKey);
+        } else {
+          console.log('[STREAM_DEBUG] ⚠️ No admin key found on apiClient');
         }
+
+        console.log('[STREAM_DEBUG] 📤 Sending headers:', Object.keys(headers));
 
         // Make streaming POST request
         const response = await fetch(`${baseURL}/api/ai-chat/messages/stream`, {
