@@ -185,6 +185,27 @@ export default function HomeScreen() {
         {/* Navigation Buttons */}
         <View style={{ gap: 12, width: '100%', maxWidth: 300 }}>
           <Pressable
+            onPress={() => router.push('/(tabs)/dashboard')}
+            style={{
+              backgroundColor: '#3B82F6',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+                textAlign: 'center',
+              }}
+            >
+              📊 Dashboard (Epic 2 + 5)
+            </Text>
+          </Pressable>
+
+          <Pressable
             onPress={() => router.push('/(tabs)/needles')}
             style={{
               backgroundColor: '#10B981',

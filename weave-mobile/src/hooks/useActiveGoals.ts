@@ -34,8 +34,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchActiveGoals } from '@/services/goals';
-import type { GoalsResponse } from '@/types/goals';
+import { fetchActiveGoals, fetchGoalById } from '@/services/goals';
+import type { GoalsResponse, GoalDetailResponse } from '@/types/goals';
 
 /**
  * Query key factory for goals
@@ -75,5 +75,32 @@ export function useActiveGoals() {
     staleTime: 5 * 60 * 1000, // 5 minutes (per architecture)
     gcTime: 10 * 60 * 1000, // 10 minutes cache (formerly cacheTime)
     retry: false, // Don't retry in dev (configured in QueryClient for prod)
+  });
+}
+
+/**
+ * Hook to fetch single goal by ID with full details
+ *
+ * @param goalId - Goal ID to fetch
+ * @returns TanStack Query result with goal detail data
+ *
+ * Includes: title, description, stats (consistency, completions, streak), qgoals, binds
+ */
+export function useGoalById(goalId: string) {
+  const { session } = useAuth();
+
+  return useQuery<GoalDetailResponse, Error>({
+    queryKey: goalsQueryKeys.byId(goalId),
+    queryFn: async () => {
+      if (!session?.access_token) {
+        throw new Error('No active session - user must be authenticated');
+      }
+
+      return fetchGoalById(goalId, session.access_token);
+    },
+    enabled: !!session?.access_token && !!goalId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
+    retry: false,
   });
 }
