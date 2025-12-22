@@ -101,9 +101,11 @@ jest.mock('expo-haptics', () => ({
 // Mock expo-modules-core (required by @expo/vector-icons)
 jest.mock('expo-modules-core', () => ({
   EventEmitter: class MockEventEmitter {
-    addListener = jest.fn();
-    removeAllListeners = jest.fn();
-    removeSubscription = jest.fn();
+    constructor() {
+      this.addListener = jest.fn();
+      this.removeAllListeners = jest.fn();
+      this.removeSubscription = jest.fn();
+    }
   },
   NativeModulesProxy: {},
   requireNativeViewManager: jest.fn(),
@@ -144,18 +146,20 @@ jest.mock('expo-av', () => ({
     ),
     setAudioModeAsync: jest.fn(() => Promise.resolve()),
     Recording: class MockRecording {
-      prepareToRecordAsync = jest.fn(() => Promise.resolve());
-      startAsync = jest.fn(() => Promise.resolve());
-      stopAndUnloadAsync = jest.fn(() => Promise.resolve());
-      pauseAsync = jest.fn(() => Promise.resolve());
-      getStatusAsync = jest.fn(() =>
-        Promise.resolve({
-          isRecording: true,
-          durationMillis: 0,
-          metering: -160,
-        })
-      );
-      getURI = jest.fn(() => 'file://test-audio.m4a');
+      constructor() {
+        this.prepareToRecordAsync = jest.fn(() => Promise.resolve());
+        this.startAsync = jest.fn(() => Promise.resolve());
+        this.stopAndUnloadAsync = jest.fn(() => Promise.resolve());
+        this.pauseAsync = jest.fn(() => Promise.resolve());
+        this.getStatusAsync = jest.fn(() =>
+          Promise.resolve({
+            isRecording: true,
+            durationMillis: 0,
+            metering: -160,
+          })
+        );
+        this.getURI = jest.fn(() => 'file://test-audio.m4a');
+      }
     },
     RecordingOptionsPresets: {
       HIGH_QUALITY: {
