@@ -61,22 +61,22 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 **Note:** FR-1.16 (Soft Paywall) has been integrated into FR-1.11 Screen 3 for a cohesive onboarding handoff.
 
-**Epic 2: Needle/Goal Management (27 pts)**
+**Epic 2: Needle/Goal Management (24 pts)** *(reduced from 27 pts)*
 - FR-2.1: View Needles List - Display up to 3 active Needles (goals) with status, consistency %, Bind count, tap to expand (M)
 - FR-2.2: View Needle Details - Full Needle info with associated Binds (subtasks), stats (completion rate, streak), edit/archive/add bind actions. Q-Goals are internal metrics not shown in edit UI (M)
 - FR-2.3: Create New Needle (AI-Assisted) - Text input for new Needle, probing questions, AI-generated Bind suggestions, enforce max 3 active Needles (M)
-- FR-2.4: Edit Needle - Edit title, description, "why it matters". Add/remove/edit Binds. **Change warning:** Thoughtfully balanced - makes user pause and confirm intent without creating friction. Options: require brief justification text, or show impact summary ("This will affect your 12-day streak tracking") (M)
+- FR-2.4: Edit Needle - Edit title, description, "why it matters". Add/remove/edit Binds. **Change warning:** Thoughtfully balanced - makes user pause and confirm intent without creating friction. Options: require brief justification text, or show impact summary ("This will affect your 12-day streak tracking"). Strictness mode integrated (M)
 - FR-2.5: Archive Needle - Confirmation dialog, archive status, visible in history (read-only), reactivate option if <3 active Needles (M)
-- FR-2.6: Needle Change Strictness - Three modes (Normal/Strict/None) configurable in settings. Normal = justification text, Strict = requires daily reflection first, None = free changes (S)
+- **REMOVED: FR-2.6** - Needle Change Strictness (integrated into FR-2.4)
 
-**Epic 3: Daily Actions & Proof (38 pts)**
+**Epic 3: Daily Actions & Proof (18 pts)** *(reduced from 38 pts)*
 - FR-3.1: View Today's Binds (Thread Home) - Today's Binds (subtasks) grouped by Needle (goal), collapsible dropdowns, completion status indicators. Answers "What should I do today?" in <10 seconds (M)
-- FR-3.2: View Triad (AI Daily Plan) - Top 3 AI-recommended Binds with rationale ("Why this bind"). **Note:** Triad IS the prioritized subset of Binds - they are the same entity type, just AI-ranked. Editable/dismissible by user (M)
-- FR-3.3: Start and Complete Bind - Tap Bind to open Bind Screen showing Needle context, Bind details, "Start Bind" button. Timer option available. Complete with **magical, delightful confetti animation**. Entire flow <30 seconds (M)
-- FR-3.4: Attach Proof to Bind - After completion, prompt: "Add proof?" Options: photo capture, quick note (280 char), timer auto-attached. Optional skip (trust-based). Proof creation <10 seconds (M)
-- FR-3.5: Quick Capture (Document) - Floating menu access, fast capture sheet for photo/note/voice. Optional link to specific Bind. If nothing captured today: "What's one thing you want to remember?" (M)
-- FR-3.6: Timer Tracking (Pomodoro-style) - **Pomodoro-feel timer experience**: Set duration upfront (25 min default, customizable), focus mode UI, subtle progress visualization, satisfying completion moment. Duration auto-attached as proof (S)
-- FR-3.7: Dual Path Visualization - Show positive/negative trajectories based on user's current patterns. **Two components:** (1) Visual representation (animated paths diverging), (2) AI-generated personalized text from Tech Context Engine describing where each path leads. Triggered when user expresses difficulty or doubt (C)
+- **REMOVED: FR-3.2** - View Triad (AI Daily Plan)
+- FR-3.3: Start and Complete Bind with Integrated Proof - Tap Bind to open Bind Screen. When user taps "Start Bind", show proof method options: **Timer/Stopwatch icon** OR **Camera icon** (can use both). Complete with **magical, delightful confetti animation** + **Weave level progress bar increase** (see FR-5.4) + **affirmation** ("You're getting closer to [Goal Name]!"). After celebration, optional description prompt (280 char max). Media (timer data, photos, videos) automatically saved. Entire flow <30 seconds. This integrated flow combines proof capture, celebration, and progress feedback in one seamless experience (M)
+- FR-3.4: Timer Tracking (Integrated Proof) - **Pomodoro-feel timer experience**: Set duration upfront (25 min default, customizable: 15/25/45/60 min options), focus mode UI, subtle progress visualization, satisfying completion moment. Accessible via Timer/Stopwatch icon on Bind Screen (FR-3.3). Timer duration auto-attached as proof. Can be used alongside camera capture. Promoted to Must Have (M)
+- **REMOVED: FR-3.5** - Quick Capture (Document)
+- **REMOVED: FR-3.6** - Timer Tracking (merged into FR-3.4)
+- **REMOVED: FR-3.7** - Dual Path Visualization
 
 **Epic 4: Reflection & Journaling (28 pts)**
 - FR-4.1: Daily Reflection Entry - **Default 2 reflection questions** ("How do you feel about today?", "What's one thing for tomorrow?") + **user-customizable questions** (add/edit/remove custom tracking questions). Fulfillment slider (1-10). Submit triggers AI batch for feedback and next day's Triad (M)
@@ -85,33 +85,33 @@ This document provides the complete epic and story breakdown for Weave, decompos
 - FR-4.4: Edit AI Feedback - Each insight card has "Edit" and "Not true" actions. Corrections stored for AI improvement. Edited artifacts marked with flag (M)
 - FR-4.5: View Past Journal Entries - List by date, tap to view full reflection + AI feedback, filter by timeframe (7/30/90 days) (S)
 
-**Epic 5: Progress Visualization (Weave Dashboard) (39 pts)**
+**Epic 5: Progress Visualization (Weave Dashboard) (26 pts)** *(reduced from 39 pts)*
 - FR-5.1: Weave Dashboard Overview - **Emotional Mirror** (top): Weave level/rank visualization, active Needles summary, Dream Self reminder. **Data Mirror** (bottom): consistency %, fulfillment chart. AI weekly insights displayed (M)
 - FR-5.2: Consistency Heat Map - **GitHub-style contribution graph**. Color intensity = completion percentage (not binary). Filter by: timeframe (7/30/60/90 days), specific Needle, specific Bind type. Tap date to navigate to that day's entry (M)
 - FR-5.3: Fulfillment Trend Chart - Line chart of fulfillment score (1-10) over time, 7-day rolling average smoothed line, tap point to navigate to entry (M)
-- FR-5.4: Weave Character Progression - **Mathematical curve visualization** that increases in complexity and intricacy as user progresses. Starts simple (thread), becomes more intertwined and beautiful (weave). Based on: total Binds completed, current streak, consistency %. Milestone-based level names: Thread → Strand → Cord → Braid → Weave (S)
+- FR-5.4: Weave Character Progression - **Mathematical curve visualization** that increases in complexity and intricacy as user progresses. Starts simple (thread), becomes more intertwined and beautiful (weave). Based on: total Binds completed, current streak, consistency %. Milestone-based level names: Thread → Strand → Cord → Braid → Weave. **Note:** Level progress bar shown in FR-3.3 completion flow (S)
 - FR-5.5: Streak Tracking - Current and longest streak display, streak resilience metric (recovery rate), streak freeze: 3 consecutive days recovers 1 missed day (M)
-- FR-5.6: Badge System - Milestone triggers (7/10/30 day streaks, 10/50/100 Binds, first Needle archived, first Proof). Displayed in profile, shareable badge cards (S)
-- FR-5.7: Day 10 Snapshot (Shareable) - "Before vs After" summary at 10 active days: consistency score, rank achieved, badges, top 3 wins (AI-selected), identity shift summary. Shareable card format. Also at 30/60/90 days (S)
+- **REMOVED: FR-5.6** - Badge System
+- **REMOVED: FR-5.7** - Day 10 Snapshot
 
-**Epic 6: AI Coaching (Dream Self Advisor) (29 pts)**
+**Epic 6: AI Coaching (Dream Self Advisor) (24 pts)** *(reduced from 29 pts)*
 - FR-6.1: Access AI Chat - Floating menu → "Talk to Weave". Chat interface with message bubbles. Contextual opening prompt (not blank). Quick chips: "Plan my day", "I'm stuck", "Edit my Needle", "Explain this Bind". Streaming response (M)
 - FR-6.2: Contextual AI Responses - AI references: current Needles and progress, recent completions and Captures, fulfillment scores and trends, Identity doc (archetype, Dream Self), past wins. Dream Self voice (from personality document). Evidence-based, no generic advice. Rate limited: 10 messages/hour (M)
 - FR-6.3: Edit AI Chat Responses - Long-press AI message → "Edit" or "Not helpful". Corrections stored for feedback loop. Regenerate option (S)
 - FR-6.4: AI Weekly Insights - Generated weekly (Sunday night per timezone). Pattern insights ("You skip gym on Fridays"), success correlations ("Morning Binds = higher fulfillment"), trajectory predictions. Dismissible/markable as helpful (S)
-- FR-6.5: AI Needle Suggestions - After archiving a Needle, AI suggests related Needles based on user's interests and patterns. Accept/modify/dismiss (C)
+- **REMOVED: FR-6.5** - AI Needle Suggestions
 
-**Epic 7: Notifications & Engagement (28 pts)**
+**Epic 7: Notifications & Engagement (23 pts)** *(reduced from 28 pts)*
 - FR-7.1: Morning Intention Notification - Sent at user's preferred start time. Content: Today's Triad (top 3 Binds), yesterday's intention recap. Dream Self voice. Deep link to Thread. Disableable (M)
 - FR-7.2: Bind Reminder Notifications - Escalation strategy: (1) Gentle: "Ready to knock out your gym session?", (2) Contextual: "You usually feel great after workouts", (3) Accountability: "Your 27-day streak is on the line". Max 3 per Bind per day. Deep link to specific Bind Screen (M)
 - FR-7.3: Evening Reflection Prompt - Sent at wind-down time if journal not submitted. "How did today go? Weave is ready to reflect with you." Deep link to Daily Reflection (M)
 - FR-7.4: Streak Recovery Notification - After 24-48h inactivity. Compassionate, not shame-based. Reference specific Needles and past wins. Easy re-entry: "Just log ONE Bind today" (M)
-- FR-7.5: Milestone Celebration Notification - At 10/30/60/90 active days, badge unlocks, Needle completions. Share option for milestone snapshot (S)
+- **REMOVED: FR-7.5** - Milestone Celebration Notification (celebration integrated into FR-3.3 completion flow)
 - FR-7.6: Notification Preferences - Nudging intensity slider (1-10), quiet hours (start/end time), per-notification toggles, max 5 notifications/day enforced. **Note:** MVP uses push notifications. Future roadmap: SMS/text messaging integration (M)
 
-**Epic 8: Settings & Profile (23 pts)**
+**Epic 8: Settings & Profile (18 pts)** *(reduced from 23 pts)*
 - FR-8.1: Profile Overview - Name, email, profile photo (optional). Quick links to: Identity Document, Notification Preferences, App Settings, Help/Support, Logout (M)
-- FR-8.2: Edit Identity Document - View/edit: Archetype (retake option), Dream Self description, Motivations, Failure mode, Coaching preference slider (gentle ↔ strict), Constraints. Each edit creates new version. AI uses latest version (M)
+- **REMOVED: FR-8.2** - Edit Identity Document
 - FR-8.3: General Settings - Timezone (auto-detect with override), preferred working hours, Needle change strictness mode, nudging intensity, data export (JSON), delete account (with confirmation, soft delete 30 days) (M)
 - FR-8.4: Subscription Management - Show current plan (Free/Pro/Max), features by tier, upgrade CTA with pricing, link to App Store subscription management. Free: 1 Needle, limited AI. Pro $12/mo: 3 Needles, unlimited AI. Max $24/mo: 5 Needles, priority support (M)
 - FR-8.5: Help and Support - FAQ section, contact support (email), rate app prompt (after 7 active days), version number (S)
@@ -309,16 +309,11 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | FR-2.1 | Epic 2 | View Needles List |
 | FR-2.2 | Epic 2 | View Needle Details |
 | FR-2.3 | Epic 2 | Create New Needle (AI) |
-| FR-2.4 | Epic 2 | Edit Needle |
+| FR-2.4 | Epic 2 | Edit Needle (with integrated strictness) |
 | FR-2.5 | Epic 2 | Archive Needle |
-| FR-2.6 | Epic 2 | Needle Change Strictness |
 | FR-3.1 | Epic 3 | View Today's Binds (Thread Home) |
-| FR-3.2 | Epic 3 | View Triad (AI Daily Plan) |
-| FR-3.3 | Epic 3 | Start and Complete Bind |
-| FR-3.4 | Epic 3 | Attach Proof to Bind |
-| FR-3.5 | Epic 3 | Quick Capture |
-| FR-3.6 | Epic 3 | Timer Tracking (Pomodoro) |
-| FR-3.7 | Epic 3 | Dual Path Visualization |
+| FR-3.3 | Epic 3 | Start and Complete Bind with Integrated Proof |
+| FR-3.4 | Epic 3 | Timer Tracking (Integrated Proof) |
 | FR-4.1 | Epic 4 | Daily Reflection Entry |
 | FR-4.2 | Epic 4 | Recap Before Reflection |
 | FR-4.3 | Epic 4 | AI Feedback Generation |
@@ -327,29 +322,25 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | FR-5.1 | Epic 5 | Weave Dashboard Overview |
 | FR-5.2 | Epic 5 | Consistency Heat Map |
 | FR-5.3 | Epic 5 | Fulfillment Trend Chart |
-| FR-5.4 | Epic 5 | Weave Character Progression |
+| FR-5.4 | Epic 5 | Weave Character Progression (level progress bar) |
 | FR-5.5 | Epic 5 | Streak Tracking |
-| FR-5.6 | Epic 5 | Badge System |
-| FR-5.7 | Epic 5 | Day 10 Snapshot |
 | FR-6.1 | Epic 6 | Access AI Chat |
 | FR-6.2 | Epic 6 | Contextual AI Responses |
 | FR-6.3 | Epic 6 | Edit AI Chat Responses |
 | FR-6.4 | Epic 6 | AI Weekly Insights |
-| FR-6.5 | Epic 6 | AI Needle Suggestions |
 | FR-7.1 | Epic 7 | Morning Intention Notification |
 | FR-7.2 | Epic 7 | Bind Reminder Notifications |
 | FR-7.3 | Epic 7 | Evening Reflection Prompt |
 | FR-7.4 | Epic 7 | Streak Recovery Notification |
-| FR-7.5 | Epic 7 | Milestone Celebration Notification |
 | FR-7.6 | Epic 7 | Notification Preferences |
 | FR-8.1 | Epic 8 | Profile Overview |
-| FR-8.2 | Epic 8 | Edit Identity Document |
 | FR-8.3 | Epic 8 | General Settings |
 | FR-8.4 | Epic 8 | Subscription Management |
 | FR-8.5 | Epic 8 | Help and Support |
 | FR-8.6 | Epic 8 | Logout and Security |
 
-**Coverage Summary:** 58 FRs → 9 Epics (100% coverage)
+**Coverage Summary:** 49 FRs → 9 Epics (100% coverage)
+**Scope Reduction:** Removed 9 FRs (US-2.6, US-3.2, US-3.5, US-3.7, US-5.6, US-5.7, US-6.5, US-7.5, US-8.2)
 
 ---
 
@@ -635,10 +626,10 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
-### Epic 2: Needle/Goal Management (27 pts)
+### Epic 2: Needle/Goal Management (24 pts) *(reduced from 27 pts)*
 **User Outcome:** Users can create, view, edit, and archive their Needles (goals), with AI assistance for breakdown. Max 3 active Needles enforced.
 
-**FRs Covered:** FR-2.1, FR-2.2, FR-2.3, FR-2.4, FR-2.5, FR-2.6
+**FRs Covered:** FR-2.1, FR-2.2, FR-2.3, FR-2.4, FR-2.5
 
 **Why This Order:** After onboarding, users need to manage their goals before they can complete daily actions.
 
@@ -656,48 +647,50 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **Error Handling:** "AI suggestions unavailable. Create your own binds or try again later."
   - **AC:** AI suggestions work; manual creation always available; templates work when AI fails
   - **DoD:** User never blocked by AI failure; all paths tested
-- **Story 2.4: Edit Needle** (5 pts) - FR-2.4: Edit title, description, add/remove Binds with thoughtful change warning
+- **Story 2.4: Edit Needle** (5 pts) - FR-2.4: Edit title, description, add/remove Binds with thoughtful change warning (strictness integrated)
 - **Story 2.5: Archive Needle** (3 pts) - FR-2.5: Confirmation dialog, archive status, reactivate option
-- **Story 2.6: Change Strictness Settings** (3 pts) - FR-2.6: Normal/Strict/None modes configurable in settings
+- **REMOVED: Story 2.6** - Change Strictness Settings (integrated into Story 2.4)
 
 ---
 
-### Epic 3: Daily Actions & Proof (38 pts) `[MVP]` (basic) + `[v1.1]` (enhanced)
-**User Outcome:** Users can complete daily Binds (tasks), capture proof, and use the Pomodoro timer. This is the core action loop driving the North Star metric.
+### Epic 3: Daily Actions & Proof (18 pts) `[MVP]` *(reduced from 38 pts)*
+**User Outcome:** Users can complete daily Binds (tasks) with integrated proof capture. This is the core action loop driving the North Star metric.
 
-**FRs Covered:** FR-3.1, FR-3.2, FR-3.3, FR-3.4, FR-3.5, FR-3.6, FR-3.7
+**FRs Covered:** FR-3.1, FR-3.3, FR-3.4
 
 **Why This Order:** The daily action loop is the heart of the product. Users need this to make progress toward their Needles.
 
 **Stories:**
-- **Story 3.1: Thread Home (Today's Binds)** (5 pts) `[MVP]` → `[v1.1]` - FR-3.1: Today's Binds grouped by Needle, collapsible, completion status. Answer "What should I do?" in <10s
-  - **v1.1 Enhancement:** Add calendar component showing week/month check-in completion status
-  - **AC (v1.1):** Calendar displays daily completion status; tap date navigates to that day's details
+- **Story 3.1: Thread Home (Today's Binds)** (5 pts) `[MVP]` - FR-3.1: Today's Binds grouped by Needle, collapsible, completion status. Answer "What should I do?" in <10s
 
-- **Story 3.2: Triad Display** (5 pts) `[MVP]` - FR-3.2: AI-recommended top 3 Binds with rationale, editable/dismissible
-  - **AI Fallback Chain:**
-    1. **Primary:** GPT-4o-mini generates Triad based on user context (completions, fulfillment, identity)
-    2. **Deterministic Fallback:** Rank binds by: incomplete today + high frequency + recent completion rate
-    3. **Simple Fallback:** Show next 3 incomplete binds from today's list
-  - **Error Handling:** Silent fallback (user sees Triad, doesn't know it's deterministic vs. AI)
-  - **AC:** AI Triad shows reasoning; deterministic ranking works; simple fallback never empty
-  - **DoD:** User always sees 3 prioritized binds; all fallback paths tested
+- **Story 3.3: Start and Complete Bind with Integrated Proof** (8 pts) `[MVP]` - FR-3.3: Seamless bind completion flow
+  - **Bind Screen:** Needle context, Bind title/description, "Start Bind" button, estimated duration
+  - **Proof Capture:** When user taps "Start Bind", show proof method options:
+    - **Timer/Stopwatch icon:** Start focused timer (see Story 3.4)
+    - **Camera icon:** Open camera for photo/video capture
+    - **Both:** User can use timer AND take photo/video
+  - **Completion Flow:**
+    1. Mark Bind as complete
+    2. **Magical, delightful confetti animation** (classy, celebratory)
+    3. **Show Weave level progress bar increase** (visual feedback - links to FR-5.4)
+    4. **Display affirmation:** "You're getting closer to [Goal Name]!"
+    5. **After celebration:** Prompt for optional description (280 char max)
+    6. Return to Thread with updated status
+  - **Total time:** <30 seconds from open to done
+  - **Data:** Write to `subtask_completions` (immutable), `captures` (timer/photo/video), update `daily_aggregates`, update `user_stats` for level progress
+  - **Design Principle:** Entire experience should feel magical and delightful, not transactional
 
-- **Story 3.3a: Bind Screen** (3 pts) `[MVP]` - FR-3.3 Part 1: Needle context, Bind details, Start Bind button
+- **Story 3.4: Timer Tracking (Integrated Proof)** (5 pts) `[MVP]` - FR-3.4: Pomodoro-feel timer experience
+  - **Pomodoro-style experience:** Set duration upfront (25 min default, customizable: 15/25/45/60 min), focus mode UI, subtle progress visualization, satisfying completion moment
+  - **Integration:** Accessible via Timer/Stopwatch icon on Bind Screen (Story 3.3)
+  - **Flexible usage:** Can be used alongside camera capture
+  - **Data:** Store in `captures` (type: 'timer') with duration, start/end times
+  - **Technical:** Timer works when app backgrounded, local notifications for completion
 
-- **Story 3.3b: Bind Completion** (5 pts) `[MVP]` → `[v1.1]` - FR-3.3 Part 2: Complete flow with magical confetti animation, <30s total
-  - **v1.1 Enhancement:** Updated post-action flow: Complete → Optional reflection → Confetti → Insight
-  - **AC (v1.1):** Insight provided regardless of reflection completion; immediate insight if reflection completed
-
-- **Story 3.4: Attach Proof** (5 pts) `[v1.2]` - FR-3.4: Photo capture, quick note, optional skip, <10s creation
-
-- **Story 3.5: Quick Capture (Document)** (5 pts) `[MVP]` → `[v1.1]` - FR-3.5: Floating menu, fast capture sheet, optional Bind linking
-  - **v1.1 Enhancement:** 3-item minimum for weave level-up; progress tracking "2 out of 3 documented today"
-  - **AC (v1.1):** Real-time counter displays progress; accepts pictures, notes, videos, voice memos; not tied to specific binds
-
-- **Story 3.6: Pomodoro Timer** (5 pts) `[v1.2]` - FR-3.6: Set duration upfront, focus mode UI, satisfying completion moment
-
-- **Story 3.7: Dual Path Visualization** (5 pts) `[v1.2]` - FR-3.7: Visual animated paths + AI text from Tech Context Engine
+- **REMOVED: Story 3.2** - Triad Display (AI-recommended)
+- **REMOVED: Story 3.5** - Quick Capture (Document)
+- **REMOVED: Story 3.6** - Pomodoro Timer (merged into Story 3.4)
+- **REMOVED: Story 3.7** - Dual Path Visualization
 
 ---
 
@@ -734,10 +727,10 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
-### Epic 5: Progress Visualization (Weave Dashboard) (39 pts) `[v1.1]` (basic) + `[v1.2]` (advanced)
+### Epic 5: Progress Visualization (Weave Dashboard) (26 pts) *(reduced from 39 pts)* `[v1.1]` (basic) + `[v1.2]` (advanced)
 **User Outcome:** Users can see their progress through the Weave Dashboard, including heat map, fulfillment trends, streak tracking, and the Weave character evolution.
 
-**FRs Covered:** FR-5.1, FR-5.2, FR-5.3, FR-5.4, FR-5.5, FR-5.6, FR-5.7
+**FRs Covered:** FR-5.1, FR-5.2, FR-5.3, FR-5.4, FR-5.5
 
 **Why This Order:** Visualization requires accumulated data from daily actions and reflections.
 
@@ -751,21 +744,21 @@ This document provides the complete epic and story breakdown for Weave, decompos
 - **Story 5.3: Fulfillment Trend Chart** (5 pts) `[v1.2]` - FR-5.3: Line chart with 7-day rolling average, tap to navigate
 
 - **Story 5.4: Weave Character** (8 pts) `[v1.2]` - FR-5.4: Mathematical curve visualization, complexity increases with progress
+  - **Note:** Level progress bar shown in FR-3.3 completion flow (integrated confetti celebration)
 
 - **Story 5.5: Streak Tracking** (5 pts) `[v1.1]` - FR-5.5: Current/longest streak, resilience metric, streak freeze logic
   - **v1.1 Enhancement:** Streak recovery mechanism - 3 consecutive check-ins after missing a day prevents streak loss
   - **AC (v1.1):** Streak resilience metric displayed; shows "You're 2/3 days to recovering your streak!"; visual progress bar
 
-- **Story 5.6: Badge System** (5 pts) `[v1.2]` - FR-5.6: Milestone triggers, display in profile, shareable badge cards
-
-- **Story 5.7: Day 10 Snapshot** (3 pts) `[v1.2]` - FR-5.7: Before vs After summary, shareable card format
+- **REMOVED: Story 5.6** - Badge System
+- **REMOVED: Story 5.7** - Day 10 Snapshot
 
 ---
 
-### Epic 6: AI Coaching (Dream Self Advisor) (29 pts) `[MVP]` (basic) + `[v1.2]` (advanced)
+### Epic 6: AI Coaching (Dream Self Advisor) (24 pts) *(reduced from 29 pts)* `[MVP]` (basic) + `[v1.2]` (advanced)
 **User Outcome:** Users can chat with their AI coach (Dream Self Advisor) for personalized guidance, receive weekly insights, and get goal suggestions.
 
-**FRs Covered:** FR-6.1, FR-6.2, FR-6.3, FR-6.4, FR-6.5
+**FRs Covered:** FR-6.1, FR-6.2, FR-6.3, FR-6.4
 
 **Why This Order:** AI coaching benefits from having user context (completions, reflections, patterns) to provide personalized responses.
 
@@ -797,14 +790,14 @@ This document provides the complete epic and story breakdown for Weave, decompos
   - **DoD:** Context caching works; AI never invents goals/completions user didn't do
 - **Story 6.3: Edit AI Responses** (3 pts) - FR-6.3: Long-press to edit or mark unhelpful, regenerate option
 - **Story 6.4: Weekly Insights** (8 pts) - FR-6.4: Generated weekly, pattern insights, success correlations, dismissible
-- **Story 6.5: AI Needle Suggestions** (5 pts) - FR-6.5: After archiving, suggest related Needles based on patterns
+- **REMOVED: Story 6.5** - AI Needle Suggestions
 
 ---
 
-### Epic 7: Notifications & Engagement (28 pts)
+### Epic 7: Notifications & Engagement (23 pts) *(reduced from 28 pts)*
 **User Outcome:** Users receive timely notifications (morning intention, bind reminders, evening reflection, streak recovery) to stay engaged.
 
-**FRs Covered:** FR-7.1, FR-7.2, FR-7.3, FR-7.4, FR-7.5, FR-7.6
+**FRs Covered:** FR-7.1, FR-7.2, FR-7.3, FR-7.4, FR-7.6
 
 **Why This Order:** Notifications are engagement layer on top of core functionality. Can be developed in parallel with other epics.
 
@@ -813,21 +806,21 @@ This document provides the complete epic and story breakdown for Weave, decompos
 - **Story 7.2: Bind Reminders** (5 pts) - FR-7.2: Escalation strategy (gentle → contextual → accountability), max 3/day
 - **Story 7.3: Evening Reflection Prompt** (3 pts) - FR-7.3: Sent at wind-down time if journal not submitted
 - **Story 7.4: Streak Recovery** (5 pts) - FR-7.4: After 24-48h inactivity, compassionate, reference past wins
-- **Story 7.5: Milestone Celebration** (5 pts) - FR-7.5: At 10/30/60/90 days, badge unlocks, share option
+- **REMOVED: Story 7.5** - Milestone Celebration (celebration integrated into FR-3.3 completion flow)
 - **Story 7.6: Notification Preferences** (5 pts) - FR-7.6: Intensity slider, quiet hours, per-notification toggles, max 5/day
 
 ---
 
-### Epic 8: Settings & Profile (23 pts)
+### Epic 8: Settings & Profile (18 pts) *(reduced from 23 pts)*
 **User Outcome:** Users can manage their profile, edit identity document, configure settings, manage subscription, and get help.
 
-**FRs Covered:** FR-8.1, FR-8.2, FR-8.3, FR-8.4, FR-8.5, FR-8.6
+**FRs Covered:** FR-8.1, FR-8.3, FR-8.4, FR-8.5, FR-8.6
 
 **Why This Order:** Settings and profile management are supporting features that enhance the core experience.
 
 **Stories:**
 - **Story 8.1: Profile Overview** (3 pts) - FR-8.1: Name, email, photo, quick links to settings sections
-- **Story 8.2: Edit Identity Document** (5 pts) - FR-8.2: View/edit archetype, Dream Self, motivations, coaching preference
+- **REMOVED: Story 8.2** - Edit Identity Document
 - **Story 8.3: General Settings** (5 pts) - FR-8.3: Timezone, working hours, change strictness, data export, delete account
 - **Story 8.4: Subscription Management** (5 pts) - FR-8.4: Current plan, tier features, upgrade CTA, App Store link
 - **Story 8.5: Help and Support** (2 pts) - FR-8.5: FAQ, contact support, rate app prompt, version number
@@ -840,22 +833,27 @@ This document provides the complete epic and story breakdown for Weave, decompos
 | Epic | Name | Story Points | Priority FRs (M) | Dependencies | Phase |
 |------|------|--------------|------------------|--------------|-------|
 | 0 | Foundation | 40 | 7 | None (True Foundation) | `[MVP]` |
-| 1 | Onboarding & Identity | 52 | 8 | Epic 0 | `[MVP]` (core) + `[v1.2]` (full) |
-| 1.5 | App Navigation Scaffolding | 8-10 | Infrastructure | Epic 0, 1 | `[MVP]` |
-| 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1, 1.5 | `[v1.2]` |
-| 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 1.5, 2 | `[MVP]` (basic) + `[v1.1]` (enhanced) |
-| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 1.5, 2, 3 | `[v1.1]` |
-| 5 | Progress Visualization | 39 | 3 | Epic 0, 1, 1.5, 2, 3, 4 | `[v1.1]` (basic) + `[v1.2]` (advanced) |
-| 6 | AI Coaching | 29 | 2 | Epic 0, 1, 1.5, 2, 3, 4 | `[MVP]` (basic chat) + `[v1.2]` (advanced) |
-| 7 | Notifications | 28 | 5 | Epic 0, 1, 1.5, 2, 3 | `[v1.2]` |
-| 8 | Settings & Profile | 23 | 5 | Epic 0, 1, 1.5 | `[v1.2]` |
+| 1 | Onboarding & Identity | 51 | 8 | Epic 0 | `[MVP]` (core) + `[v1.2]` (full) |
+| 2 | Needle/Goal Management | 24 | 5 | Epic 0, 1 | `[v1.2]` |
+| 3 | Daily Actions & Proof | 18 | 3 | Epic 0, 1, 2 | `[MVP]` (basic) + `[v1.1]` (enhanced) |
+| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 2, 3 | `[v1.1]` |
+| 5 | Progress Visualization | 26 | 3 | Epic 0, 1, 2, 3, 4 | `[v1.1]` (basic) + `[v1.2]` (advanced) |
+| 6 | AI Coaching | 24 | 2 | Epic 0, 1, 2, 3, 4 | `[MVP]` (basic chat) + `[v1.2]` (advanced) |
+| 7 | Notifications | 23 | 5 | Epic 0, 1, 2, 3 | `[v1.2]` |
+| 8 | Settings & Profile | 18 | 5 | Epic 0, 1 | `[v1.2]` |
 
-**Total:** 312-314 story points across 58 FRs (+ Epic 1.5 infrastructure)
+**Total:** 252 story points across 49 FRs
+
+**Scope Reduction Summary:**
+- **Removed 52 story points** from original 304 pts (17% reduction)
+- Removed 9 user stories: US-2.6, US-3.2, US-3.5, US-3.7, US-5.6, US-5.7, US-6.5, US-7.5, US-8.2
+- Merged US-3.3, US-3.4, US-3.6 into integrated bind completion flow with proof capture
+- Promoted timer tracking (US-3.4) from S to M priority due to integration importance
 
 **Phase Breakdown:**
 - **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~70 pts (Sprint 1)
 - **v1.1:** Epic 3 (enhanced features), Epic 4 (all), Epic 5 (basic dashboard) = ~75 pts (Sprint 2-4)
-- **v1.2:** Epic 1 (full onboarding), Epic 2 (all), Epic 5 (advanced), Epic 6 (advanced), Epic 7 (all), Epic 8 (all) = ~131 pts (Sprint 5+)
+- **v1.2:** Epic 1 (full onboarding), Epic 2 (all), Epic 5 (advanced), Epic 6 (advanced), Epic 7 (all), Epic 8 (all) = ~107 pts (Sprint 5+)
 
 ---
 
@@ -1125,7 +1123,7 @@ Day 9-10: AI Companion (CRUCIAL)
 | 1.5 Motivation/Constraints | Nice-to-have, AI can infer from behavior |
 | 1.8 App Tutorial | Users can explore; add after core proven |
 | 1.9 Soft Paywall | No payment until retention proven |
-| 3.4-3.7 | Proof, Capture, Timer, Dual Path - Sprint 2 |
+| 3.4 Timer | Integrated timer tracking - Sprint 2 |
 | Epic 4 | Reflection - Sprint 2 |
 | Epic 5 | Progress Visualization - Sprint 2 |
 | Epic 7 | Notifications - Sprint 2 |
@@ -1158,7 +1156,7 @@ Epic 0 (Foundation) - Blocks Everything
 0.2 ──► 0.3, 0.4, ALL data-dependent stories
 0.3 ──► 0.4, ALL user-facing features
 0.4 ──► Alpha Release (HARD BLOCK)
-0.6 ──► ALL AI-powered features (1.6b, 2.3b, 3.2, 4.3, 6.1-6.5)
+0.6 ──► ALL AI-powered features (1.6b, 2.3b, 4.3, 6.1-6.4)
 
 Epic 1 (Onboarding) - Sequential Flow
 ═════════════════════════════════════
@@ -1182,46 +1180,39 @@ Epic 2 (Goal Management) - Depends on Onboarding
 Epic 3 (Daily Actions) - Depends on Goals
 ═════════════════════════════════════════
 1.6c ──► 3.1 (needs binds to display)
-3.1 ──► 3.2, 3.3a
-3.3a ──► 3.3b (screen before completion)
-3.3b ──► 3.4 (completion before proof)
-3.1 ──► 3.5 (can capture once home exists)
-3.3a ──► 3.6 (timer on bind screen)
+3.1 ──► 3.3 (bind screen with integrated proof)
+3.3 ──► 3.4 (timer integrated into bind completion)
 
 Epic 4 (Reflection) - Depends on Actions
 ════════════════════════════════════════
-3.3b ──► 4.1 (needs completions to reflect on)
+3.3 ──► 4.1 (needs completions to reflect on)
 4.1 ──► 4.2, 4.3
 4.3 ──► 4.4
 4.1 ──► 4.5 (needs entries to view history)
 
 Epic 5 (Progress) - Depends on Data
 ═══════════════════════════════════
-3.3b ──► 5.1 (needs completion data)
+3.3 ──► 5.1 (needs completion data)
 4.1 ──► 5.3 (needs fulfillment data)
 5.1 ──► 5.2, 5.4, 5.5
-5.5 ──► 5.6 (badges depend on streaks)
-5.6 ──► 5.7 (snapshot includes badges)
 
 Epic 6 (AI Coaching) - Depends on AI Service
 ════════════════════════════════════════════
 0.6 ──► 6.1 (needs AI abstraction)
 6.1 ──► 6.2 (UI before context engine)
-6.2 ──► 6.3, 6.4, 6.5
+6.2 ──► 6.3, 6.4
 
 Epic 7 (Notifications) - Depends on Core Loop
 ═════════════════════════════════════════════
 3.1 ──► 7.1 (morning notification needs binds)
-3.3a ──► 7.2 (reminders need bind screens)
+3.3 ──► 7.2 (reminders need bind screens)
 4.1 ──► 7.3 (evening prompt needs reflection)
 5.5 ──► 7.4 (streak recovery needs streak data)
-5.6 ──► 7.5 (milestone celebration needs badges)
 7.1 ──► 7.6 (preferences need notifications to exist)
 
 Epic 8 (Settings) - Minimal Dependencies
 ════════════════════════════════════════
 0.3 ──► 8.1 (profile needs auth)
-1.4 ──► 8.2 (identity edit needs identity)
 0.3 ──► 8.6 (logout needs auth)
 ```
 
