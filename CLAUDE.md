@@ -159,33 +159,41 @@ gh pr create --base main
 4. **Update sprint artifacts** - Document significant decisions or blockers
 5. **Test before committing** - Mobile: test on simulator; Backend: run pytest
 
-### Wireframe-Guided Epic Implementation (Current Primary Mode)
+### Page-Based Implementation (Current Primary Mode)
 
-**Status:** 🚀 **ACTIVE** - Hybrid approach for deadline-driven development
+**Status:** 🚀 **ACTIVE** - Page-based approach for cohesive, vertical-slice development
 
-**Key Insight:** Epics/stories ARE still correct for functional requirements, BUT we need wireframes to guide visual design and navigation upfront.
+**Key Insight:** Instead of implementing epics sequentially, organize implementation by **user-facing pages** that group related epics into complete, cohesive units.
+
+**Navigation Model:** Bottom tab navigation (3 main tabs) + profile/settings
+
+**Four Main Pages:**
+1. **Thread Page** (Epic 3 + 4) - Daily action loop
+2. **Dashboard Page** (Epic 2 + 5) - Goal management + progress visualization
+3. **Weave AI Page** (Epic 6) - AI coaching chat
+4. **Profile & Settings** (Epic 7 + 8) - Notifications + account management
 
 **Workflow:**
-1. **User provides:** Wireframe/screenshot of main navigation page + brief description
+1. **User provides:** Wireframe/screenshot for a page (e.g., Thread, Dashboard)
 2. **User explains:** "This screen shows X, when user taps Y, navigate to Z"
-3. **Then reference:** The relevant epic/story for functional requirements
-4. **Claude implements:** Using wireframe for UX/layout + epic for acceptance criteria
+3. **Claude references:** The page document (`docs/pages/[page-name].md`) for functional requirements
+4. **Claude implements:** Using wireframe for UX/layout + page doc for acceptance criteria
 5. **Build → Test → Iterate:** Complete vertical slices end-to-end
 
 **Example session:**
 ```
-User: [Shows wireframe] "This is the Needles List screen (main tab).
-      Shows active goals as cards, tap to see details, FAB to add new goal.
-      Let's implement Epic 2, Story 2.1 - but use this wireframe for the layout."
+User: [Shows wireframe] "This is the Dashboard page.
+      Shows active needles as cards, has a FAB to add new goal, plus heat map and fulfillment chart below.
+      This covers Epic 2 (Goal Management) and Epic 5 (Progress Visualization)."
 
 Claude: "Got it. I see:
-        - Wireframe: Card-based list, FAB bottom-right, tab navigation
-        - Story 2.1: Display active goals, max 3, show progress indicators
-        Questions: Should we show goal progress on the cards? Loading states?"
+        - Wireframe: Card-based needle list, FAB bottom-right, heat map + chart below
+        - Page doc: docs/pages/dashboard-page.md covers all Epic 2 + 5 stories
+        Questions: Should the heat map be collapsed by default? Timeframe filter placement?"
 
 User: [Answers]
 
-Claude: [Implements using design system, following both wireframe AND story criteria]
+Claude: [Implements using design system, following both wireframe AND page doc criteria]
 ```
 
 **What matters from wireframes:**
@@ -194,24 +202,28 @@ Claude: [Implements using design system, following both wireframe AND story crit
 - ✅ Primary user interactions (taps, swipes, forms)
 - ✅ Screen organization and information architecture
 
-**What matters from epics/stories:**
-- ✅ Functional requirements and acceptance criteria
+**What matters from page documents:**
+- ✅ Functional requirements and acceptance criteria (from epics/stories)
 - ✅ Data model and API contracts
 - ✅ Business logic and validation rules
 - ✅ Edge cases and error handling
+- ✅ Page completion criteria
 
 **What Claude maintains:**
 - ✅ Consistency with existing architecture (three-layer data model, RLS patterns, API format)
 - ✅ Reuse of design system components and tokens
 - ✅ Following established patterns (state management, naming conventions)
-- ✅ Checking both wireframe AND story acceptance criteria
+- ✅ Checking both wireframe AND page doc acceptance criteria
 
-**What we're streamlining:**
-- ⚡ No lengthy story discovery process (wireframes provide visual clarity)
-- ⚡ No formal BMAD workflow gates (but still quality-focused)
-- ⚡ Faster iteration cycles (visual + functional specs upfront)
+**Benefits:**
+- ✅ Complete vertical slices (fully functional pages)
+- ✅ Natural cohesion (features grouped by user intent)
+- ✅ Parallel development possible (teams can work on different pages)
+- ✅ Testable units (clear page completion criteria)
 
-**Priority:** Ship working features that match wireframes AND meet acceptance criteria
+**Priority:** Ship complete pages that match wireframes AND meet all acceptance criteria
+
+**Page Documentation:** See `docs/pages/` for detailed page specs and `docs/implementation-strategy.md` for comprehensive guide
 
 ## Project Structure (Current Reality)
 
@@ -254,6 +266,12 @@ weavelight/
 │       └── theme/               # ThemeContext and hooks
 │
 ├── docs/
+│   ├── pages/                   # 📁 Page-based implementation guides (NEW)
+│   │   ├── thread-page.md       # Epic 3 + 4 (Daily actions + reflection)
+│   │   ├── dashboard-page.md    # Epic 2 + 5 (Goals + progress viz)
+│   │   ├── weave-ai-page.md     # Epic 6 (AI coaching)
+│   │   └── profile-settings.md  # Epic 7 + 8 (Notifications + settings)
+│   │
 │   ├── architecture/            # 📁 Sharded architecture docs
 │   │   ├── index.md             # Table of contents
 │   │   ├── core-architectural-decisions.md
@@ -262,21 +280,47 @@ weavelight/
 │   │
 │   ├── prd/                     # 📁 Sharded PRD docs
 │   │   ├── index.md             # Table of contents
+│   │   ├── implementation-pages.md  # Page → Epic mapping (NEW)
 │   │   ├── product-vision.md
 │   │   ├── epic-0-foundation.md
 │   │   ├── epic-1-onboarding-optimized-hybrid-flow.md
-│   │   └── ...                  # 26 total section files
+│   │   └── ...                  # 26+ total section files
 │   │
 │   ├── stories/                 # 📁 Story specifications
 │   │   ├── 0-1-project-scaffolding.md
 │   │   ├── 0-2a-database-schema-core.md
 │   │   ├── 0-3-authentication-flow.md
 │   │   ├── 1-1-welcome-vision-hook.md
-│   │   └── ...                  # 15+ story files
+│   │   ├── ...                  # 15+ story files
+│   │   └── validation-reports/  # Post-implementation validation
+│   │       ├── validation-report-story-0.4-20251219.md
+│   │       └── ...              # 4 validation reports
 │   │
-│   ├── sprint-artifacts/        # Implementation summaries
-│   │   ├── story-0.3-implementation-summary.md
-│   │   └── ...
+│   ├── testing/                 # 📁 Testing documentation
+│   │   ├── README.md            # Testing structure guide
+│   │   ├── test-design.md       # Overall testing strategy
+│   │   ├── atdd/                # Story-level ATDD checklists
+│   │   │   ├── atdd-checklist-story-1.6.md
+│   │   │   └── ...              # 4 ATDD checklists
+│   │   └── epic/                # Epic-level test design
+│   │       ├── test-design-epic-0.md
+│   │       └── ...              # 3 epic test designs
+│   │
+│   ├── sprint-artifacts/        # 📁 Implementation summaries & change proposals
+│   │   ├── README.md            # Sprint workflow guide
+│   │   ├── sprint-change-proposals/  # Scope changes during sprint
+│   │   │   ├── sprint-change-proposal-story-1.7-2025-12-18.md
+│   │   │   └── ...              # 5 change proposals
+│   │   ├── epic-retrospectives/ # Post-epic learnings
+│   │   │   └── epic-0-retrospective-2025-12-20.md
+│   │   ├── design-system-old/   # Archived design system docs
+│   │   │   └── ...              # 3 archived files
+│   │   ├── story-0.3-implementation-summary.md  # Active story artifacts
+│   │   └── ...                  # 14 story files at root
+│   │
+│   ├── meta/                    # 📁 Documentation about documentation
+│   │   ├── README.md            # Meta-documentation guide
+│   │   └── documentation-reorganization-2025-12-21.md
 │   │
 │   ├── idea/                    # Original deep specs (1000+ lines each)
 │   │   ├── mvp.md               # Complete product MVP spec
@@ -301,6 +345,7 @@ weavelight/
 │   │   └── prd.md               # Original before sharding
 │   │
 │   ├── bmm-workflow-status.yaml # BMAD workflow progress
+│   ├── implementation-strategy.md # Page-based implementation guide (NEW)
 │   ├── epics.md                 # Implementation epics
 │   ├── test-design.md           # Testing strategy
 │   └── ...
@@ -332,18 +377,29 @@ weavelight/
 
 | Task | Read This | Why |
 |------|-----------|-----|
+| **Implementing a page** | `docs/pages/[page-name].md` | **Complete page spec with all stories, wireframe requirements, and completion criteria** |
+| Understanding page-based strategy | `docs/implementation-strategy.md` | Comprehensive guide to page-based implementation |
 | Implementing a story | `docs/stories/[story-name].md` | Detailed spec with acceptance criteria |
 | Understanding product vision | `docs/prd/product-vision.md` | High-level goals and user personas |
 | Understanding an epic | `docs/prd/epic-[N]-[name].md` | Epic breakdown and requirements |
+| Page → Epic mapping | `docs/prd/implementation-pages.md` | How pages group epics together |
 | Architecture decisions | `docs/architecture/core-architectural-decisions.md` | Tech stack, patterns, rationale |
 | Database schema | `docs/idea/backend.md` (lines 200-800) | Complete schema with relationships |
 | API patterns | `docs/architecture/implementation-patterns-consistency-rules.md` | Code conventions and guardrails |
 | Design system usage | `docs/dev/design-system-guide.md` | Components, tokens, examples |
 | Git workflow | `docs/dev/git-workflow-guide.md` | Branching, commits, PRs |
+| **ATDD checklist for a story** | `docs/testing/atdd/atdd-checklist-story-[X.X].md` | Acceptance criteria and test scenarios |
+| **Epic-level test design** | `docs/testing/epic/test-design-epic-[X].md` | Strategic test plans spanning multiple stories |
+| **Overall testing strategy** | `docs/testing/test-design.md` | Testing methodology and standards |
+| **Story implementation notes** | `docs/sprint-artifacts/story-[X.X]-*.md` | Implementation decisions and outcomes |
+| **Sprint scope changes** | `docs/sprint-artifacts/sprint-change-proposals/` | Mid-sprint scope adjustments |
+| **Epic retrospective** | `docs/sprint-artifacts/epic-retrospectives/` | Post-epic learnings and insights |
+| **Story validation results** | `docs/stories/validation-reports/` | Post-implementation validation |
+| **Documentation organization** | `docs/meta/` | How docs are structured and why |
 | Debugging common issues | `docs/bugs/[issue-name].md` | Known bugs and solutions |
 | Deep product context | `docs/idea/mvp.md` | 1600-line comprehensive spec (only if needed) |
 
-**Tip:** Use `docs/architecture/index.md` or `docs/prd/index.md` as a table of contents to find specific sections.
+**Tip:** Use `docs/architecture/index.md`, `docs/prd/index.md`, or `docs/pages/` as navigation starting points.
 
 ## Naming Conventions
 
