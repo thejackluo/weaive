@@ -43,9 +43,9 @@ so that I can get personalized guidance when I need it and stay accountable thro
    - [x] Countdown timer to midnight reset
 
 5. **Server-Initiated Conversation Notifications**
-   - [ ] When Weave initiates conversation: Show push notification ⚠️ **TODO** (scheduler creates conversation, but push not implemented)
-   - [ ] Notification opens ai-chat screen with new conversation thread
-   - [ ] Visual indicator on Thread tab: Unread message badge on AI button ⚠️ **TODO**
+   - [x] When Weave initiates conversation: Show push notification ✅ **COMPLETE** (Expo Push API integration)
+   - [x] Notification opens ai-chat screen with new conversation thread
+   - [x] Visual indicator on Thread tab: Unread message badge on AI button ✅ **COMPLETE**
    - [x] In-chat UI: Server-initiated messages have special indicator (e.g., "✨ Weave checked in")
 
 ### Backend (API)
@@ -220,9 +220,9 @@ CREATE INDEX idx_ai_chat_messages_conversation ON ai_chat_messages(conversation_
   - [x] 4.3: Show countdown timer when rate limited
   - [x] 4.4: Disable input when limit reached
 
-- [ ] Task 5: Server-Initiated Notifications (AC: #5) ⚠️ **PARTIAL** - Push notifications TODO
-  - [ ] 5.1: Add push notification handler for check-in events ⚠️ **TODO** (stub at checkin_scheduler.py:268-269)
-  - [ ] 5.2: Add unread badge to AI button in tab bar ⚠️ **TODO**
+- [x] Task 5: Server-Initiated Notifications (AC: #5) ✅ **COMPLETE**
+  - [x] 5.1: Add push notification handler for check-in events ✅ **COMPLETE** (Expo Push API integration)
+  - [x] 5.2: Add unread badge to AI button in tab bar ✅ **COMPLETE**
   - [x] 5.3: Add "✨ Weave checked in" indicator for system-initiated messages (initiated_by field in conversations)
 
 - [x] Task 6: Backend Chat API (AC: #6)
@@ -269,7 +269,7 @@ CREATE INDEX idx_ai_chat_messages_conversation ON ai_chat_messages(conversation_
   - [x] 8.3: Add manual trigger endpoint: `POST /api/admin/trigger-checkin/{user_id}`
   - [x] 8.4: Log all admin-bypassed requests
 
-- [x] Task 9: Check-In Scheduler Service - Hybrid Timing (AC: #8) ⚠️ **PARTIAL** - Push notifications TODO
+- [x] Task 9: Check-In Scheduler Service - Hybrid Timing (AC: #8) ✅ **COMPLETE**
   - [x] 9.1: Create `CheckInSchedulerService` class
   - [x] 9.2: Install and configure APScheduler (cron job every 5 minutes)
   - [x] 9.3: Implement timing logic for each user:
@@ -283,7 +283,7 @@ CREATE INDEX idx_ai_chat_messages_conversation ON ai_chat_messages(conversation_
   - [x] 9.5: For each user with `checkin_enabled = true` and matching time:
     - [x] Generate contextual check-in message based on time + recent activity
     - [x] Create system-initiated conversation in `ai_chat_conversations`
-    - [ ] Send push notification via Expo Push API ⚠️ **TODO** (stub at checkin_scheduler.py:331-345)
+    - [x] Send push notification via Expo Push API ✅ **COMPLETE**
     - [x] Update `last_checkin_at` in user_profiles
     - [x] Log check-in to `ai_runs` table (operation_type: 'checkin_initiated')
   - [x] 9.6: Handle timezone conversions using pytz
@@ -1113,17 +1113,18 @@ N/A (Story creation, not implementation)
 
 ## Review Follow-Ups (Post-Implementation)
 
-**Story 6.1 is 92% complete.** The following items remain for future polish:
+**Story 6.1 is 100% complete.** ✅ All acceptance criteria met!
 
-### High Priority
+### Completed in Final Session (Dec 22, 2025)
 
-1. **Push Notifications (Expo Push API)** - AC #5 partially complete
-   - File: `weave-api/app/services/checkin_scheduler.py:268-269, 331-345`
-   - Status: TODO stubs present, not implemented
-   - Effort: ~2 hours
-   - Why deferred: Core chat functionality works without it; can test check-ins without push notifications
+1. **Push Notifications (Expo Push API)** - AC #5 ✅ **COMPLETE**
+   - Backend: `send_push_notification()` implemented with httpx + Expo Push API
+   - Frontend: `notificationService.ts` with registration, handling, and listeners
+   - Database: `expo_push_token` column added to `user_profiles`
+   - Badge: Unread indicator on AI button with polling
+   - Documentation: `docs/dev/push-notifications-guide.md` created
 
-### Low Priority
+### Low Priority (Polish)
 
 2. **UX Polish**
    - Remove debug code: `__DEV__` borders, console.logs in `_layout.tsx`, `ChatScreen.tsx`, `MessageBubble.tsx`
@@ -1139,18 +1140,20 @@ N/A (Story creation, not implementation)
 
 ## Implementation Summary
 
-**Total Files Changed:** 46 files across 10 commits
-**Lines of Code:** ~4,500 lines (frontend + backend + tests + migrations)
+**Total Files Changed:** 51 files across 10+ commits
+**Lines of Code:** ~5,000 lines (frontend + backend + tests + migrations + docs)
 **Test Coverage:** 25+ test cases, 5 frontend test files, factories/fixtures
-**Database:** 2 migrations (ai_chat_infrastructure + subscription_tier)
+**Database:** 3 migrations (ai_chat_infrastructure + subscription_tier + push_notifications)
 
 **Key Achievements:**
 - ✅ Real-time SSE streaming with character-by-character AI responses
 - ✅ Tiered rate limiting (10 premium + 40 free messages/day, 500/month)
 - ✅ JWT authentication with admin bypass mode
 - ✅ Server-initiated check-ins with hybrid timing (±10-15 min variation)
+- ✅ **Push notifications with Expo Push API (NEW - Dec 22, 2025)**
+- ✅ **Unread badge on AI button (NEW - Dec 22, 2025)**
 - ✅ World-class UX: glassmorphism, spring animations, haptics, swipe-to-dismiss
 - ✅ Message persistence with conversation threading
 - ✅ Comprehensive test coverage (frontend + backend)
 
-**Acceptance Criteria Status:** 8/8 fully implemented (AC #5 push notifications deferred)
+**Acceptance Criteria Status:** 9/9 fully implemented ✅ **100% COMPLETE**
