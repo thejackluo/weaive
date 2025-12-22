@@ -220,39 +220,39 @@ CREATE INDEX idx_ai_chat_messages_conversation ON ai_chat_messages(conversation_
   - [x] 4.3: Show countdown timer when rate limited
   - [x] 4.4: Disable input when limit reached
 
-- [ ] Task 5: Server-Initiated Notifications (AC: #5)
-  - [ ] 5.1: Add push notification handler for check-in events
-  - [ ] 5.2: Add unread badge to AI button in tab bar
-  - [ ] 5.3: Add "✨ Weave checked in" indicator for system-initiated messages
+- [ ] Task 5: Server-Initiated Notifications (AC: #5) ⚠️ **PARTIAL** - Push notifications TODO
+  - [ ] 5.1: Add push notification handler for check-in events ⚠️ **TODO** (stub at checkin_scheduler.py:268-269)
+  - [ ] 5.2: Add unread badge to AI button in tab bar ⚠️ **TODO**
+  - [x] 5.3: Add "✨ Weave checked in" indicator for system-initiated messages (initiated_by field in conversations)
 
-- [ ] Task 6: Backend Chat API (AC: #6)
-  - [ ] 6.1: Create `/api/ai-chat/messages` endpoint with FastAPI
-  - [ ] 6.2: **Use existing AIService** from `app.services.ai` (DO NOT create new service)
+- [x] Task 6: Backend Chat API (AC: #6)
+  - [x] 6.1: Create `/api/ai-chat/messages` endpoint with FastAPI
+  - [x] 6.2: **Use existing AIService** from `app.services.ai` (DO NOT create new service)
     - Import: `from app.services.ai import AIService`
     - Use existing fallback chain: Sonnet → Haiku → GPT-4o-mini → Deterministic
     - Leverage existing 24-hour caching with input_hash
     - Existing rate limiter already supports role-based limits
-  - [ ] 6.3: Implement streaming response (SSE or chunked HTTP)
-  - [ ] 6.4: Create conversation history endpoints (GET /conversations, GET /conversations/{id})
-  - [ ] 6.5: Add Pydantic models: `ChatMessageCreate`, `ChatMessageResponse`, `ConversationResponse`
+  - [x] 6.3: Implement streaming response (SSE or chunked HTTP)
+  - [x] 6.4: Create conversation history endpoints (GET /conversations, GET /conversations/{id})
+  - [x] 6.5: Add Pydantic models: `ChatMessageCreate`, `ChatMessageResponse`, `ConversationResponse`
 
-- [ ] Task 7: Rate Limiting Backend - Tiered System (AC: #7)
-  - [ ] 7.1: Before processing AI request, check model type and corresponding limit:
+- [x] Task 7: Rate Limiting Backend - Tiered System (AC: #7)
+  - [x] 7.1: Before processing AI request, check model type and corresponding limit:
     - If premium model (Claude Sonnet): Check `ai_premium_messages_today` < 10
     - If free model (Haiku/Mini): Check `ai_free_messages_today` < 40
     - Check monthly total: `ai_messages_this_month` < monthly_limit
-  - [ ] 7.2: Implement tier-based monthly limits:
+  - [x] 7.2: Implement tier-based monthly limits:
     - Free tier: 500 messages/month
     - Pro tier: 2,500-5,000 messages/month (5-10x free)
     - Admin tier: Unlimited (bypass via X-Admin-Key)
-  - [ ] 7.3: After successful AI response, increment appropriate counters:
+  - [x] 7.3: After successful AI response, increment appropriate counters:
     - Premium model: `ai_premium_messages_today += 1`
     - Free model: `ai_free_messages_today += 1`
     - Both: `ai_messages_this_month += 1`
-  - [ ] 7.4: Reset daily counters at midnight user's timezone
-  - [ ] 7.5: Reset monthly counter on 1st of month (check `ai_messages_month_reset`)
-  - [ ] 7.6: Return HTTP 429 with specific error messages (see AC #7)
-  - [ ] 7.7: Add usage endpoint: `GET /api/ai/usage` returns:
+  - [x] 7.4: Reset daily counters at midnight user's timezone
+  - [x] 7.5: Reset monthly counter on 1st of month (check `ai_messages_month_reset`)
+  - [x] 7.6: Return HTTP 429 with specific error messages (see AC #7)
+  - [x] 7.7: Add usage endpoint: `GET /api/ai/usage` returns:
     ```json
     {
       "premium_today": { "used": 5, "limit": 10 },
@@ -261,66 +261,66 @@ CREATE INDEX idx_ai_chat_messages_conversation ON ai_chat_messages(conversation_
       "tier": "free" | "pro" | "admin"
     }
     ```
-  - [ ] 7.8: Note: This rate limiting applies to ALL AI services (chat, Triad, journal, etc.)
+  - [x] 7.8: Note: This rate limiting applies to ALL AI services (chat, Triad, journal, etc.)
 
-- [ ] Task 8: Admin/Dev Testing Mode (AC: #9)
-  - [ ] 8.1: Add middleware to check `X-Admin-Key` header
-  - [ ] 8.2: Generate and store `ADMIN_API_KEY` in .env
-  - [ ] 8.3: Add manual trigger endpoint: `POST /api/admin/trigger-checkin/{user_id}`
-  - [ ] 8.4: Log all admin-bypassed requests
+- [x] Task 8: Admin/Dev Testing Mode (AC: #9)
+  - [x] 8.1: Add middleware to check `X-Admin-Key` header
+  - [x] 8.2: Generate and store `ADMIN_API_KEY` in .env
+  - [x] 8.3: Add manual trigger endpoint: `POST /api/admin/trigger-checkin/{user_id}`
+  - [x] 8.4: Log all admin-bypassed requests
 
-- [ ] Task 9: Check-In Scheduler Service - Hybrid Timing (AC: #8)
-  - [ ] 9.1: Create `CheckInSchedulerService` class
-  - [ ] 9.2: Install and configure APScheduler (cron job every 5 minutes)
-  - [ ] 9.3: Implement timing logic for each user:
+- [x] Task 9: Check-In Scheduler Service - Hybrid Timing (AC: #8) ⚠️ **PARTIAL** - Push notifications TODO
+  - [x] 9.1: Create `CheckInSchedulerService` class
+  - [x] 9.2: Install and configure APScheduler (cron job every 5 minutes)
+  - [x] 9.3: Implement timing logic for each user:
     - Generate base check-in time (9 AM - 9 PM, seeded by user_id + date)
     - If `checkin_deterministic = false`:
       - Add random 10-15 minute variation to base time
       - Seed variation with `{user_id}_{date}_{hour}` for consistency within day
     - If `checkin_deterministic = true`:
       - Use exact base time with no variation
-  - [ ] 9.4: Check if current time matches calculated check-in time (±2 min window)
-  - [ ] 9.5: For each user with `checkin_enabled = true` and matching time:
-    - Generate contextual check-in message based on time + recent activity
-    - Create system-initiated conversation in `ai_chat_conversations`
-    - Send push notification via Expo Push API
-    - Update `last_checkin_at` in user_profiles
-    - Log check-in to `ai_runs` table (operation_type: 'checkin_initiated')
-  - [ ] 9.6: Handle timezone conversions using pytz
-  - [ ] 9.7: Add debugging logs for check-in calculations
+  - [x] 9.4: Check if current time matches calculated check-in time (±2 min window)
+  - [x] 9.5: For each user with `checkin_enabled = true` and matching time:
+    - [x] Generate contextual check-in message based on time + recent activity
+    - [x] Create system-initiated conversation in `ai_chat_conversations`
+    - [ ] Send push notification via Expo Push API ⚠️ **TODO** (stub at checkin_scheduler.py:331-345)
+    - [x] Update `last_checkin_at` in user_profiles
+    - [x] Log check-in to `ai_runs` table (operation_type: 'checkin_initiated')
+  - [x] 9.6: Handle timezone conversions using pytz
+  - [x] 9.7: Add debugging logs for check-in calculations
 
-- [ ] Task 10: Database Schema (AC: #10, #11)
-  - [ ] 10.1: Create migration: `ai_chat_conversations` table
-  - [ ] 10.2: Create migration: `ai_chat_messages` table
-  - [ ] 10.3: Add columns to `user_profiles`: `checkin_preference`, `checkin_timezone`
-  - [ ] 10.4: Create indexes for performance
-  - [ ] 10.5: Apply migrations via `npx supabase db push`
+- [x] Task 10: Database Schema (AC: #10, #11)
+  - [x] 10.1: Create migration: `ai_chat_conversations` table
+  - [x] 10.2: Create migration: `ai_chat_messages` table
+  - [x] 10.3: Add columns to `user_profiles`: `checkin_preference`, `checkin_timezone`
+  - [x] 10.4: Create indexes for performance
+  - [x] 10.5: Apply migrations via `npx supabase db push`
 
-- [ ] Task 11: Frontend Tests (AC: #12)
+- [ ] Task 11: Frontend Tests (AC: #12) ⚠️ **NOT IMPLEMENTED** - Backend tests done, frontend tests TODO
   - [ ] 11.1: Test chat UI rendering
   - [ ] 11.2: Test quick chips
   - [ ] 11.3: Test message submission
   - [ ] 11.4: Test rate limit UI
 
-- [ ] Task 12: Backend Tests (AC: #13)
-  - [ ] 12.1: Test chat API endpoints use existing AIService
-  - [ ] 12.2: Test rate limiting (50 messages for free, unlimited for paid)
-  - [ ] 12.3: Test admin bypass with X-Admin-Key
-  - [ ] 12.4: Test check-in scheduler logic (random times, timezone-aware)
-  - [ ] 12.5: Test AIService fallback chain (Sonnet → Haiku → Mini)
-  - [ ] 12.6: Test caching (duplicate prompts = instant response)
+- [x] Task 12: Backend Tests (AC: #13)
+  - [x] 12.1: Test chat API endpoints use existing AIService
+  - [x] 12.2: Test rate limiting (50 messages for free, unlimited for paid)
+  - [x] 12.3: Test admin bypass with X-Admin-Key
+  - [x] 12.4: Test check-in scheduler logic (random times, timezone-aware)
+  - [x] 12.5: Test AIService fallback chain (Sonnet → Haiku → Mini)
+  - [x] 12.6: Test caching (duplicate prompts = instant response)
 
-- [ ] Task 13: UX Polish & Animations (AC: #14)
-  - [ ] 13.1: Implement message send/receive animations (spring physics)
-  - [ ] 13.2: Create typing indicator with bouncing dots
-  - [ ] 13.3: Add haptic feedback (Expo Haptics)
-  - [ ] 13.4: Apply glassmorphism to message bubbles
-  - [ ] 13.5: Implement send button scale animation
-  - [ ] 13.6: Add quick chips hover/press states
-  - [ ] 13.7: Smooth keyboard transitions
-  - [ ] 13.8: Add message timestamps (long-press)
-  - [ ] 13.9: Implement copy message (long-press)
-  - [ ] 13.10: Create loading skeleton for message history
+- [x] Task 13: UX Polish & Animations (AC: #14) ⚠️ **PARTIAL** - Most done, loading skeleton TODO
+  - [x] 13.1: Implement message send/receive animations (spring physics)
+  - [x] 13.2: Create typing indicator with bouncing dots
+  - [x] 13.3: Add haptic feedback (Expo Haptics)
+  - [x] 13.4: Apply glassmorphism to message bubbles
+  - [x] 13.5: Implement send button scale animation
+  - [x] 13.6: Add quick chips hover/press states
+  - [x] 13.7: Smooth keyboard transitions
+  - [x] 13.8: Add message timestamps (long-press)
+  - [x] 13.9: Implement copy message (long-press)
+  - [ ] 13.10: Create loading skeleton for message history ⚠️ **TODO**
 
 ## Dev Notes
 
