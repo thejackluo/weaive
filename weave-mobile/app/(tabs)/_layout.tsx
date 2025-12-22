@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tabs } from 'expo-router';
-import { View, TouchableOpacity, Modal, StyleSheet, Pressable } from 'react-native';
+import { View, TouchableOpacity, Modal, StyleSheet, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import Animated, {
   useSharedValue,
@@ -64,6 +64,7 @@ function CenterAIButton({ onPress }: { onPress: () => void }) {
  */
 function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const [messageInput, setMessageInput] = React.useState('');
+  const [messages, setMessages] = React.useState<Array<{ id: string; text: string; isUser: boolean }>>([]);
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(300);
 
@@ -87,9 +88,30 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
 
   const handleSendMessage = () => {
     if (messageInput.trim()) {
-      // Future: Send message to AI
+      // Add user message
+      const userMessage = {
+        id: Date.now().toString(),
+        text: messageInput,
+        isUser: true,
+      };
+      setMessages((prev) => [...prev, userMessage]);
+
+      // Simulate AI response (Future: Replace with actual AI call)
+      setTimeout(() => {
+        const aiMessage = {
+          id: (Date.now() + 1).toString(),
+          text: 'This is a preview of the AI Coach. The full feature is coming soon!',
+          isUser: false,
+        };
+        setMessages((prev) => [...prev, aiMessage]);
+      }, 500);
+
       setMessageInput('');
     }
+  };
+
+  const handleExampleMessage = (message: string) => {
+    setMessageInput(message);
   };
 
   const exampleMessages = [
@@ -131,37 +153,79 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
 
             {/* Content */}
             <View style={styles.aiChatContent}>
-              <Text variant="textBase" className="text-white/70 mb-4">
-                Epic 6: AI Coaching (Coming Soon)
-              </Text>
+              {/* Messages Area */}
+              {messages.length > 0 ? (
+                <ScrollView
+                  className="flex-1 mb-4"
+                  contentContainerStyle={{ paddingBottom: 16 }}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {messages.map((msg) => (
+                    <View
+                      key={msg.id}
+                      style={{
+                        alignSelf: msg.isUser ? 'flex-end' : 'flex-start',
+                        maxWidth: '80%',
+                        marginBottom: 12,
+                      }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: msg.isUser ? '#3B72F6' : 'rgba(255, 255, 255, 0.1)',
+                          paddingHorizontal: 16,
+                          paddingVertical: 12,
+                          borderRadius: 16,
+                        }}
+                      >
+                        <Text variant="textBase" className="text-white">
+                          {msg.text}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </ScrollView>
+              ) : (
+                <>
+                  <Text variant="textBase" className="text-white/70 mb-4">
+                    Epic 6: AI Coaching (Coming Soon)
+                  </Text>
 
-              {/* Example Messages */}
-              <Text variant="textSm" className="text-white/50 mb-2">
-                Try asking:
-              </Text>
-              <View className="gap-2 mb-6">
-                {exampleMessages.map((message, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => setMessageInput(message)}
-                    className="p-3 bg-white/5 rounded-lg border border-white/10 active:bg-white/10"
-                  >
-                    <Text variant="textSm" className="text-white/80">
-                      {message}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                  {/* Example Messages */}
+                  <Text variant="textSm" className="text-white/50 mb-2">
+                    Try asking:
+                  </Text>
+                  <View className="gap-2 mb-6">
+                    {exampleMessages.map((message, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        onPress={() => handleExampleMessage(message)}
+                        className="p-3 bg-white/5 rounded-lg border border-white/10 active:bg-white/10"
+                      >
+                        <Text variant="textSm" className="text-white/80">
+                          {message}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
             </View>
 
             {/* Input Area (at bottom) */}
             <View style={styles.aiChatInputContainer}>
               <View style={styles.aiChatInputWrapper}>
-                <View style={styles.aiChatInput}>
-                  <Text variant="textBase" className="text-white/40">
-                    {messageInput || 'Type a message...'}
-                  </Text>
-                </View>
+                <TextInput
+                  style={styles.aiChatInput}
+                  placeholder="Type a message..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  value={messageInput}
+                  onChangeText={setMessageInput}
+                  multiline
+                  maxLength={500}
+                  returnKeyType="send"
+                  onSubmitEditing={handleSendMessage}
+                  blurOnSubmit={false}
+                />
                 <TouchableOpacity
                   onPress={handleSendMessage}
                   style={[styles.sendButton, !messageInput.trim() && styles.sendButtonDisabled]}
@@ -219,6 +283,7 @@ export default function TabLayout() {
           },
         }}
       >
+        {/* MAIN TABS (Visible in tab bar) */}
         <Tabs.Screen
           name="index"
           options={{
@@ -236,6 +301,44 @@ export default function TabLayout() {
               <SymbolView name="chart.bar.fill" size={24} tintColor={color} resizeMode="center" />
             ),
           }}
+        />
+
+        {/* HIDDEN ROUTES (Not visible in tab bar) */}
+        <Tabs.Screen
+          name="ai-chat"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="binds"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="captures"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="design-system-showcase"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="goals"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="journal"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="needles"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{ href: null }}
+        />
+        <Tabs.Screen
+          name="sitemap"
+          options={{ href: null }}
         />
       </Tabs>
 
@@ -327,6 +430,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+    color: '#ffffff',
+    fontSize: 16,
+    maxHeight: 100,
   },
   sendButton: {
     width: 40,

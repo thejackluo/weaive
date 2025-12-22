@@ -1,6 +1,4 @@
-import { View } from 'react-native';
-import { Card, Text, Button } from '@/design-system';
-import { Link } from 'expo-router';
+import PlaceholderScreen from '@/components/PlaceholderScreen';
 
 /**
  * Subscription Management Screen
@@ -9,26 +7,13 @@ import { Link } from 'expo-router';
  */
 export default function SubscriptionScreen() {
   return (
-    <View className="flex-1 bg-background p-4">
-      <Card variant="glass" padding="default">
-        <Text variant="displayLg" className="text-foreground mb-2 font-bold">
-          Subscription Management
-        </Text>
-        <Text variant="textBase" className="text-muted mb-4">
-          Epic 8: Settings & Profile
-        </Text>
-        <Text variant="textSm" className="text-muted mb-4">
-          Story 8.4: Subscription Management
-        </Text>
-        <Text variant="textSm" className="text-muted mb-6">
-          This page has not been developed
-        </Text>
-        <Link href="/sitemap" asChild>
-          <Button variant="ghost" size="md">
-            ← Back to Sitemap
-          </Button>
-        </Link>
-      </Card>
-    </View>
+    <PlaceholderScreen
+      title="Subscription"
+      epic="Epic 8: Settings & Profile"
+      story="Story 8.4: Subscription Management"
+      iconName="creditcard.fill"
+      iconColor="#9ca3af"
+      backgroundColors={{ from: '#1f2937', to: '#111827' }}
+    />
   );
 }

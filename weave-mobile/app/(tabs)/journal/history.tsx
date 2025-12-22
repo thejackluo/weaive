@@ -1,6 +1,4 @@
-import { View } from 'react-native';
-import { Card, Text, Button } from '@/design-system';
-import { Link } from 'expo-router';
+import PlaceholderScreen from '@/components/PlaceholderScreen';
 
 /**
  * Journal History Screen
@@ -9,26 +7,13 @@ import { Link } from 'expo-router';
  */
 export default function JournalHistoryScreen() {
   return (
-    <View className="flex-1 bg-background p-4">
-      <Card variant="glass" padding="default">
-        <Text variant="displayLg" className="text-foreground mb-2 font-bold">
-          Journal History
-        </Text>
-        <Text variant="textBase" className="text-muted mb-4">
-          Epic 4: Reflection & Journaling
-        </Text>
-        <Text variant="textSm" className="text-muted mb-4">
-          Story 4.5: View Past Journal Entries
-        </Text>
-        <Text variant="textSm" className="text-muted mb-6">
-          This page has not been developed
-        </Text>
-        <Link href="/sitemap" asChild>
-          <Button variant="ghost" size="md">
-            ← Back to Sitemap
-          </Button>
-        </Link>
-      </Card>
-    </View>
+    <PlaceholderScreen
+      title="Journal History"
+      epic="Epic 4: Reflection & Journaling"
+      story="Story 4.5: View Past Journal Entries"
+      iconName="calendar.badge.clock"
+      iconColor="#a78bfa"
+      backgroundColors={{ from: '#5b21b6', to: '#2e1065' }}
+    />
   );
 }
