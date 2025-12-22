@@ -373,17 +373,25 @@ async def transcribe_audio(
             )
 
         # Transcribe with fallback
+        logger.info(f"Starting transcription: {len(audio_bytes)} bytes, language={language}")
+        logger.info(f"Provider status: {stt_service.get_provider_status()}")
+
         transcription_result: Optional[TranscriptionResult] = await stt_service.transcribe(
             audio_file=audio_bytes,
             language=language
         )
+
+        if transcription_result:
+            logger.info(f"Transcription successful: provider={transcription_result.provider}, length={len(transcription_result.transcript)}")
+        else:
+            logger.warning("Transcription returned None - all providers failed or unavailable")
 
         # Store in captures table
         from datetime import date
         today = date.today().isoformat()
 
         capture_data = {
-            'user_id': user_id,
+            'user_id': str(user_id),  # Convert UUID to string for JSON serialization
             'type': 'audio',
             'storage_key': storage_key,
             'content_text': transcription_result.transcript if transcription_result else None,
@@ -404,11 +412,11 @@ async def transcribe_audio(
 
         # Increment usage counters
         if transcription_result:
-            await increment_usage(user_id, transcription_result.duration_sec, supabase)
+            await increment_usage(str(user_id), transcription_result.duration_sec, supabase)
 
             # Log to ai_runs
             await log_ai_run(
-                user_id=user_id,
+                user_id=str(user_id),  # Convert UUID to string
                 provider=transcription_result.provider,
                 duration_sec=transcription_result.duration_sec,
                 cost_usd=transcription_result.cost_usd,
@@ -653,7 +661,7 @@ async def re_transcribe_capture(
 
         # Log to ai_runs (re-transcription cost tracking)
         await log_ai_run(
-            user_id=user_id,
+            user_id=str(user_id),  # Convert UUID to string
             provider=transcription_result.provider,
             duration_sec=transcription_result.duration_sec,
             cost_usd=transcription_result.cost_usd,
