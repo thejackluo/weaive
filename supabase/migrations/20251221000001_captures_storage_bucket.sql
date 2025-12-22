@@ -17,7 +17,7 @@ VALUES (
   'captures',
   false,  -- Private bucket - requires authentication
   10485760,  -- 10MB file size limit (per CLAUDE.md security requirements)
-  ARRAY['image/jpeg', 'image/jpg', 'image/png']  -- Only images for MVP (Story 0.9 scope)
+  ARRAY['image/jpeg', 'image/jpg', 'image/png', 'audio/aac', 'audio/m4a', 'audio/mp4', 'audio/mpeg', 'audio/wav', 'audio/webm']  -- Images (Story 0.9) + Audio (Story 0.11)
 )
 ON CONFLICT (id) DO NOTHING;  -- Skip if bucket already exists
 
