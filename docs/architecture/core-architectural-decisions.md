@@ -1481,6 +1481,123 @@ npx supabase db diff --linked
 
 ---
 
+### AI Module Orchestration Architecture
+
+**Added:** 2025-12-22 (Story 1.5.3 AC-9, AC-10)
+
+**Overview:**
+
+Weave AI system uses a modular architecture with 5 product modules orchestrated centrally. This separates:
+- **AI Providers** (HOW to call APIs): OpenAI, Anthropic, Gemini, AssemblyAI
+- **AI Modules** (WHAT product features): Onboarding, Triad, Recap, Dream Self, Insights
+
+**Architecture Diagram:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      API Endpoint Layer                          │
+│  POST /api/goals, POST /api/ai/recap, POST /api/ai/chat, etc.  │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      AI Orchestrator                             │
+│  - Route requests to correct module                              │
+│  - Enforce rate limiting                                         │
+│  - Log all AI calls to ai_runs                                   │
+│  - Coordinate Context Builder                                    │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│ Module        │  │ Context       │  │ Module        │
+│ Registry      │  │ Builder       │  │ Instances     │
+│               │  │               │  │               │
+│ operation →   │  │ Assemble:     │  │ 1. Onboarding │
+│ module map    │  │ - Identity    │  │ 2. Triad      │
+│               │  │ - Goals       │  │ 3. Recap      │
+│               │  │ - History     │  │ 4. Dream Self │
+│               │  │ - Metrics     │  │ 5. Insights   │
+└───────────────┘  └───────────────┘  └───────┬───────┘
+                                               │
+                            ┌──────────────────┘
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      AI Provider Layer                           │
+│  AIProviderBase → OpenAI, Anthropic, Gemini, AssemblyAI        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Components:**
+
+**1. AI Orchestrator** (`app/services/ai/ai_orchestrator.py`)
+- Central coordinator for all AI operations
+- Routes requests to appropriate module
+- Enforces rate limiting before execution
+- Logs all AI calls to `ai_runs` table
+- Handles fallback chains
+
+**2. Module Registry** (`app/services/ai/module_registry.py`)
+- Maps operation types to module instances
+- Example: `generate_triad` → Triad Planner module
+- Enables dynamic module loading
+
+**3. Context Builder** (`app/services/ai/context_builder.py`)
+- Assembles user context for AI calls
+- Operation-specific context (Triad needs different data than Chat)
+- Prevents redundant database queries
+
+**4. AI Modules** (5 total)
+- Inherit from `AIModuleBase`
+- Implement specific product features
+- Use AI providers through orchestrator
+
+**5 AI Modules:**
+
+| Module | Operations | Used In Stories |
+|--------|-----------|-----------------|
+| **Onboarding Coach** | `generate_goal_breakdown`, `create_identity_doc_v1` | 1.8, 2.3 |
+| **Triad Planner** | `generate_triad` | 4.3 |
+| **Daily Recap** | `generate_recap` | 4.3 |
+| **Dream Self Advisor** | `chat_response` | 6.1, 6.2 |
+| **AI Insights Engine** | `generate_weekly_insights` | 6.4 |
+
+**Benefits:**
+
+1. **Consistent Patterns:** All AI features use orchestrator (no direct provider calls)
+2. **Cost Tracking:** Automatic logging to `ai_runs` table
+3. **Rate Limiting:** Enforced centrally before module execution
+4. **Context Optimization:** Single fetch per operation (via Context Builder)
+5. **Maintainability:** Add new modules without changing orchestrator
+
+**Usage Example:**
+
+```python
+# API route using orchestrator
+from app.services.ai.ai_orchestrator import get_orchestrator
+
+@router.post("/api/goals")
+async def create_goal(goal_data: GoalCreate, user: User = Depends(get_current_user)):
+    orchestrator = get_orchestrator()
+
+    # Orchestrator handles: rate limits, module routing, context, logging
+    ai_result = await orchestrator.execute_ai_operation(
+        user_id=str(user.id),
+        operation_type="generate_goal_breakdown",
+        params={"title": goal_data.title, "description": goal_data.description}
+    )
+
+    # Use AI output to create goal
+    goal = Goal(user_id=user.id, title=goal_data.title, ...)
+    return {"data": goal.to_dict()}
+```
+
+**Reference:** Complete implementation guide in `docs/dev/ai-services-guide.md` (Sections 8-11)
+
+---
+
 ### Cost Summary (Production Infrastructure)
 
 | Service | Monthly Cost | Purpose |
