@@ -10,7 +10,7 @@ import { SymbolView } from 'expo-symbols';
  */
 export default function ThreadScreen() {
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView className="flex-1" style={{ backgroundColor: '#0a0a0a' }}>
       <View className="p-6">
         {/* Main Header */}
         <View className="mb-8">
