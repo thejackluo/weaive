@@ -1,6 +1,6 @@
-# 📚 Weavelight Documentation Viewer
+# 📚 Documentation Viewer
 
-Modern internal development tool for viewing project documentation with a beautiful UI and project management features.
+Modern documentation viewer for viewing project documentation with a beautiful UI and project management features.
 
 ## Quick Start
 
@@ -155,11 +155,26 @@ Automatic progress tracking at folder level:
 - 🟠 Orange badge = In progress (some docs completed)
 - 🟢 Green checkmark = All docs completed
 
+### 📋 Auto-Generated Table of Contents
+
+Navigate long documents easily:
+- **Automatically generated** from H1, H2, H3 headings
+- **Click to jump** to any section (smooth scroll)
+- **Active section highlighting** - Current section is highlighted as you scroll
+- **Collapsible panel** - Toggle visibility with button or X icon
+
+**How to use:**
+1. Open any document
+2. Click "Table of Contents" button in document header
+3. Click any heading to jump to that section
+4. Active section updates automatically as you scroll
+
 ### 📈 Benefits
 
 - **Never lose track** of what you're reading
 - **Prioritize work** effectively with visual indicators
 - **See progress** at a glance with folder completion badges
+- **Navigate long docs** with auto-generated TOC
 - **All data saved locally** in your browser (localStorage)
 
 ## Enhanced Reading Features (v3.0)
@@ -289,9 +304,21 @@ Automatic progress tracking at folder level:
 
 **Technical Details:**
 - Highlights stored in browser **localStorage**
+- **Content-hash based persistence** - Highlights survive minor document changes
+- Uses context hashing to relocate highlights even if surrounding text changes
 - Each document has independent highlights
 - Persists across sessions (even after closing browser)
 - No server storage required
+
+**How Persistence Works:**
+1. When you highlight text, the system saves:
+   - The exact highlighted text
+   - A hash of the surrounding paragraph/block
+   - Color preference
+2. When reopening the document:
+   - First tries to match by context hash (most reliable)
+   - Falls back to text search if context changed
+   - Successfully restores highlights even if doc was edited
 - Privacy-friendly (all data stays local)
 
 ---

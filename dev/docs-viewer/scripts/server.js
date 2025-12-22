@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Weavelight Documentation Viewer Server
- * 
+ * Documentation Viewer Server
+ *
  * Dynamic HTTP server with folder-structure-based organization
  * Run from project root: node dev/docs-viewer/scripts/server.js
  */
@@ -288,7 +288,7 @@ server.on('error', (error) => {
 
 server.listen(PORT, () => {
     console.log('\n┌──────────────────────────────────────────┐');
-    console.log('│  📚 Weavelight Documentation Viewer     │');
+    console.log('│  📚 Documentation Viewer                │');
     console.log('└──────────────────────────────────────────┘\n');
     console.log(`🌐 Server:      http://localhost:${PORT}`);
     console.log(`📂 Project:     ${PROJECT_ROOT}`);
