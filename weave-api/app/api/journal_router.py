@@ -50,7 +50,7 @@ async def get_or_create_user_profile(supabase, auth_user_id: str) -> str:
         user_id = profile_response.data["id"]
         logger.info(f"[JOURNAL_API] Found user_profile.id: {user_id}")
         return user_id
-    except Exception as profile_error:
+    except Exception:
         # Profile doesn't exist - auto-create it
         logger.warning(f"⚠️  No user profile found for auth_user_id: {auth_user_id}, creating one...")
 

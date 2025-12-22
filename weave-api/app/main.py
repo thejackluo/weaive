@@ -16,8 +16,8 @@ from app.api import (
     health,
     journal_router,
     onboarding,
-    transcribe,
     stats,
+    transcribe,
     user,
 )
 from app.core.config import settings

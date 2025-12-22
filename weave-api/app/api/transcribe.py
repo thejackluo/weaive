@@ -24,10 +24,10 @@ from supabase import Client
 
 from app.core.deps import get_current_user, get_supabase_client
 from app.core.stt_config import (
+    AUDIO_CONVERSION_TIMEOUT_SEC,
     DEFAULT_RATE_LIMITS,
     MAX_AUDIO_FILE_SIZE_BYTES,
     MAX_AUDIO_FILE_SIZE_MB,
-    AUDIO_CONVERSION_TIMEOUT_SEC,
     SIGNED_URL_EXPIRATION_SEC,
     SUPPORTED_LANGUAGES,
 )
@@ -142,6 +142,7 @@ async def check_rate_limit(user_id: UUID, supabase, user_timezone: str = "UTC", 
         HTTPException: 429 if rate limit exceeded
     """
     from datetime import datetime, timedelta
+
     import pytz
 
     # Apply default limits or use provided ones
@@ -218,6 +219,7 @@ async def increment_usage(user_id: str, duration_sec: int, supabase, user_timezo
         user_timezone: User's timezone for correct date calculation
     """
     from datetime import datetime
+
     import pytz
 
     # Calculate local_date in user's timezone (not server timezone!)
@@ -655,6 +657,7 @@ async def transcribe_audio(
         # Store in captures table
         # Calculate local_date in user's timezone (not server timezone)
         from datetime import datetime
+
         import pytz
         user_tz = pytz.timezone(user_timezone)
         local_date = datetime.now(user_tz).date().isoformat()

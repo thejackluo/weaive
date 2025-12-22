@@ -3,8 +3,8 @@
 Create a test user in local Supabase for development
 """
 
+
 import requests
-import json
 
 # Local Supabase credentials
 SUPABASE_URL = "http://127.0.0.1:54321"
@@ -32,9 +32,9 @@ def create_test_user():
     if response.status_code in [200, 201]:
         result = response.json()
         user_id = result.get("user", {}).get("id") or result.get("id")
-        print(f"✅ Test user created!")
-        print(f"   Email: test@example.com")
-        print(f"   Password: password123")
+        print("✅ Test user created!")
+        print("   Email: test@example.com")
+        print("   Password: password123")
         print(f"   User ID: {user_id}")
         return user_id
     else:
