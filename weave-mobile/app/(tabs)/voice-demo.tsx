@@ -155,7 +155,7 @@ export default function VoiceDemoScreen() {
               height={80}
             />
           ) : (
-            <Text variant="textXs" style={{ color: colors.text.tertiary, textAlign: 'center' }}>
+            <Text variant="textXs" style={{ color: colors.text.muted, textAlign: 'center' }}>
               Record audio above to see waveform
             </Text>
           )}
@@ -188,7 +188,7 @@ export default function VoiceDemoScreen() {
           {audioUri ? (
             <AudioPlayer audioUri={audioUri} onPlaybackComplete={handlePlaybackComplete} />
           ) : (
-            <Text variant="textXs" style={{ color: colors.text.tertiary, textAlign: 'center' }}>
+            <Text variant="textXs" style={{ color: colors.text.muted, textAlign: 'center' }}>
               Record audio above to enable playback
             </Text>
           )}
@@ -221,7 +221,7 @@ export default function VoiceDemoScreen() {
         </Card>
 
         {/* Testing Tips */}
-        <Card variant="ghost" style={{ padding: spacing[4], marginBottom: spacing[8] }}>
+        <Card variant="subtle" style={{ padding: spacing[4], marginBottom: spacing[8] }}>
           <Text variant="textBase" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
             📋 Testing Checklist
           </Text>
