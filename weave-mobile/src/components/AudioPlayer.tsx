@@ -1,23 +1,20 @@
 /**
- * Story 0.11: AudioPlayer Component
+ * Story 0.11: AudioPlayer Component (Redesigned)
  *
- * Audio playback component with controls
+ * Completely rebuilt audio playback component with better UX
  *
  * Features:
- * - Play/pause button
- * - Seek bar (scrubbing)
- * - Current time / duration display
- * - Playback speed control (0.5x, 1x, 1.5x, 2x)
- * - Loading state
- * - Error handling
+ * - Large, prominent progress bar with visual fill
+ * - Clear time display (current / total)
+ * - Smooth scrubbing and seeking
+ * - Playback speed control
+ * - Loading and error states
  *
- * Usage:
- * ```tsx
- * <AudioPlayer
- *   audioUri="https://example.com/audio.m4a"
- *   onPlaybackComplete={() => console.log('done')}
- * />
- * ```
+ * Design improvements:
+ * - Vertical stacked layout (no cramped horizontal)
+ * - Full-width progress bar with large touch target
+ * - Larger text and controls for better visibility
+ * - Visual progress fill animation
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -112,6 +109,7 @@ export function AudioPlayer({
         {
           shouldPlay: false,
           rate: playbackSpeed,
+          progressUpdateIntervalMillis: 100, // Update every 100ms for smooth progress
         },
         onPlaybackStatusUpdate
       );
@@ -215,6 +213,38 @@ export function AudioPlayer({
   };
 
   /**
+   * Skip forward 10 seconds
+   */
+  const skipForward = async () => {
+    try {
+      if (!sound) return;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      const newPosition = Math.min(position + 10000, duration);
+      await sound.setPositionAsync(newPosition);
+      setPosition(newPosition);
+    } catch (err) {
+      console.error('[AUDIO_PLAYER] ❌ Error skipping forward:', err);
+    }
+  };
+
+  /**
+   * Skip backward 10 seconds
+   */
+  const skipBackward = async () => {
+    try {
+      if (!sound) return;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      const newPosition = Math.max(position - 10000, 0);
+      await sound.setPositionAsync(newPosition);
+      setPosition(newPosition);
+    } catch (err) {
+      console.error('[AUDIO_PLAYER] ❌ Error skipping backward:', err);
+    }
+  };
+
+  /**
    * Change playback speed
    */
   const changeSpeed = async (speed: PlaybackSpeed) => {
@@ -248,12 +278,17 @@ export function AudioPlayer({
     return speed === playbackSpeed ? colors.accent[500] : colors.text.secondary;
   };
 
+  /**
+   * Calculate progress percentage
+   */
+  const progressPercent = duration > 0 ? (position / duration) * 100 : 0;
+
   if (error) {
     return (
-      <Card variant="glass" style={{ padding: spacing[4] }}>
+      <Card variant="glass" style={{ padding: spacing[6] }}>
         <View style={styles.errorContainer}>
-          <MaterialIcons name="error" size={32} color={colors.text.error} />
-          <Text variant="textBase" style={{ color: colors.text.error, marginTop: spacing[3] }}>
+          <MaterialIcons name="error" size={48} color={colors.text.error} />
+          <Text variant="textLg" style={{ color: colors.text.error, marginTop: spacing[4], textAlign: 'center' }}>
             {error}
           </Text>
         </View>
@@ -262,44 +297,46 @@ export function AudioPlayer({
   }
 
   return (
-    <Card variant="glass" style={{ padding: spacing[4] }}>
+    <Card variant="glass" style={{ padding: spacing[6] }}>
       <View style={styles.container}>
-        {/* Play/pause button */}
-        <Pressable
-          onPress={togglePlayPause}
-          disabled={isLoading}
-          style={[
-            styles.playButton,
-            {
-              backgroundColor: colors.accent[500],
-              borderRadius: radius.full,
-            },
-          ]}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color={colors.text.inverse} />
-          ) : (
-            <MaterialIcons
-              name={isPlaying ? 'pause' : 'play-arrow'}
-              size={28}
-              color={colors.text.inverse}
-            />
-          )}
-        </Pressable>
+        {/* Time display - Large and prominent */}
+        <View style={[styles.timeRow, { marginBottom: spacing[4] }]}>
+          <Text variant="textLg" style={{ color: colors.text.primary, fontWeight: '600' }}>
+            {formatTime(position)}
+          </Text>
+          <Text variant="textBase" style={{ color: colors.text.secondary }}>
+            {formatTime(duration)}
+          </Text>
+        </View>
 
-        {/* Seek bar and time */}
-        <View style={styles.seekContainer}>
-          <View style={styles.timeContainer}>
-            <Text variant="textXs" style={{ color: colors.text.secondary }}>
-              {formatTime(position)}
-            </Text>
-            <Text variant="textXs" style={{ color: colors.text.secondary }}>
-              {formatTime(duration)}
-            </Text>
-          </View>
+        {/* Progress bar - Full width with visual fill */}
+        <View style={[styles.progressBarContainer, { marginBottom: spacing[6] }]}>
+          {/* Background track */}
+          <View
+            style={[
+              styles.progressBarTrack,
+              {
+                backgroundColor: colors.neutral[700],
+                borderRadius: radius.full,
+              },
+            ]}
+          />
 
+          {/* Filled portion */}
+          <View
+            style={[
+              styles.progressBarFill,
+              {
+                width: `${progressPercent}%`,
+                backgroundColor: colors.accent[500],
+                borderRadius: radius.full,
+              },
+            ]}
+          />
+
+          {/* Interactive slider overlay */}
           <Slider
-            style={styles.slider}
+            style={styles.progressSlider}
             value={duration > 0 ? position / duration : 0}
             onValueChange={(value: number) => {
               isSeeking.current = true;
@@ -308,42 +345,102 @@ export function AudioPlayer({
             onSlidingComplete={handleSeek}
             minimumValue={0}
             maximumValue={1}
-            minimumTrackTintColor={colors.accent[500]}
-            maximumTrackTintColor={colors.border.muted}
+            minimumTrackTintColor="transparent"
+            maximumTrackTintColor="transparent"
             thumbTintColor={colors.accent[500]}
             disabled={isLoading || duration === 0}
           />
         </View>
 
-        {/* Speed control */}
+        {/* Controls - Play/pause with skip buttons */}
+        <View style={[styles.controlsRow, { marginBottom: spacing[6] }]}>
+          {/* Skip backward */}
+          <Pressable
+            onPress={skipBackward}
+            disabled={isLoading || duration === 0}
+            style={[
+              styles.skipButton,
+              {
+                opacity: isLoading || duration === 0 ? 0.3 : 1,
+              },
+            ]}
+          >
+            <MaterialIcons name="replay-10" size={32} color={colors.text.primary} />
+          </Pressable>
+
+          {/* Play/pause - Large and centered */}
+          <Pressable
+            onPress={togglePlayPause}
+            disabled={isLoading}
+            style={[
+              styles.playButton,
+              {
+                backgroundColor: colors.accent[500],
+                borderRadius: radius.full,
+              },
+            ]}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="large" color={colors.text.inverse} />
+            ) : (
+              <MaterialIcons
+                name={isPlaying ? 'pause' : 'play-arrow'}
+                size={40}
+                color={colors.text.inverse}
+              />
+            )}
+          </Pressable>
+
+          {/* Skip forward */}
+          <Pressable
+            onPress={skipForward}
+            disabled={isLoading || duration === 0}
+            style={[
+              styles.skipButton,
+              {
+                opacity: isLoading || duration === 0 ? 0.3 : 1,
+              },
+            ]}
+          >
+            <MaterialIcons name="forward-10" size={32} color={colors.text.primary} />
+          </Pressable>
+        </View>
+
+        {/* Speed control - Bottom row */}
         {showSpeedControl && (
-          <View style={styles.speedContainer}>
-            {([0.5, 1.0, 1.5, 2.0] as PlaybackSpeed[]).map((speed) => (
-              <Pressable
-                key={speed}
-                onPress={() => changeSpeed(speed)}
-                disabled={isLoading}
-                style={[
-                  styles.speedButton,
-                  {
-                    backgroundColor: colors.neutral[700],
-                    borderRadius: radius.sm,
-                    paddingHorizontal: spacing[3],
-                    paddingVertical: spacing[2],
-                  },
-                ]}
-              >
-                <Text
-                  variant="textXs"
-                  style={{
-                    color: getSpeedButtonColor(speed),
-                    fontWeight: speed === playbackSpeed ? '600' : '400',
-                  }}
+          <View style={styles.speedRow}>
+            <Text variant="textSm" style={{ color: colors.text.secondary, marginRight: spacing[3] }}>
+              Speed:
+            </Text>
+            <View style={styles.speedContainer}>
+              {([0.5, 1.0, 1.5, 2.0] as PlaybackSpeed[]).map((speed) => (
+                <Pressable
+                  key={speed}
+                  onPress={() => changeSpeed(speed)}
+                  disabled={isLoading}
+                  style={[
+                    styles.speedButton,
+                    {
+                      backgroundColor:
+                        speed === playbackSpeed ? colors.accent[500] : colors.neutral[700],
+                      borderRadius: radius.md,
+                      paddingHorizontal: spacing[4],
+                      paddingVertical: spacing[3],
+                    },
+                  ]}
                 >
-                  {speed}x
-                </Text>
-              </Pressable>
-            ))}
+                  <Text
+                    variant="textSm"
+                    style={{
+                      color: speed === playbackSpeed ? colors.text.inverse : colors.text.secondary,
+                      fontWeight: speed === playbackSpeed ? '600' : '400',
+                    }}
+                  >
+                    {speed}x
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
         )}
       </View>
@@ -353,38 +450,68 @@ export function AudioPlayer({
 
 const styles = StyleSheet.create({
   container: {
+    width: '100%',
+  },
+  timeRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
+  },
+  progressBarContainer: {
+    height: 40,
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  progressBarTrack: {
+    position: 'absolute',
+    width: '100%',
+    height: 6,
+    top: '50%',
+    marginTop: -3,
+  },
+  progressBarFill: {
+    position: 'absolute',
+    height: 6,
+    top: '50%',
+    marginTop: -3,
+  },
+  progressSlider: {
+    width: '100%',
+    height: 40,
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 32,
   },
   playButton: {
+    width: 72,
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  skipButton: {
     width: 48,
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  seekContainer: {
-    flex: 1,
-  },
-  timeContainer: {
+  speedRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  slider: {
-    width: '100%',
-    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   speedContainer: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
   },
   speedButton: {
-    minWidth: 40,
+    minWidth: 50,
     alignItems: 'center',
   },
   errorContainer: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 32,
   },
 });
