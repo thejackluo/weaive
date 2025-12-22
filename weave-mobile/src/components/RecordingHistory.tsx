@@ -216,8 +216,8 @@ export function RecordingHistory({
                   marginLeft: spacing[2],
                 }}
               >
-                {(item.confidence_score * 100).toFixed(0)}% confidence{' '}
-                {item.provider ? `(${item.provider})` : ''}
+                {(item.confidence_score * 100).toFixed(0)}% confidence
+                {item.provider ? ` · ${item.provider}` : ''}
               </Text>
             </View>
           )}
