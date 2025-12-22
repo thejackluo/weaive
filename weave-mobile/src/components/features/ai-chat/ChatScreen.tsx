@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messagesContent: {
-    padding: 16,
+    padding: 8, // ✅ Reduced from 16 to give more width to message bubbles
     paddingBottom: 24,
   },
 });

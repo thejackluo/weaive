@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     zIndex: 101,
   },
   chatCard: {
-    marginHorizontal: '5%',
+    marginHorizontal: 8, // ✅ Changed from '5%' to fixed 8px to maximize chat width
     marginBottom: 0,
     height: '70%',
     borderTopLeftRadius: 24,
