@@ -99,13 +99,16 @@ week-0-stories:
   0-11-voice-stt-infrastructure: ready-for-dev  # 5 pts ⚡ NEW (2025-12-21) - AssemblyAI primary + Whisper fallback
   week-0-retrospective: completed               # Retrospective completed 2025-12-20
 
-# Epic 1.5: Development Infrastructure (21-27 pts)
-# ⚡ SPRINT CHANGE (2025-12-22): Epic 1.5 expanded from 17-21 pts to 21-27 pts (frontend + backend API mapping + AI orchestration)
+# Epic 1.5: Development Infrastructure (19-24 pts)
+# ⚡ SPRINT CHANGE (2025-12-22): Epic 1.5 expanded, then corrected after validation
+# - Original: 8-10 pts (navigation only)
+# - Expanded: 21-27 pts (navigation + backend + AI standardization)
+# - Corrected: 19-24 pts (validation found duplicate work in Story 1.5.3, reduced from 6-8 pts to 4-5 pts)
 epic-1.5-status: planned
 epic-1.5-stories:
   1-5-1-navigation-architecture: planned        # 8-10 pts - Core navigation scaffolding (3-tab structure, glassmorphism AI chat, 15+ placeholder screens)
   1-5-2-backend-standardization: planned        # 7-9 pts ⚡ EXPANDED (2025-12-22) - API/model templates + 28 API endpoint stubs, backend-patterns-guide.md + backend-api-integration.md
-  1-5-3-ai-services-standardization: planned    # 6-8 pts ⚡ EXPANDED (2025-12-22) - AIProviderBase + AI Module Orchestration (5 modules + orchestrator + context builder), ai-services-guide.md
+  1-5-3-ai-module-orchestration: planned        # 4-5 pts ⚡ REWRITTEN (2025-12-22) - AI Module Orchestration Layer (5 modules + orchestrator + context builder), integrates with existing AIService, validation removed duplicate work
 
 # Epic 0.5: Post-Development Observability (6 pts)
 epic-0.5-status: planned
@@ -382,7 +385,7 @@ backlog-post-mvp:
 epic-completion:
   epic-0-foundation: 27/41             # Week 0: DONE ✅ (7/7 core stories, 66% pts, 14 pts deferred as stretch goals: 0.8 error framework, 0.9 image handling, 0.10 AI failure)
   epic-1-onboarding-hybrid: 0/50       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1, Phases 6-7: Sprint 2, +2 for name entry + personality)
-  epic-1.5-development-infrastructure: 0/24  # Week 0: 0% complete ⚡ EXPANDED (2025-12-22) - Frontend (8-10 pts) + Backend + API Mapping (7-9 pts) + AI Orchestration (6-8 pts)
+  epic-1.5-development-infrastructure: 0/21.5  # Week 0: 0% complete ⚡ CORRECTED (2025-12-22) - Frontend (8-10 pts) + Backend + API Mapping (7-9 pts) + AI Module Orchestration (4-5 pts, reduced after validation)
   epic-2-goal-management: 0/27         # Sprint 3: 0% complete
   epic-3-daily-actions: 0/38           # Sprint 1-2, 5: 0% complete
   epic-4-reflection: 0/28              # Sprint 2: 0% complete
