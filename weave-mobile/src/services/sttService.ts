@@ -11,6 +11,8 @@
  * - Rate limit detection
  */
 
+/* eslint-env browser */
+
 import { supabase } from '@lib/supabase';
 import { getApiBaseUrl } from '@/utils/api';
 
@@ -75,9 +77,7 @@ export interface TranscribeOptions {
  * Transcribe audio file
  * Uploads audio to backend /api/transcribe endpoint
  */
-export async function transcribeAudio(
-  options: TranscribeOptions
-): Promise<TranscriptionResult> {
+export async function transcribeAudio(options: TranscribeOptions): Promise<TranscriptionResult> {
   const { audioUri, language = 'en', captureId, subtaskInstanceId, goalId, onProgress } = options;
 
   try {
@@ -236,9 +236,7 @@ export async function transcribeAudio(
  * Re-transcribe an existing capture
  * Useful for retrying with a different provider
  */
-export async function retranscribeCapture(
-  captureId: string
-): Promise<TranscriptionResult> {
+export async function retranscribeCapture(captureId: string): Promise<TranscriptionResult> {
   try {
     console.log('[STT_SERVICE] 🔄 Re-transcribing capture:', captureId);
 
@@ -258,7 +256,7 @@ export async function retranscribeCapture(
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
     });

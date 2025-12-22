@@ -11,8 +11,6 @@
  * - POST /api/captures/{capture_id}/re-transcribe: Retry transcription
  */
 
-/* global FormData */
-
 import { getApiBaseUrl } from '@/utils/api';
 
 // API endpoint (loaded from .env via app.config.js)

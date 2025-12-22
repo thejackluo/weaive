@@ -165,7 +165,6 @@ export function VoiceRecorder({
    */
   const barCount = 24;
   const waveformBarStyles = Array.from({ length: barCount }, (_, index) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useAnimatedStyle(() => {
       // Offset each bar slightly for wave effect
       const _offset = (index / barCount) * 0.3;
