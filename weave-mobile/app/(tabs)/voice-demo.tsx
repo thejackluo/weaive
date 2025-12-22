@@ -113,8 +113,7 @@ export default function VoiceDemoScreen() {
           </Text>
           <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
             Test full recording workflow: Record → Transcribe → Preview → Save
-            {'\n\n'}
-            ✅ Using React Native Modal (no bottom-sheet dependency)
+            {'\n\n'}✅ Using React Native Modal (no bottom-sheet dependency)
           </Text>
           <Button variant="primary" onPress={handleOpenModal}>
             Open Voice Recording Modal
@@ -227,7 +226,10 @@ export default function VoiceDemoScreen() {
 
         {/* Testing Tips */}
         <Card variant="subtle" style={{ padding: spacing[4], marginBottom: spacing[8] }}>
-          <Text variant="textBase" style={{ fontWeight: '600', marginBottom: spacing[3], color: colors.text.primary }}>
+          <Text
+            variant="textBase"
+            style={{ fontWeight: '600', marginBottom: spacing[3], color: colors.text.primary }}
+          >
             📋 Testing Checklist
           </Text>
           <Text variant="textSm" style={{ color: colors.text.primary, lineHeight: 20 }}>
