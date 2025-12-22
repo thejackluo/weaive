@@ -30,9 +30,15 @@ export function BindScreen() {
   // Completion mutation
   const completeMutation = useCompleteBind();
 
-  // Local state for timer and photo
+  // Local state for timer and photo - MUST be declared before early return
   const [timerDuration, setTimerDuration] = useState<number | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [showTimerPresets, setShowTimerPresets] = useState(false);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+
+  // Get current week completion status (mock for now)
+  const weekDays = ['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'];
+  const weekCompletions = [true, true, false, false, false, false, false]; // TODO: Get from API
 
   if (!bind) {
     return (
@@ -49,13 +55,6 @@ export function BindScreen() {
       </SafeAreaView>
     );
   }
-
-  // Get current week completion status (mock for now)
-  const weekDays = ['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'];
-  const weekCompletions = [true, true, false, false, false, false, false]; // TODO: Get from API
-
-  const [showTimerPresets, setShowTimerPresets] = useState(false);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   const handleTimerSetup = () => {
     if (timerDuration) {
