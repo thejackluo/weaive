@@ -32,10 +32,12 @@ export interface Message {
 }
 
 export default function ChatScreen() {
+  // ✅ FIX: Load conversation history from TanStack Query on mount
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [showQuickChips, setShowQuickChips] = useState(true);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const streamingMessageIdRef = useRef<string | null>(null);
 
