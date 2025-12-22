@@ -7,7 +7,6 @@ from app.api import (
     admin,
     ai_router,
     analytics,
-    binds,
     captures,
     goals,
     health,
@@ -16,6 +15,7 @@ from app.api import (
     stats,
     user,
 )
+from app.core.config import settings
 
 app = FastAPI(
     title="Weave API",
@@ -125,7 +125,6 @@ app.include_router(goals.router, tags=["goals"])
 app.include_router(captures.router, tags=["captures"])
 app.include_router(stats.router, tags=["stats"])  # Progress visualization stats
 app.include_router(admin.router, tags=["admin"])  # Cost monitoring and system maintenance
-app.include_router(binds.router, tags=["binds"])
 
 @app.get("/")
 async def root():
