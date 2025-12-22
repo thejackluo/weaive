@@ -126,7 +126,7 @@ async def trigger_ai_feedback_generation(
             prompt=prompt
         )
 
-        logger.info(f"✅ AI feedback generated for journal {journal_id}: {response.text[:100]}...")
+        logger.info(f"✅ AI feedback generated for journal {journal_id}: {response.content[:100]}...")
 
     except Exception as e:
         # Don't fail the request if AI generation fails

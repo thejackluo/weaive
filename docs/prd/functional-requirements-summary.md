@@ -13,7 +13,8 @@
 | E6 | AI Coaching | 13 | 11 | 0 | 24 |
 | E7 | Notifications | 23 | 0 | 0 | 23 |
 | E8 | Settings & Profile | 18 | 0 | 0 | 18 |
-| **Total** | | **213** | **39** | **0** | **252** |
+| E9 | Production Launch & App Store | 45 | 0 | 0 | 45 |
+| **Total** | | **258** | **39** | **0** | **297** |
 
 **Scope Reduction Summary:**
 - **Removed 48 story points** from original 300 pts (16% reduction)
@@ -25,9 +26,9 @@
 
 ## MVP Scope (Must Have)
 
-**Total Must Have Points:** 213 story points (includes Epic 0 Foundation: 40 pts, Epic 1 Hybrid Flow: 40 pts M)
+**Total Must Have Points:** 258 story points (includes Epic 0 Foundation: 40 pts, Epic 1 Hybrid Flow: 40 pts M, Epic 9 Production Launch: 45 pts M)
 
-**Estimated Duration:** 9-12 sprints (assuming 15-20 points/sprint with 2-person team)
+**Estimated Duration:** 11-14 sprints (assuming 15-20 points/sprint with 2-person team)
 
 **Note:** Sprint 1 (2-week MVP) focuses on Epic 0 foundation + core loop. Reduced scope enables faster MVP delivery while maintaining core user value proposition.
 
