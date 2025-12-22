@@ -98,7 +98,7 @@ async def get_consistency_data(
         # Fetch daily_aggregates for the timeframe
         aggregates_response = (
             supabase.table("daily_aggregates")
-            .select("local_date, completed_count, scheduled_count, active_day_with_proof")
+            .select("local_date, completed_count, active_day_with_proof")
             .eq("user_id", user_id)
             .gte("local_date", start_date)
             .order("local_date", desc=False)
@@ -109,28 +109,30 @@ async def get_consistency_data(
         logger.info(f"📊 Found {len(aggregates)} days of data for consistency")
 
         # Calculate consistency data
+        # Use binary metric: active_day_with_proof = 100%, otherwise = 0%
         consistency_data = []
-        total_completed = 0
-        total_scheduled = 0
+        active_days_count = 0
 
         for agg in aggregates:
             completed = agg.get("completed_count", 0)
-            scheduled = agg.get("scheduled_count", 1)  # Avoid division by zero
-            percentage = round((completed / scheduled) * 100, 1) if scheduled > 0 else 0
+            is_active = agg.get("active_day_with_proof", False)
+
+            # Consistency: 100% if active day with proof, 0% otherwise
+            percentage = 100.0 if is_active else 0.0
 
             consistency_data.append({
                 "date": agg["local_date"],
                 "completion_percentage": percentage,
                 "completed_count": completed,
-                "total_count": scheduled,
+                "total_count": 1,  # Binary metric
             })
 
-            total_completed += completed
-            total_scheduled += scheduled
+            if is_active:
+                active_days_count += 1
 
         # Calculate overall consistency percentage
         overall_consistency = (
-            round((total_completed / total_scheduled) * 100, 1) if total_scheduled > 0 else 0
+            round((active_days_count / len(aggregates)) * 100, 1) if aggregates else 0
         )
 
         return {
@@ -381,4 +383,243 @@ async def get_streak_data(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch streak data",
+        )
+
+
+@router.get("/history")
+async def get_history(
+    limit: int = Query(20, ge=1, le=100, description="Number of items to return"),
+    timeframe: Optional[Literal["days", "weeks", "months"]] = Query(
+        None, description="Filter by timeframe: days (7d), weeks (4w), months (3m)"
+    ),
+    type: Optional[Literal["threads", "binds", "weave_chats"]] = Query(
+        None, description="Filter by type: threads (journals/goals), binds (completions), weave_chats"
+    ),
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Get recent activity history (US-5.5: History Section).
+
+    Query Parameters:
+    - limit: Number of items to return (default: 20, max: 100)
+    - timeframe: days (7d), weeks (4w), months (3m) - filter by time period
+    - type: threads (journals/goals), binds (completions), weave_chats - filter by activity type
+
+    Returns:
+    - data: Array of activity items
+    - meta: Metadata with total count
+
+    Activity item format:
+    {
+      "id": "uuid",
+      "type": "completion" | "journal" | "goal_created" | "goal_archived",
+      "timestamp": "2025-12-20T10:30:00Z",
+      "description": "Completed 'Morning meditation'",
+      "related_goal_id": "uuid" (optional),
+      "related_goal_title": "Be present" (optional)
+    }
+    """
+    if not supabase:
+        logger.error("❌ Supabase client not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not configured",
+        )
+
+    # Extract user ID from JWT
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field (user ID)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    logger.info(f"[HISTORY_API] Request from auth_user_id: {auth_user_id}")
+
+    try:
+        # Get user_profile.id
+        user_profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+
+        if not user_profile_response.data:
+            logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found",
+            )
+
+        user_id = user_profile_response.data["id"]
+
+        # Calculate date range based on timeframe
+        start_date = None
+        if timeframe:
+            timeframe_days = {"days": 7, "weeks": 28, "months": 90}  # 7 days, 4 weeks, ~3 months
+            days = timeframe_days.get(timeframe, 7)
+            start_date = (date.today() - timedelta(days=days)).isoformat()
+
+        history_items = []
+
+        # Determine which types to fetch based on type filter
+        fetch_binds = type is None or type == "binds"
+        fetch_threads = type is None or type == "threads"
+        # weave_chats not implemented yet, so skip
+
+        # Fetch recent subtask completions (binds)
+        if fetch_binds:
+            query = (
+                supabase.table("subtask_completions")
+                .select("id, completed_at, subtask_instance_id")
+                .eq("user_id", user_id)
+            )
+            if start_date:
+                query = query.gte("completed_at", start_date)
+            completions_response = query.order("completed_at", desc=True).limit(limit // 2).execute()
+
+            completions = completions_response.data or []
+        else:
+            completions = []
+
+        # For each completion, fetch subtask instance to get title and goal
+        for completion in completions:
+            try:
+                instance_response = (
+                    supabase.table("subtask_instances")
+                    .select("subtask_template_id")
+                    .eq("id", completion["subtask_instance_id"])
+                    .single()
+                    .execute()
+                )
+
+                if instance_response.data:
+                    template_response = (
+                        supabase.table("subtask_templates")
+                        .select("title, goal_id")
+                        .eq("id", instance_response.data["subtask_template_id"])
+                        .single()
+                        .execute()
+                    )
+
+                    if template_response.data:
+                        subtask_title = template_response.data.get("title", "Unknown task")
+                        goal_id = template_response.data.get("goal_id")
+
+                        # Fetch goal title if goal_id exists
+                        goal_title = None
+                        if goal_id:
+                            goal_response = (
+                                supabase.table("goals")
+                                .select("title")
+                                .eq("id", goal_id)
+                                .single()
+                                .execute()
+                            )
+                            if goal_response.data:
+                                goal_title = goal_response.data.get("title")
+
+                        history_items.append({
+                            "id": completion["id"],
+                            "type": "completion",
+                            "timestamp": completion["completed_at"],
+                            "description": f"Completed '{subtask_title}'",
+                            "related_goal_id": goal_id,
+                            "related_goal_title": goal_title,
+                        })
+            except Exception as e:
+                logger.warning(f"⚠️ Could not fetch details for completion {completion['id']}: {str(e)}")
+                continue
+
+        # Fetch recent journal entries (threads)
+        if fetch_threads:
+            query = (
+                supabase.table("journal_entries")
+                .select("id, created_at, fulfillment_score, local_date")
+                .eq("user_id", user_id)
+            )
+            if start_date:
+                query = query.gte("created_at", start_date)
+            journal_response = query.order("created_at", desc=True).limit(limit // 4).execute()
+
+            journals = journal_response.data or []
+        else:
+            journals = []
+
+        for journal in journals:
+            history_items.append({
+                "id": journal["id"],
+                "type": "journal",
+                "timestamp": journal["created_at"],
+                "description": f"Reflected on {journal['local_date']} (fulfillment: {journal.get('fulfillment_score', 0)}/10)",
+                "related_goal_id": None,
+                "related_goal_title": None,
+            })
+
+        # Fetch recent goal activities (created/archived) - also threads
+        if fetch_threads:
+            query = (
+                supabase.table("goals")
+                .select("id, title, status, created_at, updated_at")
+                .eq("user_id", user_id)
+            )
+            if start_date:
+                query = query.gte("updated_at", start_date)
+            goals_response = query.order("updated_at", desc=True).limit(limit // 4).execute()
+
+            goals = goals_response.data or []
+        else:
+            goals = []
+
+        for goal in goals:
+            # If goal was recently created (within last 30 days)
+            created_date = date.fromisoformat(goal["created_at"].split("T")[0])
+            if (date.today() - created_date).days <= 30:
+                history_items.append({
+                    "id": goal["id"],
+                    "type": "goal_created",
+                    "timestamp": goal["created_at"],
+                    "description": f"Created goal '{goal['title']}'",
+                    "related_goal_id": goal["id"],
+                    "related_goal_title": goal["title"],
+                })
+
+            # If goal was archived
+            if goal["status"] == "archived":
+                history_items.append({
+                    "id": goal["id"],
+                    "type": "goal_archived",
+                    "timestamp": goal["updated_at"],
+                    "description": f"Archived goal '{goal['title']}'",
+                    "related_goal_id": goal["id"],
+                    "related_goal_title": goal["title"],
+                })
+
+        # Sort all items by timestamp (most recent first)
+        history_items.sort(key=lambda x: x["timestamp"], reverse=True)
+
+        # Limit to requested number
+        history_items = history_items[:limit]
+
+        logger.info(f"📊 Found {len(history_items)} history items")
+
+        return {
+            "data": history_items,
+            "meta": {
+                "total": len(history_items),
+                "limit": limit,
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error fetching history: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch history",
         )
