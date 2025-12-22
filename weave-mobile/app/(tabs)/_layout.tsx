@@ -150,8 +150,9 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
 
         {/* Chat Card with Swipe-to-Dismiss */}
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.keyboardAvoidingView}
+          keyboardVerticalOffset={0}
         >
           <GestureDetector gesture={panGesture}>
             <Animated.View style={[styles.chatCard, cardStyle]}>
