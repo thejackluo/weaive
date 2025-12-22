@@ -191,14 +191,14 @@ async def check_upload_rate_limit(
     agg = await get_or_create_daily_aggregate(supabase, user_id, local_date)
 
     # Check upload count limit (5 images/day)
-    if agg["upload_count"] >= 5:
+    if agg.get("upload_count", 0) >= 5:
         seconds_until_midnight = calculate_seconds_until_midnight(user_timezone)
         raise RateLimitExceeded(
             limit_type="upload",
-            current_usage=agg["upload_count"],
+            current_usage=agg.get("upload_count", 0),
             limit=5,
             retry_after_seconds=seconds_until_midnight,
-            message=f"Daily upload limit reached ({agg['upload_count']}/5 images). Resets at midnight.",
+            message=f"Daily upload limit reached ({agg.get('upload_count', 0)}/5 images). Resets at midnight.",
         )
 
     # Check storage size limit (5MB/day)
@@ -240,14 +240,14 @@ async def check_ai_vision_rate_limit(
     agg = await get_or_create_daily_aggregate(supabase, user_id, local_date)
 
     # Check AI vision count limit (5 analyses/day)
-    if agg["ai_vision_count"] >= 5:
+    if agg.get("ai_vision_count", 0) >= 5:
         seconds_until_midnight = calculate_seconds_until_midnight(user_timezone)
         raise RateLimitExceeded(
             limit_type="AI analysis",
-            current_usage=agg["ai_vision_count"],
+            current_usage=agg.get("ai_vision_count", 0),
             limit=5,
             retry_after_seconds=seconds_until_midnight,
-            message=f"Daily AI analysis limit reached ({agg['ai_vision_count']}/5 images). Resets at midnight.",
+            message=f"Daily AI analysis limit reached ({agg.get('ai_vision_count', 0)}/5 images). Resets at midnight.",
         )
 
 
@@ -282,7 +282,7 @@ async def increment_upload_usage(
         # Fallback: direct update (less atomic but still works)
         agg = await get_or_create_daily_aggregate(supabase, user_id, local_date)
 
-        new_count = agg["upload_count"] + 1
+        new_count = agg.get("upload_count", 0) + 1
         new_size_mb = float(agg.get("upload_size_mb", 0)) + file_size_mb
 
         supabase.table("daily_aggregates").update(
@@ -319,7 +319,7 @@ async def increment_ai_vision_usage(
         # Fallback: direct update
         agg = await get_or_create_daily_aggregate(supabase, user_id, local_date)
 
-        new_count = agg["ai_vision_count"] + 1
+        new_count = agg.get("ai_vision_count", 0) + 1
 
         supabase.table("daily_aggregates").update(
             {"ai_vision_count": new_count}
@@ -346,8 +346,8 @@ async def get_upload_usage(
     agg = await get_or_create_daily_aggregate(supabase, user_id, local_date)
 
     return {
-        "upload_count": agg["upload_count"],
+        "upload_count": agg.get("upload_count", 0),
         "upload_size_mb": float(agg.get("upload_size_mb", 0)),
-        "ai_vision_count": agg["ai_vision_count"],
+        "ai_vision_count": agg.get("ai_vision_count", 0),
         "local_date": local_date,
     }
