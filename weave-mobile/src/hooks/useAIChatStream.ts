@@ -7,10 +7,11 @@
  * - Error handling and fallback to non-streaming
  * - Automatic cleanup on unmount
  *
- * NOTE: React Native doesn't have native EventSource, so we use fetch with streaming
+ * NOTE: Uses react-native-sse for proper React Native SSE support
  */
 
 import React, { useState, useRef, useCallback } from 'react';
+import { EventSource } from 'react-native-sse';
 import apiClient from '@/services/apiClient';
 import { getAccessToken } from '@/services/secureStorage';
 
@@ -53,6 +54,7 @@ export function useAIChatStream(): UseAIChatStreamReturn {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   // Auto-clear error after 5 seconds to allow retry
   React.useEffect(() => {
@@ -85,6 +87,10 @@ export function useAIChatStream(): UseAIChatStreamReturn {
     if (timeoutIdRef.current) {
       clearTimeout(timeoutIdRef.current);
       timeoutIdRef.current = null;
+    }
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
     }
   }, []);
 
@@ -141,105 +147,72 @@ export function useAIChatStream(): UseAIChatStreamReturn {
 
         console.log('[STREAM_DEBUG] 📤 Sending headers:', Object.keys(headers));
 
-        // Make streaming POST request
-        const response = await fetch(`${baseURL}/api/ai-chat/messages/stream`, {
+        // ✅ Use EventSource from react-native-sse for proper React Native SSE support
+        console.log('[STREAM_DEBUG] 🚀 Setting up EventSource with react-native-sse...');
+        
+        // Create EventSource-compatible URL with POST data as query params for SSE
+        const sseUrl = new URL(`${baseURL}/api/ai-chat/messages/stream`);
+        
+        // Create EventSource instance
+        eventSourceRef.current = new EventSource(sseUrl.toString(), {
           method: 'POST',
           headers,
           body: JSON.stringify({
             message,
             conversation_id: conversationId,
           }),
-          signal: abortControllerRef.current.signal,
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+        // Handle incoming messages
+        eventSourceRef.current.addEventListener('message', (event) => {
+          try {
+            console.log('[STREAM_DEBUG] 📨 Received SSE event:', event.data);
+            const chunk: StreamChunk = JSON.parse(event.data);
 
-        // ✅ DEBUG: Check what response object contains
-        console.log('[STREAM_DEBUG] 🔍 Response object keys:', Object.keys(response));
-        console.log('[STREAM_DEBUG] 🔍 response.body type:', typeof response.body);
-        console.log('[STREAM_DEBUG] 🔍 response.body value:', response.body);
-
-        // Check if response body is readable
-        if (!response.body) {
-          console.error('[STREAM_DEBUG] ❌ response.body is falsy, cannot stream');
-          throw new Error('Response body is not readable - streaming not supported in this environment');
-        }
-
-        // Check if body has getReader method
-        if (typeof response.body.getReader !== 'function') {
-          console.error('[STREAM_DEBUG] ❌ response.body does not have getReader method');
-          throw new Error('Response body does not support streaming - getReader not available');
-        }
-
-        console.log('[STREAM_DEBUG] ✅ response.body is readable, starting stream...');
-
-        // Read SSE stream
-        const reader = response.body.getReader();
-        // eslint-disable-next-line no-undef
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-
-          if (done) {
-            break;
-          }
-
-          // Decode chunk
-          buffer += decoder.decode(value, { stream: true });
-
-          // Process complete SSE events (split by \n\n)
-          const events = buffer.split('\n\n');
-          buffer = events.pop() || ''; // Keep incomplete event in buffer
-
-          for (const event of events) {
-            if (!event.trim() || !event.startsWith('data: ')) {
-              continue;
-            }
-
-            // Parse JSON from SSE data field
-            const jsonStr = event.replace(/^data: /, '');
-            try {
-              const chunk: StreamChunk = JSON.parse(jsonStr);
-
-              if (chunk.type === 'metadata') {
-                // Store message and conversation IDs
-                setMetadata((prev) => ({
-                  ...prev,
-                  messageId: chunk.message_id,
-                  conversationId: chunk.conversation_id,
-                }));
-              } else if (chunk.type === 'chunk') {
-                // Append content chunk
-                if (chunk.content) {
-                  setStreamingContent((prev) => prev + chunk.content);
-                }
-              } else if (chunk.type === 'done') {
-                // Stream complete, store final metadata
-                setMetadata((prev) => ({
-                  ...prev,
-                  responseId: chunk.response_id,
-                  tokensUsed: chunk.tokens_used,
-                }));
-                setIsStreaming(false);
-              } else if (chunk.type === 'error') {
-                // Handle error event
-                setError(chunk.message || 'Unknown error occurred');
-                setIsStreaming(false);
-                break;
+            if (chunk.type === 'metadata') {
+              // Store message and conversation IDs
+              setMetadata((prev) => ({
+                ...prev,
+                messageId: chunk.message_id,
+                conversationId: chunk.conversation_id,
+              }));
+            } else if (chunk.type === 'chunk') {
+              // Append content chunk
+              if (chunk.content) {
+                setStreamingContent((prev) => prev + chunk.content);
               }
-            } catch (parseError) {
-              console.error('Failed to parse SSE event:', parseError, jsonStr);
+            } else if (chunk.type === 'done') {
+              // Stream complete, store final metadata
+              setMetadata((prev) => ({
+                ...prev,
+                responseId: chunk.response_id,
+                tokensUsed: chunk.tokens_used,
+              }));
+              setIsStreaming(false);
+              eventSourceRef.current?.close();
+            } else if (chunk.type === 'error') {
+              // Handle error event
+              setError(chunk.message || 'Unknown error occurred');
+              setIsStreaming(false);
+              eventSourceRef.current?.close();
             }
+          } catch (parseError) {
+            console.error('[STREAM_DEBUG] Failed to parse SSE event:', parseError, event.data);
           }
-        }
+        });
 
-        // Clean up on successful completion
-        cleanup();
-        setIsStreaming(false);
+        // Handle EventSource errors
+        eventSourceRef.current.addEventListener('error', (error) => {
+          console.error('[STREAM_DEBUG] EventSource error:', error);
+          setError('Connection error - please try again');
+          setIsStreaming(false);
+          eventSourceRef.current?.close();
+        });
+
+        // Handle EventSource open
+        eventSourceRef.current.addEventListener('open', () => {
+          console.log('[STREAM_DEBUG] ✅ EventSource connection opened');
+        });
       } catch (err: any) {
         // Handle errors and clean up
         if (err.name === 'AbortError') {
