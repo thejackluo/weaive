@@ -80,3 +80,53 @@ COMMENT ON COLUMN daily_aggregates.ai_vision_count IS 'Number of AI vision analy
 -- Performance:
 -- - Indexed queries for verified proofs: O(log n)
 -- - Quality score filtering: O(log n) with partial index
+
+-- ═══════════════════════════════════════════════════════════════════════
+-- RPC FUNCTIONS (Atomic Operations for Rate Limiting)
+-- ═══════════════════════════════════════════════════════════════════════
+
+-- Function: Increment upload usage atomically
+-- Purpose: Avoid race conditions when tracking uploads
+-- Called by: weave-api/app/middleware/rate_limit.py:273
+CREATE OR REPLACE FUNCTION increment_upload_usage(
+  p_user_id TEXT,
+  p_local_date TEXT,
+  p_size_mb DECIMAL
+) RETURNS VOID AS $$
+BEGIN
+  -- Create record if doesn't exist
+  INSERT INTO daily_aggregates (user_id, local_date, upload_count, upload_size_mb, ai_vision_count)
+  VALUES (p_user_id::uuid, p_local_date::date, 0, 0, 0)
+  ON CONFLICT (user_id, local_date) DO NOTHING;
+
+  -- Atomically increment counters (prevents race conditions)
+  UPDATE daily_aggregates
+  SET
+    upload_count = upload_count + 1,
+    upload_size_mb = upload_size_mb + p_size_mb
+  WHERE user_id = p_user_id::uuid AND local_date = p_local_date::date;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function: Increment AI vision usage atomically
+-- Purpose: Track AI vision analyses for rate limiting
+-- Called by: weave-api/app/middleware/rate_limit.py:310
+CREATE OR REPLACE FUNCTION increment_ai_vision_usage(
+  p_user_id TEXT,
+  p_local_date TEXT
+) RETURNS VOID AS $$
+BEGIN
+  -- Create record if doesn't exist
+  INSERT INTO daily_aggregates (user_id, local_date, upload_count, upload_size_mb, ai_vision_count)
+  VALUES (p_user_id::uuid, p_local_date::date, 0, 0, 0)
+  ON CONFLICT (user_id, local_date) DO NOTHING;
+
+  -- Atomically increment counter (prevents race conditions)
+  UPDATE daily_aggregates
+  SET ai_vision_count = ai_vision_count + 1
+  WHERE user_id = p_user_id::uuid AND local_date = p_local_date::date;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION increment_upload_usage IS 'Atomically increment upload_count and upload_size_mb to avoid race conditions during concurrent uploads';
+COMMENT ON FUNCTION increment_ai_vision_usage IS 'Atomically increment ai_vision_count to avoid race conditions during concurrent AI analyses';
