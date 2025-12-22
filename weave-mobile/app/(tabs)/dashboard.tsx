@@ -49,7 +49,8 @@ export default function DashboardScreen() {
                   key={index}
                   className="w-7 h-7 rounded bg-white/10"
                   style={{
-                    backgroundColor: index % 3 === 0 ? 'rgba(34, 211, 153, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                    backgroundColor:
+                      index % 3 === 0 ? 'rgba(34, 211, 153, 0.3)' : 'rgba(255, 255, 255, 0.1)',
                   }}
                 />
               ))}
