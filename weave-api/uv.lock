@@ -1,6 +1,10 @@
 version = 1
 revision = 3
 requires-python = ">=3.11"
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version < '3.14'",
+]
 
 [[package]]
 name = "annotated-doc"
@@ -50,6 +54,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/16/ce/8a777047513153587e5434fd752e89334ac33e379aa3497db860eeb60377/anyio-4.12.0.tar.gz", hash = "sha256:73c693b567b0c55130c104d0b43a9baf3aa6a31fc6110116509f27bf75e21ec0", size = 228266, upload-time = "2025-11-28T23:37:38.911Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/9c/36c5c37947ebfb8c7f22e0eb6e4d188ee2d53aa3880f3f2744fb894f0cb1/anyio-4.12.0-py3-none-any.whl", hash = "sha256:dad2376a628f98eeca4881fc56cd06affd18f659b17a747d3ff0307ced94b1bb", size = 113362, upload-time = "2025-11-28T23:36:57.897Z" },
+]
+
+[[package]]
+name = "assemblyai"
+version = "0.48.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-settings", marker = "python_full_version >= '3.14'" },
+    { name = "typing-extensions" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/82/19/57ee0680d8afaa1d354833a35b8ff4ab4cd946734fa3876bedae8cc6ab08/assemblyai-0.48.4.tar.gz", hash = "sha256:a7ec007b6d3079d38a4a5c39ea7c733067785e1a30151a6f01aef7728c1bb659", size = 56367, upload-time = "2025-12-17T22:37:42.135Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ae/e3/a21e7fe81e056930ca0b6fd9ddfd1713322560762f8662605e493619da49/assemblyai-0.48.4-py3-none-any.whl", hash = "sha256:cf56b71f205e341b650cb2668e382181c01082b95873bea4dc7450fe1647083d", size = 52376, upload-time = "2025-12-17T22:37:40.97Z" },
 ]
 
 [[package]]
@@ -1501,6 +1521,15 @@ wheels = [
 ]
 
 [[package]]
+name = "python-multipart"
+version = "0.0.21"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/96/804520d0850c7db98e5ccb70282e29208723f0964e88ffd9d0da2f52ea09/python_multipart-0.0.21.tar.gz", hash = "sha256:7137ebd4d3bbf70ea1622998f902b97a29434a9e8dc40eb203bbcf7c2a2cba92", size = 37196, upload-time = "2025-12-17T09:24:22.446Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/aa/76/03af049af4dcee5d27442f71b6924f01f3efb5d2bd34f23fcd563f2cc5f5/python_multipart-0.0.21-py3-none-any.whl", hash = "sha256:cf7a6713e01c87aa35387f4774e812c4361150938d20d232800f75ffcf266090", size = 24541, upload-time = "2025-12-17T09:24:21.153Z" },
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2210,6 +2239,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "anthropic" },
+    { name = "assemblyai" },
     { name = "boto3" },
     { name = "fastapi" },
     { name = "openai" },
@@ -2217,6 +2247,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "python-dotenv" },
+    { name = "python-multipart" },
     { name = "sqlalchemy" },
     { name = "supabase" },
     { name = "tiktoken" },
@@ -2236,6 +2267,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic", specifier = ">=0.75.0" },
+    { name = "assemblyai", specifier = ">=0.48.4" },
     { name = "boto3", specifier = ">=1.42.14" },
     { name = "fastapi", specifier = ">=0.124.4" },
     { name = "openai", specifier = ">=2.13.0" },
@@ -2243,6 +2275,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.12.0" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
+    { name = "python-multipart", specifier = ">=0.0.21" },
     { name = "sqlalchemy", specifier = ">=2.0.45" },
     { name = "supabase", specifier = ">=2.27.0" },
     { name = "tiktoken", specifier = ">=0.12.0" },
