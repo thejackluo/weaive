@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
 import { Tabs } from 'expo-router';
-import { View, TouchableOpacity, Modal, StyleSheet, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { BlurView } from '@react-native-community/blur';
+import {
+  View,
+  TouchableOpacity,
+  Modal,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { BlurView } from 'expo-blur';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Text } from '@/design-system';
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
@@ -68,9 +79,12 @@ function CenterAIButton({ onPress }: { onPress: () => void }) {
  */
 function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const [messageInput, setMessageInput] = React.useState('');
-  const [messages, setMessages] = React.useState<Array<{ id: string; text: string; isUser: boolean }>>([]);
+  const [messages, setMessages] = React.useState<
+    Array<{ id: string; text: string; isUser: boolean }>
+  >([]);
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(500);
+  const startY = useSharedValue(0);
 
   React.useEffect(() => {
     if (visible) {
@@ -81,6 +95,29 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
       translateY.value = withTiming(500, { duration: 200 });
     }
   }, [visible]);
+
+  // Swipe-down gesture handler
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      startY.value = translateY.value;
+    })
+    .onUpdate((event) => {
+      // Only allow downward swipes (positive translationY)
+      if (event.translationY > 0) {
+        translateY.value = startY.value + event.translationY;
+      }
+    })
+    .onEnd((event) => {
+      // Dismiss if swiped down more than 100px or velocity is high
+      if (event.translationY > 100 || event.velocityY > 500) {
+        translateY.value = withTiming(500, { duration: 200 });
+        opacity.value = withTiming(0, { duration: 200 });
+        setTimeout(onClose, 200);
+      } else {
+        // Spring back to original position
+        translateY.value = withSpring(0, { damping: 18, stiffness: 100 });
+      }
+    });
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -131,125 +168,123 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       {/* Blur Background */}
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-        <BlurView
-          style={StyleSheet.absoluteFill}
-          blurType="dark"
-          blurAmount={20}
-          reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.7)"
-        />
+        <BlurView style={StyleSheet.absoluteFill} intensity={80} tint="dark" />
         <Animated.View style={[styles.overlayBackground, overlayStyle]} />
       </Pressable>
 
-      {/* Chat Card */}
+      {/* Chat Card with Swipe-to-Dismiss */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
       >
-        <Animated.View style={[styles.chatCard, cardStyle]}>
-          <Pressable onPress={(e) => e.stopPropagation()} style={styles.chatCardInner}>
-            {/* Header */}
-            <View style={styles.chatHeader}>
-              <View style={styles.chatHeaderLeft}>
-                <SymbolView name="sparkles" size={26} tintColor="#a78bfa" />
-                <Text variant="displayMd" style={styles.chatHeaderTitle}>
-                  Weave Chat
-                </Text>
-              </View>
-              <TouchableOpacity onPress={onClose} style={styles.chatCloseButton}>
-                <SymbolView name="xmark.circle.fill" size={30} tintColor="rgba(255, 255, 255, 0.6)" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Content Area */}
-            <ScrollView
-              style={styles.chatContent}
-              contentContainerStyle={styles.chatContentContainer}
-              showsVerticalScrollIndicator={false}
-            >
-              {messages.length === 0 ? (
-                // Welcome State
-                <View style={styles.welcomeContainer}>
-                  <View style={styles.welcomeIcon}>
-                    <SymbolView name="sparkles" size={36} tintColor="#a78bfa" />
-                  </View>
-                  <Text variant="displaySm" style={styles.welcomeTitle}>
-                    Your AI Coach
+        <GestureDetector gesture={panGesture}>
+          <Animated.View style={[styles.chatCard, cardStyle]}>
+            <Pressable onPress={(e) => e.stopPropagation()} style={styles.chatCardInner}>
+              {/* Header */}
+              <View style={styles.chatHeader}>
+                <View style={styles.chatHeaderLeft}>
+                  <SymbolView name="sparkles" size={26} tintColor="#a78bfa" />
+                  <Text variant="displayMd" style={styles.chatHeaderTitle}>
+                    Weave Chat
                   </Text>
-                  <Text variant="textBase" style={styles.welcomeSubtitle}>
-                    Epic 6: AI Coaching
-                  </Text>
-                  <View style={styles.comingSoonBadge}>
-                    <Text variant="textXs" style={styles.comingSoonText}>
-                      Coming Soon
-                    </Text>
-                  </View>
-
-                  <Text variant="textLg" style={styles.examplesTitle}>
-                    Try asking:
-                  </Text>
-
-                  {exampleMessages.map((message, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      onPress={() => handleExampleTap(message)}
-                      style={styles.exampleCard}
-                    >
-                      <SymbolView name="bubble.left.fill" size={18} tintColor="#a78bfa" />
-                      <Text variant="textBase" style={styles.exampleText}>
-                        {message}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
                 </View>
-              ) : (
-                // Messages State
-                <View style={styles.messagesContainer}>
-                  {messages.map((msg) => (
-                    <View
-                      key={msg.id}
-                      style={[
-                        styles.messageBubble,
-                        msg.isUser ? styles.userMessage : styles.aiMessage,
-                      ]}
-                    >
-                      <Text variant="textBase" style={styles.messageText}>
-                        {msg.text}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </ScrollView>
-
-            {/* Input Area */}
-            <View style={styles.inputContainer}>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Type a message..."
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  value={messageInput}
-                  onChangeText={setMessageInput}
-                  multiline
-                  maxLength={500}
-                  returnKeyType="send"
-                  onSubmitEditing={handleSendMessage}
-                  blurOnSubmit={false}
-                />
-                <TouchableOpacity
-                  onPress={handleSendMessage}
-                  style={[
-                    styles.sendButton,
-                    !messageInput.trim() && styles.sendButtonDisabled,
-                  ]}
-                  disabled={!messageInput.trim()}
-                >
-                  <SymbolView name="arrow.up" size={22} tintColor="#ffffff" weight="bold" />
+                <TouchableOpacity onPress={onClose} style={styles.chatCloseButton}>
+                  <SymbolView
+                    name="xmark.circle.fill"
+                    size={30}
+                    tintColor="rgba(255, 255, 255, 0.6)"
+                  />
                 </TouchableOpacity>
               </View>
-            </View>
-          </Pressable>
-        </Animated.View>
+
+              {/* Content Area */}
+              <ScrollView
+                style={styles.chatContent}
+                contentContainerStyle={styles.chatContentContainer}
+                showsVerticalScrollIndicator={false}
+              >
+                {messages.length === 0 ? (
+                  // Welcome State
+                  <View style={styles.welcomeContainer}>
+                    <View style={styles.welcomeIcon}>
+                      <SymbolView name="sparkles" size={36} tintColor="#a78bfa" />
+                    </View>
+                    <Text variant="displayMd" style={styles.welcomeTitle}>
+                      Your AI Coach
+                    </Text>
+                    <Text variant="textBase" style={styles.welcomeSubtitle}>
+                      Epic 6: AI Coaching
+                    </Text>
+                    <View style={styles.comingSoonBadge}>
+                      <Text variant="textXs" style={styles.comingSoonText}>
+                        Coming Soon
+                      </Text>
+                    </View>
+
+                    <Text variant="textLg" style={styles.examplesTitle}>
+                      Try asking:
+                    </Text>
+
+                    {exampleMessages.map((message, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        onPress={() => handleExampleTap(message)}
+                        style={styles.exampleCard}
+                      >
+                        <SymbolView name="bubble.left.fill" size={18} tintColor="#a78bfa" />
+                        <Text variant="textBase" style={styles.exampleText}>
+                          {message}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ) : (
+                  // Messages State
+                  <View style={styles.messagesContainer}>
+                    {messages.map((msg) => (
+                      <View
+                        key={msg.id}
+                        style={[
+                          styles.messageBubble,
+                          msg.isUser ? styles.userMessage : styles.aiMessage,
+                        ]}
+                      >
+                        <Text variant="textBase" style={styles.messageText}>
+                          {msg.text}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </ScrollView>
+
+              {/* Input Area */}
+              <View style={styles.inputContainer}>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Type a message..."
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                    value={messageInput}
+                    onChangeText={setMessageInput}
+                    multiline
+                    maxLength={500}
+                    returnKeyType="send"
+                    onSubmitEditing={handleSendMessage}
+                    blurOnSubmit={false}
+                  />
+                  <TouchableOpacity
+                    onPress={handleSendMessage}
+                    style={[styles.sendButton, !messageInput.trim() && styles.sendButtonDisabled]}
+                    disabled={!messageInput.trim()}
+                  >
+                    <SymbolView name="arrow.up" size={22} tintColor="#ffffff" weight="bold" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Pressable>
+          </Animated.View>
+        </GestureDetector>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -282,8 +317,8 @@ export default function TabLayout() {
           tabBarActiveTintColor: '#3B72F6',
           tabBarInactiveTintColor: '#6B7280',
           tabBarStyle: {
-            height: 64,
-            paddingBottom: 8,
+            height: 49,
+            paddingBottom: 4,
             paddingTop: 4,
             backgroundColor: '#0a0a0a',
             borderTopColor: '#1f1f1f',
@@ -300,7 +335,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
+            title: 'Thread',
             tabBarIcon: ({ color }) => (
               <SymbolView name="house.fill" size={24} tintColor={color} resizeMode="center" />
             ),
@@ -356,19 +391,21 @@ export default function TabLayout() {
   );
 }
 
+const CENTER_BUTTON_SIZE = 56;
+
 const styles = StyleSheet.create({
   // Center Button Styles
   centerButtonContainer: {
     position: 'absolute',
     bottom: 20,
     left: '50%',
-    marginLeft: -28, // Half of button width (56px)
+    marginLeft: -CENTER_BUTTON_SIZE / 2,
     zIndex: 10,
   },
   centerButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: CENTER_BUTTON_SIZE,
+    height: CENTER_BUTTON_SIZE,
+    borderRadius: CENTER_BUTTON_SIZE / 2,
     backgroundColor: '#3B72F6',
     justifyContent: 'center',
     alignItems: 'center',

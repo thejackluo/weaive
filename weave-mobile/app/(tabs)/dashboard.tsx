@@ -27,7 +27,7 @@ export default function DashboardScreen() {
           <Text variant="textLg" className="text-white mb-4 font-semibold">
             Consistency Heat Map
           </Text>
-          <Card variant="glass" className="p-5">
+          <Card variant="glass" padding="lg">
             <View className="flex-row items-center gap-3 mb-4">
               <View className="w-10 h-10 rounded-full bg-orange-500/20 items-center justify-center">
                 <SymbolView name="calendar" size={20} tintColor="#fb923c" />
@@ -66,7 +66,7 @@ export default function DashboardScreen() {
           <Text variant="textLg" className="text-white mb-4 font-semibold">
             Fulfillment Trend
           </Text>
-          <Card variant="glass" className="p-5">
+          <Card variant="glass" padding="lg">
             <View className="flex-row items-center gap-3 mb-4">
               <View className="w-10 h-10 rounded-full bg-emerald-500/20 items-center justify-center">
                 <SymbolView name="chart.line.uptrend.xyaxis" size={20} tintColor="#34d399" />
