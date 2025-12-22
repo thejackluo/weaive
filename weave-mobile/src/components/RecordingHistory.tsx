@@ -239,7 +239,7 @@ export function RecordingHistory({
               <View
                 style={{
                   padding: spacing[4],
-                  backgroundColor: colors.background.tertiary,
+                  backgroundColor: colors.background.secondary,
                   borderRadius: 8,
                 }}
               >

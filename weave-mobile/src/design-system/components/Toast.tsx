@@ -146,8 +146,8 @@ export function Toast({ message, type, duration = 3000, onDismiss }: ToastProps)
         {Platform.OS === 'ios' ? (
           <BlurView
             style={[styles.content, { borderColor: backgroundColor }]}
-            tint="dark"
-            intensity={80}
+            blurType="dark"
+            blurAmount={80}
           >
             <View
               style={[
