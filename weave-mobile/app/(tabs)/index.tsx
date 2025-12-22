@@ -10,7 +10,7 @@
 import React, { useState } from 'react';
 import { View, Text as RNText, Pressable, Modal, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +28,7 @@ import { ImageDetailView } from '@/components/ImageDetailView';
 export default function HomeScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   // Story 0.9: Image Capture Test State
   const [showCaptureSheet, setShowCaptureSheet] = useState(false);
