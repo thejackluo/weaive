@@ -54,16 +54,13 @@ export function useImageDelete() {
       });
 
       // Optimistically remove image from all cached queries
-      queryClient.setQueriesData<Capture[][]>(
-        { queryKey: ['images'] },
-        (old) => {
-          if (!old) return old;
-          // For infinite queries, filter out the deleted image from all pages
-          return old.map((page) =>
-            Array.isArray(page) ? page.filter((img) => img.id !== imageId) : page
-          );
-        }
-      );
+      queryClient.setQueriesData<Capture[][]>({ queryKey: ['images'] }, (old) => {
+        if (!old) return old;
+        // For infinite queries, filter out the deleted image from all pages
+        return old.map((page) =>
+          Array.isArray(page) ? page.filter((img) => img.id !== imageId) : page
+        );
+      });
 
       // Return context for rollback
       return { previousImages };

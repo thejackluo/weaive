@@ -37,19 +37,12 @@ export function ImageGallery({
   scrollEnabled = true, // Default to true for standalone galleries
 }: ImageGalleryProps) {
   // ✅ FIX: Use useImageList hook with infinite scroll pagination
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isLoading,
-    isFetchingNextPage,
-    refetch,
-    isRefetching,
-  } = useImageList({
-    goalId: goalId || undefined,
-    startDate: startDate || undefined, // ✅ FIX: Pass date filters to API
-    endDate: endDate || undefined,
-  });
+  const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, refetch, isRefetching } =
+    useImageList({
+      goalId: goalId || undefined,
+      startDate: startDate || undefined, // ✅ FIX: Pass date filters to API
+      endDate: endDate || undefined,
+    });
 
   // Flatten all pages into single array for FlatList
   const captures = data?.pages.flatMap((page) => page.data) ?? [];

@@ -137,11 +137,7 @@ export function useImageCount(goalId?: string) {
     queryKey: ['images', 'count', goalId],
 
     queryFn: async () => {
-      const captures = await getUserCaptures(
-        undefined,
-        'photo' as CaptureType,
-        goalId
-      );
+      const captures = await getUserCaptures(undefined, 'photo' as CaptureType, goalId);
       return captures.length;
     },
 
