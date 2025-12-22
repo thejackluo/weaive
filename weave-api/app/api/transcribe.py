@@ -17,6 +17,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
+from supabase import Client
 
 from app.core.deps import get_current_user, get_supabase_client
 from app.services.stt import STTService, TranscriptionResult
@@ -26,6 +27,46 @@ router = APIRouter(prefix="/api", tags=["stt"])
 
 # Initialize STT service (singleton)
 stt_service = STTService()
+
+
+def get_user_profile(user: dict, supabase: Client) -> tuple[UUID, str]:
+    """
+    Get user profile ID and timezone from JWT payload.
+
+    Converts auth_user_id (from JWT "sub" field) to user_profiles.id
+    following the RLS pattern: auth.uid() → user_profiles.id lookup
+
+    Args:
+        user: JWT payload from get_current_user dependency
+        supabase: Supabase client
+
+    Returns:
+        tuple: (profile_id, timezone)
+
+    Raises:
+        HTTPException: 404 if user profile not found
+    """
+    auth_user_id = user["sub"]  # Extract auth_user_id from JWT
+
+    # Look up user_profiles.id from auth_user_id
+    profile_response = (
+        supabase.table("user_profiles")
+        .select("id, timezone")
+        .eq("auth_user_id", auth_user_id)
+        .single()
+        .execute()
+    )
+
+    if not profile_response.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User profile not found. Please complete onboarding first.",
+        )
+
+    profile_id = UUID(profile_response.data["id"])
+    timezone = profile_response.data.get("timezone", "UTC")
+
+    return profile_id, timezone
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -72,7 +113,7 @@ class ErrorResponse(BaseModel):
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════
 
-async def check_rate_limit(user_id: str, supabase):
+async def check_rate_limit(user_id: UUID, supabase):
     """
     Check STT rate limits for user.
 
@@ -81,7 +122,7 @@ async def check_rate_limit(user_id: str, supabase):
     - 300 minutes total audio per day
 
     Args:
-        user_id: User profile ID
+        user_id: User profile ID (UUID)
         supabase: Supabase client
 
     Raises:
@@ -92,11 +133,11 @@ async def check_rate_limit(user_id: str, supabase):
     today = date.today().isoformat()
 
     # Query daily_aggregates for today's usage
-    result = supabase.table('daily_aggregates') \\
-        .select('stt_request_count, stt_duration_minutes') \\
-        .eq('user_id', user_id) \\
-        .eq('local_date', today) \\
-        .maybe_single() \\
+    result = supabase.table('daily_aggregates') \
+        .select('stt_request_count, stt_duration_minutes') \
+        .eq('user_id', str(user_id)) \
+        .eq('local_date', today) \
+        .maybe_single() \
         .execute()
 
     if result.data:
@@ -157,11 +198,11 @@ async def increment_usage(user_id: str, duration_sec: int, supabase):
 
     # Upsert daily_aggregates (increment or create)
     # Note: Supabase doesn't support atomic increment, so we do read-modify-write
-    result = supabase.table('daily_aggregates') \\
-        .select('stt_request_count, stt_duration_minutes') \\
-        .eq('user_id', user_id) \\
-        .eq('local_date', today) \\
-        .maybe_single() \\
+    result = supabase.table('daily_aggregates') \
+        .select('stt_request_count, stt_duration_minutes') \
+        .eq('user_id', user_id) \
+        .eq('local_date', today) \
+        .maybe_single() \
         .execute()
 
     if result.data:
@@ -169,23 +210,23 @@ async def increment_usage(user_id: str, duration_sec: int, supabase):
         new_count = result.data['stt_request_count'] + 1
         new_duration = result.data['stt_duration_minutes'] + duration_minutes
 
-        supabase.table('daily_aggregates') \\
+        supabase.table('daily_aggregates') \
             .update({
                 'stt_request_count': new_count,
                 'stt_duration_minutes': new_duration
-            }) \\
-            .eq('user_id', user_id) \\
-            .eq('local_date', today) \\
+            }) \
+            .eq('user_id', user_id) \
+            .eq('local_date', today) \
             .execute()
     else:
         # Create new record
-        supabase.table('daily_aggregates') \\
+        supabase.table('daily_aggregates') \
             .insert({
                 'user_id': user_id,
                 'local_date': today,
                 'stt_request_count': 1,
                 'stt_duration_minutes': duration_minutes
-            }) \\
+            }) \
             .execute()
 
 
@@ -270,7 +311,8 @@ async def transcribe_audio(
         503: Transcription failed (all providers)
     """
     try:
-        user_id = user['id']
+        # Get user profile ID (auth.uid() → user_profiles.id)
+        user_id, user_timezone = get_user_profile(user, supabase)
 
         # Validate audio format
         allowed_types = ['audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/wav', 'audio/wave', 'audio/flac', 'audio/ogg']
@@ -311,13 +353,14 @@ async def transcribe_audio(
         timestamp = int(datetime.now().timestamp() * 1000)
         storage_key = f"{user_id}/voice_{timestamp}.m4a"
 
-        upload_result = supabase.storage.from_('captures').upload(
-            path=storage_key,
-            file=audio_bytes,
-            file_options={"content-type": audio.content_type}
-        )
-
-        if upload_result.status_code not in [200, 201]:
+        try:
+            upload_result = supabase.storage.from_('captures').upload(
+                path=storage_key,
+                file=audio_bytes,
+                file_options={"content-type": audio.content_type}
+            )
+        except Exception as upload_error:
+            logger.error(f"Storage upload failed: {str(upload_error)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail={
@@ -429,7 +472,8 @@ async def get_capture(
         403: User doesn't own capture
     """
     try:
-        user_id = user['id']
+        # Get user profile ID (auth.uid() → user_profiles.id)
+        user_id, _ = get_user_profile(user, supabase)
 
         # Fetch capture (RLS enforces user ownership)
         result = supabase.table('captures').select('*').eq('id', str(capture_id)).single().execute()
@@ -501,7 +545,8 @@ async def delete_capture(
         403: User doesn't own capture
     """
     try:
-        user_id = user['id']
+        # Get user profile ID (auth.uid() → user_profiles.id)
+        user_id, _ = get_user_profile(user, supabase)
 
         # Fetch capture (RLS enforces user ownership)
         result = supabase.table('captures').select('storage_key').eq('id', str(capture_id)).single().execute()
@@ -562,7 +607,8 @@ async def re_transcribe_capture(
         503: Re-transcription failed
     """
     try:
-        user_id = user['id']
+        # Get user profile ID (auth.uid() → user_profiles.id)
+        user_id, user_timezone = get_user_profile(user, supabase)
 
         # Fetch capture (RLS enforces user ownership)
         result = supabase.table('captures').select('*').eq('id', str(capture_id)).single().execute()
@@ -646,3 +692,22 @@ async def re_transcribe_capture(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"error": {"code": "INTERNAL_ERROR", "message": "Re-transcription failed"}}
         )
+
+
+@router.get("/transcribe/status", status_code=status.HTTP_200_OK)
+async def get_transcription_status():
+    """
+    Get STT service status and provider availability.
+
+    Useful for diagnostics - check which providers are configured.
+
+    Returns:
+        Provider status with availability flags
+    """
+    provider_status = stt_service.get_provider_status()
+
+    return {
+        "providers": provider_status,
+        "any_available": any(provider_status.values()),
+        "message": "At least one provider required for transcription" if not any(provider_status.values()) else "Transcription available"
+    }
