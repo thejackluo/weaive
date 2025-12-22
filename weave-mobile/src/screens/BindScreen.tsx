@@ -58,7 +58,14 @@ export function BindScreen() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   const handleTimerSetup = () => {
-    setShowTimerPresets(true);
+    if (timerDuration) {
+      // Deselect timer if already selected
+      setTimerDuration(null);
+      console.log('Timer deselected');
+    } else {
+      // Open preset selector
+      setShowTimerPresets(true);
+    }
   };
 
   const handleTimerPresetSelect = (duration: number) => {
@@ -75,29 +82,47 @@ export function BindScreen() {
   const handleTimerComplete = (duration: number) => {
     setIsTimerRunning(false);
     console.log('Timer completed:', duration, 'minutes');
-    // Timer duration already set, now trigger completion
-    handleComplete();
+    // Don't automatically complete - let user click "Complete Bind" button
+    // The timer duration is already tracked in state
   };
 
   const handleOpenCamera = async () => {
-    // TODO: Request camera permissions and open camera
-    console.log('Opening camera...');
-    // For now, just simulate photo selection
-    setPhotoUri('mock-photo-uri');
+    if (photoUri) {
+      // Deselect photo if already selected
+      setPhotoUri(null);
+      console.log('Photo deselected');
+    } else {
+      // Select photo option
+      console.log('Photo option selected');
+      // For now, just mark that photo will be taken
+      // TODO: Request camera permissions and open camera on completion
+      setPhotoUri('mock-photo-uri');
+    }
   };
 
   const handleStartBind = () => {
     if (timerDuration && !isTimerRunning) {
       // Start the timer
       setIsTimerRunning(true);
+    } else if (photoUri && !timerDuration) {
+      // Only photo selected, complete immediately with photo
+      handleComplete();
     } else {
-      // No timer selected, just start tracking
-      console.log('Start bind without timer');
+      // No timer or photo selected, just complete
+      handleComplete();
     }
   };
 
   const handleComplete = async () => {
     if (!id) return;
+
+    // If photo option was selected, open camera first
+    if (photoUri) {
+      // TODO: Open camera to take actual photo
+      console.log('Opening camera to capture photo...');
+      // For now, simulate photo capture
+      // In future: const photoResult = await openCamera();
+    }
 
     try {
       await completeMutation.mutateAsync({
@@ -263,7 +288,7 @@ export function BindScreen() {
                 Photo
               </Body>
               {photoUri ? (
-                <Caption style={{ color: 'rgba(255,255,255,0.8)' }}>Photo attached</Caption>
+                <Caption style={{ color: 'rgba(255,255,255,0.8)' }}>Will attach photo</Caption>
               ) : (
                 <Caption style={{ color: colors.text.secondary }}>Take photo</Caption>
               )}
@@ -312,9 +337,34 @@ export function BindScreen() {
         {/* Action Buttons */}
         <View style={styles.actions}>
           {!bind.completed ? (
-            <Button variant="primary" size="lg" onPress={handleStartBind}>
-              {isTimerRunning ? 'Timer Running...' : 'Start Bind'}
-            </Button>
+            <>
+              {isTimerRunning ? (
+                // Timer is running - show Complete Bind button
+                <Button variant="primary" size="lg" onPress={handleComplete}>
+                  Complete Bind
+                </Button>
+              ) : timerDuration && !photoUri ? (
+                // Only timer selected - show Start Bind
+                <Button variant="primary" size="lg" onPress={handleStartBind}>
+                  Start Bind
+                </Button>
+              ) : photoUri && !timerDuration ? (
+                // Only photo selected - show Complete Bind
+                <Button variant="primary" size="lg" onPress={handleStartBind}>
+                  Complete Bind
+                </Button>
+              ) : timerDuration && photoUri ? (
+                // Both selected - show Start Bind (will start timer)
+                <Button variant="primary" size="lg" onPress={handleStartBind}>
+                  Start Bind
+                </Button>
+              ) : (
+                // Neither selected - show Complete Bind (can complete without proof)
+                <Button variant="primary" size="lg" onPress={handleStartBind}>
+                  Complete Bind
+                </Button>
+              )}
+            </>
           ) : (
             <View
               style={[styles.completedBadge, { backgroundColor: colors.semantic.success.light }]}
