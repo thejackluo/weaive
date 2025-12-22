@@ -72,11 +72,9 @@ export function ProofCaptureSheet({
       }
     } catch (error) {
       console.error('[ProofCapture] Camera capture failed:', error);
-      Alert.alert(
-        'Upload Failed',
-        'Failed to upload proof photo. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Upload Failed', 'Failed to upload proof photo. Please try again.', [
+        { text: 'OK' },
+      ]);
       setIsUploading(false);
     }
   };
@@ -113,11 +111,9 @@ export function ProofCaptureSheet({
       }
     } catch (error) {
       console.error('[ProofCapture] Gallery selection failed:', error);
-      Alert.alert(
-        'Upload Failed',
-        'Failed to upload proof photo. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Upload Failed', 'Failed to upload proof photo. Please try again.', [
+        { text: 'OK' },
+      ]);
       setIsUploading(false);
     }
   };
@@ -148,33 +144,18 @@ export function ProofCaptureSheet({
       {!isUploading && (
         <View className="space-y-4">
           {/* Camera button */}
-          <Button
-            variant="primary"
-            size="lg"
-            onPress={handleCamera}
-            className="w-full"
-          >
+          <Button variant="primary" size="lg" onPress={handleCamera} className="w-full">
             📸 Take Photo
           </Button>
 
           {/* Gallery button */}
-          <Button
-            variant="secondary"
-            size="lg"
-            onPress={handleGallery}
-            className="w-full"
-          >
+          <Button variant="secondary" size="lg" onPress={handleGallery} className="w-full">
             🖼️ Choose from Gallery
           </Button>
 
           {/* Skip button */}
           {allowSkip && (
-            <Button
-              variant="ghost"
-              size="md"
-              onPress={onCancel}
-              className="w-full mt-2"
-            >
+            <Button variant="ghost" size="md" onPress={onCancel} className="w-full mt-2">
               Skip for now
             </Button>
           )}

@@ -98,22 +98,12 @@ export function ImageCaptureTest() {
         </Button>
 
         {/* Test 2: Quick capture */}
-        <Button
-          variant="secondary"
-          size="md"
-          onPress={handleQuickCapture}
-          disabled={isLoading}
-        >
+        <Button variant="secondary" size="md" onPress={handleQuickCapture} disabled={isLoading}>
           Test Quick Capture (no context)
         </Button>
 
         {/* Test 3: Load captures */}
-        <Button
-          variant="secondary"
-          size="md"
-          onPress={loadCaptures}
-          disabled={isLoading}
-        >
+        <Button variant="secondary" size="md" onPress={loadCaptures} disabled={isLoading}>
           Load Today's Captures
         </Button>
       </View>
@@ -177,7 +167,7 @@ export function ImageCaptureTest() {
           <View className="bg-neutral-900 rounded-t-3xl">
             <ProofCaptureSheet
               context={mockProofContext}
-              onSuccess={async (capture) => {
+              onSuccess={async (_capture) => {
                 Alert.alert('Success', 'Proof photo uploaded successfully!');
                 setShowProofSheet(false);
                 await loadCaptures();
