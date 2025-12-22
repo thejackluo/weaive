@@ -3,16 +3,18 @@ Tiered AI Rate Limiting (Story 6.1)
 
 Enforces separate limits for premium vs free AI models.
 
-Rate limits (FREE tier):
+Rate limits are configured in app.config.ai_chat_config (environment-aware).
+
+Default limits (FREE tier):
 - Premium models (Claude Sonnet): 10 messages/day
 - Free models (Haiku, GPT-4o-mini): 40 messages/day
 - Total: 50 messages/day max
 - Monthly cap: 500 messages/month
 
-Rate limits (PRO tier):
-- Monthly cap: 2,500-5,000 messages/month (5-10x free)
+Default limits (PRO tier):
+- Monthly cap: 5,000 messages/month (10x free)
 
-Rate limits (ADMIN tier):
+Default limits (ADMIN tier):
 - UNLIMITED (for testing, support)
 
 Usage tracking:
@@ -28,6 +30,8 @@ from typing import Dict
 
 from fastapi import HTTPException
 from supabase import Client as SupabaseClient
+
+from app.config.ai_chat_config import AIChatConfig
 
 logger = logging.getLogger(__name__)
 
@@ -49,15 +53,17 @@ class TieredRateLimiter:
     """
     Enforces tiered rate limits for AI generation (premium vs free models).
 
-    Limits (FREE tier):
+    Limits are loaded from AIChatConfig (environment-aware).
+
+    Default Limits (FREE tier):
     - Premium models: 10/day
     - Free models: 40/day
     - Monthly cap: 500/month
 
-    Limits (PRO tier):
-    - Monthly cap: 2,500-5,000/month (5-10x free)
+    Default Limits (PRO tier):
+    - Monthly cap: 5,000/month (10x free)
 
-    Limits (ADMIN tier):
+    Default Limits (ADMIN tier):
     - Unlimited
 
     Tracking:
@@ -65,14 +71,6 @@ class TieredRateLimiter:
     - Separate counters for premium vs free models
     - Monthly counter tracks total across all models
     """
-
-    # Rate limit constants (FREE tier)
-    FREE_PREMIUM_DAILY_LIMIT = 10
-    FREE_FREE_DAILY_LIMIT = 40
-    FREE_MONTHLY_LIMIT = 500
-
-    # Rate limit constants (PRO tier)
-    PRO_MONTHLY_LIMIT = 5000  # Can be 2500-5000 based on pro level
 
     def __init__(self, db: SupabaseClient):
         """
@@ -82,6 +80,12 @@ class TieredRateLimiter:
             db: Supabase client for querying user_profiles
         """
         self.db = db
+
+        # Load rate limits from config (allows environment-specific limits)
+        self.free_premium_daily_limit = AIChatConfig.FREE_PREMIUM_DAILY_LIMIT
+        self.free_free_daily_limit = AIChatConfig.FREE_FREE_DAILY_LIMIT
+        self.free_monthly_limit = AIChatConfig.FREE_MONTHLY_LIMIT
+        self.pro_monthly_limit = AIChatConfig.PRO_MONTHLY_LIMIT
 
     def check_rate_limit(
         self,
@@ -165,7 +169,7 @@ class TieredRateLimiter:
 
         # Check daily limits by model tier
         if model_tier == ModelTier.PREMIUM:
-            daily_limit = self.FREE_PREMIUM_DAILY_LIMIT if actual_tier == 'free' else 999999  # Pro has high limit
+            daily_limit = self.free_premium_daily_limit if actual_tier == 'free' else 999999  # Pro has high limit
             if premium_used >= daily_limit:
                 reset_time = self._get_next_midnight()
                 logger.warning(f"⚠️  User {user_id} exceeded premium daily limit: {premium_used}/{daily_limit}")
@@ -179,7 +183,7 @@ class TieredRateLimiter:
                 })
 
         else:  # FREE model tier
-            daily_limit = self.FREE_FREE_DAILY_LIMIT if actual_tier == 'free' else 999999  # Pro has high limit
+            daily_limit = self.free_free_daily_limit if actual_tier == 'free' else 999999  # Pro has high limit
             if free_used >= daily_limit:
                 reset_time = self._get_next_midnight()
                 logger.warning(f"⚠️  User {user_id} exceeded free daily limit: {free_used}/{daily_limit}")
@@ -282,8 +286,8 @@ class TieredRateLimiter:
             monthly_limit = self._get_monthly_limit(actual_tier)
 
             # Pro tier has high daily limits (effectively unlimited)
-            premium_limit = self.FREE_PREMIUM_DAILY_LIMIT if actual_tier == 'free' else 999999
-            free_limit = self.FREE_FREE_DAILY_LIMIT if actual_tier == 'free' else 999999
+            premium_limit = self.free_premium_daily_limit if actual_tier == 'free' else 999999
+            free_limit = self.free_free_daily_limit if actual_tier == 'free' else 999999
 
             return {
                 "premium_today": {
@@ -339,9 +343,9 @@ class TieredRateLimiter:
         if subscription_tier == 'admin':
             return 999999  # Effectively unlimited
         elif subscription_tier == 'pro':
-            return self.PRO_MONTHLY_LIMIT
+            return self.pro_monthly_limit
         else:  # free
-            return self.FREE_MONTHLY_LIMIT
+            return self.free_monthly_limit
 
     def _get_next_midnight(self) -> datetime:
         """Get next midnight for daily reset time."""

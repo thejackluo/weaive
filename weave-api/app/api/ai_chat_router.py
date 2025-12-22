@@ -38,13 +38,11 @@ from app.models.ai_chat_models import (
 )
 from app.services.ai import AIService
 from app.services.ai.tiered_rate_limiter import TieredRateLimiter
+from app.config.ai_chat_config import AIChatConfig
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["ai-chat"])
-
-# Admin API key from environment
-ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
 
 
 # ============================================================
@@ -64,11 +62,11 @@ def get_ai_service(db: SupabaseClient = Depends(get_supabase_client)) -> AIServi
 def check_admin_key(x_admin_key: Optional[str] = Header(None)) -> bool:
     """Check if request has valid admin key for bypass."""
     logger.debug(f"[ADMIN_KEY_CHECK] Received header: {x_admin_key}")
-    logger.debug(f"[ADMIN_KEY_CHECK] Expected key: {ADMIN_API_KEY}")
-    if not ADMIN_API_KEY:
-        logger.warning("[ADMIN_KEY_CHECK] ADMIN_API_KEY not set in .env!")
+    logger.debug(f"[ADMIN_KEY_CHECK] Expected key: {AIChatConfig.ADMIN_API_KEY}")
+    if not AIChatConfig.ADMIN_API_KEY:
+        logger.warning("[ADMIN_KEY_CHECK] AI_ADMIN_KEY not set in .env!")
         return False
-    is_valid = x_admin_key == ADMIN_API_KEY
+    is_valid = x_admin_key == AIChatConfig.ADMIN_API_KEY
     logger.debug(f"[ADMIN_KEY_CHECK] Valid: {is_valid}")
     return is_valid
 
