@@ -58,10 +58,11 @@ Return your analysis as valid JSON with this EXACT structure:
 
 RULES:
 - validation_score: How well does this image match the expected content? 0=completely unrelated, 100=perfect match
-- ocr_text: Extract ALL visible text (workout logs, food labels, notes). Return null if no text visible.
+- ocr_text: Extract visible text up to 300 characters max (workout logs, food labels, notes). Summarize if longer. Return null if no text visible.
 - categories: Return top 2 categories with confidence scores
 - quality_score: 1=poor (blurry/dark), 3=acceptable, 5=excellent (clear/well-lit/relevant)
 - Output MUST be valid JSON only (no markdown, no extra text)
+- IMPORTANT: All text must be properly escaped for JSON (newlines as \\n, quotes as \\", etc.)
 """
 
     def __init__(self, api_key: Optional[str] = None):
@@ -148,7 +149,7 @@ RULES:
                         ],
                     }
                 ],
-                max_tokens=1024,
+                max_tokens=2048,  # Increased for large OCR text
                 temperature=0.0,  # Deterministic for consistency
                 response_format={"type": "json_object"},  # Force JSON output
             )
