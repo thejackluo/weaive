@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Text, Caption } from '@/design-system';
+import { Text } from '@/design-system';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 
 interface PlaceholderScreenProps {
@@ -32,66 +32,160 @@ export default function PlaceholderScreen({
   story,
   iconName = 'hammer.fill',
   iconColor = '#ffffff',
-  backgroundColors = { from: '#1a1a1a', to: '#0a0a0a' },
+  backgroundColors = { from: '#0a0a0a', to: '#0a0a0a' }, // Force dark backgrounds
 }: PlaceholderScreenProps) {
   const router = useRouter();
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: backgroundColors.from }}>
-      {/* Header with Back Button */}
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-white/10">
-        <Pressable
-          onPress={() => router.back()}
-          className="flex-row items-center gap-2 active:opacity-70"
-        >
-          <SymbolView name="chevron.left" size={20} tintColor="#ffffff" />
-          <Text className="text-white font-medium">Back</Text>
-        </Pressable>
-      </View>
-
-      <ScrollView
-        className="flex-1"
-        contentContainerClassName="p-6 items-center justify-center"
-        style={{ backgroundColor: backgroundColors.to }}
-      >
-        {/* Icon */}
-        <View className="w-20 h-20 rounded-full bg-white/10 items-center justify-center mb-6">
-          <SymbolView name={iconName} size={40} tintColor={iconColor} />
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header with Back Button */}
+        <View style={styles.header}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <SymbolView name="chevron.left" size={20} tintColor="#ffffff" />
+            <Text style={styles.backText}>Back</Text>
+          </Pressable>
         </View>
 
-        {/* Title */}
-        <Text
-          variant="display2xl"
-          className="text-white font-bold text-center mb-4"
-          style={{ fontSize: 36 }}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
         >
-          {title}
-        </Text>
+          {/* Icon */}
+          <View style={styles.iconContainer}>
+            <SymbolView name={iconName} size={40} tintColor={iconColor} />
+          </View>
 
-        {/* Epic */}
-        <Text variant="textLg" className="text-white/70 text-center mb-2">
-          {epic}
-        </Text>
+          {/* Title */}
+          <Text
+            variant="display2xl"
+            style={styles.title}
+          >
+            {title}
+          </Text>
 
-        {/* Story */}
-        <Text variant="textBase" className="text-white/50 text-center mb-8">
-          {story}
-        </Text>
+          {/* Epic */}
+          <Text variant="textLg" style={styles.epic}>
+            {epic}
+          </Text>
 
-        {/* Status Badge */}
-        <View className="px-4 py-2 bg-amber-500/20 rounded-full border border-amber-500/40 mb-6">
-          <Caption className="text-amber-400 font-semibold">Coming Soon</Caption>
-        </View>
+          {/* Story */}
+          <Text variant="textBase" style={styles.story}>
+            {story}
+          </Text>
 
-        {/* Description */}
-        <Text variant="textSm" className="text-white/40 text-center max-w-xs">
-          This screen is part of the Weave development roadmap and will be implemented in an
-          upcoming sprint.
-        </Text>
+          {/* Status Badge */}
+          <View style={styles.badge}>
+            <Text variant="textXs" style={styles.badgeText}>Coming Soon</Text>
+          </View>
 
-        {/* Bottom Spacer */}
-        <View className="h-20" />
-      </ScrollView>
-    </SafeAreaView>
+          {/* Description */}
+          <Text variant="textBase" style={styles.description}>
+            This story has not been implemented yet.
+          </Text>
+          <Text variant="textSm" style={styles.subdescription}>
+            Check back soon as we continue building Weave.
+          </Text>
+
+          {/* Bottom Spacer */}
+          <View style={styles.spacer} />
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0a0a0a', // Explicit dark background
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#0a0a0a',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  backText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100%',
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  title: {
+    color: '#ffffff',
+    fontSize: 36,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  epic: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  story: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  badge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+    marginBottom: 24,
+  },
+  badgeText: {
+    color: '#fbbf24',
+    fontWeight: '600',
+  },
+  description: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    textAlign: 'center',
+    maxWidth: 300,
+    marginBottom: 8,
+  },
+  subdescription: {
+    color: 'rgba(255, 255, 255, 0.4)',
+    textAlign: 'center',
+    maxWidth: 280,
+  },
+  spacer: {
+    height: 80,
+  },
+});
