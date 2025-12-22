@@ -12,14 +12,16 @@ import {
   Alert,
   ActivityIndicator,
   Dimensions,
-  TextInput,
   Animated,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Heading, Button } from '@/design-system';
 import { deleteImage } from '../services/imageCapture';
 import { Capture, AIVisionCategory } from '../types/captures';
+import { supabase } from '@lib/supabase';
+import { getApiBaseUrl } from '../utils/api';
 
 interface ImageDetailViewProps {
   capture: Capture & { signed_url: string };
@@ -40,8 +42,9 @@ export function ImageDetailView({
   onNext,
 }: ImageDetailViewProps) {
   const [deleting, setDeleting] = useState(false);
-  const [title, setTitle] = useState(capture.content_text || '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [title, setTitle] = useState(capture.content_text || '');
+  const [savingTitle, setSavingTitle] = useState(false);
   const insets = useSafeAreaInsets();
 
   // Zoom animation values
@@ -58,18 +61,6 @@ export function ImageDetailView({
       useNativeDriver: true,
       friction: 5,
     }).start();
-  };
-
-  // Handle tap on title to enable editing
-  const handleTitleTap = () => {
-    setIsEditingTitle(true);
-  };
-
-  // Handle save title
-  const handleSaveTitle = () => {
-    setIsEditingTitle(false);
-    // TODO: Save title to API
-    console.log('Saving title:', title);
   };
 
   const handleDelete = () => {
@@ -93,6 +84,50 @@ export function ImageDetailView({
         },
       },
     ]);
+  };
+
+  const handleSaveTitle = async () => {
+    try {
+      setSavingTitle(true);
+
+      // Get auth token
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      // Update capture via API
+      const API_BASE_URL = getApiBaseUrl();
+      const response = await fetch(`${API_BASE_URL}/api/captures/images/${capture.id}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content_text: title }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || 'Update failed');
+      }
+
+      // Update local state
+      capture.content_text = title;
+      setIsEditingTitle(false);
+    } catch (error: any) {
+      console.error('Title update error:', error);
+      Alert.alert('Update Failed', error.message || 'Please try again.');
+    } finally {
+      setSavingTitle(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setTitle(capture.content_text || '');
+    setIsEditingTitle(false);
   };
 
   const renderAIInsights = () => {
@@ -245,49 +280,56 @@ export function ImageDetailView({
         className="flex-1"
         contentContainerStyle={{ padding: 16, paddingTop: insets.top + 80, paddingBottom: 100 }}
       >
-        {/* Title - Read-only by default, tap to edit */}
+        {/* Title - Inline Edit */}
         <View className="mb-4">
           {isEditingTitle ? (
-            <View className="bg-neutral-800 rounded-lg p-4">
-              <Text className="text-white font-semibold mb-2">Edit Title</Text>
+            <View>
               <TextInput
                 value={title}
                 onChangeText={setTitle}
-                placeholder="Add a title for this image..."
-                placeholderTextColor="#71717A"
-                className="text-neutral-200 text-lg bg-neutral-900 rounded-lg p-3 mb-3"
+                placeholder="Add a title..."
+                placeholderTextColor="#737373"
+                className="text-white text-3xl font-bold mb-3 px-2 py-2 bg-neutral-800 rounded-lg"
                 multiline
                 autoFocus
-                style={{ minHeight: 60 }}
               />
               <View className="flex-row gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onPress={() => {
-                    setTitle(capture.content_text || '');
-                    setIsEditingTitle(false);
-                  }}
-                  style={{ flex: 1 }}
+                <TouchableOpacity
+                  onPress={handleSaveTitle}
+                  disabled={savingTitle}
+                  className="flex-1 bg-blue-500 rounded-lg px-4 py-3 items-center"
                 >
-                  Cancel
-                </Button>
-                <Button variant="primary" size="sm" onPress={handleSaveTitle} style={{ flex: 1 }}>
-                  Save
-                </Button>
+                  {savingTitle ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Text className="text-white font-semibold">Save</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleCancelEdit}
+                  disabled={savingTitle}
+                  className="flex-1 bg-neutral-700 rounded-lg px-4 py-3 items-center"
+                >
+                  <Text className="text-white font-semibold">Cancel</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ) : (
-            <TouchableOpacity onPress={handleTitleTap} activeOpacity={0.8}>
-              {title ? (
-                <Heading variant="displayLg" className="text-white mb-2">
-                  {title}
+            <TouchableOpacity
+              onPress={() => setIsEditingTitle(true)}
+              className="flex-row items-center gap-2"
+              activeOpacity={0.7}
+            >
+              {capture.content_text ? (
+                <Heading variant="displayLg" className="text-white flex-1">
+                  {capture.content_text}
                 </Heading>
               ) : (
-                <View className="bg-neutral-800/50 rounded-lg p-4 border border-dashed border-neutral-600">
-                  <Text className="text-neutral-400 text-center">Tap to add a title...</Text>
-                </View>
+                <Text className="text-neutral-500 text-2xl font-semibold flex-1">
+                  Tap to add title...
+                </Text>
               )}
+              <MaterialIcons name="edit" size={20} color="#737373" />
             </TouchableOpacity>
           )}
         </View>
