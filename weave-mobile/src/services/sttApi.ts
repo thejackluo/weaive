@@ -144,30 +144,43 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
     // Step 1: Get auth token
     const token = await getAuthToken();
 
-    // Step 2: Read audio file
-    console.log('[STT_API] 📂 Reading audio file from:', options.audioUri);
+    // Step 2: Validate audio file
+    console.log('[STT_API] 📂 Validating audio file from:', options.audioUri);
     const fileReadStart = performance.now();
 
-    // Read file as blob
-    const response = await fetch(options.audioUri);
-    const blob = await response.blob();
+    // Use FileSystem.getInfoAsync to check file existence and size
+    // NOTE: React Native FormData is different from web - it expects { name, type, uri }
+    const FileSystem = await import('expo-file-system');
+    const fileInfo = await FileSystem.getInfoAsync(options.audioUri);
 
+    // Verify file exists
+    if (!fileInfo.exists) {
+      throw new Error('Audio file does not exist at the specified URI');
+    }
+
+    const fileSize = fileInfo.size || 0;
     const fileReadDuration = (performance.now() - fileReadStart).toFixed(2);
-    console.log(
-      `[STT_API] ✅ File read in ${fileReadDuration}ms - Size: ${(blob.size / 1024).toFixed(1)}KB`
-    );
+    console.log('[STT_API] ✅ File validated in', fileReadDuration, 'ms');
+    console.log(`  - Size: ${(fileSize / 1024).toFixed(1)}KB`);
+    console.log(`  - URI: ${options.audioUri}`);
 
     // Step 3: Validate file size (25MB max)
     const maxSize = 25 * 1024 * 1024; // 25MB
-    if (blob.size > maxSize) {
+    if (fileSize > maxSize) {
       throw new Error(
-        `Audio file too large (max 25MB, got ${(blob.size / (1024 * 1024)).toFixed(1)}MB)`
+        `Audio file too large (max 25MB, got ${(fileSize / (1024 * 1024)).toFixed(1)}MB)`
       );
     }
 
     // Step 4: Create multipart form data
     const formData = new FormData();
-    formData.append('audio', blob as any, 'audio.m4a');
+    // CRITICAL: React Native FormData expects { name, type, uri } object, NOT File/Blob
+    // This is different from web FormData - see OpenAI forum discussion
+    formData.append('audio', {
+      name: 'audio.m4a',
+      type: 'audio/m4a',
+      uri: options.audioUri,
+    } as any);
     formData.append('language', options.language ?? 'en');
 
     if (options.captureId) {
