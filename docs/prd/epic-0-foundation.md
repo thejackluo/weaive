@@ -179,23 +179,32 @@ Before any user-facing features can be built, the development team must have a f
 **Priority:** M (Must Have)
 
 **As a** user
-**I want to** understand what went wrong when image uploads fail
-**So that** I can take corrective action
+**I want to** understand what went wrong when image uploads fail and have fair daily limits
+**So that** I can take corrective action and system costs are controlled
 
 **Acceptance Criteria:**
-- [ ] Implement file validation: Max 10MB, JPEG/PNG only, minimum 100x100px
+- [ ] Implement file validation: Max 10MB per image, JPEG/PNG only, minimum 100x100px
+- [ ] Implement rate limiting:
+  - [ ] Max 5MB total uploads per user per day
+  - [ ] Max 20 images per user per day
+  - [ ] Track daily usage in `daily_aggregates` table (columns: `upload_count`, `upload_size_mb`)
+  - [ ] Reset counters at midnight user's local timezone
 - [ ] Handle error scenarios:
-  - File too large
+  - File too large (per-file limit)
   - Invalid file format
   - Storage quota exceeded
   - Upload timeout
+  - Rate limit exceeded (daily limit)
 - [ ] Display progress UI with upload progress bar and cancel button
+- [ ] Show daily usage indicator: "3/20 images uploaded today (2.5MB/5MB used)"
 - [ ] Implement retry logic with 3 attempts using exponential backoff
 - [ ] Queue failed uploads locally for retry when connection returns
 
 **Technical Notes:**
 - User sees clear, actionable error messages
 - Failed uploads automatically retry when online
+- Rate limit enforced server-side (backend validation)
+- Rate limit errors return HTTP 429 with `Retry-After` header (seconds until midnight)
 - Supabase Storage integration with signed URLs
 
 **Story Points:** 3
@@ -226,12 +235,73 @@ Before any user-facing features can be built, the development team must have a f
 
 ---
 
+### US-0.11: Voice/Speech-to-Text Infrastructure
+
+**Priority:** M (Must Have)
+
+**As a** developer
+**I want to** have a speech-to-text service integrated with the backend
+**So that** voice recordings can be transcribed for captures and origin stories
+
+**Acceptance Criteria:**
+
+Core Integration:
+- [ ] Research and select B2B speech-to-text provider (recommended: AssemblyAI)
+- [ ] Create `services/stt_service.py` with provider abstraction
+- [ ] Implement STT fallback chain: AssemblyAI → Whisper API → Store audio only (manual transcript later)
+- [ ] Add STT cost tracking to `ai_runs` table (columns: `audio_duration_sec`, `provider`, `cost_usd`)
+- [ ] Support audio formats: MP3, M4A, WAV (common mobile recording formats)
+
+API Endpoint:
+- [ ] Create `/api/transcribe` POST endpoint
+- [ ] Accept audio file upload (multipart/form-data)
+- [ ] Return: `{ transcript: string, confidence: number, duration_sec: number }`
+- [ ] Handle transcription errors gracefully (return audio URL if STT fails)
+
+Rate Limiting:
+- [ ] Max 50 transcription requests per user per day (prevent abuse)
+- [ ] Max 5 minutes audio length per request (prevent excessive costs)
+- [ ] Track usage in `daily_aggregates` table
+
+Testing:
+- [ ] Unit tests for STT service (mock provider responses)
+- [ ] Integration test: Upload sample audio → verify transcript returned
+- [ ] Cost tracking test: Verify `ai_runs` table logged correctly
+
+**Technical Notes:**
+- **Recommended Provider:** AssemblyAI
+  - Cost: $0.15/hour (cheapest among top performers)
+  - Accuracy: High (2nd place in 2025 benchmarks, better than Apple/Azure/AWS)
+  - Ease of integration: Simple API, good docs, $50 free credits (333 hours testing)
+  - Alternative: Deepgram ($0.46/hr, highest accuracy but 3x cost)
+  - Fallback: OpenAI Whisper API ($0.006/min = $0.36/hr)
+
+- **Cost Projections (10K users, MVP):**
+  - 20% voice adoption (2K users)
+  - 2 recordings/user/day, 30 sec average
+  - Daily cost: 4K recordings * 0.5min * ($0.15/60min) = $5/day = $150/month
+  - Well within AI budget ($2,500/month)
+
+- **Integration Points:**
+  - Epic 1 FR-1.7: Origin Story voice commitment
+  - Epic 3 FR-3.5: Quick Capture voice notes
+  - Store audio: Supabase Storage `/captures/audio/{user_id}/{filename}.m4a`
+  - Store transcripts: `captures` table (`transcript` TEXT column, nullable)
+
+**Story Points:** 3
+
+**Dependencies:**
+- Requires: Story 0.2 (Database), Story 0.3 (Auth), Story 0.6 (AI Service Abstraction)
+- Unblocks: Epic 1 Story 1.7 (voice commitment), Epic 3 Story 3.5 (voice capture)
+
+---
+
 ## Epic 0 Summary
 
 | Metric | Value |
 |--------|-------|
-| Total Story Points | 38 |
-| Priority M (Must Have) | 10 |
+| Total Story Points | 43 |
+| Priority M (Must Have) | 11 |
 | Priority S (Should Have) | 0 |
 | Dependencies | None (True Foundation) |
 

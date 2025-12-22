@@ -33,6 +33,9 @@ export default [
         clearImmediate: 'readonly',
         __DEV__: 'readonly',
         fetch: 'readonly',
+        // Browser/React Native globals
+        performance: 'readonly',
+        AbortController: 'readonly',
         // Jest/testing globals
         jest: 'readonly',
         describe: 'readonly',

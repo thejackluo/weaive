@@ -134,29 +134,6 @@ Users can create, view, edit, and archive goals (needles), with AI assistance fo
 - Update `goals.status` = 'archived'
 - Update `goals.archived_at`
 
----
-
-### US-2.6: Goal Change Strictness
-
-**Priority:** S (Should Have)
-
-**As a** user
-**I want to** control how easily I can change goals
-**So that** I stay committed and don't constantly pivot
-
-**Acceptance Criteria:**
-- [ ] Three modes configurable in Settings:
-  - **Normal:** Changes require justification text
-  - **Strict:** Changes require daily reflection first
-  - **None:** Changes allowed freely
-- [ ] Default: Normal
-- [ ] Mode saved in user preferences
-
-**Data Requirements:**
-- Store in `user_profiles.preferences.goal_change_strictness`
-
----
-
 ## Epic 2 Summary
 
 | ID | Story | Priority | Estimate |
@@ -166,8 +143,10 @@ Users can create, view, edit, and archive goals (needles), with AI assistance fo
 | US-2.3 | Create New Goal (AI) | M | 8 pts |
 | US-2.4 | Edit Goal | M | 5 pts |
 | US-2.5 | Archive Goal | M | 3 pts |
-| US-2.6 | Goal Change Strictness | S | 3 pts |
 
-**Epic Total:** 27 story points
+**Epic Total:** 24 story points
+
+**Changes from Original:**
+- Removed US-2.6 (Goal Change Strictness) - strictness mode integrated into US-2.4
 
 ---
