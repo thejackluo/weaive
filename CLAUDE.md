@@ -61,6 +61,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Use when:** Creating API endpoints, database models, or backend services
 
 **Standards Include:**
+- ✅ **JWT Authentication** - ALL protected endpoints MUST use `Depends(get_current_user)` (Story 0.3)
 - ✅ API endpoint naming (`GET /api/goals`, `POST /api/completions`)
 - ✅ Pydantic request/response models (`{Resource}Create`, `{Resource}Response`)
 - ✅ Database model conventions (`snake_case`, plural tables, soft delete)
@@ -69,12 +70,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ Service layer decision tree (when to create services vs inline logic)
 
 **Quick Checklist:**
+- [ ] **USE `user: dict = Depends(get_current_user)` for ALL protected endpoints**
+- [ ] Extract user ID: `auth_user_id = user["sub"]`
 - [ ] Use `snake_case` for all API params and DB columns
 - [ ] Follow REST naming: `GET /api/{resources}`, `POST /api/{resources}`
 - [ ] Use `{data, meta}` response wrapper format
 - [ ] Create Pydantic models: `{Resource}Create`, `{Resource}Response`
 - [ ] Add error handling with standard codes (`VALIDATION_ERROR`, `NOT_FOUND`, etc.)
 - [ ] Write pytest tests in `tests/test_{resource}_api.py`
+
+**❌ NEVER use placeholder auth:** `auth_user_id = "placeholder_auth_user_id"` is a **CRITICAL SECURITY VULNERABILITY**
 
 **Templates Available:**
 - API endpoint template (FastAPI router with auth, validation, error handling)
@@ -154,6 +159,8 @@ Request → AIOrchestrator (NEW - which product module?)
 ### ❌ What NOT to Do
 
 **DON'T:**
+- ❌ **Use placeholder authentication** - `auth_user_id = "placeholder_..."` is a CRITICAL security vulnerability
+- ❌ Skip JWT middleware (ALWAYS use `Depends(get_current_user)` for protected endpoints)
 - ❌ Create custom navigation patterns (use Story 1.5.1 structure)
 - ❌ Invent new API response formats (use `{data, meta}` wrapper)
 - ❌ Skip error handling (use standard error codes)
