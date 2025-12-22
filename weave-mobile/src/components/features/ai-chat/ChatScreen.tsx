@@ -11,25 +11,10 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  SlideInUp,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import { ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
+import Animated, { FadeIn, FadeInDown, SlideInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-
-import { Text } from '@/design-system';
 import MessageBubble from './MessageBubble';
 import QuickActionChips from './QuickActionChips';
 import MessageInput from './MessageInput';
@@ -52,16 +37,10 @@ export default function ChatScreen() {
   const [showQuickChips, setShowQuickChips] = useState(true);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
   const scrollViewRef = useRef<ScrollView>(null);
-  const queryClient = useQueryClient();
   const streamingMessageIdRef = useRef<string | null>(null);
 
   // Custom hook for AI chat API (non-streaming fallback)
-  const {
-    sendMessage,
-    getUsageStats,
-    conversations,
-    isLoading: isChatLoading,
-  } = useAIChat();
+  const { getUsageStats } = useAIChat();
 
   // Custom hook for streaming AI responses
   const {
@@ -70,7 +49,6 @@ export default function ChatScreen() {
     isStreaming,
     error: streamError,
     metadata: streamMetadata,
-    cancelStream,
   } = useAIChatStream();
 
   // Fetch usage stats
@@ -94,7 +72,8 @@ export default function ChatScreen() {
     } else if (hour < 17) {
       greeting = "Hey there! Ready to crush your goals today? What's on your mind?";
     } else {
-      greeting = "Evening! Let's reflect on your day and plan for tomorrow. What would you like to talk about?";
+      greeting =
+        "Evening! Let's reflect on your day and plan for tomorrow. What would you like to talk about?";
     }
 
     const initialMessage: Message = {
@@ -118,7 +97,8 @@ export default function ChatScreen() {
   useEffect(() => {
     if (isStreaming && streamingContent) {
       // Create or update streaming message
-      const streamingMessageId = streamingMessageIdRef.current || `assistant-streaming-${Date.now()}`;
+      const streamingMessageId =
+        streamingMessageIdRef.current || `assistant-streaming-${Date.now()}`;
       streamingMessageIdRef.current = streamingMessageId;
 
       setMessages((prev) => {
@@ -275,7 +255,7 @@ export default function ChatScreen() {
         onContentSizeChange={scrollToBottom}
         showsVerticalScrollIndicator={false}
       >
-        {messages.map((message, index) => (
+        {messages.map((message) => (
           <Animated.View
             key={message.id}
             entering={
@@ -309,7 +289,7 @@ export default function ChatScreen() {
         onChangeText={setInputValue}
         onSend={handleSendMessage}
         disabled={isRateLimited || isStreaming}
-        placeholder={isRateLimited ? "Rate limit reached" : "Talk to Weave..."}
+        placeholder={isRateLimited ? 'Rate limit reached' : 'Talk to Weave...'}
       />
     </KeyboardAvoidingView>
   );

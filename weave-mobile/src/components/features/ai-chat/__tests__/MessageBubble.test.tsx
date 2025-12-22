@@ -3,7 +3,7 @@
  * RED Phase: Tests written BEFORE implementation
  */
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent, screen } from '@testing-library/react-native';
 import MessageBubble from '../MessageBubble';
 
 describe('MessageBubble Component', () => {
@@ -124,7 +124,8 @@ describe('MessageBubble Component', () => {
     // GIVEN: Long message
     const message = {
       role: 'user' as const,
-      content: 'This is a very long message that should wrap properly within the message bubble without overflowing or breaking the layout in any way.',
+      content:
+        'This is a very long message that should wrap properly within the message bubble without overflowing or breaking the layout in any way.',
       timestamp: '2025-12-22T10:00:00Z',
     };
 

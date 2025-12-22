@@ -11,20 +11,9 @@
  */
 
 import React from 'react';
-import {
-  View,
-  TextInput,
-  Pressable,
-  Text,
-  StyleSheet,
-  Platform,
-} from 'react-native';
+import { View, TextInput, Pressable, Text, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -44,7 +33,7 @@ export default function MessageInput({
   onChangeText,
   onSend,
   disabled = false,
-  placeholder = "Talk to Weave...",
+  placeholder = 'Talk to Weave...',
 }: MessageInputProps) {
   const scale = useSharedValue(1);
   const characterCount = value.length;
@@ -69,12 +58,7 @@ export default function MessageInput({
         {/* Character Counter */}
         {showCounter && (
           <Animated.View style={styles.counterContainer}>
-            <Text
-              style={[
-                styles.counterText,
-                isOverLimit && styles.counterTextError,
-              ]}
-            >
+            <Text style={[styles.counterText, isOverLimit && styles.counterTextError]}>
               {characterCount}/{MAX_CHARACTERS}
             </Text>
           </Animated.View>
@@ -82,10 +66,7 @@ export default function MessageInput({
 
         {/* Text Input */}
         <TextInput
-          style={[
-            styles.input,
-            disabled && styles.inputDisabled,
-          ]}
+          style={[styles.input, disabled && styles.inputDisabled]}
           value={value}
           onChangeText={(text) => {
             // Enforce character limit
@@ -122,17 +103,9 @@ export default function MessageInput({
           style={styles.sendButtonWrapper}
         >
           <Animated.View
-            style={[
-              styles.sendButton,
-              !canSend && styles.sendButtonDisabled,
-              animatedButtonStyle,
-            ]}
+            style={[styles.sendButton, !canSend && styles.sendButtonDisabled, animatedButtonStyle]}
           >
-            <Ionicons
-              name="arrow-up"
-              size={20}
-              color={canSend ? '#ffffff' : '#6b7280'}
-            />
+            <Ionicons name="arrow-up" size={20} color={canSend ? '#ffffff' : '#6b7280'} />
           </Animated.View>
         </Pressable>
       </View>

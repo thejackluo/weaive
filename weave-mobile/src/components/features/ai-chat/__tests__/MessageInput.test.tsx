@@ -3,7 +3,7 @@
  * RED Phase: Tests written BEFORE implementation
  */
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, screen } from '@testing-library/react-native';
 import MessageInput from '../MessageInput';
 
 describe('MessageInput Component', () => {
@@ -84,7 +84,12 @@ describe('MessageInput Component', () => {
     // GIVEN: MessageInput with text
     const mockOnSend = jest.fn();
     const { getByTestId } = render(
-      <MessageInput value="Test message" onChange={jest.fn()} onSend={mockOnSend} disabled={false} />
+      <MessageInput
+        value="Test message"
+        onChange={jest.fn()}
+        onSend={mockOnSend}
+        disabled={false}
+      />
     );
 
     // WHEN: User presses send button
@@ -177,7 +182,12 @@ describe('MessageInput Component', () => {
     // GIVEN: MessageInput with text
     const mockOnSend = jest.fn();
     const { getByTestId } = render(
-      <MessageInput value="Test message" onChange={jest.fn()} onSend={mockOnSend} disabled={false} />
+      <MessageInput
+        value="Test message"
+        onChange={jest.fn()}
+        onSend={mockOnSend}
+        disabled={false}
+      />
     );
 
     // WHEN: User presses Enter
