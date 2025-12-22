@@ -232,9 +232,15 @@ async def send_chat_message(
     except:
         subscription_tier = 'free'
 
-    # Model selection (default: premium Sonnet)
-    # ✅ Fixed: Use claude-3-5-sonnet (3.7 doesn't exist yet)
-    model = 'claude-3-5-sonnet'
+    # Model selection with fallback chain  
+    # ✅ Fixed: Use actual AWS Bedrock model IDs from documentation
+    models_to_try = [
+        'claude-3-5-haiku-20241022',       # Claude 3.5 Haiku (exists in Bedrock)
+        'claude-3-haiku-20240307',         # Claude 3 Haiku (exists in Bedrock) 
+        'gpt-4o-mini',                     # OpenAI fallback
+        'gpt-3.5-turbo'                    # Final OpenAI fallback
+    ]
+    model = models_to_try[0]  # Default to best available model
 
     # Check rate limit BEFORE processing
     rate_limiter.check_rate_limit(
@@ -257,35 +263,49 @@ async def send_chat_message(
         content=request.message
     )
 
-    # Call AI service (uses existing AIService with fallback chain)
-    try:
-        # Build context-aware prompt
-        system_prompt = (
-            "You are Weave, a supportive AI coach helping users achieve their goals. "
-            "Be encouraging, concise, and actionable. Focus on progress and accountability."
-        )
+    # Call AI service with model fallback chain
+    ai_response = None
+    response_text = None
+    tokens_used = 0
+    
+    # Build context-aware prompt
+    system_prompt = (
+        "You are Weave, a supportive AI coach helping users achieve their goals. "
+        "Be encouraging, concise, and actionable. Focus on progress and accountability."
+    )
+    full_prompt = f"{system_prompt}\n\nUser: {request.message}"
+    
+    # Try each model in sequence
+    for i, model_to_try in enumerate(models_to_try):
+        try:
+            logger.info(f"🔄 [MODEL_FALLBACK] Trying model {i+1}/{len(models_to_try)}: {model_to_try}")
+            
+            # Call existing AIService
+            ai_response = ai_service.generate(
+                user_id=str(user_id),
+                user_role='admin' if is_admin else 'user',
+                user_tier=subscription_tier,
+                module='chat',  # ✅ Fixed: Use 'chat' not 'ai_chat' (must match enum in database)
+                prompt=full_prompt,
+                model=model_to_try,
+                max_tokens=500
+            )
 
-        full_prompt = f"{system_prompt}\n\nUser: {request.message}"
-
-        # Call existing AIService
-        ai_response = ai_service.generate(
-            user_id=str(user_id),
-            user_role='admin' if is_admin else 'user',
-            user_tier=subscription_tier,
-            module='chat',  # ✅ Fixed: Use 'chat' not 'ai_chat' (must match enum in database)
-            prompt=full_prompt,
-            model=model,
-            max_tokens=500
-        )
-
-        response_text = ai_response.get('content', 'Sorry, I encountered an issue. Please try again.')
-        tokens_used = ai_response.get('total_tokens', 0)
-
-    except Exception as e:
-        logger.error(f"AI service error for user {user_id}: {e}")
-        # Fallback response (deterministic)
-        response_text = "I'm having trouble responding right now. Please try again in a moment."
-        tokens_used = 0
+            response_text = ai_response.get('content', 'Sorry, I encountered an issue. Please try again.')
+            tokens_used = ai_response.get('total_tokens', 0)
+            
+            logger.info(f"✅ [MODEL_FALLBACK] Success with model: {model_to_try}")
+            model = model_to_try  # Update model for usage tracking
+            break  # Success! Exit the loop
+            
+        except Exception as e:
+            logger.warning(f"⚠️  [MODEL_FALLBACK] Model {model_to_try} failed: {e}")
+            if i == len(models_to_try) - 1:  # Last model failed
+                logger.error(f"💥 [MODEL_FALLBACK] All models failed for user {user_id}")
+                # Fallback response (deterministic)
+                response_text = "I'm having trouble responding right now. Please try again in a moment."
+                tokens_used = 0
+            # Continue to next model
 
     # Save assistant response
     assistant_message_id = save_message(
@@ -374,9 +394,15 @@ async def send_chat_message_stream(
             except:
                 subscription_tier = 'free'
 
-            # Model selection (default: premium Sonnet)
-            # ✅ Fixed: Use claude-3-5-sonnet (3.7 doesn't exist yet)
-            model = 'claude-3-5-sonnet'
+            # Model selection with fallback chain
+            # ✅ Fixed: Use actual AWS Bedrock model IDs from documentation
+            models_to_try = [
+                'claude-3-5-haiku-20241022',       # Claude 3.5 Haiku (exists in Bedrock)
+                'claude-3-haiku-20240307',         # Claude 3 Haiku (exists in Bedrock) 
+                'gpt-4o-mini',                     # OpenAI fallback
+                'gpt-3.5-turbo'                    # Final OpenAI fallback
+            ]
+            model = models_to_try[0]  # Default to best available model
 
             # Check rate limit BEFORE processing
             logger.info(f"[STREAMING] Calling rate limiter with: user_id={user_id}, model={model}, tier={subscription_tier}, is_admin={is_admin}")
@@ -424,7 +450,7 @@ async def send_chat_message_stream(
             )
             full_prompt = f"{system_prompt}\n\nUser: {request.message}"
 
-            # Stream AI response (save message even if client disconnects)
+            # Stream AI response with model fallback chain (save message even if client disconnects)
             full_content = []
             tokens_used = 0
             cost_usd = 0.0
@@ -432,44 +458,56 @@ async def send_chat_message_stream(
             streaming_succeeded = False
 
             try:
-                # Call existing AIService streaming method
-                async for chunk in ai_service.generate_stream(
-                    user_id=str(user_id),
-                    user_role='admin' if is_admin else 'user',
-                    user_tier=subscription_tier,
-                    module='chat',  # ✅ Fixed: Use 'chat' not 'ai_chat' (must match enum in database)
-                    prompt=full_prompt,
-                    model=model,
-                    max_tokens=500
-                ):
-                    if chunk['type'] == 'chunk':
-                        # Stream content chunk to frontend
-                        full_content.append(chunk['content'])
-                        chunk_event = json.dumps({
-                            "type": "chunk",
-                            "content": chunk['content']
-                        })
-                        yield f"data: {chunk_event}\n\n"
+                # Try each model in sequence for streaming
+                for i, model_to_try in enumerate(models_to_try):
+                    try:
+                        logger.info(f"🔄 [STREAMING_FALLBACK] Trying model {i+1}/{len(models_to_try)}: {model_to_try}")
 
-                    elif chunk['type'] == 'done':
-                        # Store final metadata
-                        tokens_used = chunk.get('tokens_used', chunk.get('output_tokens', 0))
-                        cost_usd = chunk.get('cost_usd', 0.0)
-                        run_id = chunk.get('run_id')
-                        streaming_succeeded = True
+                        # Call existing AIService streaming method
+                        async for chunk in ai_service.generate_stream(
+                            user_id=str(user_id),
+                            user_role='admin' if is_admin else 'user',
+                            user_tier=subscription_tier,
+                            module='chat',  # ✅ Fixed: Use 'chat' not 'ai_chat' (must match enum in database)
+                            prompt=full_prompt,
+                            model=model_to_try,
+                            max_tokens=500
+                        ):
+                            if chunk['type'] == 'chunk':
+                                # Stream content chunk to frontend
+                                full_content.append(chunk['content'])
+                                chunk_event = json.dumps({
+                                    "type": "chunk",
+                                    "content": chunk['content']
+                                })
+                                yield f"data: {chunk_event}\n\n"
 
-            except Exception as e:
-                logger.error(f"AI streaming error for user {user_id}: {e}")
-                # Fallback response (deterministic)
-                fallback_text = "I'm having trouble responding right now. Please try again in a moment."
-                full_content = [fallback_text]
+                            elif chunk['type'] == 'done':
+                                # Store final metadata
+                                tokens_used = chunk.get('tokens_used', chunk.get('output_tokens', 0))
+                                cost_usd = chunk.get('cost_usd', 0.0)
+                                run_id = chunk.get('run_id')
+                                streaming_succeeded = True
 
-                # Send fallback as single chunk
-                chunk_event = json.dumps({
-                    "type": "chunk",
-                    "content": fallback_text
-                })
-                yield f"data: {chunk_event}\n\n"
+                        logger.info(f"✅ [STREAMING_FALLBACK] Success with model: {model_to_try}")
+                        model = model_to_try  # Update model for usage tracking
+                        break  # Success! Exit the loop
+
+                    except Exception as e:
+                        logger.warning(f"⚠️  [STREAMING_FALLBACK] Model {model_to_try} failed: {e}")
+                        if i == len(models_to_try) - 1:  # Last model failed
+                            logger.error(f"💥 [STREAMING_FALLBACK] All models failed for user {user_id}")
+                            # Fallback response (deterministic)
+                            fallback_text = "I'm having trouble responding right now. Please try again in a moment."
+                            full_content = [fallback_text]
+
+                            # Send fallback as single chunk
+                            chunk_event = json.dumps({
+                                "type": "chunk",
+                                "content": fallback_text
+                            })
+                            yield f"data: {chunk_event}\n\n"
+                        # Continue to next model
 
             finally:
                 # ALWAYS save assistant message (even if client disconnects mid-stream)
