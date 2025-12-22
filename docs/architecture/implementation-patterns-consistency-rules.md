@@ -124,6 +124,55 @@ const [inputValue, setInputValue] = useState('')
 
 ## Process Patterns
 
+### Authentication & Authorization (Story 0.3)
+
+**ALL protected API endpoints MUST use JWT middleware:**
+
+```python
+from app.core.deps import get_current_user, get_optional_user
+
+# Protected endpoint (requires authentication)
+@router.get("/api/protected-resource")
+async def protected_route(
+    user: dict = Depends(get_current_user),  # ← REQUIRED for protected endpoints
+    db: Client = Depends(get_supabase_client)
+):
+    auth_user_id = user["sub"]  # Extract auth.uid from JWT
+    # ... rest of logic
+
+# Optional authentication (works with or without token)
+@router.get("/api/optional-auth-resource")
+async def optional_auth_route(
+    user: Optional[dict] = Depends(get_optional_user),  # ← For optional auth
+    db: Client = Depends(get_supabase_client)
+):
+    if user:
+        auth_user_id = user["sub"]
+        # Authenticated user logic
+    else:
+        # Anonymous user logic
+```
+
+**Key Points:**
+- `get_current_user()` - Use for ALL protected endpoints (raises 401 if no token)
+- `get_optional_user()` - Use for endpoints that work with or without auth
+- Extract user ID: `auth_user_id = user["sub"]`
+- JWT automatically verified by middleware (HS256, audience="authenticated")
+- Returns 401 for missing/invalid/expired tokens
+
+**❌ NEVER do this:**
+```python
+# BAD - Placeholder auth (security vulnerability)
+auth_user_id = "placeholder_auth_user_id"  # ❌ NEVER use placeholders
+
+# BAD - Manual JWT parsing (use middleware instead)
+token = request.headers.get("Authorization")  # ❌ Don't parse manually
+```
+
+**Reference Implementation:**
+- Middleware: `weave-api/app/core/deps.py:85-220`
+- Examples: `weave-api/app/api/user.py`, `weave-api/app/api/goals/router.py`
+
 ### Error Handling
 ```typescript
 // Error boundaries for crashes
@@ -148,12 +197,13 @@ if (isLoading) return <GoalCardSkeleton />  // Initial load
 ## Enforcement Guidelines
 
 **All AI Agents MUST:**
-1. Use `snake_case` for all database columns and API parameters
-2. Use `PascalCase` for React components and their files
-3. Use the `{data, error, meta}` response wrapper format
-4. Place tests co-located for mobile, in `tests/` for backend
-5. Never UPDATE/DELETE from `subtask_completions`
-6. Transform `snake_case` ↔ `camelCase` at API boundary only
+1. Use `Depends(get_current_user)` for ALL protected API endpoints (Story 0.3)
+2. Use `snake_case` for all database columns and API parameters
+3. Use `PascalCase` for React components and their files
+4. Use the `{data, error, meta}` response wrapper format
+5. Place tests co-located for mobile, in `tests/` for backend
+6. Never UPDATE/DELETE from `subtask_completions`
+7. Transform `snake_case` ↔ `camelCase` at API boundary only
 
 **Verification:**
 - TypeScript strict mode catches naming inconsistencies
