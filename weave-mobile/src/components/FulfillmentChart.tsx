@@ -253,7 +253,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
   const handleViewDayEntries = () => {
     if (selectedDayData) {
       setShowDayDetailsModal(false);
-      router.push(`/history/${selectedDayData.date}`);
+      router.push(`/(tabs)/progress/${selectedDayData.date}`);
     }
   };
 
