@@ -370,9 +370,9 @@ export default function HomeScreen() {
       <Modal visible={showCaptureSheet} animationType="slide" presentationStyle="pageSheet">
         <ProofCaptureSheet
           context={{
-            goal_id: '16111111-1111-1111-1111-111111111111', // Test goal from seed data
+            goal_id: null, // Quick capture - no specific goal binding
             subtask_instance_id: null,
-            bind_description: 'Test workout proof',
+            bind_description: 'Quick capture from home screen',
             local_date: new Date().toISOString().split('T')[0],
           }}
           onSuccess={(result) => {
