@@ -83,14 +83,14 @@ export function VoiceRecorder({
 
   const {
     isRecording,
-    isPaused,
+    isPaused: _isPaused,
     duration,
     metering,
     hasPermission,
     isRequestingPermission,
     error,
     startRecording,
-    pauseRecording,
+    pauseRecording: _pauseRecording,
     stopRecording,
     requestPermissions,
   } = useAudioRecording();
@@ -164,7 +164,7 @@ export function VoiceRecorder({
   const createWaveformBarStyle = (index: number, total: number) => {
     return useAnimatedStyle(() => {
       // Offset each bar slightly for wave effect
-      const offset = (index / total) * 0.3;
+      const _offset = (index / total) * 0.3;
       const amplitude = interpolate(
         waveformAmplitude.value,
         [0, 1],
@@ -225,7 +225,10 @@ export function VoiceRecorder({
           ]
         );
       } else {
-        Alert.alert('Recording Error', err instanceof Error ? err.message : 'Failed to record audio');
+        Alert.alert(
+          'Recording Error',
+          err instanceof Error ? err.message : 'Failed to record audio'
+        );
       }
     }
   }, [

@@ -58,7 +58,7 @@ export function useTranscribeAudio() {
       });
     },
 
-    onSuccess: (data: TranscriptionResponse, variables: TranscribeOptions) => {
+    onSuccess: (data: TranscriptionResponse, _variables: TranscribeOptions) => {
       console.log('[AUDIO_UPLOAD_HOOK] ✅ Transcription successful:', {
         transcript_length: data.transcript.length,
         confidence: data.confidence,
@@ -135,7 +135,9 @@ export async function processOfflineQueue(): Promise<void> {
     const successful = results.filter((r) => r.status === 'fulfilled').length;
     const failed = results.filter((r) => r.status === 'rejected').length;
 
-    console.log(`[AUDIO_UPLOAD_HOOK] ✅ Processed offline queue: ${successful} successful, ${failed} failed`);
+    console.log(
+      `[AUDIO_UPLOAD_HOOK] ✅ Processed offline queue: ${successful} successful, ${failed} failed`
+    );
 
     // Clear queue
     await AsyncStorage.removeItem(OFFLINE_QUEUE_KEY);
@@ -237,8 +239,13 @@ export function useRetranscribeCapture() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ captureId, provider }: { captureId: string; provider?: 'assemblyai' | 'whisper' }) =>
-      sttApi.retranscribeCapture(captureId, provider),
+    mutationFn: ({
+      captureId,
+      provider,
+    }: {
+      captureId: string;
+      provider?: 'assemblyai' | 'whisper';
+    }) => sttApi.retranscribeCapture(captureId, provider),
 
     onMutate: async ({ captureId }) => {
       console.log('[AUDIO_UPLOAD_HOOK] 🔄 Re-transcribing capture:', captureId);

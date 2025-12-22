@@ -23,31 +23,21 @@ export default function AttachProofScreen() {
 
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           {/* Title */}
-          <RNText style={styles.title}>
-            Attach Proof
-          </RNText>
+          <RNText style={styles.title}>Attach Proof</RNText>
 
           {/* Epic */}
-          <RNText style={styles.epic}>
-            Epic 3: Daily Actions & Proof
-          </RNText>
+          <RNText style={styles.epic}>Epic 3: Daily Actions & Proof</RNText>
 
           {/* Story */}
-          <RNText style={styles.story}>
-            Story 3.4: Attach Proof to Bind
-          </RNText>
+          <RNText style={styles.story}>Story 3.4: Attach Proof to Bind</RNText>
 
           {/* Status Badge */}
           <View style={styles.badge}>
-            <RNText style={styles.badgeText}>
-              Coming Soon
-            </RNText>
+            <RNText style={styles.badgeText}>Coming Soon</RNText>
           </View>
 
           {/* Description */}
-          <RNText style={styles.description}>
-            This page has not been developed
-          </RNText>
+          <RNText style={styles.description}>This page has not been developed</RNText>
           <RNText style={styles.subdescription}>
             Check back soon as we continue building Weave.
           </RNText>
