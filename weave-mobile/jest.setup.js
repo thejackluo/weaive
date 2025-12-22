@@ -1,6 +1,20 @@
-/* global jest, global */
+/* global jest, global, process */
 // Jest setup file for React Native Testing Library
 // Note: @testing-library/react-native v12.4+ includes Jest matchers by default
+
+// Set environment variables for tests
+process.env.API_BASE_URL = 'http://localhost:8000';
+
+// Mock API utilities to provide test environment
+jest.mock('./src/utils/api', () => ({
+  getApiBaseUrl: () => 'http://localhost:8000',
+  apiClient: {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+  },
+}));
 
 // Mock NativeWind - Jest doesn't process NativeWind's Babel transformations
 // This prevents "require is not defined" errors from nativewind/babel plugin
@@ -83,6 +97,16 @@ jest.mock('expo-haptics', () => ({
   notificationAsync: jest.fn(),
   selectionAsync: jest.fn(),
 }));
+
+jest.mock('expo-blur', () => {
+  const React = require('react');
+  return {
+    BlurView: React.forwardRef((props, ref) => {
+      const { View } = require('react-native');
+      return React.createElement(View, { ...props, ref, testID: 'blur-view' });
+    }),
+  };
+});
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
