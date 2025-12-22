@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Weavelight Documentation Viewer Server
+Documentation Viewer Server
 
 Dynamic HTTP server with folder-structure-based organization
 Run from project root: python dev/docs-viewer/scripts/server.py
@@ -155,7 +155,7 @@ def main():
     # Create server
     with socketserver.TCPServer(("", PORT), DocsViewerHandler) as httpd:
         print("\n" + "="*44)
-        print(" Weavelight Documentation Viewer")
+        print(" Documentation Viewer")
         print("="*44 + "\n")
         print(f"Server:      http://localhost:{PORT}")
         print(f"Project:     {project_root}")

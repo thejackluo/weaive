@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weavelight Documentation</title>
+    <title>Documentation Viewer</title>
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -764,6 +764,111 @@
             color: var(--text-secondary);
         }
 
+        /* Table of Contents */
+        .toc-container {
+            position: fixed;
+            right: 32px;
+            top: 120px;
+            width: 240px;
+            max-height: calc(100vh - 160px);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-y: auto;
+            display: none;
+            z-index: 50;
+        }
+
+        .toc-container.visible {
+            display: block;
+        }
+
+        .toc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .toc-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .toc-toggle {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s;
+        }
+
+        .toc-toggle:hover {
+            color: var(--text-primary);
+        }
+
+        .toc-toggle-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc-item {
+            margin: 0;
+            padding: 0;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 6px 8px 6px 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            transition: all 0.15s;
+            cursor: pointer;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            border-left-color: var(--text-tertiary);
+        }
+
+        .toc-link.active {
+            color: var(--primary);
+            border-left-color: var(--primary);
+            background: var(--primary-subtle);
+        }
+
+        .toc-link.level-1 {
+            padding-left: 12px;
+            font-weight: 600;
+        }
+
+        .toc-link.level-2 {
+            padding-left: 24px;
+        }
+
+        .toc-link.level-3 {
+            padding-left: 36px;
+            font-size: 12px;
+        }
+
         /* Markdown */
         .markdown-content {
             font-size: 16px;
@@ -1212,6 +1317,22 @@
             .content-meta {
                 flex-wrap: wrap;
             }
+
+            .toc-container {
+                right: 12px;
+                left: 12px;
+                width: auto;
+                top: auto;
+                bottom: 80px;
+                max-height: 50vh;
+            }
+        }
+
+        @media (max-width: 1400px) {
+            .toc-container {
+                width: 200px;
+                right: 16px;
+            }
         }
     </style>
 </head>
@@ -1222,7 +1343,7 @@
             <div class="sidebar-header">
                 <div class="logo">
                     <i data-lucide="book-open" class="logo-icon"></i>
-                    <span class="logo-text">Weavelight Docs</span>
+                    <span class="logo-text">Documentation</span>
                 </div>
             </div>
 
@@ -1316,6 +1437,17 @@
                 <i data-lucide="x" style="width: 14px; height: 14px;"></i>
             </button>
         </div>
+
+        <!-- Table of Contents -->
+        <div class="toc-container" id="toc-container">
+            <div class="toc-header">
+                <span class="toc-title">On This Page</span>
+                <button class="toc-toggle" onclick="toggleTOC()" title="Hide table of contents">
+                    <i data-lucide="x" class="toc-toggle-icon"></i>
+                </button>
+            </div>
+            <ul class="toc-list" id="toc-list"></ul>
+        </div>
     </div>
 
     <script>
@@ -1331,6 +1463,8 @@
             totalLines: 0,
             totalReadingTime: 0
         };
+        let tocVisible = false;
+        let currentTOCHeadings = [];
 
         // LocalStorage keys
         const STORAGE_KEYS = {
@@ -1458,6 +1592,31 @@
             localStorage.setItem(STORAGE_KEYS.HIGHLIGHTS, JSON.stringify(allHighlights));
         }
 
+        // Simple hash function for content identification
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return hash.toString(36);
+        }
+
+        // Get context hash for a text node (paragraph or block)
+        function getContextHash(textNode) {
+            // Find parent paragraph or block element
+            let context = textNode.parentElement;
+            while (context && !['P', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TD'].includes(context.tagName)) {
+                context = context.parentElement;
+            }
+            if (!context || context.id === 'markdown-content') {
+                // Fallback: use parent element
+                context = textNode.parentElement;
+            }
+            return simpleHash(context.textContent.trim());
+        }
+
         // Calculate reading time (words per minute)
         function calculateReadingTime(text) {
             const wordsPerMinute = 200;
@@ -1540,7 +1699,7 @@
 
                 // Calculate time remaining
                 const timeRemaining = Math.ceil(currentDocReadingTime * (1 - scrollPercent / 100));
-                
+
                 // Show indicator if scrolled past 5%
                 if (scrollPercent > 5 && timeRemaining > 0) {
                     readingTimeIndicator.classList.add('visible');
@@ -1554,6 +1713,9 @@
                 } else {
                     readingTimeIndicator.classList.remove('visible');
                 }
+
+                // Update TOC active state
+                updateTOCActiveState();
 
                 lucide.createIcons();
             });
@@ -1905,6 +2067,10 @@
                                 <i data-lucide="clock" class="meta-badge-icon"></i>
                                 ${readingTime} min read
                             </span>
+                            <button class="meta-badge" onclick="toggleTOC()" style="cursor: pointer; border: 1px solid var(--border-subtle); background: var(--bg-tertiary);">
+                                <i data-lucide="list" class="meta-badge-icon"></i>
+                                Table of Contents
+                            </button>
                         </div>
                     </div>
                     <div class="progress-header">
@@ -1975,6 +2141,12 @@
 
                 // Setup text selection handler
                 setupTextSelection();
+
+                // Generate table of contents
+                setTimeout(() => {
+                    generateTOC();
+                    updateTOCActiveState();
+                }, 100);
 
                 document.querySelectorAll('.nav-item').forEach(item => {
                     item.classList.toggle('active', item.dataset.path === path);
@@ -2107,47 +2279,101 @@
             document.getElementById('highlight-toolbar').classList.remove('visible');
         }
 
-        // Save current highlights
+        // Save current highlights with context hashing
         function saveCurrentHighlights() {
             if (!currentDocPath) return;
-            
+
             const markdownContent = document.getElementById('markdown-content');
             if (!markdownContent) return;
-            
+
             const highlights = [];
             markdownContent.querySelectorAll('mark.highlight').forEach((mark, index) => {
-                // Get text path (simple approach using text content)
-                const text = mark.textContent;
+                // Get text content
+                const text = mark.textContent.trim();
                 const colorClass = Array.from(mark.classList).find(c => c.startsWith('highlight-') && c !== 'highlight');
                 const color = colorClass ? colorClass.replace('highlight-', '') : 'yellow';
-                
+
+                // Get context for persistent matching
+                const textNode = mark.firstChild;
+                let contextHash = null;
+                let contextText = '';
+
+                if (textNode) {
+                    try {
+                        // Find parent block element
+                        let context = mark.parentElement;
+                        while (context && !['P', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TD', 'DIV'].includes(context.tagName)) {
+                            context = context.parentElement;
+                        }
+                        if (context && context.id !== 'markdown-content') {
+                            contextText = context.textContent.trim();
+                            contextHash = simpleHash(contextText);
+                        }
+                    } catch (e) {
+                        console.warn('Could not get context for highlight', e);
+                    }
+                }
+
                 highlights.push({
                     text: text,
                     color: color,
+                    contextHash: contextHash,
+                    contextSnippet: contextText.substring(0, 100), // First 100 chars for debugging
                     index: index
                 });
             });
-            
+
             saveHighlights(currentDocPath, highlights);
         }
 
-        // Restore highlights
+        // Restore highlights with context-aware matching
         function restoreHighlights(path) {
             const highlights = getHighlights(path);
             if (highlights.length === 0) return;
-            
+
             const markdownContent = document.getElementById('markdown-content');
             if (!markdownContent) return;
-            
-            // Simple approach: find and highlight text
+
+            // Build context map for efficient lookup
+            const contextMap = new Map();
+            const allBlocks = markdownContent.querySelectorAll('p, li, blockquote, h1, h2, h3, h4, h5, h6, td, div');
+
+            allBlocks.forEach(block => {
+                const text = block.textContent.trim();
+                if (text.length > 0) {
+                    const hash = simpleHash(text);
+                    if (!contextMap.has(hash)) {
+                        contextMap.set(hash, []);
+                    }
+                    contextMap.get(hash).push(block);
+                }
+            });
+
+            // Restore each highlight
             highlights.forEach(highlight => {
-                highlightText(markdownContent, highlight.text, highlight.color);
+                let restored = false;
+
+                // Strategy 1: Try to find by context hash first (most reliable)
+                if (highlight.contextHash && contextMap.has(highlight.contextHash)) {
+                    const blocks = contextMap.get(highlight.contextHash);
+                    for (const block of blocks) {
+                        if (highlightTextInElement(block, highlight.text, highlight.color)) {
+                            restored = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Strategy 2: Fallback to global search if context not found
+                if (!restored) {
+                    highlightTextInElement(markdownContent, highlight.text, highlight.color);
+                }
             });
         }
 
-        // Helper to highlight text in DOM
-        function highlightText(container, searchText, color) {
-            if (!searchText) return;
+        // Helper to highlight text in a specific element (returns true if successful)
+        function highlightTextInElement(container, searchText, color) {
+            if (!searchText) return false;
             
             const walker = document.createTreeWalker(
                 container,
@@ -2177,23 +2403,114 @@
             for (let textNode of textNodes) {
                 const text = textNode.textContent;
                 const index = text.indexOf(searchText);
-                
+
                 if (index !== -1) {
                     const range = document.createRange();
                     range.setStart(textNode, index);
                     range.setEnd(textNode, index + searchText.length);
-                    
+
                     const mark = document.createElement('mark');
                     mark.className = `highlight highlight-${color}`;
-                    
+
                     try {
                         range.surroundContents(mark);
-                        break; // Only highlight first occurrence
+                        return true; // Success
                     } catch (e) {
                         console.warn('Could not restore highlight:', e);
+                        return false;
                     }
                 }
             }
+
+            return false; // Not found
+        }
+
+        // Toggle table of contents visibility
+        function toggleTOC() {
+            tocVisible = !tocVisible;
+            const tocContainer = document.getElementById('toc-container');
+            if (tocVisible) {
+                tocContainer.classList.add('visible');
+            } else {
+                tocContainer.classList.remove('visible');
+            }
+        }
+
+        // Generate table of contents from headings
+        function generateTOC() {
+            const markdownContent = document.getElementById('markdown-content');
+            if (!markdownContent) return;
+
+            const headings = markdownContent.querySelectorAll('h1, h2, h3');
+            const tocList = document.getElementById('toc-list');
+            tocList.innerHTML = '';
+            currentTOCHeadings = [];
+
+            if (headings.length === 0) {
+                document.getElementById('toc-container').classList.remove('visible');
+                tocVisible = false;
+                return;
+            }
+
+            headings.forEach((heading, index) => {
+                const level = parseInt(heading.tagName.substring(1));
+                const text = heading.textContent.replace('#', '').trim();
+                const id = heading.id;
+
+                currentTOCHeadings.push({ id, element: heading });
+
+                const li = document.createElement('li');
+                li.className = 'toc-item';
+
+                const link = document.createElement('a');
+                link.className = `toc-link level-${level}`;
+                link.textContent = text;
+                link.dataset.headingId = id;
+                link.onclick = (e) => {
+                    e.preventDefault();
+                    heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    updateTOCActiveState();
+                };
+
+                li.appendChild(link);
+                tocList.appendChild(li);
+            });
+
+            // Show TOC if there are headings
+            if (headings.length > 0) {
+                document.getElementById('toc-container').classList.add('visible');
+                tocVisible = true;
+            }
+
+            lucide.createIcons();
+        }
+
+        // Update TOC active state based on scroll position
+        function updateTOCActiveState() {
+            if (!tocVisible || currentTOCHeadings.length === 0) return;
+
+            const mainContent = document.getElementById('main-content');
+            const scrollTop = mainContent.scrollTop;
+
+            let activeIndex = 0;
+
+            // Find the currently visible heading
+            for (let i = currentTOCHeadings.length - 1; i >= 0; i--) {
+                const heading = currentTOCHeadings[i].element;
+                if (heading.offsetTop - 100 <= scrollTop) {
+                    activeIndex = i;
+                    break;
+                }
+            }
+
+            // Update active class
+            document.querySelectorAll('.toc-link').forEach((link, index) => {
+                if (index === activeIndex) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
         }
 
         // Search
