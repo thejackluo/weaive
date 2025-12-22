@@ -75,7 +75,7 @@ week-0-stories:
   0-6-ai-service-abstraction: done              # 3 pts ✅ (AWS Bedrock primary, dual cost tracking, 22 tests passed)
   0-7-test-infrastructure: done                 # 3 pts ✅ (71 tests passing, 76% backend coverage)
   0-8-error-handling-framework: backlog         # 3 pts (DEFERRED - stretch goal)
-  0-9-ai-powered-image-service: in-progress     # 8 pts ⚡ EXPANDED (2025-12-21) - Full image service + Gemini 3.0 Flash (5 images/day free tier)
+  0-9-ai-powered-image-service: review          # 8 pts ⚡ EXPANDED (2025-12-21) - Full image service + Gemini 3.0 Flash (5 images/day free tier)
   0-10-memory-system-architecture: backlog      # 2 pts (Simple PostgreSQL TEXT[] arrays, no vector DB for MVP)
   0-11-voice-stt-infrastructure: ready-for-dev  # 5 pts ⚡ NEW (2025-12-21) - AssemblyAI primary + Whisper fallback
   week-0-retrospective: completed               # Retrospective completed 2025-12-20
