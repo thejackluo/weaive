@@ -418,6 +418,140 @@
             height: 16px;
         }
 
+        /* Status & Priority Controls */
+        .doc-controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-btn, .priority-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 5px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .status-btn:hover, .priority-btn:hover {
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .status-btn.active, .priority-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .status-btn.status-in-progress.active {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+
+        .status-btn.status-archived.active {
+            background: var(--text-tertiary);
+            border-color: var(--text-tertiary);
+        }
+
+        .status-btn.status-finished.active {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .priority-btn.priority-high.active {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .priority-btn.priority-medium.active {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+
+        .priority-btn.priority-low.active {
+            background: var(--text-tertiary);
+            border-color: var(--text-tertiary);
+        }
+
+        /* Status badges in navigation */
+        .nav-item-badges {
+            position: absolute;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .status-badge {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-badge.in-progress {
+            background: var(--accent-orange);
+        }
+
+        .status-badge.archived {
+            background: var(--text-tertiary);
+        }
+
+        .status-badge.finished {
+            background: var(--accent-green);
+        }
+
+        .priority-indicator {
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .priority-indicator.high {
+            color: #ef4444;
+        }
+
+        .priority-indicator.medium {
+            color: var(--accent-orange);
+        }
+
+        .priority-indicator.low {
+            color: var(--text-tertiary);
+        }
+
+        /* Folder completion badge */
+        .folder-completion-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: var(--accent-green);
+            color: white;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
         /* Scroll Reading Progress */
         .scroll-progress-bar {
             position: fixed;
@@ -1202,7 +1336,9 @@
         const STORAGE_KEYS = {
             COMPLETED: 'docs_completed',
             HIGHLIGHTS: 'docs_highlights',
-            DOC_STATS: 'docs_stats'
+            STATUS: 'docs_status', // in-progress, archived, finished
+            PRIORITY: 'docs_priority', // high, medium, low
+            FOLDER_STATUS: 'folder_status' // folder completion tracking
         };
 
         // Get completed documents from localStorage
@@ -1216,12 +1352,95 @@
             const completedDocs = getCompletedDocs();
             if (completed) {
                 completedDocs[path] = new Date().toISOString();
+                // Also set status to finished
+                setDocStatus(path, 'finished');
             } else {
                 delete completedDocs[path];
             }
             localStorage.setItem(STORAGE_KEYS.COMPLETED, JSON.stringify(completedDocs));
             updateProgressStats();
+            checkFolderCompletion();
             renderNav(); // Re-render to show checkmarks
+        }
+
+        // Get document status (in-progress, archived, finished)
+        function getDocStatus(path) {
+            const data = localStorage.getItem(STORAGE_KEYS.STATUS);
+            const allStatuses = data ? JSON.parse(data) : {};
+            return allStatuses[path] || null;
+        }
+
+        // Set document status
+        function setDocStatus(path, status) {
+            const data = localStorage.getItem(STORAGE_KEYS.STATUS);
+            const allStatuses = data ? JSON.parse(data) : {};
+            if (status) {
+                allStatuses[path] = { status, updatedAt: new Date().toISOString() };
+            } else {
+                delete allStatuses[path];
+            }
+            localStorage.setItem(STORAGE_KEYS.STATUS, JSON.stringify(allStatuses));
+            checkFolderCompletion();
+            renderNav();
+        }
+
+        // Get document priority (high, medium, low)
+        function getDocPriority(path) {
+            const data = localStorage.getItem(STORAGE_KEYS.PRIORITY);
+            const allPriorities = data ? JSON.parse(data) : {};
+            return allPriorities[path] || 'medium'; // default to medium
+        }
+
+        // Set document priority
+        function setDocPriority(path, priority) {
+            const data = localStorage.getItem(STORAGE_KEYS.PRIORITY);
+            const allPriorities = data ? JSON.parse(data) : {};
+            allPriorities[path] = priority;
+            localStorage.setItem(STORAGE_KEYS.PRIORITY, JSON.stringify(allPriorities));
+            renderNav();
+        }
+
+        // Check if all docs in a folder are completed
+        function checkFolderCompletion() {
+            const completedDocs = getCompletedDocs();
+            const folderStatus = {};
+
+            function checkFolder(structure, folderPath = '') {
+                let totalFiles = 0;
+                let completedFiles = 0;
+
+                for (const file of structure.files) {
+                    totalFiles++;
+                    if (completedDocs[file.path]) {
+                        completedFiles++;
+                    }
+                }
+
+                for (const folderName in structure.folders) {
+                    const subPath = folderPath ? `${folderPath}/${folderName}` : folderName;
+                    const subResult = checkFolder(structure.folders[folderName], subPath);
+                    totalFiles += subResult.total;
+                    completedFiles += subResult.completed;
+                }
+
+                const isComplete = totalFiles > 0 && totalFiles === completedFiles;
+                if (folderPath) {
+                    folderStatus[folderPath] = { total: totalFiles, completed: completedFiles, isComplete };
+                }
+
+                return { total: totalFiles, completed: completedFiles };
+            }
+
+            checkFolder(docsStructure);
+            localStorage.setItem(STORAGE_KEYS.FOLDER_STATUS, JSON.stringify(folderStatus));
+            return folderStatus;
+        }
+
+        // Get folder completion status
+        function getFolderStatus(folderPath) {
+            const data = localStorage.getItem(STORAGE_KEYS.FOLDER_STATUS);
+            const allStatuses = data ? JSON.parse(data) : {};
+            return allStatuses[folderPath] || null;
         }
 
         // Get highlights for a document
@@ -1340,47 +1559,25 @@
             });
         }
 
-        // Cache document stats
-        async function cacheDocumentStats() {
-            // Try to load from localStorage first
-            const cached = localStorage.getItem(STORAGE_KEYS.DOC_STATS);
-            if (cached) {
-                docStats = JSON.parse(cached);
-                updateDocStats();
-                return;
-            }
-
-            // Calculate stats for all documents
-            let totalWords = 0;
-            let totalLines = 0;
-            let totalReadingTime = 0;
-
-            for (const doc of allDocs) {
-                try {
-                    const fullPath = `../../${doc.path}`;
-                    const response = await fetch(fullPath);
-                    if (response.ok) {
-                        const markdown = await response.text();
-                        const stats = calculateDocStats(markdown);
-                        totalWords += stats.words;
-                        totalLines += stats.lines;
-                        totalReadingTime += stats.readingTime;
-                    }
-                } catch (error) {
-                    console.warn(`Could not load stats for ${doc.path}`);
+        // Load document stats from server (always fresh)
+        async function loadDocumentStats() {
+            try {
+                const response = await fetch('/api/stats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    docStats = {
+                        totalDocs: stats.totalFiles,
+                        totalWords: stats.totalWords,
+                        totalLines: stats.totalLines,
+                        totalReadingTime: stats.totalReadingTime
+                    };
+                    updateDocStats();
+                } else {
+                    console.warn('Could not load stats from server');
                 }
+            } catch (error) {
+                console.error('Error loading stats:', error);
             }
-
-            docStats = {
-                totalDocs: allDocs.length,
-                totalWords,
-                totalLines,
-                totalReadingTime
-            };
-
-            // Cache for future sessions
-            localStorage.setItem(STORAGE_KEYS.DOC_STATS, JSON.stringify(docStats));
-            updateDocStats();
         }
 
         // Fetch documents dynamically from server
@@ -1399,7 +1596,7 @@
                 renderWelcome();
                 
                 // Calculate and display stats
-                cacheDocumentStats();
+                loadDocumentStats();
                 
                 // Setup scroll tracking
                 setupScrollTracking();
@@ -1455,14 +1652,26 @@
                     
                     const subFolderId = `${folderId}-${folderName}`;
                     const isExpanded = expandedFolders.has(subFolderId);
-                    
+
+                    // Check folder completion
+                    const folderPath = subFolderId.replace('root-', '');
+                    const folderStatus = getFolderStatus(folderPath);
+
                     // Folder header
                     const folderHeader = document.createElement('div');
                     folderHeader.className = 'nav-folder-header';
+                    let completionBadge = '';
+                    if (folderStatus && folderStatus.isComplete) {
+                        completionBadge = '<span class="folder-completion-badge">✓</span>';
+                    } else if (folderStatus && folderStatus.completed > 0) {
+                        completionBadge = `<span class="folder-completion-badge" style="background: var(--accent-orange)">${folderStatus.completed}/${folderStatus.total}</span>`;
+                    }
+
                     folderHeader.innerHTML = `
                         <i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="folder-chevron"></i>
                         <i data-lucide="folder" class="nav-item-icon"></i>
                         <span>${folderName}</span>
+                        ${completionBadge}
                     `;
                     folderHeader.onclick = () => toggleFolder(subFolderId);
                     
@@ -1492,9 +1701,26 @@
                     }
                     item.dataset.path = file.path;
                     item.style.paddingLeft = `${(level * 12) + 24}px`; // Extra indent for files
+
+                    // Get status and priority for badges
+                    const docStatus = getDocStatus(file.path);
+                    const docPriority = getDocPriority(file.path);
+
+                    let badgesHtml = '<div class="nav-item-badges">';
+                    // Status badge
+                    if (docStatus && docStatus.status) {
+                        badgesHtml += `<div class="status-badge ${docStatus.status}"></div>`;
+                    }
+                    // Priority indicator
+                    if (docPriority && docPriority !== 'medium') {
+                        badgesHtml += `<span class="priority-indicator ${docPriority}">${docPriority === 'high' ? '!' : docPriority === 'low' ? '↓' : ''}</span>`;
+                    }
+                    badgesHtml += '</div>';
+
                     item.innerHTML = `
                         <i data-lucide="${file.icon}" class="nav-item-icon"></i>
                         <span>${file.title}</span>
+                        ${badgesHtml}
                     `;
                     item.onclick = () => {
                         loadDoc(file.path);
@@ -1610,7 +1836,11 @@
                 // Check if completed
                 const completedDocs = getCompletedDocs();
                 const isCompleted = !!completedDocs[path];
-                
+
+                // Get status and priority
+                const docStatus = getDocStatus(path);
+                const docPriority = getDocPriority(path);
+
                 // Extract YAML frontmatter (handle different line endings)
                 let frontmatter = '';
                 const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/m;
@@ -1688,6 +1918,38 @@
                             <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}" class="complete-btn-icon"></i>
                             ${isCompleted ? 'Completed' : 'Mark as Complete'}
                         </button>
+                    </div>
+                    <div class="doc-controls">
+                        <div class="control-group">
+                            <span class="control-label">Status</span>
+                            <button class="status-btn status-in-progress ${docStatus?.status === 'in-progress' ? 'active' : ''}"
+                                    onclick="setDocStatus('${path}', '${docStatus?.status === 'in-progress' ? '' : 'in-progress'}'); loadDoc('${path}')">
+                                In Progress
+                            </button>
+                            <button class="status-btn status-archived ${docStatus?.status === 'archived' ? 'active' : ''}"
+                                    onclick="setDocStatus('${path}', '${docStatus?.status === 'archived' ? '' : 'archived'}'); loadDoc('${path}')">
+                                Archived
+                            </button>
+                            <button class="status-btn status-finished ${docStatus?.status === 'finished' ? 'active' : ''}"
+                                    onclick="setDocStatus('${path}', '${docStatus?.status === 'finished' ? '' : 'finished'}'); loadDoc('${path}')">
+                                Finished
+                            </button>
+                        </div>
+                        <div class="control-group">
+                            <span class="control-label">Priority</span>
+                            <button class="priority-btn priority-high ${docPriority === 'high' ? 'active' : ''}"
+                                    onclick="setDocPriority('${path}', 'high'); loadDoc('${path}')">
+                                High
+                            </button>
+                            <button class="priority-btn priority-medium ${docPriority === 'medium' ? 'active' : ''}"
+                                    onclick="setDocPriority('${path}', 'medium'); loadDoc('${path}')">
+                                Medium
+                            </button>
+                            <button class="priority-btn priority-low ${docPriority === 'low' ? 'active' : ''}"
+                                    onclick="setDocPriority('${path}', 'low'); loadDoc('${path}')">
+                                Low
+                            </button>
+                        </div>
                     </div>
                     ${frontmatterHtml}
                     <div class="markdown-content" id="markdown-content">${html}</div>

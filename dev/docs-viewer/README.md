@@ -1,6 +1,6 @@
 # 📚 Weavelight Documentation Viewer
 
-Modern internal development tool for viewing project documentation with a beautiful UI.
+Modern internal development tool for viewing project documentation with a beautiful UI and project management features.
 
 ## Quick Start
 
@@ -16,22 +16,34 @@ Modern internal development tool for viewing project documentation with a beauti
 # Node.js directly
 node dev/docs-viewer/scripts/server.js
 
+# Node.js with custom port
+node dev/docs-viewer/scripts/server.js --port 8080
+
 # Python directly
 python dev/docs-viewer/scripts/server.py
 ```
 
-Then open: **http://localhost:3030**
+Then open: **http://localhost:3030** (or your custom port)
 
 ## Features
 
+### Core Documentation Features
 - **Dynamic Discovery** - Automatically finds all markdown files in `docs/` folder
 - **Auto-Categorization** - Smart categorization based on folder structure
 - **No Configuration** - Add/remove docs, changes reflect immediately
+- **Real-Time Stats** - Server calculates accurate word/line counts and reading time
 - **Reading Time Estimation** - Shows estimated reading time for each document
 - **Scroll-Based Progress** - See time remaining as you scroll through documents
-- **Comprehensive Stats** - Total words, lines, reading time across all docs
-- **Progress Tracking** - Mark documents as complete and track your progress
 - **Persistent Highlighting** - Highlight text in multiple colors with localStorage persistence
+
+### Project Management Features ✨ NEW
+- **Doc Status Workflow** - Track documents as "In Progress", "Archived", or "Finished"
+- **Priority Levels** - Mark documents as High (red !), Medium (orange), or Low (gray ↓)
+- **Folder Completion Tracking** - Automatic badges showing progress (e.g., "3/10" or "✓" when complete)
+- **Visual Indicators** - Color-coded status badges in navigation for quick overview
+- **Progress Tracking** - Mark documents as complete and track your overall progress
+
+### UI/UX Features
 - **Minimal Design** - Mintlify-inspired clean, professional aesthetic
 - **Professional Icons** - Lucide icon library with smart icon detection
 - **Monochrome Palette** - Pure black with strategic blue accent
@@ -98,11 +110,57 @@ Edit CSS variables in `index.html` (around line 15):
 
 ### Change Port
 
-Edit the PORT variable in server files:
+Use the `--port` or `-p` flag when starting the server:
 
-```javascript
-const PORT = 3030;  // Change to your preferred port
+```bash
+node dev/docs-viewer/scripts/server.js --port 8080
 ```
+
+Or set the default by editing the PORT variable in `scripts/server.js` (line 15).
+
+## Project Management Features ✨ NEW
+
+### 📊 Document Status Workflow
+
+Track the lifecycle of your documentation:
+- **In Progress** (🟠) - Currently working on this document
+- **Archived** (⚫) - Document is archived or deprecated
+- **Finished** (🟢) - Document is complete and reviewed
+
+**How to use:**
+1. Open any document
+2. Click status buttons below the header
+3. Badges appear in navigation sidebar
+
+### 🎯 Priority Levels
+
+Organize your reading queue:
+- **High Priority** (red !) - Urgent/critical documents
+- **Medium Priority** (orange) - Standard priority (default)
+- **Low Priority** (gray ↓) - Nice-to-read, not urgent
+
+**How to use:**
+1. Open any document
+2. Click priority buttons (High/Medium/Low)
+3. Priority indicators show in sidebar navigation
+
+### 📁 Folder Completion Tracking
+
+Automatic progress tracking at folder level:
+- Shows completion count: **"3/10"** (3 completed out of 10 docs)
+- Shows **"✓"** badge when all docs in folder are completed
+- Updates automatically when you mark docs as complete
+
+**Visual indicators:**
+- 🟠 Orange badge = In progress (some docs completed)
+- 🟢 Green checkmark = All docs completed
+
+### 📈 Benefits
+
+- **Never lose track** of what you're reading
+- **Prioritize work** effectively with visual indicators
+- **See progress** at a glance with folder completion badges
+- **All data saved locally** in your browser (localStorage)
 
 ## Enhanced Reading Features (v3.0)
 
