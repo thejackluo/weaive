@@ -508,6 +508,7 @@ class AIService:
                     'user_id': user_id,
                     'module': module,
                     'input_hash': input_hash,
+                    'prompt_version': f'{module}-v1.0',  # ✅ Fixed: Added prompt_version (required NOT NULL field)
                     'provider': provider,
                     'status': 'running',
                     'model': 'unknown',  # Will update on success
