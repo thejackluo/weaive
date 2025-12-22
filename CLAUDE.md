@@ -329,6 +329,7 @@ weavelight/
 │   │   └── ux.md                # UX design system
 │   │
 │   ├── dev/                     # Developer guides
+│   │   ├── ai-service-integration-guide.md  # Integrating AI services (Story 0.11)
 │   │   ├── design-system-guide.md
 │   │   ├── docs-viewer-guide.md
 │   │   ├── git-workflow-guide.md
@@ -386,6 +387,7 @@ weavelight/
 | Architecture decisions | `docs/architecture/core-architectural-decisions.md` | Tech stack, patterns, rationale |
 | Database schema | `docs/idea/backend.md` (lines 200-800) | Complete schema with relationships |
 | API patterns | `docs/architecture/implementation-patterns-consistency-rules.md` | Code conventions and guardrails |
+| **Integrating AI services** | `docs/dev/ai-service-integration-guide.md` | Environment config, provider abstraction, fallback chains |
 | Design system usage | `docs/dev/design-system-guide.md` | Components, tokens, examples |
 | Git workflow | `docs/dev/git-workflow-guide.md` | Branching, commits, PRs |
 | **ATDD checklist for a story** | `docs/testing/atdd/atdd-checklist-story-[X.X].md` | Acceptance criteria and test scenarios |
