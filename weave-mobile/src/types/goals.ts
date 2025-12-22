@@ -84,8 +84,51 @@ export interface GoalDetailResponse {
  * API Error Response
  */
 export interface ApiErrorResponse {
-  error: {
+  error?: {
     code: string;
     message: string;
   };
+  detail?: string; // FastAPI validation error format
+}
+
+/**
+ * Q-Goal Creation Request
+ */
+export interface QGoalCreate {
+  title: string;
+  metric_name?: string;
+  target_value?: number;
+  current_value?: number;
+  unit?: string;
+}
+
+/**
+ * Bind Creation Request
+ */
+export interface BindCreate {
+  title: string;
+  description?: string;
+  frequency_type: 'daily' | 'weekly' | 'custom';
+  frequency_value: number; // 1-7
+}
+
+/**
+ * Goal Creation Request (US-2.3: Create New Goal)
+ */
+export interface CreateGoalRequest {
+  title: string;
+  description?: string; // "Why it matters"
+  priority?: 'low' | 'medium' | 'high';
+  qgoals?: QGoalCreate[];
+  binds?: BindCreate[];
+}
+
+/**
+ * Goal Update Request (US-2.4: Edit Needle)
+ */
+export interface UpdateGoalRequest {
+  title?: string;
+  description?: string;
+  priority?: 'low' | 'medium' | 'high';
+  status?: 'active' | 'archived';
 }

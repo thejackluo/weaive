@@ -50,6 +50,11 @@ export function DashboardScreen() {
     router.push('/(tabs)/settings');
   };
 
+  const handleAddGoal = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/needles/create');
+  };
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background.primary }]}
@@ -140,11 +145,23 @@ export function DashboardScreen() {
             ))}
           </View>
         ) : goals.length === 0 ? (
-          <Card variant="glass" style={styles.emptyCard}>
-            <Text variant="textBase" style={[styles.emptyText, { color: colors.text.secondary }]}>
-              No active needles yet
-            </Text>
-          </Card>
+          <>
+            <Card variant="glass" style={styles.emptyCard}>
+              <Text variant="textBase" style={[styles.emptyText, { color: colors.text.secondary }]}>
+                No active needles yet
+              </Text>
+            </Card>
+            <Pressable onPress={handleAddGoal} style={styles.addGoalButton}>
+              <Card variant="glass" style={styles.addGoalCard}>
+                <View style={styles.addGoalContent}>
+                  <Ionicons name="add-circle-outline" size={24} color={colors.accent[500]} />
+                  <Text variant="textBase" weight="semibold" style={{ color: colors.accent[500] }}>
+                    Add Your First Needle
+                  </Text>
+                </View>
+              </Card>
+            </Pressable>
+          </>
         ) : (
           <View style={styles.needlesContainer}>
             {goals.slice(0, 3).map((goal) => (
@@ -178,6 +195,20 @@ export function DashboardScreen() {
                 </Card>
               </Pressable>
             ))}
+
+            {/* Add Goal button if less than 3 active goals */}
+            {goals.length < 3 && (
+              <Pressable onPress={handleAddGoal} style={styles.addGoalButton}>
+                <Card variant="glass" style={styles.addGoalCard}>
+                  <View style={styles.addGoalContent}>
+                    <Ionicons name="add-circle-outline" size={20} color={colors.accent[500]} />
+                    <Text variant="textBase" weight="medium" style={{ color: colors.accent[500] }}>
+                      Add Needle
+                    </Text>
+                  </View>
+                </Card>
+              </Pressable>
+            )}
           </View>
         )}
       </View>
@@ -515,5 +546,20 @@ const styles = StyleSheet.create({
   },
   skeletonLine: {
     borderRadius: 4,
+  },
+  addGoalButton: {
+    width: '100%',
+    marginTop: 12,
+  },
+  addGoalCard: {
+    padding: 0,
+    overflow: 'hidden',
+  },
+  addGoalContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    gap: 8,
   },
 });
