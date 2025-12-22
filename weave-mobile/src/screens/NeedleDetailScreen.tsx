@@ -64,13 +64,26 @@ export function NeedleDetailScreen() {
   const handleEditToggle = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (isEditMode) {
+      // Client-side validation before saving
+      const trimmedTitle = editedTitle.trim();
+
+      if (!trimmedTitle) {
+        Alert.alert('Validation Error', 'Goal title cannot be empty.');
+        return;
+      }
+
+      if (trimmedTitle.length > 200) {
+        Alert.alert('Validation Error', 'Goal title must be 200 characters or less.');
+        return;
+      }
+
       // Save changes
       updateGoalMutation.mutate(
         {
           goalId: id || '',
           data: {
-            title: editedTitle,
-            description: editedWhy,
+            title: trimmedTitle,
+            description: editedWhy.trim(),
           },
         },
         {
@@ -98,12 +111,9 @@ export function NeedleDetailScreen() {
         onPress: () => {
           archiveGoalMutation.mutate(id || '', {
             onSuccess: () => {
-              Alert.alert('Success', 'Goal archived successfully!', [
-                {
-                  text: 'OK',
-                  onPress: () => router.back(),
-                },
-              ]);
+              // Navigate back immediately without showing success alert
+              // The mutation already invalidates the cache, so the list will update
+              router.back();
             },
             onError: (error) => {
               Alert.alert('Error', error.message || 'Failed to archive goal. Please try again.');
@@ -367,10 +377,15 @@ export function NeedleDetailScreen() {
               size="md"
               onPress={handleArchive}
               style={[styles.archiveButton, { borderColor: colors.rose[500] }]}
+              disabled={archiveGoalMutation.isPending}
             >
-              <Text variant="textBase" weight="medium" style={{ color: colors.rose[500] }}>
-                Archive Needle
-              </Text>
+              {archiveGoalMutation.isPending ? (
+                <ActivityIndicator size="small" color={colors.rose[500]} />
+              ) : (
+                <Text variant="textBase" weight="medium" style={{ color: colors.rose[500] }}>
+                  Archive Needle
+                </Text>
+              )}
             </Button>
           </View>
         )}
