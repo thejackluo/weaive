@@ -190,28 +190,47 @@ if (isLoading) return <GoalCardSkeleton />  // Initial load
 - Database model template (SQLAlchemy `BaseModel` with timestamps)
 - Pydantic schema template (request/response models)
 
-### AI Services Standardization (Story 1.5.3)
-**When:** Integrating AI features (text generation, image analysis, voice transcription)
-**Reference:** `docs/stories/1-5-3-ai-services-standardization.md` + `docs/dev/ai-services-guide.md`
+### AI Module Orchestration (Story 1.5.3)
+
+**When:** Implementing AI features (goal breakdown, triad planning, AI chat, insights)
+
+**Reference:** `docs/stories/1-5-3-ai-module-orchestration.md` + `docs/dev/ai-services-guide.md`
+
+**Architecture Flow:**
+```
+Request → AIOrchestrator (NEW - which product module?)
+       → AIModule (NEW - what context to build?)
+       → AIService (EXISTS - which AI provider?)
+       → AIProvider (EXISTS - API call implementation)
+```
+
 **Patterns:**
-- Unified `AIProviderBase` abstraction for all AI modalities
-- Provider fallback chains: Primary → Secondary → Graceful degradation
-- Cost tracking: Log ALL AI calls to `ai_runs` table
-- Rate limiting: Check `daily_aggregates` before AI calls
-- React Native hooks: `useAIChat()`, `useImageAnalysis()`, `useVoiceTranscription()`
+- **Use AIOrchestrator** for all AI requests (routes to correct product module)
+- **Use AI Modules** for product features (Onboarding Coach, Triad Planner, Dream Self Advisor, etc.)
+- **Use ContextBuilder** for user state assembly (identity, goals, history, patterns)
+- **Use existing AIService** for provider calls (DO NOT bypass orchestrator to call AIService directly)
+- Cost tracking and rate limiting handled automatically by existing AIService
 
-**Provider Decision Tree:**
-| Use Case | Primary Provider | Fallback | Cost |
-|----------|------------------|----------|------|
-| Text Generation (routine) | GPT-4o-mini | Claude 3.7 Sonnet | $0.15/$0.60/MTok |
-| Complex Reasoning | Claude 3.7 Sonnet | GPT-4o | $3.00/$15.00/MTok |
-| Image Analysis | Gemini 3.0 Flash | GPT-4o Vision | $0.02/image |
-| Voice Transcription | AssemblyAI | Whisper API | $0.15/hr |
+**Module → Operation Mapping:**
+| Operation Type | Module | Epic/Story Usage |
+|----------------|--------|------------------|
+| `generate_goal_breakdown` | Onboarding Coach | Stories 1.8, 2.3 |
+| `generate_triad` | Triad Planner | Story 4.3 |
+| `generate_recap` | Daily Recap | Story 4.3 |
+| `chat_response` | Dream Self Advisor | Stories 6.1, 6.2 |
+| `generate_weekly_insights` | AI Insights Engine | Story 6.4 |
 
-**Before Writing Code:**
-1. Identify work type: Frontend? Backend? AI?
-2. Read relevant standardization story
-3. Use templates and conventions
-4. Don't reinvent patterns
+**Quick Checklist:**
+- [ ] Use `AIOrchestrator.execute_ai_operation()` for all AI requests
+- [ ] Specify operation_type (maps to correct module)
+- [ ] Let module build context automatically (don't manually assemble)
+- [ ] Use standard React hooks: `useAIChat()`, `useImageAnalysis()`, `useVoiceTranscription()`
+- [ ] DO NOT call AIService directly (use orchestrator)
+
+**Before Writing AI Feature Code:**
+1. Read Story 1.5.3 to understand module orchestration
+2. Identify which AI module handles your operation
+3. Use AIOrchestrator.execute_ai_operation() pattern
+4. Use appropriate React Native hook for frontend
 
 ---
