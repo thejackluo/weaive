@@ -40,6 +40,7 @@ export default [
         FormData: 'readonly',
         URLSearchParams: 'readonly',
         FileReader: 'readonly',
+        XMLHttpRequest: 'readonly',
         // Jest/testing globals
         jest: 'readonly',
         describe: 'readonly',
@@ -99,6 +100,7 @@ export default [
         __filename: 'readonly',
         process: 'readonly',
         console: 'readonly',
+        jest: 'readonly',
       },
       ecmaVersion: 2021,
       sourceType: 'module',
@@ -112,6 +114,7 @@ export default [
       'build',
       '.vscode',
       'tailwind.config.js',  // CommonJS config file
+      'jest.setup.js',  // Jest setup with class field syntax
       'src/_archive/**',  // Archived code from old implementations
     ],
   },

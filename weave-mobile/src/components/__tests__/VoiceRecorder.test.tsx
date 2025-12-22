@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, screen } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { VoiceRecorder } from '../VoiceRecorder';
 import * as Audio from 'expo-av';
 
