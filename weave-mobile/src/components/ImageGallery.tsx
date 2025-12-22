@@ -16,7 +16,10 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useImageList } from '../hooks/useImageList';
-import { Capture } from '../types/captures';
+import type { Capture } from '../types/captures';
+
+// Type for captures with signed URLs (returned by API)
+type CaptureWithUrl = Capture & { signed_url: string };
 
 interface ImageGalleryProps {
   onImagePress: (capture: Capture) => void;
@@ -47,7 +50,7 @@ export function ImageGallery({
   // Flatten all pages into single array for FlatList
   const captures = data?.pages.flatMap((page) => page.data) ?? [];
 
-  const renderImage = ({ item }: { item: Capture }) => (
+  const renderImage = ({ item }: { item: CaptureWithUrl }) => (
     <TouchableOpacity
       onPress={() => onImagePress(item)}
       style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, margin: 4 }}
