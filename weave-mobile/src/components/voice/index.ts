@@ -19,5 +19,8 @@ export type { AudioPlayerProps } from '../AudioPlayer';
 export { VoiceRecordSheet } from '../VoiceRecordSheet';
 export type { VoiceRecordSheetProps } from '../VoiceRecordSheet';
 
+export { VoiceRecordModal } from '../VoiceRecordModal';
+export type { VoiceRecordModalProps } from '../VoiceRecordModal';
+
 export { RateLimitIndicator } from '../RateLimitIndicator';
 export type { RateLimitIndicatorProps } from '../RateLimitIndicator';
