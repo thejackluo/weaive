@@ -17,6 +17,8 @@ Note: Uses lazy imports to avoid hanging on google.generativeai initialization
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .gemini_vision_provider import GeminiVisionProvider
+    from .openai_vision_provider import OpenAIVisionProvider
     from .vision_service import (
         VisionAnalysisResult,
         VisionProvider,
@@ -24,8 +26,6 @@ if TYPE_CHECKING:
         VisionService,
         calculate_cost,
     )
-    from .gemini_vision_provider import GeminiVisionProvider
-    from .openai_vision_provider import OpenAIVisionProvider
 
 
 def __getattr__(name):

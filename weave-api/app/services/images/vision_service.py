@@ -11,10 +11,8 @@ This service follows the provider abstraction pattern from Story 0.6, enabling:
 - Graceful degradation when AI unavailable
 """
 
-import base64
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 

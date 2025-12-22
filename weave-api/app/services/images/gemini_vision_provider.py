@@ -12,13 +12,12 @@ Capabilities:
 - Quality scoring (1-5 rating)
 """
 
-import base64
 import json
 import logging
 import os
 import time
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
