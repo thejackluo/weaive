@@ -92,9 +92,10 @@ class AssemblyAIProvider(STTProvider):
 
             # Wrap bytes in BytesIO with filename (AssemblyAI SDK needs .name for format detection)
             # This matches the pattern used by Whisper provider and is required for proper upload
-            # Note: audio_file is now MP3 format after conversion in transcribe.py
+            # Note: audio_file is now MP3 or WAV format after conversion in transcribe.py
+            # Use WAV extension as it's the guaranteed fallback format
             audio_buffer = io.BytesIO(audio_file)
-            audio_buffer.name = "audio.mp3"  # AssemblyAI will detect format from extension
+            audio_buffer.name = "audio.wav"  # AssemblyAI will detect format from extension
 
             logger.info(f"[ASSEMBLYAI] Created BytesIO buffer with name: {audio_buffer.name}")
 

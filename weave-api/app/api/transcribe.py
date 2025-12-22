@@ -273,15 +273,15 @@ async def log_ai_run(
 
 async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "audio") -> Tuple[bytes, Optional[str]]:
     """
-    Convert audio to MP3 format using ffmpeg.
+    Convert audio to MP3 or WAV format using ffmpeg.
 
     Fixes iOS/Expo Audio compatibility issues where non-standard Apple codecs
     are rejected by Whisper and AssemblyAI APIs.
 
     Process:
     1. Write audio bytes to temp file (preserves binary integrity)
-    2. Convert with ffmpeg to MP3 with speech-optimized settings
-    3. Read converted bytes
+    2. Try MP3 conversion first (best compression)
+    3. Fall back to WAV if MP3 encoding not available
     4. Return converted bytes or original on failure
 
     Args:
@@ -290,7 +290,7 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
 
     Returns:
         tuple: (converted_bytes, error_message)
-        - Success: (mp3_bytes, None)
+        - Success: (mp3_bytes or wav_bytes, None)
         - Failure: (original_bytes, error_string)
 
     Raises:
@@ -300,25 +300,64 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
         # Get bundled ffmpeg binary from imageio-ffmpeg package
         # This works cross-platform (Windows, Linux, Mac) without system installation
         ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
-        logger.info(f"[FFMPEG] Using bundled ffmpeg binary: {ffmpeg_exe}")
+        logger.info(f"[FFMPEG] Using ffmpeg binary: {ffmpeg_exe}")
         logger.info(f"[FFMPEG] Converting audio: {len(audio_bytes)} bytes from {original_filename}")
 
-        # Create temp files for input and output
-        with tempfile.NamedTemporaryFile(suffix='.input', delete=False) as input_file, \
-             tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as output_file:
+        # Validate audio_bytes before processing
+        if not audio_bytes or len(audio_bytes) == 0:
+            logger.error(f"[FFMPEG] Received empty audio_bytes!")
+            return audio_bytes, "Empty audio data received"
 
-            input_path = input_file.name
-            output_path = output_file.name
+        # Check magic bytes to verify it's actually audio
+        magic_bytes = audio_bytes[:16] if len(audio_bytes) >= 16 else audio_bytes
+        logger.info(f"[FFMPEG] Audio magic bytes (hex): {magic_bytes.hex()}")
 
+        # Create temp files - use delete=False and close explicitly for Windows compatibility
+        # Windows doesn't allow other processes to open files while Python has them open
+        input_file = tempfile.NamedTemporaryFile(suffix='.m4a', delete=False)
+        output_file = tempfile.NamedTemporaryFile(suffix='.mp3', delete=False)
+
+        input_path = input_file.name
+        output_path = output_file.name
+
+        try:
             # Write input bytes
-            input_file.write(audio_bytes)
+            logger.info(f"[FFMPEG] Writing {len(audio_bytes)} bytes to temp file: {input_path}")
+            bytes_written = input_file.write(audio_bytes)
             input_file.flush()
+            logger.info(f"[FFMPEG] Wrote {bytes_written} bytes, flushing and closing...")
 
-            logger.info(f"[FFMPEG] Input temp file: {input_path}")
-            logger.info(f"[FFMPEG] Output temp file: {output_path}")
+            # CRITICAL: Close the file explicitly so ffmpeg can open it (Windows requirement)
+            input_file.close()
+            output_file.close()
+
+            # Verify temp file was created and has data
+            import os
+            if not os.path.exists(input_path):
+                logger.error(f"[FFMPEG] Temp file doesn't exist after writing: {input_path}")
+                return audio_bytes, "Failed to create temp file"
+
+            file_size = os.path.getsize(input_path)
+            logger.info(f"[FFMPEG] Temp file verified: {input_path} ({file_size} bytes)")
+
+            if file_size != len(audio_bytes):
+                logger.error(f"[FFMPEG] Size mismatch! Expected {len(audio_bytes)}, got {file_size}")
+                return audio_bytes, f"Temp file size mismatch: {file_size} != {len(audio_bytes)}"
+
+            logger.info(f"[FFMPEG] Input temp file ready: {input_path}")
+            logger.info(f"[FFMPEG] Output temp file ready: {output_path}")
+
+        except Exception as write_error:
+            logger.error(f"[FFMPEG] Failed to write temp file: {write_error}")
+            try:
+                input_file.close()
+                output_file.close()
+            except:
+                pass
+            return audio_bytes, f"Temp file write failed: {str(write_error)}"
 
         # Convert using ffmpeg (optimized for speech transcription)
-        result = subprocess.run([
+        ffmpeg_cmd = [
             ffmpeg_exe,                # Use bundled ffmpeg binary
             '-i', input_path,          # Input file
             '-codec:a', 'libmp3lame',  # MP3 encoder
@@ -326,23 +365,65 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
             '-ar', '16000',            # 16kHz sample rate (optimal for speech)
             '-ac', '1',                # Mono (reduces file size, good for speech)
             '-y',                      # Overwrite output without asking
+            '-loglevel', 'error',      # Only show errors, not version info
             output_path                # Output file
-        ], capture_output=True, timeout=30, text=True)
+        ]
+
+        logger.info(f"[FFMPEG] Running command: {' '.join(ffmpeg_cmd[:3])}... (full command logged at debug level)")
+        logger.debug(f"[FFMPEG] Full command: {' '.join(ffmpeg_cmd)}")
+
+        result = subprocess.run(ffmpeg_cmd, capture_output=True, timeout=30, text=True)
 
         # Check if conversion succeeded
         if result.returncode != 0:
-            error_msg = result.stderr[:500] if result.stderr else "Unknown ffmpeg error"
-            logger.error(f"[FFMPEG] Conversion failed (code {result.returncode}): {error_msg}")
+            # Log FULL stderr (no truncation) to see the actual error
+            logger.error(f"[FFMPEG] MP3 conversion failed (exit code {result.returncode})")
+            logger.error(f"[FFMPEG] STDERR (full): {result.stderr}")
+            logger.error(f"[FFMPEG] STDOUT (full): {result.stdout}")
 
-            # Clean up temp files
+            # Try WAV fallback (doesn't require MP3 encoder)
+            logger.info(f"[FFMPEG] Trying WAV fallback (no encoding required)...")
+
             import os
+            wav_output = output_path.replace('.mp3', '.wav')
+
+            wav_cmd = [
+                ffmpeg_exe,
+                '-i', input_path,
+                '-ar', '16000',            # 16kHz sample rate
+                '-ac', '1',                # Mono
+                '-y',
+                '-loglevel', 'error',
+                wav_output
+            ]
+
+            logger.debug(f"[FFMPEG] WAV command: {' '.join(wav_cmd)}")
+            wav_result = subprocess.run(wav_cmd, capture_output=True, timeout=30, text=True)
+
+            if wav_result.returncode != 0:
+                logger.error(f"[FFMPEG] WAV fallback also failed (exit code {wav_result.returncode})")
+                logger.error(f"[FFMPEG] WAV STDERR: {wav_result.stderr}")
+
+                # Clean up temp files
+                try:
+                    os.remove(input_path)
+                    os.remove(output_path)
+                    os.remove(wav_output)
+                except Exception:
+                    pass
+
+                error_summary = result.stderr[:200] if result.stderr else "Unknown ffmpeg error"
+                return audio_bytes, f"ffmpeg failed (code {result.returncode}): {error_summary}"
+
+            # WAV conversion succeeded!
+            logger.info(f"[FFMPEG] ✅ WAV fallback successful")
+            output_path = wav_output  # Use WAV file
+
+            # Clean up MP3 attempt
             try:
-                os.remove(input_path)
-                os.remove(output_path)
+                os.remove(input_path.replace('.input', '.mp3') if '.input' in input_path else output_path.replace('.wav', '.mp3'))
             except Exception:
                 pass
-
-            return audio_bytes, f"ffmpeg conversion failed: {error_msg}"
 
         # Read converted audio
         with open(output_path, 'rb') as f:
@@ -352,10 +433,10 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
         logger.info(f"[FFMPEG] Compression ratio: {len(converted_bytes)/len(audio_bytes)*100:.1f}%")
 
         # Clean up temp files
-        import os
         try:
             os.remove(input_path)
             os.remove(output_path)
+            logger.info(f"[FFMPEG] Cleaned up temp files")
         except Exception as e:
             logger.warning(f"[FFMPEG] Failed to clean temp files: {e}")
 
@@ -363,10 +444,26 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
 
     except subprocess.TimeoutExpired:
         logger.error(f"[FFMPEG] Conversion timeout (>30s)")
+        # Clean up temp files on timeout
+        try:
+            import os
+            os.remove(input_path)
+            os.remove(output_path)
+        except:
+            pass
         return audio_bytes, "ffmpeg timeout"
 
     except Exception as e:
         logger.error(f"[FFMPEG] Unexpected error: {str(e)}", exc_info=True)
+        # Try to clean up temp files on error
+        try:
+            import os
+            if 'input_path' in locals():
+                os.remove(input_path)
+            if 'output_path' in locals():
+                os.remove(output_path)
+        except:
+            pass
         return audio_bytes, f"Conversion error: {str(e)}"
 
 
