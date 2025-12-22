@@ -1,5 +1,10 @@
 # Cross-platform script to remove .venv and run the development server
 # Works on Windows PowerShell
+# Usage: .\run-dev.ps1 [-Port 8002]
+
+param(
+    [int]$Port = 8002
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -22,8 +27,8 @@ if (Test-Path ".venv") {
 
 Write-Host ""
 Write-Host "Starting development server..." -ForegroundColor Cyan
-Write-Host '   Command: uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8002' -ForegroundColor Gray
+Write-Host "   Command: uv run uvicorn app.main:app --reload --host 0.0.0.0 --port $Port" -ForegroundColor Gray
 Write-Host ""
 
 # Run the uvicorn server
-& uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
+& uv run uvicorn app.main:app --reload --host 0.0.0.0 --port $Port
