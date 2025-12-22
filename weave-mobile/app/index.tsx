@@ -27,7 +27,7 @@ export default function Index() {
 
   // Testing Mode: Bypass auth guards during development
   // Set EXPO_PUBLIC_DEV_SKIP_AUTH=true in .env to enable
-  const devSkipAuth = __DEV__ && Constants.expoConfig?.extra?.devSkipAuth === true;
+  const devSkipAuth = __DEV__ && process.env.EXPO_PUBLIC_DEV_SKIP_AUTH === 'true';
 
   if (devSkipAuth) {
     return (
