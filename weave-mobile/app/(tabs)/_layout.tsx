@@ -22,6 +22,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Text } from '@/design-system';
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
  * Center AI Button Component
@@ -300,6 +301,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
  */
 export default function TabLayout() {
   const [aiChatVisible, setAIChatVisible] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const openAIChat = () => {
     setAIChatVisible(true);
@@ -317,8 +319,8 @@ export default function TabLayout() {
           tabBarActiveTintColor: '#3B72F6',
           tabBarInactiveTintColor: '#6B7280',
           tabBarStyle: {
-            height: 49,
-            paddingBottom: 4,
+            height: 49 + insets.bottom,
+            paddingBottom: insets.bottom > 0 ? insets.bottom : 4,
             paddingTop: 4,
             backgroundColor: '#0a0a0a',
             borderTopColor: '#1f1f1f',
