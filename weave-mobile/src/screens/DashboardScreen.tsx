@@ -12,33 +12,52 @@
  */
 
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Pressable,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Text, Card } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useActiveGoals } from '@/hooks/useActiveGoals';
+import { useUserStats } from '@/hooks/useUserStats';
 import { Ionicons } from '@expo/vector-icons';
+import { ConsistencyHeatmap } from '@/components/ConsistencyHeatmap';
+import { FulfillmentChart } from '@/components/FulfillmentChart';
+import { WeaveCharacter } from '@/components/WeaveCharacter';
+import { HistoryList } from '@/components/HistoryList';
 
 type ConsistencyFilter = 'Overall' | 'Needle' | 'Bind' | 'Thread';
-type TimeframeOption = '7d' | '2w' | '1m' | '90d';
+type TimeframeOption = '7d' | '2w' | '1m';
 
 export function DashboardScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { data: goalsData, isLoading } = useActiveGoals();
+  const { data: userStatsData, isLoading: isStatsLoading } = useUserStats();
 
   const [consistencyFilter, setConsistencyFilter] = useState<ConsistencyFilter>('Overall');
-  const [timeframe, setTimeframe] = useState<TimeframeOption>('7d');
+  const [consistencyTimeframe, setConsistencyTimeframe] = useState<TimeframeOption>('7d');
+  const [fulfillmentTimeframe, setFulfillmentTimeframe] = useState<TimeframeOption>('7d');
+
+  // History filters
+  const [historyTimeframe, setHistoryTimeframe] = useState<'days' | 'weeks' | 'months'>('days');
+  const [historyType, setHistoryType] = useState<'all' | 'threads' | 'binds' | 'weave_chats'>(
+    'all'
+  );
+  const [historySearch, setHistorySearch] = useState('');
 
   const goals = goalsData?.data || [];
 
-  // Mock data for MVP - will be replaced with real data
-  const userLevel = 2;
-  const userStreak = 12;
-  const consistencyPercentage = 73;
-  const consistencyTrend = '+17%';
-  const averageFulfillment = 7.7;
+  // User stats from API (with fallback to defaults)
+  const userLevel = userStatsData?.data?.level || 1;
+  const userStreak = userStatsData?.data?.current_streak || 0;
+  const characterState = userStatsData?.data?.weave_character_state || 'strand';
 
   const handleNeedlePress = (goalId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -63,27 +82,43 @@ export function DashboardScreen() {
     >
       {/* Header Section */}
       <View style={styles.header}>
-        {/* Left: Level */}
-        <Text variant="textBase" weight="semibold" style={styles.levelText}>
-          Level {userLevel}
-        </Text>
-
-        {/* Center: Weave Character Visualization (Placeholder) */}
-        <View style={styles.weaveCharacter}>
-          <View style={[styles.weaveCircle, { borderColor: colors.violet[500] }]}>
-            <Text variant="textSm" style={{ color: colors.violet[500] }}>
-              Strand
-            </Text>
+        {/* Left: Level + Progress Bar + Streak */}
+        <View style={styles.headerLeft}>
+          {/* Level text */}
+          <Text variant="textSm" style={{ color: colors.text.secondary }}>
+            Level {userLevel}
+          </Text>
+          {/* Level progress bar */}
+          <View style={styles.levelBarBackground}>
+            <View
+              style={[
+                styles.levelBarFill,
+                {
+                  backgroundColor: colors.accent[500],
+                  width: `${(userLevel % 10) * 10 || 5}%`, // Progress within current level
+                },
+              ]}
+            />
           </View>
-        </View>
-
-        {/* Right: Streak + Profile */}
-        <View style={styles.headerRight}>
+          {/* Streak badge */}
           <View style={styles.streakBadge}>
             <Text variant="textSm" weight="semibold">
               {userStreak} 🔥
             </Text>
           </View>
+        </View>
+
+        {/* Center: Weave Character Visualization */}
+        <View style={styles.weaveCharacterContainer}>
+          {isStatsLoading ? (
+            <ActivityIndicator size="small" color={colors.accent[500]} />
+          ) : (
+            <WeaveCharacter characterState={characterState} size={64} />
+          )}
+        </View>
+
+        {/* Right: Profile */}
+        <View style={styles.headerRight}>
           <Pressable
             onPress={handleProfilePress}
             style={[styles.profileButton, { backgroundColor: colors.accent[500] }]}
@@ -215,160 +250,122 @@ export function DashboardScreen() {
 
       {/* Overall Consistency Section */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text variant="textLg" weight="semibold">
-            Overall Consistency
-          </Text>
-          <Pressable
-            style={styles.timeframeDropdown}
-            onPress={() => {
-              Haptics.selectionAsync();
-              // Cycle through timeframe options
-              const options: TimeframeOption[] = ['7d', '2w', '1m', '90d'];
-              const currentIndex = options.indexOf(timeframe);
-              const nextIndex = (currentIndex + 1) % options.length;
-              setTimeframe(options[nextIndex]);
-            }}
-          >
-            <Text variant="textSm" color="secondary">
-              {timeframe}
-            </Text>
-            <Ionicons name="chevron-down" size={16} color={colors.text.secondary} />
-          </Pressable>
-        </View>
-
-        {/* Consistency percentage */}
-        <View style={styles.consistencyStats}>
-          <Text variant="displayLg" weight="bold">
-            {consistencyPercentage}%
-          </Text>
-          <Text variant="textBase" style={[styles.trendIndicator, { color: colors.emerald[500] }]}>
-            {consistencyTrend}
-          </Text>
-        </View>
-
-        {/* Filter tabs */}
-        <View style={styles.filterTabs}>
-          {(['Overall', 'Needle', 'Bind', 'Thread'] as ConsistencyFilter[]).map((filter) => (
-            <Pressable
-              key={filter}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setConsistencyFilter(filter);
-              }}
-              style={[
-                styles.filterTab,
-                consistencyFilter === filter && [
-                  styles.filterTabActive,
-                  { backgroundColor: colors.accent[500] },
-                ],
-              ]}
-            >
-              <Text
-                variant="textSm"
-                weight={consistencyFilter === filter ? 'semibold' : 'regular'}
-                style={{
-                  color: consistencyFilter === filter ? colors.text.primary : colors.text.muted,
-                }}
-              >
-                {filter}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Visualization placeholder */}
-        <Card variant="glass" style={styles.visualizationCard}>
-          <Text variant="textBase" style={[styles.placeholderText, { color: '#F5F5F5' }]}>
-            {timeframe === '7d' ? '7-day table view' : 'Heat map visualization'}
-          </Text>
-          <Text variant="textSm" style={[styles.placeholderSubtext, { color: '#D4D4D4' }]}>
-            Visualization coming soon
-          </Text>
-        </Card>
-
-        {/* AI Insight card placeholder */}
-        <Card variant="glass" style={styles.insightCard}>
-          <View style={styles.insightContent}>
-            <Ionicons name="sparkles" size={20} color={colors.violet[400]} />
-            <Text variant="textSm" style={[styles.insightText, { color: colors.text.secondary }]}>
-              AI insights coming soon
-            </Text>
-          </View>
-        </Card>
+        {/* Consistency Heatmap (contains title, percentage, filters, grid, and insight) */}
+        <ConsistencyHeatmap
+          timeframe={consistencyTimeframe}
+          filterType={consistencyFilter.toLowerCase() as 'overall' | 'needle' | 'bind' | 'thread'}
+          onFilterChange={(filter) => {
+            Haptics.selectionAsync();
+            setConsistencyFilter(
+              (filter.charAt(0).toUpperCase() + filter.slice(1)) as ConsistencyFilter
+            );
+          }}
+          onTimeframeChange={(timeframe) => {
+            Haptics.selectionAsync();
+            setConsistencyTimeframe(timeframe);
+          }}
+        />
       </View>
 
       {/* Average Fulfillment Section */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text variant="textLg" weight="semibold">
-            Average Fulfillment
-          </Text>
-          <Pressable
-            style={styles.timeframeDropdown}
-            onPress={() => {
-              Haptics.selectionAsync();
-              // Cycle through timeframe options
-              const options: TimeframeOption[] = ['7d', '2w', '1m', '90d'];
-              const currentIndex = options.indexOf(timeframe);
-              const nextIndex = (currentIndex + 1) % options.length;
-              setTimeframe(options[nextIndex]);
-            }}
-          >
-            <Text variant="textSm" color="secondary">
-              {timeframe}
-            </Text>
-            <Ionicons name="chevron-down" size={16} color={colors.text.secondary} />
-          </Pressable>
-        </View>
-
-        {/* Fulfillment score */}
-        <View style={styles.consistencyStats}>
-          <Text variant="displayLg" weight="bold">
-            {averageFulfillment}
-          </Text>
-          <Text variant="textSm" color="secondary">
-            / 10
-          </Text>
-        </View>
-
-        {/* Chart placeholder */}
-        <Card variant="glass" style={styles.visualizationCard}>
-          <Text
-            variant="textBase"
-            style={[styles.placeholderText, { color: colors.text.secondary }]}
-          >
-            Line chart with 7-day rolling average
-          </Text>
-          <Text variant="textSm" style={[styles.placeholderSubtext, { color: colors.text.muted }]}>
-            Chart coming soon
-          </Text>
-        </Card>
-
-        {/* AI Insight card placeholder */}
-        <Card variant="glass" style={styles.insightCard}>
-          <View style={styles.insightContent}>
-            <Ionicons name="sparkles" size={20} color={colors.violet[400]} />
-            <Text variant="textSm" style={[styles.insightText, { color: colors.text.secondary }]}>
-              AI insights coming soon
-            </Text>
-          </View>
-        </Card>
+        {/* Fulfillment Chart */}
+        <FulfillmentChart
+          timeframe={fulfillmentTimeframe}
+          onTimeframeChange={(timeframe) => {
+            Haptics.selectionAsync();
+            setFulfillmentTimeframe(timeframe);
+          }}
+        />
       </View>
 
       {/* History Section */}
       <View style={[styles.section, styles.lastSection]}>
-        <Text variant="textLg" weight="semibold" style={styles.sectionTitle}>
-          History
-        </Text>
-
-        <Card variant="glass" style={styles.historyCard}>
+        <Card variant="glass" style={styles.historyCardContainer}>
+          {/* Title */}
           <Text
-            variant="textBase"
-            style={[styles.placeholderText, { color: colors.text.secondary }]}
+            variant="textLg"
+            weight="semibold"
+            style={[styles.historyTitle, { color: '#FFFFFF' }]}
           >
-            No entries found
+            History
           </Text>
+
+          {/* Timeframe filters */}
+          <View style={styles.filterRow}>
+            {['days', 'weeks', 'months'].map((timeframe) => (
+              <Pressable
+                key={timeframe}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setHistoryTimeframe(timeframe as 'days' | 'weeks' | 'months');
+                }}
+                style={[
+                  styles.filterPill,
+                  historyTimeframe === timeframe && styles.filterPillActive,
+                ]}
+              >
+                <Text
+                  variant="textSm"
+                  weight={historyTimeframe === timeframe ? 'semibold' : 'medium'}
+                  style={{
+                    color: historyTimeframe === timeframe ? '#000000' : colors.text.secondary,
+                  }}
+                >
+                  {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Type filters */}
+          <View style={styles.filterRow}>
+            {[
+              { value: 'all', label: 'All' },
+              { value: 'threads', label: 'Threads' },
+              { value: 'binds', label: 'Binds' },
+              { value: 'weave_chats', label: 'Weave Chats' },
+            ].map((type) => (
+              <Pressable
+                key={type.value}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setHistoryType(type.value as 'all' | 'threads' | 'binds' | 'weave_chats');
+                }}
+                style={[styles.filterPill, historyType === type.value && styles.filterPillActive]}
+              >
+                <Text
+                  variant="textSm"
+                  weight={historyType === type.value ? 'semibold' : 'medium'}
+                  style={{
+                    color: historyType === type.value ? '#000000' : colors.text.secondary,
+                  }}
+                >
+                  {type.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Search bar */}
+          <View style={[styles.searchBar, { backgroundColor: colors.background.elevated }]}>
+            <Ionicons
+              name="search-outline"
+              size={20}
+              color={colors.text.muted}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              placeholder="Search..."
+              placeholderTextColor={colors.text.muted}
+              value={historySearch}
+              onChangeText={setHistorySearch}
+              style={[styles.searchInput, { color: colors.text.primary }]}
+            />
+          </View>
+
+          {/* History List */}
+          <HistoryList limit={10} timeframe={historyTimeframe} type={historyType} />
         </Card>
       </View>
     </ScrollView>
@@ -390,34 +387,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  levelText: {
+  headerLeft: {
     flex: 1,
+    gap: 6,
   },
-  weaveCharacter: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  levelBarBackground: {
+    height: 4,
+    backgroundColor: '#27272A',
+    borderRadius: 2,
+    overflow: 'hidden',
+    width: 80,
   },
-  weaveCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
+  levelBarFill: {
+    height: '100%',
+    borderRadius: 2,
+    minWidth: 4,
+  },
+  weaveCharacterContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerRight: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 12,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-start',
   },
   streakBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     backgroundColor: '#27272A',
+    alignSelf: 'flex-start',
   },
   profileButton: {
     width: 36,
@@ -450,6 +453,24 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: '#27272A',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 36,
+    right: 0,
+    minWidth: 80,
+    borderRadius: 8,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  dropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   needlesContainer: {
     gap: 12,
@@ -529,20 +550,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
   },
-  insightCard: {
-    padding: 16,
+  historyCardContainer: {
+    padding: 20,
   },
-  insightContent: {
+  historyTitle: {
+    marginBottom: 16,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  filterPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#27272A',
+  },
+  filterPillActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginBottom: 16,
   },
-  insightText: {
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
     flex: 1,
-  },
-  historyCard: {
-    padding: 40,
-    alignItems: 'center',
+    fontSize: 14,
+    fontFamily: 'Inter',
   },
   skeletonLine: {
     borderRadius: 4,
