@@ -37,8 +37,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  interpolate,
-  Extrapolate,
 } from 'react-native-reanimated';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 

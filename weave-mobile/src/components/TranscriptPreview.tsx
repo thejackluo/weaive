@@ -177,10 +177,7 @@ export function TranscriptPreview({
               size={16}
               color={getConfidenceColor()}
             />
-            <Text
-              variant="bodySm"
-              style={{ color: getConfidenceColor(), marginLeft: spacing.xs }}
-            >
+            <Text variant="bodySm" style={{ color: getConfidenceColor(), marginLeft: spacing.xs }}>
               {getConfidenceLabel()} confidence
             </Text>
           </View>
@@ -219,10 +216,7 @@ export function TranscriptPreview({
       {isLoading ? (
         <View style={[styles.loadingContainer, { paddingVertical: spacing.xl }]}>
           <ActivityIndicator size="large" color={colors.brand.primary.default} />
-          <Text
-            variant="bodyMd"
-            style={{ color: colors.text.secondary, marginTop: spacing.md }}
-          >
+          <Text variant="bodyMd" style={{ color: colors.text.secondary, marginTop: spacing.md }}>
             Transcribing audio...
           </Text>
         </View>

@@ -92,7 +92,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
     const [editedTranscript, setEditedTranscript] = useState('');
 
     // Transcription mutation
-    const { mutate: transcribeAudio, isPending: isTranscribing } = useTranscribeAudio();
+    const { mutate: transcribeAudio, isPending: _isTranscribing } = useTranscribeAudio();
 
     // Snap points for bottom sheet
     const snapPoints = useMemo(() => ['50%', '90%'], []);
@@ -102,12 +102,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
      */
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          opacity={0.5}
-        />
+        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
       ),
       []
     );
@@ -180,12 +175,9 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
     /**
      * Handle transcript save
      */
-    const handleTranscriptSave = useCallback(
-      (transcript: string) => {
-        setEditedTranscript(transcript);
-      },
-      []
-    );
+    const handleTranscriptSave = useCallback((transcript: string) => {
+      setEditedTranscript(transcript);
+    }, []);
 
     /**
      * Handle final save

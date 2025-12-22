@@ -14,7 +14,6 @@
 
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
 
 export interface RecordingOptions {
   /**
@@ -84,7 +83,7 @@ export enum RecordingState {
 class AudioRecordingService {
   private recording: Audio.Recording | null = null;
   private state: RecordingState = RecordingState.IDLE;
-  private meteringInterval: NodeJS.Timeout | null = null;
+  private meteringInterval: ReturnType<typeof setTimeout> | null = null;
   private meteringHistory: number[] = [];
 
   /**

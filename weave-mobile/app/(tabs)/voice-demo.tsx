@@ -99,10 +99,7 @@ export default function VoiceDemoScreen() {
         <Text variant="displayMd" style={{ marginBottom: spacing.xs }}>
           Voice/STT Demo
         </Text>
-        <Text
-          variant="bodyMd"
-          style={{ color: colors.text.secondary, marginBottom: spacing.xl }}
-        >
+        <Text variant="bodyMd" style={{ color: colors.text.secondary, marginBottom: spacing.xl }}>
           Test all Story 0.11 voice components
         </Text>
 
@@ -111,10 +108,7 @@ export default function VoiceDemoScreen() {
           <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
             Test 1: Complete Workflow
           </Text>
-          <Text
-            variant="bodySm"
-            style={{ color: colors.text.secondary, marginBottom: spacing.md }}
-          >
+          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
             Opens bottom sheet with 4-step workflow: Record → Transcribe → Preview → Save
           </Text>
           <Button variant="primary" onPress={handleOpenSheet}>
@@ -127,10 +121,7 @@ export default function VoiceDemoScreen() {
           <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
             Test 2: Standalone Recording
           </Text>
-          <Text
-            variant="bodySm"
-            style={{ color: colors.text.secondary, marginBottom: spacing.md }}
-          >
+          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
             Test VoiceRecorder component in isolation (no transcription)
           </Text>
           <View style={styles.centerContent}>
@@ -153,10 +144,7 @@ export default function VoiceDemoScreen() {
           <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
             Test 3: Waveform Visualization
           </Text>
-          <Text
-            variant="bodySm"
-            style={{ color: colors.text.secondary, marginBottom: spacing.md }}
-          >
+          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
             Static waveform (displays recording metering data)
           </Text>
           {recordingResult ? (
@@ -178,10 +166,7 @@ export default function VoiceDemoScreen() {
           <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
             Test 4: Transcript Editing
           </Text>
-          <Text
-            variant="bodySm"
-            style={{ color: colors.text.secondary, marginBottom: spacing.md }}
-          >
+          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
             Edit transcript, see confidence scoring
           </Text>
           <TranscriptPreview
@@ -197,10 +182,7 @@ export default function VoiceDemoScreen() {
           <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
             Test 5: Audio Playback
           </Text>
-          <Text
-            variant="bodySm"
-            style={{ color: colors.text.secondary, marginBottom: spacing.md }}
-          >
+          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
             Play/pause, seek, speed controls
           </Text>
           {audioUri ? (
@@ -217,10 +199,7 @@ export default function VoiceDemoScreen() {
           <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
             Test 6: Rate Limit Display
           </Text>
-          <Text
-            variant="bodySm"
-            style={{ color: colors.text.secondary, marginBottom: spacing.md }}
-          >
+          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
             Visual progress bars for daily limits
           </Text>
           <RateLimitIndicator requestCount={requestCount} durationMinutes={durationMinutes} />
@@ -231,10 +210,7 @@ export default function VoiceDemoScreen() {
           <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
             Test 7: Rate Limit (Compact)
           </Text>
-          <Text
-            variant="bodySm"
-            style={{ color: colors.text.secondary, marginBottom: spacing.md }}
-          >
+          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
             Minimal display for toolbars/headers
           </Text>
           <RateLimitIndicator
@@ -263,12 +239,7 @@ export default function VoiceDemoScreen() {
       </ScrollView>
 
       {/* VoiceRecordSheet (hidden until opened) */}
-      <VoiceRecordSheet
-        ref={sheetRef}
-        onSave={handleSheetSave}
-        maxDuration={300}
-        language="en"
-      />
+      <VoiceRecordSheet ref={sheetRef} onSave={handleSheetSave} maxDuration={300} language="en" />
     </View>
   );
 }

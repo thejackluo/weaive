@@ -11,6 +11,8 @@
  * - POST /api/captures/{capture_id}/re-transcribe: Retry transcription
  */
 
+/* global FormData */
+
 import { getApiBaseUrl } from '@/utils/api';
 
 // API endpoint (loaded from .env via app.config.js)
@@ -105,9 +107,7 @@ async function getAuthToken(): Promise<string> {
 
   if (!getAuthTokenFn) {
     console.error('[STT_API] ❌ sttApi not initialized!');
-    throw new Error(
-      'sttApi not initialized. Call initSttApi(getAuthToken) in app/_layout.tsx'
-    );
+    throw new Error('sttApi not initialized. Call initSttApi(getAuthToken) in app/_layout.tsx');
   }
 
   const token = await getAuthTokenFn();
@@ -153,12 +153,16 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
     const blob = await response.blob();
 
     const fileReadDuration = (performance.now() - fileReadStart).toFixed(2);
-    console.log(`[STT_API] ✅ File read in ${fileReadDuration}ms - Size: ${(blob.size / 1024).toFixed(1)}KB`);
+    console.log(
+      `[STT_API] ✅ File read in ${fileReadDuration}ms - Size: ${(blob.size / 1024).toFixed(1)}KB`
+    );
 
     // Step 3: Validate file size (25MB max)
     const maxSize = 25 * 1024 * 1024; // 25MB
     if (blob.size > maxSize) {
-      throw new Error(`Audio file too large (max 25MB, got ${(blob.size / (1024 * 1024)).toFixed(1)}MB)`);
+      throw new Error(
+        `Audio file too large (max 25MB, got ${(blob.size / (1024 * 1024)).toFixed(1)}MB)`
+      );
     }
 
     // Step 4: Create multipart form data
@@ -201,7 +205,9 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
       clearTimeout(timeoutId);
 
       const uploadDuration = (performance.now() - uploadStart).toFixed(2);
-      console.log(`[STT_API] 📡 Response received in ${uploadDuration}ms - Status: ${uploadResponse.status}`);
+      console.log(
+        `[STT_API] 📡 Response received in ${uploadDuration}ms - Status: ${uploadResponse.status}`
+      );
 
       // Handle rate limiting (429)
       if (uploadResponse.status === 429) {
@@ -215,7 +221,8 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
       // Handle other errors
       if (!uploadResponse.ok) {
         const errorData = await uploadResponse.json().catch(() => null);
-        const errorMessage = errorData?.error?.message || errorData?.detail || uploadResponse.statusText;
+        const errorMessage =
+          errorData?.error?.message || errorData?.detail || uploadResponse.statusText;
 
         console.error(`[STT_API] ❌ API error: ${uploadResponse.status} ${errorMessage}`);
         throw new Error(`Transcription failed: ${errorMessage}`);

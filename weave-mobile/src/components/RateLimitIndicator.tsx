@@ -24,7 +24,7 @@
  * ```
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
@@ -72,7 +72,7 @@ export function RateLimitIndicator({
   maxRequests = 50,
   maxMinutes = 300,
   compact = false,
-  onLimitExceeded,
+  onLimitExceeded: _onLimitExceeded,
 }: RateLimitIndicatorProps) {
   const { colors, spacing, radius } = useTheme();
 
@@ -93,7 +93,12 @@ export function RateLimitIndicator({
 
   const requestStatus = getStatusLevel(requestPercentage);
   const durationStatus = getStatusLevel(durationPercentage);
-  const overallStatus = requestStatus === 'error' || durationStatus === 'error' ? 'error' : requestStatus === 'warning' || durationStatus === 'warning' ? 'warning' : 'normal';
+  const overallStatus =
+    requestStatus === 'error' || durationStatus === 'error'
+      ? 'error'
+      : requestStatus === 'warning' || durationStatus === 'warning'
+        ? 'warning'
+        : 'normal';
 
   /**
    * Get status color
@@ -172,8 +177,15 @@ export function RateLimitIndicator({
     // Compact view - just show icon and percentage
     return (
       <View style={styles.compactContainer}>
-        <MaterialIcons name={getStatusIcon(overallStatus)} size={20} color={getStatusColor(overallStatus)} />
-        <Text variant="bodyXs" style={{ color: getStatusColor(overallStatus), marginLeft: spacing.xs }}>
+        <MaterialIcons
+          name={getStatusIcon(overallStatus)}
+          size={20}
+          color={getStatusColor(overallStatus)}
+        />
+        <Text
+          variant="bodyXs"
+          style={{ color: getStatusColor(overallStatus), marginLeft: spacing.xs }}
+        >
           {Math.max(requestPercentage, durationPercentage).toFixed(0)}%
         </Text>
       </View>
@@ -186,7 +198,11 @@ export function RateLimitIndicator({
         {/* Header */}
         <View style={[styles.header, { marginBottom: spacing.sm }]}>
           <View style={styles.headerLeft}>
-            <MaterialIcons name={getStatusIcon(overallStatus)} size={20} color={getStatusColor(overallStatus)} />
+            <MaterialIcons
+              name={getStatusIcon(overallStatus)}
+              size={20}
+              color={getStatusColor(overallStatus)}
+            />
             <Text
               variant="bodyMd"
               style={{

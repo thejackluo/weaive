@@ -114,7 +114,7 @@ export function useAudioRecording(): UseAudioRecordingReturn {
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const statusInterval = useRef<NodeJS.Timeout | null>(null);
+  const statusInterval = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Check permissions on mount
@@ -205,27 +205,24 @@ export function useAudioRecording(): UseAudioRecordingReturn {
   /**
    * Start recording
    */
-  const startRecording = useCallback(
-    async (options?: RecordingOptions): Promise<void> => {
-      try {
-        setError(null);
+  const startRecording = useCallback(async (options?: RecordingOptions): Promise<void> => {
+    try {
+      setError(null);
 
-        await audioRecordingService.startRecording(options);
-        setState(RecordingState.RECORDING);
-        setDuration(0);
-        setMetering(null);
+      await audioRecordingService.startRecording(options);
+      setState(RecordingState.RECORDING);
+      setDuration(0);
+      setMetering(null);
 
-        console.log('[AUDIO_RECORDING_HOOK] ✅ Recording started');
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to start recording';
-        console.error('[AUDIO_RECORDING_HOOK] ❌ Error starting recording:', err);
-        setError(errorMessage);
-        setState(RecordingState.ERROR);
-        throw err;
-      }
-    },
-    []
-  );
+      console.log('[AUDIO_RECORDING_HOOK] ✅ Recording started');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start recording';
+      console.error('[AUDIO_RECORDING_HOOK] ❌ Error starting recording:', err);
+      setError(errorMessage);
+      setState(RecordingState.ERROR);
+      throw err;
+    }
+  }, []);
 
   /**
    * Pause recording
