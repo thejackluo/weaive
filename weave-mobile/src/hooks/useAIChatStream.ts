@@ -183,6 +183,12 @@ export function useAIChatStream(): UseAIChatStreamReturn {
                 setStreamingContent((prev) => prev + chunk.content);
               }
             } else if (chunk.type === 'done') {
+              // ✅ FIX: Clear timeout on successful completion
+              if (timeoutIdRef.current) {
+                clearTimeout(timeoutIdRef.current);
+                timeoutIdRef.current = null;
+              }
+              
               // Stream complete, store final metadata
               setMetadata((prev) => ({
                 ...prev,
@@ -192,6 +198,12 @@ export function useAIChatStream(): UseAIChatStreamReturn {
               setIsStreaming(false);
               eventSourceRef.current?.close();
             } else if (chunk.type === 'error') {
+              // ✅ FIX: Clear timeout on error
+              if (timeoutIdRef.current) {
+                clearTimeout(timeoutIdRef.current);
+                timeoutIdRef.current = null;
+              }
+              
               // Handle error event
               setError(chunk.message || 'Unknown error occurred');
               setIsStreaming(false);
