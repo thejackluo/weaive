@@ -82,7 +82,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
       }}
       style={[styles.container, isUser ? styles.userContainer : styles.assistantContainer]}
     >
-      <Animated.View style={[styles.bubble, animatedStyle]}>
+      <Animated.View style={[styles.bubble, animatedStyle]} testID="message-bubble">
         {/* Glassmorphism Background */}
         <BlurView
           intensity={20}
@@ -115,14 +115,18 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
 
           {/* Timestamp (shown on long-press) */}
           {showTimestamp && (
-            <Animated.View style={styles.timestampContainer} entering={FadeIn.duration(200)}>
+            <Animated.View
+              style={styles.timestampContainer}
+              entering={FadeIn.duration(200)}
+              testID="message-timestamp"
+            >
               <Text style={styles.timestamp}>
                 {message.timestamp.toLocaleTimeString('en-US', {
                   hour: 'numeric',
                   minute: '2-digit',
                 })}
               </Text>
-              <Pressable onPress={handleCopyMessage} style={styles.copyButton}>
+              <Pressable onPress={handleCopyMessage} style={styles.copyButton} testID="copy-message-button">
                 <Text style={styles.copyButtonText}>Copy</Text>
               </Pressable>
             </Animated.View>
@@ -145,7 +149,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   bubble: {
-    maxWidth: '80%',
+    maxWidth: '85%', // ✅ Increased from 80% for better readability
     minWidth: 60,
   },
   blurContainer: {

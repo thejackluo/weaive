@@ -57,7 +57,7 @@ export default function MessageInput({
       <View style={styles.inputContainer}>
         {/* Character Counter */}
         {showCounter && (
-          <Animated.View style={styles.counterContainer}>
+          <Animated.View style={styles.counterContainer} testID="character-counter">
             <Text style={[styles.counterText, isOverLimit && styles.counterTextError]}>
               {characterCount}/{MAX_CHARACTERS}
             </Text>
@@ -66,6 +66,7 @@ export default function MessageInput({
 
         {/* Text Input */}
         <TextInput
+          testID="message-input"
           style={[styles.input, disabled && styles.inputDisabled]}
           value={value}
           onChangeText={(text) => {
@@ -90,6 +91,7 @@ export default function MessageInput({
 
         {/* Send Button */}
         <Pressable
+          testID="send-button"
           onPress={handleSend}
           onPressIn={() => {
             if (canSend) {
