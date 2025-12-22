@@ -2,7 +2,6 @@ import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { Text, Card } from '@/design-system';
-import Constants from 'expo-constants';
 
 /**
  * Root index route
