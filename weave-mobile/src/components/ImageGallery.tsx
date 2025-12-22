@@ -23,12 +23,19 @@ interface ImageGalleryProps {
   goalId?: string | null;
   startDate?: string | null;
   endDate?: string | null;
+  scrollEnabled?: boolean; // Allow disabling scroll for nested preview galleries
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const IMAGE_SIZE = (SCREEN_WIDTH - 48) / 3; // 3 columns with padding
 
-export function ImageGallery({ onImagePress, goalId, startDate, endDate }: ImageGalleryProps) {
+export function ImageGallery({
+  onImagePress,
+  goalId,
+  startDate,
+  endDate,
+  scrollEnabled = true, // Default to true for standalone galleries
+}: ImageGalleryProps) {
   // ✅ FIX: Use useImageList hook with infinite scroll pagination
   const {
     data,
@@ -118,6 +125,7 @@ export function ImageGallery({ onImagePress, goalId, startDate, endDate }: Image
         keyExtractor={(item) => item.id}
         numColumns={3}
         contentContainerStyle={{ padding: 12 }}
+        scrollEnabled={scrollEnabled} // ✅ FIX: Allow disabling scroll for nested galleries
         // ✅ FIX: Pull-to-refresh with TanStack Query refetch
         refreshing={isRefetching}
         onRefresh={refetch}
