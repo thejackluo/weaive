@@ -372,6 +372,7 @@ export default function TabLayout() {
         <Tabs.Screen name="design-system-showcase" options={{ href: null }} />
         <Tabs.Screen name="needles" options={{ href: null }} />
         <Tabs.Screen name="sitemap" options={{ href: null }} />
+        <Tabs.Screen name="voice-demo" options={{ href: null }} />
 
         {/* Binds Routes */}
         <Tabs.Screen name="binds/[id]" options={{ href: null }} />
@@ -397,6 +398,7 @@ export default function TabLayout() {
         <Tabs.Screen name="settings/identity" options={{ href: null }} />
         <Tabs.Screen name="settings/subscription" options={{ href: null }} />
         <Tabs.Screen name="settings/reflection" options={{ href: null }} />
+        <Tabs.Screen name="settings/dev-tools" options={{ href: null }} />
       </Tabs>
 
       {/* Center AI Button (elevated above tab bar) */}
