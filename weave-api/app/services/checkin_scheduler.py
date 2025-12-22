@@ -265,8 +265,12 @@ class CheckInSchedulerService:
                 }
             }).execute()
 
-            # TODO: Send push notification via Expo Push API
-            # await self.send_push_notification(user_id, message)
+            # Send push notification via Expo Push API
+            try:
+                await self.send_push_notification(user_id, message, str(conversation_id))
+            except Exception as push_error:
+                logger.error(f"Failed to send push notification to user {user_id}: {push_error}")
+                # Don't fail the check-in if push fails - user can still see it in-app
 
             logger.info(f"✅ Sent check-in to user {user_id}: {message[:50]}...")
 
@@ -328,18 +332,74 @@ class CheckInSchedulerService:
         else:
             return f"Evening check-in, {display_name}! How did today go? Let's reflect on your wins and plan for tomorrow. 🌙"
 
-    async def send_push_notification(self, user_id: UUID, message: str):
+    async def send_push_notification(self, user_id: UUID, message: str, conversation_id: str):
         """
         Send push notification via Expo Push API.
-
-        TODO: Implement Expo Push integration
 
         Args:
             user_id: User UUID
             message: Notification message
+            conversation_id: ID of the conversation to open
         """
-        # TODO: Get user's push token from database
-        # TODO: Call Expo Push API
-        # TODO: Handle push token expiration/errors
-        logger.warning(f"Push notification not implemented yet for user {user_id}")
-        pass
+        import httpx
+
+        # Get user's push token
+        try:
+            user_result = self.db.table('user_profiles') \
+                .select('expo_push_token') \
+                .eq('id', str(user_id)) \
+                .single() \
+                .execute()
+
+            push_token = user_result.data.get('expo_push_token') if user_result.data else None
+
+            if not push_token:
+                logger.info(f"No push token for user {user_id}, skipping notification")
+                return
+
+            # Validate Expo push token format
+            if not push_token.startswith('ExponentPushToken['):
+                logger.warning(f"Invalid push token format for user {user_id}: {push_token}")
+                return
+
+        except Exception as e:
+            logger.error(f"Error getting push token for user {user_id}: {e}")
+            return
+
+        # Send push notification via Expo Push API
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    'https://exp.host/--/api/v2/push/send',
+                    json={
+                        'to': push_token,
+                        'title': 'Weave Check-In 👋',
+                        'body': message,
+                        'data': {
+                            'type': 'checkin',
+                            'conversation_id': conversation_id,
+                            'screen': 'ai-chat'
+                        },
+                        'sound': 'default',
+                        'priority': 'high',
+                        'channelId': 'default'
+                    },
+                    headers={
+                        'Accept': 'application/json',
+                        'Accept-Encoding': 'gzip, deflate',
+                        'Content-Type': 'application/json'
+                    }
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get('data', {}).get('status') == 'ok':
+                        logger.info(f"✅ Push notification sent to user {user_id}")
+                    else:
+                        logger.warning(f"Push notification failed for user {user_id}: {result}")
+                else:
+                    logger.error(f"Push notification API error for user {user_id}: {response.status_code} - {response.text}")
+
+        except Exception as e:
+            logger.error(f"Error sending push notification to user {user_id}: {e}")
+            # Don't raise - notification failure shouldn't break check-in
