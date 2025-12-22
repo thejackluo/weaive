@@ -32,11 +32,19 @@ export interface RecordingHistoryProps {
    * Callback when a recording is selected
    */
   onRecordingPress?: (recording: RecordingCapture) => void;
+
+  /**
+   * Whether the list should be scrollable
+   * Set to false when inside another ScrollView to avoid nested virtualized list warning
+   * Default: true
+   */
+  scrollEnabled?: boolean;
 }
 
 export function RecordingHistory({
   maxPreviewLength = 100,
   onRecordingPress,
+  scrollEnabled = true,
 }: RecordingHistoryProps) {
   const { colors, spacing, radius } = useTheme();
   const { data: recordings, isLoading, error, refetch } = useRecordingHistory();
@@ -233,6 +241,31 @@ export function RecordingHistory({
     );
   };
 
+  // Header component
+  const listHeader = (
+    <View style={{ marginBottom: spacing[4] }}>
+      <Text variant="textLg" style={{ fontWeight: '600', color: colors.text.primary }}>
+        Recording History
+      </Text>
+      <Text variant="textSm" style={{ color: colors.text.secondary, marginTop: spacing[2] }}>
+        {recordings?.length || 0} recordings
+      </Text>
+    </View>
+  );
+
+  // If not scrollable, render as simple View (for use inside another ScrollView)
+  if (!scrollEnabled) {
+    return (
+      <View>
+        {listHeader}
+        {recordings?.map((item) => (
+          <View key={item.id}>{renderRecording({ item })}</View>
+        ))}
+      </View>
+    );
+  }
+
+  // Otherwise, use FlatList with virtualization
   return (
     <FlatList
       data={recordings}
@@ -242,16 +275,7 @@ export function RecordingHistory({
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.accent[500]} />
       }
-      ListHeaderComponent={
-        <View style={{ marginBottom: spacing[4] }}>
-          <Text variant="textLg" style={{ fontWeight: '600', color: colors.text.primary }}>
-            Recording History
-          </Text>
-          <Text variant="textSm" style={{ color: colors.text.secondary, marginTop: spacing[2] }}>
-            {recordings?.length || 0} recordings
-          </Text>
-        </View>
-      }
+      ListHeaderComponent={listHeader}
     />
   );
 }
