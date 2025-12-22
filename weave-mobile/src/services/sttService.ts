@@ -1,7 +1,7 @@
 /**
  * STT (Speech-to-Text) Service
  *
- * Client service for transcribing audio files using the backend /api/transcribe endpoint
+ * Client service for transcribing audio files using the backend /api/stt/transcribe endpoint
  *
  * Features:
  * - Upload audio file and get transcript
@@ -92,7 +92,7 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * Transcribe audio file with automatic retry on retryable errors
- * Uploads audio to backend /api/transcribe endpoint
+ * Uploads audio to backend /api/stt/transcribe endpoint
  */
 export async function transcribeAudio(options: TranscribeOptions): Promise<TranscriptionResult> {
   const {
@@ -150,7 +150,7 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
     if (goalId) formData.append('goal_id', goalId);
 
     // Upload to backend with progress tracking
-    const apiUrl = `${getApiBaseUrl()}/api/transcribe`;
+    const apiUrl = `${getApiBaseUrl()}/api/stt/transcribe`;
 
     const xhr = new XMLHttpRequest();
 
@@ -189,7 +189,7 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
             // Check for 404 - backend endpoint not found
             if (xhr.status === 404) {
               const error: any = new Error(
-                'Backend transcription service is not available. Please start the backend server (weave-api) and ensure /api/transcribe endpoint is implemented.'
+                'Backend transcription service is not available. Please start the backend server (weave-api) and ensure /api/stt/transcribe endpoint is implemented.'
               );
               error.code = 'BACKEND_NOT_AVAILABLE';
               error.retryable = false;
@@ -308,7 +308,7 @@ export async function retranscribeCapture(captureId: string): Promise<Transcript
     }
 
     // Call re-transcribe endpoint
-    const apiUrl = `${getApiBaseUrl()}/api/captures/${captureId}/re-transcribe`;
+    const apiUrl = `${getApiBaseUrl()}/api/stt/captures/${captureId}/re-transcribe`;
 
     const response = await fetch(apiUrl, {
       method: 'POST',
