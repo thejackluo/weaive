@@ -1,5 +1,8 @@
-import { View, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, Button } from '@/design-system';
+import React, { useState } from 'react';
+import { View, ScrollView, TouchableOpacity, Pressable, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/hooks/useAuth';
+import { Text, Button, showSimpleToast } from '@/design-system';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 
@@ -8,25 +11,16 @@ import { SymbolView } from 'expo-symbols';
  * Epic 3: Daily Actions & Proof
  * Story 3.1: View Today's Binds
  */
-
-import React, { useState } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
-import { Button as _Button, showSimpleToast } from '@/design-system';
-import CountdownTimer from '@/components/features/journal/CountdownTimer';
-
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { user: _user, signOut } = useAuth();
+  const [_showUserMenu, setShowUserMenu] = useState(false);
+  const [_isLoggingOut, setIsLoggingOut] = useState(false);
 
   /**
    * Handle logout with confirmation
    */
-  const handleLogout = async () => {
+  const _handleLogout = async () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       {
         text: 'Cancel',
@@ -58,7 +52,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView className="flex-1" style={{ backgroundColor: '#0a0a0a' }}>
       <View className="p-6">
         {/* Main Header */}
         <View className="mb-8">
@@ -93,41 +87,6 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
 
-        {/* Story 4.1c: Countdown Timer (Section C) */}
-        <View style={{ width: '100%', maxWidth: 400, paddingHorizontal: 16 }}>
-          <Text
-            style={{
-              fontSize: 12,
-              color: '#71717A',
-              marginBottom: 8,
-              textAlign: 'center',
-            }}
-          >
-            Story 4.1c: Countdown Timer Demo
-          </Text>
-          <CountdownTimer debug={true} />
-        </View>
-
-        {/* Navigation Buttons */}
-        <View style={{ gap: 12, width: '100%', maxWidth: 300 }}>
-          <Pressable
-            onPress={() => router.push('/(tabs)/needles')}
-            style={{
-              backgroundColor: '#10B981',
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-              borderRadius: 12,
-            }}
-          >
-            <Text
-              style={{
-                color: '#FAFAFA',
-                fontSize: 16,
-                fontWeight: '600',
-                textAlign: 'center',
-              }}
-            >
-              📍 View Needles (Story 2.1)
           <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center gap-3">
@@ -163,53 +122,54 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Settings Screen */}
-        <Pressable
-          onPress={() => router.push('/(tabs)/settings')}
-          style={{
-            backgroundColor: '#10B981',
-            paddingHorizontal: 24,
-            paddingVertical: 16,
-            borderRadius: 12,
-          }}
-        >
-          <Text
+        {/* Development Navigation */}
+        <View className="mb-8">
+          <Text variant="textLg" className="text-white mb-4 font-semibold">
+            Development Navigation
+          </Text>
+
+          <Pressable
+            onPress={() => router.push('/(tabs)/settings')}
             style={{
-              color: '#FAFAFA',
-              fontSize: 16,
-              fontWeight: '600',
+              backgroundColor: '#10B981',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
+              marginBottom: 16,
             }}
           >
-            ⚙️ Settings (with Reflection)
-          </Text>
-        </Pressable>
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+              }}
+            >
+              ⚙️ Settings (with Reflection)
+            </Text>
+          </Pressable>
 
-        {/* TEST: Direct Reflection Link (Story 4.1a) */}
-        <Pressable
-          onPress={() => router.push('/(tabs)/settings/reflection')}
-          style={{
-            backgroundColor: '#3B82F6',
-            paddingHorizontal: 24,
-            paddingVertical: 16,
-            borderRadius: 12,
-          }}
-        >
-          <Text
+          <Pressable
+            onPress={() => router.push('/(tabs)/settings/reflection')}
             style={{
-              color: '#FAFAFA',
-              fontSize: 16,
-              fontWeight: '600',
+              backgroundColor: '#3B82F6',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
             }}
           >
-            📝 Test Reflection (Direct)
-          </Text>
-        </Pressable>
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+              }}
+            >
+              📝 Test Reflection (Direct)
+            </Text>
+          </Pressable>
+        </View>
 
-        {/* Footer */}
-        <View style={{ position: 'absolute', bottom: 32, alignItems: 'center' }}>
-          <Text style={{ color: '#71717A', fontSize: 12 }}>React Native-First Design System</Text>
-          <Text style={{ color: '#71717A', fontSize: 12 }}>
-            NativeWind v5 • Tailwind v4 • Liquid Glass UI
         {/* Quick Actions */}
         <View className="mb-8">
           <Text variant="textLg" className="text-white mb-4 font-semibold">
@@ -243,7 +203,7 @@ export default function HomeScreen() {
 
         {/* Navigation Testing (Bottom - de-emphasized) */}
         <View className="pt-6 border-t border-white/5">
-          <Text variant="textSm" className="text-white/30 mb-2 text-center">
+          <Text variant="textSm" className="text-white/30 mb-3 text-center">
             Development Tools
           </Text>
           <Link href="/sitemap" asChild>
@@ -251,6 +211,16 @@ export default function HomeScreen() {
               View Sitemap
             </Button>
           </Link>
+        </View>
+
+        {/* Footer */}
+        <View className="pt-8 pb-4">
+          <Text variant="textXs" className="text-white/20 text-center mb-1">
+            React Native-First Design System
+          </Text>
+          <Text variant="textXs" className="text-white/20 text-center">
+            NativeWind v5 • Tailwind v4 • Liquid Glass UI
+          </Text>
         </View>
       </View>
     </ScrollView>
