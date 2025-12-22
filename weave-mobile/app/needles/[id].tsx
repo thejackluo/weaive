@@ -1,15 +1,15 @@
-import React from 'react';
-
 /**
- * Dashboard Route (Epic 2 + 5)
+ * Needle Detail Route (US-2.2: View Goal Details)
  *
- * Main dashboard showing goal management and progress visualization
+ * Dynamic route for viewing and editing a specific needle (goal)
  */
+
+import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/design-system';
-import { DashboardScreen } from '@/screens/DashboardScreen';
+import { NeedleDetailScreen } from '@/screens/NeedleDetailScreen';
 
-export default function DashboardRoute() {
+export default function NeedleDetailRoute() {
   const { colors } = useTheme();
 
   return (
@@ -20,7 +20,7 @@ export default function DashboardRoute() {
       }}
       edges={['top']}
     >
-      <DashboardScreen />
+      <NeedleDetailScreen />
     </SafeAreaView>
   );
 }

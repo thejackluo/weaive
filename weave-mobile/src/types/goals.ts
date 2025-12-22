@@ -36,6 +36,51 @@ export interface GoalsResponse {
 }
 
 /**
+ * Milestone (Q-Goal) - Quantifiable subgoal
+ */
+export interface Milestone {
+  id: string;
+  title: string;
+  target_value?: number;
+  current_value?: number;
+  unit?: string;
+}
+
+/**
+ * Bind (Subtask Template) - Consistent action/habit
+ */
+export interface Bind {
+  id: string;
+  title: string;
+  frequency: string;
+  completedToday?: boolean;
+}
+
+/**
+ * Goal Detail (extended Goal with milestones and binds)
+ * Used in US-2.2: View Goal Details
+ */
+export interface GoalDetail extends Goal {
+  milestones: Milestone[];
+  binds: Bind[];
+  stats?: {
+    consistency_7d: number | null;
+    total_completions: number;
+    current_streak: number;
+  };
+}
+
+/**
+ * Goal Detail API Response
+ */
+export interface GoalDetailResponse {
+  data: GoalDetail;
+  meta?: {
+    timestamp: string;
+  };
+}
+
+/**
  * API Error Response
  */
 export interface ApiErrorResponse {
