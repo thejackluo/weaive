@@ -1,9 +1,15 @@
 module.exports = function (api) {
   api.cache(true);
+
+  // Detect test environment (Jest)
+  const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+
   return {
     presets: [
       "babel-preset-expo",
-      "nativewind/babel", // NativeWind v5 Babel preset
+      // NativeWind v5 Babel preset - disable in test environment
+      // Jest doesn't support NativeWind's CSS transformations
+      ...(!isTest ? ["nativewind/babel"] : []),
     ],
     plugins: [
       [

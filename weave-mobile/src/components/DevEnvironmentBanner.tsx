@@ -3,6 +3,7 @@
  *
  * Shows which API endpoint is currently active in dev mode.
  * Useful when working on multiple worktrees with different backend ports.
+ * Can be dismissed by tapping the X button.
  *
  * Usage:
  * ```tsx
@@ -18,13 +19,18 @@
  * }
  * ```
  */
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Constants from 'expo-constants';
 
 export function DevEnvironmentBanner() {
+  const [isDismissed, setIsDismissed] = useState(false);
+
   // Only show in development mode
   if (!__DEV__) return null;
+
+  // Don't render if dismissed
+  if (isDismissed) return null;
 
   const apiBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl || 'Not configured';
 
@@ -34,8 +40,19 @@ export function DevEnvironmentBanner() {
 
   return (
     <View style={styles.banner}>
-      <Text style={styles.text}>🔧 Dev Mode - API Port: {port}</Text>
-      <Text style={styles.url}>{apiBaseUrl}</Text>
+      <View style={styles.content}>
+        <View style={styles.textContainer}>
+          <Text style={styles.text}>🔧 Dev Mode - API Port: {port}</Text>
+          <Text style={styles.url}>{apiBaseUrl}</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => setIsDismissed(true)}
+          style={styles.closeButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Text style={styles.closeButtonText}>✕</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -51,6 +68,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     zIndex: 9999,
   },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  textContainer: {
+    flex: 1,
+  },
   text: {
     color: 'white',
     fontSize: 12,
@@ -60,5 +85,19 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 10,
     marginTop: 2,
+  },
+  closeButton: {
+    marginLeft: 12,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 24,
+    minHeight: 24,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    lineHeight: 18,
   },
 });
