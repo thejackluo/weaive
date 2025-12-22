@@ -19,6 +19,7 @@ import {
 import { getApiBaseUrl } from '../utils/api';
 
 const API_BASE_URL = getApiBaseUrl();
+console.log('[ImageCapture] Initialized with API_BASE_URL:', API_BASE_URL);
 
 // ============================================================================
 // PERMISSIONS
@@ -53,7 +54,7 @@ export async function launchCamera(): Promise<ImagePicker.ImagePickerResult> {
   }
 
   return await ImagePicker.launchCameraAsync({
-    mediaTypes: [ImagePicker.MediaType.Images],
+    mediaTypes: ['images'],
     allowsEditing: false,
     quality: 0.8,
   });
@@ -66,7 +67,7 @@ export async function launchGallery(): Promise<ImagePicker.ImagePickerResult> {
   }
 
   return await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: [ImagePicker.MediaType.Images],
+    mediaTypes: ['images'],
     allowsEditing: false,
     quality: 0.8,
   });
@@ -248,17 +249,25 @@ export async function getUserCaptures(
     }
     params.append('per_page', '100');
 
-    const response = await fetch(`${API_BASE_URL}/api/captures/images?${params.toString()}`, {
+    const url = `${API_BASE_URL}/api/captures/images?${params.toString()}`;
+    console.log('[ImageCapture] Fetching images from:', url);
+
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${session.access_token}`,
       },
     });
 
+    console.log('[ImageCapture] Response status:', response.status);
+
     if (!response.ok) {
-      throw new Error('Failed to fetch captures');
+      const errorText = await response.text();
+      console.error('[ImageCapture] Error response:', errorText);
+      throw new Error(`Failed to fetch captures: ${response.status} ${errorText}`);
     }
 
     const result: ListImagesResponse = await response.json();
+    console.log('[ImageCapture] Fetched', result.data.length, 'images');
     return result.data;
   } catch (error) {
     console.error('Failed to get captures:', error);
