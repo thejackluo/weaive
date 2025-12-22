@@ -7,6 +7,11 @@ import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
 import { DevEnvironmentBanner } from '../src/components/DevEnvironmentBanner';
 import { initJournalApi } from '../src/services/journalApi';
 import apiClient from '../src/services/apiClient';
+import {
+  registerForPushNotificationsAsync,
+  savePushTokenToBackend,
+  setupNotificationListeners,
+} from '../src/services/notificationService';
 import '../global.css';
 
 // Create QueryClient instance (singleton)
@@ -49,6 +54,32 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
     const ADMIN_KEY = 'dev-unlimited-access-key-2025'; // Must match backend ADMIN_API_KEY
     apiClient.enableAdminMode(ADMIN_KEY);
     console.log('[ROOT_LAYOUT] ✅ Admin mode enabled for testing');
+
+    // 📬 Initialize push notifications (Story 6.1)
+    (async () => {
+      try {
+        // Register for push notifications and get token
+        const pushToken = await registerForPushNotificationsAsync();
+
+        if (pushToken) {
+          // Save token to backend
+          await savePushTokenToBackend(pushToken);
+          console.log('[ROOT_LAYOUT] ✅ Push notifications registered and saved');
+        } else {
+          console.log('[ROOT_LAYOUT] ⚠️ Push notifications not available (simulator or permissions denied)');
+        }
+      } catch (error) {
+        console.error('[ROOT_LAYOUT] ❌ Error initializing push notifications:', error);
+      }
+    })();
+
+    // Setup notification listeners
+    const cleanupListeners = setupNotificationListeners();
+
+    // Cleanup on unmount
+    return () => {
+      cleanupListeners();
+    };
   }, [getAuthToken]);
 
   return <>{children}</>;

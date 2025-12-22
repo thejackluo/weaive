@@ -1,8 +1,11 @@
-"""User API endpoints (Story 0.3: Authentication Flow, Story 1.5: Profile Creation)"""
+"""User API endpoints (Story 0.3: Authentication Flow, Story 1.5: Profile Creation, Story 6.1: Push Notifications)"""
 
 import logging
+from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from supabase import Client
 
 from app.core.deps import get_current_user, get_optional_user, get_supabase_client
@@ -12,6 +15,11 @@ from app.services import user_profile
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/user")
+
+
+# Pydantic model for push token request
+class PushTokenRequest(BaseModel):
+    expo_push_token: str
 
 
 @router.get("/me")
@@ -194,4 +202,103 @@ async def create_profile(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create user profile: {str(e)}",
+        )
+
+
+@router.post("/push-token", status_code=status.HTTP_200_OK)
+async def save_push_token(
+    request: PushTokenRequest,
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Save Expo push token for the authenticated user (Story 6.1).
+
+    This endpoint saves the device's Expo push token to enable server-initiated
+    push notifications for check-ins.
+
+    **Authentication Required:**
+    - Include JWT token in Authorization header: `Bearer <token>`
+
+    **Request Body:**
+    - expo_push_token: Expo push token (format: ExponentPushToken[...])
+
+    **Status Codes:**
+    - 200: Push token saved successfully
+    - 401: Unauthorized (missing or invalid JWT token)
+    - 404: User profile not found
+    - 422: Invalid push token format
+    - 500: Server error (database failure)
+
+    **Example Request:**
+    ```json
+    {
+      "expo_push_token": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]"
+    }
+    ```
+
+    **Example Response:**
+    ```json
+    {
+      "message": "Push token saved successfully",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000"
+    }
+    ```
+    """
+    # Extract auth_user_id from JWT token
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+        )
+
+    # Validate push token format
+    if not request.expo_push_token.startswith('ExponentPushToken['):
+        logger.error(f"❌ Invalid push token format: {request.expo_push_token}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid Expo push token format",
+        )
+
+    logger.info(f"💾 Saving push token for user: {auth_user_id}")
+
+    try:
+        # Get user_profiles.id from auth.uid
+        profile_result = supabase.table('user_profiles') \
+            .select('id') \
+            .eq('auth_user_id', auth_user_id) \
+            .single() \
+            .execute()
+
+        if not profile_result.data:
+            logger.error(f"❌ User profile not found for auth_user_id: {auth_user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found",
+            )
+
+        user_id = profile_result.data['id']
+
+        # Update push token
+        supabase.table('user_profiles') \
+            .update({'expo_push_token': request.expo_push_token}) \
+            .eq('id', user_id) \
+            .execute()
+
+        logger.info(f"✅ Push token saved for user: {user_id}")
+
+        return {
+            "message": "Push token saved successfully",
+            "user_id": user_id
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error saving push token: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save push token: {str(e)}",
         )
