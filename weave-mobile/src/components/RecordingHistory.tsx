@@ -170,10 +170,7 @@ export function RecordingHistory({
       : 'No transcript available';
 
     return (
-      <Card
-        variant="glass"
-        style={{ padding: spacing[4], marginBottom: spacing[4] }}
-      >
+      <Card variant="glass" style={{ padding: spacing[4], marginBottom: spacing[4] }}>
         <Pressable
           onPress={() => {
             toggleExpand(item.id);
@@ -186,7 +183,10 @@ export function RecordingHistory({
           <View style={styles.recordingHeader}>
             <View style={styles.recordingHeaderLeft}>
               <MaterialIcons name="mic" size={20} color={colors.accent[500]} />
-              <Text variant="textSm" style={{ color: colors.text.secondary, marginLeft: spacing[2] }}>
+              <Text
+                variant="textSm"
+                style={{ color: colors.text.secondary, marginLeft: spacing[2] }}
+              >
                 {formatDate(item.created_at)} at {formatTime(item.created_at)}
               </Text>
             </View>
@@ -236,8 +236,17 @@ export function RecordingHistory({
             {getAudioUrl(item) ? (
               <AudioPlayer audioUri={getAudioUrl(item)!} showSpeedControl={true} />
             ) : (
-              <View style={{ padding: spacing[4], backgroundColor: colors.background.tertiary, borderRadius: 8 }}>
-                <Text variant="textSm" style={{ color: colors.text.secondary, textAlign: 'center' }}>
+              <View
+                style={{
+                  padding: spacing[4],
+                  backgroundColor: colors.background.tertiary,
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  variant="textSm"
+                  style={{ color: colors.text.secondary, textAlign: 'center' }}
+                >
                   Audio URL not available. Please refresh to reload.
                 </Text>
               </View>
@@ -280,7 +289,11 @@ export function RecordingHistory({
       keyExtractor={(item) => item.id}
       contentContainerStyle={{ paddingBottom: spacing[6] }}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.accent[500]} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.accent[500]}
+        />
       }
       ListHeaderComponent={listHeader}
     />

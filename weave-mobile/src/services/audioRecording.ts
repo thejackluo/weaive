@@ -162,7 +162,9 @@ class AudioRecordingService {
 
       // Stop any existing recording (cleanup directly, don't call stopRecording to avoid lock)
       if (this.recording) {
-        console.log('[AUDIO_RECORDING] 🔄 Cleaning up previous recording before starting new one...');
+        console.log(
+          '[AUDIO_RECORDING] 🔄 Cleaning up previous recording before starting new one...'
+        );
         try {
           this.stopMeteringInterval();
           await this.recording.stopAndUnloadAsync();

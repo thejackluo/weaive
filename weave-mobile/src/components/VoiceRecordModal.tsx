@@ -94,7 +94,9 @@ export function VoiceRecordModal({
   const [recordingResult, setRecordingResult] = useState<RecordingResult | null>(null);
   const [transcript, setTranscript] = useState('');
   const [transcriptConfidence, setTranscriptConfidence] = useState(0.0);
-  const [transcriptProvider, setTranscriptProvider] = useState<'assemblyai' | 'whisper' | 'manual'>('assemblyai');
+  const [transcriptProvider, setTranscriptProvider] = useState<'assemblyai' | 'whisper' | 'manual'>(
+    'assemblyai'
+  );
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcriptionProgress, setTranscriptionProgress] = useState(0);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
@@ -115,55 +117,58 @@ export function VoiceRecordModal({
   /**
    * Step 1: Recording completed
    */
-  const handleRecordingComplete = useCallback(async (result: RecordingResult) => {
-    console.log('[VOICE_MODAL] ✅ Recording complete:', result);
-    setRecordingResult(result);
+  const handleRecordingComplete = useCallback(
+    async (result: RecordingResult) => {
+      console.log('[VOICE_MODAL] ✅ Recording complete:', result);
+      setRecordingResult(result);
 
-    // Move to transcribing step
-    setStep('transcribing');
-    setIsTranscribing(true);
-    setTranscriptionProgress(0);
-    setTranscriptionError(null);
+      // Move to transcribing step
+      setStep('transcribing');
+      setIsTranscribing(true);
+      setTranscriptionProgress(0);
+      setTranscriptionError(null);
 
-    try {
-      // Call real STT API
-      const transcriptionResult: TranscriptionResult = await transcribeAudio({
-        audioUri: result.uri,
-        language: _language,
-        onProgress: (progress) => {
-          // Update upload progress (0-100%)
-          setTranscriptionProgress(Math.round(progress * 100));
-        },
-      });
+      try {
+        // Call real STT API
+        const transcriptionResult: TranscriptionResult = await transcribeAudio({
+          audioUri: result.uri,
+          language: _language,
+          onProgress: (progress) => {
+            // Update upload progress (0-100%)
+            setTranscriptionProgress(Math.round(progress * 100));
+          },
+        });
 
-      console.log('[VOICE_MODAL] ✅ Transcription success:', transcriptionResult);
+        console.log('[VOICE_MODAL] ✅ Transcription success:', transcriptionResult);
 
-      setTranscript(transcriptionResult.transcript);
-      setTranscriptConfidence(transcriptionResult.confidence);
-      setTranscriptProvider(transcriptionResult.provider);
-      setIsTranscribing(false);
-      setStep('preview');
-    } catch (err: any) {
-      console.error('[VOICE_MODAL] ❌ Transcription error:', err);
+        setTranscript(transcriptionResult.transcript);
+        setTranscriptConfidence(transcriptionResult.confidence);
+        setTranscriptProvider(transcriptionResult.provider);
+        setIsTranscribing(false);
+        setStep('preview');
+      } catch (err: any) {
+        console.error('[VOICE_MODAL] ❌ Transcription error:', err);
 
-      // Provide user-friendly error messages
-      let errorMessage = 'Failed to transcribe audio';
+        // Provide user-friendly error messages
+        let errorMessage = 'Failed to transcribe audio';
 
-      if (err.code === 'NETWORK_ERROR') {
-        errorMessage = 'No internet connection. Recording saved locally.';
-      } else if (err.code === 'UPLOAD_TIMEOUT') {
-        errorMessage = 'Upload timed out. Please check your connection and try again.';
-      } else if (err.code === 'STT_RATE_LIMIT_EXCEEDED') {
-        errorMessage = err.message;
-      } else if (err.message) {
-        errorMessage = err.message;
+        if (err.code === 'NETWORK_ERROR') {
+          errorMessage = 'No internet connection. Recording saved locally.';
+        } else if (err.code === 'UPLOAD_TIMEOUT') {
+          errorMessage = 'Upload timed out. Please check your connection and try again.';
+        } else if (err.code === 'STT_RATE_LIMIT_EXCEEDED') {
+          errorMessage = err.message;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+
+        setTranscriptionError(errorMessage);
+        setIsTranscribing(false);
+        setStep('preview'); // Show preview anyway with error message
       }
-
-      setTranscriptionError(errorMessage);
-      setIsTranscribing(false);
-      setStep('preview'); // Show preview anyway with error message
-    }
-  }, [_language]);
+    },
+    [_language]
+  );
 
   /**
    * Step 3: User saves edited transcript
@@ -324,7 +329,10 @@ export function VoiceRecordModal({
                 style={{ opacity: 0.6 }}
               />
               {transcriptionProgress > 0 && transcriptionProgress < 100 && (
-                <Text variant="textSm" style={{ color: colors.text.secondary, marginTop: spacing[3] }}>
+                <Text
+                  variant="textSm"
+                  style={{ color: colors.text.secondary, marginTop: spacing[3] }}
+                >
                   {transcriptionProgress}%
                 </Text>
               )}

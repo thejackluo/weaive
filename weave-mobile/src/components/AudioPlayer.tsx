@@ -288,7 +288,10 @@ export function AudioPlayer({
       <Card variant="glass" style={{ padding: spacing[6] }}>
         <View style={styles.errorContainer}>
           <MaterialIcons name="error" size={48} color={colors.text.error} />
-          <Text variant="textLg" style={{ color: colors.text.error, marginTop: spacing[4], textAlign: 'center' }}>
+          <Text
+            variant="textLg"
+            style={{ color: colors.text.error, marginTop: spacing[4], textAlign: 'center' }}
+          >
             {error}
           </Text>
         </View>
@@ -409,7 +412,10 @@ export function AudioPlayer({
         {/* Speed control - Bottom row */}
         {showSpeedControl && (
           <View style={styles.speedRow}>
-            <Text variant="textSm" style={{ color: colors.text.secondary, marginRight: spacing[3] }}>
+            <Text
+              variant="textSm"
+              style={{ color: colors.text.secondary, marginRight: spacing[3] }}
+            >
               Speed:
             </Text>
             <View style={styles.speedContainer}>

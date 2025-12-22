@@ -76,7 +76,10 @@ async function fetchRecordingHistory(): Promise<RecordingCapture[]> {
           .createSignedUrl(recording.storage_key, 3600); // 1 hour = 3600 seconds
 
         if (urlError || !signedUrlData?.signedUrl) {
-          console.error(`[RECORDING_HISTORY] ⚠️  Failed to generate signed URL for ${recording.storage_key}:`, urlError);
+          console.error(
+            `[RECORDING_HISTORY] ⚠️  Failed to generate signed URL for ${recording.storage_key}:`,
+            urlError
+          );
           return {
             ...recording,
             audio_url: null,
