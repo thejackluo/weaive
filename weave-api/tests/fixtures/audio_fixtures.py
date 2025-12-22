@@ -8,16 +8,16 @@ Fixture Pattern:
 - Cleanup: Auto-delete created data after test completes
 """
 
-import pytest
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
+import pytest
+
 from tests.factories.audio_factory import (
+    create_test_audio_bytes,
     create_test_audio_capture,
     create_test_transcription_result,
-    create_test_audio_bytes,
 )
-
 
 # ============================================================================
 # AUDIO CAPTURE FIXTURES
