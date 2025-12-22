@@ -159,7 +159,7 @@ After implementing each chunk, follow this process:
 1. **HIGH:** Removed 3 console.log statements from production code (NeedleDetailScreen.tsx)
 2. **HIGH:** Fixed unsafe 'any' type - Added proper TypeScript types (GoalDetail, GoalDetailResponse, Milestone, Bind)
 3. **HIGH:** Updated documentation with complete file list (added missing modified files)
-4. **MEDIUM:** Replaced 6+ hardcoded hex colors with theme tokens (colors.text._, colors.border._)
+4. **MEDIUM:** Replaced 6+ hardcoded hex colors with theme tokens (colors.text.*, colors.border.*)
 5. **MEDIUM:** Wired up timeframe dropdown functionality (cycles through 7d/2w/1m/90d)
 6. **MEDIUM:** Added skeleton loaders for needles loading state (3 placeholder cards)
 
