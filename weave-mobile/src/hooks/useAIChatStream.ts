@@ -12,6 +12,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import apiClient from '@/services/apiClient';
+import { getAccessToken } from '@/services/secureStorage';
 
 export interface StreamChunk {
   type: 'chunk' | 'metadata' | 'done' | 'error';
@@ -115,11 +116,18 @@ export function useAIChatStream(): UseAIChatStreamReturn {
 
         // Get API base URL and headers from apiClient
         const baseURL = apiClient.defaults.baseURL || '';
-        const headers = {
+
+        // ✅ FIX: Get JWT token for authentication
+        const accessToken = await getAccessToken();
+        const headers: Record<string, string> = {
           ...apiClient.defaults.headers.common,
           'Content-Type': 'application/json',
           Accept: 'text/event-stream',
         };
+
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`;
+        }
 
         // Make streaming POST request
         const response = await fetch(`${baseURL}/api/ai-chat/messages/stream`, {

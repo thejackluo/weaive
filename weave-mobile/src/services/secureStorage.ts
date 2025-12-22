@@ -381,6 +381,40 @@ export const secureStorage = {
 };
 
 /**
+ * Get the current Supabase access token from session
+ * @returns Promise<string | null> - Access token if session exists, null otherwise
+ *
+ * Usage in API calls:
+ * ```ts
+ * const token = await getAccessToken();
+ * if (token) {
+ *   headers['Authorization'] = `Bearer ${token}`;
+ * }
+ * ```
+ *
+ * Note: This function uses dynamic import to avoid circular dependency
+ * with @lib/supabase which uses this storage module
+ */
+export async function getAccessToken(): Promise<string | null> {
+  try {
+    // Use Supabase client to get current session (most reliable method)
+    // Dynamic import to avoid circular dependency
+    const { supabase } = await import('@lib/supabase');
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (error) {
+      console.error('[SECURE_STORAGE] Error getting session:', error);
+      return null;
+    }
+
+    return session?.access_token || null;
+  } catch (error) {
+    console.error('[SECURE_STORAGE] Error getting access token:', error);
+    return null;
+  }
+}
+
+/**
  * Clear all auth tokens from keychain or AsyncStorage
  * Useful for logout and debugging
  * @returns Promise<boolean> - True if cleared successfully
