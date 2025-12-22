@@ -881,54 +881,132 @@ Animation: Fade in on mount
 
 ## Navigation Architecture
 
+**Implementation:** Epic 1.5, Story 1.5.1 - Core Navigation Architecture
+**Status:** ✅ Implemented
+**Last Updated:** 2025-12-21
+
 ### Information Architecture
 
 ```
-App Structure
-├── Tab Navigation (2 primary screens)
-│   ├── Thread (Home)
-│   │   ├── Today's triad (AI plan)
-│   │   ├── Needles with binds (collapsible)
-│   │   ├── Daily check-in CTA
-│   │   └── Push: Bind Detail
+App Structure (Story 1.5.1)
+├── Tab Navigation (2 visible tabs + center AI button)
+│   ├── Thread (Tab 1 - Left)
+│   │   ├── Today's Binds (Epic 3)
+│   │   ├── Daily Actions & Proof
+│   │   ├── Bind Completion Cards
+│   │   └── Stack Navigation →
+│   │       ├── Bind Detail [id]
+│   │       └── Attach Proof [id]
 │   │
-│   └── Weave (Dashboard)
-│       ├── Emotional mirror (identity)
-│       ├── Data mirror (charts)
-│       ├── AI insights
-│       └── Push: History/Entry Detail
-│
-├── Floating Menu (Quick Actions)
-│   ├── Talk to Weave → Chat screen
-│   └── Document → Capture screen
-│
-├── Modal Flows
-│   ├── Bind Completion Flow
-│   │   └── Bind Detail → Complete → Proof (optional)
+│   ├── AI Coach (Center Button - Glassmorphism Overlay)
+│   │   ├── Magical blur background (iOS 18 Siri-inspired)
+│   │   ├── Slide-up card interface
+│   │   ├── Chat with AI Coach (Epic 6)
+│   │   ├── Swipe-down to dismiss
+│   │   └── Tap outside to close
 │   │
-│   ├── Reflection Flow
-│   │   └── Recap → Reflection → AI Feedback
-│   │
-│   └── Goal Management Flow
-│       └── Needles Overview → Goal Detail → Edit
+│   └── Dashboard (Tab 2 - Right)
+│       ├── Progress Visualization (Epic 5)
+│       ├── Consistency Heatmap
+│       ├── Fulfillment Trend
+│       ├── Weave Character
+│       └── Stack Navigation →
+│           ├── Goals Management
+│           ├── Settings
+│           └── Profile
 │
-└── Settings Stack
-    ├── Profile
-    ├── Identity Document
-    ├── Notification Settings
-    ├── App Settings
-    └── Subscription
+├── Stack Screens (15+ placeholder screens)
+│   ├── Goals/ (Epic 2)
+│   │   ├── index.tsx → Goals List
+│   │   ├── [id].tsx → Goal Detail
+│   │   ├── new.tsx → Create Goal (Modal)
+│   │   └── edit/[id].tsx → Edit Goal (Modal)
+│   │
+│   ├── Binds/ (Epic 3)
+│   │   ├── [id].tsx → Bind Detail
+│   │   └── proof/[id].tsx → Attach Proof
+│   │
+│   ├── Journal/ (Epic 4)
+│   │   ├── index.tsx → Daily Reflection
+│   │   ├── history.tsx → Journal History
+│   │   └── [date].tsx → Past Entry
+│   │
+│   ├── Captures/ (Epic 3)
+│   │   ├── index.tsx → Capture Gallery
+│   │   └── [id].tsx → Capture Detail
+│   │
+│   └── Settings/ (Epic 8)
+│       ├── index.tsx → Settings Home
+│       ├── identity.tsx → Edit Identity Document
+│       └── subscription.tsx → Subscription Management
+│
+└── Auth & Onboarding Flows
+    ├── (auth)/ → Login, Signup
+    └── (onboarding)/ → Welcome, Identity, First Goal
 ```
 
 ### Navigation Patterns
 
-| Pattern | Usage | Implementation |
-|---------|-------|----------------|
-| Tab Switch | Main navigation | Tab bar, instant switch |
-| Push | Detail views | Slide from right |
-| Modal | Creation, focused tasks | Slide from bottom |
-| Bottom Sheet | Quick actions, selections | Partial overlay |
-| Alert | Confirmations | Centered dialog |
+| Pattern | Usage | Implementation | Examples |
+|---------|-------|----------------|----------|
+| **Tab Switch** | Main navigation | Tab bar, instant (<50ms) | Thread ↔ Dashboard |
+| **Center Button** | AI Chat access | Floating button, glassmorphism overlay | AI Coach overlay |
+| **Blur Overlay** | AI Chat modal | Backdrop blur + slide-up card | Siri-inspired design |
+| **Stack Push** | Detail views | Slide from right (300ms) | Goal Detail, Bind Detail |
+| **Modal Present** | Creation, editing | Slide from bottom (300ms) | New Goal, Edit Goal |
+| **Swipe Down** | Dismiss overlays | Pan gesture, spring animation | Close AI Chat |
+| **Tap Outside** | Quick dismiss | Pressable background | Close AI Chat |
+
+### Primary User Flows
+
+**1. Daily Action Completion**
+```
+Thread Tab → Bind Card → Bind Detail → Complete → Attach Proof (optional) → Back to Thread
+```
+
+**2. AI Coaching Session**
+```
+Any Screen → Center AI Button → AI Chat Overlay → Chat with Coach → Swipe Down to Dismiss
+```
+
+**3. Daily Reflection**
+```
+Dashboard → Journal → Daily Reflection → Answer Questions → AI Feedback → Complete
+```
+
+**4. Goal Management**
+```
+Dashboard → Goals → Goals List → Goal Detail → Edit/Archive
+```
+
+**5. Progress Review**
+```
+Dashboard → View Heat Map → View Fulfillment Chart → View Weave Character
+```
+
+### Glassmorphism AI Chat Design Spec
+
+**Visual Design:**
+- **Background:** Blur effect (expo-blur, intensity: 80, tint: dark)
+- **Dim Overlay:** rgba(0, 0, 0, 0.5)
+- **Card Background:** rgba(26, 26, 26, 0.98) with 3px purple glow border
+- **Border Color:** rgba(167, 139, 250, 0.6) - purple accent
+- **Shadow:** 0 -4px 32px rgba(167, 139, 250, 0.9)
+- **Border Radius:** 24px (top corners only)
+- **Height:** 70% of screen
+- **Width:** 90% of screen
+
+**Animation Timing:**
+- **Open:** Fade-in blur (250ms) + slide-up card (300ms spring)
+- **Close:** Fade-out blur (200ms) + slide-down card (200ms)
+- **Gesture Dismiss:** Swipe down >100px or velocity >500px/s
+
+**Interaction:**
+- ✅ Tap center AI button to open
+- ✅ Tap outside card to dismiss
+- ✅ Swipe down on card to dismiss
+- ✅ Android back button to dismiss
+- ✅ Close button (top-right X icon)
 
 ---
 
