@@ -46,6 +46,7 @@ import { AudioWaveform } from './AudioWaveform';
 import { TranscriptPreview } from './TranscriptPreview';
 import { AudioPlayer } from './AudioPlayer';
 import { RecordingResult } from '@/services/audioRecording';
+import { transcribeAudio, TranscriptionResult } from '@/services/sttService';
 
 export interface VoiceRecordModalProps {
   /**
@@ -93,7 +94,9 @@ export function VoiceRecordModal({
   const [recordingResult, setRecordingResult] = useState<RecordingResult | null>(null);
   const [transcript, setTranscript] = useState('');
   const [transcriptConfidence, setTranscriptConfidence] = useState(0.0);
+  const [transcriptProvider, setTranscriptProvider] = useState<'assemblyai' | 'whisper' | 'manual'>('assemblyai');
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptionProgress, setTranscriptionProgress] = useState(0);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
 
   /**
@@ -119,27 +122,48 @@ export function VoiceRecordModal({
     // Move to transcribing step
     setStep('transcribing');
     setIsTranscribing(true);
+    setTranscriptionProgress(0);
     setTranscriptionError(null);
 
     try {
-      // TODO: Call actual transcription API
-      // For now, simulate API call with mock data
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Call real STT API
+      const transcriptionResult: TranscriptionResult = await transcribeAudio({
+        audioUri: result.uri,
+        language: _language,
+        onProgress: (progress) => {
+          // Update upload progress (0-100%)
+          setTranscriptionProgress(Math.round(progress * 100));
+        },
+      });
 
-      const mockTranscript = 'This is a mock transcript. Replace with actual API call.';
-      const mockConfidence = 0.92;
+      console.log('[VOICE_MODAL] ✅ Transcription success:', transcriptionResult);
 
-      setTranscript(mockTranscript);
-      setTranscriptConfidence(mockConfidence);
+      setTranscript(transcriptionResult.transcript);
+      setTranscriptConfidence(transcriptionResult.confidence);
+      setTranscriptProvider(transcriptionResult.provider);
       setIsTranscribing(false);
       setStep('preview');
-    } catch (err) {
+    } catch (err: any) {
       console.error('[VOICE_MODAL] ❌ Transcription error:', err);
-      setTranscriptionError(err instanceof Error ? err.message : 'Failed to transcribe audio');
+
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to transcribe audio';
+
+      if (err.code === 'NETWORK_ERROR') {
+        errorMessage = 'No internet connection. Recording saved locally.';
+      } else if (err.code === 'UPLOAD_TIMEOUT') {
+        errorMessage = 'Upload timed out. Please check your connection and try again.';
+      } else if (err.code === 'STT_RATE_LIMIT_EXCEEDED') {
+        errorMessage = err.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setTranscriptionError(errorMessage);
       setIsTranscribing(false);
       setStep('preview'); // Show preview anyway with error message
     }
-  }, []);
+  }, [_language]);
 
   /**
    * Step 3: User saves edited transcript
@@ -266,7 +290,7 @@ export function VoiceRecordModal({
         return (
           <View style={styles.stepContent}>
             <Text variant="displayMd" style={{ marginBottom: spacing[6], textAlign: 'center' }}>
-              Transcribing...
+              {transcriptionProgress < 100 ? 'Uploading...' : 'Transcribing...'}
             </Text>
             <Text
               variant="textBase"
@@ -276,7 +300,9 @@ export function VoiceRecordModal({
                 textAlign: 'center',
               }}
             >
-              Converting your audio to text
+              {transcriptionProgress < 100
+                ? `Uploading audio ${transcriptionProgress}%`
+                : 'Converting your audio to text'}
             </Text>
 
             {recordingResult && (
@@ -297,6 +323,11 @@ export function VoiceRecordModal({
                 color={colors.accent[500]}
                 style={{ opacity: 0.6 }}
               />
+              {transcriptionProgress > 0 && transcriptionProgress < 100 && (
+                <Text variant="textSm" style={{ color: colors.text.secondary, marginTop: spacing[3] }}>
+                  {transcriptionProgress}%
+                </Text>
+              )}
             </View>
           </View>
         );
@@ -339,13 +370,27 @@ export function VoiceRecordModal({
                 </View>
               </Card>
             ) : (
-              <TranscriptPreview
-                transcript={transcript}
-                confidence={transcriptConfidence}
-                provider="assemblyai"
-                isLoading={isTranscribing}
-                onSave={handleSaveTranscript}
-              />
+              <>
+                <TranscriptPreview
+                  transcript={transcript}
+                  confidence={transcriptConfidence}
+                  provider={transcriptProvider}
+                  isLoading={isTranscribing}
+                  onSave={handleSaveTranscript}
+                />
+
+                {/* Continue button - save without editing */}
+                {transcript && !isTranscribing && (
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onPress={() => handleSaveTranscript(transcript)}
+                    style={{ marginTop: spacing[4] }}
+                  >
+                    Continue
+                  </Button>
+                )}
+              </>
             )}
 
             {recordingResult && !isTranscribing && (

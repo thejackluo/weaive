@@ -23,6 +23,7 @@ import {
   TranscriptPreview,
   AudioPlayer,
   RateLimitIndicator,
+  RecordingHistory,
 } from '@/components/voice';
 import { RecordingResult } from '@/services/audioRecording';
 
@@ -137,8 +138,8 @@ export default function VoiceDemoScreen() {
           </View>
           {recordingResult && (
             <Text variant="textXs" style={{ color: colors.text.secondary, marginTop: spacing[3] }}>
-              ✅ Last recording: {(recordingResult.durationMillis / 1000).toFixed(1)}s (
-              {(recordingResult.size / 1024).toFixed(1)}KB)
+              ✅ Last recording: {(recordingResult.durationMillis / 1000).toFixed(1)}s /{' '}
+              {(recordingResult.size / 1024).toFixed(1)}KB
             </Text>
           )}
         </Card>
@@ -224,6 +225,19 @@ export default function VoiceDemoScreen() {
           />
         </Card>
 
+        {/* Test 8: Recording History */}
+        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
+          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
+            Test 8: Recording History
+          </Text>
+          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
+            View all past audio recordings with transcripts and playback
+          </Text>
+          <View style={{ height: 400 }}>
+            <RecordingHistory maxPreviewLength={80} />
+          </View>
+        </Card>
+
         {/* Testing Tips */}
         <Card variant="subtle" style={{ padding: spacing[4], marginBottom: spacing[8] }}>
           <Text
@@ -240,7 +254,8 @@ export default function VoiceDemoScreen() {
             5. Check offline queueing (airplane mode){'\n'}
             6. Verify rate limit display updates{'\n'}
             7. Test all playback speeds (0.5x - 2.0x){'\n'}
-            8. Edit transcript and check character limit
+            8. Edit transcript and check character limit{'\n'}
+            9. Check recording history updates after new recordings
           </Text>
         </Card>
       </ScrollView>
