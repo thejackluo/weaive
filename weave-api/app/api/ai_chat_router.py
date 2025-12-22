@@ -39,6 +39,7 @@ from app.models.ai_chat_models import (
 from app.services.ai import AIService
 from app.services.ai.tiered_rate_limiter import TieredRateLimiter
 from app.config.ai_chat_config import AIChatConfig
+from app.config.ai_personality_config import AIPersonalityConfig
 
 logger = logging.getLogger(__name__)
 
@@ -414,10 +415,26 @@ async def send_chat_message_stream(
                     bypass_admin_key=is_admin
                 )
             except HTTPException as e:
+                # ✅ FIX: Stream error message character by character for better UX
+                error_msg = e.detail.get("message", "Rate limit exceeded")
+                
+                # Send metadata first
+                metadata_event = json.dumps({"type": "metadata", "message_id": None, "conversation_id": None})
+                yield f"data: {metadata_event}\n\n"
+                
+                # Stream error message as chunks (fake stream for UX)
+                import asyncio
+                for i in range(0, len(error_msg), 10):  # 10 chars at a time
+                    chunk = error_msg[i:i+10]
+                    chunk_event = json.dumps({"type": "chunk", "content": chunk})
+                    yield f"data: {chunk_event}\n\n"
+                    await asyncio.sleep(0.05)  # 50ms delay for typing effect
+                
+                # Send final error event
                 error_event = json.dumps({
                     "type": "error",
                     "code": e.detail.get("code", "RATE_LIMIT_EXCEEDED"),
-                    "message": e.detail.get("message", "Rate limit exceeded")
+                    "message": error_msg
                 })
                 yield f"data: {error_event}\n\n"
                 return
@@ -443,12 +460,12 @@ async def send_chat_message_stream(
             })
             yield f"data: {metadata_event}\n\n"
 
-            # Build context-aware prompt
-            system_prompt = (
-                "You are Weave, a supportive AI coach helping users achieve their goals. "
-                "Be encouraging, concise, and actionable. Focus on progress and accountability."
+            # ✅ Build context-aware prompt using personality config
+            full_prompt = AIPersonalityConfig.build_context_prompt(
+                user_message=request.message,
+                personality=AIPersonalityConfig.PERSONALITY,
+                user_context=None  # TODO: Load from Context Builder (Story 1.5.3)
             )
-            full_prompt = f"{system_prompt}\n\nUser: {request.message}"
 
             # Stream AI response with model fallback chain (save message even if client disconnects)
             full_content = []
