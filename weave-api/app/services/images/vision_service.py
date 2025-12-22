@@ -27,6 +27,7 @@ class VisionAnalysisResult:
         provider: str,
         validation_score: int,  # 0-100
         is_verified: bool,  # True if validation_score >= 80
+        summary: Optional[str],  # 1-2 sentence description
         ocr_text: Optional[str],
         categories: List[Dict[str, any]],  # [{"label": str, "confidence": float}]
         quality_score: int,  # 1-5
@@ -39,6 +40,7 @@ class VisionAnalysisResult:
         self.provider = provider
         self.validation_score = validation_score
         self.is_verified = is_verified
+        self.summary = summary
         self.ocr_text = ocr_text
         self.categories = categories
         self.quality_score = quality_score
@@ -54,6 +56,7 @@ class VisionAnalysisResult:
             "provider": self.provider,
             "validation_score": self.validation_score,
             "is_verified": self.is_verified,
+            "summary": self.summary,
             "ocr_text": self.ocr_text,
             "categories": self.categories,
             "quality_score": self.quality_score,

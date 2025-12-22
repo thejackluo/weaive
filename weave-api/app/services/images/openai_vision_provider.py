@@ -195,6 +195,7 @@ RULES:
                 provider=self.MODEL_NAME,
                 validation_score=validation_score,
                 is_verified=validation_score >= 80,
+                summary=analysis.get("summary"),  # Extract summary from AI response
                 ocr_text=analysis.get("ocr_text"),
                 categories=analysis.get("categories", []),
                 quality_score=int(analysis["quality_score"]),
