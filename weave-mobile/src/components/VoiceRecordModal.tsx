@@ -112,39 +112,34 @@ export function VoiceRecordModal({
   /**
    * Step 1: Recording completed
    */
-  const handleRecordingComplete = useCallback(
-    async (result: RecordingResult) => {
-      console.log('[VOICE_MODAL] ✅ Recording complete:', result);
-      setRecordingResult(result);
+  const handleRecordingComplete = useCallback(async (result: RecordingResult) => {
+    console.log('[VOICE_MODAL] ✅ Recording complete:', result);
+    setRecordingResult(result);
 
-      // Move to transcribing step
-      setStep('transcribing');
-      setIsTranscribing(true);
-      setTranscriptionError(null);
+    // Move to transcribing step
+    setStep('transcribing');
+    setIsTranscribing(true);
+    setTranscriptionError(null);
 
-      try {
-        // TODO: Call actual transcription API
-        // For now, simulate API call with mock data
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // TODO: Call actual transcription API
+      // For now, simulate API call with mock data
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        const mockTranscript = 'This is a mock transcript. Replace with actual API call.';
-        const mockConfidence = 0.92;
+      const mockTranscript = 'This is a mock transcript. Replace with actual API call.';
+      const mockConfidence = 0.92;
 
-        setTranscript(mockTranscript);
-        setTranscriptConfidence(mockConfidence);
-        setIsTranscribing(false);
-        setStep('preview');
-      } catch (err) {
-        console.error('[VOICE_MODAL] ❌ Transcription error:', err);
-        setTranscriptionError(
-          err instanceof Error ? err.message : 'Failed to transcribe audio'
-        );
-        setIsTranscribing(false);
-        setStep('preview'); // Show preview anyway with error message
-      }
-    },
-    []
-  );
+      setTranscript(mockTranscript);
+      setTranscriptConfidence(mockConfidence);
+      setIsTranscribing(false);
+      setStep('preview');
+    } catch (err) {
+      console.error('[VOICE_MODAL] ❌ Transcription error:', err);
+      setTranscriptionError(err instanceof Error ? err.message : 'Failed to transcribe audio');
+      setIsTranscribing(false);
+      setStep('preview'); // Show preview anyway with error message
+    }
+  }, []);
 
   /**
    * Step 3: User saves edited transcript
@@ -249,7 +244,11 @@ export function VoiceRecordModal({
             </Text>
             <Text
               variant="textBase"
-              style={{ color: colors.text.secondary, marginBottom: spacing[8], textAlign: 'center' }}
+              style={{
+                color: colors.text.secondary,
+                marginBottom: spacing[8],
+                textAlign: 'center',
+              }}
             >
               Tap the microphone to start recording
             </Text>
@@ -271,7 +270,11 @@ export function VoiceRecordModal({
             </Text>
             <Text
               variant="textBase"
-              style={{ color: colors.text.secondary, marginBottom: spacing[8], textAlign: 'center' }}
+              style={{
+                color: colors.text.secondary,
+                marginBottom: spacing[8],
+                textAlign: 'center',
+              }}
             >
               Converting your audio to text
             </Text>
@@ -306,7 +309,11 @@ export function VoiceRecordModal({
             </Text>
             <Text
               variant="textBase"
-              style={{ color: colors.text.secondary, marginBottom: spacing[6], textAlign: 'center' }}
+              style={{
+                color: colors.text.secondary,
+                marginBottom: spacing[6],
+                textAlign: 'center',
+              }}
             >
               Edit if needed, then save
             </Text>
@@ -345,7 +352,11 @@ export function VoiceRecordModal({
               <Card variant="glass" style={{ padding: spacing[4], marginTop: spacing[6] }}>
                 <Text
                   variant="textBase"
-                  style={{ fontWeight: '600', marginBottom: spacing[3], color: colors.text.primary }}
+                  style={{
+                    fontWeight: '600',
+                    marginBottom: spacing[3],
+                    color: colors.text.primary,
+                  }}
                 >
                   Audio Playback
                 </Text>

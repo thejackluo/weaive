@@ -13,7 +13,7 @@
  */
 
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import { File } from 'expo-file-system';
 
 export interface RecordingOptions {
   /**
@@ -85,6 +85,7 @@ class AudioRecordingService {
   private state: RecordingState = RecordingState.IDLE;
   private meteringInterval: ReturnType<typeof setTimeout> | null = null;
   private meteringHistory: number[] = [];
+  private isProcessing: boolean = false; // Prevent concurrent operations
 
   /**
    * Request microphone permissions
@@ -141,6 +142,13 @@ class AudioRecordingService {
    */
   async startRecording(options: RecordingOptions = {}): Promise<void> {
     try {
+      // Prevent concurrent operations
+      if (this.isProcessing) {
+        console.warn('[AUDIO_RECORDING] ⚠️  Operation already in progress, skipping...');
+        return;
+      }
+      this.isProcessing = true;
+
       console.log('[AUDIO_RECORDING] 🎙️  Starting recording...');
 
       // Check permissions first
@@ -152,15 +160,26 @@ class AudioRecordingService {
         }
       }
 
-      // Stop any existing recording
+      // Stop any existing recording (cleanup directly, don't call stopRecording to avoid lock)
       if (this.recording) {
-        await this.stopRecording();
+        console.log('[AUDIO_RECORDING] 🔄 Cleaning up previous recording before starting new one...');
+        try {
+          this.stopMeteringInterval();
+          await this.recording.stopAndUnloadAsync();
+          this.recording = null;
+          this.meteringHistory = [];
+        } catch (cleanupError) {
+          console.warn('[AUDIO_RECORDING] ⚠️  Error cleaning up previous recording:', cleanupError);
+          this.recording = null; // Force cleanup
+        }
       }
 
       // Configure audio mode for recording
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
+        interruptionModeIOS: 1, // DoNotMix - Required for iOS recording to work
+        interruptionModeAndroid: 1, // DoNotMix
         staysActiveInBackground: false,
         shouldDuckAndroid: true,
         playThroughEarpieceAndroid: false,
@@ -179,13 +198,11 @@ class AudioRecordingService {
         },
         ios: {
           extension: '.m4a',
+          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
           audioQuality: Audio.IOSAudioQuality.HIGH,
           sampleRate: 44100,
           numberOfChannels: 1,
           bitRate: 128000,
-          linearPCMBitDepth: 16,
-          linearPCMIsBigEndian: false,
-          linearPCMIsFloat: false,
         },
         web: {
           mimeType: 'audio/webm',
@@ -194,10 +211,24 @@ class AudioRecordingService {
       };
 
       // Create recording instance
-      const { recording } = await Audio.Recording.createAsync(recordingOptions);
+      const { recording, status } = await Audio.Recording.createAsync(recordingOptions);
       this.recording = recording;
       this.state = RecordingState.RECORDING;
       this.meteringHistory = [];
+
+      console.log('[AUDIO_RECORDING] 📊 Recording created:', {
+        isRecording: status.isRecording,
+        canRecord: status.canRecord,
+        durationMillis: status.durationMillis,
+        meteringEnabled: status.metering !== undefined,
+      });
+
+      // Verify recording is actually active
+      if (!status.isRecording) {
+        throw new Error(
+          'Recording was created but did not start. Check audio permissions and device settings.'
+        );
+      }
 
       // Start metering interval if enabled
       if (options.enableMetering ?? true) {
@@ -214,11 +245,13 @@ class AudioRecordingService {
         }, options.maxDuration * 1000);
       }
 
-      console.log('[AUDIO_RECORDING] ✅ Recording started');
+      console.log('[AUDIO_RECORDING] ✅ Recording started successfully');
     } catch (error) {
       console.error('[AUDIO_RECORDING] ❌ Error starting recording:', error);
       this.state = RecordingState.ERROR;
       throw error;
+    } finally {
+      this.isProcessing = false;
     }
   }
 
@@ -277,6 +310,9 @@ class AudioRecordingService {
         throw new Error('No active recording to stop');
       }
 
+      // Note: We don't check isProcessing here because stopping should always be allowed
+      // to prevent the user from being stuck in a bad state
+
       console.log('[AUDIO_RECORDING] ⏹️  Stopping recording...');
       this.state = RecordingState.PROCESSING;
       this.stopMeteringInterval();
@@ -292,9 +328,20 @@ class AudioRecordingService {
         throw new Error('Recording URI is null');
       }
 
-      // Get file size
-      const fileInfo = await FileSystem.getInfoAsync(uri);
-      const size = fileInfo.exists && 'size' in fileInfo ? fileInfo.size : 0;
+      // Get file size and verify file exists (using new File API)
+      const recordingFile = new File(uri);
+
+      if (!recordingFile.exists) {
+        throw new Error('Recording file was not created. Audio recording may have failed.');
+      }
+
+      const size = recordingFile.size;
+
+      // Warn if file is suspiciously small (likely empty/silent)
+      if (size < 1000) {
+        console.warn('[AUDIO_RECORDING] ⚠️  Recording file is very small:', size, 'bytes');
+        console.warn('[AUDIO_RECORDING] This may indicate a silent recording or permission issue');
+      }
 
       // Clean up
       const result: RecordingResult = {
@@ -309,8 +356,10 @@ class AudioRecordingService {
       this.state = RecordingState.IDLE;
 
       console.log('[AUDIO_RECORDING] ✅ Recording stopped:', {
+        uri,
         duration: `${(result.durationMillis / 1000).toFixed(1)}s`,
         size: `${(result.size / 1024).toFixed(1)}KB`,
+        samples: result.meteringData?.length || 0,
       });
 
       return result;
@@ -336,9 +385,16 @@ class AudioRecordingService {
       const uri = this.recording.getURI();
       await this.recording.stopAndUnloadAsync();
 
-      // Delete recording file
+      // Delete recording file (using new File API)
       if (uri) {
-        await FileSystem.deleteAsync(uri, { idempotent: true });
+        try {
+          const file = new File(uri);
+          if (file.exists) {
+            file.delete();
+          }
+        } catch (deleteError) {
+          console.warn('[AUDIO_RECORDING] Failed to delete file:', deleteError);
+        }
       }
 
       this.recording = null;
