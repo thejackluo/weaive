@@ -51,14 +51,46 @@ export function useAIChatStream(): UseAIChatStreamReturn {
   }>({});
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
 
-  const cancelStream = useCallback(() => {
+  // Auto-clear error after 5 seconds to allow retry
+  React.useEffect(() => {
+    if (error) {
+      const timerId = setTimeout(() => {
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timerId);
+    }
+  }, [error]);
+
+  // Cleanup on unmount to prevent memory leaks
+  React.useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
+    };
+  }, []);
+
+  const cleanup = useCallback(() => {
+    // Clear all refs to prevent memory leaks
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-    setIsStreaming(false);
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
   }, []);
+
+  const cancelStream = useCallback(() => {
+    cleanup();
+    setIsStreaming(false);
+  }, [cleanup]);
 
   const sendStreamingMessage = useCallback(
     async (message: string, conversationId?: string) => {
@@ -71,6 +103,15 @@ export function useAIChatStream(): UseAIChatStreamReturn {
 
         // Create AbortController for cancellation support
         abortControllerRef.current = new AbortController();
+
+        // Set 60-second timeout for streaming request
+        timeoutIdRef.current = setTimeout(() => {
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            setError('Request timed out after 60 seconds. Please try again.');
+            setIsStreaming(false);
+          }
+        }, 60000);
 
         // Get API base URL and headers from apiClient
         const baseURL = apiClient.defaults.baseURL || '';
@@ -161,22 +202,23 @@ export function useAIChatStream(): UseAIChatStreamReturn {
           }
         }
 
-        // Clean up
-        abortControllerRef.current = null;
+        // Clean up on successful completion
+        cleanup();
         setIsStreaming(false);
       } catch (err: any) {
-        // Handle errors
+        // Handle errors and clean up
         if (err.name === 'AbortError') {
-          console.log('Stream cancelled by user');
+          console.log('Stream cancelled by user or timed out');
+          // Error already set if timeout, otherwise user cancellation
         } else {
           console.error('Streaming error:', err);
           setError(err.message || 'Failed to stream response');
         }
         setIsStreaming(false);
-        abortControllerRef.current = null;
+        cleanup();
       }
     },
-    []
+    [cleanup]
   );
 
   return {
