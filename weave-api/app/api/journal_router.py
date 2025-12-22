@@ -23,6 +23,56 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/journal-entries", tags=["journal"])
 
 
+# Helper function to get or create user profile
+async def get_or_create_user_profile(supabase, auth_user_id: str) -> str:
+    """
+    Get user_profile.id from auth_user_id, creating profile if it doesn't exist.
+
+    Args:
+        supabase: Supabase client
+        auth_user_id: Auth user ID from JWT token
+
+    Returns:
+        user_profile.id (UUID as string)
+
+    Raises:
+        HTTPException if profile creation fails
+    """
+    try:
+        # Try to get existing profile
+        profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+        user_id = profile_response.data["id"]
+        logger.info(f"[JOURNAL_API] Found user_profile.id: {user_id}")
+        return user_id
+    except Exception as profile_error:
+        # Profile doesn't exist - auto-create it
+        logger.warning(f"⚠️  No user profile found for auth_user_id: {auth_user_id}, creating one...")
+
+        try:
+            new_profile = supabase.table("user_profiles").insert({
+                "auth_user_id": auth_user_id,
+                "display_name": "User",
+                "timezone": "America/Los_Angeles",
+                "locale": "en-US"
+            }).execute()
+
+            user_id = new_profile.data[0]["id"]
+            logger.info(f"✅ Auto-created user_profile.id: {user_id}")
+            return user_id
+        except Exception as create_error:
+            logger.error(f"❌ Failed to auto-create user profile: {create_error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to initialize user profile",
+            )
+
+
 # Pydantic Models
 class DefaultResponses(BaseModel):
     """Default reflection questions responses"""
@@ -158,15 +208,7 @@ async def create_journal_entry(
         )
 
     # Get user's profile ID (convert auth_user_id → user_profiles.id)
-    profile_response = supabase.table("user_profiles").select("id").eq("auth_user_id", user_id).single().execute()
-
-    if not profile_response.data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not found"
-        )
-
-    profile_id = profile_response.data["id"]
+    profile_id = await get_or_create_user_profile(supabase, user_id)
 
     # Prepare journal entry data
     journal_data = {
@@ -219,6 +261,28 @@ async def create_journal_entry(
         # Log error but don't fail the request
         print(f"Failed to update daily_aggregates: {str(e)}")
 
+    # Calculate level and progress (same system as bind completion)
+    # Simple level system: 10 journal entries per level
+    try:
+        total_journals_response = (
+            supabase.table("journal_entries")
+            .select("id", count="exact")
+            .eq("user_id", profile_id)
+            .execute()
+        )
+
+        total_journals = total_journals_response.count or 0
+        level = (total_journals // 10) + 1  # Level 1 starts at 0-9 journals
+        journals_in_level = total_journals % 10
+        level_progress = (journals_in_level / 10) * 100  # Percentage to next level
+
+        logger.info(f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}")
+    except Exception as level_error:
+        logger.error(f"❌ Error calculating level: {str(level_error)}")
+        # Default to level 1 if calculation fails
+        level = 1
+        level_progress = 0.0
+
     # AC #15, Subtask 2.8: Trigger AI batch job asynchronously (Story 4.1/4.3)
     asyncio.create_task(
         trigger_ai_feedback_generation(
@@ -229,7 +293,15 @@ async def create_journal_entry(
         )
     )
 
-    return ApiResponse(data=JournalEntryResponse(**created_journal))
+    # Return with level data for celebration modal
+    return {
+        "data": JournalEntryResponse(**created_journal),
+        "meta": {
+            "timestamp": datetime.utcnow().isoformat(),
+            "level": level,
+            "level_progress": round(level_progress, 1),
+        }
+    }
 
 
 @router.get("/today", response_model=ApiResponse)
@@ -247,15 +319,7 @@ async def get_today_journal_entry(
     supabase = get_supabase_client()
 
     # Get user's profile ID
-    profile_response = supabase.table("user_profiles").select("id").eq("auth_user_id", user_id).single().execute()
-
-    if not profile_response.data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not found"
-        )
-
-    profile_id = profile_response.data["id"]
+    profile_id = await get_or_create_user_profile(supabase, user_id)
 
     # Calculate today's local_date (use user's timezone)
     # For now, use server's date - TODO: Use user's timezone from profile
@@ -294,15 +358,7 @@ async def update_journal_entry(
     supabase = get_supabase_client()
 
     # Get user's profile ID
-    profile_response = supabase.table("user_profiles").select("id").eq("auth_user_id", user_id).single().execute()
-
-    if not profile_response.data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not found"
-        )
-
-    profile_id = profile_response.data["id"]
+    profile_id = await get_or_create_user_profile(supabase, user_id)
 
     # Verify journal entry exists and belongs to user
     journal_response = supabase.table("journal_entries").select("*").eq("id", journal_id).eq("user_id", profile_id).execute()
@@ -352,6 +408,26 @@ async def update_journal_entry(
     except Exception as e:
         print(f"Failed to update daily_aggregates: {str(e)}")
 
+    # Calculate level and progress (same system as bind completion)
+    try:
+        total_journals_response = (
+            supabase.table("journal_entries")
+            .select("id", count="exact")
+            .eq("user_id", profile_id)
+            .execute()
+        )
+
+        total_journals = total_journals_response.count or 0
+        level = (total_journals // 10) + 1
+        journals_in_level = total_journals % 10
+        level_progress = (journals_in_level / 10) * 100
+
+        logger.info(f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}")
+    except Exception as level_error:
+        logger.error(f"❌ Error calculating level: {str(level_error)}")
+        level = 1
+        level_progress = 0.0
+
     # AC #15, Subtask 2.8: Trigger AI batch job asynchronously (Story 4.1/4.3)
     asyncio.create_task(
         trigger_ai_feedback_generation(
@@ -362,4 +438,12 @@ async def update_journal_entry(
         )
     )
 
-    return ApiResponse(data=JournalEntryResponse(**updated_journal))
+    # Return with level data for celebration modal
+    return {
+        "data": JournalEntryResponse(**updated_journal),
+        "meta": {
+            "timestamp": datetime.utcnow().isoformat(),
+            "level": level,
+            "level_progress": round(level_progress, 1),
+        }
+    }
