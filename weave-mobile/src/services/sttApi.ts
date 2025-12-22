@@ -2,13 +2,13 @@
  * Story 0.11: Speech-to-Text API Client
  *
  * HTTP client for STT operations
- * Communicates with FastAPI backend: /api/transcribe
+ * Communicates with FastAPI backend: /api/stt/*
  *
  * Endpoints:
- * - POST /api/transcribe: Upload and transcribe audio
- * - GET /api/captures/{capture_id}: Retrieve capture with signed URL
- * - DELETE /api/captures/{capture_id}: Delete capture
- * - POST /api/captures/{capture_id}/re-transcribe: Retry transcription
+ * - POST /api/stt/transcribe: Upload and transcribe audio
+ * - GET /api/stt/captures/{capture_id}: Retrieve capture with signed URL
+ * - DELETE /api/stt/captures/{capture_id}: Delete capture
+ * - POST /api/stt/captures/{capture_id}/re-transcribe: Retry transcription
  */
 
 import { getApiBaseUrl } from '@/utils/api';
@@ -115,7 +115,7 @@ async function getAuthToken(): Promise<string> {
 }
 
 /**
- * POST /api/transcribe
+ * POST /api/stt/transcribe
  * Upload audio file and transcribe with provider fallback
  *
  * Process:
@@ -166,7 +166,7 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
     }
 
     // Step 4: Upload and transcribe
-    console.log('[STT_API] 🚀 Uploading to /api/transcribe');
+    console.log('[STT_API] 🚀 Uploading to /api/stt/transcribe');
     const uploadStart = performance.now();
 
     // Create AbortController for 30-second timeout (STT can be slow)
@@ -177,7 +177,7 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
     }, 30000);
 
     try {
-      const uploadResponse = await fetch(`${API_BASE_URL}/api/transcribe`, {
+      const uploadResponse = await fetch(`${API_BASE_URL}/api/stt/transcribe`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -255,7 +255,7 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
 }
 
 /**
- * GET /api/captures/{capture_id}
+ * GET /api/stt/captures/{capture_id}
  * Retrieve capture with signed audio URL (1-hour expiration)
  */
 export async function getCapture(captureId: string): Promise<CaptureResponse> {
@@ -264,7 +264,7 @@ export async function getCapture(captureId: string): Promise<CaptureResponse> {
 
     const token = await getAuthToken();
 
-    const response = await fetch(`${API_BASE_URL}/api/captures/${captureId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/stt/captures/${captureId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -293,7 +293,7 @@ export async function getCapture(captureId: string): Promise<CaptureResponse> {
 }
 
 /**
- * DELETE /api/captures/{capture_id}
+ * DELETE /api/stt/captures/{capture_id}
  * Delete capture (storage + database)
  */
 export async function deleteCapture(captureId: string): Promise<void> {
@@ -302,7 +302,7 @@ export async function deleteCapture(captureId: string): Promise<void> {
 
     const token = await getAuthToken();
 
-    const response = await fetch(`${API_BASE_URL}/api/captures/${captureId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/stt/captures/${captureId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -327,7 +327,7 @@ export async function deleteCapture(captureId: string): Promise<void> {
 }
 
 /**
- * POST /api/captures/{capture_id}/re-transcribe
+ * POST /api/stt/captures/{capture_id}/re-transcribe
  * Re-transcribe audio with different provider
  *
  * Free retry policy:
@@ -348,7 +348,7 @@ export async function retranscribeCapture(
       formData.append('provider', provider);
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/captures/${captureId}/re-transcribe`, {
+    const response = await fetch(`${API_BASE_URL}/api/stt/captures/${captureId}/re-transcribe`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,

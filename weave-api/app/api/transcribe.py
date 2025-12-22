@@ -34,7 +34,7 @@ from app.core.stt_config import (
 from app.services.stt import STTService, TranscriptionResult
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api", tags=["stt"])
+router = APIRouter(prefix="/api/stt", tags=["stt"])
 
 # Initialize STT service (singleton)
 stt_service = STTService()
@@ -160,6 +160,12 @@ async def check_rate_limit(user_id: UUID, supabase, user_timezone: str = "UTC", 
         .eq('local_date', local_date) \
         .maybe_single() \
         .execute()
+
+    # Handle None result (query failed or no data)
+    if result is None:
+        logger.warning(f"Rate limit check failed - Supabase query returned None for user {user_id}")
+        # Allow request if we can't check limits (fail open for better UX)
+        return
 
     if result.data:
         request_count = result.data.get('stt_request_count', 0)
