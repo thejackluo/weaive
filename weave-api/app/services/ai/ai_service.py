@@ -364,9 +364,9 @@ class AIService:
                 errors.append(f"{provider_name}: {e.message}")
                 logger.warning(f"❌ {provider_name} streaming failed: {e.message}")
 
+                # ✅ Fixed: Don't break on non-retryable errors - try other providers
                 if not e.retryable:
-                    logger.error(f"🛑 {provider_name} error is not retryable, skipping remaining providers")
-                    break
+                    logger.warning(f"⚠️  {provider_name} error is not retryable, but will try other streaming providers")
 
                 continue  # Try next provider
 
@@ -377,20 +377,45 @@ class AIService:
                 logger.error(f"💥 {provider_name} unexpected streaming error: {e}")
                 continue
 
-        # All providers failed - fallback to deterministic
-        logger.warning("⚠️  All streaming providers failed, falling back to deterministic")
-        deterministic = self.providers[-1][1]
-        response = deterministic.complete(prompt=prompt, module=module, **kwargs)
+        # ✅ Fixed: All streaming failed - fall back to non-streaming on all providers
+        logger.warning("⚠️  All streaming providers failed, falling back to non-streaming")
 
-        # Yield as single chunk
-        yield {'type': 'chunk', 'content': response.content}
-        yield {
-            'type': 'done',
-            'input_tokens': response.input_tokens,
-            'output_tokens': response.output_tokens,
-            'cost_usd': 0.0,
-            'provider': 'deterministic',
-        }
+        try:
+            # Try non-streaming generation (will use same fallback chain: Bedrock → OpenAI → Anthropic → Deterministic)
+            response = self.generate(
+                user_id=user_id,
+                user_role=user_role,
+                user_tier=user_tier,
+                module=module,
+                prompt=prompt,
+                **kwargs
+            )
+
+            # Yield as single chunk (non-streaming response)
+            yield {'type': 'chunk', 'content': response.content}
+            yield {
+                'type': 'done',
+                'input_tokens': response.input_tokens,
+                'output_tokens': response.output_tokens,
+                'cost_usd': response.cost_usd,
+                'provider': response.provider,
+                'run_id': response.run_id,
+            }
+
+        except Exception as e:
+            # Ultimate fallback - deterministic
+            logger.error(f"💥 Non-streaming also failed: {e}, using deterministic")
+            deterministic = self.providers[-1][1]
+            response = deterministic.complete(prompt=prompt, module=module, **kwargs)
+
+            yield {'type': 'chunk', 'content': response.content}
+            yield {
+                'type': 'done',
+                'input_tokens': response.input_tokens,
+                'output_tokens': response.output_tokens,
+                'cost_usd': 0.0,
+                'provider': 'deterministic',
+            }
 
     def _compute_hash(self, prompt: str, module: str, model: str) -> str:
         """
