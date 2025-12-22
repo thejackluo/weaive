@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, Alert, Modal, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { Button as _Button, showSimpleToast } from '@/design-system';
 import CountdownTimer from '@/components/features/journal/CountdownTimer';
@@ -21,13 +22,13 @@ import { ImageDetailView } from '@/components/ImageDetailView';
 export default function HomeScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const queryClient = useQueryClient();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Story 0.9: Image Capture Test State
   const [showCaptureSheet, setShowCaptureSheet] = useState(false);
   const [selectedImage, setSelectedImage] = useState<any>(null);
-  const [refreshGallery, setRefreshGallery] = useState(0);
 
   /**
    * Handle logout with confirmation
@@ -239,7 +240,6 @@ export default function HomeScreen() {
               }}
             >
               <ImageGallery
-                key={refreshGallery} // Force refresh after upload
                 onImagePress={(capture) => setSelectedImage(capture)}
               />
             </View>
@@ -379,7 +379,8 @@ export default function HomeScreen() {
             console.log('✅ Upload success:', result);
             showSimpleToast('Image uploaded successfully! 🎉', 'success');
             setShowCaptureSheet(false);
-            setRefreshGallery((prev) => prev + 1); // Refresh gallery
+            // Invalidate images query to refetch gallery
+            queryClient.invalidateQueries({ queryKey: ['images'] });
           }}
           onCancel={() => setShowCaptureSheet(false)}
           allowSkip={true}
@@ -395,7 +396,8 @@ export default function HomeScreen() {
             onDelete={() => {
               showSimpleToast('Image deleted', 'success');
               setSelectedImage(null);
-              setRefreshGallery((prev) => prev + 1); // Refresh gallery
+              // Invalidate images query to refetch gallery
+              queryClient.invalidateQueries({ queryKey: ['images'] });
             }}
           />
         </Modal>

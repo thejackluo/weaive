@@ -176,7 +176,10 @@ export async function uploadImageToAPI(
     });
 
     console.log('☁️  [FETCH] Response status:', uploadResponse.status);
-    console.log('☁️  [FETCH] Response headers:', JSON.stringify(Object.fromEntries(uploadResponse.headers.entries())));
+    console.log(
+      '☁️  [FETCH] Response headers:',
+      JSON.stringify(Object.fromEntries(uploadResponse.headers.entries()))
+    );
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
@@ -186,7 +189,7 @@ export async function uploadImageToAPI(
       let error;
       try {
         error = JSON.parse(errorText);
-      } catch (e) {
+      } catch (_e) {
         error = { error: { message: errorText } };
       }
       throw new Error(error.error?.message || 'Upload failed');
@@ -197,8 +200,14 @@ export async function uploadImageToAPI(
     return result;
   } catch (error) {
     console.error('❌ [UPLOAD FAIL] Error:', error);
-    console.error('❌ [UPLOAD FAIL] Error type:', error instanceof Error ? error.constructor.name : typeof error);
-    console.error('❌ [UPLOAD FAIL] Error message:', error instanceof Error ? error.message : String(error));
+    console.error(
+      '❌ [UPLOAD FAIL] Error type:',
+      error instanceof Error ? error.constructor.name : typeof error
+    );
+    console.error(
+      '❌ [UPLOAD FAIL] Error message:',
+      error instanceof Error ? error.message : String(error)
+    );
     throw error;
   }
 }

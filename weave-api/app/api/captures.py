@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Upload
 from PIL import Image
 from supabase import Client
 
+from app.core.config import settings
 from app.core.deps import get_current_user, get_supabase_client
 from app.middleware.rate_limit import (
     RateLimitExceeded,
@@ -51,8 +52,8 @@ def get_vision_service() -> VisionService:
     """Get or create vision service singleton"""
     global _vision_service
     if _vision_service is None:
-        gemini = GeminiVisionProvider()
-        openai = OpenAIVisionProvider()
+        gemini = GeminiVisionProvider(api_key=settings.GOOGLE_AI_API_KEY or None)
+        openai = OpenAIVisionProvider(api_key=settings.OPENAI_API_KEY or None)
         _vision_service = VisionService(gemini, openai)
     return _vision_service
 
