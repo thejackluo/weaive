@@ -39,7 +39,8 @@ SET allowed_mime_types = ARRAY[
 file_size_limit = 26214400  -- 25MB (up from 10MB for audio files)
 WHERE id = 'captures';
 
-COMMENT ON TABLE storage.buckets IS 'Updated to support both images (Story 0.9) and audio (Story 0.11). Max 25MB file size.';
+-- COMMENT ON TABLE storage.buckets IS 'Updated to support both images (Story 0.9) and audio (Story 0.11). Max 25MB file size.';
+-- Note: Commented out for local Supabase permissions (non-fatal)
 
 -- ============================================================================
 -- 2. ADD AUDIO DURATION TO CAPTURES TABLE
@@ -76,11 +77,15 @@ COMMENT ON COLUMN ai_runs.confidence_score IS 'STT transcription confidence scor
 -- ============================================================================
 -- Add AssemblyAI and Whisper as provider options
 
--- Add new enum values using ALTER TYPE
-ALTER TYPE ai_provider ADD VALUE IF NOT EXISTS 'assemblyai';
-ALTER TYPE ai_provider ADD VALUE IF NOT EXISTS 'whisper';
+-- NOTE: Commented out for Story 0.9 - ai_provider enum doesn't exist yet
+-- The ai_runs.model column is currently TEXT, not an enum
+-- Uncomment when creating ai_provider enum in future story
 
-COMMENT ON TYPE ai_provider IS 'AI provider types: bedrock (primary), openai (fallback #1), anthropic (fallback #2), assemblyai (STT primary), whisper (STT fallback), deterministic (ultimate fallback), cache (no cost)';
+-- Add new enum values using ALTER TYPE
+-- ALTER TYPE ai_provider ADD VALUE IF NOT EXISTS 'assemblyai';
+-- ALTER TYPE ai_provider ADD VALUE IF NOT EXISTS 'whisper';
+
+-- COMMENT ON TYPE ai_provider IS 'AI provider types: bedrock (primary), openai (fallback #1), anthropic (fallback #2), assemblyai (STT primary), whisper (STT fallback), deterministic (ultimate fallback), cache (no cost)';
 
 -- ============================================================================
 -- 5. ADD STT RATE LIMITING TO DAILY_AGGREGATES
