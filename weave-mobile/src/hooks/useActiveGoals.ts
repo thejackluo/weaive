@@ -32,10 +32,21 @@
  * - Returns standard TanStack Query response
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchActiveGoals, fetchGoalById } from '@/services/goals';
-import type { GoalsResponse, GoalDetailResponse } from '@/types/goals';
+import {
+  fetchActiveGoals,
+  fetchGoalById,
+  createGoal,
+  updateGoal,
+  archiveGoal,
+} from '@/services/goals';
+import type {
+  GoalsResponse,
+  GoalDetailResponse,
+  CreateGoalRequest,
+  UpdateGoalRequest,
+} from '@/types/goals';
 
 /**
  * Query key factory for goals
@@ -102,5 +113,117 @@ export function useGoalById(goalId: string) {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes cache
     retry: false,
+  });
+}
+
+/**
+ * Hook to create a new goal (US-2.3: Create New Goal)
+ *
+ * @returns TanStack Query mutation for creating goals
+ *
+ * Usage:
+ * ```tsx
+ * const createMutation = useCreateGoal();
+ *
+ * createMutation.mutate({
+ *   title: 'Get Ripped',
+ *   description: 'to auafarm mfs',
+ *   qgoals: [{title: 'Reach 180 lbs', target_value: 180, unit: 'lbs'}],
+ *   binds: [{title: 'Workout', frequency_type: 'weekly', frequency_value: 5}]
+ * }, {
+ *   onSuccess: (data) => console.log('Created goal:', data),
+ *   onError: (error) => console.error('Failed:', error)
+ * });
+ * ```
+ */
+export function useCreateGoal() {
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (goalData: CreateGoalRequest) => {
+      if (!session?.access_token) {
+        throw new Error('No active session - user must be authenticated');
+      }
+
+      return createGoal(goalData, session.access_token);
+    },
+    onSuccess: () => {
+      // Invalidate active goals query to refetch the list
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
+    },
+  });
+}
+
+/**
+ * Hook to update an existing goal (US-2.4: Edit Needle)
+ *
+ * @returns TanStack Query mutation for updating goals
+ *
+ * Usage:
+ * ```tsx
+ * const updateMutation = useUpdateGoal();
+ *
+ * updateMutation.mutate({
+ *   goalId: 'goal-123',
+ *   data: { title: 'Updated Title', description: 'New description' }
+ * }, {
+ *   onSuccess: (data) => console.log('Updated goal:', data),
+ *   onError: (error) => console.error('Failed:', error)
+ * });
+ * ```
+ */
+export function useUpdateGoal() {
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ goalId, data }: { goalId: string; data: UpdateGoalRequest }) => {
+      if (!session?.access_token) {
+        throw new Error('No active session - user must be authenticated');
+      }
+
+      return updateGoal(goalId, data, session.access_token);
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate both the list and the specific goal query
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) });
+    },
+  });
+}
+
+/**
+ * Hook to archive a goal (US-2.5: Archive Goal)
+ *
+ * @returns TanStack Query mutation for archiving goals
+ *
+ * Usage:
+ * ```tsx
+ * const archiveMutation = useArchiveGoal();
+ *
+ * archiveMutation.mutate('goal-123', {
+ *   onSuccess: () => console.log('Goal archived'),
+ *   onError: (error) => console.error('Failed:', error)
+ * });
+ * ```
+ */
+export function useArchiveGoal() {
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (goalId: string) => {
+      if (!session?.access_token) {
+        throw new Error('No active session - user must be authenticated');
+      }
+
+      return archiveGoal(goalId, session.access_token);
+    },
+    onSuccess: (data, goalId) => {
+      // Invalidate both the list and the specific goal query
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(goalId) });
+    },
   });
 }
