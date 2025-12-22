@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { BlurView } from '@react-native-community/blur';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -170,7 +170,11 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
       <GestureHandlerRootView style={{ flex: 1 }}>
         {/* Blur Background */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-          <BlurView style={StyleSheet.absoluteFill} intensity={80} tint="dark" />
+          <BlurView
+            style={StyleSheet.absoluteFill}
+            blurAmount={32}
+            blurType="dark"
+          />
           <Animated.View style={[styles.overlayBackground, overlayStyle]} />
         </Pressable>
 

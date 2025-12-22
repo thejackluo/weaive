@@ -7,6 +7,7 @@ Endpoints:
 - POST /api/captures/upload - Upload image with optional AI analysis
 - GET /api/captures/images - List user's images with filters
 - GET /api/captures/images/{image_id} - Get single image details
+- PATCH /api/captures/images/{image_id} - Update image metadata (title/caption)
 - DELETE /api/captures/images/{image_id} - Delete image (Storage + DB)
 - POST /api/captures/analyze/{image_id} - Retry AI analysis
 - GET /api/captures/usage - Get current upload usage
@@ -17,9 +18,9 @@ import io
 import logging
 from datetime import datetime, timezone
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, UploadFile, status
 from PIL import Image
 from supabase import Client
 
@@ -190,9 +191,9 @@ async def upload_image(
             user_timezone,
         )
 
-        # Generate unique filename
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        filename = f"{user_id}/proof_{timestamp}.jpg"
+        # Generate unique filename (UUID prevents collision in rapid uploads)
+        unique_id = uuid4()
+        filename = f"{user_id}/proof_{unique_id}.jpg"
 
         # Upload to Supabase Storage
         logger.info(f"📤 [UPLOAD START] filename={filename}, size={file_size_bytes}bytes, content_type={file.content_type}")
@@ -441,6 +442,84 @@ async def list_images(
         )
 
 
+@router.patch("/images/{image_id}")
+async def update_image(
+    image_id: str,
+    body: dict = Body(...),
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Update image metadata (content_text/title)
+
+    Request body:
+        {"content_text": "Updated title"}
+
+    Returns:
+        {"data": {"success": True}, "meta": {...}}
+    """
+    try:
+        # Get user profile ID (auth.uid() → user_profiles.id)
+        user_id, _ = get_user_profile(user, supabase)
+
+        # Verify ownership
+        response = (
+            supabase.table("captures")
+            .select("id")
+            .eq("id", image_id)
+            .eq("user_id", str(user_id))
+            .execute()
+        )
+
+        if not response.data or len(response.data) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "IMAGE_NOT_FOUND",
+                        "message": "Image not found or unauthorized",
+                    }
+                },
+            )
+
+        # Update content_text
+        update_data = {}
+        if "content_text" in body:
+            update_data["content_text"] = body["content_text"]
+
+        if not update_data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": {
+                        "code": "NO_UPDATE_DATA",
+                        "message": "No fields to update",
+                    }
+                },
+            )
+
+        supabase.table("captures").update(update_data).eq("id", image_id).execute()
+
+        return {
+            "data": {"success": True},
+            "meta": {"timestamp": datetime.now(timezone.utc).isoformat()},
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Update image error: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "UPDATE_ERROR",
+                    "message": f"Failed to update image: {str(e)}",
+                }
+            },
+        )
+
+
 @router.delete("/images/{image_id}")
 async def delete_image(
     image_id: str,
@@ -485,12 +564,13 @@ async def delete_image(
         capture = response.data[0]
         storage_key = capture["storage_key"]
 
-        # Delete from Storage
+        # Delete from Database first (prevents orphaned DB records)
+        logger.info(f"Deleting capture record from database: {image_id}")
+        supabase.table("captures").delete().eq("id", image_id).execute()
+
+        # Delete from Storage second (orphaned files better than orphaned records)
         logger.info(f"Deleting image from Storage: {storage_key}")
         supabase.storage.from_("captures").remove([storage_key])
-
-        # Delete from Database
-        supabase.table("captures").delete().eq("id", image_id).execute()
 
         return {
             "data": {"success": True},
