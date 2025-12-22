@@ -52,6 +52,71 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
   const barsContainerRef = useRef<View>(null);
   const barsContainerXRef = useRef<number>(0); // Absolute X position of bars container
 
+  // Calculate which bar index is under the touch position
+  // pageX is the absolute screen position, we convert to relative position within bars
+  const getBarIndexFromTouch = (pageX: number): number | null => {
+    const chartWidth = chartWidthRef.current;
+    const barCount = displayDataRef.current.length;
+    const containerX = barsContainerXRef.current;
+
+    if (chartWidth === 0 || barCount === 0 || containerX === 0) {
+      return null;
+    }
+
+    // Convert absolute pageX to position within the bars container
+    const relativeX = pageX - containerX;
+
+    // Each bar gets an equal-width "zone" for selection
+    const barZoneWidth = chartWidth / barCount;
+    let barIndex = Math.floor(relativeX / barZoneWidth);
+
+    // Clamp to valid range
+    barIndex = Math.max(0, Math.min(barIndex, barCount - 1));
+
+    return barIndex;
+  };
+
+  // Handler for opening day details modal
+  const handleTooltipPress = (date: string, fulfillmentScore: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelectedDayData({ date, fulfillmentScore });
+    setShowDayDetailsModal(true);
+  };
+
+  // PanResponder for drag interaction across bars (MUST be before any conditional returns)
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt) => {
+        const barIndex = getBarIndexFromTouch(evt.nativeEvent.pageX);
+        if (barIndex !== null) {
+          // If tapping same bar, open modal
+          if (barIndex === selectedBarIndex) {
+            const day = displayDataRef.current[barIndex];
+            if (day) {
+              handleTooltipPress(day.date, day.fulfillment_score);
+            }
+          } else {
+            // Show tooltip for new bar
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setSelectedBarIndex(barIndex);
+          }
+        }
+      },
+      onPanResponderMove: (evt) => {
+        const barIndex = getBarIndexFromTouch(evt.nativeEvent.pageX);
+        if (barIndex !== null && barIndex !== selectedBarIndex) {
+          Haptics.selectionAsync();
+          setSelectedBarIndex(barIndex);
+        }
+      },
+      onPanResponderRelease: () => {
+        // Keep tooltip visible
+      },
+    })
+  ).current;
+
   // Temporary: Force sample data for demo purposes until user has real data
   const FORCE_SAMPLE_DATA = false;
 
@@ -167,66 +232,6 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
     return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
-  // Calculate which bar index is under the touch position
-  // pageX is the absolute screen position, we convert to relative position within bars
-  const getBarIndexFromTouch = (pageX: number): number | null => {
-    const chartWidth = chartWidthRef.current;
-    const barCount = displayDataRef.current.length;
-    const containerX = barsContainerXRef.current;
-
-    if (chartWidth === 0 || barCount === 0 || containerX === 0) {
-      return null;
-    }
-
-    // Convert absolute pageX to position within the bars container
-    const relativeX = pageX - containerX;
-
-    // Each bar gets an equal-width "zone" for selection
-    const barZoneWidth = chartWidth / barCount;
-    let barIndex = Math.floor(relativeX / barZoneWidth);
-
-    // Clamp to valid range
-    barIndex = Math.max(0, Math.min(barIndex, barCount - 1));
-
-    return barIndex;
-  };
-
-  // PanResponder for drag interaction across bars
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt) => {
-        // Use pageX (absolute position) and convert to relative position within bars
-        const barIndex = getBarIndexFromTouch(evt.nativeEvent.pageX);
-        if (barIndex !== null) {
-          // If clicking on the same bar that's already selected, open the modal
-          if (barIndex === selectedBarIndex) {
-            const day = displayDataRef.current[barIndex];
-            if (day) {
-              handleTooltipPress(day.date, day.fulfillment_score);
-            }
-          } else {
-            // Otherwise, just show the tooltip for the new bar
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setSelectedBarIndex(barIndex);
-          }
-        }
-      },
-      onPanResponderMove: (evt) => {
-        // Use pageX (absolute position) and convert to relative position within bars
-        const barIndex = getBarIndexFromTouch(evt.nativeEvent.pageX);
-        if (barIndex !== null && barIndex !== selectedBarIndex) {
-          Haptics.selectionAsync();
-          setSelectedBarIndex(barIndex);
-        }
-      },
-      onPanResponderRelease: () => {
-        // Keep tooltip visible until user taps outside
-      },
-    })
-  ).current;
-
   // Handler for chart layout measurement
   const handleChartLayout = () => {
     if (barsContainerRef.current) {
@@ -242,13 +247,6 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
     if (selectedBarIndex !== null) {
       setSelectedBarIndex(null);
     }
-  };
-
-  // Handler for opening day details modal
-  const handleTooltipPress = (date: string, fulfillmentScore: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSelectedDayData({ date, fulfillmentScore });
-    setShowDayDetailsModal(true);
   };
 
   // Handler for navigating to day's entries
