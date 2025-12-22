@@ -112,6 +112,7 @@ export default [
       'build',
       '.vscode',
       'tailwind.config.js',  // CommonJS config file
+      'src/_archive/**',  // Archived code from old implementations
     ],
   },
 ];
