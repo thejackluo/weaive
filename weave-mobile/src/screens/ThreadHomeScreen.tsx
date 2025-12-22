@@ -21,7 +21,7 @@ import type { Bind } from '@/types/binds';
 import { mockUser, getGreeting, getRandomInsight } from '@/data/mockThreadData';
 
 export function ThreadHomeScreen() {
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
   const router = useRouter();
   const [expandedNeedleId, setExpandedNeedleId] = useState<string | null>(null);
 
@@ -99,9 +99,7 @@ export function ThreadHomeScreen() {
 
   // Handle bind press
   const handleBindPress = (bind: Bind) => {
-    // TODO: Navigate to Bind Screen
-    console.log('Bind pressed:', bind.title);
-    // router.push(`/(tabs)/thread/bind/${bind.id}`);
+    router.push(`/(tabs)/thread/bind/${bind.id}`);
   };
 
   // Handle AI insight tap
@@ -152,40 +150,6 @@ export function ThreadHomeScreen() {
             </Body>
             <Button variant="primary" onPress={() => refetch()}>
               Retry
-            </Button>
-          </Card>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Empty state
-  if (needleGroups.length === 0) {
-    return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background.primary }]}
-        edges={['top']}
-      >
-        <View style={[styles.centerContent, { padding: spacing[4] }]}>
-          <Card variant="default" style={{ padding: spacing[5], alignItems: 'center' }}>
-            <Heading
-              variant="displayLg"
-              style={{ color: colors.text.primary, marginBottom: spacing[3] }}
-            >
-              No Binds Today
-            </Heading>
-            <Body
-              style={{
-                color: colors.text.secondary,
-                marginBottom: spacing[4],
-                textAlign: 'center',
-              }}
-            >
-              You don't have any tasks scheduled for today. Create a goal and add consistent actions
-              to get started!
-            </Body>
-            <Button variant="primary" onPress={() => router.push('/(tabs)/needles')}>
-              View Goals
             </Button>
           </Card>
         </View>
@@ -283,22 +247,46 @@ export function ThreadHomeScreen() {
             Your Needles
           </Heading>
 
-          {needleGroups.map((group) => {
-            const isExpanded = expandedNeedleId === group.needle.id;
-            const isVisible = expandedNeedleId === null || expandedNeedleId === group.needle.id;
+          {needleGroups.length === 0 ? (
+            <Card variant="default" style={{ padding: spacing[5], alignItems: 'center' }}>
+              <Heading
+                variant="displayLg"
+                style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+              >
+                No Binds Today
+              </Heading>
+              <Body
+                style={{
+                  color: colors.text.secondary,
+                  marginBottom: spacing[4],
+                  textAlign: 'center',
+                }}
+              >
+                You don't have any tasks scheduled for today. Create a goal and add consistent
+                actions to get started!
+              </Body>
+              <Button variant="primary" onPress={() => router.push('/(tabs)/needles')}>
+                View Goals
+              </Button>
+            </Card>
+          ) : (
+            needleGroups.map((group) => {
+              const isExpanded = expandedNeedleId === group.needle.id;
+              const isVisible = expandedNeedleId === null || expandedNeedleId === group.needle.id;
 
-            return (
-              <NeedleCard
-                key={group.needle.id}
-                needle={group.needle}
-                binds={group.binds}
-                isExpanded={isExpanded}
-                isVisible={isVisible}
-                onToggle={() => handleNeedleToggle(group.needle.id)}
-                onBindPress={handleBindPress}
-              />
-            );
-          })}
+              return (
+                <NeedleCard
+                  key={group.needle.id}
+                  needle={group.needle}
+                  binds={group.binds}
+                  isExpanded={isExpanded}
+                  isVisible={isVisible}
+                  onToggle={() => handleNeedleToggle(group.needle.id)}
+                  onBindPress={handleBindPress}
+                />
+              );
+            })
+          )}
         </View>
 
         {/* Your Thread Section */}

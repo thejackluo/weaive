@@ -16,7 +16,6 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
-  interpolate,
 } from 'react-native-reanimated';
 import { useTheme, Body, Caption } from '@/design-system';
 import { BindItem } from './BindItem';
@@ -60,20 +59,20 @@ export function NeedleCard({
 }: NeedleCardProps) {
   const { colors, spacing, radius } = useTheme();
   const rotation = useSharedValue(0);
-  const height = useSharedValue(0);
+  const opacity = useSharedValue(0);
 
-  // Update rotation when expanded state changes
+  // Update rotation and opacity when expanded state changes
   React.useEffect(() => {
     rotation.value = withSpring(isExpanded ? 180 : 0);
+    opacity.value = withTiming(isExpanded ? 1 : 0, { duration: 300 });
   }, [isExpanded]);
 
   const animatedChevronStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
-  const animatedHeightStyle = useAnimatedStyle(() => ({
-    height: height.value,
-    opacity: interpolate(height.value, [0, 100], [0, 1]),
+  const animatedBindsStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
   }));
 
   // Don't render if not visible (hide-others behavior)
@@ -143,12 +142,8 @@ export function NeedleCard({
               marginTop: spacing[2],
               paddingHorizontal: spacing[2],
             },
-            animatedHeightStyle,
+            animatedBindsStyle,
           ]}
-          onLayout={(event) => {
-            const { height: measuredHeight } = event.nativeEvent.layout;
-            height.value = withTiming(measuredHeight, { duration: 300 });
-          }}
         >
           {binds.map((bind) => (
             <BindItem key={bind.id} bind={bind} onPress={() => onBindPress(bind)} />
