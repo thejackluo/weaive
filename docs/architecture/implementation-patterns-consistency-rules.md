@@ -173,6 +173,107 @@ token = request.headers.get("Authorization")  # ❌ Don't parse manually
 - Middleware: `weave-api/app/core/deps.py:85-220`
 - Examples: `weave-api/app/api/user.py`, `weave-api/app/api/goals/router.py`
 
+### Configuration Management (Story 6.1+)
+
+**Use feature config modules for centralized, environment-aware configuration.**
+
+**Pattern:** Create `app/config/{feature}_config.py` for feature-specific settings (rate limits, feature flags, timeouts).
+
+**✅ GOOD - Centralized Config:**
+```python
+# app/config/ai_chat_config.py
+import os
+from typing import Optional
+
+class AIChatConfig:
+    """AI Chat feature configuration loaded from environment variables."""
+
+    # Rate limits (loaded from .env with defaults)
+    FREE_PREMIUM_DAILY_LIMIT: int = int(os.getenv('AI_FREE_PREMIUM_DAILY_LIMIT', '10'))
+    FREE_FREE_DAILY_LIMIT: int = int(os.getenv('AI_FREE_FREE_DAILY_LIMIT', '40'))
+    FREE_MONTHLY_LIMIT: int = int(os.getenv('AI_FREE_MONTHLY_LIMIT', '500'))
+    PRO_MONTHLY_LIMIT: int = int(os.getenv('AI_PRO_MONTHLY_LIMIT', '5000'))
+
+    # Admin bypass
+    ADMIN_API_KEY: Optional[str] = os.getenv('AI_ADMIN_KEY', None)
+
+    # Feature flags
+    CHECK_IN_ENABLED: bool = os.getenv('AI_CHECK_IN_ENABLED', 'true').lower() == 'true'
+
+    @classmethod
+    def validate(cls) -> None:
+        """Validate config on startup - catches misconfiguration early."""
+        assert cls.FREE_PREMIUM_DAILY_LIMIT > 0, "Limit must be positive"
+        assert cls.FREE_MONTHLY_LIMIT >= cls.FREE_PREMIUM_DAILY_LIMIT
+
+# Validate on module import
+AIChatConfig.validate()
+```
+
+**Usage in Business Logic:**
+```python
+from app.config.ai_chat_config import AIChatConfig
+
+class TieredRateLimiter:
+    def __init__(self, db: SupabaseClient):
+        self.db = db
+        # Load from config (environment-aware)
+        self.free_premium_daily_limit = AIChatConfig.FREE_PREMIUM_DAILY_LIMIT
+        self.pro_monthly_limit = AIChatConfig.PRO_MONTHLY_LIMIT
+
+    def check_rate_limit(self, user_id: str):
+        # Use instance variables (loaded from config)
+        if premium_used >= self.free_premium_daily_limit:
+            raise HTTPException(status_code=429, ...)
+```
+
+**Setting Config (.env file):**
+```bash
+# weave-api/.env
+AI_FREE_PREMIUM_DAILY_LIMIT=10      # Strict limits in prod
+AI_ADMIN_KEY=abc123xyz789           # Generate with: openssl rand -hex 32
+
+# weave-api/.env (dev)
+AI_FREE_PREMIUM_DAILY_LIMIT=100     # Higher limits for testing
+AI_CHECK_IN_ENABLED=false           # Disable check-ins in dev
+```
+
+**❌ BAD - Hardcoded Constants:**
+```python
+class RateLimiter:
+    FREE_DAILY_LIMIT = 10  # ❌ Can't change per environment
+    PRO_DAILY_LIMIT = 100  # ❌ Requires code change to adjust
+```
+
+**What Goes in Config:**
+- ✅ Rate limits (daily, monthly, per-tier)
+- ✅ Feature flags (enabled/disabled)
+- ✅ Admin bypass keys
+- ✅ Timeouts and thresholds
+- ✅ Scheduler intervals
+
+**What Stays in Business Logic:**
+- ❌ Core algorithms
+- ❌ Database queries
+- ❌ API response formats
+
+**Key Benefits:**
+1. **Environment-specific settings** - Different dev/staging/prod config
+2. **No code changes** - Adjust limits via .env only
+3. **Type-safe** - Validation catches errors on startup
+4. **Single source of truth** - All config in one place
+5. **Reusable pattern** - Template for all features
+
+**Reference Implementation:**
+- Config module: `weave-api/app/config/ai_chat_config.py`
+- Usage: `weave-api/app/services/ai/tiered_rate_limiter.py`
+- .env template: `weave-api/.env.example`
+
+**Future Config Modules:**
+- `app/config/upload_config.py` - File upload limits
+- `app/config/api_config.py` - General API rate limits
+- `app/config/feature_flags.py` - Feature toggles
+
 ### Error Handling
 ```typescript
 // Error boundaries for crashes
