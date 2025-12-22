@@ -3,7 +3,16 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import ai_router, analytics, goals, health, journal_router, onboarding, user
+from app.api import (
+    ai_router,
+    analytics,
+    captures,
+    goals,
+    health,
+    journal_router,
+    onboarding,
+    user,
+)
 from app.core.config import settings
 
 app = FastAPI(
@@ -111,6 +120,7 @@ app.include_router(onboarding.router, tags=["onboarding"])
 app.include_router(ai_router.router, tags=["ai"])
 app.include_router(journal_router.router, prefix="/api", tags=["journal"])
 app.include_router(goals.router, tags=["goals"])
+app.include_router(captures.router, tags=["captures"])
 
 @app.get("/")
 async def root():
