@@ -1325,3 +1325,178 @@ OPENAI_API_KEY=your_whisper_fallback_key  # Already configured
 ```
 
 ---
+
+## Production Deployment Architecture
+
+**Purpose:** Document production infrastructure configuration for backend (Railway), database (Supabase), and monitoring services.
+
+### Backend Deployment (Railway)
+
+**Platform:** Railway.app (managed Node.js/Python hosting)
+
+**Configuration:**
+- **Project:** weave-api-production
+- **Service:** FastAPI backend
+- **Region:** us-west-1 (low latency for US users)
+- **Instance:** Shared vCPU, 512MB RAM (scale to 1GB if needed)
+- **Auto-scaling:** Enabled (max 3 instances)
+
+**Environment Variables (Production):**
+```bash
+# Database
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=xxx  # Server-side only (never expose to client)
+DATABASE_URL=postgresql://xxx
+
+# AI Providers
+OPENAI_API_KEY=sk-proj-xxx
+ANTHROPIC_API_KEY=sk-ant-xxx
+GOOGLE_AI_API_KEY=xxx  # Gemini
+
+# Auth
+JWT_SECRET=xxx  # 256-bit random string
+JWT_ALGORITHM=HS256
+
+# Monitoring
+SENTRY_DSN=https://xxx@sentry.io/xxx
+LOGROCKET_APP_ID=weave/production
+
+# Environment
+ENVIRONMENT=production
+DEBUG=false
+LOG_LEVEL=INFO
+```
+
+**Deployment Strategy:**
+- **CI/CD:** GitHub Actions triggers Railway deploy on push to `main`
+- **Health Check:** `GET /health` endpoint (200 = healthy)
+- **Rollback:** Railway auto-rollback on failed health check
+
+**Cost Estimate:** $20-50/month (depends on usage, scales automatically)
+
+---
+
+### Database (Supabase Production)
+
+**Instance:** Supabase Production Project (dedicated, separate from dev/staging)
+
+**Configuration:**
+- **Region:** us-west-1 (same as Railway for low latency)
+- **Plan:** Pro Plan ($25/month) - required for production SLA
+- **Database:** PostgreSQL 15
+- **Connection Pooling:** Enabled (PgBouncer)
+
+**Migration Strategy:**
+```bash
+# Run migrations via Supabase CLI
+npx supabase db push --db-url $DATABASE_URL
+
+# Verify migration success
+npx supabase db diff --linked
+```
+
+**Backup Strategy:**
+- **Automatic:** Daily backups (included in Supabase Pro Plan)
+- **Retention:** 7 days
+- **Manual Backup:** Run before major migrations or schema changes
+
+**Security:**
+- Row Level Security (RLS) enabled on all 12 user-owned tables
+- SSL/TLS encryption for all connections
+- Firewall rules restrict access to Railway backend only
+
+---
+
+### Monitoring & Observability
+
+**Sentry (Error Tracking):**
+- **Projects:** weave-mobile, weave-api
+- **Alert Rules:**
+  - Error rate > 1% of sessions → Slack #alerts
+  - API response time > 5s → Email engineering@
+  - App crash rate > 1% → Slack #alerts (urgent)
+- **Integration:** See Epic 0.5 (Observability) for implementation details
+
+**LogRocket (Session Replay):**
+- **Project:** weave/production
+- **Plan:** $99/month (10K sessions)
+- **Usage:** Debug user issues, watch session recordings
+- **Privacy:** Mask password fields, auth tokens, PII
+- **Integration:** See Epic 0.5 (Observability) for implementation details
+
+**UptimeRobot (Uptime Monitoring):**
+- **URL:** `https://weave-api-production.railway.app/health`
+- **Check Interval:** 5 minutes
+- **Alert Threshold:** Downtime > 2 minutes
+
+---
+
+### CDN & Static Assets
+
+**Not Required for MVP:**
+- Expo serves mobile app bundle (built-in CDN)
+- Supabase Storage serves images/audio (built-in CDN)
+- No separate CDN needed
+
+**Future Consideration (Post-MVP):**
+- Cloudflare CDN for global users (low latency worldwide)
+- Cost: Free tier covers 10GB/month bandwidth
+
+---
+
+### Production Security
+
+**Security Measures (Story 9.5):**
+- Rate limiting: 100 req/min (public), 1000 req/min (authenticated)
+- HTTPS-only (Railway auto-SSL)
+- Secure cookie flags: `HttpOnly`, `Secure`, `SameSite=Strict`
+- CORS whitelist (mobile app origin only)
+- Debug mode disabled (`DEBUG=false`)
+- Secrets stored in Railway dashboard (not GitHub)
+
+**Compliance:**
+- GDPR (EU users): Data export, right to be forgotten
+- COPPA (if users <13): Parental consent, minimal data collection
+- App Store guidelines: Privacy policy, no prohibited content
+
+---
+
+### Disaster Recovery
+
+**Database Restoration:**
+1. Access Supabase Dashboard → Project Settings → Backups
+2. Select backup to restore (daily backups available)
+3. Click "Restore" (creates new database from backup)
+4. Update `DATABASE_URL` in Railway to point to restored database
+5. Verify data integrity
+
+**Backend Rollback:**
+1. Railway Dashboard → Deployments tab
+2. Select previous working deployment
+3. Click "Redeploy" (instant rollback)
+4. Verify `/health` endpoint returns 200
+
+**RTO (Recovery Time Objective):** < 15 minutes
+**RPO (Recovery Point Objective):** < 24 hours (daily backups)
+
+---
+
+### Cost Summary (Production Infrastructure)
+
+| Service | Monthly Cost | Purpose |
+|---------|--------------|---------|
+| Railway (Backend) | $20-50 | FastAPI hosting |
+| Supabase Pro | $25 | Database + Auth + Storage |
+| Apple Developer | $8 ($99/year) | App Store publishing |
+| RevenueCat | Free (up to $10K MRR) | Subscription management |
+| LogRocket | $99 | Session replay |
+| Sentry | Free or $26 | Error tracking |
+| **Total** | **$172-208/month** | **Excluding AI costs** |
+
+**AI Costs (Separate Budget):**
+- OpenAI + Anthropic: ~$2,000/month (text AI)
+- Google AI (Gemini): ~$90/month (image analysis)
+- AssemblyAI: ~$150/month (voice transcription)
+- **Total AI:** ~$2,240/month (within $2,500 budget)
+
+---
