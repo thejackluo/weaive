@@ -1,10 +1,12 @@
+import { View, ScrollView, TouchableOpacity } from 'react-native';
+import { Text, Button } from '@/design-system';
+import { Link } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
+
 /**
- * Home Screen (Tabs Index)
- *
- * Story 0.3: Added logout button for testing auth flow
- *
- * This is a placeholder home screen for testing.
- * Will be replaced with actual Thread/Home screen in future stories.
+ * Thread (Home) Tab
+ * Epic 3: Daily Actions & Proof
+ * Story 3.1: View Today's Binds
  */
 
 import React, { useState } from 'react';
@@ -56,116 +58,40 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: '#0F0F10',
-      }}
-    >
-      {/* User Avatar in Top Right */}
-      <View
-        style={{
-          position: 'absolute',
-          top: 48,
-          right: 16,
-          zIndex: 50,
-        }}
-      >
-        <Pressable
-          onPress={() => setShowUserMenu(!showUserMenu)}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: '#8B5CF6',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>
-            {user?.email?.charAt(0).toUpperCase() || 'U'}
+    <ScrollView className="flex-1 bg-background">
+      <View className="p-6">
+        {/* Main Header */}
+        <View className="mb-8">
+          <Text variant="displayLg" className="text-white mb-2 font-bold">
+            Good Morning ✨
           </Text>
-        </Pressable>
-
-        {/* User Menu Dropdown */}
-        {showUserMenu && (
-          <View
-            style={{
-              position: 'absolute',
-              top: 48,
-              right: 0,
-              backgroundColor: '#1F1F23',
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: '#27272A',
-              minWidth: 192,
-              overflow: 'hidden',
-            }}
-          >
-            <View
-              style={{
-                padding: 12,
-                borderBottomWidth: 1,
-                borderBottomColor: '#27272A',
-              }}
-            >
-              <Text style={{ color: '#71717A', fontSize: 12 }}>Signed in as</Text>
-              <Text style={{ color: '#FAFAFA', fontSize: 14, fontWeight: '500', marginTop: 4 }}>
-                {user?.email}
-              </Text>
-            </View>
-            <Pressable onPress={handleLogout} disabled={isLoggingOut} style={{ padding: 12 }}>
-              <Text style={{ color: '#EF4444', fontWeight: '500' }}>
-                {isLoggingOut ? 'Signing out...' : 'Sign Out'}
-              </Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-
-      {/* Main Content */}
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 24,
-          gap: 24,
-        }}
-      >
-        <View style={{ alignItems: 'center', gap: 12 }}>
-          <Text
-            style={{
-              fontSize: 48,
-              fontWeight: 'bold',
-              color: '#FAFAFA',
-              textAlign: 'center',
-            }}
-          >
-            Weave MVP
+          <Text variant="textBase" className="text-white/60">
+            Friday, December 20 • Let's make today count
           </Text>
-          <Text
-            style={{
-              fontSize: 18,
-              color: '#A1A1AA',
-              textAlign: 'center',
-            }}
-          >
-            Foundation Setup Complete ✅
-          </Text>
-          {user && (
-            <Text
-              style={{
-                fontSize: 14,
-                color: '#71717A',
-                marginTop: 8,
-                textAlign: 'center',
-              }}
-            >
-              Signed in as: {user.email}
-            </Text>
-          )}
         </View>
+
+        {/* Today's Binds - Primary Section */}
+        <View className="mb-8">
+          <Text variant="displayMd" className="text-white mb-4 font-semibold">
+            Today's Binds
+          </Text>
+
+          <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
+            <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 rounded-full bg-blue-500/20 items-center justify-center">
+                  <SymbolView name="figure.run" size={20} tintColor="#60a5fa" />
+                </View>
+                <Text variant="textLg" className="text-white font-semibold">
+                  Morning Workout
+                </Text>
+              </View>
+              <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
+            </View>
+            <Text variant="textSm" className="text-white/60 ml-13">
+              Complete your 30-minute strength training session
+            </Text>
+          </TouchableOpacity>
 
         {/* Story 4.1c: Countdown Timer (Section C) */}
         <View style={{ width: '100%', maxWidth: 400, paddingHorizontal: 16 }}>
@@ -223,29 +149,39 @@ export default function HomeScreen() {
               }}
             >
               📍 View Needles (Story 2.1)
+          <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
+            <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 rounded-full bg-purple-500/20 items-center justify-center">
+                  <SymbolView name="book.fill" size={20} tintColor="#a78bfa" />
+                </View>
+                <Text variant="textLg" className="text-white font-semibold">
+                  Deep Work Block
+                </Text>
+              </View>
+              <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
+            </View>
+            <Text variant="textSm" className="text-white/60 ml-13">
+              2 hours of focused project work
             </Text>
-          </Pressable>
+          </TouchableOpacity>
 
-          <Pressable
-            onPress={() => router.push('/(tabs)/design-system-showcase')}
-            style={{
-              backgroundColor: '#8B5CF6',
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-              borderRadius: 12,
-            }}
-          >
-            <Text
-              style={{
-                color: '#FAFAFA',
-                fontSize: 16,
-                fontWeight: '600',
-                textAlign: 'center',
-              }}
-            >
-              🎨 View Design System
+          <TouchableOpacity className="p-5 bg-white/5 rounded-xl border border-white/10 active:bg-white/10">
+            <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 rounded-full bg-emerald-500/20 items-center justify-center">
+                  <SymbolView name="sparkles" size={20} tintColor="#34d399" />
+                </View>
+                <Text variant="textLg" className="text-white font-semibold">
+                  Evening Meditation
+                </Text>
+              </View>
+              <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
+            </View>
+            <Text variant="textSm" className="text-white/60 ml-13">
+              10-minute mindfulness practice
             </Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
 
         {/* Settings Screen */}
@@ -295,12 +231,49 @@ export default function HomeScreen() {
           <Text style={{ color: '#71717A', fontSize: 12 }}>React Native-First Design System</Text>
           <Text style={{ color: '#71717A', fontSize: 12 }}>
             NativeWind v5 • Tailwind v4 • Liquid Glass UI
+        {/* Quick Actions */}
+        <View className="mb-8">
+          <Text variant="textLg" className="text-white mb-4 font-semibold">
+            Quick Actions
           </Text>
-          <Text style={{ color: '#71717A', fontSize: 12, marginTop: 8 }}>
-            Story 0.3: Authentication Flow
+          <View className="flex-row gap-3 mb-3">
+            <Link href="/dashboard" asChild className="flex-1">
+              <Button variant="primary" size="md">
+                Dashboard
+              </Button>
+            </Link>
+            <Link href="/journal" asChild className="flex-1">
+              <Button variant="ai" size="md">
+                Journal
+              </Button>
+            </Link>
+          </View>
+          <View className="flex-row gap-3">
+            <Link href="/goals" asChild className="flex-1">
+              <Button variant="secondary" size="md">
+                Goals
+              </Button>
+            </Link>
+            <Link href="/captures" asChild className="flex-1">
+              <Button variant="success" size="md">
+                Captures
+              </Button>
+            </Link>
+          </View>
+        </View>
+
+        {/* Navigation Testing (Bottom - de-emphasized) */}
+        <View className="pt-6 border-t border-white/5">
+          <Text variant="textSm" className="text-white/30 mb-2 text-center">
+            Development Tools
           </Text>
+          <Link href="/sitemap" asChild>
+            <Button variant="ghost" size="sm">
+              View Sitemap
+            </Button>
+          </Link>
         </View>
       </View>
-    </SafeAreaView>
+    </ScrollView>
   );
 }
