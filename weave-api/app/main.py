@@ -12,6 +12,7 @@ from app.api import (
     health,
     journal_router,
     onboarding,
+    stats,
     user,
 )
 from app.core.config import settings
@@ -122,6 +123,7 @@ app.include_router(ai_router.router, tags=["ai"])
 app.include_router(journal_router.router, prefix="/api", tags=["journal"])
 app.include_router(goals.router, tags=["goals"])
 app.include_router(captures.router, tags=["captures"])
+app.include_router(stats.router, tags=["stats"])  # Progress visualization stats
 app.include_router(admin.router, tags=["admin"])  # Cost monitoring and system maintenance
 
 @app.get("/")
