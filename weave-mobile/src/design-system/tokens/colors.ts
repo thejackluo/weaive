@@ -7,28 +7,28 @@
 
 export const colors = {
   // ============================================================================
-  // Background Colors (Dark-First)
+  // Background Colors (Dark-First) - LIGHTER for better text contrast
   // ============================================================================
   background: {
     primary: '#09090B', // Main app background - Deep black
-    secondary: '#0F0F12', // Card backgrounds - Slightly lighter
-    elevated: '#1A1A1F', // Floating elements, modals
-    glass: 'rgba(26, 26, 31, 0.7)', // Glass effect background
+    secondary: '#18181B', // Card backgrounds - Much lighter for text visibility
+    elevated: '#27272A', // Floating elements, modals - Lighter
+    glass: 'rgba(39, 39, 42, 0.85)', // Glass effect - Lighter with more opacity
     overlay: 'rgba(9, 9, 11, 0.8)', // Modal overlays
   },
 
   // ============================================================================
-  // Text Colors
+  // Text Colors - MAXIMUM BRIGHTNESS for readability
   // ============================================================================
   text: {
-    primary: '#ECECF1', // High emphasis - Headers, important text
-    secondary: '#D4D4DC', // Normal body text
-    muted: '#71717F', // De-emphasized text, labels
-    disabled: '#3F3F46', // Disabled state
-    ai: '#9D71E8', // AI-generated content (violet)
-    success: '#10D87E', // Success messages
-    error: '#E85A7E', // Error messages
-    warning: '#F5A623', // Warning messages
+    primary: '#FFFFFF', // High emphasis - Pure white for maximum contrast
+    secondary: '#F5F5F5', // Normal body text - Near white, very bright
+    muted: '#D4D4D4', // De-emphasized text - Bright gray, still very readable
+    disabled: '#737373', // Disabled state - Medium gray
+    ai: '#C4B5FD', // AI-generated content - Much brighter violet
+    success: '#6EE7B7', // Success messages - Much brighter emerald
+    error: '#FDA4AF', // Error messages - Much brighter rose
+    warning: '#FCD34D', // Warning messages - Much brighter amber
     inverse: '#09090B', // Text on light backgrounds
   },
 
@@ -180,15 +180,15 @@ export const colors = {
   // Dark Theme Palette (Reference - maps to above)
   // ============================================================================
   dark: {
-    100: '#ECECF1', // → text.primary
-    200: '#D4D4DC', // → text.secondary
-    300: '#A1A1AA',
-    400: '#71717F', // → text.muted
-    500: '#52525B',
-    600: '#3F3F46', // → text.disabled
-    700: '#27272A',
-    800: '#1A1A1F', // → background.elevated
-    850: '#0F0F12', // → background.secondary
+    100: '#FFFFFF', // → text.primary
+    200: '#F5F5F5', // → text.secondary
+    300: '#D4D4D4', // → text.muted
+    400: '#A3A3A3',
+    500: '#737373', // → text.disabled
+    600: '#525252',
+    700: '#27272A', // → background.elevated
+    800: '#18181B', // → background.secondary
+    850: '#0F0F12',
     900: '#09090B', // → background.primary
   },
 

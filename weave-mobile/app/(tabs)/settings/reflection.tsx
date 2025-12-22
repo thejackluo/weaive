@@ -32,6 +32,7 @@ import CustomQuestionInput, {
 } from '@/components/features/journal/CustomQuestionInput';
 import ManageQuestionsModal from '@/components/features/journal/ManageQuestionsModal';
 import { UserAvatarMenu } from '@/components/UserAvatarMenu';
+import CountdownTimer from '@/components/features/journal/CountdownTimer';
 
 const DRAFT_KEY = '@weave_reflection_draft';
 
@@ -501,7 +502,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   header: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   headerTitle: {
     fontSize: 24,
@@ -512,6 +513,16 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
+  },
+  timerContainer: {
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
+  timerLabel: {
+    fontSize: 12,
+    color: '#71717A',
+    marginBottom: 8,
+    textAlign: 'center',
   },
   questionContainer: {
     marginBottom: 28,

@@ -17,7 +17,7 @@ Proactive push notifications keep users engaged without becoming spam. Notificat
 **Acceptance Criteria:**
 - [ ] Sent at user's preferred start time
 - [ ] Content includes:
-  - Today's triad tasks (top 3)
+  - Today's binds
   - Yesterday's intention recap (from journal)
 - [ ] Uses Dream Self voice
 - [ ] Deep link to Thread (Home)
@@ -125,27 +125,6 @@ Tap to chat with Weave about getting back on track.
 
 ---
 
-### US-7.5: Milestone Celebration Notification
-
-**Priority:** S (Should Have)
-
-**As a** user
-**I want to** be celebrated when I hit milestones
-**So that** I feel accomplished
-
-**Acceptance Criteria:**
-- [ ] Triggered at milestones: 10, 30, 60, 90 active days
-- [ ] Also triggered for badge unlocks, goal completions
-- [ ] Content affirms identity shift
-- [ ] Option to share progress card
-- [ ] Deep link to milestone snapshot
-
-**Data Requirements:**
-- Triggered by worker after stats update
-- Read from `milestone_snapshots`
-
----
-
 ### US-7.6: Notification Preferences
 
 **Priority:** M (Must Have)
@@ -155,14 +134,10 @@ Tap to chat with Weave about getting back on track.
 **So that** I'm not overwhelmed and receive notifications where I want them
 
 **Acceptance Criteria:**
-- [ ] Nudging intensity slider (1-10)
-- [ ] Quiet hours: Start time and end time
 - [ ] Per-notification toggles:
   - Morning intention
   - Bind reminders
   - Evening reflection
-  - Milestones
-- [ ] "Disable all except milestones" option
 - [ ] Max 5 notifications per day enforced
 
 **Data Requirements:**
@@ -180,9 +155,11 @@ Tap to chat with Weave about getting back on track.
 | US-7.2 | Bind Reminders | M | 5 pts |
 | US-7.3 | Evening Reflection Prompt | M | 3 pts |
 | US-7.4 | Streak Recovery | M | 5 pts |
-| US-7.5 | Milestone Celebration | S | 5 pts |
 | US-7.6 | Notification Preferences | M | 5 pts |
 
-**Epic Total:** 28 story points
+**Epic Total:** 23 story points
+
+**Changes from Original:**
+- Removed US-7.5 (Milestone Celebration) - milestone celebration integrated into US-3.3 completion flow
 
 ---
