@@ -16,12 +16,20 @@
  */
 
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Pressable, TextInput, Alert } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Text, Card, Button } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
-import { useGoalById } from '@/hooks/useActiveGoals';
+import { useGoalById, useUpdateGoal, useArchiveGoal } from '@/hooks/useActiveGoals';
 import { Ionicons } from '@expo/vector-icons';
 
 export function NeedleDetailScreen() {
@@ -34,6 +42,8 @@ export function NeedleDetailScreen() {
   const [editedWhy, setEditedWhy] = useState('');
 
   const { data, isLoading, isError, error } = useGoalById(id || '');
+  const updateGoalMutation = useUpdateGoal();
+  const archiveGoalMutation = useArchiveGoal();
 
   // Extract goal data (mock structure for now - will be replaced with real API response)
   const goal = data?.data || null;
@@ -54,10 +64,28 @@ export function NeedleDetailScreen() {
   const handleEditToggle = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (isEditMode) {
-      // Save changes (placeholder - will implement save API in Chunk 2)
-      // TODO: Call updateGoal API when implemented
+      // Save changes
+      updateGoalMutation.mutate(
+        {
+          goalId: id || '',
+          data: {
+            title: editedTitle,
+            description: editedWhy,
+          },
+        },
+        {
+          onSuccess: () => {
+            setIsEditMode(false);
+            Alert.alert('Success', 'Goal updated successfully!');
+          },
+          onError: (error) => {
+            Alert.alert('Error', error.message || 'Failed to update goal. Please try again.');
+          },
+        }
+      );
+    } else {
+      setIsEditMode(true);
     }
-    setIsEditMode(!isEditMode);
   };
 
   const handleArchive = () => {
@@ -68,9 +96,19 @@ export function NeedleDetailScreen() {
         text: 'Archive',
         style: 'destructive',
         onPress: () => {
-          // Archive API call (will implement in Chunk 2)
-          // TODO: Call archiveGoal API when implemented
-          router.back();
+          archiveGoalMutation.mutate(id || '', {
+            onSuccess: () => {
+              Alert.alert('Success', 'Goal archived successfully!', [
+                {
+                  text: 'OK',
+                  onPress: () => router.back(),
+                },
+              ]);
+            },
+            onError: (error) => {
+              Alert.alert('Error', error.message || 'Failed to archive goal. Please try again.');
+            },
+          });
         },
       },
     ]);
@@ -168,10 +206,18 @@ export function NeedleDetailScreen() {
           </Text>
         )}
 
-        <Pressable onPress={handleEditToggle} style={styles.editButton}>
-          <Text variant="textSm" weight="semibold" style={{ color: colors.accent[500] }}>
-            {isEditMode ? 'Done' : 'Edit'}
-          </Text>
+        <Pressable
+          onPress={handleEditToggle}
+          style={styles.editButton}
+          disabled={updateGoalMutation.isPending}
+        >
+          {updateGoalMutation.isPending ? (
+            <ActivityIndicator size="small" color={colors.accent[500]} />
+          ) : (
+            <Text variant="textSm" weight="semibold" style={{ color: colors.accent[500] }}>
+              {isEditMode ? 'Done' : 'Edit'}
+            </Text>
+          )}
         </Pressable>
       </View>
 
