@@ -8,12 +8,9 @@ Factory Pattern:
 - Auto-cleanup via fixtures (not in factory)
 """
 
-import io
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
-
-from PIL import Image
 
 
 def create_test_audio_capture(user_id: Optional[str] = None, **kwargs: Any) -> Dict[str, Any]:
