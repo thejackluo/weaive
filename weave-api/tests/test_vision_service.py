@@ -3,9 +3,9 @@ Unit Tests for Vision Service
 Story: 0.9 - AI-Powered Image Service
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from uuid import uuid4
+
+import pytest
 
 from app.services.images import (
     VisionAnalysisResult,
@@ -14,7 +14,6 @@ from app.services.images import (
     VisionService,
     calculate_cost,
 )
-
 
 # ============================================================================
 # FIXTURES

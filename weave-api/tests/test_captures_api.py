@@ -4,13 +4,13 @@ Story: 0.9 - AI-Powered Image Service
 """
 
 import io
-import pytest
-from PIL import Image
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
-from app.services.images import VisionAnalysisResult
+import pytest
+from PIL import Image
 
+from app.services.images import VisionAnalysisResult
 
 # ============================================================================
 # FIXTURES

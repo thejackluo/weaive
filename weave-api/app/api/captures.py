@@ -16,11 +16,10 @@ import base64
 import io
 import logging
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
-from fastapi.responses import JSONResponse
 from PIL import Image
 from supabase import Client
 
@@ -30,7 +29,6 @@ from app.middleware.rate_limit import (
     check_ai_vision_rate_limit,
     check_upload_rate_limit,
     get_upload_usage,
-    get_user_local_date,
     increment_ai_vision_usage,
     increment_upload_usage,
 )
