@@ -22,6 +22,7 @@ import RateLimitIndicator from './RateLimitIndicator';
 import TypingIndicator from './TypingIndicator';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAIChatStream } from '@/hooks/useAIChatStream';
+import apiClient from '@/services/apiClient';
 
 export interface Message {
   id: string;
@@ -60,22 +61,62 @@ export default function ChatScreen() {
     refetchInterval: 60000, // Refetch every minute
   });
 
-  // Initial greeting on mount
+  // Load conversation history on mount
   useEffect(() => {
-    loadInitialGreeting();
+    loadConversationHistory();
   }, []);
+
+  const loadConversationHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      // Fetch latest conversation from backend
+      const response = await apiClient.get('/api/ai-chat/conversations');
+      const conversations = response.data.data || [];
+
+      if (conversations.length > 0) {
+        // Load most recent conversation
+        const latestConv = conversations[0];
+        setCurrentConversationId(latestConv.id);
+
+        // Fetch messages for this conversation
+        const messagesResponse = await apiClient.get(`/api/ai-chat/conversations/${latestConv.id}/messages`);
+        const convMessages = messagesResponse.data.data || [];
+
+        // Transform backend messages to UI format
+        const transformedMessages: Message[] = convMessages.map((msg: any) => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.created_at),
+        }));
+
+        if (transformedMessages.length > 0) {
+          setMessages(transformedMessages);
+          setShowQuickChips(false); // Hide chips if conversation exists
+        } else {
+          loadInitialGreeting();
+        }
+      } else {
+        loadInitialGreeting();
+      }
+    } catch (error) {
+      console.error('Failed to load conversation history:', error);
+      loadInitialGreeting();
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   const loadInitialGreeting = () => {
     const hour = new Date().getHours();
     let greeting = '';
 
     if (hour < 12) {
-      greeting = "Good morning! I'm Weave, your AI coach. How can I help you make today count?";
+      greeting = "good morning! I'm weave, your AI coach. how can I help you make today count?";
     } else if (hour < 17) {
-      greeting = "Hey there! Ready to crush your goals today? What's on your mind?";
+      greeting = "hey there! ready to crush your goals today? what's on your mind?";
     } else {
-      greeting =
-        "Evening! Let's reflect on your day and plan for tomorrow. What would you like to talk about?";
+      greeting = "evening! let's reflect on your day and plan for tomorrow. what would you like to talk about?";
     }
 
     const initialMessage: Message = {
@@ -132,7 +173,8 @@ export default function ChatScreen() {
 
   // Effect: Finalize streaming message when complete
   useEffect(() => {
-    if (!isStreaming && streamingMessageIdRef.current && streamingContent) {
+    // ✅ FIX: Clear streaming state even if no content (fixes stuck typing indicator)
+    if (!isStreaming && streamingMessageIdRef.current) {
       // Mark message as complete (not streaming)
       setMessages((prev) =>
         prev.map((m) =>
