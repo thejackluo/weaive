@@ -48,9 +48,9 @@ export function PomodoroTimer({
   const { colors, spacing } = useTheme();
 
   // State
-  const [isPaused, setIsPaused] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState(0);
-  const [showPauseConfirm, setShowPauseConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showEarlyCompleteConfirm, setShowEarlyCompleteConfirm] = useState(false);
 
   // Refs
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -69,7 +69,6 @@ export function PomodoroTimer({
   const startTimer = (minutes: number) => {
     const totalSeconds = minutes * 60;
     setSecondsRemaining(totalSeconds);
-    setIsPaused(false);
     startTimeRef.current = Date.now();
     totalSecondsRef.current = totalSeconds;
     progress.value = withTiming(0, { duration: totalSeconds * 1000 });
@@ -83,57 +82,63 @@ export function PomodoroTimer({
 
   // Effect: Start timer when isRunningProp becomes true
   useEffect(() => {
-    if (isRunningProp && selectedDurationProp && !isPaused) {
+    if (isRunningProp && selectedDurationProp) {
       startTimer(selectedDurationProp);
     }
   }, [isRunningProp, selectedDurationProp]);
 
-  // Pause timer
-  const handlePause = () => {
-    setShowPauseConfirm(true);
+  // Complete bind early (before timer finishes)
+  const handleCompleteBind = () => {
+    const isEarlyCompletion = secondsRemaining > 0;
+    if (isEarlyCompletion) {
+      // Show warning if completing before timer ends
+      setShowEarlyCompleteConfirm(true);
+    } else {
+      // Timer finished naturally, complete immediately
+      confirmCompleteBind();
+    }
   };
 
-  const confirmPause = () => {
-    setIsPaused(true);
-    setShowPauseConfirm(false);
+  const confirmCompleteBind = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    setShowEarlyCompleteConfirm(false);
+
+    // Call completion callback with duration
+    if (selectedDurationProp) {
+      onComplete(selectedDurationProp);
+    }
   };
 
-  const cancelPause = () => {
-    setShowPauseConfirm(false);
+  const cancelCompleteBind = () => {
+    setShowEarlyCompleteConfirm(false);
   };
 
-  // Resume timer
-  const handleResume = () => {
-    setIsPaused(false);
-    startTimeRef.current = Date.now();
+  // Cancel timer - show confirmation
+  const handleCancelTimer = () => {
+    setShowCancelConfirm(true);
   };
 
-  // Extend timer
-  const handleExtend = () => {
-    const additionalSeconds = 5 * 60; // +5 minutes
-    setSecondsRemaining((prev) => prev + additionalSeconds);
-    totalSecondsRef.current += additionalSeconds;
-  };
-
-  // Cancel timer
-  const handleCancel = () => {
+  const confirmCancel = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    setIsPaused(false);
+    setShowCancelConfirm(false);
     setSecondsRemaining(0);
     progress.value = 1;
     onCancel();
   };
 
+  const cancelCancelAction = () => {
+    setShowCancelConfirm(false);
+  };
+
   // Timer tick effect
   useEffect(() => {
-    if (isRunningProp && !isPaused) {
+    if (isRunningProp) {
       intervalRef.current = setInterval(() => {
         setSecondsRemaining((prev) => {
           if (prev <= 1) {
@@ -165,7 +170,7 @@ export function PomodoroTimer({
         }
       };
     }
-  }, [isRunningProp, isPaused, selectedDurationProp, onComplete]);
+  }, [isRunningProp, selectedDurationProp, onComplete]);
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -230,7 +235,7 @@ export function PomodoroTimer({
             <Button
               variant="secondary"
               size="lg"
-              onPress={handleCancel}
+              onPress={onCancel}
               style={{ marginTop: spacing[6] }}
             >
               Cancel
@@ -280,47 +285,21 @@ export function PomodoroTimer({
 
             {/* Controls */}
             <View style={styles.controls}>
-              {isPaused ? (
-                <>
-                  <Button variant="primary" size="lg" onPress={handleResume}>
-                    Resume
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    onPress={handleExtend}
-                    style={{ marginTop: spacing[3] }}
-                  >
-                    Extend +5 min
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    onPress={handleCancel}
-                    style={{ marginTop: spacing[3] }}
-                  >
-                    Cancel Timer
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="secondary" size="lg" onPress={handlePause}>
-                    Pause
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    onPress={handleCancel}
-                    style={{ marginTop: spacing[3] }}
-                  >
-                    Cancel
-                  </Button>
-                </>
-              )}
+              <Button variant="primary" size="lg" onPress={handleCompleteBind}>
+                Complete Bind
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                onPress={handleCancelTimer}
+                style={{ marginTop: spacing[3] }}
+              >
+                Cancel
+              </Button>
             </View>
 
-            {/* Pause Confirmation Modal */}
-            {showPauseConfirm && (
+            {/* Early Complete Confirmation Modal */}
+            {showEarlyCompleteConfirm && (
               <View style={[styles.confirmOverlay, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
                 <View
                   style={[
@@ -336,7 +315,7 @@ export function PomodoroTimer({
                     variant="displayLg"
                     style={{ color: colors.text.primary, marginBottom: spacing[3] }}
                   >
-                    Pause timer?
+                    Complete early?
                   </Heading>
                   <Body
                     style={{
@@ -345,18 +324,62 @@ export function PomodoroTimer({
                       textAlign: 'center',
                     }}
                   >
-                    Taking a break? You can resume anytime.
+                    You haven't completed the full timer yet. You can still mark this bind as
+                    complete.
                   </Body>
-                  <Button variant="primary" size="lg" onPress={confirmPause}>
-                    Yes, Pause
+                  <Button variant="primary" size="lg" onPress={confirmCompleteBind}>
+                    Yes, Complete Bind
                   </Button>
                   <Button
                     variant="ghost"
                     size="lg"
-                    onPress={cancelPause}
+                    onPress={cancelCompleteBind}
                     style={{ marginTop: spacing[3] }}
                   >
                     Keep Going
+                  </Button>
+                </View>
+              </View>
+            )}
+
+            {/* Cancel Confirmation Modal */}
+            {showCancelConfirm && (
+              <View style={[styles.confirmOverlay, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+                <View
+                  style={[
+                    styles.confirmCard,
+                    {
+                      backgroundColor: colors.background.primary,
+                      borderRadius: 16,
+                      padding: spacing[5],
+                    },
+                  ]}
+                >
+                  <Heading
+                    variant="displayLg"
+                    style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+                  >
+                    Cancel timer?
+                  </Heading>
+                  <Body
+                    style={{
+                      color: colors.text.secondary,
+                      marginBottom: spacing[5],
+                      textAlign: 'center',
+                    }}
+                  >
+                    Your progress will be lost and the bind won't be completed.
+                  </Body>
+                  <Button variant="primary" size="lg" onPress={confirmCancel}>
+                    Yes, Cancel
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    onPress={cancelCancelAction}
+                    style={{ marginTop: spacing[3] }}
+                  >
+                    Keep Timer Running
                   </Button>
                 </View>
               </View>
