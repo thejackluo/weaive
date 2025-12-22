@@ -190,7 +190,7 @@ export async function uploadImageToAPI(
       let error;
       try {
         error = JSON.parse(errorText);
-      } catch (_e) {
+      } catch {
         error = { error: { message: errorText } };
       }
       throw new Error(error.error?.message || 'Upload failed');

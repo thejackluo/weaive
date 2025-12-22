@@ -46,7 +46,7 @@ export function RecordingHistory({
   onRecordingPress,
   scrollEnabled = true,
 }: RecordingHistoryProps) {
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
   const { data: recordings, isLoading, error, refetch } = useRecordingHistory();
 
   const [expandedRecordingId, setExpandedRecordingId] = useState<string | null>(null);

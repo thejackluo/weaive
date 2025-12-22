@@ -19,7 +19,7 @@ import { useImageList } from '../hooks/useImageList';
 import type { Capture } from '../types/captures';
 
 // Type for captures with signed URLs (returned by API)
-type CaptureWithUrl = Capture & { signed_url: string };
+type _CaptureWithUrl = Capture & { signed_url: string };
 
 interface ImageGalleryProps {
   onImagePress: (capture: Capture) => void;
