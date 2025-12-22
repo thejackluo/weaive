@@ -387,61 +387,62 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
                 pass
             return audio_bytes, f"Temp file write failed: {str(write_error)}"
 
-        # Convert using ffmpeg (optimized for speech transcription)
-        ffmpeg_cmd = [
-            ffmpeg_exe,                # Use bundled ffmpeg binary
-            '-i', input_path,          # Input file
-            '-codec:a', 'libmp3lame',  # MP3 encoder
-            '-qscale:a', '2',          # High quality (2 = ~192kbps)
-            '-ar', '16000',            # 16kHz sample rate (optimal for speech)
-            '-ac', '1',                # Mono (reduces file size, good for speech)
-            '-y',                      # Overwrite output without asking
-            '-loglevel', 'error',      # Only show errors, not version info
-            output_path                # Output file
-        ]
-
-        logger.info(f"[FFMPEG] Running command: {' '.join(ffmpeg_cmd[:3])}... (full command logged at debug level)")
-        logger.debug(f"[FFMPEG] Full command: {' '.join(ffmpeg_cmd)}")
-
-        result = subprocess.run(ffmpeg_cmd, capture_output=True, timeout=AUDIO_CONVERSION_TIMEOUT_SEC, text=True)
-
-        # Check if conversion succeeded
-        if result.returncode != 0:
-            # Log FULL stderr (no truncation) to see the actual error
-            logger.error(f"[FFMPEG] MP3 conversion failed (exit code {result.returncode})")
-            logger.error(f"[FFMPEG] STDERR (full): {result.stderr}")
-            logger.error(f"[FFMPEG] STDOUT (full): {result.stdout}")
-
-            # Try WAV fallback (doesn't require MP3 encoder)
-            logger.info("[FFMPEG] Trying WAV fallback (no encoding required)...")
-
-            import os
-            wav_output = output_path.replace('.mp3', '.wav')
-            temp_files_to_cleanup.append(wav_output)  # Track WAV file for cleanup
-
-            wav_cmd = [
-                ffmpeg_exe,
-                '-i', input_path,
-                '-ar', '16000',            # 16kHz sample rate
-                '-ac', '1',                # Mono
-                '-y',
-                '-loglevel', 'error',
-                wav_output
+        try:
+            # Convert using ffmpeg (optimized for speech transcription)
+            ffmpeg_cmd = [
+                ffmpeg_exe,                # Use bundled ffmpeg binary
+                '-i', input_path,          # Input file
+                '-codec:a', 'libmp3lame',  # MP3 encoder
+                '-qscale:a', '2',          # High quality (2 = ~192kbps)
+                '-ar', '16000',            # 16kHz sample rate (optimal for speech)
+                '-ac', '1',                # Mono (reduces file size, good for speech)
+                '-y',                      # Overwrite output without asking
+                '-loglevel', 'error',      # Only show errors, not version info
+                output_path                # Output file
             ]
 
-            logger.debug(f"[FFMPEG] WAV command: {' '.join(wav_cmd)}")
-            wav_result = subprocess.run(wav_cmd, capture_output=True, timeout=AUDIO_CONVERSION_TIMEOUT_SEC, text=True)
+            logger.info(f"[FFMPEG] Running command: {' '.join(ffmpeg_cmd[:3])}... (full command logged at debug level)")
+            logger.debug(f"[FFMPEG] Full command: {' '.join(ffmpeg_cmd)}")
 
-            if wav_result.returncode != 0:
-                logger.error(f"[FFMPEG] WAV fallback also failed (exit code {wav_result.returncode})")
-                logger.error(f"[FFMPEG] WAV STDERR: {wav_result.stderr}")
-                # ✅ Cleanup handled by finally block
-                error_summary = result.stderr[:200] if result.stderr else "Unknown ffmpeg error"
-                return audio_bytes, f"ffmpeg failed (code {result.returncode}): {error_summary}"
+            result = subprocess.run(ffmpeg_cmd, capture_output=True, timeout=AUDIO_CONVERSION_TIMEOUT_SEC, text=True)
 
-            # WAV conversion succeeded!
-            logger.info("[FFMPEG] ✅ WAV fallback successful")
-            output_path = wav_output  # Use WAV file (cleanup handled by finally)
+            # Check if conversion succeeded
+            if result.returncode != 0:
+                # Log FULL stderr (no truncation) to see the actual error
+                logger.error(f"[FFMPEG] MP3 conversion failed (exit code {result.returncode})")
+                logger.error(f"[FFMPEG] STDERR (full): {result.stderr}")
+                logger.error(f"[FFMPEG] STDOUT (full): {result.stdout}")
+
+                # Try WAV fallback (doesn't require MP3 encoder)
+                logger.info("[FFMPEG] Trying WAV fallback (no encoding required)...")
+
+                import os
+                wav_output = output_path.replace('.mp3', '.wav')
+                temp_files_to_cleanup.append(wav_output)  # Track WAV file for cleanup
+
+                wav_cmd = [
+                    ffmpeg_exe,
+                    '-i', input_path,
+                    '-ar', '16000',            # 16kHz sample rate
+                    '-ac', '1',                # Mono
+                    '-y',
+                    '-loglevel', 'error',
+                    wav_output
+                ]
+
+                logger.debug(f"[FFMPEG] WAV command: {' '.join(wav_cmd)}")
+                wav_result = subprocess.run(wav_cmd, capture_output=True, timeout=AUDIO_CONVERSION_TIMEOUT_SEC, text=True)
+
+                if wav_result.returncode != 0:
+                    logger.error(f"[FFMPEG] WAV fallback also failed (exit code {wav_result.returncode})")
+                    logger.error(f"[FFMPEG] WAV STDERR: {wav_result.stderr}")
+                    # ✅ Cleanup handled by finally block
+                    error_summary = result.stderr[:200] if result.stderr else "Unknown ffmpeg error"
+                    return audio_bytes, f"ffmpeg failed (code {result.returncode}): {error_summary}"
+
+                # WAV conversion succeeded!
+                logger.info("[FFMPEG] ✅ WAV fallback successful")
+                output_path = wav_output  # Use WAV file (cleanup handled by finally)
 
             # Read converted audio
             with open(output_path, 'rb') as f:
