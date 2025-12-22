@@ -9,7 +9,5 @@
       "app/*": ["./app/*"]
     }
   },
-  "exclude": [
-    "src/_archive/**/*"
-  ]
+  "exclude": ["src/_archive/**/*"]
 }
