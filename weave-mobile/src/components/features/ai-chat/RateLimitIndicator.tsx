@@ -9,9 +9,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 
 interface RateLimitIndicatorProps {
   premiumUsed: number;
@@ -33,6 +34,8 @@ export default function RateLimitIndicator({
   isRateLimited,
 }: RateLimitIndicatorProps) {
   const [timeToReset, setTimeToReset] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false); // ✅ FIX: Collapsed by default
+  const heightValue = useSharedValue(0);
 
   useEffect(() => {
     if (isRateLimited) {
@@ -60,18 +63,50 @@ export default function RateLimitIndicator({
   const freePercent = freeLimit > 0 ? (freeUsed / freeLimit) * 100 : 0;
   const monthlyPercent = monthlyLimit > 0 ? (monthlyUsed / monthlyLimit) * 100 : 0;
 
+  // Animated height for collapse/expand
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: withTiming(heightValue.value, { duration: 300 }),
+    opacity: withTiming(heightValue.value > 0 ? 1 : 0, { duration: 200 }),
+  }));
+
+  // Update height when expanded state changes
+  useEffect(() => {
+    heightValue.value = isExpanded ? (isRateLimited ? 80 : 200) : 0;
+  }, [isExpanded, isRateLimited]);
+
   return (
     <Animated.View entering={FadeIn.duration(300)}>
       <BlurView intensity={15} tint="dark" style={styles.container}>
-        {isRateLimited ? (
-          // Rate Limited View
-          <View style={styles.rateLimitedContainer}>
-            <Text style={styles.rateLimitedTitle}>⏳ Rate Limit Reached</Text>
-            <Text style={styles.rateLimitedText}>Resets in {timeToReset}</Text>
+        {/* ✅ FIX: Collapsible header */}
+        <TouchableOpacity 
+          style={styles.header} 
+          onPress={() => setIsExpanded(!isExpanded)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.headerTitle}>Daily Usage</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.headerSummary}>
+              {premiumUsed + freeUsed}/{premiumLimit + freeLimit}
+            </Text>
+            <Ionicons 
+              name={isExpanded ? 'chevron-up' : 'chevron-down'} 
+              size={16} 
+              color="#9ca3af" 
+            />
           </View>
-        ) : (
-          // Usage Stats View
-          <View style={styles.statsContainer}>
+        </TouchableOpacity>
+
+        {/* ✅ FIX: Animated collapsible content */}
+        <Animated.View style={[styles.contentWrapper, animatedStyle]}>
+          {isRateLimited ? (
+            // Rate Limited View
+            <View style={styles.rateLimitedContainer}>
+              <Text style={styles.rateLimitedTitle}>⏳ Rate Limit Reached</Text>
+              <Text style={styles.rateLimitedText}>Resets in {timeToReset}</Text>
+            </View>
+          ) : (
+            // Usage Stats View
+            <View style={styles.statsContainer}>
             <Text style={styles.title}>Daily Usage</Text>
 
             {/* Premium Messages */}
@@ -131,7 +166,8 @@ export default function RateLimitIndicator({
               </View>
             </View>
           </View>
-        )}
+          )}
+        </Animated.View>
       </BlurView>
     </Animated.View>
   );
@@ -146,6 +182,32 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(10, 10, 10, 0.6)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+  },
+  headerTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#9ca3af',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerSummary: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#d1d5db',
+  },
+  contentWrapper: {
+    overflow: 'hidden',
   },
   rateLimitedContainer: {
     padding: 16,
