@@ -104,12 +104,11 @@ export function RecordingHistory({
   };
 
   /**
-   * Get audio URL from storage key
+   * Get audio URL from recording item
+   * Returns signed URL if available, null otherwise
    */
-  const getAudioUrl = (storageKey: string): string => {
-    // TODO: Generate signed URL from Supabase Storage
-    // For now, return placeholder
-    return `https://storage.supabase.com/captures/${storageKey}`;
+  const getAudioUrl = (item: RecordingCapture): string | null => {
+    return item.audio_url || null;
   };
 
   /**
@@ -234,7 +233,15 @@ export function RecordingHistory({
         {/* Audio player (shown when expanded) */}
         {isExpanded && (
           <View style={{ marginTop: spacing[4] }}>
-            <AudioPlayer audioUri={getAudioUrl(item.storage_key)} showSpeedControl={true} />
+            {getAudioUrl(item) ? (
+              <AudioPlayer audioUri={getAudioUrl(item)!} showSpeedControl={true} />
+            ) : (
+              <View style={{ padding: spacing[4], backgroundColor: colors.background.tertiary, borderRadius: 8 }}>
+                <Text variant="textSm" style={{ color: colors.text.secondary, textAlign: 'center' }}>
+                  Audio URL not available. Please refresh to reload.
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </Card>
