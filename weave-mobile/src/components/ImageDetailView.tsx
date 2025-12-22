@@ -3,19 +3,21 @@
  * Story: 0.9 - AI-Powered Image Service
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
-  Image,
   ScrollView,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
   Dimensions,
+  TextInput,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Heading, Button } from '@/design-system';
 import { deleteImage } from '../services/imageCapture';
 import { Capture, AIVisionCategory } from '../types/captures';
 
@@ -38,7 +40,37 @@ export function ImageDetailView({
   onNext,
 }: ImageDetailViewProps) {
   const [deleting, setDeleting] = useState(false);
+  const [title, setTitle] = useState(capture.content_text || '');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const insets = useSafeAreaInsets();
+
+  // Zoom animation values
+  const scale = useRef(new Animated.Value(1)).current;
+  const lastScale = useRef(1);
+
+  // Handle double-tap to zoom image
+  const handleImageDoubleTap = () => {
+    const newScale = lastScale.current === 1 ? 2 : 1;
+    lastScale.current = newScale;
+
+    Animated.spring(scale, {
+      toValue: newScale,
+      useNativeDriver: true,
+      friction: 5,
+    }).start();
+  };
+
+  // Handle tap on title to enable editing
+  const handleTitleTap = () => {
+    setIsEditingTitle(true);
+  };
+
+  // Handle save title
+  const handleSaveTitle = () => {
+    setIsEditingTitle(false);
+    // TODO: Save title to API
+    console.log('Saving title:', title);
+  };
 
   const handleDelete = () => {
     Alert.alert('Delete Image?', 'This cannot be undone.', [
@@ -91,6 +123,14 @@ export function ImageDetailView({
             Match Score: {analysis.validation_score}/100
           </Text>
         </View>
+
+        {/* AI Summary */}
+        {analysis.summary && (
+          <View className="bg-neutral-800 rounded-lg p-4">
+            <Text className="text-white font-semibold mb-2">Summary</Text>
+            <Text className="text-neutral-300 text-sm">{analysis.summary}</Text>
+          </View>
+        )}
 
         {/* Quality Score */}
         {capture.ai_quality_score && (
@@ -145,20 +185,54 @@ export function ImageDetailView({
 
   return (
     <View className="flex-1 bg-black">
-      {/* Header - Safe Area Aware */}
+      {/* Header - Safe Area Aware: X (left), Date (center), Trash (right) */}
       <View
-        className="absolute top-0 left-0 right-0 z-10 bg-black/80 flex-row items-center justify-between px-4"
-        style={{ paddingTop: insets.top + 16, paddingBottom: 16 }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+          paddingTop: insets.top + 16,
+          paddingBottom: 16,
+        }}
       >
-        <TouchableOpacity onPress={onClose}>
+        {/* Left: Close Button */}
+        <TouchableOpacity
+          onPress={onClose}
+          style={{
+            width: 48,
+            height: 48,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <MaterialIcons name="close" size={28} color="white" />
         </TouchableOpacity>
 
-        <Text className="text-white font-medium">
-          {new Date(capture.local_date).toLocaleDateString()}
-        </Text>
+        {/* Center: Date */}
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: 'white', fontWeight: '500', fontSize: 16 }}>
+            {new Date(capture.local_date).toLocaleDateString()}
+          </Text>
+        </View>
 
-        <TouchableOpacity onPress={handleDelete} disabled={deleting}>
+        {/* Right: Delete Button */}
+        <TouchableOpacity
+          onPress={handleDelete}
+          disabled={deleting}
+          style={{
+            width: 48,
+            height: 48,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           {deleting ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
@@ -169,15 +243,72 @@ export function ImageDetailView({
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingTop: insets.top + 80 }}
+        contentContainerStyle={{ padding: 16, paddingTop: insets.top + 80, paddingBottom: 100 }}
       >
-        {/* Main Image */}
-        <Image
-          source={{ uri: capture.signed_url }}
-          style={{ width: SCREEN_WIDTH - 32, height: SCREEN_HEIGHT * 0.5 }}
-          className="rounded-xl mb-6"
-          resizeMode="contain"
-        />
+        {/* Title - Read-only by default, tap to edit */}
+        <View className="mb-4">
+          {isEditingTitle ? (
+            <View className="bg-neutral-800 rounded-lg p-4">
+              <Text className="text-white font-semibold mb-2">Edit Title</Text>
+              <TextInput
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Add a title for this image..."
+                placeholderTextColor="#71717A"
+                className="text-neutral-200 text-lg bg-neutral-900 rounded-lg p-3 mb-3"
+                multiline
+                autoFocus
+                style={{ minHeight: 60 }}
+              />
+              <View className="flex-row gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => {
+                    setTitle(capture.content_text || '');
+                    setIsEditingTitle(false);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Cancel
+                </Button>
+                <Button variant="primary" size="sm" onPress={handleSaveTitle} style={{ flex: 1 }}>
+                  Save
+                </Button>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={handleTitleTap} activeOpacity={0.8}>
+              {title ? (
+                <Heading variant="displayLg" className="text-white mb-2">
+                  {title}
+                </Heading>
+              ) : (
+                <View className="bg-neutral-800/50 rounded-lg p-4 border border-dashed border-neutral-600">
+                  <Text className="text-neutral-400 text-center">Tap to add a title...</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Main Image with Zoom */}
+        <TouchableOpacity activeOpacity={0.9} onPress={handleImageDoubleTap}>
+          <Animated.Image
+            source={{ uri: capture.signed_url }}
+            style={{
+              width: SCREEN_WIDTH - 32,
+              height: SCREEN_HEIGHT * 0.5,
+              transform: [{ scale }],
+            }}
+            className="rounded-xl mb-4"
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        <Text className="text-neutral-500 text-xs text-center mb-4">
+          Double-tap image to zoom in/out
+        </Text>
 
         {/* AI Insights */}
         {renderAIInsights()}

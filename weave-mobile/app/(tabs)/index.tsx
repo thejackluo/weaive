@@ -233,7 +233,7 @@ export default function HomeScreen() {
             </Text>
             <View
               style={{
-                height: 200,
+                height: 400,
                 backgroundColor: '#0F0F10',
                 borderRadius: 12,
                 overflow: 'hidden',
@@ -241,7 +241,7 @@ export default function HomeScreen() {
             >
               <ImageGallery
                 onImagePress={(capture) => setSelectedImage(capture)}
-                scrollEnabled={false} // Disable scroll - let outer ScrollView handle it
+                scrollEnabled={true}
               />
             </View>
           </View>
