@@ -129,6 +129,13 @@ export function useAIChatStream(): UseAIChatStreamReturn {
           headers['Authorization'] = `Bearer ${accessToken}`;
         }
 
+        // ✅ Add admin key if available (for unlimited rate limits in dev)
+        // @ts-ignore - accessing private property for streaming
+        if (apiClient.adminKey) {
+          // @ts-ignore
+          headers['X-Admin-Key'] = apiClient.adminKey;
+        }
+
         // Make streaming POST request
         const response = await fetch(`${baseURL}/api/ai-chat/messages/stream`, {
           method: 'POST',

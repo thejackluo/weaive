@@ -6,6 +6,7 @@ import { ThemeProvider, SimpleToastContainer } from '../src/design-system';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
 import { DevEnvironmentBanner } from '../src/components/DevEnvironmentBanner';
 import { initJournalApi } from '../src/services/journalApi';
+import apiClient from '../src/services/apiClient';
 import '../global.css';
 
 // Create QueryClient instance (singleton)
@@ -42,6 +43,12 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
     // Initialize journalApi with shared auth token getter
     // Reduces duplicate supabase.auth.getSession() calls
     initJournalApi(getAuthToken);
+
+    // 🔓 Enable admin mode for unlimited rate limits (DEVELOPMENT ONLY)
+    // TODO: Remove this before production or gate behind __DEV__
+    const ADMIN_KEY = 'dev-unlimited-access-key-2025'; // Must match backend ADMIN_API_KEY
+    apiClient.enableAdminMode(ADMIN_KEY);
+    console.log('[ROOT_LAYOUT] ✅ Admin mode enabled for testing');
   }, [getAuthToken]);
 
   return <>{children}</>;

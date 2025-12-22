@@ -24,6 +24,7 @@ interface ApiResponse<T = any> {
 
 class ApiClient {
   public defaults: ApiClientConfig;
+  private adminKey: string | null = null;
 
   constructor() {
     this.defaults = {
@@ -36,6 +37,23 @@ class ApiClient {
     };
   }
 
+  /**
+   * Enable admin mode for unlimited rate limits (DEVELOPMENT ONLY)
+   * @param key - Admin API key from backend .env
+   */
+  public enableAdminMode(key: string): void {
+    this.adminKey = key;
+    console.log('[API_CLIENT] 🔓 Admin mode enabled - unlimited rate limits');
+  }
+
+  /**
+   * Disable admin mode
+   */
+  public disableAdminMode(): void {
+    this.adminKey = null;
+    console.log('[API_CLIENT] 🔒 Admin mode disabled - normal rate limits');
+  }
+
   private async getAuthHeaders(): Promise<Record<string, string>> {
     const accessToken = await getAccessToken();
     const headers: Record<string, string> = {
@@ -44,6 +62,11 @@ class ApiClient {
 
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    // Add admin key if enabled
+    if (this.adminKey) {
+      headers['X-Admin-Key'] = this.adminKey;
     }
 
     return headers;
