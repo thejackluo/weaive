@@ -33,6 +33,7 @@ export interface AIVisionAnalysis {
   provider: string; // 'gemini-3-flash-preview' | 'gpt-4o'
   validation_score: number; // 0-100
   is_verified: boolean; // true if validation_score >= 80
+  summary?: string | null; // 1-2 sentence description of image content
   ocr_text: string | null;
   categories: AIVisionCategory[];
   quality_score: number; // 1-5
