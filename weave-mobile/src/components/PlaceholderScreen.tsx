@@ -84,7 +84,7 @@ export default function PlaceholderScreen({
 
           {/* Description */}
           <Text variant="textBase" style={styles.description}>
-            This story has not been implemented yet.
+            This page has not been developed
           </Text>
           <Text variant="textSm" style={styles.subdescription}>
             Check back soon as we continue building Weave.
