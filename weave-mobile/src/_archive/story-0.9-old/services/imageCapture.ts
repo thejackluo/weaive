@@ -64,9 +64,7 @@ export async function requestGalleryPermissions(): Promise<boolean> {
  * @param options - Photo capture options
  * @returns Image URI or null if cancelled/failed
  */
-export async function launchCamera(
-  options?: PhotoCaptureOptions
-): Promise<string | null> {
+export async function launchCamera(options?: PhotoCaptureOptions): Promise<string | null> {
   try {
     // Check permissions
     const hasPermission = await requestCameraPermissions();
@@ -102,9 +100,7 @@ export async function launchCamera(
  * @param options - Photo capture options
  * @returns Image URI or null if cancelled/failed
  */
-export async function launchGallery(
-  options?: PhotoCaptureOptions
-): Promise<string | null> {
+export async function launchGallery(options?: PhotoCaptureOptions): Promise<string | null> {
   try {
     // Check permissions
     const hasPermission = await requestGalleryPermissions();
@@ -192,9 +188,7 @@ export async function uploadImageToStorage(
     console.log('[ImageCapture] Upload successful:', data.path);
 
     // Get public/signed URL
-    const { data: urlData } = supabase.storage
-      .from('captures')
-      .getPublicUrl(storagePath);
+    const { data: urlData } = supabase.storage.from('captures').getPublicUrl(storagePath);
 
     return {
       success: true,
@@ -222,11 +216,7 @@ export async function createCaptureRecord(
   try {
     console.log('[ImageCapture] Creating capture record:', captureData);
 
-    const { data, error } = await supabase
-      .from('captures')
-      .insert(captureData)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('captures').insert(captureData).select().single();
 
     if (error) {
       console.error('[ImageCapture] Database insert error:', error);
@@ -356,8 +346,7 @@ export async function captureQuickPhoto(
     const userId = profile.id;
 
     // Step 2: Capture photo
-    const imageUri =
-      source === 'camera' ? await launchCamera() : await launchGallery();
+    const imageUri = source === 'camera' ? await launchCamera() : await launchGallery();
 
     if (!imageUri) {
       return null; // User cancelled
