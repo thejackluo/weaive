@@ -1,4 +1,4 @@
-/* global jest, global, process */
+/* global jest, global */
 // Jest setup file for React Native Testing Library
 // Note: @testing-library/react-native v12.4+ includes Jest matchers by default
 
