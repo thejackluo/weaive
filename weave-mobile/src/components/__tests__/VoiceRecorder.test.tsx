@@ -242,9 +242,7 @@ describe('VoiceRecorder Component', () => {
      * WHEN: Component initializes
      * THEN: Requests microphone permissions from user
      */
-    const mockRequestPermissions = jest.fn(() =>
-      Promise.resolve({ status: 'granted' })
-    );
+    const mockRequestPermissions = jest.fn(() => Promise.resolve({ status: 'granted' }));
     (Audio.Audio.requestPermissionsAsync as jest.Mock) = mockRequestPermissions;
 
     render(<VoiceRecorder />);
