@@ -44,6 +44,7 @@ class ApiClient {
   public enableAdminMode(key: string): void {
     this.adminKey = key;
     console.log('[API_CLIENT] 🔓 Admin mode enabled - unlimited rate limits');
+    console.log('[API_CLIENT] 🔑 Admin key set to:', key); // DEBUG: Verify key value
   }
 
   /**

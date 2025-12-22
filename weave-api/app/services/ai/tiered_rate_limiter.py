@@ -103,9 +103,12 @@ class TieredRateLimiter:
             HTTPException 429: If rate limit exceeded
         """
         # Admin bypass (X-Admin-Key header)
+        logger.info(f"[RATE_LIMIT] Checking bypass: bypass_admin_key={bypass_admin_key}, subscription_tier={subscription_tier}")
         if bypass_admin_key or subscription_tier == 'admin':
-            logger.debug(f"Admin bypass for user {user_id}: unlimited access")
+            logger.info(f"🔓 [RATE_LIMIT] ADMIN BYPASS ACTIVE - Unlimited access for user {user_id}")
             return
+        else:
+            logger.info(f"⚠️ [RATE_LIMIT] NO BYPASS - Normal rate limits apply for user {user_id}")
 
         # Determine model tier
         model_tier = self._get_model_tier(model)

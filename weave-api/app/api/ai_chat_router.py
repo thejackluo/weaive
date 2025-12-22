@@ -63,9 +63,14 @@ def get_ai_service(db: SupabaseClient = Depends(get_supabase_client)) -> AIServi
 
 def check_admin_key(x_admin_key: Optional[str] = Header(None)) -> bool:
     """Check if request has valid admin key for bypass."""
+    logger.debug(f"[ADMIN_KEY_CHECK] Received header: {x_admin_key}")
+    logger.debug(f"[ADMIN_KEY_CHECK] Expected key: {ADMIN_API_KEY}")
     if not ADMIN_API_KEY:
+        logger.warning("[ADMIN_KEY_CHECK] ADMIN_API_KEY not set in .env!")
         return False
-    return x_admin_key == ADMIN_API_KEY
+    is_valid = x_admin_key == ADMIN_API_KEY
+    logger.debug(f"[ADMIN_KEY_CHECK] Valid: {is_valid}")
+    return is_valid
 
 
 # ============================================================
@@ -343,6 +348,9 @@ async def send_chat_message_stream(
     - No blocking wait for complete generation
     """
 
+    # Log admin status at endpoint level
+    logger.info(f"[STREAMING_ENDPOINT] is_admin dependency resolved: {is_admin}")
+
     async def event_generator() -> AsyncGenerator[str, None]:
         """Generate SSE events."""
         try:
@@ -371,6 +379,7 @@ async def send_chat_message_stream(
             model = 'claude-3-7-sonnet-20250219'
 
             # Check rate limit BEFORE processing
+            logger.info(f"[STREAMING] Calling rate limiter with: user_id={user_id}, model={model}, tier={subscription_tier}, is_admin={is_admin}")
             try:
                 rate_limiter.check_rate_limit(
                     user_id=str(user_id),
