@@ -33,9 +33,10 @@ logger = logging.getLogger(__name__)
 
 
 class GeminiVisionProvider(VisionProvider):
-    """Gemini 3.0 Flash vision provider"""
+    """Gemini vision provider (supports multiple model versions)"""
 
-    MODEL_NAME = "gemini-3-flash-preview"
+    # Default model (primary)
+    DEFAULT_MODEL = "gemini-3-flash-preview"
 
     # Analysis prompt template
     ANALYSIS_PROMPT = """Analyze this image and provide a detailed assessment.
@@ -46,6 +47,7 @@ Return your analysis as valid JSON with this EXACT structure (no markdown, just 
 {{
   "validation_score": <number 0-100>,
   "validation_reasoning": "<brief explanation>",
+  "summary": "<concise 1-2 sentence description of what's in the image>",
   "ocr_text": "<extracted text or null>",
   "categories": [
     {{"label": "gym|food|outdoor|workspace|social|other", "confidence": <0.0-1.0>}},
@@ -57,6 +59,7 @@ Return your analysis as valid JSON with this EXACT structure (no markdown, just 
 
 RULES:
 - validation_score: How well does this image match the expected content? 0=completely unrelated, 100=perfect match
+- summary: 1-2 sentence description of the image content (e.g., "A person at the gym doing bicep curls with dumbbells")
 - ocr_text: Extract visible text up to 300 characters max (workout logs, food labels, notes). Summarize if longer. Return null if no text visible.
 - categories: Return top 2 categories with confidence scores
 - quality_score: 1=poor (blurry/dark), 3=acceptable, 5=excellent (clear/well-lit/relevant)
@@ -64,14 +67,17 @@ RULES:
 - IMPORTANT: All text must be properly escaped for JSON (newlines as \\n, quotes as \\", etc.)
 """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, model_name: Optional[str] = None):
         """
         Initialize Gemini provider
 
         Args:
             api_key: Google AI API key (defaults to GOOGLE_AI_API_KEY env var)
+            model_name: Model name (defaults to gemini-3-flash-preview)
+                       Can be overridden for fallback to gemini-2.5-flash-preview
         """
         self.api_key = api_key or os.getenv("GOOGLE_AI_API_KEY")
+        self.model_name = model_name or self.DEFAULT_MODEL
 
         if not self.api_key:
             logger.warning("GOOGLE_AI_API_KEY not configured")
@@ -80,14 +86,14 @@ RULES:
 
         try:
             genai.configure(api_key=self.api_key)
-            self._model = genai.GenerativeModel(self.MODEL_NAME)
-            logger.info(f"✅ Gemini provider initialized: {self.MODEL_NAME}")
+            self._model = genai.GenerativeModel(self.model_name)
+            logger.info(f"✅ Gemini provider initialized: {self.model_name}")
         except Exception as e:
             logger.error(f"❌ Failed to initialize Gemini: {e}")
             self._model = None
 
     def get_provider_name(self) -> str:
-        return self.MODEL_NAME
+        return self.model_name
 
     def is_available(self) -> bool:
         return self._model is not None
@@ -114,7 +120,7 @@ RULES:
         """
         if not self.is_available():
             raise VisionProviderError(
-                self.MODEL_NAME,
+                self.model_name,
                 "Gemini provider not configured (missing GOOGLE_AI_API_KEY)",
                 retryable=False,
             )
@@ -167,7 +173,7 @@ RULES:
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse Gemini response as JSON: {response_text[:500]}")
                 raise VisionProviderError(
-                    self.MODEL_NAME,
+                    self.model_name,
                     f"Invalid JSON response from Gemini: {str(e)}",
                     retryable=True,
                 )
@@ -177,20 +183,21 @@ RULES:
             for field in required_fields:
                 if field not in analysis:
                     raise VisionProviderError(
-                        self.MODEL_NAME,
+                        self.model_name,
                         f"Missing required field in Gemini response: {field}",
                         retryable=True,
                     )
 
             # Calculate cost
-            cost_usd = calculate_cost(self.MODEL_NAME, input_tokens, output_tokens)
+            cost_usd = calculate_cost(self.model_name, input_tokens, output_tokens)
 
             # Build result
             validation_score = int(analysis["validation_score"])
             result = VisionAnalysisResult(
-                provider=self.MODEL_NAME,
+                provider=self.model_name,
                 validation_score=validation_score,
                 is_verified=validation_score >= 80,
+                summary=analysis.get("summary"),  # Extract summary from AI response
                 ocr_text=analysis.get("ocr_text"),
                 categories=analysis.get("categories", []),
                 quality_score=int(analysis["quality_score"]),
@@ -214,7 +221,7 @@ RULES:
         except google_exceptions.ResourceExhausted as e:
             # Rate limit exceeded
             raise VisionProviderError(
-                self.MODEL_NAME,
+                self.model_name,
                 f"Rate limit exceeded: {str(e)}",
                 retryable=False,
             )
@@ -222,7 +229,7 @@ RULES:
         except google_exceptions.InvalidArgument as e:
             # Invalid input (bad image format, etc.)
             raise VisionProviderError(
-                self.MODEL_NAME,
+                self.model_name,
                 f"Invalid input: {str(e)}",
                 retryable=False,
             )
@@ -230,7 +237,7 @@ RULES:
         except google_exceptions.GoogleAPIError as e:
             # Other Google API errors
             raise VisionProviderError(
-                self.MODEL_NAME,
+                self.model_name,
                 f"Google API error: {str(e)}",
                 retryable=True,
             )
@@ -239,7 +246,7 @@ RULES:
             # Unexpected errors
             logger.error(f"Unexpected error in Gemini analysis: {e}", exc_info=True)
             raise VisionProviderError(
-                self.MODEL_NAME,
+                self.model_name,
                 f"Unexpected error: {str(e)}",
                 retryable=True,
             )
