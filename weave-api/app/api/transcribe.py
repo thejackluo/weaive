@@ -258,14 +258,19 @@ async def log_ai_run(
     """
     result = supabase.table('ai_runs').insert({
         'user_id': user_id,
-        'operation': 'transcription',
+        'module': 'transcription',  # Changed from 'operation' to match enum
+        'input_hash': f'audio_{duration_sec}_{confidence_score}',  # Simple hash for now
+        'prompt_version': 'stt-v1.0',
         'model': 'whisper-1' if provider == 'whisper' else 'assemblyai',
-        'provider': provider,
-        'audio_duration_sec': duration_sec,
-        'cost_usd': cost_usd,
-        'confidence_score': confidence_score,
-        'input_tokens': 0,  # Not applicable for STT
-        'output_tokens': 0,  # Not applicable for STT
+        'params_json': {
+            'provider': provider,
+            'audio_duration_sec': duration_sec,
+            'confidence_score': confidence_score
+        },
+        'status': 'success',
+        'cost_estimate': cost_usd,  # Changed from 'cost_usd' to 'cost_estimate'
+        'tokens_input': 0,  # Changed from 'input_tokens' to 'tokens_input'
+        'tokens_output': 0,  # Changed from 'output_tokens' to 'tokens_output'
     }).execute()
 
     return result.data[0]['id']
@@ -651,7 +656,7 @@ async def transcribe_audio(
         if transcription_result:
             await increment_usage(str(user_id), transcription_result.duration_sec, supabase)
 
-            # Log to ai_runs
+            # Log to ai_runs (re-enabled after adding 'transcription' to ai_module enum)
             await log_ai_run(
                 user_id=str(user_id),  # Convert UUID to string
                 provider=transcription_result.provider,
