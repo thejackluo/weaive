@@ -10,14 +10,18 @@ FastAPI router for STT operations:
 Provider fallback: AssemblyAI → Whisper → Store audio only
 """
 
+import io
 import logging
+import subprocess
+import tempfile
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Tuple
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 from supabase import Client
+import imageio_ffmpeg
 
 from app.core.deps import get_current_user, get_supabase_client
 from app.services.stt import STTService, TranscriptionResult
@@ -267,6 +271,105 @@ async def log_ai_run(
     return result.data[0]['id']
 
 
+async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "audio") -> Tuple[bytes, Optional[str]]:
+    """
+    Convert audio to MP3 format using ffmpeg.
+
+    Fixes iOS/Expo Audio compatibility issues where non-standard Apple codecs
+    are rejected by Whisper and AssemblyAI APIs.
+
+    Process:
+    1. Write audio bytes to temp file (preserves binary integrity)
+    2. Convert with ffmpeg to MP3 with speech-optimized settings
+    3. Read converted bytes
+    4. Return converted bytes or original on failure
+
+    Args:
+        audio_bytes: Original audio bytes (any format)
+        original_filename: Original filename for logging
+
+    Returns:
+        tuple: (converted_bytes, error_message)
+        - Success: (mp3_bytes, None)
+        - Failure: (original_bytes, error_string)
+
+    Raises:
+        Never raises - always returns original bytes on error
+    """
+    try:
+        # Get bundled ffmpeg binary from imageio-ffmpeg package
+        # This works cross-platform (Windows, Linux, Mac) without system installation
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        logger.info(f"[FFMPEG] Using bundled ffmpeg binary: {ffmpeg_exe}")
+        logger.info(f"[FFMPEG] Converting audio: {len(audio_bytes)} bytes from {original_filename}")
+
+        # Create temp files for input and output
+        with tempfile.NamedTemporaryFile(suffix='.input', delete=False) as input_file, \
+             tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as output_file:
+
+            input_path = input_file.name
+            output_path = output_file.name
+
+            # Write input bytes
+            input_file.write(audio_bytes)
+            input_file.flush()
+
+            logger.info(f"[FFMPEG] Input temp file: {input_path}")
+            logger.info(f"[FFMPEG] Output temp file: {output_path}")
+
+        # Convert using ffmpeg (optimized for speech transcription)
+        result = subprocess.run([
+            ffmpeg_exe,                # Use bundled ffmpeg binary
+            '-i', input_path,          # Input file
+            '-codec:a', 'libmp3lame',  # MP3 encoder
+            '-qscale:a', '2',          # High quality (2 = ~192kbps)
+            '-ar', '16000',            # 16kHz sample rate (optimal for speech)
+            '-ac', '1',                # Mono (reduces file size, good for speech)
+            '-y',                      # Overwrite output without asking
+            output_path                # Output file
+        ], capture_output=True, timeout=30, text=True)
+
+        # Check if conversion succeeded
+        if result.returncode != 0:
+            error_msg = result.stderr[:500] if result.stderr else "Unknown ffmpeg error"
+            logger.error(f"[FFMPEG] Conversion failed (code {result.returncode}): {error_msg}")
+
+            # Clean up temp files
+            import os
+            try:
+                os.remove(input_path)
+                os.remove(output_path)
+            except Exception:
+                pass
+
+            return audio_bytes, f"ffmpeg conversion failed: {error_msg}"
+
+        # Read converted audio
+        with open(output_path, 'rb') as f:
+            converted_bytes = f.read()
+
+        logger.info(f"[FFMPEG] ✅ Conversion successful: {len(audio_bytes)} → {len(converted_bytes)} bytes")
+        logger.info(f"[FFMPEG] Compression ratio: {len(converted_bytes)/len(audio_bytes)*100:.1f}%")
+
+        # Clean up temp files
+        import os
+        try:
+            os.remove(input_path)
+            os.remove(output_path)
+        except Exception as e:
+            logger.warning(f"[FFMPEG] Failed to clean temp files: {e}")
+
+        return converted_bytes, None
+
+    except subprocess.TimeoutExpired:
+        logger.error(f"[FFMPEG] Conversion timeout (>30s)")
+        return audio_bytes, "ffmpeg timeout"
+
+    except Exception as e:
+        logger.error(f"[FFMPEG] Unexpected error: {str(e)}", exc_info=True)
+        return audio_bytes, f"Conversion error: {str(e)}"
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # API ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════
@@ -377,6 +480,17 @@ async def transcribe_audio(
                     }
                 }
             )
+
+        # Convert audio to MP3 for STT compatibility (fixes iOS/Expo format issues)
+        logger.info(f"[TRANSCRIBE] Converting audio to MP3 format for STT compatibility")
+        converted_bytes, conversion_error = await convert_audio_to_mp3(audio_bytes, audio.filename)
+
+        if conversion_error:
+            logger.warning(f"[TRANSCRIBE] Audio conversion failed: {conversion_error}, using original bytes")
+            # Continue with original bytes (might still work for some formats)
+        else:
+            logger.info(f"[TRANSCRIBE] Audio converted successfully, using MP3 for transcription")
+            audio_bytes = converted_bytes  # Use converted MP3 for transcription
 
         # Transcribe with fallback
         logger.info(f"Starting transcription: {len(audio_bytes)} bytes, language={language}")
