@@ -6,7 +6,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/services/supabase';
+import { supabase } from '@lib/supabase';
 
 /**
  * Recording capture from database
