@@ -168,6 +168,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Navigation Patterns:** `docs/stories/1-5-1-navigation-architecture.md`
 - **Backend Patterns:** `docs/stories/1-5-2-backend-standardization.md` + `docs/dev/backend-patterns-guide.md`
+- **API Endpoint Registry:** `docs/dev/backend-api-integration.md` ⚡ NEW (28 endpoints mapped)
 - **AI Service Patterns:** `docs/stories/1-5-3-ai-services-standardization.md` + `docs/dev/ai-services-guide.md`
 - **Architecture Rules:** `docs/architecture/implementation-patterns-consistency-rules.md`
 
