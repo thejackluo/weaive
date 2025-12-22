@@ -1,6 +1,6 @@
 # ⚡ Quick Reference
 
-One-page reference for the Weavelight Documentation Viewer.
+One-page reference for the Documentation Viewer.
 
 ## 🚀 Start Server
 

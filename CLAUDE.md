@@ -20,6 +20,159 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **State Management:** TanStack Query (server state), Zustand (UI state), useState (local)
 - **Styling:** NativeWind (Tailwind CSS for React Native)
 
+---
+
+## 🚨 Development Standards (MANDATORY FOR ALL AGENTS)
+
+**Epic 1.5: Development Infrastructure** established standardized patterns for all development. **ALL agents MUST follow these standards when implementing ANY story.**
+
+### When to Use Each Standard
+
+| If You're Implementing... | Follow This Standard | Reference File |
+|----------------------------|---------------------|----------------|
+| **Navigation/Screens** (any UI screen) | **Story 1.5.1: Navigation Patterns** | `docs/stories/1-5-1-navigation-architecture.md` |
+| **API Endpoints** (FastAPI routes) | **Story 1.5.2: Backend Patterns** | `docs/stories/1-5-2-backend-standardization.md` |
+| **Database Models** (Supabase tables) | **Story 1.5.2: Backend Patterns** | `docs/stories/1-5-2-backend-standardization.md` |
+| **AI Services** (text/image/audio AI) | **Story 1.5.3: AI Service Patterns** | `docs/stories/1-5-3-ai-services-standardization.md` |
+
+### Story 1.5.1: Navigation/Frontend Patterns
+
+**Use when:** Creating screens, navigation flows, or UI components
+
+**Standards Include:**
+- ✅ File-based routing with Expo Router (`app/` directory structure)
+- ✅ Screen placeholder templates (3-tab navigation: Home, Goals, Journal, Progress)
+- ✅ Navigation patterns (tabs, modals, stacks)
+- ✅ Design system component usage (`@/design-system`)
+- ✅ State management boundaries (TanStack Query, Zustand, useState)
+
+**Quick Checklist:**
+- [ ] Use `app/(tabs)/` for main navigation screens
+- [ ] Import design system components from `@/design-system`
+- [ ] Use TanStack Query for server data (NOT Zustand)
+- [ ] Follow `PascalCase` for component files
+
+**Full Spec:** `docs/stories/1-5-1-navigation-architecture.md`
+
+---
+
+### Story 1.5.2: Backend/API Patterns
+
+**Use when:** Creating API endpoints, database models, or backend services
+
+**Standards Include:**
+- ✅ API endpoint naming (`GET /api/goals`, `POST /api/completions`)
+- ✅ Pydantic request/response models (`{Resource}Create`, `{Resource}Response`)
+- ✅ Database model conventions (`snake_case`, plural tables, soft delete)
+- ✅ Error handling patterns (standard error codes, HTTP status codes)
+- ✅ Testing patterns (pytest fixtures, integration tests)
+- ✅ Service layer decision tree (when to create services vs inline logic)
+
+**Quick Checklist:**
+- [ ] Use `snake_case` for all API params and DB columns
+- [ ] Follow REST naming: `GET /api/{resources}`, `POST /api/{resources}`
+- [ ] Use `{data, meta}` response wrapper format
+- [ ] Create Pydantic models: `{Resource}Create`, `{Resource}Response`
+- [ ] Add error handling with standard codes (`VALIDATION_ERROR`, `NOT_FOUND`, etc.)
+- [ ] Write pytest tests in `tests/test_{resource}_api.py`
+
+**Templates Available:**
+- API endpoint template (FastAPI router with auth, validation, error handling)
+- Database model template (BaseModel with timestamps, soft delete)
+- Pydantic schema template (request/response models)
+
+**Full Spec:** `docs/stories/1-5-2-backend-standardization.md`
+**Developer Guide:** `docs/dev/backend-patterns-guide.md` (created by Story 1.5.2)
+
+---
+
+### Story 1.5.3: AI Services Patterns
+
+**Use when:** Integrating AI features (text generation, image analysis, voice transcription)
+
+**Standards Include:**
+- ✅ Unified `AIProviderBase` abstraction for all AI modalities
+- ✅ Text AI patterns (OpenAI GPT-4o-mini, Claude 3.7 Sonnet fallback)
+- ✅ Image AI patterns (Gemini 3.0 Flash, GPT-4o Vision fallback)
+- ✅ Audio AI patterns (AssemblyAI, Whisper API fallback)
+- ✅ Cost tracking (log to `ai_runs` table with tokens, cost, duration)
+- ✅ Rate limiting (10 text calls/hr, 5 image analyses/day, 50 transcriptions/day)
+- ✅ React Native hooks for AI services
+
+**Quick Checklist:**
+- [ ] Use `AIProviderBase` abstract class for new AI providers
+- [ ] Implement fallback chain (Primary → Secondary → Graceful degradation)
+- [ ] Log ALL AI calls to `ai_runs` table (cost tracking)
+- [ ] Check rate limits before AI calls (use `daily_aggregates` table)
+- [ ] Use standard React hooks:
+  - `useAIChat()` for text AI
+  - `useImageAnalysis()` for image AI
+  - `useVoiceTranscription()` for audio AI
+- [ ] Handle errors with standard loading states ("Generating...", "Analyzing...")
+
+**Provider Decision Tree:**
+| Use Case | Primary Provider | Fallback | Cost |
+|----------|------------------|----------|------|
+| **Text Generation** (Triad, Journal feedback) | GPT-4o-mini | Claude 3.7 Sonnet | $0.15/$0.60 per MTok |
+| **Complex Reasoning** (Onboarding, Dream Self) | Claude 3.7 Sonnet | GPT-4o | $3.00/$15.00 per MTok |
+| **Image Analysis** (Proof validation, OCR) | Gemini 3.0 Flash | GPT-4o Vision | $0.02/image |
+| **Voice Transcription** (STT) | AssemblyAI | Whisper API | $0.15/hr |
+
+**Full Spec:** `docs/stories/1-5-3-ai-services-standardization.md`
+**Developer Guide:** `docs/dev/ai-services-guide.md` (created by Story 1.5.3)
+
+---
+
+### 🎯 Before Writing ANY Code
+
+**STEP 1: Identify the type of work**
+- Navigation/UI screen? → Story 1.5.1
+- API endpoint/database? → Story 1.5.2
+- AI integration? → Story 1.5.3
+
+**STEP 2: Read the relevant standardization story**
+- Open `docs/stories/[story-file].md`
+- Review patterns, templates, examples
+- Check acceptance criteria
+
+**STEP 3: Follow the standard**
+- Use templates and conventions
+- Don't reinvent patterns
+- Maintain consistency
+
+**STEP 4: Reference in implementation**
+- Mention which standard you're following
+- Link to story file in code comments (optional but helpful)
+
+---
+
+### ❌ What NOT to Do
+
+**DON'T:**
+- ❌ Create custom navigation patterns (use Story 1.5.1 structure)
+- ❌ Invent new API response formats (use `{data, meta}` wrapper)
+- ❌ Skip error handling (use standard error codes)
+- ❌ Create new AI provider patterns (use `AIProviderBase` abstraction)
+- ❌ Ignore rate limiting (check `daily_aggregates` before AI calls)
+- ❌ Use different naming conventions (follow `snake_case` DB, `camelCase` TS)
+
+**DO:**
+- ✅ Read standardization stories BEFORE implementing features
+- ✅ Copy-paste templates from standardization stories
+- ✅ Ask "Does a pattern already exist for this?" before creating custom solutions
+- ✅ Reference standardization stories in PR descriptions
+
+---
+
+### 📚 Quick Links
+
+- **Navigation Patterns:** `docs/stories/1-5-1-navigation-architecture.md`
+- **Backend Patterns:** `docs/stories/1-5-2-backend-standardization.md` + `docs/dev/backend-patterns-guide.md`
+- **AI Service Patterns:** `docs/stories/1-5-3-ai-services-standardization.md` + `docs/dev/ai-services-guide.md`
+- **Architecture Rules:** `docs/architecture/implementation-patterns-consistency-rules.md`
+
+---
+
 ## Common Development Commands
 
 ### Mobile Development (weave-mobile/)

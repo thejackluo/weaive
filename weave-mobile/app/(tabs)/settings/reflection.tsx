@@ -31,7 +31,7 @@ import CustomQuestionInput, {
   CustomQuestion,
 } from '@/components/features/journal/CustomQuestionInput';
 import ManageQuestionsModal from '@/components/features/journal/ManageQuestionsModal';
-import CountdownTimer from '@/components/features/journal/CountdownTimer';
+import { UserAvatarMenu } from '@/components/UserAvatarMenu';
 
 const DRAFT_KEY = '@weave_reflection_draft';
 
@@ -293,148 +293,149 @@ export default function ReflectionScreen() {
   console.log('[REFLECTION_SCREEN] ✅ Rendering main form');
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>How did today go, {userName}?</Text>
-        <Text style={styles.headerSubtitle}>Take 60 seconds to reflect</Text>
-      </View>
+    <View style={{ flex: 1 }}>
+      {/* User Avatar Menu - Top Right */}
+      <UserAvatarMenu />
 
-      {/* Story 4.1c: Countdown Timer */}
-      <View style={styles.timerContainer}>
-        <Text style={styles.timerLabel}>Story 4.1c: Countdown Timer Demo</Text>
-        <CountdownTimer debug={true} />
-      </View>
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>How did today go, {userName}?</Text>
+          <Text style={styles.headerSubtitle}>Take 60 seconds to reflect</Text>
+        </View>
 
-      {/* Question 1: Today's Reflection */}
-      <View style={styles.questionContainer}>
-        <Text style={styles.questionLabel}>
-          How do you feel about today? What worked well and what didn't?
-        </Text>
-        <TextInput
-          style={styles.multilineInput}
-          multiline
-          numberOfLines={5}
-          maxLength={500}
-          value={todayReflection}
-          onChangeText={setTodayReflection}
-          placeholder="Today I felt... The highlight was... I struggled with..."
-          placeholderTextColor="#999"
-        />
-        <Text style={styles.characterCount}>{reflectionCount} / 500</Text>
-        {reflectionCount < 50 && reflectionCount > 0 && (
-          <Text style={styles.hint}>Keep going! Aim for at least 50 characters.</Text>
-        )}
-      </View>
+        {/* Question 1: Today's Reflection */}
+        <View style={styles.questionContainer}>
+          <Text style={styles.questionLabel}>
+            How do you feel about today? What worked well and what didn't?
+          </Text>
+          <TextInput
+            style={styles.multilineInput}
+            multiline
+            numberOfLines={5}
+            maxLength={500}
+            value={todayReflection}
+            onChangeText={setTodayReflection}
+            placeholder="Today I felt... The highlight was... I struggled with..."
+            placeholderTextColor="#999"
+          />
+          <Text style={styles.characterCount}>{reflectionCount} / 500</Text>
+          {reflectionCount < 50 && reflectionCount > 0 && (
+            <Text style={styles.hint}>Keep going! Aim for at least 50 characters.</Text>
+          )}
+        </View>
 
-      {/* Question 2: Tomorrow's Focus */}
-      <View style={styles.questionContainer}>
-        <Text style={styles.questionLabel}>
-          What is the one thing you want to accomplish tomorrow?
-        </Text>
-        <TextInput
-          style={styles.singleLineInput}
-          maxLength={100}
-          value={tomorrowFocus}
-          onChangeText={setTomorrowFocus}
-          placeholder="Tomorrow I will..."
-          placeholderTextColor="#999"
-        />
-        <Text style={styles.characterCount}>{focusCount} / 100</Text>
-      </View>
+        {/* Question 2: Tomorrow's Focus */}
+        <View style={styles.questionContainer}>
+          <Text style={styles.questionLabel}>
+            What is the one thing you want to accomplish tomorrow?
+          </Text>
+          <TextInput
+            style={styles.singleLineInput}
+            maxLength={100}
+            value={tomorrowFocus}
+            onChangeText={setTomorrowFocus}
+            placeholder="Tomorrow I will..."
+            placeholderTextColor="#999"
+          />
+          <Text style={styles.characterCount}>{focusCount} / 100</Text>
+        </View>
 
-      {/* Fulfillment Score Slider */}
-      <View style={styles.questionContainer}>
-        <Text style={styles.questionLabel}>Overall, how fulfilled do you feel about today?</Text>
-        <View style={styles.sliderContainer}>
-          <Text style={styles.scoreDisplay}>{fulfillmentScore}</Text>
-          <View style={styles.sliderTrack}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-              <TouchableOpacity
-                key={num}
-                style={[styles.sliderDot, num <= fulfillmentScore && styles.sliderDotActive]}
-                onPress={() => setFulfillmentScore(num)}
-              >
-                <Text style={styles.sliderDotText}>{num}</Text>
+        {/* Fulfillment Score Slider */}
+        <View style={styles.questionContainer}>
+          <Text style={styles.questionLabel}>Overall, how fulfilled do you feel about today?</Text>
+          <View style={styles.sliderContainer}>
+            <Text style={styles.scoreDisplay}>{fulfillmentScore}</Text>
+            <View style={styles.sliderTrack}>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                <TouchableOpacity
+                  key={num}
+                  style={[styles.sliderDot, num <= fulfillmentScore && styles.sliderDotActive]}
+                  onPress={() => setFulfillmentScore(num)}
+                >
+                  <Text style={styles.sliderDotText}>{num}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.sliderLabels}>
+              <Text style={styles.sliderLabel}>Low</Text>
+              <Text style={styles.sliderLabel}>High</Text>
+            </View>
+          </View>
+          <Text style={styles.sliderFeedback}>
+            {fulfillmentScore <= 3 && '🤔 Tomorrow is a fresh start'}
+            {fulfillmentScore > 3 && fulfillmentScore <= 6 && '💭 Steady progress'}
+            {fulfillmentScore > 6 && '✨ Great momentum!'}
+          </Text>
+        </View>
+
+        {/* Custom Questions (AC #10) */}
+        {customQuestions.length > 0 && (
+          <View style={styles.customQuestionsSection}>
+            <View style={styles.customQuestionsHeader}>
+              <Text style={styles.customQuestionsSectionTitle}>Your Custom Questions</Text>
+              <TouchableOpacity onPress={() => setShowManageQuestionsModal(true)}>
+                <Text style={styles.manageQuestionsLink}>Manage</Text>
               </TouchableOpacity>
+            </View>
+            {customQuestions.map((question) => (
+              <CustomQuestionInput
+                key={question.id}
+                question={question}
+                value={customResponses[question.id]}
+                onChange={(value) => handleCustomResponseChange(question.id, value)}
+              />
             ))}
           </View>
-          <View style={styles.sliderLabels}>
-            <Text style={styles.sliderLabel}>Low</Text>
-            <Text style={styles.sliderLabel}>High</Text>
-          </View>
-        </View>
-        <Text style={styles.sliderFeedback}>
-          {fulfillmentScore <= 3 && '🤔 Tomorrow is a fresh start'}
-          {fulfillmentScore > 3 && fulfillmentScore <= 6 && '💭 Steady progress'}
-          {fulfillmentScore > 6 && '✨ Great momentum!'}
-        </Text>
-      </View>
-
-      {/* Custom Questions (AC #10) */}
-      {customQuestions.length > 0 && (
-        <View style={styles.customQuestionsSection}>
-          <View style={styles.customQuestionsHeader}>
-            <Text style={styles.customQuestionsSectionTitle}>Your Custom Questions</Text>
-            <TouchableOpacity onPress={() => setShowManageQuestionsModal(true)}>
-              <Text style={styles.manageQuestionsLink}>Manage</Text>
-            </TouchableOpacity>
-          </View>
-          {customQuestions.map((question) => (
-            <CustomQuestionInput
-              key={question.id}
-              question={question}
-              value={customResponses[question.id]}
-              onChange={(value) => handleCustomResponseChange(question.id, value)}
-            />
-          ))}
-        </View>
-      )}
-
-      {/* Add Custom Questions Link (AC #11) */}
-      {customQuestions.length === 0 && (
-        <TouchableOpacity
-          style={styles.addCustomQuestionsButton}
-          onPress={() => setShowManageQuestionsModal(true)}
-        >
-          <Text style={styles.addCustomQuestionsText}>+ Add custom tracking questions</Text>
-        </TouchableOpacity>
-      )}
-      {customQuestions.length > 0 && customQuestions.length < 5 && (
-        <TouchableOpacity
-          style={styles.addMoreQuestionsButton}
-          onPress={() => setShowManageQuestionsModal(true)}
-        >
-          <Text style={styles.addMoreQuestionsText}>+ Add more questions</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Submit Button */}
-      <TouchableOpacity
-        style={[styles.submitButton, !isSubmitEnabled && styles.submitButtonDisabled]}
-        onPress={handleSubmit}
-        disabled={!isSubmitEnabled || isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitButtonText}>{isEditMode ? 'Update Reflection' : 'Submit'}</Text>
         )}
-      </TouchableOpacity>
-      {isLoading && (
-        <Text style={styles.loadingText}>
-          {isEditMode ? 'Updating your reflection...' : 'Submitting your reflection...'}
-        </Text>
-      )}
 
-      {/* Manage Questions Modal */}
-      <ManageQuestionsModal
-        visible={showManageQuestionsModal}
-        questions={customQuestions}
-        onClose={() => setShowManageQuestionsModal(false)}
-        onSave={handleSaveCustomQuestions}
-      />
-    </ScrollView>
+        {/* Add Custom Questions Link (AC #11) */}
+        {customQuestions.length === 0 && (
+          <TouchableOpacity
+            style={styles.addCustomQuestionsButton}
+            onPress={() => setShowManageQuestionsModal(true)}
+          >
+            <Text style={styles.addCustomQuestionsText}>+ Add custom tracking questions</Text>
+          </TouchableOpacity>
+        )}
+        {customQuestions.length > 0 && customQuestions.length < 5 && (
+          <TouchableOpacity
+            style={styles.addMoreQuestionsButton}
+            onPress={() => setShowManageQuestionsModal(true)}
+          >
+            <Text style={styles.addMoreQuestionsText}>+ Add more questions</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={[styles.submitButton, !isSubmitEnabled && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={!isSubmitEnabled || isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitButtonText}>
+              {isEditMode ? 'Update Reflection' : 'Submit'}
+            </Text>
+          )}
+        </TouchableOpacity>
+        {isLoading && (
+          <Text style={styles.loadingText}>
+            {isEditMode ? 'Updating your reflection...' : 'Submitting your reflection...'}
+          </Text>
+        )}
+
+        {/* Manage Questions Modal */}
+        <ManageQuestionsModal
+          visible={showManageQuestionsModal}
+          questions={customQuestions}
+          onClose={() => setShowManageQuestionsModal(false)}
+          onSave={handleSaveCustomQuestions}
+        />
+      </ScrollView>
+    </View>
   );
 }
 
