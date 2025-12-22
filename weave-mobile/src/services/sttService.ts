@@ -147,6 +147,17 @@ export async function transcribeAudio(
             const errorResponse = JSON.parse(xhr.responseText);
             console.error('[STT_SERVICE] ❌ Transcription failed:', errorResponse);
 
+            // Check for 404 - backend endpoint not found
+            if (xhr.status === 404) {
+              const error: any = new Error(
+                'Backend transcription service is not available. Please start the backend server (weave-api) and ensure /api/transcribe endpoint is implemented.'
+              );
+              error.code = 'BACKEND_NOT_AVAILABLE';
+              error.retryable = false;
+              reject(error);
+              return;
+            }
+
             const error: TranscriptionError = errorResponse.error || {
               code: 'UNKNOWN_ERROR',
               message: 'Transcription failed',
@@ -160,7 +171,17 @@ export async function transcribeAudio(
             enrichedError.retryAfter = error.retryAfter;
             reject(enrichedError);
           } catch (parseError) {
-            reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+            // Couldn't parse error response - check if it's 404
+            if (xhr.status === 404) {
+              const error: any = new Error(
+                'Backend transcription service is not available. Please start the backend server.'
+              );
+              error.code = 'BACKEND_NOT_AVAILABLE';
+              error.retryable = false;
+              reject(error);
+            } else {
+              reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+            }
           }
         }
       });
