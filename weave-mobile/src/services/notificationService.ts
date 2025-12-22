@@ -119,7 +119,7 @@ export function setupNotificationListeners(): () => void {
 
   // Return cleanup function
   return () => {
-    Notifications.removeNotificationSubscription(notificationListener);
-    Notifications.removeNotificationSubscription(responseListener);
+    notificationListener.remove();
+    responseListener.remove();
   };
 }
