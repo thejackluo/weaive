@@ -8,18 +8,26 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
+import { View, Text, Pressable, Alert, Modal, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Button as _Button, showSimpleToast } from '@/design-system';
 import CountdownTimer from '@/components/features/journal/CountdownTimer';
+import { ProofCaptureSheet } from '@/components/ProofCaptureSheet';
+import { ImageGallery } from '@/components/ImageGallery';
+import { ImageDetailView } from '@/components/ImageDetailView';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Story 0.9: Image Capture Test State
+  const [showCaptureSheet, setShowCaptureSheet] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
+  const [refreshGallery, setRefreshGallery] = useState(0);
 
   /**
    * Handle logout with confirmation
@@ -123,16 +131,16 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* Main Content */}
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
+      {/* Main Content - Scrollable */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
           padding: 24,
           gap: 24,
+          paddingBottom: 100,
         }}
       >
+        {/* Header */}
         <View style={{ alignItems: 'center', gap: 12 }}>
           <Text
             style={{
@@ -165,6 +173,83 @@ export default function HomeScreen() {
               Signed in as: {user.email}
             </Text>
           )}
+        </View>
+
+        {/* Story 0.9: Test Image Capture */}
+        <View
+          style={{
+            backgroundColor: '#1F1F23',
+            borderRadius: 16,
+            padding: 20,
+            borderWidth: 2,
+            borderColor: '#3B82F6',
+            gap: 16,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ fontSize: 24 }}>📸</Text>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: 'bold',
+                  color: '#FAFAFA',
+                }}
+              >
+                Story 0.9: Image Capture Test
+              </Text>
+              <Text style={{ fontSize: 12, color: '#71717A', marginTop: 4 }}>
+                AI-Powered Image Service with Gemini Vision
+              </Text>
+            </View>
+          </View>
+
+          <Pressable
+            onPress={() => setShowCaptureSheet(true)}
+            style={{
+              backgroundColor: '#3B82F6',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+              }}
+            >
+              📷 Capture & Upload Image
+            </Text>
+          </Pressable>
+
+          {/* Mini Gallery Preview */}
+          <View style={{ gap: 8 }}>
+            <Text style={{ color: '#A1A1AA', fontSize: 14, fontWeight: '500' }}>
+              Recent Uploads:
+            </Text>
+            <View
+              style={{
+                height: 200,
+                backgroundColor: '#0F0F10',
+                borderRadius: 12,
+                overflow: 'hidden',
+              }}
+            >
+              <ImageGallery
+                key={refreshGallery} // Force refresh after upload
+                onImagePress={(capture) => setSelectedImage(capture)}
+              />
+            </View>
+          </View>
+
+          <Text
+            style={{ fontSize: 11, color: '#71717A', textAlign: 'center', fontStyle: 'italic' }}
+          >
+            Tap "Capture" → Take/Choose photo → Watch AI analysis → View in gallery
+          </Text>
         </View>
 
         {/* Story 4.1c: Countdown Timer (Section C) */}
@@ -270,7 +355,7 @@ export default function HomeScreen() {
         </Pressable>
 
         {/* Footer */}
-        <View style={{ position: 'absolute', bottom: 32, alignItems: 'center' }}>
+        <View style={{ alignItems: 'center', marginTop: 32 }}>
           <Text style={{ color: '#71717A', fontSize: 12 }}>React Native-First Design System</Text>
           <Text style={{ color: '#71717A', fontSize: 12 }}>
             NativeWind v5 • Tailwind v4 • Liquid Glass UI
@@ -279,7 +364,42 @@ export default function HomeScreen() {
             Story 0.3: Authentication Flow
           </Text>
         </View>
-      </View>
+      </ScrollView>
+
+      {/* Story 0.9: Capture Sheet Modal */}
+      <Modal visible={showCaptureSheet} animationType="slide" presentationStyle="pageSheet">
+        <ProofCaptureSheet
+          context={{
+            goal_id: '16111111-1111-1111-1111-111111111111', // Test goal from seed data
+            subtask_instance_id: null,
+            bind_description: 'Test workout proof',
+            local_date: new Date().toISOString().split('T')[0],
+          }}
+          onSuccess={(result) => {
+            console.log('✅ Upload success:', result);
+            showSimpleToast('Image uploaded successfully! 🎉', 'success');
+            setShowCaptureSheet(false);
+            setRefreshGallery((prev) => prev + 1); // Refresh gallery
+          }}
+          onCancel={() => setShowCaptureSheet(false)}
+          allowSkip={true}
+        />
+      </Modal>
+
+      {/* Story 0.9: Image Detail Modal */}
+      {selectedImage && (
+        <Modal visible={true} animationType="fade" presentationStyle="fullScreen">
+          <ImageDetailView
+            capture={selectedImage}
+            onClose={() => setSelectedImage(null)}
+            onDelete={() => {
+              showSimpleToast('Image deleted', 'success');
+              setSelectedImage(null);
+              setRefreshGallery((prev) => prev + 1); // Refresh gallery
+            }}
+          />
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
