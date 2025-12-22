@@ -110,26 +110,40 @@ export async function uploadImageToAPI(
   runAIAnalysis: boolean = true
 ): Promise<UploadImageResponse> {
   try {
+    console.log('📤 [UPLOAD START] imageUri:', imageUri);
+    console.log('📤 [UPLOAD START] context:', JSON.stringify(context, null, 2));
+
     // Compress image first
+    console.log('🔄 [COMPRESS] Compressing image...');
     const compressed = await compressImage(imageUri);
+    console.log('✅ [COMPRESS] Compressed:', {
+      uri: compressed.uri,
+      width: compressed.width,
+      height: compressed.height,
+    });
 
     // Get auth token
+    console.log('🔐 [AUTH] Getting session...');
     const {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) {
       throw new Error('Not authenticated');
     }
+    console.log('✅ [AUTH] Session valid, token length:', session.access_token.length);
 
     // Prepare form data
+    console.log('📦 [FORMDATA] Preparing FormData...');
     const formData = new FormData();
 
     // Append file (React Native format)
-    formData.append('file', {
+    const fileObj = {
       uri: compressed.uri,
       type: 'image/jpeg',
       name: 'photo.jpg',
-    } as any);
+    };
+    console.log('📦 [FORMDATA] Appending file:', fileObj);
+    formData.append('file', fileObj as any);
 
     // Add context
     if (context.subtask_instance_id) {
@@ -147,8 +161,13 @@ export async function uploadImageToAPI(
     }
     formData.append('run_ai_analysis', String(runAIAnalysis));
 
+    console.log('📦 [FORMDATA] All fields added to FormData');
+
     // Upload to API
-    const uploadResponse = await fetch(`${API_BASE_URL}/api/captures/upload`, {
+    const uploadUrl = `${API_BASE_URL}/api/captures/upload`;
+    console.log('☁️  [FETCH] Uploading to:', uploadUrl);
+
+    const uploadResponse = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${session.access_token}`,
@@ -156,14 +175,30 @@ export async function uploadImageToAPI(
       body: formData,
     });
 
+    console.log('☁️  [FETCH] Response status:', uploadResponse.status);
+    console.log('☁️  [FETCH] Response headers:', JSON.stringify(Object.fromEntries(uploadResponse.headers.entries())));
+
     if (!uploadResponse.ok) {
-      const error = await uploadResponse.json();
+      const errorText = await uploadResponse.text();
+      console.error('❌ [FETCH ERROR] Status:', uploadResponse.status);
+      console.error('❌ [FETCH ERROR] Response:', errorText);
+
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch (e) {
+        error = { error: { message: errorText } };
+      }
       throw new Error(error.error?.message || 'Upload failed');
     }
 
-    return await uploadResponse.json();
+    const result = await uploadResponse.json();
+    console.log('✅ [UPLOAD SUCCESS] Result:', JSON.stringify(result, null, 2));
+    return result;
   } catch (error) {
-    console.error('Image upload failed:', error);
+    console.error('❌ [UPLOAD FAIL] Error:', error);
+    console.error('❌ [UPLOAD FAIL] Error type:', error instanceof Error ? error.constructor.name : typeof error);
+    console.error('❌ [UPLOAD FAIL] Error message:', error instanceof Error ? error.message : String(error));
     throw error;
   }
 }

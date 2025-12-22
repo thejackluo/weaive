@@ -194,16 +194,25 @@ async def upload_image(
         filename = f"{user_id}/proof_{timestamp}.jpg"
 
         # Upload to Supabase Storage
-        logger.info(f"Uploading image to Storage: {filename}")
+        logger.info(f"📤 [UPLOAD START] filename={filename}, size={file_size_bytes}bytes, content_type={file.content_type}")
 
-        # Convert to base64 for Supabase upload
-        file_base64 = base64.b64encode(file_content).decode("utf-8")
+        try:
+            # Supabase Python SDK expects raw bytes, NOT base64 string
+            logger.info(f"☁️  [STORAGE] Uploading {file_size_bytes} bytes to captures/{filename}...")
 
-        upload_response = supabase.storage.from_("captures").upload(
-            path=filename,
-            file=file_base64,
-            file_options={"contentType": file.content_type or "image/jpeg"},
-        )
+            upload_response = supabase.storage.from_("captures").upload(
+                path=filename,
+                file=file_content,  # Pass raw bytes directly
+                file_options={"content-type": file.content_type or "image/jpeg"},
+            )
+            logger.info(f"✅ [STORAGE] Upload successful: {upload_response}")
+        except Exception as storage_err:
+            logger.error(f"❌ [STORAGE FAIL] Error during upload: {storage_err}", exc_info=True)
+            logger.error(f"❌ [STORAGE FAIL] Error type: {type(storage_err).__name__}")
+            logger.error(f"❌ [STORAGE FAIL] Filename attempted: {filename}")
+            logger.error(f"❌ [STORAGE FAIL] File size: {file_size_bytes} bytes")
+            logger.error(f"❌ [STORAGE FAIL] Content type: {file.content_type}")
+            raise
 
         if not upload_response:
             raise HTTPException(
