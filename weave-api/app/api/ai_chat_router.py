@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.responses import StreamingResponse
 from supabase import Client as SupabaseClient
 
+from app.core.deps import get_current_user
 from app.core.supabase import get_supabase_client
 from app.models.ai_chat_models import (
     ChatMessageCreate,
@@ -185,6 +186,7 @@ def save_message(
 @router.post("/ai-chat/messages", response_model=ChatMessageResponseWrapper)
 async def send_chat_message(
     request: ChatMessageCreate,
+    user: dict = Depends(get_current_user),
     db: SupabaseClient = Depends(get_supabase_client),
     rate_limiter: TieredRateLimiter = Depends(get_tiered_rate_limiter),
     ai_service: AIService = Depends(get_ai_service),
@@ -211,8 +213,8 @@ async def send_chat_message(
     - Default: Claude Sonnet 3.7 (premium)
     - Fallback: Haiku → GPT-4o-mini → Deterministic
     """
-    # TODO: Get auth user from JWT middleware (placeholder for now)
-    auth_user_id = "placeholder_auth_user_id"  # Replace with actual JWT extraction
+    # Extract auth.uid from JWT token (Story 0.3)
+    auth_user_id = user["sub"]
 
     # Get user_profiles.id from auth.uid
     user_id = get_user_id_from_auth(db, auth_user_id)
@@ -314,6 +316,7 @@ async def send_chat_message(
 @router.post("/ai-chat/messages/stream")
 async def send_chat_message_stream(
     request: ChatMessageCreate,
+    user: dict = Depends(get_current_user),
     db: SupabaseClient = Depends(get_supabase_client),
     rate_limiter: TieredRateLimiter = Depends(get_tiered_rate_limiter),
     ai_service: AIService = Depends(get_ai_service),
@@ -345,8 +348,8 @@ async def send_chat_message_stream(
     async def event_generator() -> AsyncGenerator[str, None]:
         """Generate SSE events."""
         try:
-            # TODO: Get auth user from JWT middleware (placeholder for now)
-            auth_user_id = "placeholder_auth_user_id"  # Replace with actual JWT extraction
+            # Extract auth.uid from JWT token (Story 0.3) - passed from outer scope
+            auth_user_id = user["sub"]
 
             # Get user_profiles.id from auth.uid
             user_id = get_user_id_from_auth(db, auth_user_id)
@@ -414,11 +417,12 @@ async def send_chat_message_stream(
             )
             full_prompt = f"{system_prompt}\n\nUser: {request.message}"
 
-            # Stream AI response
+            # Stream AI response (save message even if client disconnects)
             full_content = []
             tokens_used = 0
             cost_usd = 0.0
             run_id = None
+            streaming_succeeded = False
 
             try:
                 # Call existing AIService streaming method
@@ -445,6 +449,7 @@ async def send_chat_message_stream(
                         tokens_used = chunk.get('tokens_used', chunk.get('output_tokens', 0))
                         cost_usd = chunk.get('cost_usd', 0.0)
                         run_id = chunk.get('run_id')
+                        streaming_succeeded = True
 
             except Exception as e:
                 logger.error(f"AI streaming error for user {user_id}: {e}")
@@ -459,22 +464,26 @@ async def send_chat_message_stream(
                 })
                 yield f"data: {chunk_event}\n\n"
 
-            # Save complete assistant response
-            response_text = ''.join(full_content)
-            assistant_message_id = save_message(
-                db=db,
-                conversation_id=conversation_id,
-                role="assistant",
-                content=response_text,
-                tokens_used=tokens_used
-            )
+            finally:
+                # ALWAYS save assistant message (even if client disconnects mid-stream)
+                # This prevents race condition where tokens counted but message lost
+                response_text = ''.join(full_content) or "I'm having trouble responding right now."
+                assistant_message_id = save_message(
+                    db=db,
+                    conversation_id=conversation_id,
+                    role="assistant",
+                    content=response_text,
+                    tokens_used=tokens_used
+                )
 
-            # Increment usage counters (after successful response)
-            rate_limiter.increment_usage(
-                user_id=str(user_id),
-                model=model,
-                bypass_admin_key=is_admin
-            )
+                # Only increment usage if streaming actually succeeded
+                # (don't count failed attempts or client disconnects)
+                if streaming_succeeded and not is_admin:
+                    rate_limiter.increment_usage(
+                        user_id=str(user_id),
+                        model=model,
+                        bypass_admin_key=False
+                    )
 
             # Send final metadata event
             done_event = json.dumps({
@@ -511,6 +520,7 @@ async def send_chat_message_stream(
 
 @router.get("/ai-chat/conversations", response_model=ConversationListResponseWrapper)
 async def list_conversations(
+    user: dict = Depends(get_current_user),
     db: SupabaseClient = Depends(get_supabase_client)
 ):
     """
@@ -519,8 +529,8 @@ async def list_conversations(
     Returns:
         List of conversation summaries with last message preview
     """
-    # TODO: Get auth user from JWT middleware
-    auth_user_id = "placeholder_auth_user_id"
+    # Extract auth.uid from JWT token (Story 0.3)
+    auth_user_id = user["sub"]
 
     user_id = get_user_id_from_auth(db, auth_user_id)
     if not user_id:
@@ -579,6 +589,7 @@ async def list_conversations(
 @router.get("/ai-chat/conversations/{conversation_id}", response_model=ConversationDetailResponseWrapper)
 async def get_conversation(
     conversation_id: UUID,
+    user: dict = Depends(get_current_user),
     db: SupabaseClient = Depends(get_supabase_client)
 ):
     """
@@ -590,8 +601,8 @@ async def get_conversation(
     Returns:
         Full conversation with all messages
     """
-    # TODO: Get auth user from JWT middleware
-    auth_user_id = "placeholder_auth_user_id"
+    # Extract auth.uid from JWT token (Story 0.3)
+    auth_user_id = user["sub"]
 
     user_id = get_user_id_from_auth(db, auth_user_id)
     if not user_id:
@@ -657,6 +668,7 @@ async def get_conversation(
 
 @router.get("/ai/usage", response_model=UsageStatsResponseWrapper)
 async def get_usage_stats(
+    user: dict = Depends(get_current_user),
     db: SupabaseClient = Depends(get_supabase_client),
     rate_limiter: TieredRateLimiter = Depends(get_tiered_rate_limiter)
 ):
@@ -672,8 +684,8 @@ async def get_usage_stats(
             "tier": "free" | "pro" | "admin"
         }
     """
-    # TODO: Get auth user from JWT middleware
-    auth_user_id = "placeholder_auth_user_id"
+    # Extract auth.uid from JWT token (Story 0.3)
+    auth_user_id = user["sub"]
 
     user_id = get_user_id_from_auth(db, auth_user_id)
     if not user_id:
