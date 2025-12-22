@@ -12,6 +12,7 @@ Endpoints:
 - GET /api/captures/usage - Get current upload usage
 """
 
+import base64
 import io
 import logging
 from datetime import datetime, timezone

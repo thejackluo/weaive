@@ -13,7 +13,7 @@ This service follows the provider abstraction pattern from Story 0.6, enabling:
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class VisionAnalysisResult:
         is_verified: bool,  # True if validation_score >= 80
         summary: Optional[str],  # 1-2 sentence description
         ocr_text: Optional[str],
-        categories: List[Dict[str, any]],  # [{"label": str, "confidence": float}]
+        categories: List[Dict[str, Any]],  # [{"label": str, "confidence": float}]
         quality_score: int,  # 1-5
         input_tokens: int,
         output_tokens: int,
