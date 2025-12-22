@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Pressable, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
-import { Text, Button, showSimpleToast } from '@/design-system';
+import React from 'react';
+import { View, ScrollView, TouchableOpacity, Pressable } from 'react-native';
+import { Text, Button } from '@/design-system';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
+import CountdownTimer from '@/components/features/journal/CountdownTimer';
 
 /**
  * Thread (Home) Tab
@@ -13,43 +13,6 @@ import { SymbolView } from 'expo-symbols';
  */
 export default function HomeScreen() {
   const router = useRouter();
-  const { user: _user, signOut } = useAuth();
-  const [_showUserMenu, setShowUserMenu] = useState(false);
-  const [_isLoggingOut, setIsLoggingOut] = useState(false);
-
-  /**
-   * Handle logout with confirmation
-   */
-  const _handleLogout = async () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            setIsLoggingOut(true);
-            await signOut();
-
-            // Show success toast
-            console.log('[HOME] Calling showSimpleToast for logout...');
-            showSimpleToast('Signed out successfully. See you soon! 👋', 'success');
-
-            // Redirect handled automatically by auth state change in _layout.tsx
-          } catch (error) {
-            console.error('[HOME] Logout error:', error);
-            Alert.alert('Error', 'Failed to sign out. Please try again.');
-          } finally {
-            setIsLoggingOut(false);
-            setShowUserMenu(false);
-          }
-        },
-      },
-    ]);
-  };
 
   return (
     <ScrollView className="flex-1" style={{ backgroundColor: '#0a0a0a' }}>
@@ -122,6 +85,66 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Story 4.1c: Countdown Timer (Section C) */}
+        <View style={{ width: '100%', maxWidth: 400, paddingHorizontal: 16 }}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: '#71717A',
+              marginBottom: 8,
+              textAlign: 'center',
+            }}
+          >
+            Story 4.1c: Countdown Timer Demo
+          </Text>
+          <CountdownTimer debug={true} />
+        </View>
+
+        {/* Navigation Buttons */}
+        <View style={{ gap: 12, width: '100%', maxWidth: 300 }}>
+          <Pressable
+            onPress={() => router.push('/(tabs)/dashboard')}
+            style={{
+              backgroundColor: '#3B82F6',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+                textAlign: 'center',
+              }}
+            >
+              📊 Dashboard (Epic 2 + 5)
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/(tabs)/needles')}
+            style={{
+              backgroundColor: '#10B981',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+                textAlign: 'center',
+              }}
+            >
+              📍 View Needles (Story 2.1)
+            </Text>
+          </Pressable>
+        </View>
+
         {/* Development Navigation */}
         <View className="mb-8">
           <Text variant="textLg" className="text-white mb-4 font-semibold">
@@ -168,6 +191,14 @@ export default function HomeScreen() {
               📝 Test Reflection (Direct)
             </Text>
           </Pressable>
+        </View>
+
+        {/* Footer */}
+        <View style={{ position: 'absolute', bottom: 32, alignItems: 'center' }}>
+          <Text style={{ color: '#71717A', fontSize: 12 }}>React Native-First Design System</Text>
+          <Text style={{ color: '#71717A', fontSize: 12 }}>
+            NativeWind v5 • Tailwind v4 • Liquid Glass UI
+          </Text>
         </View>
 
         {/* Quick Actions */}

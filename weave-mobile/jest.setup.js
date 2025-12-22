@@ -2,6 +2,10 @@
 // Jest setup file for React Native Testing Library
 // Note: @testing-library/react-native v12.4+ includes Jest matchers by default
 
+// Mock NativeWind - Jest doesn't process NativeWind's Babel transformations
+// This prevents "require is not defined" errors from nativewind/babel plugin
+jest.mock('nativewind', () => ({}));
+
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => ({
   default: {

@@ -1,10 +1,11 @@
 """
-Goals API Router - Story 2.1: Needles List View
+Goals API Router - Story 2.1 & 2.2: Needles List and Detail View
 
 Endpoints:
 - GET /api/goals - List active goals with stats
+- GET /api/goals/{goal_id} - Get single goal with full details
 
-Implements AC1 and AC4 from Story 2.1
+Implements AC1 and AC4 from Story 2.1, US-2.2 detail view
 """
 
 import logging
@@ -127,6 +128,136 @@ async def list_goals(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch goals",
+        )
+
+
+@router.get("/{goal_id}")
+async def get_goal_by_id(
+    goal_id: str,
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Get single goal by ID with full details (US-2.2: View Goal Details).
+
+    Path Parameters:
+    - goal_id: UUID of the goal
+
+    Returns:
+    - data: Goal object with stats, qgoals (milestones), and binds
+    - meta: Metadata with timestamp
+
+    RLS: User can only access their own goals
+    """
+    if not supabase:
+        logger.error("❌ Supabase client not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not configured",
+        )
+
+    # Extract user ID from JWT
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field (user ID)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    logger.info(f"[GOALS_API] Get goal {goal_id} for auth_user_id: {auth_user_id}")
+
+    try:
+        # Get user_profile.id from auth_user_id (RLS pattern)
+        user_profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+
+        if not user_profile_response.data:
+            logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found",
+            )
+
+        user_id = user_profile_response.data["id"]
+        logger.debug(f"✅ Resolved user_id: {user_id} for auth_user_id: {auth_user_id}")
+
+        # Fetch the goal (RLS enforced - user can only see their own goals)
+        goal_response = (
+            supabase.table("goals")
+            .select("id, title, description, status, priority, start_date, target_date, created_at, updated_at, user_id")
+            .eq("id", goal_id)
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
+
+        if not goal_response.data:
+            logger.warning(f"⚠️ Goal {goal_id} not found for user {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Goal not found",
+            )
+
+        goal = goal_response.data
+        logger.info(f"✅ Found goal {goal_id}: {goal.get('title')}")
+
+        # Enrich with stats (consistency_7d, active_binds_count)
+        goals_with_stats = await _enrich_goals_with_stats(supabase, [goal], user_id)
+        enriched_goal = goals_with_stats[0]
+
+        # Fetch qgoals (milestones) for this goal
+        try:
+            qgoals_response = (
+                supabase.table("qgoals")
+                .select("id, goal_id, title, metric_name, target_value, current_value, unit, created_at, updated_at")
+                .eq("goal_id", goal_id)
+                .order("created_at", desc=False)
+                .execute()
+            )
+            enriched_goal["qgoals"] = qgoals_response.data or []
+            logger.debug(f"📊 Goal {goal_id}: Found {len(enriched_goal['qgoals'])} qgoals")
+        except Exception as e:
+            logger.error(f"❌ Error fetching qgoals for goal {goal_id}: {str(e)}")
+            enriched_goal["qgoals"] = []
+
+        # Fetch subtask_templates (binds) for this goal
+        try:
+            binds_response = (
+                supabase.table("subtask_templates")
+                .select("id, goal_id, title, description, frequency_type, frequency_value, is_archived, created_at, updated_at")
+                .eq("goal_id", goal_id)
+                .eq("is_archived", False)  # Only active binds
+                .order("created_at", desc=False)
+                .execute()
+            )
+            enriched_goal["binds"] = binds_response.data or []
+            logger.debug(f"📊 Goal {goal_id}: Found {len(enriched_goal['binds'])} active binds")
+        except Exception as e:
+            logger.error(f"❌ Error fetching binds for goal {goal_id}: {str(e)}")
+            enriched_goal["binds"] = []
+
+        # Return standard response format
+        return {
+            "data": enriched_goal,
+            "meta": {
+                "timestamp": date.today().isoformat(),
+            },
+        }
+
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error fetching goal {goal_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch goal",
         )
 
 
