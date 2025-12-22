@@ -41,29 +41,20 @@ export default function PlaceholderScreen({
       <SafeAreaView style={styles.safeArea}>
         {/* Header with Back Button */}
         <View style={styles.header}>
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
             <SymbolView name="chevron.left" size={20} tintColor="#ffffff" />
             <Text style={styles.backText}>Back</Text>
           </Pressable>
         </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           {/* Icon */}
           <View style={styles.iconContainer}>
             <SymbolView name={iconName} size={40} tintColor={iconColor} />
           </View>
 
           {/* Title */}
-          <Text
-            variant="display2xl"
-            style={styles.title}
-          >
+          <Text variant="display2xl" style={styles.title}>
             {title}
           </Text>
 
@@ -79,7 +70,9 @@ export default function PlaceholderScreen({
 
           {/* Status Badge */}
           <View style={styles.badge}>
-            <Text variant="textXs" style={styles.badgeText}>Coming Soon</Text>
+            <Text variant="textXs" style={styles.badgeText}>
+              Coming Soon
+            </Text>
           </View>
 
           {/* Description */}
