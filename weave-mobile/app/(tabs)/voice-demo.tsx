@@ -233,9 +233,7 @@ export default function VoiceDemoScreen() {
           <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
             View all past audio recordings with transcripts and playback
           </Text>
-          <View style={{ height: 400 }}>
-            <RecordingHistory maxPreviewLength={80} />
-          </View>
+          <RecordingHistory maxPreviewLength={80} scrollEnabled={false} />
         </Card>
 
         {/* Testing Tips */}
