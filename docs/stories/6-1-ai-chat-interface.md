@@ -397,6 +397,165 @@ Database:
 
 **No Conflicts Detected**
 
+### Configuration Pattern (IMPORTANT)
+
+**✅ NEW PATTERN: Centralized Feature Config (Story 6.1+)**
+
+Rate limits and feature flags are now managed via dedicated config modules instead of hardcoding in business logic. This makes environment-specific configuration easy and promotes consistency.
+
+**Config Module:** `weave-api/app/config/ai_chat_config.py`
+
+**Key Benefits:**
+1. ✅ **Environment-specific limits** - Different dev/staging/prod limits via .env
+2. ✅ **Single source of truth** - All AI chat config in one place
+3. ✅ **Type-safe** - Validation on module import catches errors early
+4. ✅ **Reusable pattern** - Template for future feature configs
+
+**Usage Pattern:**
+```python
+# ❌ OLD: Hardcoded constants in business logic
+class RateLimiter:
+    FREE_DAILY_LIMIT = 10
+    PRO_DAILY_LIMIT = 100
+
+# ✅ NEW: Load from centralized config
+from app.config.ai_chat_config import AIChatConfig
+
+class RateLimiter:
+    def __init__(self):
+        self.free_daily_limit = AIChatConfig.FREE_PREMIUM_DAILY_LIMIT
+        self.pro_daily_limit = AIChatConfig.PRO_MONTHLY_LIMIT
+```
+
+**Config Structure:**
+```python
+class AIChatConfig:
+    # Rate Limits (loaded from env vars with defaults)
+    FREE_PREMIUM_DAILY_LIMIT: int = int(os.getenv('AI_FREE_PREMIUM_DAILY_LIMIT', '10'))
+    FREE_FREE_DAILY_LIMIT: int = int(os.getenv('AI_FREE_FREE_DAILY_LIMIT', '40'))
+    FREE_MONTHLY_LIMIT: int = int(os.getenv('AI_FREE_MONTHLY_LIMIT', '500'))
+    PRO_MONTHLY_LIMIT: int = int(os.getenv('AI_PRO_MONTHLY_LIMIT', '5000'))
+
+    # Admin Bypass
+    ADMIN_API_KEY: Optional[str] = os.getenv('AI_ADMIN_KEY', None)
+
+    # Check-In Scheduler
+    CHECK_IN_ENABLED: bool = os.getenv('AI_CHECK_IN_ENABLED', 'true').lower() == 'true'
+    CHECK_IN_INTERVAL_MINUTES: int = int(os.getenv('AI_CHECK_IN_INTERVAL_MINUTES', '5'))
+
+    # Streaming
+    STREAMING_TIMEOUT_SECONDS: int = int(os.getenv('AI_STREAMING_TIMEOUT_SECONDS', '60'))
+
+    @classmethod
+    def validate(cls):
+        """Validate config on startup - catches misconfiguration early."""
+        assert cls.FREE_PREMIUM_DAILY_LIMIT > 0
+        assert cls.FREE_MONTHLY_LIMIT >= cls.FREE_PREMIUM_DAILY_LIMIT
+        # ... more validation
+```
+
+**Environment Variables (`.env`):**
+```bash
+# AI Chat Rate Limits
+AI_FREE_PREMIUM_DAILY_LIMIT=10      # Claude Sonnet messages/day (free tier)
+AI_FREE_FREE_DAILY_LIMIT=40         # Haiku/Mini messages/day (free tier)
+AI_FREE_MONTHLY_LIMIT=500           # Total messages/month (free tier)
+AI_PRO_MONTHLY_LIMIT=5000           # Total messages/month (pro tier)
+
+# Admin Bypass (generate with: openssl rand -hex 32)
+AI_ADMIN_KEY=your-admin-key-here    # NEVER commit to git
+
+# Check-In Scheduler
+AI_CHECK_IN_ENABLED=true
+AI_CHECK_IN_INTERVAL_MINUTES=5
+
+# Streaming
+AI_STREAMING_TIMEOUT_SECONDS=60
+AI_STREAMING_CHUNK_SIZE=50
+```
+
+**Files Using This Pattern:**
+- `weave-api/app/services/ai/tiered_rate_limiter.py` - Loads limits from config
+- `weave-api/app/api/ai_chat_router.py` - Uses `AIChatConfig.ADMIN_API_KEY`
+- `weave-api/app/services/checkin_scheduler.py` - Can use config for scheduler settings
+
+**Reusable for Future Features:**
+- File upload limits: `app/config/upload_config.py`
+- General API rate limits: `app/config/api_config.py`
+- Feature flags: `app/config/feature_flags.py`
+
+**Migration from Hardcoded Values:**
+1. Create `app/config/{feature}_config.py`
+2. Move constants to config class with env var defaults
+3. Add validation in `@classmethod validate()`
+4. Update business logic to import from config
+5. Document env vars in `.env.example`
+
+**How to Set Config (Practical Guide):**
+
+**Step 1: Create `.env` file in `weave-api/` directory**
+```bash
+cd weave-api
+cp .env.example .env  # Copy template
+```
+
+**Step 2: Edit `.env` file with your values**
+```bash
+# In weave-api/.env
+AI_ADMIN_KEY=abc123def456  # Your admin key (generate with: openssl rand -hex 32)
+AI_FREE_PREMIUM_DAILY_LIMIT=100  # Override default (10) for dev
+```
+
+**Step 3: Config loads automatically on server start**
+```bash
+cd weave-api
+uv run uvicorn app.main:app --reload
+
+# You'll see validation messages:
+# ✅ AI config loaded: FREE_PREMIUM_DAILY_LIMIT=100
+# ⚠️  AI_ADMIN_KEY not set - admin bypass disabled
+```
+
+**Step 4: Use admin key in requests**
+```bash
+# Include X-Admin-Key header for unlimited rate limits
+curl -X POST http://localhost:8000/api/ai-chat/messages \
+  -H "X-Admin-Key: abc123def456" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -d '{"message": "Test with unlimited access"}'
+```
+
+**Environment-Specific Config:**
+
+**Development** (`weave-api/.env`):
+```bash
+AI_FREE_PREMIUM_DAILY_LIMIT=100   # High limits for testing
+AI_CHECK_IN_ENABLED=false         # Disable check-ins in dev
+AI_ADMIN_KEY=dev-key-12345        # Simple key for local dev
+```
+
+**Production** (`weave-api/.env` on server):
+```bash
+AI_FREE_PREMIUM_DAILY_LIMIT=10    # Strict limits
+AI_CHECK_IN_ENABLED=true          # Enable check-ins
+AI_ADMIN_KEY=abc123...xyz789      # Secure 32-char key, rotate regularly
+```
+
+**Common Mistakes:**
+- ❌ Forgetting to create `.env` file → Uses defaults (may be too strict for dev)
+- ❌ Committing `.env` to git → **NEVER commit secrets!** (.gitignore includes .env)
+- ❌ Not restarting server after `.env` changes → Config loads on startup only
+- ❌ Using weak admin keys → Generate with `openssl rand -hex 32`
+
+**Verification:**
+```python
+# In Python shell or test:
+from app.config.ai_chat_config import AIChatConfig
+
+print(AIChatConfig.FREE_PREMIUM_DAILY_LIMIT)  # 100 (from .env)
+print(AIChatConfig.ADMIN_API_KEY)             # abc123def456
+```
+
 ### AI Service Integration (Detailed)
 
 **⚠️ CRITICAL: Use existing AI service infrastructure - DO NOT duplicate!**
