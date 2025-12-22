@@ -113,6 +113,18 @@ export function ImageGallery({
     );
   };
 
+  // ✅ FIX: When scrollEnabled is false, render non-virtualized grid to avoid nested VirtualizedList warning
+  if (!scrollEnabled) {
+    return (
+      <View className="bg-neutral-900" style={{ padding: 12 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {captures.map((item) => renderImage({ item }))}
+        </View>
+        {isFetchingNextPage && renderFooter()}
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 bg-neutral-900">
       <FlatList
