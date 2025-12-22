@@ -145,7 +145,7 @@
 
 ### Tests
 
-**`tests/test_vision_service.py`** - Unit tests (48 tests)
+**`tests/test_vision_service.py`** - Unit tests (7 test functions, 251 lines)
 - VisionAnalysisResult to_dict() and to_ai_run_log()
 - Vision service provider fallback
 - Graceful degradation when all fail
@@ -154,14 +154,9 @@
 - Cost calculation (Gemini, GPT-4o)
 - VisionProviderError creation
 
-**`tests/test_captures_api.py`** - Integration tests (10 endpoint tests)
-- Upload with/without AI analysis
-- Rate limit enforcement (429 response)
-- File size validation (413 response)
-- List images with pagination
-- List with filters (goal_id)
-- Delete image success/not found
-- Get upload usage
+**`tests/test_captures_api.py`** - Integration tests (1 test function, 277 lines)
+- Basic API endpoint smoke test
+- **Note:** Full integration test coverage pending (upload, rate limits, pagination, deletion)
 
 ---
 
@@ -207,7 +202,7 @@
 | Display AI insights in UI | ✅ | ImageDetailView renders all fields |
 
 ### ✅ AC-3: Rate Limiting
-**Status:** COMPLETE
+**Status:** COMPLETE (All requirements met)
 
 | Requirement | Status | Implementation |
 |-------------|--------|----------------|
@@ -222,7 +217,7 @@
 | GET /api/captures/usage | ✅ | Returns current usage |
 
 ### ⚠️ AC-4: Error Handling & Offline Support
-**Status:** PARTIALLY COMPLETE
+**Status:** PARTIALLY COMPLETE (Offline queue not fully implemented)
 
 | Requirement | Status | Implementation |
 |-------------|--------|----------------|
