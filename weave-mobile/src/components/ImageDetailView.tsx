@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { deleteImage } from '../services/imageCapture';
 import { Capture, AIVisionCategory } from '../types/captures';
@@ -37,6 +38,7 @@ export function ImageDetailView({
   onNext,
 }: ImageDetailViewProps) {
   const [deleting, setDeleting] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const handleDelete = () => {
     Alert.alert('Delete Image?', 'This cannot be undone.', [
@@ -143,8 +145,11 @@ export function ImageDetailView({
 
   return (
     <View className="flex-1 bg-black">
-      {/* Header */}
-      <View className="absolute top-0 left-0 right-0 z-10 bg-black/80 flex-row items-center justify-between p-4">
+      {/* Header - Safe Area Aware */}
+      <View
+        className="absolute top-0 left-0 right-0 z-10 bg-black/80 flex-row items-center justify-between px-4"
+        style={{ paddingTop: insets.top + 16, paddingBottom: 16 }}
+      >
         <TouchableOpacity onPress={onClose}>
           <MaterialIcons name="close" size={28} color="white" />
         </TouchableOpacity>
@@ -162,7 +167,10 @@ export function ImageDetailView({
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingTop: 80 }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16, paddingTop: insets.top + 80 }}
+      >
         {/* Main Image */}
         <Image
           source={{ uri: capture.signed_url }}
