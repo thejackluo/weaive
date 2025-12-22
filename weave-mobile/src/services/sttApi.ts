@@ -172,15 +172,40 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
       );
     }
 
-    // Step 4: Create multipart form data
+    // Step 4: Read file data explicitly (React Native FormData {uri} pattern is unreliable)
+    console.log('[STT_API] 📖 Reading audio file bytes from URI...');
+    const readStart = performance.now();
+
+    // Read file as base64, then convert to blob
+    const fileContent = await FileSystem.readAsStringAsync(options.audioUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    const readDuration = (performance.now() - readStart).toFixed(2);
+    console.log(`[STT_API] ✅ File read in ${readDuration}ms`);
+    console.log(`  - Base64 length: ${fileContent.length} chars`);
+    console.log(`  - Estimated bytes: ${Math.floor((fileContent.length * 3) / 4)}`);
+
+    // Validate we actually read data
+    if (!fileContent || fileContent.length === 0) {
+      throw new Error('Failed to read audio file - file is empty or unreadable');
+    }
+
+    // Create blob from base64 data
+    const blob = await (async () => {
+      const response = await fetch(`data:audio/m4a;base64,${fileContent}`);
+      return response.blob();
+    })();
+
+    console.log('[STT_API] 📦 Created blob:', {
+      size: blob.size,
+      type: blob.type,
+    });
+
+    // Step 5: Create multipart form data with actual blob
     const formData = new FormData();
-    // CRITICAL: React Native FormData expects { name, type, uri } object, NOT File/Blob
-    // This is different from web FormData - see OpenAI forum discussion
-    formData.append('audio', {
-      name: 'audio.m4a',
-      type: 'audio/m4a',
-      uri: options.audioUri,
-    } as any);
+    // Pass actual blob data, not just URI reference
+    formData.append('audio', blob, 'audio.m4a');
     formData.append('language', options.language ?? 'en');
 
     if (options.captureId) {
@@ -193,7 +218,7 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
       formData.append('goal_id', options.goalId);
     }
 
-    // Step 5: Upload and transcribe
+    // Step 6: Upload and transcribe
     console.log('[STT_API] 🚀 Uploading to /api/transcribe');
     const uploadStart = performance.now();
 

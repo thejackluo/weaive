@@ -537,6 +537,26 @@ async def transcribe_audio(
         # Read audio file
         audio_bytes = await audio.read()
 
+        # CRITICAL: Log audio_bytes immediately after read
+        logger.info(f"[TRANSCRIBE] Read audio file: {len(audio_bytes)} bytes")
+        if len(audio_bytes) == 0:
+            logger.error(f"[TRANSCRIBE] ❌ Audio read returned EMPTY bytes!")
+            logger.error(f"[TRANSCRIBE] UploadFile details: filename={audio.filename}, content_type={audio.content_type}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": {
+                        "code": "EMPTY_AUDIO_FILE",
+                        "message": "Audio file is empty or could not be read",
+                        "retryable": False
+                    }
+                }
+            )
+
+        # Log first 16 bytes (magic bytes) to verify audio format
+        magic_bytes = audio_bytes[:16] if len(audio_bytes) >= 16 else audio_bytes
+        logger.info(f"[TRANSCRIBE] Audio magic bytes (hex): {magic_bytes.hex()}")
+
         # Validate audio size (25MB max)
         max_size = 25 * 1024 * 1024  # 25MB
         if len(audio_bytes) > max_size:

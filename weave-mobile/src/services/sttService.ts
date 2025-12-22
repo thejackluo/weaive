@@ -100,9 +100,17 @@ export async function transcribeAudio(
     // Prepare multipart form data
     const formData = new FormData();
 
-    // Add audio file
-    const audioBlob = await fetch(audioUri).then((res) => res.blob());
-    formData.append('audio', audioBlob, 'recording.m4a');
+    // React Native FormData Pattern: Use file descriptor object
+    // This tells RN to read the file from disk when sending the request
+    console.log('[STT_SERVICE] 📎 Preparing file upload from:', audioUri);
+
+    // React Native FormData accepts: { uri, name, type }
+    // The implementation will read the file bytes automatically during upload
+    formData.append('audio', {
+      uri: audioUri,
+      name: 'recording.m4a',
+      type: 'audio/x-m4a',
+    } as any);
 
     // Add optional parameters
     formData.append('language', language);
