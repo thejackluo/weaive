@@ -23,12 +23,17 @@ import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
- * Center AI Button Component
+ * Center AI Button Component (Story 6.1)
  *
  * Magical glassmorphism button that opens AI Chat overlay
  * Inspired by new Siri (iOS 18) design
+ *
+ * Features:
+ * - Unread badge indicator for server-initiated check-ins
+ * - Haptic feedback on press
+ * - Spring animation
  */
-function CenterAIButton({ onPress }: { onPress: () => void }) {
+function CenterAIButton({ onPress, hasUnread }: { onPress: () => void; hasUnread: boolean }) {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -59,6 +64,13 @@ function CenterAIButton({ onPress }: { onPress: () => void }) {
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <SymbolView name="sparkles" size={28} tintColor="#ffffff" resizeMode="center" />
+
+          {/* Unread badge indicator */}
+          {hasUnread && (
+            <View style={styles.unreadBadge}>
+              <View style={styles.unreadBadgeInner} />
+            </View>
+          )}
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -66,6 +78,8 @@ function CenterAIButton({ onPress }: { onPress: () => void }) {
 }
 
 import ChatScreen from '@/components/features/ai-chat/ChatScreen';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '@/services/apiClient';
 
 /**
  * AI Chat Overlay - Real Implementation (Story 6.1)
@@ -182,10 +196,35 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
  */
 export default function TabLayout() {
   const [aiChatVisible, setAIChatVisible] = useState(false);
+  const [hasUnreadCheckins, setHasUnreadCheckins] = useState(false);
   const insets = useSafeAreaInsets();
+
+  // Check for unread check-in conversations (system-initiated)
+  const { data: conversations } = useQuery({
+    queryKey: ['ai-chat-conversations'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/ai-chat/conversations');
+      return response.data.data || [];
+    },
+    refetchInterval: 30000, // Check every 30 seconds
+    enabled: !aiChatVisible, // Don't check when chat is open
+  });
+
+  // Update unread badge when conversations change
+  React.useEffect(() => {
+    if (conversations && conversations.length > 0) {
+      // Check if there are any system-initiated conversations
+      // TODO: In a real app, track which conversations have been viewed
+      // For now, we'll show badge if there are any system-initiated conversations
+      const hasSystemInitiated = conversations.some((conv: any) => conv.initiated_by === 'system');
+      setHasUnreadCheckins(hasSystemInitiated);
+    }
+  }, [conversations]);
 
   const openAIChat = () => {
     setAIChatVisible(true);
+    // Clear unread badge when chat is opened
+    setHasUnreadCheckins(false);
   };
 
   const closeAIChat = () => {
@@ -267,7 +306,7 @@ export default function TabLayout() {
       </Tabs>
 
       {/* Center AI Button (elevated above tab bar) */}
-      <CenterAIButton onPress={openAIChat} />
+      <CenterAIButton onPress={openAIChat} hasUnread={hasUnreadCheckins} />
 
       {/* AI Chat Overlay */}
       <AIChatOverlay visible={aiChatVisible} onClose={closeAIChat} />
@@ -298,6 +337,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  unreadBadgeInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ef4444', // Red accent color
   },
 
   // AI Chat Overlay Styles
