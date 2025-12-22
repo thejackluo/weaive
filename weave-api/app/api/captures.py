@@ -57,6 +57,46 @@ def get_vision_service() -> VisionService:
     return _vision_service
 
 
+def get_user_profile(user: dict, supabase: Client) -> tuple[UUID, str]:
+    """
+    Get user profile ID and timezone from JWT payload.
+
+    Converts auth_user_id (from JWT "sub" field) to user_profiles.id
+    following the RLS pattern: auth.uid() → user_profiles.id lookup
+
+    Args:
+        user: JWT payload from get_current_user dependency
+        supabase: Supabase client
+
+    Returns:
+        tuple: (profile_id, timezone)
+
+    Raises:
+        HTTPException: 404 if user profile not found
+    """
+    auth_user_id = user["sub"]  # Extract auth_user_id from JWT
+
+    # Look up user_profiles.id from auth_user_id
+    profile_response = (
+        supabase.table("user_profiles")
+        .select("id, timezone")
+        .eq("auth_user_id", auth_user_id)
+        .single()
+        .execute()
+    )
+
+    if not profile_response.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User profile not found. Please complete onboarding first.",
+        )
+
+    profile_id = UUID(profile_response.data["id"])
+    timezone = profile_response.data.get("timezone", "UTC")
+
+    return profile_id, timezone
+
+
 @router.post("/upload")
 async def upload_image(
     file: UploadFile = File(...),
@@ -95,8 +135,8 @@ async def upload_image(
         }
     """
     try:
-        user_id = UUID(user["id"])
-        user_timezone = user.get("timezone", "UTC")
+        # Get user profile ID and timezone (auth.uid() → user_profiles.id)
+        user_id, user_timezone = get_user_profile(user, supabase)
 
         # Read file content
         file_content = await file.read()
@@ -323,7 +363,8 @@ async def list_images(
         }
     """
     try:
-        user_id = UUID(user["id"])
+        # Get user profile ID (auth.uid() → user_profiles.id)
+        user_id, _ = get_user_profile(user, supabase)
 
         # Build query
         query = (
@@ -408,7 +449,8 @@ async def delete_image(
         {"data": {"success": True}, "meta": {...}}
     """
     try:
-        user_id = UUID(user["id"])
+        # Get user profile ID (auth.uid() → user_profiles.id)
+        user_id, _ = get_user_profile(user, supabase)
 
         # Fetch capture record and verify ownership
         response = (
@@ -480,8 +522,8 @@ async def get_usage(
         }
     """
     try:
-        user_id = UUID(user["id"])
-        user_timezone = user.get("timezone", "UTC")
+        # Get user profile ID and timezone (auth.uid() → user_profiles.id)
+        user_id, user_timezone = get_user_profile(user, supabase)
 
         usage = await get_upload_usage(supabase, user_id, user_timezone)
 
