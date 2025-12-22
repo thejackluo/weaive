@@ -56,7 +56,7 @@ export async function launchCamera(): Promise<ImagePicker.ImagePickerResult> {
   return await ImagePicker.launchCameraAsync({
     mediaTypes: ['images'],
     allowsEditing: false,
-    quality: 0.8,
+    // Quality handled by compressImage() after capture
   });
 }
 
@@ -69,7 +69,7 @@ export async function launchGallery(): Promise<ImagePicker.ImagePickerResult> {
   return await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
     allowsEditing: false,
-    quality: 0.8,
+    // Quality handled by compressImage() after selection
   });
 }
 
@@ -107,7 +107,8 @@ export async function compressImage(uri: string): Promise<CompressedImage> {
 export async function uploadImageToAPI(
   imageUri: string,
   context: ProofCaptureContext,
-  runAIAnalysis: boolean = true
+  runAIAnalysis: boolean = true,
+  signal?: AbortSignal
 ): Promise<UploadImageResponse> {
   try {
     console.log('📤 [UPLOAD START] imageUri:', imageUri);
@@ -173,6 +174,7 @@ export async function uploadImageToAPI(
         Authorization: `Bearer ${session.access_token}`,
       },
       body: formData,
+      signal, // Pass abort signal to allow cancellation
     });
 
     console.log('☁️  [FETCH] Response status:', uploadResponse.status);
@@ -218,7 +220,8 @@ export async function uploadImageToAPI(
 
 export async function captureAndUploadProofPhoto(
   context: ProofCaptureContext,
-  source: PhotoSource
+  source: PhotoSource,
+  signal?: AbortSignal
 ): Promise<UploadImageResponse | null> {
   try {
     // Launch camera or gallery
@@ -230,8 +233,8 @@ export async function captureAndUploadProofPhoto(
 
     const imageUri = result.assets[0].uri;
 
-    // Upload with context
-    return await uploadImageToAPI(imageUri, context, true);
+    // Upload with context and abort signal
+    return await uploadImageToAPI(imageUri, context, true, signal);
   } catch (error) {
     console.error('Proof photo capture failed:', error);
     throw error;
@@ -275,8 +278,10 @@ export async function getUserCaptures(
   goalId?: string,
   subtaskInstanceId?: string,
   startDate?: string,
-  endDate?: string
-): Promise<Capture[]> {
+  endDate?: string,
+  page: number = 1,
+  perPage: number = 20
+): Promise<ListImagesResponse> {
   try {
     const {
       data: { session },
@@ -298,7 +303,8 @@ export async function getUserCaptures(
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
     }
-    params.append('per_page', '100');
+    params.append('page', page.toString());
+    params.append('per_page', perPage.toString());
 
     const url = `${API_BASE_URL}/api/captures/images?${params.toString()}`;
     console.log('[ImageCapture] Fetching images from:', url);
@@ -318,8 +324,8 @@ export async function getUserCaptures(
     }
 
     const result: ListImagesResponse = await response.json();
-    console.log('[ImageCapture] Fetched', result.data.length, 'images');
-    return result.data;
+    console.log('[ImageCapture] Fetched', result.data.length, 'images, page', result.meta.page);
+    return result;
   } catch (error) {
     console.error('Failed to get captures:', error);
     throw error;
