@@ -41,7 +41,6 @@ export async function fetchActiveGoals(accessToken: string): Promise<GoalsRespon
   if (!response.ok) {
     // Parse error response
     const errorData: ApiErrorResponse = await response.json();
-    console.error('[GOALS_SERVICE] API error:', response.status, errorData);
     throw new Error(
       errorData.error?.message || `Failed to fetch goals: ${response.status} ${response.statusText}`
     );
@@ -82,7 +81,6 @@ export async function fetchGoalById(
 
   if (!response.ok) {
     const errorData: ApiErrorResponse = await response.json();
-    console.error('[GOALS_SERVICE] API error:', response.status, errorData);
     throw new Error(
       errorData.error?.message || `Failed to fetch goal: ${response.status} ${response.statusText}`
     );
@@ -128,7 +126,6 @@ export async function createGoal(
 
   if (!response.ok) {
     const errorData: ApiErrorResponse = await response.json();
-    console.error('[GOALS_SERVICE] API error:', response.status, errorData);
     throw new Error(
       errorData.error?.message ||
         errorData.detail ||
@@ -176,7 +173,6 @@ export async function updateGoal(
 
   if (!response.ok) {
     const errorData: ApiErrorResponse = await response.json();
-    console.error('[GOALS_SERVICE] API error:', response.status, errorData);
     throw new Error(
       errorData.error?.message ||
         errorData.detail ||
@@ -219,7 +215,6 @@ export async function archiveGoal(
 
   if (!response.ok) {
     const errorData: ApiErrorResponse = await response.json();
-    console.error('[GOALS_SERVICE] API error:', response.status, errorData);
     throw new Error(
       errorData.error?.message ||
         errorData.detail ||

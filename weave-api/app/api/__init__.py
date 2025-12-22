@@ -10,5 +10,6 @@ __all__ = [
     "journal_router",
     "onboarding",
     "transcribe",
+    "stats",
     "user",
 ]

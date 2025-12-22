@@ -220,9 +220,10 @@ export function useArchiveGoal() {
 
       return archiveGoal(goalId, session.access_token);
     },
-    onSuccess: (data, goalId) => {
-      // Invalidate both the list and the specific goal query
-      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
+    onSuccess: async (data, goalId) => {
+      // Refetch both the list and the specific goal query
+      // Using refetchQueries ensures the data is fresh before the mutation completes
+      await queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() });
       queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(goalId) });
     },
   });

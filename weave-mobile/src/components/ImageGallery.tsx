@@ -16,7 +16,10 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useImageList } from '../hooks/useImageList';
-import { Capture } from '../types/captures';
+import type { Capture } from '../types/captures';
+
+// Type for captures with signed URLs (returned by API)
+type CaptureWithUrl = Capture & { signed_url: string };
 
 interface ImageGalleryProps {
   onImagePress: (capture: Capture) => void;
