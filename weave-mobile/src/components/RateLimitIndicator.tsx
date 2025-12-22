@@ -106,11 +106,11 @@ export function RateLimitIndicator({
   const getStatusColor = (status: 'normal' | 'warning' | 'error'): string => {
     switch (status) {
       case 'error':
-        return colors.error.default;
+        return colors.text.error;
       case 'warning':
-        return colors.warning.default;
+        return colors.text.warning;
       default:
-        return colors.success.default;
+        return colors.text.success;
     }
   };
 
@@ -154,7 +154,7 @@ export function RateLimitIndicator({
         style={[
           styles.progressBarContainer,
           {
-            backgroundColor: colors.neutral.tertiary,
+            backgroundColor: colors.neutral[700],
             borderRadius: radius.sm,
           },
         ]}
@@ -178,13 +178,13 @@ export function RateLimitIndicator({
     return (
       <View style={styles.compactContainer}>
         <MaterialIcons
-          name={getStatusIcon(overallStatus)}
+          name={getStatusIcon(overallStatus) as any}
           size={20}
           color={getStatusColor(overallStatus)}
         />
         <Text
-          variant="bodyXs"
-          style={{ color: getStatusColor(overallStatus), marginLeft: spacing.xs }}
+          variant="textXs"
+          style={{ color: getStatusColor(overallStatus), marginLeft: spacing[2] }}
         >
           {Math.max(requestPercentage, durationPercentage).toFixed(0)}%
         </Text>
@@ -193,21 +193,21 @@ export function RateLimitIndicator({
   }
 
   return (
-    <Card variant="ghost" style={{ padding: spacing.md }}>
+    <Card variant="subtle" style={{ padding: spacing[4] }}>
       <View style={styles.container}>
         {/* Header */}
-        <View style={[styles.header, { marginBottom: spacing.sm }]}>
+        <View style={[styles.header, { marginBottom: spacing[3] }]}>
           <View style={styles.headerLeft}>
             <MaterialIcons
-              name={getStatusIcon(overallStatus)}
+              name={getStatusIcon(overallStatus) as any}
               size={20}
               color={getStatusColor(overallStatus)}
             />
             <Text
-              variant="bodyMd"
+              variant="textBase"
               style={{
                 color: colors.text.primary,
-                marginLeft: spacing.xs,
+                marginLeft: spacing[2],
                 fontWeight: '600',
               }}
             >
@@ -216,22 +216,22 @@ export function RateLimitIndicator({
           </View>
 
           {overallStatus !== 'normal' && (
-            <Text variant="bodyXs" style={{ color: colors.text.secondary }}>
+            <Text variant="textXs" style={{ color: colors.text.secondary }}>
               Resets in {getTimeUntilReset()}
             </Text>
           )}
         </View>
 
         {/* Request count */}
-        <View style={{ marginBottom: spacing.sm }}>
-          <View style={[styles.labelRow, { marginBottom: spacing.xs }]}>
-            <Text variant="bodySm" style={{ color: colors.text.secondary }}>
+        <View style={{ marginBottom: spacing[3] }}>
+          <View style={[styles.labelRow, { marginBottom: spacing[2] }]}>
+            <Text variant="textSm" style={{ color: colors.text.secondary }}>
               Transcriptions
             </Text>
             <Text
-              variant="bodySm"
+              variant="textSm"
               style={{
-                color: requestStatus === 'error' ? colors.error.default : colors.text.primary,
+                color: requestStatus === 'error' ? colors.text.error : colors.text.primary,
                 fontWeight: '600',
               }}
             >
@@ -243,14 +243,14 @@ export function RateLimitIndicator({
 
         {/* Duration */}
         <View>
-          <View style={[styles.labelRow, { marginBottom: spacing.xs }]}>
-            <Text variant="bodySm" style={{ color: colors.text.secondary }}>
+          <View style={[styles.labelRow, { marginBottom: spacing[2] }]}>
+            <Text variant="textSm" style={{ color: colors.text.secondary }}>
               Audio duration
             </Text>
             <Text
-              variant="bodySm"
+              variant="textSm"
               style={{
-                color: durationStatus === 'error' ? colors.error.default : colors.text.primary,
+                color: durationStatus === 'error' ? colors.text.error : colors.text.primary,
                 fontWeight: '600',
               }}
             >
@@ -262,8 +262,8 @@ export function RateLimitIndicator({
 
         {/* Warning message */}
         {overallStatus === 'error' && (
-          <View style={[styles.warningContainer, { marginTop: spacing.sm }]}>
-            <Text variant="bodyXs" style={{ color: colors.error.default, textAlign: 'center' }}>
+          <View style={[styles.warningContainer, { marginTop: spacing[3] }]}>
+            <Text variant="textXs" style={{ color: colors.text.error, textAlign: 'center' }}>
               Daily limit reached. Limit resets at midnight.
             </Text>
           </View>
