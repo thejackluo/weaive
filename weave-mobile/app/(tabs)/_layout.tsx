@@ -8,6 +8,8 @@ import {
   Pressable,
   TextInput,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import Animated, {
