@@ -1,9 +1,10 @@
 /**
  * ImageGallery - Chronological grid view of user's proof images
  * Story: 0.9 - AI-Powered Image Service
+ * Fixed: Infinite scroll pagination + date filters
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -14,7 +15,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { getUserCaptures } from '../services/imageCapture';
+import { useImageList } from '../hooks/useImageList';
 import { Capture } from '../types/captures';
 
 interface ImageGalleryProps {
@@ -28,39 +29,23 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const IMAGE_SIZE = (SCREEN_WIDTH - 48) / 3; // 3 columns with padding
 
 export function ImageGallery({ onImagePress, goalId, startDate, endDate }: ImageGalleryProps) {
-  const [captures, setCaptures] = useState<(Capture & { signed_url: string })[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
+  // ✅ FIX: Use useImageList hook with infinite scroll pagination
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isLoading,
+    isFetchingNextPage,
+    refetch,
+    isRefetching,
+  } = useImageList({
+    goalId: goalId || undefined,
+    startDate: startDate || undefined, // ✅ FIX: Pass date filters to API
+    endDate: endDate || undefined,
+  });
 
-  const loadImages = async (refresh: boolean = false) => {
-    try {
-      if (refresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-
-      const fetchedCaptures = await getUserCaptures(
-        undefined, // localDate (not filtering by single date)
-        'photo' as any, // type
-        goalId || undefined,
-        undefined // subtaskInstanceId
-      );
-
-      setCaptures(fetchedCaptures as any);
-      setHasMore(false); // TODO: Implement pagination
-    } catch (error) {
-      console.error('Failed to load images:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    loadImages();
-  }, [goalId, startDate, endDate]);
+  // Flatten all pages into single array for FlatList
+  const captures = data?.pages.flatMap((page) => page.data) ?? [];
 
   const renderImage = ({ item }: { item: Capture & { signed_url: string } }) => (
     <TouchableOpacity
@@ -91,7 +76,8 @@ export function ImageGallery({ onImagePress, goalId, startDate, endDate }: Image
     </TouchableOpacity>
   );
 
-  if (loading) {
+  // Loading state: Initial load
+  if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-900">
         <ActivityIndicator size="large" color="#3b82f6" />
@@ -100,6 +86,7 @@ export function ImageGallery({ onImagePress, goalId, startDate, endDate }: Image
     );
   }
 
+  // Empty state: No images found
   if (captures.length === 0) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-900 p-6">
@@ -112,6 +99,17 @@ export function ImageGallery({ onImagePress, goalId, startDate, endDate }: Image
     );
   }
 
+  // Render footer: "Loading more..." indicator
+  const renderFooter = () => {
+    if (!isFetchingNextPage) return null;
+    return (
+      <View className="py-4">
+        <ActivityIndicator size="small" color="#3b82f6" />
+        <Text className="text-neutral-400 text-center mt-2 text-xs">Loading more...</Text>
+      </View>
+    );
+  };
+
   return (
     <View className="flex-1 bg-neutral-900">
       <FlatList
@@ -120,15 +118,18 @@ export function ImageGallery({ onImagePress, goalId, startDate, endDate }: Image
         keyExtractor={(item) => item.id}
         numColumns={3}
         contentContainerStyle={{ padding: 12 }}
-        refreshing={refreshing}
-        onRefresh={() => loadImages(true)}
+        // ✅ FIX: Pull-to-refresh with TanStack Query refetch
+        refreshing={isRefetching}
+        onRefresh={refetch}
+        // ✅ FIX: Infinite scroll - fetch next page when 50% from bottom
         onEndReached={() => {
-          // TODO: Load more images (pagination)
-          if (hasMore) {
-            console.log('Load more images...');
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
           }
         }}
         onEndReachedThreshold={0.5}
+        // ✅ FIX: Footer loading indicator
+        ListFooterComponent={renderFooter}
       />
     </View>
   );
