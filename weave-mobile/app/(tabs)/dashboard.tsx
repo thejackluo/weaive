@@ -1,15 +1,10 @@
-import { View, ScrollView, TouchableOpacity } from 'react-native';
-import { Card, Text } from '@/design-system';
-import { Link } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
+import React from 'react';
 
 /**
  * Dashboard Route (Epic 2 + 5)
  *
  * Main dashboard showing goal management and progress visualization
  */
-
-import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/design-system';
 import { DashboardScreen } from '@/screens/DashboardScreen';
