@@ -32,7 +32,7 @@ export default function PlaceholderScreen({
   story,
   iconName = 'hammer.fill',
   iconColor = '#ffffff',
-  backgroundColors = { from: '#0a0a0a', to: '#0a0a0a' }, // Force dark backgrounds
+  backgroundColors: _backgroundColors = { from: '#0a0a0a', to: '#0a0a0a' }, // Force dark backgrounds
 }: PlaceholderScreenProps) {
   const router = useRouter();
 

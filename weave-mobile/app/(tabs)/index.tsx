@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, ScrollView, TouchableOpacity, Pressable, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Text, Button, showSimpleToast } from '@/design-system';
@@ -14,14 +13,14 @@ import { SymbolView } from 'expo-symbols';
  */
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { user: _user, signOut } = useAuth();
+  const [_showUserMenu, setShowUserMenu] = useState(false);
+  const [_isLoggingOut, setIsLoggingOut] = useState(false);
 
   /**
    * Handle logout with confirmation
    */
-  const handleLogout = async () => {
+  const _handleLogout = async () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       {
         text: 'Cancel',
