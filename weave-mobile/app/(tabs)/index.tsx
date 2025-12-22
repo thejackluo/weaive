@@ -8,12 +8,13 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, Pressable, Alert, Modal, ScrollView } from 'react-native';
+import { View, Text as RNText, Pressable, Modal, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/hooks/useAuth';
-import { Button as _Button, showSimpleToast } from '@/design-system';
+import { Button, Text, showSimpleToast } from '@/design-system';
 import CountdownTimer from '@/components/features/journal/CountdownTimer';
 import { ProofCaptureSheet } from '@/components/ProofCaptureSheet';
 import { ImageGallery } from '@/components/ImageGallery';
@@ -25,69 +26,74 @@ import { ImageDetailView } from '@/components/ImageDetailView';
  * Story 3.1: View Today's Binds
  */
 export default function HomeScreen() {
-  const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Story 0.9: Image Capture Test State
   const [showCaptureSheet, setShowCaptureSheet] = useState(false);
   const [selectedImage, setSelectedImage] = useState<any>(null);
 
-  /**
-   * Handle logout with confirmation
-   */
-  const handleLogout = async () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            setIsLoggingOut(true);
-            await signOut();
-
-            // Show success toast
-            console.log('[HOME] Calling showSimpleToast for logout...');
-            showSimpleToast('Signed out successfully. See you soon! 👋', 'success');
-
-            // Redirect handled automatically by auth state change in _layout.tsx
-          } catch (error) {
-            console.error('[HOME] Logout error:', error);
-            Alert.alert('Error', 'Failed to sign out. Please try again.');
-          } finally {
-            setIsLoggingOut(false);
-            setShowUserMenu(false);
-          }
-        },
-      },
-    ]);
-  };
+  // Get current date dynamically
+  const today = new Date();
+  const dateString = today.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
 
   return (
-    <ScrollView className="flex-1" style={{ backgroundColor: '#0a0a0a' }}>
-      <View className="p-6">
-        {/* Main Header */}
-        <View className="mb-8">
-          <Text variant="displayLg" className="text-white mb-2 font-bold">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
+      {/* Main Content - Scrollable */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          padding: 24,
+          gap: 24,
+          paddingBottom: 100,
+        }}
+      >
+        {/* Header */}
+        <View style={{ alignItems: 'center', gap: 12 }}>
+          <RNText
+            style={{
+              fontSize: 48,
+              fontWeight: 'bold',
+              color: '#FAFAFA',
+              textAlign: 'center',
+            }}
+          >
             Good Morning ✨
-          </Text>
-          <Text variant="textBase" className="text-white/60">
-            Friday, December 20 • Let's make today count
-          </Text>
+          </RNText>
+          <RNText
+            style={{
+              fontSize: 18,
+              color: '#A1A1AA',
+              textAlign: 'center',
+            }}
+          >
+            {dateString} • Let's make today count
+          </RNText>
+          {user && (
+            <RNText
+              style={{
+                fontSize: 14,
+                color: '#71717A',
+                marginTop: 8,
+                textAlign: 'center',
+              }}
+            >
+              Signed in as: {user.email}
+            </RNText>
+          )}
         </View>
 
-        {/* Today's Binds - Primary Section */}
+        {/* Story 3.1: Today's Binds */}
         <View className="mb-8">
           <Text variant="displayMd" className="text-white mb-4 font-semibold">
             Today's Binds
           </Text>
 
+          {/* Morning Workout Bind */}
           <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center gap-3">
@@ -105,48 +111,7 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
 
-      {/* Main Content - Scrollable */}
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          padding: 24,
-          gap: 24,
-          paddingBottom: 100,
-        }}
-      >
-        {/* Header */}
-        <View style={{ alignItems: 'center', gap: 12 }}>
-          <Text
-            style={{
-              fontSize: 48,
-              fontWeight: 'bold',
-              color: '#FAFAFA',
-              textAlign: 'center',
-            }}
-          >
-            Weave MVP
-          </Text>
-          <Text
-            style={{
-              fontSize: 18,
-              color: '#A1A1AA',
-              textAlign: 'center',
-            }}
-          >
-            Foundation Setup Complete ✅
-          </Text>
-          {user && (
-            <Text
-              style={{
-                fontSize: 14,
-                color: '#71717A',
-                marginTop: 8,
-                textAlign: 'center',
-              }}
-            >
-              Signed in as: {user.email}
-            </Text>
-          )}
+          {/* Deep Work Block Bind */}
           <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center gap-3">
@@ -164,6 +129,7 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
 
+          {/* Evening Meditation Bind */}
           <TouchableOpacity className="p-5 bg-white/5 rounded-xl border border-white/10 active:bg-white/10">
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center gap-3">
@@ -194,9 +160,9 @@ export default function HomeScreen() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ fontSize: 24 }}>📸</Text>
+            <RNText style={{ fontSize: 24 }}>📸</RNText>
             <View style={{ flex: 1 }}>
-              <Text
+              <RNText
                 style={{
                   fontSize: 18,
                   fontWeight: 'bold',
@@ -204,10 +170,10 @@ export default function HomeScreen() {
                 }}
               >
                 Story 0.9: Image Capture Test
-              </Text>
-              <Text style={{ fontSize: 12, color: '#71717A', marginTop: 4 }}>
+              </RNText>
+              <RNText style={{ fontSize: 12, color: '#71717A', marginTop: 4 }}>
                 AI-Powered Image Service with Gemini Vision
-              </Text>
+              </RNText>
             </View>
           </View>
 
@@ -221,7 +187,7 @@ export default function HomeScreen() {
               alignItems: 'center',
             }}
           >
-            <Text
+            <RNText
               style={{
                 color: '#FAFAFA',
                 fontSize: 16,
@@ -229,14 +195,14 @@ export default function HomeScreen() {
               }}
             >
               📷 Capture & Upload Image
-            </Text>
+            </RNText>
           </Pressable>
 
           {/* Mini Gallery Preview */}
           <View style={{ gap: 8 }}>
-            <Text style={{ color: '#A1A1AA', fontSize: 14, fontWeight: '500' }}>
+            <RNText style={{ color: '#A1A1AA', fontSize: 14, fontWeight: '500' }}>
               Recent Uploads:
-            </Text>
+            </RNText>
             <View
               style={{
                 height: 400,
@@ -252,16 +218,16 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <Text
+          <RNText
             style={{ fontSize: 11, color: '#71717A', textAlign: 'center', fontStyle: 'italic' }}
           >
             Tap "Capture" → Take/Choose photo → Watch AI analysis → View in gallery
-          </Text>
+          </RNText>
         </View>
 
         {/* Story 4.1c: Countdown Timer (Section C) */}
         <View style={{ width: '100%', maxWidth: 400, paddingHorizontal: 16 }}>
-          <Text
+          <RNText
             style={{
               fontSize: 12,
               color: '#71717A',
@@ -270,152 +236,68 @@ export default function HomeScreen() {
             }}
           >
             Story 4.1c: Countdown Timer Demo
-          </Text>
+          </RNText>
           <CountdownTimer debug={true} />
         </View>
 
-        {/* Navigation Buttons */}
-        <View style={{ gap: 12, width: '100%', maxWidth: 300 }}>
-          <Pressable
-            onPress={() => router.push('/(tabs)/dashboard')}
-            style={{
-              backgroundColor: '#3B82F6',
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-              borderRadius: 12,
-            }}
-          >
-            <Text
-              style={{
-                color: '#FAFAFA',
-                fontSize: 16,
-                fontWeight: '600',
-                textAlign: 'center',
-              }}
-            >
-              📊 Dashboard (Epic 2 + 5)
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/(tabs)/needles')}
-            style={{
-              backgroundColor: '#10B981',
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-              borderRadius: 12,
-            }}
-          >
-            <Text
-              style={{
-                color: '#FAFAFA',
-                fontSize: 16,
-                fontWeight: '600',
-                textAlign: 'center',
-              }}
-            >
-              📍 View Needles (Story 2.1)
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Development Navigation */}
-        <View className="mb-8">
-          <Text variant="textLg" className="text-white mb-4 font-semibold">
-            Development Navigation
-          </Text>
-
-          <Pressable
-            onPress={() => router.push('/(tabs)/settings')}
-            style={{
-              backgroundColor: '#10B981',
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-              borderRadius: 12,
-              marginBottom: 16,
-            }}
-          >
-            <Text
-              style={{
-                color: '#FAFAFA',
-                fontSize: 16,
-                fontWeight: '600',
-              }}
-            >
-              ⚙️ Settings (with Reflection)
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/(tabs)/settings/reflection')}
-            style={{
-              backgroundColor: '#3B82F6',
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-              borderRadius: 12,
-            }}
-          >
-            <Text
-              style={{
-                color: '#FAFAFA',
-                fontSize: 16,
-                fontWeight: '600',
-              }}
-            >
-              📝 Test Reflection (Direct)
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Footer */}
-        <View style={{ alignItems: 'center', marginTop: 32 }}>
-          <Text style={{ color: '#71717A', fontSize: 12 }}>React Native-First Design System</Text>
-          <Text style={{ color: '#71717A', fontSize: 12 }}>
-            NativeWind v5 • Tailwind v4 • Liquid Glass UI
-          </Text>
-        </View>
-
-        {/* Quick Actions */}
+        {/* Quick Actions - Primary Navigation */}
         <View className="mb-8">
           <Text variant="textLg" className="text-white mb-4 font-semibold">
             Quick Actions
           </Text>
           <View className="flex-row gap-3 mb-3">
-            <Link href="/dashboard" asChild className="flex-1">
+            <Link href="/(tabs)/dashboard" asChild className="flex-1">
               <Button variant="primary" size="md">
-                Dashboard
+                📊 Dashboard
               </Button>
             </Link>
             <Link href="/journal" asChild className="flex-1">
               <Button variant="ai" size="md">
-                Journal
+                📝 Journal
               </Button>
             </Link>
           </View>
-          <View className="flex-row gap-3">
+          <View className="flex-row gap-3 mb-3">
             <Link href="/goals" asChild className="flex-1">
               <Button variant="secondary" size="md">
-                Goals
+                🎯 Goals
               </Button>
             </Link>
             <Link href="/captures" asChild className="flex-1">
               <Button variant="success" size="md">
-                Captures
+                📸 Captures
               </Button>
             </Link>
           </View>
+          <Link href="/(tabs)/needles" asChild className="w-full">
+            <Button variant="secondary" size="md">
+              📍 View Needles (Story 2.1)
+            </Button>
+          </Link>
         </View>
 
-        {/* Navigation Testing (Bottom - de-emphasized) */}
-        <View className="pt-6 border-t border-white/5">
+        {/* Development Tools */}
+        <View className="pt-6 border-t border-white/5 mb-8">
           <Text variant="textSm" className="text-white/30 mb-3 text-center">
             Development Tools
           </Text>
-          <Link href="/sitemap" asChild>
-            <Button variant="ghost" size="sm">
-              View Sitemap
-            </Button>
-          </Link>
+          <View className="gap-3">
+            <Link href="/(tabs)/settings" asChild>
+              <Button variant="ghost" size="sm">
+                ⚙️ Settings
+              </Button>
+            </Link>
+            <Link href="/(tabs)/settings/reflection" asChild>
+              <Button variant="ghost" size="sm">
+                💭 Test Reflection (Direct)
+              </Button>
+            </Link>
+            <Link href="/sitemap" asChild>
+              <Button variant="ghost" size="sm">
+                🗺️ View Sitemap
+              </Button>
+            </Link>
+          </View>
         </View>
 
         {/* Footer */}
