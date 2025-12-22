@@ -51,7 +51,7 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
 
     // 🔓 Enable admin mode for unlimited rate limits (DEVELOPMENT ONLY)
     // TODO: Remove this before production or gate behind __DEV__
-    const ADMIN_KEY = 'dev-unlimited-access-key-2025'; // Must match backend ADMIN_API_KEY
+    const ADMIN_KEY = 'dev-admin-key-12345-change-in-production'; // Must match backend AI_ADMIN_KEY
     apiClient.enableAdminMode(ADMIN_KEY);
     console.log('[ROOT_LAYOUT] ✅ Admin mode enabled for testing');
 

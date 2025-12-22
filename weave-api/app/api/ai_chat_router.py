@@ -233,7 +233,8 @@ async def send_chat_message(
         subscription_tier = 'free'
 
     # Model selection (default: premium Sonnet)
-    model = 'claude-3-7-sonnet-20250219'
+    # ✅ Fixed: Use claude-3-5-sonnet (3.7 doesn't exist yet)
+    model = 'claude-3-5-sonnet'
 
     # Check rate limit BEFORE processing
     rate_limiter.check_rate_limit(
@@ -374,7 +375,8 @@ async def send_chat_message_stream(
                 subscription_tier = 'free'
 
             # Model selection (default: premium Sonnet)
-            model = 'claude-3-7-sonnet-20250219'
+            # ✅ Fixed: Use claude-3-5-sonnet (3.7 doesn't exist yet)
+            model = 'claude-3-5-sonnet'
 
             # Check rate limit BEFORE processing
             logger.info(f"[STREAMING] Calling rate limiter with: user_id={user_id}, model={model}, tier={subscription_tier}, is_admin={is_admin}")
