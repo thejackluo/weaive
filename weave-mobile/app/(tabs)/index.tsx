@@ -211,9 +211,10 @@ export default function HomeScreen() {
                 overflow: 'hidden',
               }}
             >
+              {/* ✅ FIX: Disable scrolling since ImageGallery is nested inside ScrollView */}
               <ImageGallery
                 onImagePress={(capture) => setSelectedImage(capture)}
-                scrollEnabled={true}
+                scrollEnabled={false}
               />
             </View>
           </View>

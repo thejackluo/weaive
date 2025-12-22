@@ -140,7 +140,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
 const styles = StyleSheet.create({
   container: {
     marginVertical: 6,
-    paddingHorizontal: 4,
+    paddingHorizontal: 0, // ✅ Removed to maximize bubble width
   },
   userContainer: {
     alignItems: 'flex-end',
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   bubble: {
-    maxWidth: '85%', // ✅ Increased from 80% for better readability
+    maxWidth: '98%', // ✅ Increased to 98% to maximize usable width
     minWidth: 60,
   },
   blurContainer: {
