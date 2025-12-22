@@ -317,12 +317,12 @@ class AudioRecordingService {
       this.state = RecordingState.PROCESSING;
       this.stopMeteringInterval();
 
-      // Stop recording
-      await this.recording.stopAndUnloadAsync();
-
-      // Get recording status
+      // Get recording status BEFORE unloading (unloading clears duration!)
       const status = await this.recording.getStatusAsync();
       const uri = this.recording.getURI();
+
+      // Stop recording
+      await this.recording.stopAndUnloadAsync();
 
       if (!uri) {
         throw new Error('Recording URI is null');
