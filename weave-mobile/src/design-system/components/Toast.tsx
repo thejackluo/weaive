@@ -30,7 +30,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from '@react-native-community/blur';
+import { BlurView } from 'expo-blur';
 import { Text } from './Text/Text';
 import { useTheme } from '../theme/ThemeProvider';
 
@@ -146,9 +146,8 @@ export function Toast({ message, type, duration = 3000, onDismiss }: ToastProps)
         {Platform.OS === 'ios' ? (
           <BlurView
             style={[styles.content, { borderColor: backgroundColor }]}
-            blurType="dark"
-            blurAmount={20}
-            reducedTransparencyFallbackColor={colors.dark[800]}
+            tint="dark"
+            intensity={80}
           >
             <View
               style={[

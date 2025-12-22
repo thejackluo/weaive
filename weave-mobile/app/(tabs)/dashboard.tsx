@@ -1,3 +1,8 @@
+import { View, ScrollView, TouchableOpacity } from 'react-native';
+import { Card, Text } from '@/design-system';
+import { Link } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
+
 /**
  * Dashboard Route (Epic 2 + 5)
  *

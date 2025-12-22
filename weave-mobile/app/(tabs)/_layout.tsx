@@ -16,9 +16,11 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Text } from '@/design-system';
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
  * Center AI Button Component
@@ -64,11 +66,15 @@ function CenterAIButton({ onPress }: { onPress: () => void }) {
 }
 
 /**
- * AI Chat Overlay with Glassmorphism
+ * AI Chat Overlay - Complete Rebuild
  *
- * Magical blur effect with translucent card
- * Dismissible via tap outside or swipe down
- * Features: Input field, send button, example messages, glow effect
+ * Clean, well-structured AI chat interface with:
+ * - Blur background modal (dismissible)
+ * - Card slides up from bottom (70% height)
+ * - Fixed header with title and close button
+ * - Scrollable content (welcome state OR messages)
+ * - Fixed input area at bottom
+ * - Purple glow border, glassmorphism aesthetic
  */
 function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const [messageInput, setMessageInput] = React.useState('');
@@ -76,17 +82,41 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
     Array<{ id: string; text: string; isUser: boolean }>
   >([]);
   const opacity = useSharedValue(0);
-  const translateY = useSharedValue(300);
+  const translateY = useSharedValue(500);
+  const startY = useSharedValue(0);
 
   React.useEffect(() => {
     if (visible) {
-      opacity.value = withTiming(1, { duration: 200 });
-      translateY.value = withSpring(0, { damping: 20, stiffness: 90 });
+      opacity.value = withTiming(1, { duration: 250 });
+      translateY.value = withSpring(0, { damping: 18, stiffness: 100 });
     } else {
       opacity.value = withTiming(0, { duration: 200 });
-      translateY.value = withTiming(300, { duration: 200 });
+      translateY.value = withTiming(500, { duration: 200 });
     }
   }, [visible]);
+
+  // Swipe-down gesture handler
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      startY.value = translateY.value;
+    })
+    .onUpdate((event) => {
+      // Only allow downward swipes (positive translationY)
+      if (event.translationY > 0) {
+        translateY.value = startY.value + event.translationY;
+      }
+    })
+    .onEnd((event) => {
+      // Dismiss if swiped down more than 100px or velocity is high
+      if (event.translationY > 100 || event.velocityY > 500) {
+        translateY.value = withTiming(500, { duration: 200 });
+        opacity.value = withTiming(0, { duration: 200 });
+        setTimeout(onClose, 200);
+      } else {
+        // Spring back to original position
+        translateY.value = withSpring(0, { damping: 18, stiffness: 100 });
+      }
+    });
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -106,7 +136,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
       };
       setMessages((prev) => [...prev, userMessage]);
 
-      // Simulate AI response (Future: Replace with actual AI call)
+      // Simulate AI response
       setTimeout(() => {
         const aiMessage = {
           id: (Date.now() + 1).toString(),
@@ -114,13 +144,13 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
           isUser: false,
         };
         setMessages((prev) => [...prev, aiMessage]);
-      }, 500);
+      }, 600);
 
       setMessageInput('');
     }
   };
 
-  const handleExampleMessage = (message: string) => {
+  const handleExampleTap = (message: string) => {
     setMessageInput(message);
   };
 
@@ -135,119 +165,128 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-        <BlurView
-          style={StyleSheet.absoluteFill}
-          blurType="dark"
-          blurAmount={20}
-          reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.6)"
-        />
-        <Animated.View style={[styles.overlayBackground, overlayStyle]} />
-      </Pressable>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        {/* Blur Background */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
+          <BlurView style={StyleSheet.absoluteFill} intensity={80} tint="dark" />
+          <Animated.View style={[styles.overlayBackground, overlayStyle]} />
+        </Pressable>
 
-      <Animated.View style={[styles.aiChatCardContainer, cardStyle]}>
-        <Pressable onPress={(e) => e.stopPropagation()}>
-          <View style={styles.aiChatCard}>
-            {/* Header */}
-            <View style={styles.aiChatHeader}>
-              <View className="flex-row items-center gap-2">
-                <SymbolView name="sparkles" size={24} tintColor="#a78bfa" />
-                <Text variant="displayMd" className="text-white font-bold">
-                  AI Coach
-                </Text>
-              </View>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <SymbolView name="xmark" size={20} tintColor="rgba(255, 255, 255, 0.6)" />
-              </TouchableOpacity>
-            </View>
+        {/* Chat Card with Swipe-to-Dismiss */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
+        >
+          <GestureDetector gesture={panGesture}>
+            <Animated.View style={[styles.chatCard, cardStyle]}>
+              <Pressable onPress={(e) => e.stopPropagation()} style={styles.chatCardInner}>
+                {/* Header */}
+                <View style={styles.chatHeader}>
+                  <View style={styles.chatHeaderLeft}>
+                    <SymbolView name="sparkles" size={26} tintColor="#a78bfa" />
+                    <Text variant="displayMd" style={styles.chatHeaderTitle}>
+                      Weave Chat
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={onClose} style={styles.chatCloseButton}>
+                    <SymbolView
+                      name="xmark.circle.fill"
+                      size={30}
+                      tintColor="rgba(255, 255, 255, 0.6)"
+                    />
+                  </TouchableOpacity>
+                </View>
 
-            {/* Content */}
-            <View style={styles.aiChatContent}>
-              {/* Messages Area */}
-              {messages.length > 0 ? (
+                {/* Content Area */}
                 <ScrollView
-                  className="flex-1 mb-4"
-                  contentContainerStyle={{ paddingBottom: 16 }}
+                  style={styles.chatContent}
+                  contentContainerStyle={styles.chatContentContainer}
                   showsVerticalScrollIndicator={false}
                 >
-                  {messages.map((msg) => (
-                    <View
-                      key={msg.id}
-                      style={{
-                        alignSelf: msg.isUser ? 'flex-end' : 'flex-start',
-                        maxWidth: '80%',
-                        marginBottom: 12,
-                      }}
-                    >
-                      <View
-                        style={{
-                          backgroundColor: msg.isUser ? '#3B72F6' : 'rgba(255, 255, 255, 0.1)',
-                          paddingHorizontal: 16,
-                          paddingVertical: 12,
-                          borderRadius: 16,
-                        }}
-                      >
-                        <Text variant="textBase" className="text-white">
-                          {msg.text}
+                  {messages.length === 0 ? (
+                    // Welcome State
+                    <View style={styles.welcomeContainer}>
+                      <View style={styles.welcomeIcon}>
+                        <SymbolView name="sparkles" size={36} tintColor="#a78bfa" />
+                      </View>
+                      <Text variant="displayMd" style={styles.welcomeTitle}>
+                        Your AI Coach
+                      </Text>
+                      <Text variant="textBase" style={styles.welcomeSubtitle}>
+                        Epic 6: AI Coaching
+                      </Text>
+                      <View style={styles.comingSoonBadge}>
+                        <Text variant="textXs" style={styles.comingSoonText}>
+                          Coming Soon
                         </Text>
                       </View>
+
+                      <Text variant="textLg" style={styles.examplesTitle}>
+                        Try asking:
+                      </Text>
+
+                      {exampleMessages.map((message, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          onPress={() => handleExampleTap(message)}
+                          style={styles.exampleCard}
+                        >
+                          <SymbolView name="bubble.left.fill" size={18} tintColor="#a78bfa" />
+                          <Text variant="textBase" style={styles.exampleText}>
+                            {message}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
                     </View>
-                  ))}
+                  ) : (
+                    // Messages State
+                    <View style={styles.messagesContainer}>
+                      {messages.map((msg) => (
+                        <View
+                          key={msg.id}
+                          style={[
+                            styles.messageBubble,
+                            msg.isUser ? styles.userMessage : styles.aiMessage,
+                          ]}
+                        >
+                          <Text variant="textBase" style={styles.messageText}>
+                            {msg.text}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
                 </ScrollView>
-              ) : (
-                <>
-                  <Text variant="textBase" className="text-white/70 mb-4">
-                    Epic 6: AI Coaching (Coming Soon)
-                  </Text>
 
-                  {/* Example Messages */}
-                  <Text variant="textSm" className="text-white/50 mb-2">
-                    Try asking:
-                  </Text>
-                  <View className="gap-2 mb-6">
-                    {exampleMessages.map((message, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => handleExampleMessage(message)}
-                        className="p-3 bg-white/5 rounded-lg border border-white/10 active:bg-white/10"
-                      >
-                        <Text variant="textSm" className="text-white/80">
-                          {message}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                {/* Input Area */}
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="Type a message..."
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      value={messageInput}
+                      onChangeText={setMessageInput}
+                      multiline
+                      maxLength={500}
+                      returnKeyType="send"
+                      onSubmitEditing={handleSendMessage}
+                      blurOnSubmit={false}
+                    />
+                    <TouchableOpacity
+                      onPress={handleSendMessage}
+                      style={[styles.sendButton, !messageInput.trim() && styles.sendButtonDisabled]}
+                      disabled={!messageInput.trim()}
+                    >
+                      <SymbolView name="arrow.up" size={22} tintColor="#ffffff" weight="bold" />
+                    </TouchableOpacity>
                   </View>
-                </>
-              )}
-            </View>
-
-            {/* Input Area (at bottom) */}
-            <View style={styles.aiChatInputContainer}>
-              <View style={styles.aiChatInputWrapper}>
-                <TextInput
-                  style={styles.aiChatInput}
-                  placeholder="Type a message..."
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  value={messageInput}
-                  onChangeText={setMessageInput}
-                  multiline
-                  maxLength={500}
-                  returnKeyType="send"
-                  onSubmitEditing={handleSendMessage}
-                  blurOnSubmit={false}
-                />
-                <TouchableOpacity
-                  onPress={handleSendMessage}
-                  style={[styles.sendButton, !messageInput.trim() && styles.sendButtonDisabled]}
-                  disabled={!messageInput.trim()}
-                >
-                  <SymbolView name="arrow.up" size={20} tintColor="#ffffff" weight="bold" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Pressable>
-      </Animated.View>
+                </View>
+              </Pressable>
+            </Animated.View>
+          </GestureDetector>
+        </KeyboardAvoidingView>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
@@ -262,6 +301,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
  */
 export default function TabLayout() {
   const [aiChatVisible, setAIChatVisible] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const openAIChat = () => {
     setAIChatVisible(true);
@@ -279,8 +319,8 @@ export default function TabLayout() {
           tabBarActiveTintColor: '#3B72F6',
           tabBarInactiveTintColor: '#6B7280',
           tabBarStyle: {
-            height: 64,
-            paddingBottom: 8,
+            height: 49 + insets.bottom,
+            paddingBottom: insets.bottom > 0 ? insets.bottom : 4,
             paddingTop: 4,
             backgroundColor: '#0a0a0a',
             borderTopColor: '#1f1f1f',
@@ -297,7 +337,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
+            title: 'Thread',
             tabBarIcon: ({ color }) => (
               <SymbolView name="house.fill" size={24} tintColor={color} resizeMode="center" />
             ),
@@ -315,14 +355,34 @@ export default function TabLayout() {
 
         {/* HIDDEN ROUTES (Not visible in tab bar) */}
         <Tabs.Screen name="ai-chat" options={{ href: null }} />
-        <Tabs.Screen name="binds" options={{ href: null }} />
-        <Tabs.Screen name="captures" options={{ href: null }} />
         <Tabs.Screen name="design-system-showcase" options={{ href: null }} />
-        <Tabs.Screen name="goals" options={{ href: null }} />
-        <Tabs.Screen name="journal" options={{ href: null }} />
         <Tabs.Screen name="needles" options={{ href: null }} />
-        <Tabs.Screen name="settings" options={{ href: null }} />
         <Tabs.Screen name="sitemap" options={{ href: null }} />
+
+        {/* Binds Routes */}
+        <Tabs.Screen name="binds/[id]" options={{ href: null }} />
+        <Tabs.Screen name="binds/proof/[id]" options={{ href: null }} />
+
+        {/* Captures Routes */}
+        <Tabs.Screen name="captures/index" options={{ href: null }} />
+        <Tabs.Screen name="captures/[id]" options={{ href: null }} />
+
+        {/* Goals Routes */}
+        <Tabs.Screen name="goals/index" options={{ href: null }} />
+        <Tabs.Screen name="goals/[id]" options={{ href: null }} />
+        <Tabs.Screen name="goals/new" options={{ href: null }} />
+        <Tabs.Screen name="goals/edit/[id]" options={{ href: null }} />
+
+        {/* Journal Routes */}
+        <Tabs.Screen name="journal/index" options={{ href: null }} />
+        <Tabs.Screen name="journal/[date]" options={{ href: null }} />
+        <Tabs.Screen name="journal/history" options={{ href: null }} />
+
+        {/* Settings Routes */}
+        <Tabs.Screen name="settings/index" options={{ href: null }} />
+        <Tabs.Screen name="settings/identity" options={{ href: null }} />
+        <Tabs.Screen name="settings/subscription" options={{ href: null }} />
+        <Tabs.Screen name="settings/reflection" options={{ href: null }} />
       </Tabs>
 
       {/* Center AI Button (elevated above tab bar) */}
@@ -334,19 +394,21 @@ export default function TabLayout() {
   );
 }
 
+const CENTER_BUTTON_SIZE = 56;
+
 const styles = StyleSheet.create({
   // Center Button Styles
   centerButtonContainer: {
     position: 'absolute',
     bottom: 20,
     left: '50%',
-    marginLeft: -28, // Half of button width (56px)
+    marginLeft: -CENTER_BUTTON_SIZE / 2,
     zIndex: 10,
   },
   centerButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: CENTER_BUTTON_SIZE,
+    height: CENTER_BUTTON_SIZE,
+    borderRadius: CENTER_BUTTON_SIZE / 2,
     backgroundColor: '#3B72F6',
     justifyContent: 'center',
     alignItems: 'center',
@@ -360,74 +422,192 @@ const styles = StyleSheet.create({
   // AI Chat Overlay Styles
   overlayBackground: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     zIndex: 100,
   },
-  aiChatCardContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: '5%',
-    width: '90%',
-    height: '60%',
+  keyboardAvoidingView: {
+    flex: 1,
+    justifyContent: 'flex-end',
     zIndex: 101,
   },
-  aiChatCard: {
-    flex: 1,
-    backgroundColor: 'rgba(26, 26, 26, 0.95)',
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: 'rgba(167, 139, 250, 0.3)', // Purple glow border
-    shadowColor: '#a78bfa', // Purple glow shadow
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    padding: 20,
+  chatCard: {
+    marginHorizontal: '5%',
+    marginBottom: 0,
+    height: '70%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
-  aiChatHeader: {
+  chatCardInner: {
+    flex: 1,
+    backgroundColor: 'rgba(26, 26, 26, 0.98)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 3,
+    borderColor: 'rgba(167, 139, 250, 0.6)',
+    shadowColor: '#a78bfa',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.9,
+    shadowRadius: 32,
+    elevation: 24,
+    overflow: 'hidden',
+  },
+  chatHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
-  closeButton: {
-    padding: 8,
+  chatHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  aiChatContent: {
+  chatHeaderTitle: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  chatCloseButton: {
+    padding: 4,
+  },
+  chatContent: {
     flex: 1,
   },
-  aiChatInputContainer: {
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  chatContentContainer: {
+    padding: 20,
+    flexGrow: 1,
   },
-  aiChatInputWrapper: {
-    flexDirection: 'row',
-    gap: 8,
+
+  // Welcome State Styles
+  welcomeContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  aiChatInput: {
+  welcomeIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(167, 139, 250, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  welcomeTitle: {
+    color: '#ffffff',
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  comingSoonBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+    marginBottom: 32,
+  },
+  comingSoonText: {
+    color: '#fbbf24',
+    fontWeight: '600',
+  },
+  examplesTitle: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+    alignSelf: 'flex-start',
+  },
+  exampleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 12,
+  },
+  exampleText: {
+    color: '#ffffff',
+    flex: 1,
+  },
+
+  // Messages State Styles
+  messagesContainer: {
+    flex: 1,
+  },
+  messageBubble: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    marginBottom: 12,
+    maxWidth: '80%',
+  },
+  userMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#3B72F6',
+  },
+  aiMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  messageText: {
+    color: '#ffffff',
+  },
+
+  // Input Area Styles
+  inputContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(26, 26, 26, 0.5)',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  textInput: {
     flex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     color: '#ffffff',
     fontSize: 16,
     maxHeight: 100,
+    minHeight: 44,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#3B72F6',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#3B72F6',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
   },
   sendButtonDisabled: {
     backgroundColor: 'rgba(59, 114, 246, 0.3)',
