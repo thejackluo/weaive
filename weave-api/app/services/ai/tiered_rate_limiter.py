@@ -22,12 +22,12 @@ Usage tracking:
 """
 
 import logging
-from datetime import datetime, date
-from typing import Optional, Dict, Literal
+from datetime import date, datetime
 from enum import Enum
+from typing import Dict
 
-from supabase import Client as SupabaseClient
 from fastapi import HTTPException
+from supabase import Client as SupabaseClient
 
 logger = logging.getLogger(__name__)
 
