@@ -9,13 +9,11 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, Pressable, Alert, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, Pressable, Alert } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { showSimpleToast } from '@/design-system';
 
 export function UserAvatarMenu() {
-  const router = useRouter();
   const { user, signOut } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
