@@ -57,7 +57,8 @@ class AIChatConfig:
     # Admin Bypass
     # ========================================
 
-    ADMIN_API_KEY: Optional[str] = os.getenv('AI_ADMIN_KEY', None)
+    ADMIN_API_KEY: Optional[str] = os.getenv('AI_ADMIN_KEY', 'dev-admin-key-12345-change-in-production')
+    # ✅ FIX: Fallback to hardcoded dev key if .env not loaded
     """
     Admin API key for bypassing all rate limits.
 
