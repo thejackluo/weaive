@@ -441,6 +441,86 @@ async def list_images(
         )
 
 
+@router.get("/images/{image_id}")
+async def get_image(
+    image_id: str,
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Get single image details with signed URL
+
+    Returns:
+        {
+            "data": {
+                "id": UUID,
+                "storage_key": str,
+                "signed_url": str,
+                "local_date": str,
+                "content_text": str | null,
+                "ai_verified": bool,
+                "ai_analysis": dict | null,
+                ...
+            },
+            "meta": {"timestamp": ISO8601}
+        }
+    """
+    try:
+        # Get user profile ID (auth.uid() → user_profiles.id)
+        user_id, _ = get_user_profile(user, supabase)
+
+        # Fetch capture record and verify ownership
+        response = (
+            supabase.table("captures")
+            .select("*")
+            .eq("id", image_id)
+            .eq("user_id", str(user_id))
+            .eq("type", "photo")
+            .execute()
+        )
+
+        if not response.data or len(response.data) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "IMAGE_NOT_FOUND",
+                        "message": "Image not found or unauthorized",
+                    }
+                },
+            )
+
+        capture = response.data[0]
+
+        # Generate signed URL
+        signed_url = supabase.storage.from_("captures").create_signed_url(
+            capture["storage_key"],
+            expires_in=3600,  # 1 hour
+        )["signedURL"]
+
+        return {
+            "data": {
+                **capture,
+                "signed_url": signed_url,
+            },
+            "meta": {"timestamp": datetime.now(timezone.utc).isoformat()},
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get image error: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": {
+                    "code": "GET_ERROR",
+                    "message": f"Failed to get image: {str(e)}",
+                }
+            },
+        )
+
+
 @router.patch("/images/{image_id}")
 async def update_image(
     image_id: str,

@@ -7,6 +7,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteImage } from '../services/imageCapture';
 import type { ImagePage } from './useImageList';
+import type { Capture } from '../types/captures';
 
 interface DeleteContext {
   previousImages?: Array<[readonly unknown[], ImagePage[] | undefined]>;
@@ -61,7 +62,7 @@ export function useImageDelete() {
           ...old,
           pages: old.pages.map((page) => ({
             ...page,
-            data: page.data.filter((img: { id: string }) => img.id !== imageId),
+            data: page.data.filter((img: Capture) => img.id !== imageId),
           })),
         };
       });

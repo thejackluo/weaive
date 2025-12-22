@@ -10,7 +10,7 @@
 import React, { useState } from 'react';
 import { View, Text as RNText, Pressable, Modal, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +28,7 @@ import { ImageDetailView } from '@/components/ImageDetailView';
 export default function HomeScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   // Story 0.9: Image Capture Test State
   const [showCaptureSheet, setShowCaptureSheet] = useState(false);
@@ -176,6 +177,27 @@ export default function HomeScreen() {
               </RNText>
             </View>
           </View>
+
+          <Pressable
+            onPress={() => router.push('/(tabs)/voice-demo')}
+            style={{
+              backgroundColor: '#a855f7',
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              borderRadius: 12,
+              marginBottom: 16,
+            }}
+          >
+            <Text
+              style={{
+                color: '#FAFAFA',
+                fontSize: 16,
+                fontWeight: '600',
+              }}
+            >
+              🎤 Voice Demo (Story 0.11)
+            </Text>
+          </Pressable>
 
           <Pressable
             onPress={() => setShowCaptureSheet(true)}
