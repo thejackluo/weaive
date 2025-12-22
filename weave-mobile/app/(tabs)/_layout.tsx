@@ -374,11 +374,11 @@ const styles = StyleSheet.create({
     zIndex: 101,
   },
   chatCard: {
-    marginHorizontal: 8, // ✅ Changed from '5%' to fixed 8px to maximize chat width
+    marginHorizontal: 8,
     marginBottom: 0,
-    height: '70%',
-    width: undefined, // ✅ Ensure no width constraint
-    alignSelf: 'stretch', // ✅ Force full width within parent
+    height: '95%', // ✅ FIX: Full screen height (was 70%)
+    width: undefined,
+    alignSelf: 'stretch',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
