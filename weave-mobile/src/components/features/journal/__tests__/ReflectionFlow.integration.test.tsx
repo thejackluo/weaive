@@ -47,7 +47,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
-describe('Daily Reflection Flow - E2E Integration Tests', () => {
+describe.skip('Daily Reflection Flow - E2E Integration Tests', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {

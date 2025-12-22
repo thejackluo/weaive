@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = Field(default="", description="OpenAI API key")
     ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key")
     ASSEMBLYAI_API_KEY: str = Field(default="", description="AssemblyAI API key (Story 0.11)")
+    GOOGLE_AI_API_KEY: str = Field(default="", description="Google AI (Gemini) API key for vision analysis")
 
     @field_validator("SUPABASE_URL", "SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET", mode="after")
     @classmethod
@@ -63,7 +64,7 @@ class Settings(BaseSettings):
             )
         return v
 
-    @field_validator("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ASSEMBLYAI_API_KEY", mode="after")
+    @field_validator("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ASSEMBLYAI_API_KEY", "GOOGLE_AI_API_KEY", mode="after")
     @classmethod
     def validate_ai_credentials(cls, v: str, info) -> str:
         """Warn if AI API keys are missing in non-dev environments."""

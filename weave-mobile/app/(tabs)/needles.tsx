@@ -8,6 +8,7 @@ import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/design-system';
 import { NeedlesListScreen } from '@/screens/NeedlesListScreen';
+import { UserAvatarMenu } from '@/components/UserAvatarMenu';
 
 export default function NeedlesRoute() {
   const { colors } = useTheme();
@@ -19,6 +20,9 @@ export default function NeedlesRoute() {
         backgroundColor: colors.background.primary,
       }}
     >
+      {/* User Avatar Menu - Top Right */}
+      <UserAvatarMenu />
+
       <NeedlesListScreen />
     </SafeAreaView>
   );

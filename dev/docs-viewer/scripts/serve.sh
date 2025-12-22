@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Weavelight Documentation Viewer - Bash Launcher
+# Documentation Viewer - Bash Launcher
 # Run from project root: ./dev/docs-viewer/scripts/serve.sh
 
 PORT=3030
@@ -10,7 +10,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 echo ""
 echo "┌──────────────────────────────────────────┐"
-echo "│  📚 Weavelight Documentation Viewer     │"
+echo "│  📚 Documentation Viewer                │"
 echo "└──────────────────────────────────────────┘"
 echo ""
 echo "🌐 Server:      http://localhost:$PORT"

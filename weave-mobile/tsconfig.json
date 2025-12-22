@@ -8,5 +8,6 @@
       "@lib/*": ["./lib/*"],
       "app/*": ["./app/*"]
     }
-  }
+  },
+  "exclude": ["src/_archive/**/*"]
 }
