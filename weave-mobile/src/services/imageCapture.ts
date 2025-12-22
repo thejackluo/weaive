@@ -264,7 +264,9 @@ export async function getUserCaptures(
   localDate?: string,
   type?: CaptureType,
   goalId?: string,
-  subtaskInstanceId?: string
+  subtaskInstanceId?: string,
+  startDate?: string,
+  endDate?: string
 ): Promise<Capture[]> {
   try {
     const {
@@ -279,8 +281,13 @@ export async function getUserCaptures(
     if (goalId) params.append('goal_id', goalId);
     if (subtaskInstanceId) params.append('subtask_instance_id', subtaskInstanceId);
     if (localDate) {
+      // Single day query (localDate takes precedence)
       params.append('start_date', localDate);
       params.append('end_date', localDate);
+    } else if (startDate || endDate) {
+      // Range query
+      if (startDate) params.append('start_date', startDate);
+      if (endDate) params.append('end_date', endDate);
     }
     params.append('per_page', '100');
 
