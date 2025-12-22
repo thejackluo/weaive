@@ -31,6 +31,7 @@ import CustomQuestionInput, {
   CustomQuestion,
 } from '@/components/features/journal/CustomQuestionInput';
 import ManageQuestionsModal from '@/components/features/journal/ManageQuestionsModal';
+import CountdownTimer from '@/components/features/journal/CountdownTimer';
 
 const DRAFT_KEY = '@weave_reflection_draft';
 
@@ -299,6 +300,12 @@ export default function ReflectionScreen() {
         <Text style={styles.headerSubtitle}>Take 60 seconds to reflect</Text>
       </View>
 
+      {/* Story 4.1c: Countdown Timer */}
+      <View style={styles.timerContainer}>
+        <Text style={styles.timerLabel}>Story 4.1c: Countdown Timer Demo</Text>
+        <CountdownTimer debug={true} />
+      </View>
+
       {/* Question 1: Today's Reflection */}
       <View style={styles.questionContainer}>
         <Text style={styles.questionLabel}>
@@ -493,7 +500,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   header: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   headerTitle: {
     fontSize: 24,
@@ -504,6 +511,16 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
+  },
+  timerContainer: {
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
+  timerLabel: {
+    fontSize: 12,
+    color: '#71717A',
+    marginBottom: 8,
+    textAlign: 'center',
   },
   questionContainer: {
     marginBottom: 28,
