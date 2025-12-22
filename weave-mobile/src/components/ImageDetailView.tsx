@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Heading, Button } from '@/design-system';
+import { Heading } from '@/design-system';
 import { deleteImage } from '../services/imageCapture';
 import { Capture, AIVisionCategory } from '../types/captures';
 import { supabase } from '@lib/supabase';

@@ -32,7 +32,6 @@ import CustomQuestionInput, {
 } from '@/components/features/journal/CustomQuestionInput';
 import ManageQuestionsModal from '@/components/features/journal/ManageQuestionsModal';
 import { UserAvatarMenu } from '@/components/UserAvatarMenu';
-import CountdownTimer from '@/components/features/journal/CountdownTimer';
 
 const DRAFT_KEY = '@weave_reflection_draft';
 

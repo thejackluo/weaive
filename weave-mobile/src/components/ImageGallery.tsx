@@ -47,7 +47,7 @@ export function ImageGallery({
   // Flatten all pages into single array for FlatList
   const captures = data?.pages.flatMap((page) => page.data) ?? [];
 
-  const renderImage = ({ item }: { item: Capture & { signed_url: string } }) => (
+  const renderImage = ({ item }: { item: Capture }) => (
     <TouchableOpacity
       onPress={() => onImagePress(item)}
       style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, margin: 4 }}

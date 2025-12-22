@@ -6,10 +6,10 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteImage } from '../services/imageCapture';
-import { Capture } from '../types/captures';
+import type { ImagePage } from './useImageList';
 
 interface DeleteContext {
-  previousImages?: Capture[][];
+  previousImages?: Array<[readonly unknown[], ImagePage[] | undefined]>;
 }
 
 /**
@@ -49,17 +49,21 @@ export function useImageDelete() {
       await queryClient.cancelQueries({ queryKey: ['images'] });
 
       // Snapshot previous values for rollback
-      const previousImages = queryClient.getQueriesData<Capture[][]>({
+      const previousImages = queryClient.getQueriesData<ImagePage[]>({
         queryKey: ['images'],
       });
 
       // Optimistically remove image from all cached queries
-      queryClient.setQueriesData<Capture[][]>({ queryKey: ['images'] }, (old) => {
+      queryClient.setQueriesData<{ pages: ImagePage[] }>({ queryKey: ['images'] }, (old) => {
         if (!old) return old;
         // For infinite queries, filter out the deleted image from all pages
-        return old.map((page) =>
-          Array.isArray(page) ? page.filter((img) => img.id !== imageId) : page
-        );
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.filter((img) => img.id !== imageId),
+          })),
+        };
       });
 
       // Return context for rollback
@@ -67,7 +71,7 @@ export function useImageDelete() {
     },
 
     // On error: Rollback optimistic update
-    onError: (error, imageId, context) => {
+    onError: (error, _imageId, context) => {
       console.error('Delete failed:', error);
 
       // Restore previous cache state
