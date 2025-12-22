@@ -145,6 +145,8 @@ export default function HomeScreen() {
               }}
             >
               Signed in as: {user.email}
+            </Text>
+          )}
           <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center gap-3">
