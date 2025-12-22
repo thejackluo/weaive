@@ -11,7 +11,7 @@
  * - Rate limit detection
  */
 
-/* eslint-env browser */
+/* global XMLHttpRequest */
 
 import { supabase } from '@lib/supabase';
 import { getApiBaseUrl } from '@/utils/api';
@@ -128,140 +128,143 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
         throw new Error('Not authenticated');
       }
 
-    // Prepare multipart form data
-    const formData = new FormData();
+      // Prepare multipart form data
+      const formData = new FormData();
 
-    // React Native FormData Pattern: Use file descriptor object
-    // This tells RN to read the file from disk when sending the request
-    console.log('[STT_SERVICE] 📎 Preparing file upload from:', audioUri);
+      // React Native FormData Pattern: Use file descriptor object
+      // This tells RN to read the file from disk when sending the request
+      console.log('[STT_SERVICE] 📎 Preparing file upload from:', audioUri);
 
-    // React Native FormData accepts: { uri, name, type }
-    // The implementation will read the file bytes automatically during upload
-    formData.append('audio', {
-      uri: audioUri,
-      name: 'recording.m4a',
-      type: 'audio/x-m4a',
-    } as any);
+      // React Native FormData accepts: { uri, name, type }
+      // The implementation will read the file bytes automatically during upload
+      formData.append('audio', {
+        uri: audioUri,
+        name: 'recording.m4a',
+        type: 'audio/x-m4a',
+      } as any);
 
-    // Add optional parameters
-    formData.append('language', language);
-    if (captureId) formData.append('capture_id', captureId);
-    if (subtaskInstanceId) formData.append('subtask_instance_id', subtaskInstanceId);
-    if (goalId) formData.append('goal_id', goalId);
+      // Add optional parameters
+      formData.append('language', language);
+      if (captureId) formData.append('capture_id', captureId);
+      if (subtaskInstanceId) formData.append('subtask_instance_id', subtaskInstanceId);
+      if (goalId) formData.append('goal_id', goalId);
 
-    // Upload to backend with progress tracking
-    const apiUrl = `${getApiBaseUrl()}/api/stt/transcribe`;
+      // Upload to backend with progress tracking
+      const apiUrl = `${getApiBaseUrl()}/api/stt/transcribe`;
 
-    const xhr = new XMLHttpRequest();
+      const xhr = new XMLHttpRequest();
 
-    // Promise wrapper for XMLHttpRequest
-    const uploadPromise = new Promise<TranscriptionResult>((resolve, reject) => {
-      // Track upload progress
-      if (onProgress) {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const progress = event.loaded / event.total;
-            onProgress(progress);
+      // Promise wrapper for XMLHttpRequest
+      const uploadPromise = new Promise<TranscriptionResult>((resolve, reject) => {
+        // Track upload progress
+        if (onProgress) {
+          xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+              const progress = event.loaded / event.total;
+              onProgress(progress);
+            }
+          });
+        }
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              console.log('[STT_SERVICE] ✅ Transcription complete:', response);
+
+              // Extract data from standard API response format
+              const { data } = response;
+              resolve(data);
+            } catch (parseError) {
+              console.error('[STT_SERVICE] ❌ Failed to parse response:', parseError);
+              reject(new Error('Invalid response format'));
+            }
+          } else {
+            // Handle error response
+            try {
+              const errorResponse = JSON.parse(xhr.responseText);
+              console.error('[STT_SERVICE] ❌ Transcription failed:', errorResponse);
+
+              // Check for 404 - backend endpoint not found
+              if (xhr.status === 404) {
+                const error: any = new Error(
+                  'Backend transcription service is not available. Please start the backend server (weave-api) and ensure /api/stt/transcribe endpoint is implemented.'
+                );
+                error.code = 'BACKEND_NOT_AVAILABLE';
+                error.retryable = false;
+                reject(error);
+                return;
+              }
+
+              const error: TranscriptionError = errorResponse.error || {
+                code: 'UNKNOWN_ERROR',
+                message: 'Transcription failed',
+                retryable: false,
+              };
+
+              // Return error with additional context
+              const enrichedError: any = new Error(error.message);
+              enrichedError.code = error.code;
+              enrichedError.retryable = error.retryable;
+              enrichedError.retryAfter = error.retryAfter;
+              reject(enrichedError);
+            } catch (parseError) {
+              // Couldn't parse error response - check if it's 404
+              if (xhr.status === 404) {
+                const error: any = new Error(
+                  'Backend transcription service is not available. Please start the backend server.'
+                );
+                error.code = 'BACKEND_NOT_AVAILABLE';
+                error.retryable = false;
+                reject(error);
+              } else {
+                reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+              }
+            }
           }
         });
-      }
 
-      // Handle completion
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            console.log('[STT_SERVICE] ✅ Transcription complete:', response);
+        // Handle network errors
+        xhr.addEventListener('error', () => {
+          console.error('[STT_SERVICE] ❌ Network error during upload');
+          const error: any = new Error('Network error');
+          error.code = 'NETWORK_ERROR';
+          error.retryable = true;
+          reject(error);
+        });
 
-            // Extract data from standard API response format
-            const { data } = response;
-            resolve(data);
-          } catch (parseError) {
-            console.error('[STT_SERVICE] ❌ Failed to parse response:', parseError);
-            reject(new Error('Invalid response format'));
-          }
-        } else {
-          // Handle error response
-          try {
-            const errorResponse = JSON.parse(xhr.responseText);
-            console.error('[STT_SERVICE] ❌ Transcription failed:', errorResponse);
+        // Handle timeout
+        xhr.addEventListener('timeout', () => {
+          console.error('[STT_SERVICE] ❌ Upload timeout');
+          const error: any = new Error('Upload timeout');
+          error.code = 'UPLOAD_TIMEOUT';
+          error.retryable = true;
+          reject(error);
+        });
 
-            // Check for 404 - backend endpoint not found
-            if (xhr.status === 404) {
-              const error: any = new Error(
-                'Backend transcription service is not available. Please start the backend server (weave-api) and ensure /api/stt/transcribe endpoint is implemented.'
-              );
-              error.code = 'BACKEND_NOT_AVAILABLE';
-              error.retryable = false;
-              reject(error);
-              return;
-            }
+        // Open request
+        xhr.open('POST', apiUrl);
 
-            const error: TranscriptionError = errorResponse.error || {
-              code: 'UNKNOWN_ERROR',
-              message: 'Transcription failed',
-              retryable: false,
-            };
+        // Set headers
+        xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
 
-            // Return error with additional context
-            const enrichedError: any = new Error(error.message);
-            enrichedError.code = error.code;
-            enrichedError.retryable = error.retryable;
-            enrichedError.retryAfter = error.retryAfter;
-            reject(enrichedError);
-          } catch (parseError) {
-            // Couldn't parse error response - check if it's 404
-            if (xhr.status === 404) {
-              const error: any = new Error(
-                'Backend transcription service is not available. Please start the backend server.'
-              );
-              error.code = 'BACKEND_NOT_AVAILABLE';
-              error.retryable = false;
-              reject(error);
-            } else {
-              reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
-            }
-          }
-        }
+        // Set timeout (30 seconds)
+        xhr.timeout = 30000;
+
+        // Send request
+        xhr.send(formData);
       });
-
-      // Handle network errors
-      xhr.addEventListener('error', () => {
-        console.error('[STT_SERVICE] ❌ Network error during upload');
-        const error: any = new Error('Network error');
-        error.code = 'NETWORK_ERROR';
-        error.retryable = true;
-        reject(error);
-      });
-
-      // Handle timeout
-      xhr.addEventListener('timeout', () => {
-        console.error('[STT_SERVICE] ❌ Upload timeout');
-        const error: any = new Error('Upload timeout');
-        error.code = 'UPLOAD_TIMEOUT';
-        error.retryable = true;
-        reject(error);
-      });
-
-      // Open request
-      xhr.open('POST', apiUrl);
-
-      // Set headers
-      xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
-
-      // Set timeout (30 seconds)
-      xhr.timeout = 30000;
-
-      // Send request
-      xhr.send(formData);
-    });
 
       return await uploadPromise;
     } catch (error: any) {
       lastError = error;
 
       // Check if error is retryable
-      const isRetryable = error.retryable === true || error.code === 'NETWORK_ERROR' || error.code === 'UPLOAD_TIMEOUT';
+      const isRetryable =
+        error.retryable === true ||
+        error.code === 'NETWORK_ERROR' ||
+        error.code === 'UPLOAD_TIMEOUT';
 
       if (isRetryable && attempt < maxRetries) {
         // Calculate exponential backoff delay
