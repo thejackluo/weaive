@@ -17,6 +17,7 @@ import { useTheme, Card, Heading, Body, Caption, Button } from '@/design-system'
 import { useTodayBinds } from '@/hooks/useTodayBinds';
 import { useCompleteBind } from '@/hooks/useCompleteBind';
 import { PomodoroTimer } from '@/components/thread/PomodoroTimer';
+import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
 
 export function BindScreen() {
   const { colors, spacing, radius } = useTheme();
@@ -35,6 +36,11 @@ export function BindScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [showTimerPresets, setShowTimerPresets] = useState(false);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [completionData, setCompletionData] = useState<{
+    level: number;
+    levelProgress: number;
+  } | null>(null);
 
   // Get current week completion status (mock for now)
   const weekDays = ['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'];
@@ -124,19 +130,49 @@ export function BindScreen() {
     }
 
     try {
-      await completeMutation.mutateAsync({
+      const result = await completeMutation.mutateAsync({
         bindId: id,
         timerDuration: timerDuration ?? undefined,
       });
 
-      // TODO: Show confetti animation and level progress
-      // For now, just navigate back with success message
-      console.log('Bind completed successfully!');
-      router.back();
+      // Show completion celebration with real data from backend
+      setCompletionData({
+        level: result.data.level,
+        levelProgress: result.data.level_progress,
+      });
+      setShowCelebration(true);
+
+      console.log('Bind completed successfully!', result);
     } catch (error) {
       console.error('Failed to complete bind:', error);
       // TODO: Show error toast/alert
     }
+  };
+
+  const handleCelebrationComplete = async (description?: string) => {
+    console.log('Celebration complete with description:', description);
+
+    // If description provided, save it (update the completion with notes)
+    if (description && id) {
+      try {
+        // TODO: Add PATCH endpoint to update completion notes
+        // For now, we'll pass notes in the initial completion
+        console.log('Description saved:', description);
+      } catch (error) {
+        console.error('Failed to save description:', error);
+      }
+    }
+
+    setShowCelebration(false);
+    // Navigate back to Thread Home
+    router.back();
+  };
+
+  const handleCelebrationSkip = () => {
+    console.log('Celebration skipped');
+    setShowCelebration(false);
+    // Navigate back to Thread Home
+    router.back();
   };
 
   return (
@@ -385,6 +421,18 @@ export function BindScreen() {
         onComplete={handleTimerComplete}
         onCancel={handleTimerCancel}
       />
+
+      {/* Completion Celebration Modal */}
+      {completionData && (
+        <CompletionCelebration
+          visible={showCelebration}
+          needleName={bind?.needle_title || 'your goal'}
+          level={completionData.level}
+          levelProgress={completionData.levelProgress}
+          onComplete={handleCelebrationComplete}
+          onSkip={handleCelebrationSkip}
+        />
+      )}
     </SafeAreaView>
   );
 }

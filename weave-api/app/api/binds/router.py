@@ -303,10 +303,10 @@ async def complete_bind(
         user_id = user_profile_response.data["id"]
         logger.info(f"[BINDS_API] Found user_profile.id: {user_id}")
 
-        # Verify bind exists and belongs to user
+        # Verify bind exists and belongs to user (include goal for affirmation)
         bind_response = (
             supabase.table("subtask_instances")
-            .select("id, user_id")
+            .select("id, user_id, goal_id, goals!subtask_instances_goal_id_fkey(id, title)")
             .eq("id", bind_id)
             .single()
             .execute()
@@ -368,12 +368,32 @@ async def complete_bind(
         completion = completion_response.data[0]
         logger.info(f"✅ Bind {bind_id} completed successfully")
 
+        # Calculate level and progress
+        # Simple level system: 10 completions per level
+        total_completions_response = (
+            supabase.table("subtask_completions")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        total_completions = total_completions_response.count or 0
+        level = (total_completions // 10) + 1  # Level 1 starts at 0-9 completions
+        completions_in_level = total_completions % 10
+        level_progress = (completions_in_level / 10) * 100  # Percentage to next level
+
+        # Get needle (goal) name for affirmation
+        goal_name = bind_response.data.get("goals", {}).get("title", "your goal")
+
         return {
             "success": True,
             "data": {
                 "completion_id": completion["id"],
                 "bind_id": bind_id,
                 "completed_at": completion["completed_at"],
+                "level": level,
+                "level_progress": round(level_progress, 1),
+                "affirmation": f"You're getting closer to {goal_name}!",
             },
         }
 

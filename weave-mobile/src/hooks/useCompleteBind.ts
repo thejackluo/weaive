@@ -20,6 +20,9 @@ interface CompleteBindResponse {
     completion_id: string;
     bind_id: string;
     completed_at: string;
+    level: number;
+    level_progress: number; // Percentage to next level (0-100)
+    affirmation: string;
   };
 }
 
