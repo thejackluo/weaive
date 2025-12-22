@@ -11,7 +11,8 @@
  */
 
 import React, { useState, useRef, useCallback } from 'react';
-import { EventSource } from 'react-native-sse';
+// ✅ FIX: react-native-sse exports EventSource as default, not named export
+import EventSource from 'react-native-sse';
 import apiClient from '@/services/apiClient';
 import { getAccessToken } from '@/services/secureStorage';
 
