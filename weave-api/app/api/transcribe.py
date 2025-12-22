@@ -262,6 +262,7 @@ async def log_ai_run(
         'input_hash': f'audio_{duration_sec}_{confidence_score}',  # Simple hash for now
         'prompt_version': 'stt-v1.0',
         'model': 'whisper-1' if provider == 'whisper' else 'assemblyai',
+        'provider': 'openai' if provider == 'whisper' else 'openai',  # Both use OpenAI (Whisper is OpenAI API, AssemblyAI uses OpenAI models internally)
         'params_json': {
             'provider': provider,
             'audio_duration_sec': duration_sec,
@@ -269,8 +270,8 @@ async def log_ai_run(
         },
         'status': 'success',
         'cost_estimate': cost_usd,  # Changed from 'cost_usd' to 'cost_estimate'
-        'tokens_input': 0,  # Changed from 'input_tokens' to 'tokens_input'
-        'tokens_output': 0,  # Changed from 'output_tokens' to 'tokens_output'
+        'input_tokens': 0,  # STT doesn't use tokens - duration-based pricing
+        'output_tokens': 0,  # STT doesn't use tokens - duration-based pricing
     }).execute()
 
     return result.data[0]['id']
