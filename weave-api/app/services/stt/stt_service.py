@@ -43,23 +43,41 @@ class STTService:
             assemblyai_api_key: AssemblyAI API key (from env if None)
             openai_api_key: OpenAI API key (from env if None)
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         # Initialize providers
         try:
             self.assemblyai = AssemblyAIProvider(api_key=assemblyai_api_key)
-        except STTProviderError:
+            logger.info("✅ AssemblyAI provider initialized")
+        except STTProviderError as e:
+            logger.warning(f"⚠️  AssemblyAI provider unavailable: {e.message}")
+            self.assemblyai = None
+        except Exception as e:
+            logger.error(f"❌ AssemblyAI initialization error: {str(e)}")
             self.assemblyai = None
 
         try:
             self.whisper = WhisperProvider(api_key=openai_api_key)
-        except STTProviderError:
+            logger.info("✅ Whisper provider initialized")
+        except STTProviderError as e:
+            logger.warning(f"⚠️  Whisper provider unavailable: {e.message}")
+            self.whisper = None
+        except Exception as e:
+            logger.error(f"❌ Whisper initialization error: {str(e)}")
             self.whisper = None
 
         # Build provider chain
         self.providers = []
         if self.assemblyai and self.assemblyai.is_available():
             self.providers.append(self.assemblyai)
+            logger.info("Added AssemblyAI to provider chain")
         if self.whisper and self.whisper.is_available():
             self.providers.append(self.whisper)
+            logger.info("Added Whisper to provider chain")
+
+        if not self.providers:
+            logger.error("❌ No STT providers available! Check API keys.")
 
     async def transcribe(
         self,
@@ -91,8 +109,14 @@ class STTService:
 
         last_error = None
 
+        import logging
+        logger = logging.getLogger(__name__)
+
         # Try each provider in chain
         for provider in self.providers:
+            provider_name = provider.__class__.__name__
+            logger.info(f"Attempting transcription with {provider_name}")
+
             try:
                 result = await self._transcribe_with_retry(
                     provider=provider,
@@ -101,16 +125,19 @@ class STTService:
                     max_retries=max_retries,
                     **kwargs
                 )
+                logger.info(f"✅ Transcription successful with {provider_name}")
                 return result
 
             except STTProviderError as e:
                 last_error = e
+                logger.error(f"❌ {provider_name} failed: {e.message} (retryable={e.retryable})")
                 # If error is not retryable, skip to next provider
                 if not e.retryable:
                     continue
                 # Otherwise, try next provider in fallback chain
 
         # All providers failed
+        logger.error(f"❌ All providers failed. Last error: {last_error}")
         return None
 
     async def _transcribe_with_retry(
