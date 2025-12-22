@@ -479,6 +479,143 @@ OPENAI_API_KEY=your_gpt4o_fallback_key  # Already configured
 
 ---
 
+## Unified AI Service Architecture (Story 1.5.3)
+
+**Purpose:** Standardize AI integrations across text, image, and audio modalities with consistent patterns for provider abstraction, cost tracking, and error handling.
+
+### AIProviderBase Abstraction
+
+**Pattern:** All AI providers (text/image/audio) inherit from single `AIProviderBase` abstract class.
+
+**Architecture:**
+```python
+# weave-api/app/services/ai_provider_base.py
+from abc import ABC, abstractmethod
+
+class AIProviderBase(ABC):
+    @abstractmethod
+    async def call_ai(self, input: dict, context: dict) -> dict:
+        """Execute AI call with provider-specific logic."""
+        pass
+
+    @abstractmethod
+    def estimate_cost(self, input: dict) -> float:
+        """Estimate cost before making call."""
+        pass
+
+    @abstractmethod
+    def get_provider_name(self) -> str:
+        """Return provider identifier (e.g., 'gpt-4o-mini', 'gemini-3-flash')."""
+        pass
+
+    async def log_to_ai_runs(self, operation_type: str, input_tokens: int,
+                             output_tokens: int, cost_usd: float, duration_ms: int):
+        """Unified cost tracking to ai_runs table."""
+        # Common implementation for all providers
+
+    async def check_rate_limit(self, user_id: UUID, operation_type: str):
+        """Check daily_aggregates before AI call."""
+        # Common implementation for all providers
+```
+
+### Provider Fallback Pattern
+
+**Standard Fallback Chain:**
+```
+1. Primary Provider (cost-optimized)
+   ↓ (timeout/error)
+2. Secondary Provider (quality-optimized)
+   ↓ (timeout/error)
+3. Graceful Degradation (return None or cached/default response)
+```
+
+**Implementation:**
+```python
+async def call_with_fallback(input: dict, context: dict):
+    try:
+        return await primary_provider.call_ai(input, context)
+    except Exception as e:
+        logger.warning(f"Primary provider failed: {e}")
+        try:
+            return await secondary_provider.call_ai(input, context)
+        except Exception as e2:
+            logger.error(f"Secondary provider failed: {e2}")
+            return graceful_degradation_response()
+```
+
+### Unified Cost Tracking
+
+**Pattern:** ALL AI calls log to `ai_runs` table with consistent schema:
+
+```python
+# Common fields for all AI modalities
+await log_to_ai_runs(
+    operation_type="text_generation" | "image_analysis" | "transcription",
+    provider="gpt-4o-mini" | "gemini-3-flash" | "assemblyai",
+    input_tokens=500,      # or image_count, audio_duration_sec
+    output_tokens=200,     # or null for non-text
+    model="gpt-4o-mini-2024-07-18",
+    cost_usd=0.0025,       # Calculated per-provider pricing
+    duration_ms=1200
+)
+```
+
+### Unified Rate Limiting
+
+**Pattern:** Check `daily_aggregates` table before ALL AI calls:
+
+| AI Modality | Rate Limit Column | Limit |
+|-------------|-------------------|-------|
+| Text Generation | `ai_text_count` | 10 calls/hour |
+| Image Analysis | `ai_vision_count` | 5 analyses/day |
+| Voice Transcription | `transcription_count` | 50 transcriptions/day |
+
+**Enforcement:**
+- HTTP 429 response with `Retry-After` header
+- Error code: `RATE_LIMIT_EXCEEDED`
+- Message includes next reset time in user's timezone
+
+### React Native AI Hooks
+
+**Standard Hooks for All Modalities:**
+
+```typescript
+// Text AI
+const { generate, isGenerating, error } = useAIChat();
+const result = await generate({ prompt: "...", context: {...} });
+
+// Image AI
+const { analyze, isAnalyzing, error } = useImageAnalysis();
+const result = await analyze({ imageUrl: "...", operations: [...] });
+
+// Audio AI
+const { transcribe, isTranscribing, error } = useVoiceTranscription();
+const result = await transcribe({ audioFile: blob, format: "m4a" });
+```
+
+**Loading States:**
+- Text: "Generating..."
+- Image: "Analyzing image..."
+- Audio: "Transcribing audio..."
+
+**Error States:**
+- Provider failure: "AI service unavailable. Try again."
+- Rate limit: "Daily limit reached. Resets at midnight."
+- Network error: "No internet. Try again when online."
+
+### Complete Documentation
+
+**Developer Guides Created by Story 1.5.3:**
+- `docs/dev/ai-services-guide.md` - Comprehensive AI integration guide
+- Examples for all 3 modalities (text, image, audio)
+- Provider decision tree (when to use which provider)
+- Cost calculation formulas
+- Frontend hook usage patterns
+
+**Reference:** See Story 1.5.3 acceptance criteria for complete implementation details.
+
+---
+
 ## Full Image Service Architecture
 
 **Purpose:** Complete image lifecycle management (upload, store, retrieve, analyze, delete) with gallery UI.
