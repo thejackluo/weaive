@@ -273,7 +273,7 @@ async def send_chat_message(
             user_id=str(user_id),
             user_role='admin' if is_admin else 'user',
             user_tier=subscription_tier,
-            module='ai_chat',
+            module='chat',  # ✅ Fixed: Use 'chat' not 'ai_chat' (must match enum in database)
             prompt=full_prompt,
             model=model,
             max_tokens=500
@@ -437,7 +437,7 @@ async def send_chat_message_stream(
                     user_id=str(user_id),
                     user_role='admin' if is_admin else 'user',
                     user_tier=subscription_tier,
-                    module='ai_chat',
+                    module='chat',  # ✅ Fixed: Use 'chat' not 'ai_chat' (must match enum in database)
                     prompt=full_prompt,
                     model=model,
                     max_tokens=500
