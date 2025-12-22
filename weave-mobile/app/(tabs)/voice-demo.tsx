@@ -93,22 +93,22 @@ export default function VoiceDemoScreen() {
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { padding: spacing.lg }]}
+        contentContainerStyle={[styles.content, { padding: spacing[6] }]}
       >
         {/* Header */}
-        <Text variant="displayMd" style={{ marginBottom: spacing.xs }}>
+        <Text variant="displayMd" style={{ marginBottom: spacing[2] }}>
           Voice/STT Demo
         </Text>
-        <Text variant="bodyMd" style={{ color: colors.text.secondary, marginBottom: spacing.xl }}>
+        <Text variant="textBase" style={{ color: colors.text.secondary, marginBottom: spacing[8] }}>
           Test all Story 0.11 voice components
         </Text>
 
         {/* Test 1: VoiceRecordSheet */}
-        <Card variant="outlined" style={{ marginBottom: spacing.lg, padding: spacing.md }}>
-          <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
+        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
+          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
             Test 1: Complete Workflow
           </Text>
-          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
+          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
             Opens bottom sheet with 4-step workflow: Record → Transcribe → Preview → Save
           </Text>
           <Button variant="primary" onPress={handleOpenSheet}>
@@ -117,11 +117,11 @@ export default function VoiceDemoScreen() {
         </Card>
 
         {/* Test 2: Standalone VoiceRecorder */}
-        <Card variant="outlined" style={{ marginBottom: spacing.lg, padding: spacing.md }}>
-          <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
+        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
+          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
             Test 2: Standalone Recording
           </Text>
-          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
+          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
             Test VoiceRecorder component in isolation (no transcription)
           </Text>
           <View style={styles.centerContent}>
@@ -132,7 +132,7 @@ export default function VoiceDemoScreen() {
             />
           </View>
           {recordingResult && (
-            <Text variant="bodyXs" style={{ color: colors.text.secondary, marginTop: spacing.sm }}>
+            <Text variant="textXs" style={{ color: colors.text.secondary, marginTop: spacing[3] }}>
               ✅ Last recording: {(recordingResult.durationMillis / 1000).toFixed(1)}s (
               {(recordingResult.size / 1024).toFixed(1)}KB)
             </Text>
@@ -140,11 +140,11 @@ export default function VoiceDemoScreen() {
         </Card>
 
         {/* Test 3: AudioWaveform */}
-        <Card variant="outlined" style={{ marginBottom: spacing.lg, padding: spacing.md }}>
-          <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
+        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
+          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
             Test 3: Waveform Visualization
           </Text>
-          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
+          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
             Static waveform (displays recording metering data)
           </Text>
           {recordingResult ? (
@@ -155,18 +155,18 @@ export default function VoiceDemoScreen() {
               height={80}
             />
           ) : (
-            <Text variant="bodyXs" style={{ color: colors.text.tertiary, textAlign: 'center' }}>
+            <Text variant="textXs" style={{ color: colors.text.tertiary, textAlign: 'center' }}>
               Record audio above to see waveform
             </Text>
           )}
         </Card>
 
         {/* Test 4: TranscriptPreview */}
-        <Card variant="outlined" style={{ marginBottom: spacing.lg, padding: spacing.md }}>
-          <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
+        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
+          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
             Test 4: Transcript Editing
           </Text>
-          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
+          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
             Edit transcript, see confidence scoring
           </Text>
           <TranscriptPreview
@@ -178,39 +178,39 @@ export default function VoiceDemoScreen() {
         </Card>
 
         {/* Test 5: AudioPlayer */}
-        <Card variant="outlined" style={{ marginBottom: spacing.lg, padding: spacing.md }}>
-          <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
+        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
+          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
             Test 5: Audio Playback
           </Text>
-          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
+          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
             Play/pause, seek, speed controls
           </Text>
           {audioUri ? (
             <AudioPlayer audioUri={audioUri} onPlaybackComplete={handlePlaybackComplete} />
           ) : (
-            <Text variant="bodyXs" style={{ color: colors.text.tertiary, textAlign: 'center' }}>
+            <Text variant="textXs" style={{ color: colors.text.tertiary, textAlign: 'center' }}>
               Record audio above to enable playback
             </Text>
           )}
         </Card>
 
         {/* Test 6: RateLimitIndicator */}
-        <Card variant="outlined" style={{ marginBottom: spacing.lg, padding: spacing.md }}>
-          <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
+        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
+          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
             Test 6: Rate Limit Display
           </Text>
-          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
+          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
             Visual progress bars for daily limits
           </Text>
           <RateLimitIndicator requestCount={requestCount} durationMinutes={durationMinutes} />
         </Card>
 
         {/* Test 7: Rate Limit Compact */}
-        <Card variant="outlined" style={{ marginBottom: spacing.lg, padding: spacing.md }}>
-          <Text variant="bodyLg" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
+        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
+          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
             Test 7: Rate Limit (Compact)
           </Text>
-          <Text variant="bodySm" style={{ color: colors.text.secondary, marginBottom: spacing.md }}>
+          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
             Minimal display for toolbars/headers
           </Text>
           <RateLimitIndicator
@@ -221,11 +221,11 @@ export default function VoiceDemoScreen() {
         </Card>
 
         {/* Testing Tips */}
-        <Card variant="ghost" style={{ padding: spacing.md, marginBottom: spacing.xl }}>
-          <Text variant="bodyMd" style={{ fontWeight: '600', marginBottom: spacing.sm }}>
+        <Card variant="ghost" style={{ padding: spacing[4], marginBottom: spacing[8] }}>
+          <Text variant="textBase" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
             📋 Testing Checklist
           </Text>
-          <Text variant="bodySm" style={{ color: colors.text.secondary, lineHeight: 20 }}>
+          <Text variant="textSm" style={{ color: colors.text.secondary, lineHeight: 20 }}>
             1. Check microphone permissions (Settings → Expo Go → Microphone){'\n'}
             2. Test on real device (simulator has no mic){'\n'}
             3. Verify audio recording quality{'\n'}

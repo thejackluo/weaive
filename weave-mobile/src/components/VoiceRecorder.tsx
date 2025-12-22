@@ -271,7 +271,7 @@ export function VoiceRecorder({
             barStyle,
             {
               transform: [{ rotate: `${angle}deg` }],
-              backgroundColor: colors.error.default,
+              backgroundColor: colors.text.error,
             },
           ]}
         />
@@ -296,7 +296,7 @@ export function VoiceRecorder({
               width: size + 20,
               height: size + 20,
               borderRadius: (size + 20) / 2,
-              borderColor: colors.error.default,
+              borderColor: colors.text.error,
             },
           ]}
         />
@@ -311,7 +311,7 @@ export function VoiceRecorder({
             width: size,
             height: size,
             borderRadius: size / 2,
-            backgroundColor: isRecording ? colors.error.default : colors.neutral.secondary,
+            backgroundColor: isRecording ? colors.text.error : colors.neutral[600],
           },
         ]}
         onPress={handlePress}
@@ -330,11 +330,11 @@ export function VoiceRecorder({
           style={[
             styles.durationContainer,
             {
-              marginTop: spacing.md,
+              marginTop: spacing[4],
             },
           ]}
         >
-          <Text variant="bodyMd" style={{ color: colors.error.default }}>
+          <Text variant="textBase" style={{ color: colors.text.error }}>
             {formatDuration(duration)}
           </Text>
         </View>
@@ -342,8 +342,8 @@ export function VoiceRecorder({
 
       {/* Permission prompt */}
       {!hasPermission && !isRequestingPermission && (
-        <View style={[styles.permissionPrompt, { marginTop: spacing.md }]}>
-          <Text variant="bodySm" style={{ color: colors.text.secondary, textAlign: 'center' }}>
+        <View style={[styles.permissionPrompt, { marginTop: spacing[4] }]}>
+          <Text variant="textSm" style={{ color: colors.text.secondary, textAlign: 'center' }}>
             Microphone access required
           </Text>
         </View>
@@ -351,8 +351,8 @@ export function VoiceRecorder({
 
       {/* Error display */}
       {error && (
-        <View style={[styles.errorContainer, { marginTop: spacing.md }]}>
-          <Text variant="bodySm" style={{ color: colors.error.default, textAlign: 'center' }}>
+        <View style={[styles.errorContainer, { marginTop: spacing[4] }]}>
+          <Text variant="textSm" style={{ color: colors.text.error, textAlign: 'center' }}>
             {error}
           </Text>
         </View>

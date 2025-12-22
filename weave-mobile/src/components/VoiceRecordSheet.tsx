@@ -224,8 +224,8 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
       switch (currentStep) {
         case 'record':
           return (
-            <View style={[styles.stepContainer, { padding: spacing.lg }]}>
-              <Text variant="displaySm" style={{ textAlign: 'center', marginBottom: spacing.lg }}>
+            <View style={[styles.stepContainer, { padding: spacing[6] }]}>
+              <Text variant="displayMd" style={{ textAlign: 'center', marginBottom: spacing[6] }}>
                 Record Voice Note
               </Text>
 
@@ -236,11 +236,11 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
               />
 
               <Text
-                variant="bodySm"
+                variant="textSm"
                 style={{
                   textAlign: 'center',
                   color: colors.text.secondary,
-                  marginTop: spacing.lg,
+                  marginTop: spacing[6],
                 }}
               >
                 Tap to start recording
@@ -250,8 +250,8 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
 
         case 'transcribing':
           return (
-            <View style={[styles.stepContainer, { padding: spacing.lg }]}>
-              <Text variant="displaySm" style={{ textAlign: 'center', marginBottom: spacing.lg }}>
+            <View style={[styles.stepContainer, { padding: spacing[6] }]}>
+              <Text variant="displayMd" style={{ textAlign: 'center', marginBottom: spacing[6] }}>
                 Transcribing...
               </Text>
 
@@ -265,11 +265,11 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
               )}
 
               <Text
-                variant="bodyMd"
+                variant="textBase"
                 style={{
                   textAlign: 'center',
                   color: colors.text.secondary,
-                  marginTop: spacing.lg,
+                  marginTop: spacing[6],
                 }}
               >
                 Processing audio...
@@ -281,9 +281,9 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
           return (
             <ScrollView
               style={styles.scrollView}
-              contentContainerStyle={[styles.stepContainer, { padding: spacing.lg }]}
+              contentContainerStyle={[styles.stepContainer, { padding: spacing[6] }]}
             >
-              <Text variant="displaySm" style={{ marginBottom: spacing.lg }}>
+              <Text variant="displayMd" style={{ marginBottom: spacing[6] }}>
                 Review Transcript
               </Text>
 
@@ -297,12 +297,12 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
               )}
 
               {recordingResult && (
-                <View style={{ marginTop: spacing.md }}>
+                <View style={{ marginTop: spacing[4] }}>
                   <AudioPlayer audioUri={recordingResult.uri} />
                 </View>
               )}
 
-              <View style={[styles.actions, { marginTop: spacing.lg, gap: spacing.sm }]}>
+              <View style={[styles.actions, { marginTop: spacing[6], gap: spacing[3] }]}>
                 <Button variant="secondary" size="md" onPress={handleCancel} style={{ flex: 1 }}>
                   Cancel
                 </Button>
@@ -315,8 +315,8 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
 
         case 'complete':
           return (
-            <View style={[styles.stepContainer, { padding: spacing.lg }]}>
-              <Text variant="displaySm" style={{ textAlign: 'center' }}>
+            <View style={[styles.stepContainer, { padding: spacing[6] }]}>
+              <Text variant="displayMd" style={{ textAlign: 'center' }}>
                 Saved!
               </Text>
             </View>
@@ -336,10 +336,10 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
           backdropComponent={renderBackdrop}
           enablePanDownToClose
           backgroundStyle={{
-            backgroundColor: colors.surface.secondary,
+            backgroundColor: colors.background.secondary,
           }}
           handleIndicatorStyle={{
-            backgroundColor: colors.neutral.border,
+            backgroundColor: colors.border.muted,
           }}
         >
           <BottomSheetView>{renderContent()}</BottomSheetView>
