@@ -16,8 +16,9 @@ import {
   CompressedImage,
   Capture,
 } from '../types/captures';
+import { getApiBaseUrl } from '../utils/api';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = getApiBaseUrl();
 
 // ============================================================================
 // PERMISSIONS
@@ -52,7 +53,7 @@ export async function launchCamera(): Promise<ImagePicker.ImagePickerResult> {
   }
 
   return await ImagePicker.launchCameraAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    mediaTypes: [ImagePicker.MediaType.Images],
     allowsEditing: false,
     quality: 0.8,
   });
@@ -65,7 +66,7 @@ export async function launchGallery(): Promise<ImagePicker.ImagePickerResult> {
   }
 
   return await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    mediaTypes: [ImagePicker.MediaType.Images],
     allowsEditing: false,
     quality: 0.8,
   });
@@ -122,10 +123,12 @@ export async function uploadImageToAPI(
     // Prepare form data
     const formData = new FormData();
 
-    // Fetch image as blob
-    const response = await fetch(compressed.uri);
-    const blob = await response.blob();
-    formData.append('file', blob, 'photo.jpg');
+    // Append file (React Native format)
+    formData.append('file', {
+      uri: compressed.uri,
+      type: 'image/jpeg',
+      name: 'photo.jpg',
+    } as any);
 
     // Add context
     if (context.subtask_instance_id) {
