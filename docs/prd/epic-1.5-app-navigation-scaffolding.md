@@ -731,7 +731,112 @@ This story establishes:
 | Testing conventions + fixtures | 1 pt | Pytest fixtures, integration test template |
 | Backend patterns guide | 1-2 pts | Comprehensive developer documentation |
 
-**Total: 5-6 story points**
+#### AC-9: API Endpoint Mapping (Pre-Create All Epic 2-8 Routes)
+
+**Approach:** Similar to Story 1.5.1 which pre-created 15+ navigation screens, pre-create all API route stubs for Epic 2-8 with placeholder implementations.
+
+**Complete Endpoint Registry (28 Endpoints):**
+
+**Epic 2: Goal Management (5 endpoints)**
+- [ ] GET `/api/goals` - List user's active goals (Story 2.1)
+- [ ] GET `/api/goals/{id}` - Get goal details (Story 2.2)
+- [ ] POST `/api/goals` - Create new goal with AI (Story 2.3)
+- [ ] PUT `/api/goals/{id}` - Edit goal (Story 2.4)
+- [ ] PUT `/api/goals/{id}/archive` - Archive goal (Story 2.5)
+
+**Epic 3: Daily Actions (4 endpoints)**
+- [ ] GET `/api/subtask-instances?local_date={date}` - Today's binds (Story 3.1)
+- [ ] POST `/api/subtask-completions` - Mark bind complete (Story 3.3)
+- [ ] POST `/api/captures` - Upload proof (photo/video/timer) (Story 3.3, 3.4)
+- [ ] GET `/api/daily-aggregates?local_date={date}` - Daily stats (Story 3.1)
+
+**Epic 4: Reflection & Journaling (5 endpoints)**
+- [ ] POST `/api/journal-entries` - Submit daily reflection (Story 4.1)
+- [ ] GET `/api/journal-entries` - List past journals (Story 4.5)
+- [ ] GET `/api/journal-entries/{date}` - Get specific entry (Story 4.5)
+- [ ] POST `/api/ai/recap` - Generate AI feedback (Story 4.3)
+- [ ] PUT `/api/ai-artifacts/{id}` - Edit AI feedback (Story 4.4)
+
+**Epic 5: Progress Visualization (2 endpoints)**
+- [ ] GET `/api/user-stats` - Overall user metrics (Story 5.1)
+- [ ] GET `/api/daily-aggregates?timeframe={7|30|60|90}` - Aggregates for heat map (Story 5.2, 5.3)
+
+**Epic 6: AI Coaching (3 endpoints)**
+- [ ] POST `/api/ai/chat` - Send message to Dream Self Advisor (Story 6.1, 6.2)
+- [ ] GET `/api/ai/chat/history` - Chat conversation history (Story 6.1)
+- [ ] POST `/api/ai/insights` - Trigger weekly insights (Story 6.4)
+
+**Epic 7: Notifications (4 endpoints)**
+- [ ] POST `/api/notifications/schedule` - Schedule notification (Story 7.1)
+- [ ] POST `/api/notifications/bind-reminder` - Bind reminder (Story 7.2)
+- [ ] POST `/api/notifications/reflection-prompt` - Evening prompt (Story 7.3)
+- [ ] POST `/api/notifications/streak-recovery` - Recovery nudge (Story 7.4)
+
+**Epic 8: Settings & Profile (5 endpoints)**
+- [ ] GET `/api/user/profile` - Get user profile (Story 8.1)
+- [ ] PUT `/api/user/profile` - Update profile (Story 8.1)
+- [ ] GET `/api/user/export` - Data export (JSON) (Story 8.3)
+- [ ] DELETE `/api/user/account` - Soft delete account (Story 8.3)
+- [ ] GET `/api/subscriptions` - Subscription status (Story 8.4)
+
+**Placeholder Implementation Pattern:**
+
+Each route returns 501 Not Implemented with Epic/Story reference:
+
+```python
+# Example: weave-api/app/api/routers/goals.py
+@router.get("/")
+async def list_goals(user=Depends(get_current_user)):
+    """
+    Epic 2, Story 2.1: View Goals List
+    TODO: Implement goal list retrieval
+    """
+    raise HTTPException(
+        status_code=501,
+        detail={
+            "error": "NOT_IMPLEMENTED",
+            "message": "This endpoint has not been developed",
+            "epic": "Epic 2: Goal Management",
+            "story": "Story 2.1: View Goals List"
+        }
+    )
+```
+
+**Testing Scaffolding:**
+
+For each endpoint, create corresponding test:
+
+```python
+# tests/test_goals_api.py
+def test_list_goals_not_implemented(client: TestClient, auth_headers):
+    """Test that goals list endpoint returns 501 Not Implemented"""
+    response = client.get("/api/goals", headers=auth_headers)
+    assert response.status_code == 501
+    assert response.json()["error"] == "NOT_IMPLEMENTED"
+    assert "Epic 2" in response.json()["epic"]
+```
+
+**Documentation:**
+- [ ] Create `docs/dev/backend-api-integration.md`
+  - Section 1: API Endpoint Registry (complete list with Epic/Story mapping)
+  - Section 2: Implementation Checklist (how to replace 501 stub with real logic)
+  - Section 3: Testing Patterns (integration test examples)
+  - Section 4: Authentication & RLS integration
+
+---
+
+### Story Points Breakdown
+
+| Task | Estimate | Rationale |
+|------|----------|-----------|
+| API templates + docs | 2 pts | FastAPI router template, response format standardization |
+| Model/schema templates | 1 pt | BaseModel, Pydantic templates |
+| Error handling + service patterns | 1 pt | Error codes, decision tree |
+| Testing conventions + fixtures | 1 pt | Pytest fixtures, integration test template |
+| **API endpoint mapping (AC-9)** | **2-3 pts** | **28 endpoint stubs + tests across 7 router files** |
+| Backend patterns guide + API integration guide | 1-2 pts | Comprehensive developer documentation |
+
+**Total: 7-9 story points** (was 5-6 pts, +2-3 pts for API mapping)
 
 ---
 
@@ -872,16 +977,239 @@ const result = await generate({ prompt: "...", context: {...} });
 
 ---
 
+#### AC-9: AI Module Abstraction (5 Product Modules)
+
+**Purpose:** Abstract base class for all AI product features (Onboarding Coach, Triad Planner, etc.)
+
+**AIModuleBase Abstract Class:**
+
+```python
+# weave-api/app/services/ai/ai_module_base.py
+from abc import ABC, abstractmethod
+from typing import Dict, Any
+
+class AIModuleBase(ABC):
+    """
+    Base class for all AI product modules.
+
+    Modules represent product features (Onboarding, Triad, Recap, Dream Self, Insights)
+    that use AI providers to generate outputs.
+    """
+
+    def __init__(self, provider: AIProviderBase, context_builder):
+        self.provider = provider
+        self.context_builder = context_builder
+
+    @abstractmethod
+    def get_module_name(self) -> str:
+        """Return module identifier (e.g., 'onboarding_coach', 'triad_planner')"""
+        pass
+
+    @abstractmethod
+    async def execute(self, user_id: str, operation_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute AI module operation.
+
+        Args:
+            user_id: User identifier
+            operation_type: Specific operation (e.g., 'generate_goal_breakdown', 'generate_triad')
+            params: Operation-specific parameters
+
+        Returns:
+            Structured AI output (validated by module-specific schema)
+        """
+        pass
+
+    async def build_context(self, user_id: str, operation_type: str) -> Dict[str, Any]:
+        """Build user context for AI call using Context Builder"""
+        return await self.context_builder.get_context(user_id, operation_type)
+```
+
+**5 AI Modules to Implement:**
+
+- [ ] **Onboarding Coach Module** (`OnboardingCoachModule`)
+  - Epic 1, Story 1.8: Generate goal breakdown from vague input
+  - Epic 2, Story 2.3: Reused for creating new goals
+  - Operations: `generate_goal_breakdown`, `create_identity_doc_v1`
+
+- [ ] **Triad Planner Module** (`TriadPlannerModule`)
+  - Epic 4, Story 4.3: Generate tomorrow's 3-task plan after journal
+  - Operations: `generate_triad`
+
+- [ ] **Daily Recap Module** (`DailyRecapModule`)
+  - Epic 4, Story 4.3: Generate AI feedback after reflection
+  - Operations: `generate_recap`
+
+- [ ] **Dream Self Advisor Module** (`DreamSelfAdvisorModule`)
+  - Epic 6, Story 6.1, 6.2: Conversational AI coaching
+  - Operations: `chat_response`
+
+- [ ] **AI Insights Engine Module** (`AIInsightsModule`)
+  - Epic 6, Story 6.4: Weekly pattern analysis
+  - Operations: `generate_weekly_insights`
+
+**Module Registry:**
+
+```python
+# weave-api/app/services/ai/module_registry.py
+class AIModuleRegistry:
+    """
+    Registry for all AI modules.
+    Maps operation types to module instances.
+    """
+
+    def __init__(self):
+        self._modules: Dict[str, AIModuleBase] = {}
+
+    def register_module(self, module: AIModuleBase):
+        """Register an AI module"""
+        module_name = module.get_module_name()
+        self._modules[module_name] = module
+
+    def get_module(self, operation_type: str) -> AIModuleBase:
+        """Get module for operation type"""
+        operation_module_map = {
+            'generate_goal_breakdown': 'onboarding_coach',
+            'create_identity_doc_v1': 'onboarding_coach',
+            'generate_triad': 'triad_planner',
+            'generate_recap': 'daily_recap',
+            'chat_response': 'dream_self_advisor',
+            'generate_weekly_insights': 'ai_insights'
+        }
+        module_name = operation_module_map.get(operation_type)
+        return self._modules.get(module_name)
+```
+
+---
+
+#### AC-10: AI Orchestrator (Request Router)
+
+**Purpose:** Central coordinator that routes AI requests to correct module
+
+**AI Orchestrator Implementation:**
+
+```python
+# weave-api/app/services/ai/ai_orchestrator.py
+class AIOrchestrator:
+    """
+    Central AI orchestrator that:
+    1. Routes requests to correct AI module
+    2. Coordinates Context Builder
+    3. Enforces rate limiting
+    4. Logs all AI calls to ai_runs table
+    5. Handles fallback chains
+    """
+
+    def __init__(
+        self,
+        module_registry: AIModuleRegistry,
+        context_builder: ContextBuilder,
+        text_provider: AIProviderBase,
+        image_provider: AIProviderBase,
+        audio_provider: AIProviderBase
+    ):
+        self.module_registry = module_registry
+        self.context_builder = context_builder
+        self.text_provider = text_provider
+        self.image_provider = image_provider
+        self.audio_provider = audio_provider
+
+    async def execute_ai_operation(
+        self,
+        user_id: str,
+        operation_type: str,
+        params: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Execute AI operation.
+
+        Flow:
+        1. Check rate limits
+        2. Get appropriate module
+        3. Build user context
+        4. Execute module operation
+        5. Log to ai_runs
+        6. Return result
+        """
+
+        # 1. Check rate limits
+        await self._check_rate_limit(user_id, operation_type)
+
+        # 2. Get module
+        module = self.module_registry.get_module(operation_type)
+        if not module:
+            raise ValueError(f"No module registered for operation: {operation_type}")
+
+        # 3. Execute
+        result = await module.execute(user_id, operation_type, params)
+
+        # 4. Log (cost tracking)
+        await self._log_ai_run(user_id, operation_type, module, result)
+
+        return result
+
+    async def _check_rate_limit(self, user_id: str, operation_type: str):
+        """Check daily_aggregates for rate limit compliance"""
+        pass
+
+    async def _log_ai_run(self, user_id: str, operation_type: str, module, result):
+        """Log to ai_runs table with tokens, cost, duration"""
+        pass
+```
+
+**Context Builder:**
+
+```python
+# weave-api/app/services/ai/context_builder.py
+class ContextBuilder:
+    """
+    Assembles canonical user context for AI calls.
+
+    Context includes:
+    - Identity document (archetype, dream self, motivations)
+    - Active goals and Q-goals
+    - Recent completions (last 7 days)
+    - Journal entries with fulfillment scores
+    - Computed metrics (streak, consistency %)
+    - User preferences (timezone, coaching strictness)
+    """
+
+    async def get_context(self, user_id: str, operation_type: str) -> Dict[str, Any]:
+        """
+        Build context based on operation type.
+
+        Different operations need different context:
+        - Onboarding: minimal (just user input)
+        - Triad: goals + history + journal
+        - Recap: today's completions + captures + journal
+        - Chat: full context (identity + goals + history + patterns)
+        - Insights: 30-day history + patterns
+        """
+        pass
+```
+
+**Integration with Existing Stories:**
+
+- [ ] **Story 1.8** (Choose Your First Needle) uses Onboarding Coach module
+- [ ] **Story 2.3** (Create New Goal) uses Onboarding Coach module
+- [ ] **Story 4.3** (AI Feedback Generation) uses Triad Planner + Daily Recap modules
+- [ ] **Story 6.1, 6.2** (AI Chat) uses Dream Self Advisor module
+- [ ] **Story 6.4** (Weekly Insights) uses AI Insights Engine module
+
+---
+
 ### Story Points Breakdown
 
 | Task | Estimate | Rationale |
 |------|----------|-----------|
 | AIProviderBase abstraction | 1 pt | Abstract class, common methods |
 | Provider standardization (text/image/audio) | 2 pts | Extract patterns from Stories 0.6, 0.9, 0.11 |
+| **AI Module Abstraction (AC-9)** | **1-2 pts** | **AIModuleBase, 5 module stubs, registry** |
+| **AI Orchestrator (AC-10)** | **1 pt** | **Orchestrator + Context Builder** |
 | React Native hooks | 1 pt | 3 hooks with loading/error states |
-| AI services guide | 1-2 pts | Comprehensive developer documentation |
+| AI services guide (updated) | 1-2 pts | Comprehensive developer documentation + orchestration sections |
 
-**Total: 4-5 story points**
+**Total: 6-8 story points** (was 4-5 pts, +2-3 pts for orchestration)
 
 ---
 
@@ -890,17 +1218,22 @@ const result = await generate({ prompt: "...", context: {...} });
 | ID | Story | Priority | Estimate |
 |----|-------|----------|----------|
 | 1.5.1 | Core Navigation Architecture | M | 8-10 pts |
-| 1.5.2 | Backend API/Model Standardization | S | 5-6 pts |
-| 1.5.3 | AI Services Standardization (Text/Image/Audio) | S | 4-5 pts |
+| 1.5.2 | Backend API/Model Standardization + **API Endpoint Mapping** | S | **7-9 pts** |
+| 1.5.3 | AI Services Standardization + **AI Orchestration** | S | **6-8 pts** |
 
-**Epic Total:** 17-21 story points (3 infrastructure stories)
+**Epic Total:** **21-27 story points** (3 infrastructure stories, expanded from 17-21 pts)
 
 **Key Deliverables:**
 - **Story 1.5.1:** 3-tab navigation structure (Thread, AI Chat, Dashboard), magical glassmorphism AI Chat with blur effect, 15+ placeholder screens for Epic 2-8, auth guards, navigation documentation
-- **Story 1.5.2:** Backend API/model templates, FastAPI router scaffolding, Pydantic schema standards, error handling patterns, testing conventions, `docs/dev/backend-patterns-guide.md`
-- **Story 1.5.3:** Unified `AIProviderBase` abstraction, text/image/audio AI standardization, cost tracking patterns, rate limiting, React Native AI hooks, `docs/dev/ai-services-guide.md`
+- **Story 1.5.2:** Backend API/model templates, FastAPI router scaffolding, Pydantic schema standards, error handling patterns, testing conventions, **28 API endpoint stubs**, `docs/dev/backend-patterns-guide.md`, **`docs/dev/backend-api-integration.md`**
+- **Story 1.5.3:** Unified `AIProviderBase` abstraction, text/image/audio AI standardization, **AI Module Orchestration (5 modules + orchestrator + context builder)**, cost tracking patterns, rate limiting, React Native AI hooks, `docs/dev/ai-services-guide.md`
 
-**ROI:** 20-30% velocity improvement for Epic 2-8 stories (40+ future stories benefit from standardization)
+**ROI:** 25-35% velocity improvement for Epic 2-8 stories (40+ future stories benefit from standardization)
+
+**Changes from Original:**
+- Story 1.5.2: +2-3 pts (AC-9: 28 API endpoint stubs across Epic 2-8)
+- Story 1.5.3: +2-3 pts (AC-9: AI Module Abstraction, AC-10: AI Orchestrator)
+- Epic 1.5 Total: +4-6 pts (21-27 pts from 17-21 pts)
 
 **Deferred to Post-MVP:**
 - Radial menu animation (fancy fan-out options)
