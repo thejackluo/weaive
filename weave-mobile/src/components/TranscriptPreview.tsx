@@ -235,7 +235,7 @@ export function TranscriptPreview({
           value={editedText}
           onChangeText={handleTextChange}
           placeholder="Transcript will appear here..."
-          placeholderTextColor={colors.text.muted}
+          placeholderTextColor={colors.text.secondary}
           multiline
           editable={isEditable}
           maxLength={maxLength}
