@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import {
   View,
   TouchableOpacity,
@@ -23,6 +23,7 @@ import { Text } from '@/design-system';
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Center AI Button Component
@@ -302,8 +303,19 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
  * - Center: AI Chat (magical overlay, accessed via center button)
  */
 export default function TabLayout() {
+  const { user, isLoading } = useAuth();
   const [aiChatVisible, setAIChatVisible] = useState(false);
   const insets = useSafeAreaInsets();
+
+  // Auth guard: redirect to login if not authenticated
+  if (!isLoading && !user) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  // Show nothing while loading (prevents flash of content)
+  if (isLoading) {
+    return null;
+  }
 
   const openAIChat = () => {
     setAIChatVisible(true);
