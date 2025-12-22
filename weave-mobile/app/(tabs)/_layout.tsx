@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { Tabs } from 'expo-router';
-import { View, TouchableOpacity, Modal, StyleSheet, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  Modal,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  ScrollView,
+} from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import Animated, {
   useSharedValue,
@@ -64,7 +72,9 @@ function CenterAIButton({ onPress }: { onPress: () => void }) {
  */
 function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const [messageInput, setMessageInput] = React.useState('');
-  const [messages, setMessages] = React.useState<Array<{ id: string; text: string; isUser: boolean }>>([]);
+  const [messages, setMessages] = React.useState<
+    Array<{ id: string; text: string; isUser: boolean }>
+  >([]);
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(300);
 
@@ -304,42 +314,15 @@ export default function TabLayout() {
         />
 
         {/* HIDDEN ROUTES (Not visible in tab bar) */}
-        <Tabs.Screen
-          name="ai-chat"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="binds"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="captures"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="design-system-showcase"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="goals"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="journal"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="needles"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{ href: null }}
-        />
-        <Tabs.Screen
-          name="sitemap"
-          options={{ href: null }}
-        />
+        <Tabs.Screen name="ai-chat" options={{ href: null }} />
+        <Tabs.Screen name="binds" options={{ href: null }} />
+        <Tabs.Screen name="captures" options={{ href: null }} />
+        <Tabs.Screen name="design-system-showcase" options={{ href: null }} />
+        <Tabs.Screen name="goals" options={{ href: null }} />
+        <Tabs.Screen name="journal" options={{ href: null }} />
+        <Tabs.Screen name="needles" options={{ href: null }} />
+        <Tabs.Screen name="settings" options={{ href: null }} />
+        <Tabs.Screen name="sitemap" options={{ href: null }} />
       </Tabs>
 
       {/* Center AI Button (elevated above tab bar) */}
