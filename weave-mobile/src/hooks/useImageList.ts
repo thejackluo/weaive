@@ -54,32 +54,20 @@ export function useImageList(filters: ImageFilters = {}) {
     queryKey: ['images', filters],
 
     queryFn: async ({ pageParam = 1 }) => {
-      // Fetch images with pagination
-      const captures = await getUserCaptures(
+      // Fetch images with pagination from API
+      const response = await getUserCaptures(
         undefined, // localDate (not used for range queries)
         'photo' as CaptureType,
         filters.goalId,
         filters.subtaskInstanceId,
         filters.startDate, // Pass date range filters
-        filters.endDate
+        filters.endDate,
+        pageParam as number,
+        20
       );
 
-      // TODO: API should return pagination metadata
-      // For now, simulate pagination (API returns all results)
-      const perPage = 20;
-      const start = ((pageParam as number) - 1) * perPage;
-      const end = start + perPage;
-      const page = captures.slice(start, end);
-
-      return {
-        data: page,
-        meta: {
-          total: captures.length,
-          page: pageParam as number,
-          per_page: perPage,
-          has_next: end < captures.length,
-        },
-      };
+      // API now returns pagination metadata directly
+      return response;
     },
 
     // Get next page number if more data exists
@@ -114,7 +102,8 @@ export function useDailyImages(localDate: string) {
     queryKey: ['images', 'daily', localDate],
 
     queryFn: async () => {
-      return await getUserCaptures(localDate, 'photo' as CaptureType);
+      const response = await getUserCaptures(localDate, 'photo' as CaptureType);
+      return response.data; // Return just the captures array
     },
 
     // Longer stale time for daily images (unlikely to change after the day)
@@ -137,8 +126,8 @@ export function useImageCount(goalId?: string) {
     queryKey: ['images', 'count', goalId],
 
     queryFn: async () => {
-      const captures = await getUserCaptures(undefined, 'photo' as CaptureType, goalId);
-      return captures.length;
+      const response = await getUserCaptures(undefined, 'photo' as CaptureType, goalId);
+      return response.meta.total; // Return total count from metadata
     },
 
     staleTime: 2 * 60 * 1000, // 2 minutes

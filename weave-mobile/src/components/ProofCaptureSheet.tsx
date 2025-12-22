@@ -51,7 +51,11 @@ export function ProofCaptureSheet({
       setUploading(true);
       setUploadProgress(source === PhotoSource.CAMERA ? 'Opening camera...' : 'Opening gallery...');
 
-      const result = await captureAndUploadProofPhoto(context, source, abortControllerRef.current.signal);
+      const result = await captureAndUploadProofPhoto(
+        context,
+        source,
+        abortControllerRef.current.signal
+      );
 
       if (!result) {
         // User canceled

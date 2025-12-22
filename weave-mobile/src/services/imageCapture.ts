@@ -14,7 +14,6 @@ import {
   UploadUsageResponse,
   ListImagesResponse,
   CompressedImage,
-  Capture,
 } from '../types/captures';
 import { getApiBaseUrl } from '../utils/api';
 
@@ -92,7 +91,7 @@ export async function compressImage(uri: string): Promise<CompressedImage> {
       uri: result.uri,
       width: result.width,
       height: result.height,
-      size: 0, // Size not available from manipulator, will be calculated on upload
+      // Note: File size calculated during upload, not during compression
     };
   } catch (error) {
     console.error('Image compression failed:', error);
@@ -108,7 +107,7 @@ export async function uploadImageToAPI(
   imageUri: string,
   context: ProofCaptureContext,
   runAIAnalysis: boolean = true,
-  signal?: AbortSignal
+  signal?: globalThis.AbortSignal
 ): Promise<UploadImageResponse> {
   try {
     console.log('📤 [UPLOAD START] imageUri:', imageUri);
@@ -221,7 +220,7 @@ export async function uploadImageToAPI(
 export async function captureAndUploadProofPhoto(
   context: ProofCaptureContext,
   source: PhotoSource,
-  signal?: AbortSignal
+  signal?: globalThis.AbortSignal
 ): Promise<UploadImageResponse | null> {
   try {
     // Launch camera or gallery

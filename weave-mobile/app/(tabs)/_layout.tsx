@@ -170,11 +170,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
       <GestureHandlerRootView style={{ flex: 1 }}>
         {/* Blur Background */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-          <BlurView
-            style={StyleSheet.absoluteFill}
-            blurAmount={32}
-            blurType="dark"
-          />
+          <BlurView style={StyleSheet.absoluteFill} blurAmount={32} blurType="dark" />
           <Animated.View style={[styles.overlayBackground, overlayStyle]} />
         </Pressable>
 
