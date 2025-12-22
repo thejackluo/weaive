@@ -71,31 +71,62 @@ export interface TranscribeOptions {
    * Progress callback for upload
    */
   onProgress?: (progress: number) => void;
+
+  /**
+   * Maximum retry attempts for retryable errors (default: 3)
+   */
+  maxRetries?: number;
+
+  /**
+   * Retry delay in milliseconds (default: 1000ms)
+   */
+  retryDelay?: number;
 }
 
 /**
- * Transcribe audio file
+ * Sleep utility for retry delays
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Transcribe audio file with automatic retry on retryable errors
  * Uploads audio to backend /api/transcribe endpoint
  */
 export async function transcribeAudio(options: TranscribeOptions): Promise<TranscriptionResult> {
-  const { audioUri, language = 'en', captureId, subtaskInstanceId, goalId, onProgress } = options;
+  const {
+    audioUri,
+    language = 'en',
+    captureId,
+    subtaskInstanceId,
+    goalId,
+    onProgress,
+    maxRetries = 3,
+    retryDelay = 1000,
+  } = options;
 
-  try {
-    console.log('[STT_SERVICE] 🎤 Starting transcription:', {
-      audioUri,
-      language,
-      captureId,
-    });
+  // Retry loop for retryable errors
+  let lastError: any;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      console.log('[STT_SERVICE] 🎤 Starting transcription:', {
+        audioUri,
+        language,
+        captureId,
+        attempt: attempt + 1,
+        maxRetries: maxRetries + 1,
+      });
 
-    // Get current user session
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      // Get current user session
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-      throw new Error('Not authenticated');
-    }
+      if (sessionError || !session) {
+        throw new Error('Not authenticated');
+      }
 
     // Prepare multipart form data
     const formData = new FormData();
@@ -225,11 +256,37 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
       xhr.send(formData);
     });
 
-    return await uploadPromise;
-  } catch (error) {
-    console.error('[STT_SERVICE] ❌ Transcription error:', error);
-    throw error;
+      return await uploadPromise;
+    } catch (error: any) {
+      lastError = error;
+
+      // Check if error is retryable
+      const isRetryable = error.retryable === true || error.code === 'NETWORK_ERROR' || error.code === 'UPLOAD_TIMEOUT';
+
+      if (isRetryable && attempt < maxRetries) {
+        // Calculate exponential backoff delay
+        const delay = retryDelay * Math.pow(2, attempt);
+        console.warn(
+          `[STT_SERVICE] ⚠️  Retryable error (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms:`,
+          error.code || error.message
+        );
+        await sleep(delay);
+        continue; // Retry
+      }
+
+      // Non-retryable error or max retries reached
+      if (!isRetryable) {
+        console.error('[STT_SERVICE] ❌ Non-retryable error:', error);
+      } else {
+        console.error(`[STT_SERVICE] ❌ Max retries (${maxRetries + 1}) reached:`, error);
+      }
+
+      throw error;
+    }
   }
+
+  // Should never reach here, but throw last error if we do
+  throw lastError;
 }
 
 /**
