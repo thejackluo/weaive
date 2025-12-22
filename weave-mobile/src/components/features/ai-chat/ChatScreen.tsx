@@ -258,6 +258,7 @@ export default function ChatScreen() {
         {messages.map((message) => (
           <Animated.View
             key={message.id}
+            style={{ width: '100%' }} // ✅ Force full width
             entering={
               message.role === 'user'
                 ? SlideInUp.duration(300).springify()
