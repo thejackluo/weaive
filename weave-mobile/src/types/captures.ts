@@ -153,7 +153,7 @@ export interface CompressedImage {
   uri: string;
   width: number;
   height: number;
-  size: number; // bytes
+  // Note: File size calculated during upload, not during compression
 }
 
 // ============================================================================
