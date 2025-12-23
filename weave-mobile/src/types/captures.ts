@@ -58,6 +58,7 @@ export interface Capture {
   ai_verified: boolean;
   ai_quality_score?: number | null; // 1-5
   created_at: string; // ISO8601
+  signed_url?: string; // Signed URL for image access
 }
 
 // ============================================================================

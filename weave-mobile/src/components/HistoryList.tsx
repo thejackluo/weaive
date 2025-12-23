@@ -15,7 +15,7 @@ interface HistoryListProps {
 }
 
 /**
- * HistoryList - Displays recent user activity (completions, journal entries, goal changes)
+ * HistoryList - Displays recent user activity (bind completions, journal reflections)
  *
  * US-5.5: History Section
  */

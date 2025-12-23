@@ -144,6 +144,7 @@ export function ThreadHomeScreen() {
 
   // Handle bind press
   const handleBindPress = (bind: Bind) => {
+    console.log('[ThreadHome] Navigate to bind:', bind.id);
     router.push(`/(tabs)/binds/${bind.id}`);
   };
 
