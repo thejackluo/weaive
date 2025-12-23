@@ -15,18 +15,23 @@
     "web": "expo start --web",
     "reset": "watchman watch-del-all && rm -rf node_modules && npm install && npm run start:clean",
     "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
+    "@gorhom/bottom-sheet": "^4.6.4",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/blur": "^4.4.1",
     "@react-native-community/netinfo": "11.4.1",
+    "@react-native-community/slider": "5.0.1",
     "@supabase/supabase-js": "^2.88.0",
     "@tanstack/react-query": "^5.90.12",
     "base-64": "^1.0.0",
+    "date-fns": "^4.1.0",
     "expo": "^54.0.30",
     "expo-auth-session": "~7.0.10",
     "expo-av": "~16.0.8",
@@ -62,6 +67,7 @@
     "react-native-worklets-core": "^1.6.2",
     "tailwind-merge": "^3.4.0",
     "tailwind-variants": "^3.2.2",
+    "victory-native": "^41.20.2",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

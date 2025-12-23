@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import {
   View,
   TouchableOpacity,
@@ -21,6 +21,7 @@ import { Text } from '@/design-system';
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Center AI Button Component (Story 6.1)
@@ -196,9 +197,20 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
  * - Center: AI Chat (magical overlay, accessed via center button)
  */
 export default function TabLayout() {
+  const { user, isLoading } = useAuth();
   const [aiChatVisible, setAIChatVisible] = useState(false);
   const [hasUnreadCheckins, setHasUnreadCheckins] = useState(false);
   const insets = useSafeAreaInsets();
+
+  // Auth guard: redirect to login if not authenticated
+  if (!isLoading && !user) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  // Show nothing while loading (prevents flash of content)
+  if (isLoading) {
+    return null;
+  }
 
   // Check for unread check-in conversations (system-initiated)
   const { data: conversations } = useQuery({
@@ -279,6 +291,10 @@ export default function TabLayout() {
         <Tabs.Screen name="design-system-showcase" options={{ href: null }} />
         <Tabs.Screen name="needles" options={{ href: null }} />
         <Tabs.Screen name="sitemap" options={{ href: null }} />
+        <Tabs.Screen name="voice-demo" options={{ href: null }} />
+
+        {/* Progress Routes (Day Detail Pages) */}
+        <Tabs.Screen name="progress/[date]" options={{ href: null }} />
 
         {/* Binds Routes */}
         <Tabs.Screen name="binds/[id]" options={{ href: null }} />
@@ -304,6 +320,7 @@ export default function TabLayout() {
         <Tabs.Screen name="settings/identity" options={{ href: null }} />
         <Tabs.Screen name="settings/subscription" options={{ href: null }} />
         <Tabs.Screen name="settings/reflection" options={{ href: null }} />
+        <Tabs.Screen name="settings/dev-tools" options={{ href: null }} />
       </Tabs>
 
       {/* Center AI Button (elevated above tab bar) */}

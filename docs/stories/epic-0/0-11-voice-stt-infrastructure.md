@@ -5,7 +5,7 @@
 **Story Key:** 0-11-voice-stt-infrastructure
 **Priority:** Must Have (Foundation)
 **Estimate:** 5 story points
-**Status:** ready-for-dev
+**Status:** in-progress
 
 ---
 
@@ -298,6 +298,334 @@ This story establishes the foundation for voice-based features and unblocks:
 
 ---
 
+## Tasks/Subtasks
+
+### Task 1: Database Migration - Audio Storage Enhancement
+- [ ] Create migration `20251221000002_audio_storage_enhancement.sql`
+- [ ] Add `duration_sec` column to `captures` table (INT, nullable)
+- [ ] Consolidate transcript columns: rename `transcript_text` → `content_text` usage pattern
+- [ ] Create `captures` storage bucket (if not exists from Story 0.9)
+- [ ] Set bucket config: private, 25MB limit, audio MIME types
+- [ ] Create RLS policies for captures bucket (folder-based user isolation)
+- [ ] Update `CHECK` constraints for audio type validation
+
+### Task 2: Backend STT Service - Provider Abstraction
+- [ ] Create `app/services/stt/` directory
+- [ ] Implement `base.py` with `STTProvider` abstract class
+- [ ] Define `TranscriptionResult` dataclass
+- [ ] Implement `AssemblyAIProvider` class
+  - [ ] API key from environment
+  - [ ] Upload audio to AssemblyAI
+  - [ ] Poll for transcription completion
+  - [ ] Parse response with confidence score
+  - [ ] Calculate cost ($0.0025/min)
+- [ ] Implement `WhisperProvider` class
+  - [ ] Use OpenAI SDK (already installed)
+  - [ ] Direct transcription (no polling)
+  - [ ] Language detection
+  - [ ] Calculate cost ($0.006/min)
+- [ ] Implement fallback chain logic in `stt_service.py`
+- [ ] Add retry logic (3 attempts, exponential backoff)
+- [ ] Log to `ai_runs` table with provider metadata
+
+### Task 3: API Endpoints - Transcription & Audio Management
+- [ ] Create `app/api/transcribe.py`
+- [ ] Implement `POST /api/transcribe` endpoint
+  - [ ] Accept multipart/form-data (audio file)
+  - [ ] Validate file format and size
+  - [ ] Check rate limits (daily_aggregates)
+  - [ ] Upload to Supabase Storage
+  - [ ] Call STT service with fallback
+  - [ ] Store in captures table
+  - [ ] Return transcript + audio URL
+- [ ] Implement `GET /api/captures/{capture_id}` endpoint
+  - [ ] Fetch from database
+  - [ ] Generate signed URL (1-hour expiration)
+  - [ ] Return with metadata
+- [ ] Implement `DELETE /api/captures/{capture_id}` endpoint
+  - [ ] Verify user ownership
+  - [ ] Delete from Storage
+  - [ ] Delete from Database
+- [ ] Implement `POST /api/captures/{capture_id}/re-transcribe` endpoint
+  - [ ] Check retry count (free first retry)
+  - [ ] Run transcription with optional provider
+  - [ ] Update captures.content_text
+
+### Task 4: Rate Limiting & Cost Tracking
+- [ ] Create migration to add columns to `daily_aggregates`:
+  - `stt_request_count` INT DEFAULT 0
+  - `stt_duration_minutes` DECIMAL DEFAULT 0
+- [ ] Implement rate limit check function
+  - [ ] Query daily_aggregates for today's usage
+  - [ ] Check against limits (50 requests, 300 minutes)
+  - [ ] Return HTTP 429 if exceeded
+- [ ] Implement usage increment function
+  - [ ] Atomic update of daily_aggregates
+  - [ ] Reset at midnight (user's timezone)
+- [ ] Add cost tracking to ai_runs table
+  - [ ] Log provider, duration, cost per request
+  - [ ] Monitor daily spend ($83.33 threshold)
+
+### Task 5: Mobile Audio Recording Service
+- [ ] Install `expo-av` package
+- [ ] Create `src/services/audioRecording.ts`
+  - [ ] Request microphone permissions
+  - [ ] Configure audio mode for recording
+  - [ ] Start/stop/pause recording
+  - [ ] Get recording URI
+  - [ ] Get recording status (duration, metering)
+- [ ] Create `src/hooks/useAudioRecording.ts`
+  - [ ] Manage recording state (idle, recording, paused, stopped)
+  - [ ] Track elapsed time
+  - [ ] Enforce 5-minute limit
+  - [ ] Handle permission errors
+  - [ ] Clean up resources on unmount
+
+### Task 6: Mobile Audio Upload Service
+- [ ] Create `src/services/audioUpload.ts`
+  - [ ] Upload to Supabase Storage
+  - [ ] Generate unique filename
+  - [ ] Track upload progress
+  - [ ] Support cancellation (AbortController)
+- [ ] Create `src/hooks/useAudioUpload.ts` (TanStack Query)
+  - [ ] Mutation for audio upload
+  - [ ] Progress tracking
+  - [ ] Error handling
+  - [ ] Offline queue support
+
+### Task 7: Mobile STT Service
+- [ ] Create `src/services/sttService.ts`
+  - [ ] API client for `/api/transcribe`
+  - [ ] Call with audio file + metadata
+  - [ ] Parse response
+  - [ ] Handle errors
+- [ ] Create `src/hooks/useTranscription.ts` (TanStack Query)
+  - [ ] Mutation for transcription request
+  - [ ] Cache transcripts (1-hour staleTime)
+  - [ ] Offline support (networkMode: 'offlineFirst')
+  - [ ] Invalidate cache on re-transcription
+
+### Task 8: Mobile VoiceRecorder Component
+- [ ] Create `src/components/VoiceRecorder.tsx`
+  - [ ] Circular microphone button (80px)
+  - [ ] 3-button layout (record, cancel, pause)
+  - [ ] Visual states (idle, recording, paused, stopped)
+  - [ ] Elapsed time display (MM:SS)
+  - [ ] 5-minute limit enforcement
+  - [ ] Warning at 4:30
+  - [ ] Auto-stop at 5:00
+  - [ ] Permission handling UI
+- [ ] Use design system components (Button, Text, Card)
+- [ ] Follow NativeWind styling patterns
+
+### Task 9: Mobile AudioWaveform Component
+- [ ] Create `src/components/AudioWaveform.tsx`
+  - [ ] Render 20-30 vertical bars
+  - [ ] Animate bar height based on audio amplitude
+  - [ ] Use expo-av recording status for levels
+  - [ ] Throttle updates to 30fps
+  - [ ] Apply primary gradient color
+  - [ ] Handle recording states (active, paused, stopped)
+- [ ] Optimize for performance (lightweight rendering)
+
+### Task 10: Mobile TranscriptPreview Component
+- [ ] Create `src/components/TranscriptPreview.tsx`
+  - [ ] Display transcript text
+  - [ ] Editable text input
+  - [ ] Confidence score indicator (color-coded)
+  - [ ] Save button
+  - [ ] Re-transcribe button
+- [ ] Use design system Text and Input components
+
+### Task 11: Mobile AudioPlayer Component
+- [ ] Create `src/components/AudioPlayer.tsx`
+  - [ ] Play/pause button
+  - [ ] Seek bar (scrubbing)
+  - [ ] Playback speed controls (1x, 1.5x, 2x)
+  - [ ] Volume control (iOS only)
+  - [ ] Time display (current / total)
+- [ ] Create `src/hooks/useAudioPlayback.ts`
+  - [ ] Manage playback state
+  - [ ] Load audio from signed URL
+  - [ ] Update position
+  - [ ] Handle playback completion
+
+### Task 12: Mobile VoiceRecordSheet Component
+- [ ] Create `src/components/VoiceRecordSheet.tsx`
+  - [ ] Bottom sheet container
+  - [ ] Embed VoiceRecorder
+  - [ ] Show AudioWaveform during recording
+  - [ ] Show upload progress
+  - [ ] Show transcription progress
+  - [ ] Show TranscriptPreview on completion
+- [ ] Handle sheet dismissal (confirm if recording active)
+
+### Task 13: Mobile Rate Limit UI
+- [ ] Create `src/components/VoiceUsageIndicator.tsx`
+  - [ ] Display "X/50 transcriptions used today"
+  - [ ] Fetch usage from daily_aggregates
+  - [ ] Update after each transcription
+  - [ ] Show warning at 80% (yellow)
+  - [ ] Show error at 100% (red)
+  - [ ] Display reset time
+- [ ] Integrate into VoiceRecorder component
+
+### Task 14: Mobile Error Handling
+- [ ] Create error handling utilities in `src/services/sttService.ts`
+  - [ ] Map HTTP errors to error codes
+  - [ ] Create user-friendly error messages
+  - [ ] Implement retry logic
+- [ ] Create error UI components
+  - [ ] Error banner with retry button
+  - [ ] Permission denial deep link to Settings
+  - [ ] Offline queue indicator
+- [ ] Implement offline queueing
+  - [ ] Store failed uploads in AsyncStorage
+  - [ ] Retry on connection restore
+  - [ ] Show pending count in UI
+
+### Task 15: Backend Unit Tests
+- [ ] Test `STTProvider` abstraction (`test_stt_base.py`)
+  - [ ] Mock providers
+  - [ ] Test abstract methods
+- [ ] Test `AssemblyAIProvider` (`test_assemblyai_provider.py`)
+  - [ ] Mock API responses
+  - [ ] Test upload + poll flow
+  - [ ] Test cost calculation
+  - [ ] Test error handling
+- [ ] Test `WhisperProvider` (`test_whisper_provider.py`)
+  - [ ] Mock OpenAI API
+  - [ ] Test direct transcription
+  - [ ] Test language detection
+  - [ ] Test cost calculation
+- [ ] Test fallback chain (`test_stt_service.py`)
+  - [ ] AssemblyAI success
+  - [ ] AssemblyAI fail → Whisper success
+  - [ ] Both fail → store audio only
+- [ ] Test rate limiting (`test_rate_limiting.py`)
+  - [ ] Check limits
+  - [ ] Increment counters
+  - [ ] Reset at midnight
+- [ ] Coverage target: 80%+
+
+### Task 16: Backend Integration Tests
+- [ ] Test audio upload flow (`test_audio_upload.py`)
+  - [ ] Upload to Storage
+  - [ ] Create captures record
+  - [ ] Verify RLS isolation
+- [ ] Test transcription flow (`test_transcription_integration.py`)
+  - [ ] Upload audio
+  - [ ] Transcribe with mock STT
+  - [ ] Store transcript
+  - [ ] Verify cost tracking
+- [ ] Test audio retrieval (`test_audio_retrieval.py`)
+  - [ ] Fetch capture
+  - [ ] Generate signed URL
+  - [ ] Verify expiration
+- [ ] Test audio deletion (`test_audio_deletion.py`)
+  - [ ] Delete from Storage
+  - [ ] Delete from Database
+  - [ ] Verify cascading cleanup
+
+### Task 17: Mobile E2E Tests
+- [ ] Test voice recording flow (`VoiceRecorder.test.tsx`)
+  - [ ] Start recording
+  - [ ] Stop recording
+  - [ ] Cancel recording
+  - [ ] Max duration enforcement
+- [ ] Test transcription flow (`useTranscription.test.ts`)
+  - [ ] Upload audio
+  - [ ] Mock transcription API
+  - [ ] Display transcript
+  - [ ] Edit transcript
+- [ ] Test playback controls (`AudioPlayer.test.tsx`)
+  - [ ] Play/pause
+  - [ ] Seek
+  - [ ] Speed control
+- [ ] Test rate limiting UI (`VoiceUsageIndicator.test.tsx`)
+  - [ ] Display usage count
+  - [ ] Show warnings
+  - [ ] Show limit error
+- [ ] Test offline queueing (`audioUpload.test.ts`)
+  - [ ] Queue failed upload
+  - [ ] Retry on connection
+  - [ ] Display pending count
+
+### Task 18: Documentation & Manual Testing
+- [ ] Update CLAUDE.md with STT patterns
+- [ ] Document AssemblyAI + Whisper integration
+- [ ] Document rate limiting logic
+- [ ] Manual testing checklist:
+  - [ ] iOS simulator recording
+  - [ ] Android emulator recording
+  - [ ] Microphone permissions
+  - [ ] Recording quality
+  - [ ] Transcription accuracy
+  - [ ] Waveform animation
+  - [ ] Playback controls
+  - [ ] Rate limit warnings
+  - [ ] Offline queueing
+  - [ ] Cross-user isolation
+
+---
+
+## Dev Agent Record
+
+### Implementation Plan
+
+**Phase 1: Database & Storage Foundation**
+- Create migration for audio storage enhancements
+- Add duration_sec column
+- Create captures bucket with RLS policies
+- Update CHECK constraints
+
+**Phase 2: Backend STT Service**
+- Implement provider abstraction (base.py)
+- Implement AssemblyAI provider
+- Implement Whisper provider
+- Implement fallback chain
+- Add cost tracking and rate limiting
+
+**Phase 3: Backend API Endpoints**
+- POST /api/transcribe
+- GET /api/captures/{capture_id}
+- DELETE /api/captures/{capture_id}
+- POST /api/captures/{capture_id}/re-transcribe
+
+**Phase 4: Mobile Recording Infrastructure**
+- Audio recording service
+- Audio upload service
+- STT service client
+- TanStack Query hooks
+
+**Phase 5: Mobile UI Components**
+- VoiceRecorder component
+- AudioWaveform component
+- TranscriptPreview component
+- AudioPlayer component
+- VoiceRecordSheet component
+
+**Phase 6: Testing & Validation**
+- Backend unit tests (80%+ coverage)
+- Backend integration tests
+- Mobile E2E tests
+- Manual testing on iOS/Android
+
+### Debug Log
+<!-- Record implementation decisions, blockers, and workarounds here -->
+
+### Completion Notes
+<!-- Summary of what was implemented, tests added, and any deviations from plan -->
+
+---
+
+## File List
+<!-- Auto-generated list of all files created/modified during implementation -->
+
+---
+
+## Change Log
+<!-- Auto-generated summary of changes made to the story during implementation -->
 ## Developer Context
 
 ### Technical Requirements
@@ -850,6 +1178,9 @@ supabase/migrations/
 
 ---
 
+**Status:** 🚀 **IN PROGRESS**
+
+Implementation started: 2025-12-21
 ## Changelog
 
 | Date | Author | Changes |

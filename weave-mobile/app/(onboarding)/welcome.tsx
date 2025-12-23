@@ -66,6 +66,16 @@ export default function WelcomeScreen() {
   };
 
   /**
+   * Handles the "Voice Demo" button press
+   *
+   * Navigates to the voice/STT demo screen for testing Story 0.11 components
+   */
+  const handleVoiceDemo = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/voice-demo');
+  };
+
+  /**
    * Handles the "Skip to Main App" button press (DEV TESTING ONLY)
    *
    * Bypasses onboarding and goes directly to the main app tabs
@@ -187,7 +197,7 @@ export default function WelcomeScreen() {
             width: '100%',
             justifyContent: 'center',
             alignItems: 'center',
-            marginBottom: 12,
+            marginBottom: 8,
           }}
         >
           <Text
@@ -195,6 +205,34 @@ export default function WelcomeScreen() {
             style={{ color: '#262626', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
           >
             🎨 View Design System
+          </Text>
+        </Pressable>
+
+        {/* Voice Demo Button - Dev Testing Tool (Story 0.11) */}
+        <Pressable
+          className={({ pressed }) =>
+            `bg-purple-500 h-11 rounded-lg w-full justify-center items-center ${
+              pressed ? 'bg-purple-600 scale-[0.98]' : ''
+            }`
+          }
+          onPress={handleVoiceDemo}
+          accessibilityRole="button"
+          accessible={true}
+          style={{
+            backgroundColor: '#a855f7',
+            height: 44,
+            borderRadius: 8,
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 12,
+          }}
+        >
+          <Text
+            className="text-white text-sm font-medium tracking-wider"
+            style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
+          >
+            🎤 Voice Demo (Story 0.11)
           </Text>
         </Pressable>
 

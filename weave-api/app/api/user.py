@@ -1,6 +1,7 @@
 """User API endpoints (Story 0.3: Authentication Flow, Story 1.5: Profile Creation, Story 6.1: Push Notifications)"""
 
 import logging
+from datetime import date, timedelta
 from typing import Optional
 from uuid import UUID
 
@@ -205,13 +206,19 @@ async def create_profile(
         )
 
 
+<<<<<<< HEAD
 @router.post("/push-token", status_code=status.HTTP_200_OK)
 async def save_push_token(
     request: PushTokenRequest,
+=======
+@router.get("/stats")
+async def get_user_stats(
+>>>>>>> origin/main
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
     """
+<<<<<<< HEAD
     Save Expo push token for the authenticated user (Story 6.1).
 
     This endpoint saves the device's Expo push token to enable server-initiated
@@ -274,11 +281,64 @@ async def save_push_token(
 
         if not profile_result.data:
             logger.error(f"❌ User profile not found for auth_user_id: {auth_user_id}")
+=======
+    Get computed user statistics (US-5.1, US-5.4: Level, Streak, Character State).
+
+    Returns:
+    - data: User stats object
+    - meta: Metadata with timestamp
+
+    Data format:
+    {
+      "level": 5,                         // Computed from total active days
+      "current_streak": 12,               // Consecutive days with completions
+      "weave_character_state": "thread",  // "strand" | "thread" | "weave"
+      "total_completions": 145,           // Total subtask completions
+      "total_active_days": 42             // Total days with active_day_with_proof=true
+    }
+
+    Character state mapping:
+    - Level 1-3: "strand" (simple line)
+    - Level 4-7: "thread" (woven lines)
+    - Level 8+: "weave" (complex pattern)
+    """
+    if not supabase:
+        logger.error("❌ Supabase client not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not configured",
+        )
+
+    # Extract user ID from JWT
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field (user ID)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    logger.info(f"[USER_STATS] Request from auth_user_id: {auth_user_id}")
+
+    try:
+        # Get user_profile.id from auth_user_id (RLS pattern)
+        user_profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+
+        if not user_profile_response.data:
+            logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
+>>>>>>> origin/main
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User profile not found",
             )
 
+<<<<<<< HEAD
         user_id = profile_result.data['id']
 
         # Update push token
@@ -292,13 +352,91 @@ async def save_push_token(
         return {
             "message": "Push token saved successfully",
             "user_id": user_id
+=======
+        user_id = user_profile_response.data["id"]
+        logger.debug(f"✅ Resolved user_id: {user_id} for auth_user_id: {auth_user_id}")
+
+        # Fetch all daily_aggregates to calculate stats
+        aggregates_response = (
+            supabase.table("daily_aggregates")
+            .select("local_date, active_day_with_proof, completed_count")
+            .eq("user_id", user_id)
+            .order("local_date", desc=False)
+            .execute()
+        )
+
+        aggregates = aggregates_response.data or []
+        logger.info(f"📊 Found {len(aggregates)} days of data for user stats")
+
+        # Calculate total_active_days (days with active_day_with_proof=true)
+        total_active_days = sum(1 for agg in aggregates if agg.get("active_day_with_proof"))
+
+        # Calculate level based on total_active_days
+        # Simple formula: level = total_active_days // 10 + 1 (every 10 active days = 1 level)
+        level = (total_active_days // 10) + 1 if total_active_days > 0 else 1
+
+        # Calculate total_completions (sum of all completed_count)
+        total_completions = sum(agg.get("completed_count", 0) for agg in aggregates)
+
+        # Calculate current_streak (consecutive days from today backwards)
+        current_streak = 0
+        today = date.today()
+
+        # Create a set of active dates for fast lookup
+        active_dates = {
+            agg["local_date"]
+            for agg in aggregates
+            if agg.get("active_day_with_proof")
+        }
+
+        # Count backwards from today
+        for i in range(len(aggregates) + 1):
+            check_date = (today - timedelta(days=i)).isoformat()
+            if check_date in active_dates:
+                current_streak += 1
+            else:
+                # Streak broken
+                break
+
+        # Determine weave_character_state based on level
+        if level <= 3:
+            character_state = "strand"
+        elif level <= 7:
+            character_state = "thread"
+        else:
+            character_state = "weave"
+
+        logger.info(
+            f"✅ User stats computed: level={level}, streak={current_streak}, "
+            f"character={character_state}, completions={total_completions}"
+        )
+
+        return {
+            "data": {
+                "level": level,
+                "current_streak": current_streak,
+                "weave_character_state": character_state,
+                "total_completions": total_completions,
+                "total_active_days": total_active_days,
+            },
+            "meta": {
+                "timestamp": today.isoformat(),
+            },
+>>>>>>> origin/main
         }
 
     except HTTPException:
         raise
     except Exception as e:
+<<<<<<< HEAD
         logger.error(f"❌ Error saving push token: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to save push token: {str(e)}",
+=======
+        logger.error(f"❌ Error fetching user stats: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch user stats",
+>>>>>>> origin/main
         )

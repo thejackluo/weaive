@@ -6,20 +6,37 @@ This directory contains all testing-related documentation for the Weave project.
 
 ```
 docs/testing/
-├── README.md                    # This file
-├── test-design.md               # Overall testing strategy and principles
-├── atdd/                        # Story-level ATDD checklists
+├── README.md                           # This file
+├── test-design.md                      # Overall testing strategy and principles
+├── voice-demo-quick-start.md           # Quick start guide for voice/STT testing (Story 0.11)
+├── voice-stt-manual-testing-guide.md   # Comprehensive voice/STT manual testing (Story 0.11)
+├── atdd/                               # Story-level ATDD checklists
 │   ├── atdd-checklist-story-1.6.md
 │   ├── atdd-checklist-story-1.7.md
 │   ├── atdd-checklist-story-2.1.md
 │   └── atdd-checklist-story-4.1.md
-└── epic/                        # Epic-level test design documents
+└── epic/                               # Epic-level test design documents
     ├── test-design-epic-0.md
     ├── test-design-epic-1.md
     └── test-design-epic-4.md
 ```
 
 ## File Types
+
+### Manual Testing Guides
+**Format:** `{feature}-{test-type}.md`
+**Purpose:** Interactive testing guides for manual QA and feature verification
+**Contains:**
+- Quick start guides (5-10 minutes)
+- Comprehensive test scenarios
+- Prerequisites and setup instructions
+- Troubleshooting tips
+
+**Current Guides:**
+- **voice-demo-quick-start.md** - 5-minute voice/STT verification
+- **voice-stt-manual-testing-guide.md** - Full voice/STT test suite (25+ scenarios)
+
+**When to use:** During feature development and before release to manually verify functionality
 
 ### ATDD Checklists (`atdd/`)
 **Format:** `atdd-checklist-story-{X.X}.md`
