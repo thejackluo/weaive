@@ -13,11 +13,8 @@
  */
 
 import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, RefreshControl, Pressable } from 'react-native';
+import { View, FlatList, StyleSheet, RefreshControl, Pressable, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
-import { Text } from '@/design-system/components/Text/Text';
-import { Card } from '@/design-system/components/Card/Card';
 import { AudioPlayer } from './AudioPlayer';
 import { useRecordingHistory, RecordingCapture } from '@/hooks/useRecordingHistory';
 
@@ -46,7 +43,6 @@ export function RecordingHistory({
   onRecordingPress,
   scrollEnabled = true,
 }: RecordingHistoryProps) {
-  const { colors, spacing } = useTheme();
   const { data: recordings, isLoading, error, refetch } = useRecordingHistory();
 
   const [expandedRecordingId, setExpandedRecordingId] = useState<string | null>(null);
@@ -116,20 +112,17 @@ export function RecordingHistory({
    */
   if (!isLoading && (!recordings || recordings.length === 0)) {
     return (
-      <Card variant="glass" style={{ padding: spacing[6] }}>
+      <View style={[styles.card, { padding: 24 }]}>
         <View style={styles.emptyState}>
-          <MaterialIcons name="mic-none" size={64} color={colors.text.secondary} />
-          <Text variant="textLg" style={{ color: colors.text.primary, marginTop: spacing[4] }}>
+          <MaterialIcons name="mic-none" size={64} color="#a1a1aa" />
+          <Text style={{ fontSize: 18, color: '#fafafa', marginTop: 16 }}>
             No recordings yet
           </Text>
-          <Text
-            variant="textBase"
-            style={{ color: colors.text.secondary, marginTop: spacing[2], textAlign: 'center' }}
-          >
+          <Text style={{ fontSize: 16, color: '#a1a1aa', marginTop: 8, textAlign: 'center' }}>
             Start recording to see your audio history here
           </Text>
         </View>
-      </Card>
+      </View>
     );
   }
 
@@ -138,23 +131,17 @@ export function RecordingHistory({
    */
   if (error) {
     return (
-      <Card variant="glass" style={{ padding: spacing[6] }}>
+      <View style={[styles.card, { padding: 24 }]}>
         <View style={styles.emptyState}>
-          <MaterialIcons name="error" size={64} color={colors.text.error} />
-          <Text
-            variant="textLg"
-            style={{ color: colors.text.error, marginTop: spacing[4], textAlign: 'center' }}
-          >
+          <MaterialIcons name="error" size={64} color="#ef4444" />
+          <Text style={{ fontSize: 18, color: '#ef4444', marginTop: 16, textAlign: 'center' }}>
             Failed to load recordings
           </Text>
-          <Text
-            variant="textBase"
-            style={{ color: colors.text.secondary, marginTop: spacing[2], textAlign: 'center' }}
-          >
+          <Text style={{ fontSize: 16, color: '#a1a1aa', marginTop: 8, textAlign: 'center' }}>
             {error instanceof Error ? error.message : 'Unknown error occurred'}
           </Text>
         </View>
-      </Card>
+      </View>
     );
   }
 
@@ -170,7 +157,7 @@ export function RecordingHistory({
       : 'No transcript available';
 
     return (
-      <Card variant="glass" style={{ padding: spacing[4], marginBottom: spacing[4] }}>
+      <View style={[styles.card, { padding: 16, marginBottom: 16 }]}>
         <Pressable
           onPress={() => {
             toggleExpand(item.id);
@@ -182,25 +169,22 @@ export function RecordingHistory({
           {/* Header */}
           <View style={styles.recordingHeader}>
             <View style={styles.recordingHeaderLeft}>
-              <MaterialIcons name="mic" size={20} color={colors.accent[500]} />
-              <Text
-                variant="textSm"
-                style={{ color: colors.text.secondary, marginLeft: spacing[2] }}
-              >
+              <MaterialIcons name="mic" size={20} color="#3b82f6" />
+              <Text style={{ fontSize: 14, color: '#a1a1aa', marginLeft: 8 }}>
                 {formatDate(item.created_at)} at {formatTime(item.created_at)}
               </Text>
             </View>
-            <Text variant="textSm" style={{ color: colors.text.secondary }}>
+            <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               {formatDuration(item.duration_sec)}
             </Text>
           </View>
 
           {/* Transcript preview */}
           <Text
-            variant="textBase"
             style={{
-              color: hasTranscript ? colors.text.primary : colors.text.secondary,
-              marginTop: spacing[3],
+              fontSize: 16,
+              color: hasTranscript ? '#fafafa' : '#a1a1aa',
+              marginTop: 12,
               fontStyle: hasTranscript ? 'normal' : 'italic',
             }}
             numberOfLines={isExpanded ? undefined : 2}
@@ -210,17 +194,17 @@ export function RecordingHistory({
 
           {/* Confidence badge (if transcribed) */}
           {hasTranscript && item.confidence_score !== undefined && (
-            <View style={[styles.confidenceBadge, { marginTop: spacing[3] }]}>
+            <View style={[styles.confidenceBadge, { marginTop: 12 }]}>
               <MaterialIcons
                 name={item.confidence_score >= 0.9 ? 'check-circle' : 'warning'}
                 size={14}
-                color={item.confidence_score >= 0.9 ? colors.text.success : colors.text.warning}
+                color={item.confidence_score >= 0.9 ? '#10b981' : '#f59e0b'}
               />
               <Text
-                variant="textXs"
                 style={{
-                  color: item.confidence_score >= 0.9 ? colors.text.success : colors.text.warning,
-                  marginLeft: spacing[2],
+                  fontSize: 12,
+                  color: item.confidence_score >= 0.9 ? '#10b981' : '#f59e0b',
+                  marginLeft: 8,
                 }}
               >
                 {(item.confidence_score * 100).toFixed(0)}% confidence
@@ -232,38 +216,35 @@ export function RecordingHistory({
 
         {/* Audio player (shown when expanded) */}
         {isExpanded && (
-          <View style={{ marginTop: spacing[4] }}>
+          <View style={{ marginTop: 16 }}>
             {getAudioUrl(item) ? (
               <AudioPlayer audioUri={getAudioUrl(item)!} showSpeedControl={true} />
             ) : (
               <View
                 style={{
-                  padding: spacing[4],
-                  backgroundColor: colors.background.secondary,
+                  padding: 16,
+                  backgroundColor: '#18181b',
                   borderRadius: 8,
                 }}
               >
-                <Text
-                  variant="textSm"
-                  style={{ color: colors.text.secondary, textAlign: 'center' }}
-                >
+                <Text style={{ fontSize: 14, color: '#a1a1aa', textAlign: 'center' }}>
                   Audio URL not available. Please refresh to reload.
                 </Text>
               </View>
             )}
           </View>
         )}
-      </Card>
+      </View>
     );
   };
 
   // Header component
   const listHeader = (
-    <View style={{ marginBottom: spacing[4] }}>
-      <Text variant="textLg" style={{ fontWeight: '600', color: colors.text.primary }}>
+    <View style={{ marginBottom: 16 }}>
+      <Text style={{ fontSize: 18, fontWeight: '600', color: '#fafafa' }}>
         Recording History
       </Text>
-      <Text variant="textSm" style={{ color: colors.text.secondary, marginTop: spacing[2] }}>
+      <Text style={{ fontSize: 14, color: '#a1a1aa', marginTop: 8 }}>
         {recordings?.length || 0} recordings
       </Text>
     </View>
@@ -287,12 +268,12 @@ export function RecordingHistory({
       data={recordings}
       renderItem={renderRecording}
       keyExtractor={(item) => item.id}
-      contentContainerStyle={{ paddingBottom: spacing[6] }}
+      contentContainerStyle={{ paddingBottom: 24 }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
           onRefresh={handleRefresh}
-          tintColor={colors.accent[500]}
+          tintColor="#3b82f6"
         />
       }
       ListHeaderComponent={listHeader}
@@ -301,6 +282,12 @@ export function RecordingHistory({
 }
 
 const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#18181b',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#27272a',
+  },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',

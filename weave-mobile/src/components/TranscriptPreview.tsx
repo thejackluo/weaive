@@ -25,12 +25,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, TextInput, StyleSheet, ActivityIndicator, Text, Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
-import { Text } from '@/design-system/components/Text/Text';
-import { Button } from '@/design-system/components/Button/Button';
-import { Card } from '@/design-system/components/Card/Card';
 
 export interface TranscriptPreviewProps {
   /**
@@ -88,8 +84,6 @@ export function TranscriptPreview({
   onCancel,
   maxLength = 2000,
 }: TranscriptPreviewProps) {
-  const { colors, spacing, radius } = useTheme();
-
   const [editedText, setEditedText] = useState(transcript);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -135,9 +129,9 @@ export function TranscriptPreview({
    * Get confidence color based on score
    */
   const getConfidenceColor = (): string => {
-    if (confidence >= 0.9) return colors.text.success;
-    if (confidence >= 0.7) return colors.text.warning;
-    return colors.text.error;
+    if (confidence >= 0.9) return '#10b981';
+    if (confidence >= 0.7) return '#f59e0b';
+    return '#ef4444';
   };
 
   /**
@@ -166,9 +160,9 @@ export function TranscriptPreview({
   };
 
   return (
-    <Card variant="glass" style={{ padding: spacing[4] }}>
+    <View style={[styles.card, { padding: 16 }]}>
       {/* Header with confidence and provider */}
-      <View style={[styles.header, { marginBottom: spacing[3] }]}>
+      <View style={[styles.header, { marginBottom: 12 }]}>
         <View style={styles.headerLeft}>
           {/* Confidence indicator */}
           <View style={styles.confidenceIndicator}>
@@ -177,7 +171,7 @@ export function TranscriptPreview({
               size={16}
               color={getConfidenceColor()}
             />
-            <Text variant="textSm" style={{ color: getConfidenceColor(), marginLeft: spacing[2] }}>
+            <Text style={{ fontSize: 14, color: getConfidenceColor(), marginLeft: 8 }}>
               {getConfidenceLabel()} confidence
             </Text>
           </View>
@@ -187,15 +181,15 @@ export function TranscriptPreview({
             style={[
               styles.providerBadge,
               {
-                backgroundColor: colors.neutral[700],
-                paddingHorizontal: spacing[3],
-                paddingVertical: spacing[2],
-                borderRadius: radius.sm,
-                marginLeft: spacing[3],
+                backgroundColor: '#3f3f46',
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 4,
+                marginLeft: 12,
               },
             ]}
           >
-            <Text variant="textXs" style={{ color: colors.text.secondary }}>
+            <Text style={{ fontSize: 12, color: '#a1a1aa' }}>
               {getProviderName()}
             </Text>
           </View>
@@ -203,9 +197,9 @@ export function TranscriptPreview({
 
         {/* Character count */}
         <Text
-          variant="textXs"
           style={{
-            color: editedText.length > maxLength ? colors.text.error : colors.text.secondary,
+            fontSize: 12,
+            color: editedText.length > maxLength ? '#ef4444' : '#a1a1aa',
           }}
         >
           {editedText.length}/{maxLength}
@@ -214,9 +208,9 @@ export function TranscriptPreview({
 
       {/* Transcript text */}
       {isLoading ? (
-        <View style={[styles.loadingContainer, { paddingVertical: spacing[8] }]}>
-          <ActivityIndicator size="large" color={colors.accent[500]} />
-          <Text variant="textBase" style={{ color: colors.text.secondary, marginTop: spacing[4] }}>
+        <View style={[styles.loadingContainer, { paddingVertical: 32 }]}>
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text style={{ fontSize: 16, color: '#a1a1aa', marginTop: 16 }}>
             Transcribing audio...
           </Text>
         </View>
@@ -225,17 +219,17 @@ export function TranscriptPreview({
           style={[
             styles.textInput,
             {
-              borderColor: colors.border.muted,
-              borderRadius: radius.md,
-              color: colors.text.primary,
-              padding: spacing[4],
+              borderColor: '#27272a',
+              borderRadius: 8,
+              color: '#fafafa',
+              padding: 16,
               minHeight: 120,
             },
           ]}
           value={editedText}
           onChangeText={handleTextChange}
           placeholder="Transcript will appear here..."
-          placeholderTextColor={colors.text.secondary}
+          placeholderTextColor="#a1a1aa"
           multiline
           editable={isEditable}
           maxLength={maxLength}
@@ -244,20 +238,43 @@ export function TranscriptPreview({
 
       {/* Action buttons */}
       {isEditable && hasChanges && !isLoading && (
-        <View style={[styles.actions, { marginTop: spacing[4], gap: spacing[3] }]}>
-          <Button variant="secondary" size="sm" onPress={handleCancel} style={{ flex: 1 }}>
-            Cancel
-          </Button>
-          <Button variant="primary" size="sm" onPress={handleSave} style={{ flex: 1 }}>
-            Save
-          </Button>
+        <View style={[styles.actions, { marginTop: 16, gap: 12 }]}>
+          <Pressable
+            onPress={handleCancel}
+            style={[styles.button, { flex: 1, backgroundColor: '#27272a' }]}
+          >
+            <Text style={{ fontSize: 14, color: '#fafafa', fontWeight: '600' }}>
+              Cancel
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={handleSave}
+            style={[styles.button, { flex: 1, backgroundColor: '#3b82f6' }]}
+          >
+            <Text style={{ fontSize: 14, color: '#ffffff', fontWeight: '600' }}>
+              Save
+            </Text>
+          </Pressable>
         </View>
       )}
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#18181b',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#27272a',
+  },
+  button: {
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

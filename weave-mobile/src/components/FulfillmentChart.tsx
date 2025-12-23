@@ -17,9 +17,9 @@ import {
   PanResponder,
   Modal,
   Dimensions,
+  Text,
+  TouchableOpacity,
 } from 'react-native';
-import { Text, Card, Button } from '@/design-system';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useFulfillmentData } from '@/hooks/useFulfillmentData';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,7 +34,6 @@ interface FulfillmentChartProps {
 
 export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentChartProps) {
   const router = useRouter();
-  const { colors } = useTheme();
   const { data, isLoading, isError, error } = useFulfillmentData(timeframe);
 
   // State for interactions
@@ -124,19 +123,19 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
 
   if (isLoading && !FORCE_SAMPLE_DATA) {
     return (
-      <Card variant="glass" style={styles.card}>
-        <ActivityIndicator size="large" color={colors.accent[500]} />
-      </Card>
+      <View style={[styles.card, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 24, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
     );
   }
 
   if (isError) {
     return (
-      <Card variant="glass" style={styles.card}>
-        <Text variant="textSm" style={{ color: colors.text.error }}>
+      <View style={[styles.card, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 24, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+        <Text style={{ fontSize: 14, color: '#ef4444' }}>
           Error loading fulfillment data: {error?.message}
         </Text>
-      </Card>
+      </View>
     );
   }
 
@@ -259,11 +258,11 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
 
   return (
     <Pressable onPress={handleDismissTooltip}>
-      <Card variant="glass" style={styles.card}>
+      <View style={[styles.card, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 24, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
         {/* Header Section */}
         <View style={styles.headerSection}>
           <View style={styles.titleAndDropdownRow}>
-            <Text variant="textLg" weight="semibold">
+            <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
               Average Fulfillment
             </Text>
 
@@ -273,34 +272,34 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                 <Pressable
                   style={[
                     styles.timeframeDropdown,
-                    { backgroundColor: colors.background.elevated },
+                    { backgroundColor: '#18181b' },
                   ]}
                   onPress={() => {
                     Haptics.selectionAsync();
                     setShowTimeframeDropdown(!showTimeframeDropdown);
                   }}
                 >
-                  <Text variant="textSm" style={{ color: colors.text.secondary }}>
+                  <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                     {timeframe}
                   </Text>
                   <Ionicons
                     name={showTimeframeDropdown ? 'chevron-up' : 'chevron-down'}
                     size={14}
-                    color={colors.text.secondary}
+                    color="#a1a1aa"
                   />
                 </Pressable>
 
                 {/* Dropdown Menu */}
                 {showTimeframeDropdown && (
                   <View
-                    style={[styles.dropdownMenu, { backgroundColor: colors.background.elevated }]}
+                    style={[styles.dropdownMenu, { backgroundColor: '#18181b' }]}
                   >
                     {timeframeOptions.map((option) => (
                       <Pressable
                         key={option}
                         style={[
                           styles.dropdownItem,
-                          timeframe === option && { backgroundColor: colors.accent[500] },
+                          timeframe === option && { backgroundColor: '#3b82f6' },
                         ]}
                         onPress={() => {
                           Haptics.selectionAsync();
@@ -309,11 +308,10 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                         }}
                       >
                         <Text
-                          variant="textSm"
-                          weight={timeframe === option ? 'semibold' : 'regular'}
                           style={{
-                            color:
-                              timeframe === option ? colors.text.primary : colors.text.secondary,
+                            fontSize: 14,
+                            fontWeight: timeframe === option ? '600' : '400',
+                            color: timeframe === option ? '#ffffff' : '#a1a1aa',
                           }}
                         >
                           {option}
@@ -328,26 +326,26 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
 
           {/* Average Score Display */}
           <View style={styles.averageContainer}>
-            <Text variant="displayLg" weight="bold" style={styles.averageText}>
+            <Text style={[styles.averageText, { fontSize: 64, fontWeight: 'bold', color: '#ffffff' }]}>
               {averageFulfillment.toFixed(1)}
             </Text>
           </View>
         </View>
 
         {/* Separator line */}
-        <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
+        <View style={[styles.separator, { backgroundColor: '#27272A' }]} />
 
         {/* Chart with Y-axis */}
         <View style={styles.chartContainer}>
           {/* Y-axis labels */}
           <View style={styles.yAxis}>
-            <Text variant="textXs" style={{ color: colors.text.muted }}>
+            <Text style={{ fontSize: 12, color: '#71717a' }}>
               10
             </Text>
-            <Text variant="textXs" style={{ color: colors.text.muted }}>
+            <Text style={{ fontSize: 12, color: '#71717a' }}>
               5
             </Text>
-            <Text variant="textXs" style={{ color: colors.text.muted }}>
+            <Text style={{ fontSize: 12, color: '#71717a' }}>
               0
             </Text>
           </View>
@@ -373,7 +371,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                         <View
                           style={[
                             styles.indicatorLine,
-                            { backgroundColor: colors.text.muted, opacity: 0.5 },
+                            { backgroundColor: '#71717a', opacity: 0.5 },
                           ]}
                         />
                       )}
@@ -381,7 +379,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                       {/* Tooltip */}
                       {isSelected && (
                         <Pressable
-                          style={[styles.tooltip, { backgroundColor: colors.background.elevated }]}
+                          style={[styles.tooltip, { backgroundColor: '#18181b' }]}
                           onPress={() => handleTooltipPress(day.date, day.fulfillment_score)}
                         >
                           {/* Interactive icon indicator */}
@@ -389,16 +387,14 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                             <Ionicons
                               name="arrow-forward-outline"
                               size={12}
-                              color={colors.text.muted}
+                              color="#71717a"
                               style={{ transform: [{ rotate: '-45deg' }] }}
                             />
                           </View>
 
                           <Text
-                            variant="textSm"
-                            weight="semibold"
                             numberOfLines={1}
-                            style={{ color: colors.text.primary }}
+                            style={{ fontSize: 14, fontWeight: '600', color: '#ffffff' }}
                           >
                             {new Date(day.date).toLocaleDateString('en-US', {
                               month: 'short',
@@ -406,9 +402,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                             })}
                           </Text>
                           <Text
-                            variant="textLg"
-                            weight="bold"
-                            style={{ color: colors.text.muted, marginTop: 4 }}
+                            style={{ fontSize: 18, fontWeight: 'bold', color: '#71717a', marginTop: 4 }}
                           >
                             {day.fulfillment_score.toFixed(1)}
                           </Text>
@@ -422,7 +416,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                             styles.bar,
                             {
                               height: `${scoreHeight}%`,
-                              backgroundColor: isSelected ? colors.violet[300] : colors.violet[400],
+                              backgroundColor: isSelected ? '#c4b5fd' : '#a78bfa',
                             },
                           ]}
                         />
@@ -440,8 +434,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                 .map((labelIndex) => (
                   <Text
                     key={displayData[labelIndex].date}
-                    variant="textXs"
-                    style={{ color: colors.text.muted }}
+                    style={{ fontSize: 12, color: '#71717a' }}
                   >
                     {formatDateLabel(displayData[labelIndex].date)}
                   </Text>
@@ -451,10 +444,10 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
         </View>
 
         {/* AI Insight */}
-        <View style={[styles.insightBanner, { backgroundColor: colors.background.elevated }]}>
+        <View style={[styles.insightBanner, { backgroundColor: '#18181b' }]}>
           <View style={styles.insightContent}>
-            <Ionicons name="sparkles" size={20} color={colors.violet[400]} />
-            <Text variant="textSm" style={{ flex: 1, marginLeft: 8, color: colors.text.secondary }}>
+            <Ionicons name="sparkles" size={20} color="#a78bfa" />
+            <Text style={{ flex: 1, marginLeft: 8, fontSize: 14, color: '#a1a1aa' }}>
               AI insights coming soon
             </Text>
           </View>
@@ -469,12 +462,12 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
         >
           <Pressable style={styles.modalOverlay} onPress={() => setShowDayDetailsModal(false)}>
             <Pressable
-              style={[styles.modalContent, { backgroundColor: colors.background.elevated }]}
+              style={[styles.modalContent, { backgroundColor: '#18181b' }]}
               onPress={(e) => e.stopPropagation()}
             >
               {selectedDayData && (
                 <>
-                  <Text variant="textLg" weight="bold" style={styles.modalDate}>
+                  <Text style={[styles.modalDate, { fontSize: 18, fontWeight: 'bold', color: '#ffffff' }]}>
                     {new Date(selectedDayData.date).toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
@@ -483,27 +476,28 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                   </Text>
 
                   <View style={styles.modalSection}>
-                    <Text variant="textBase" style={{ color: colors.text.secondary }}>
+                    <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                       Fulfillment Score
                     </Text>
-                    <Text variant="displayMd" weight="bold" style={styles.modalPercentage}>
+                    <Text style={[styles.modalPercentage, { fontSize: 28, fontWeight: 'bold', color: '#ffffff' }]}>
                       {selectedDayData.fulfillmentScore.toFixed(1)}
                     </Text>
                   </View>
 
-                  <Button
+                  <TouchableOpacity
                     onPress={handleViewDayEntries}
-                    variant="primary"
-                    style={styles.modalButton}
+                    style={[styles.modalButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}
                   >
-                    View Day&apos;s Entries →
-                  </Button>
+                    <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
+                      View Day&apos;s Entries →
+                    </Text>
+                  </TouchableOpacity>
 
                   <Pressable
                     onPress={() => setShowDayDetailsModal(false)}
                     style={styles.modalCloseButton}
                   >
-                    <Text variant="textBase" style={{ color: colors.text.secondary }}>
+                    <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                       Close
                     </Text>
                   </Pressable>
@@ -512,7 +506,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
             </Pressable>
           </Pressable>
         </Modal>
-      </Card>
+      </View>
     </Pressable>
   );
 }

@@ -35,12 +35,8 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, Modal, ScrollView, Alert, SafeAreaView } from 'react-native';
+import { View, StyleSheet, Modal, ScrollView, Alert, SafeAreaView, Text, Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
-import { Text } from '@/design-system/components/Text/Text';
-import { Button } from '@/design-system/components/Button/Button';
-import { Card } from '@/design-system/components/Card/Card';
 import { VoiceRecorder } from './VoiceRecorder';
 import { AudioWaveform } from './AudioWaveform';
 import { TranscriptPreview } from './TranscriptPreview';
@@ -87,8 +83,6 @@ export function VoiceRecordModal({
   maxDuration = 300,
   language: _language = 'en',
 }: VoiceRecordModalProps) {
-  const { colors, spacing, radius } = useTheme();
-
   // Workflow state
   const [step, setStep] = useState<WorkflowStep>('record');
   const [recordingResult, setRecordingResult] = useState<RecordingResult | null>(null);
@@ -216,7 +210,7 @@ export function VoiceRecordModal({
     const currentStepIndex = steps.findIndex((s) => s.key === step);
 
     return (
-      <View style={[styles.stepIndicator, { marginBottom: spacing[6] }]}>
+      <View style={[styles.stepIndicator, { marginBottom: 24 }]}>
         {steps.map((s, index) => {
           const isActive = index === currentStepIndex;
           const isComplete = index < currentStepIndex;
@@ -228,27 +222,27 @@ export function VoiceRecordModal({
                   styles.stepCircle,
                   {
                     backgroundColor: isComplete
-                      ? colors.accent[500]
+                      ? '#3b82f6'
                       : isActive
-                        ? colors.accent[500]
-                        : colors.neutral[700],
-                    borderRadius: radius.full,
+                        ? '#3b82f6'
+                        : '#3f3f46',
+                    borderRadius: 9999,
                   },
                 ]}
               >
                 {isComplete ? (
-                  <MaterialIcons name="check" size={16} color={colors.text.inverse} />
+                  <MaterialIcons name="check" size={16} color="#ffffff" />
                 ) : (
-                  <Text variant="textSm" style={{ color: colors.text.inverse }}>
+                  <Text style={{ fontSize: 14, color: '#ffffff' }}>
                     {index + 1}
                   </Text>
                 )}
               </View>
               <Text
-                variant="textXs"
                 style={{
-                  color: isActive ? colors.text.primary : colors.text.secondary,
-                  marginTop: spacing[2],
+                  fontSize: 12,
+                  color: isActive ? '#fafafa' : '#a1a1aa',
+                  marginTop: 8,
                 }}
               >
                 {s.label}
@@ -268,14 +262,14 @@ export function VoiceRecordModal({
       case 'record':
         return (
           <View style={styles.stepContent}>
-            <Text variant="displayMd" style={{ marginBottom: spacing[6], textAlign: 'center' }}>
+            <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 24, textAlign: 'center' }}>
               Record Audio
             </Text>
             <Text
-              variant="textBase"
               style={{
-                color: colors.text.secondary,
-                marginBottom: spacing[8],
+                fontSize: 16,
+                color: '#a1a1aa',
+                marginBottom: 32,
                 textAlign: 'center',
               }}
             >
@@ -294,14 +288,14 @@ export function VoiceRecordModal({
       case 'transcribing':
         return (
           <View style={styles.stepContent}>
-            <Text variant="displayMd" style={{ marginBottom: spacing[6], textAlign: 'center' }}>
+            <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 24, textAlign: 'center' }}>
               {transcriptionProgress < 100 ? 'Uploading...' : 'Transcribing...'}
             </Text>
             <Text
-              variant="textBase"
               style={{
-                color: colors.text.secondary,
-                marginBottom: spacing[8],
+                fontSize: 16,
+                color: '#a1a1aa',
+                marginBottom: 32,
                 textAlign: 'center',
               }}
             >
@@ -311,27 +305,26 @@ export function VoiceRecordModal({
             </Text>
 
             {recordingResult && (
-              <Card variant="glass" style={{ padding: spacing[4], marginBottom: spacing[6] }}>
+              <View style={[styles.card, { padding: 16, marginBottom: 24 }]}>
                 <AudioWaveform
                   meteringData={recordingResult.meteringData}
                   isLive={false}
                   barCount={30}
                   height={80}
                 />
-              </Card>
+              </View>
             )}
 
             <View style={styles.centerContent}>
               <MaterialIcons
                 name="sync"
                 size={48}
-                color={colors.accent[500]}
+                color="#3b82f6"
                 style={{ opacity: 0.6 }}
               />
               {transcriptionProgress > 0 && transcriptionProgress < 100 && (
                 <Text
-                  variant="textSm"
-                  style={{ color: colors.text.secondary, marginTop: spacing[3] }}
+                  style={{ fontSize: 14, color: '#a1a1aa', marginTop: 12 }}
                 >
                   {transcriptionProgress}%
                 </Text>
@@ -343,14 +336,14 @@ export function VoiceRecordModal({
       case 'preview':
         return (
           <View style={styles.stepContent}>
-            <Text variant="displayMd" style={{ marginBottom: spacing[6], textAlign: 'center' }}>
+            <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 24, textAlign: 'center' }}>
               Review Transcript
             </Text>
             <Text
-              variant="textBase"
               style={{
-                color: colors.text.secondary,
-                marginBottom: spacing[6],
+                fontSize: 16,
+                color: '#a1a1aa',
+                marginBottom: 24,
                 textAlign: 'center',
               }}
             >
@@ -358,25 +351,24 @@ export function VoiceRecordModal({
             </Text>
 
             {transcriptionError ? (
-              <Card variant="outlined" style={{ padding: spacing[4], marginBottom: spacing[6] }}>
+              <View style={[styles.card, { padding: 16, marginBottom: 24 }]}>
                 <View style={styles.errorContainer}>
-                  <MaterialIcons name="error" size={32} color={colors.text.error} />
+                  <MaterialIcons name="error" size={32} color="#ef4444" />
                   <Text
-                    variant="textBase"
-                    style={{ color: colors.text.error, marginTop: spacing[3], textAlign: 'center' }}
+                    style={{ fontSize: 16, color: '#ef4444', marginTop: 12, textAlign: 'center' }}
                   >
                     {transcriptionError}
                   </Text>
-                  <Button
-                    variant="secondary"
-                    size="sm"
+                  <Pressable
                     onPress={handleRetryTranscription}
-                    style={{ marginTop: spacing[4] }}
+                    style={[styles.button, { marginTop: 16, backgroundColor: '#27272a' }]}
                   >
-                    Retry Transcription
-                  </Button>
+                    <Text style={{ fontSize: 14, color: '#fafafa', fontWeight: '600' }}>
+                      Retry Transcription
+                    </Text>
+                  </Pressable>
                 </View>
-              </Card>
+              </View>
             ) : (
               <>
                 <TranscriptPreview
@@ -389,32 +381,32 @@ export function VoiceRecordModal({
 
                 {/* Continue button - save without editing */}
                 {transcript && !isTranscribing && (
-                  <Button
-                    variant="primary"
-                    size="md"
+                  <Pressable
                     onPress={() => handleSaveTranscript(transcript)}
-                    style={{ marginTop: spacing[4] }}
+                    style={[styles.button, { marginTop: 16, backgroundColor: '#3b82f6' }]}
                   >
-                    Continue
-                  </Button>
+                    <Text style={{ fontSize: 16, color: '#ffffff', fontWeight: '600' }}>
+                      Continue
+                    </Text>
+                  </Pressable>
                 )}
               </>
             )}
 
             {recordingResult && !isTranscribing && (
-              <Card variant="glass" style={{ padding: spacing[4], marginTop: spacing[6] }}>
+              <View style={[styles.card, { padding: 16, marginTop: 24 }]}>
                 <Text
-                  variant="textBase"
                   style={{
+                    fontSize: 16,
                     fontWeight: '600',
-                    marginBottom: spacing[3],
-                    color: colors.text.primary,
+                    marginBottom: 12,
+                    color: '#fafafa',
                   }}
                 >
                   Audio Playback
                 </Text>
                 <AudioPlayer audioUri={recordingResult.uri} />
-              </Card>
+              </View>
             )}
           </View>
         );
@@ -427,20 +419,19 @@ export function VoiceRecordModal({
                 style={[
                   styles.successCircle,
                   {
-                    backgroundColor: colors.accent[500],
-                    borderRadius: radius.full,
-                    marginBottom: spacing[6],
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 9999,
+                    marginBottom: 24,
                   },
                 ]}
               >
-                <MaterialIcons name="check" size={64} color={colors.text.inverse} />
+                <MaterialIcons name="check" size={64} color="#ffffff" />
               </View>
-              <Text variant="displayMd" style={{ marginBottom: spacing[4], textAlign: 'center' }}>
+              <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 16, textAlign: 'center' }}>
                 Saved!
               </Text>
               <Text
-                variant="textBase"
-                style={{ color: colors.text.secondary, textAlign: 'center' }}
+                style={{ fontSize: 16, color: '#a1a1aa', textAlign: 'center' }}
               >
                 Your recording has been saved
               </Text>
@@ -457,31 +448,31 @@ export function VoiceRecordModal({
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: '#0a0a0a' }]}>
         {/* Header */}
         <View
           style={[
             styles.header,
             {
-              paddingHorizontal: spacing[6],
-              paddingVertical: spacing[4],
+              paddingHorizontal: 24,
+              paddingVertical: 16,
               borderBottomWidth: 1,
-              borderBottomColor: colors.border.muted,
+              borderBottomColor: '#27272a',
             },
           ]}
         >
-          <Text variant="textLg" style={{ fontWeight: '600', color: colors.text.primary }}>
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#fafafa' }}>
             Voice Recording
           </Text>
-          <Button variant="ghost" size="sm" onPress={handleClose}>
-            <MaterialIcons name="close" size={24} color={colors.text.primary} />
-          </Button>
+          <Pressable onPress={handleClose} style={{ padding: 4 }}>
+            <MaterialIcons name="close" size={24} color="#fafafa" />
+          </Pressable>
         </View>
 
         {/* Content */}
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.content, { padding: spacing[6] }]}
+          contentContainerStyle={[styles.content, { padding: 24 }]}
         >
           {renderStepIndicator()}
           {renderContent()}
@@ -494,6 +485,19 @@ export function VoiceRecordModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  card: {
+    backgroundColor: '#18181b',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#27272a',
+  },
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
     flexDirection: 'row',

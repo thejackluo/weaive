@@ -19,11 +19,12 @@ import {
   Pressable,
   ActivityIndicator,
   TextInput,
+  Text as RNText,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Text, Card } from '@/design-system';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
+// Removed: import { Text, Card } from '@/design-system';
+// Removed: import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useActiveGoals } from '@/hooks/useActiveGoals';
 import { useUserStats } from '@/hooks/useUserStats';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,7 +38,7 @@ type TimeframeOption = '7d' | '2w' | '1m';
 
 export function DashboardScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  // Removed: const { colors } = useTheme();
   const { data: goalsData, isLoading } = useActiveGoals();
   const { data: userStatsData, isLoading: isStatsLoading } = useUserStats();
 
@@ -76,7 +77,7 @@ export function DashboardScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background.primary }]}
+      style={[styles.container, { backgroundColor: '#0a0a0a' }]}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
@@ -85,16 +86,16 @@ export function DashboardScreen() {
         {/* Left: Level + Progress Bar + Streak */}
         <View style={styles.headerLeft}>
           {/* Level text */}
-          <Text variant="textSm" style={{ color: colors.text.secondary }}>
+          <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
             Level {userLevel}
-          </Text>
+          </RNText>
           {/* Level progress bar */}
           <View style={styles.levelBarBackground}>
             <View
               style={[
                 styles.levelBarFill,
                 {
-                  backgroundColor: colors.accent[500],
+                  backgroundColor: '#3b82f6',
                   width: `${(userLevel % 10) * 10 || 5}%`, // Progress within current level
                 },
               ]}
@@ -102,16 +103,16 @@ export function DashboardScreen() {
           </View>
           {/* Streak badge */}
           <View style={styles.streakBadge}>
-            <Text variant="textSm" weight="semibold">
+            <RNText style={{ fontSize: 14, fontWeight: '600' }}>
               {userStreak} 🔥
-            </Text>
+            </RNText>
           </View>
         </View>
 
         {/* Center: Weave Character Visualization */}
         <View style={styles.weaveCharacterContainer}>
           {isStatsLoading ? (
-            <ActivityIndicator size="small" color={colors.accent[500]} />
+            <ActivityIndicator size="small" color={'#3b82f6'} />
           ) : (
             <WeaveCharacter characterState={characterState} size={64} />
           )}
@@ -121,7 +122,7 @@ export function DashboardScreen() {
         <View style={styles.headerRight}>
           <Pressable
             onPress={handleProfilePress}
-            style={[styles.profileButton, { backgroundColor: colors.accent[500] }]}
+            style={[styles.profileButton, { backgroundColor: '#3b82f6' }]}
           >
             <Ionicons name="person-outline" size={20} color="white" />
           </Pressable>
@@ -130,20 +131,20 @@ export function DashboardScreen() {
 
       {/* Your Needles Section */}
       <View style={styles.section}>
-        <Text variant="textLg" weight="semibold" style={styles.sectionTitle}>
+        <RNText style={[styles.sectionTitle, { fontSize: 18, fontWeight: '600' }]}>
           Your Needles
-        </Text>
+        </RNText>
 
         {isLoading ? (
           <View style={styles.needlesContainer}>
             {[1, 2, 3].map((i) => (
-              <Card key={i} variant="glass" style={styles.needleCardInner}>
+              <View key={i} style={styles.needleCardInner}>
                 <View style={styles.needleContent}>
                   {/* Skeleton color bar */}
                   <View
                     style={[
                       styles.needleColorBar,
-                      { backgroundColor: colors.border.muted, opacity: 0.5 },
+                      { backgroundColor: '#27272a', opacity: 0.5 },
                     ]}
                   />
 
@@ -152,14 +153,14 @@ export function DashboardScreen() {
                     <View
                       style={[
                         styles.skeletonLine,
-                        { backgroundColor: colors.border.muted, width: '70%', height: 16 },
+                        { backgroundColor: '#27272a', width: '70%', height: 16 },
                       ]}
                     />
                     <View
                       style={[
                         styles.skeletonLine,
                         {
-                          backgroundColor: colors.border.muted,
+                          backgroundColor: '#27272a',
                           width: '90%',
                           height: 12,
                           marginTop: 8,
@@ -172,29 +173,29 @@ export function DashboardScreen() {
                   <View
                     style={[
                       styles.skeletonLine,
-                      { backgroundColor: colors.border.muted, width: 20, height: 20 },
+                      { backgroundColor: '#27272a', width: 20, height: 20 },
                     ]}
                   />
                 </View>
-              </Card>
+              </View>
             ))}
           </View>
         ) : goals.length === 0 ? (
           <>
-            <Card variant="glass" style={styles.emptyCard}>
-              <Text variant="textBase" style={[styles.emptyText, { color: colors.text.secondary }]}>
+            <View style={styles.emptyCard}>
+              <RNText style={[styles.emptyText, { fontSize: 16, color: '#a1a1aa' }]}>
                 No active needles yet
-              </Text>
-            </Card>
+              </RNText>
+            </View>
             <Pressable onPress={handleAddGoal} style={styles.addGoalButton}>
-              <Card variant="glass" style={styles.addGoalCard}>
+              <View style={styles.addGoalCard}>
                 <View style={styles.addGoalContent}>
-                  <Ionicons name="add-circle-outline" size={24} color={colors.accent[500]} />
-                  <Text variant="textBase" weight="semibold" style={{ color: colors.accent[500] }}>
+                  <Ionicons name="add-circle-outline" size={24} color={'#3b82f6'} />
+                  <RNText style={{ fontSize: 16, fontWeight: '600', color: '#3b82f6' }}>
                     Add Your First Needle
-                  </Text>
+                  </RNText>
                 </View>
-              </Card>
+              </View>
             </Pressable>
           </>
         ) : (
@@ -205,43 +206,43 @@ export function DashboardScreen() {
                 onPress={() => handleNeedlePress(goal.id)}
                 style={styles.needleCard}
               >
-                <Card variant="glass" style={styles.needleCardInner}>
+                <View style={styles.needleCardInner}>
                   <View style={styles.needleContent}>
                     {/* Color bar */}
                     <View
-                      style={[styles.needleColorBar, { backgroundColor: colors.accent[500] }]}
+                      style={[styles.needleColorBar, { backgroundColor: '#3b82f6' }]}
                     />
 
                     {/* Needle info */}
                     <View style={styles.needleInfo}>
-                      <Text variant="textBase" weight="semibold">
+                      <RNText style={{ fontSize: 16, fontWeight: '600' }}>
                         {goal.title}
-                      </Text>
+                      </RNText>
                       {goal.description && (
-                        <Text variant="textSm" color="secondary" style={styles.needleWhy}>
+                        <RNText style={[styles.needleWhy, { fontSize: 14, color: '#a1a1aa' }]}>
                           {goal.description}
-                        </Text>
+                        </RNText>
                       )}
                     </View>
 
                     {/* Arrow */}
-                    <Ionicons name="chevron-forward" size={20} color={colors.text.secondary} />
+                    <Ionicons name="chevron-forward" size={20} color={'#a1a1aa'} />
                   </View>
-                </Card>
+                </View>
               </Pressable>
             ))}
 
             {/* Add Goal button if less than 3 active goals */}
             {goals.length < 3 && (
               <Pressable onPress={handleAddGoal} style={styles.addGoalButton}>
-                <Card variant="glass" style={styles.addGoalCard}>
+                <View style={styles.addGoalCard}>
                   <View style={styles.addGoalContent}>
-                    <Ionicons name="add-circle-outline" size={20} color={colors.accent[500]} />
-                    <Text variant="textBase" weight="medium" style={{ color: colors.accent[500] }}>
+                    <Ionicons name="add-circle-outline" size={20} color={'#3b82f6'} />
+                    <RNText style={{ fontSize: 16, fontWeight: '500', color: '#3b82f6' }}>
                       Add Needle
-                    </Text>
+                    </RNText>
                   </View>
-                </Card>
+                </View>
               </Pressable>
             )}
           </View>
@@ -281,15 +282,13 @@ export function DashboardScreen() {
 
       {/* History Section */}
       <View style={[styles.section, styles.lastSection]}>
-        <Card variant="glass" style={styles.historyCardContainer}>
+        <View style={styles.historyCardContainer}>
           {/* Title */}
-          <Text
-            variant="textLg"
-            weight="semibold"
-            style={[styles.historyTitle, { color: '#FFFFFF' }]}
+          <RNText
+            style={[styles.historyTitle, { fontSize: 18, fontWeight: '600', color: '#FFFFFF' }]}
           >
             History
-          </Text>
+          </RNText>
 
           {/* Timeframe filters */}
           <View style={styles.filterRow}>
@@ -305,15 +304,15 @@ export function DashboardScreen() {
                   historyTimeframe === timeframe && styles.filterPillActive,
                 ]}
               >
-                <Text
-                  variant="textSm"
-                  weight={historyTimeframe === timeframe ? 'semibold' : 'medium'}
+                <RNText
                   style={{
-                    color: historyTimeframe === timeframe ? '#000000' : colors.text.secondary,
+                    fontSize: 14,
+                    fontWeight: historyTimeframe === timeframe ? '600' : '500',
+                    color: historyTimeframe === timeframe ? '#000000' : '#a1a1aa',
                   }}
                 >
                   {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}
-                </Text>
+                </RNText>
               </Pressable>
             ))}
           </View>
@@ -334,39 +333,39 @@ export function DashboardScreen() {
                 }}
                 style={[styles.filterPill, historyType === type.value && styles.filterPillActive]}
               >
-                <Text
-                  variant="textSm"
-                  weight={historyType === type.value ? 'semibold' : 'medium'}
+                <RNText
                   style={{
-                    color: historyType === type.value ? '#000000' : colors.text.secondary,
+                    fontSize: 14,
+                    fontWeight: historyType === type.value ? '600' : '500',
+                    color: historyType === type.value ? '#000000' : '#a1a1aa',
                   }}
                 >
                   {type.label}
-                </Text>
+                </RNText>
               </Pressable>
             ))}
           </View>
 
           {/* Search bar */}
-          <View style={[styles.searchBar, { backgroundColor: colors.background.elevated }]}>
+          <View style={[styles.searchBar, { backgroundColor: '#18181b' }]}>
             <Ionicons
               name="search-outline"
               size={20}
-              color={colors.text.muted}
+              color={'#71717a'}
               style={styles.searchIcon}
             />
-            <TextInput
+            <RNTextInput
               placeholder="Search..."
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor={'#71717a'}
               value={historySearch}
               onChangeText={setHistorySearch}
-              style={[styles.searchInput, { color: colors.text.primary }]}
+              style={[styles.searchInput, { color: '#fafafa' }]}
             />
           </View>
 
           {/* History List */}
           <HistoryList limit={10} timeframe={historyTimeframe} type={historyType} />
-        </Card>
+        </View>
       </View>
     </ScrollView>
   );

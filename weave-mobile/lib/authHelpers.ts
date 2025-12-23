@@ -7,7 +7,6 @@
 
 import { router } from 'expo-router';
 import { supabase } from './supabase';
-import { showSimpleToast } from '@/design-system';
 
 /**
  * Check if user has completed onboarding
@@ -55,7 +54,8 @@ export async function navigateAfterAuth(
     // Validate userId
     if (!userId) {
       console.error('[AUTH_HELPERS] No userId provided, cannot navigate');
-      showSimpleToast('Unable to navigate. Please try signing in again.', 'error');
+      // TODO: Replace with new toast system
+      // showSimpleToast('Unable to navigate. Please try signing in again.', 'error');
       return;
     }
 
@@ -84,7 +84,8 @@ export async function navigateAfterAuth(
     }
   } catch (err) {
     console.error('[AUTH_HELPERS] Navigation error:', err);
-    showSimpleToast('Navigation failed. Redirecting to main app...', 'error');
+    // TODO: Replace with new toast system
+    // showSimpleToast('Navigation failed. Redirecting to main app...', 'error');
     // Fallback: go to tabs if error occurs
     try {
       router.replace('/(tabs)' as any);
@@ -146,7 +147,8 @@ export async function bypassAuthForDev(
 
     // Show success toast (only if not skipping navigation, caller will show their own)
     if (!skipNavigation) {
-      showSimpleToast('🔧 Dev bypass: Signed in with test account', 'success');
+      // TODO: Replace with new toast system
+      // showSimpleToast('🔧 Dev bypass: Signed in with test account', 'success');
       // Navigate to main app (bypass onboarding for dev)
       router.replace('/(tabs)' as any);
     }
@@ -154,7 +156,8 @@ export async function bypassAuthForDev(
     return true;
   } catch (err: any) {
     console.error('[AUTH_HELPERS] Development bypass failed:', err);
-    showSimpleToast(`Dev bypass failed: ${err.message}`, 'error');
+    // TODO: Replace with new toast system
+    // showSimpleToast(`Dev bypass failed: ${err.message}`, 'error');
     return false;
   }
 }

@@ -11,11 +11,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
-import { Text } from '@/design-system/components/Text/Text';
-import { Button } from '@/design-system/components/Button/Button';
-import { Card } from '@/design-system/components/Card/Card';
+import { View, ScrollView, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
 import {
   VoiceRecordModal, // NEW: Alternative modal without bottom-sheet dependency
   VoiceRecorder,
@@ -28,8 +24,6 @@ import {
 import { RecordingResult } from '@/services/audioRecording';
 
 export default function VoiceDemoScreen() {
-  const { colors, spacing } = useTheme();
-
   // Modal visibility state
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -94,39 +88,68 @@ export default function VoiceDemoScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+    <View style={[styles.container, { backgroundColor: '#000000' }]}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { padding: spacing[6] }]}
+        contentContainerStyle={[styles.content, { padding: 24 }]}
       >
         {/* Header */}
-        <Text variant="displayMd" style={{ marginBottom: spacing[2] }}>
+        <Text style={{ fontSize: 24, fontWeight: '700', color: '#ffffff', marginBottom: 8 }}>
           Voice/STT Demo
         </Text>
-        <Text variant="textBase" style={{ color: colors.text.secondary, marginBottom: spacing[8] }}>
+        <Text style={{ fontSize: 16, color: '#a1a1aa', marginBottom: 32 }}>
           Test all Story 0.11 voice components
         </Text>
 
         {/* Test 1: VoiceRecordModal - Complete Workflow */}
-        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
-          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
+        <View
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            padding: 16,
+            marginBottom: 24,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 1: Complete Workflow
           </Text>
-          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
+          <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Test full recording workflow: Record → Transcribe → Preview → Save
             {'\n\n'}✅ Using React Native Modal (no bottom-sheet dependency)
           </Text>
-          <Button variant="primary" onPress={handleOpenModal}>
-            Open Voice Recording Modal
-          </Button>
-        </Card>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#3b82f6',
+              borderRadius: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 24,
+              alignItems: 'center',
+            }}
+            onPress={handleOpenModal}
+          >
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#ffffff' }}>
+              Open Voice Recording Modal
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Test 2: Standalone VoiceRecorder */}
-        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
-          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
+        <View
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            padding: 16,
+            marginBottom: 24,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 2: Standalone Recording
           </Text>
-          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
+          <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Test VoiceRecorder component in isolation (no transcription)
           </Text>
           <View style={styles.centerContent}>
@@ -137,19 +160,28 @@ export default function VoiceDemoScreen() {
             />
           </View>
           {recordingResult && (
-            <Text variant="textXs" style={{ color: colors.text.secondary, marginTop: spacing[3] }}>
+            <Text style={{ fontSize: 12, color: '#a1a1aa', marginTop: 12 }}>
               ✅ Last recording: {(recordingResult.durationMillis / 1000).toFixed(1)}s /{' '}
               {(recordingResult.size / 1024).toFixed(1)}KB
             </Text>
           )}
-        </Card>
+        </View>
 
         {/* Test 3: AudioWaveform */}
-        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
-          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
+        <View
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            padding: 16,
+            marginBottom: 24,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 3: Waveform Visualization
           </Text>
-          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
+          <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Static waveform (displays recording metering data)
           </Text>
           {recordingResult ? (
@@ -160,18 +192,27 @@ export default function VoiceDemoScreen() {
               height={80}
             />
           ) : (
-            <Text variant="textXs" style={{ color: colors.text.secondary, textAlign: 'center' }}>
+            <Text style={{ fontSize: 12, color: '#a1a1aa', textAlign: 'center' }}>
               Record audio above to see waveform
             </Text>
           )}
-        </Card>
+        </View>
 
         {/* Test 4: TranscriptPreview */}
-        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
-          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
+        <View
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            padding: 16,
+            marginBottom: 24,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 4: Transcript Editing
           </Text>
-          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
+          <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Edit transcript, see confidence scoring
           </Text>
           <TranscriptPreview
@@ -180,42 +221,69 @@ export default function VoiceDemoScreen() {
             provider="assemblyai"
             onSave={handleTranscriptSave}
           />
-        </Card>
+        </View>
 
         {/* Test 5: AudioPlayer */}
-        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
-          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
+        <View
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            padding: 16,
+            marginBottom: 24,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 5: Audio Playback
           </Text>
-          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
+          <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Play/pause, seek, speed controls
           </Text>
           {audioUri ? (
             <AudioPlayer audioUri={audioUri} onPlaybackComplete={handlePlaybackComplete} />
           ) : (
-            <Text variant="textXs" style={{ color: colors.text.secondary, textAlign: 'center' }}>
+            <Text style={{ fontSize: 12, color: '#a1a1aa', textAlign: 'center' }}>
               Record audio above to enable playback
             </Text>
           )}
-        </Card>
+        </View>
 
         {/* Test 6: RateLimitIndicator */}
-        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
-          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
+        <View
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            padding: 16,
+            marginBottom: 24,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 6: Rate Limit Display
           </Text>
-          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
+          <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Visual progress bars for daily limits
           </Text>
           <RateLimitIndicator requestCount={requestCount} durationMinutes={durationMinutes} />
-        </Card>
+        </View>
 
         {/* Test 7: Rate Limit Compact */}
-        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
-          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
+        <View
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            padding: 16,
+            marginBottom: 24,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 7: Rate Limit (Compact)
           </Text>
-          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
+          <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Minimal display for toolbars/headers
           </Text>
           <RateLimitIndicator
@@ -223,28 +291,45 @@ export default function VoiceDemoScreen() {
             durationMinutes={durationMinutes}
             compact
           />
-        </Card>
+        </View>
 
         {/* Test 8: Recording History */}
-        <Card variant="outlined" style={{ marginBottom: spacing[6], padding: spacing[4] }}>
-          <Text variant="textLg" style={{ fontWeight: '600', marginBottom: spacing[3] }}>
+        <View
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            padding: 16,
+            marginBottom: 24,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 8: Recording History
           </Text>
-          <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
+          <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             View all past audio recordings with transcripts and playback
           </Text>
           <RecordingHistory maxPreviewLength={80} scrollEnabled={false} />
-        </Card>
+        </View>
 
         {/* Testing Tips */}
-        <Card variant="subtle" style={{ padding: spacing[4], marginBottom: spacing[8] }}>
+        <View
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            padding: 16,
+            marginBottom: 32,
+          }}
+        >
           <Text
-            variant="textBase"
-            style={{ fontWeight: '600', marginBottom: spacing[3], color: colors.text.primary }}
+            style={{ fontSize: 16, fontWeight: '600', marginBottom: 12, color: '#ffffff' }}
           >
             📋 Testing Checklist
           </Text>
-          <Text variant="textSm" style={{ color: colors.text.primary, lineHeight: 20 }}>
+          <Text style={{ fontSize: 14, color: '#ffffff', lineHeight: 20 }}>
             1. Check microphone permissions (Settings → Expo Go → Microphone){'\n'}
             2. Test on real device (simulator has no mic){'\n'}
             3. Verify audio recording quality{'\n'}
@@ -255,7 +340,7 @@ export default function VoiceDemoScreen() {
             8. Edit transcript and check character limit{'\n'}
             9. Check recording history updates after new recordings
           </Text>
-        </Card>
+        </View>
       </ScrollView>
 
       {/* VoiceRecordModal - Alternative to bottom-sheet */}

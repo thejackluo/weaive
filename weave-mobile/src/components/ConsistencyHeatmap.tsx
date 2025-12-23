@@ -31,9 +31,9 @@ import {
   NativeSyntheticEvent,
   Modal,
   TextInput,
+  Text,
+  TouchableOpacity,
 } from 'react-native';
-import { Text, Card, Button } from '@/design-system';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useConsistencyData } from '@/hooks/useConsistencyData';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -78,7 +78,6 @@ export function ConsistencyHeatmap({
   trendPercentage = 2,
 }: ConsistencyHeatmapProps) {
   const router = useRouter();
-  const { colors } = useTheme();
   const { data, isLoading, isError, error } = useConsistencyData(timeframe, filterType, filterId);
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
 
@@ -104,19 +103,19 @@ export function ConsistencyHeatmap({
 
   if (isLoading && !FORCE_SAMPLE_DATA) {
     return (
-      <Card variant="glass" style={styles.card}>
-        <ActivityIndicator size="large" color={colors.accent[500]} />
-      </Card>
+      <View style={[styles.card, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
     );
   }
 
   if (isError) {
     return (
-      <Card variant="glass" style={styles.card}>
-        <Text variant="textSm" style={{ color: colors.text.error }}>
+      <View style={[styles.card, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+        <Text style={{ fontSize: 14, color: '#ef4444' }}>
           Error loading consistency data: {error?.message}
         </Text>
-      </Card>
+      </View>
     );
   }
 
@@ -150,9 +149,9 @@ export function ConsistencyHeatmap({
   }
 
   const getColorForPercentage = (percentage: number) => {
-    if (percentage >= 80) return colors.emerald[500]; // Green - high
-    if (percentage >= 50) return colors.amber[500]; // Yellow - medium
-    return colors.rose[500]; // Red - low
+    if (percentage >= 80) return '#10b981'; // Green - high
+    if (percentage >= 50) return '#f59e0b'; // Yellow - medium
+    return '#ef4444'; // Red - low
   };
 
   // Sample needle data (for needle view)
@@ -271,37 +270,37 @@ export function ConsistencyHeatmap({
   const renderHeader = () => (
     <View style={styles.headerSection}>
       <View style={styles.titleAndDropdownRow}>
-        <Text variant="textLg" weight="semibold">
+        <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
           {getHeaderTitle()}
         </Text>
         {/* Timeframe Dropdown */}
         <View>
           <Pressable
-            style={[styles.timeframeDropdown, { backgroundColor: colors.background.elevated }]}
+            style={[styles.timeframeDropdown, { backgroundColor: '#18181b' }]}
             onPress={() => {
               Haptics.selectionAsync();
               setShowTimeframeDropdown(!showTimeframeDropdown);
             }}
           >
-            <Text variant="textSm" style={{ color: colors.text.secondary }}>
+            <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               {timeframe}
             </Text>
             <Ionicons
               name={showTimeframeDropdown ? 'chevron-up' : 'chevron-down'}
               size={14}
-              color={colors.text.secondary}
+              color="#a1a1aa"
             />
           </Pressable>
 
           {/* Dropdown Menu */}
           {showTimeframeDropdown && onTimeframeChange && (
-            <View style={[styles.dropdownMenu, { backgroundColor: colors.background.elevated }]}>
+            <View style={[styles.dropdownMenu, { backgroundColor: '#18181b' }]}>
               {timeframeOptions.map((option) => (
                 <Pressable
                   key={option}
                   style={[
                     styles.dropdownItem,
-                    timeframe === option && { backgroundColor: colors.accent[500] },
+                    timeframe === option && { backgroundColor: '#3b82f6' },
                   ]}
                   onPress={() => {
                     Haptics.selectionAsync();
@@ -310,10 +309,10 @@ export function ConsistencyHeatmap({
                   }}
                 >
                   <Text
-                    variant="textSm"
-                    weight={timeframe === option ? 'semibold' : 'regular'}
                     style={{
-                      color: timeframe === option ? colors.text.primary : colors.text.secondary,
+                      fontSize: 14,
+                      fontWeight: timeframe === option ? '600' : '400',
+                      color: timeframe === option ? '#ffffff' : '#a1a1aa',
                     }}
                   >
                     {option}
@@ -325,7 +324,7 @@ export function ConsistencyHeatmap({
         </View>
       </View>
       <View style={styles.percentageRow}>
-        <Text variant="displayLg" weight="bold" style={styles.percentageText}>
+        <Text style={[styles.percentageText, { fontSize: 64, fontWeight: 'bold', color: '#ffffff' }]}>
           {consistencyPercentage}%
         </Text>
         <View
@@ -338,10 +337,10 @@ export function ConsistencyHeatmap({
           ]}
         >
           <Text
-            variant="textSm"
-            weight="semibold"
             style={{
-              color: trendPercentage >= 0 ? colors.emerald[500] : colors.rose[500],
+              fontSize: 14,
+              fontWeight: '600',
+              color: trendPercentage >= 0 ? '#10b981' : '#ef4444',
             }}
           >
             {trendPercentage >= 0 ? '+' : ''}
@@ -390,22 +389,21 @@ export function ConsistencyHeatmap({
               style={[
                 styles.needleCard,
                 {
-                  backgroundColor: colors.background.elevated,
+                  backgroundColor: '#18181b',
                   width: CARD_WIDTH,
                 },
               ]}
             >
               <View style={styles.needleCardHeader}>
                 <View
-                  style={[styles.needleColorIndicator, { backgroundColor: colors.emerald[500] }]}
+                  style={[styles.needleColorIndicator, { backgroundColor: '#10b981' }]}
                 />
                 <View style={{ flex: 1 }}>
-                  <Text variant="textBase" weight="semibold" numberOfLines={2}>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#ffffff' }} numberOfLines={2}>
                     {needle.title}
                   </Text>
                   <Text
-                    variant="textSm"
-                    style={{ color: colors.text.muted, marginTop: 4, fontStyle: 'italic' }}
+                    style={{ fontSize: 14, color: '#71717a', marginTop: 4, fontStyle: 'italic' }}
                   >
                     {needle.description}
                   </Text>
@@ -433,8 +431,8 @@ export function ConsistencyHeatmap({
                           {
                             backgroundColor:
                               index === selectedNeedleIndex
-                                ? colors.text.primary
-                                : colors.background.secondary,
+                                ? '#ffffff'
+                                : '#18181b',
                           },
                         ]}
                       />
@@ -473,16 +471,16 @@ export function ConsistencyHeatmap({
                 styles.bindChip,
                 {
                   backgroundColor:
-                    index === selectedBindIndex ? colors.text.primary : colors.background.elevated,
+                    index === selectedBindIndex ? '#ffffff' : '#18181b',
                 },
               ]}
             >
               <Text
-                variant="textSm"
-                weight={index === selectedBindIndex ? 'semibold' : 'regular'}
                 style={{
+                  fontSize: 14,
+                  fontWeight: index === selectedBindIndex ? '600' : '400',
                   color:
-                    index === selectedBindIndex ? colors.background.primary : colors.text.secondary,
+                    index === selectedBindIndex ? '#000000' : '#a1a1aa',
                 }}
               >
                 {bind.bindName}
@@ -493,13 +491,13 @@ export function ConsistencyHeatmap({
 
         {/* Search button */}
         <Pressable
-          style={[styles.searchButton, { backgroundColor: colors.background.elevated }]}
+          style={[styles.searchButton, { backgroundColor: '#18181b' }]}
           onPress={() => {
             Haptics.selectionAsync();
             setShowSearchModal(true);
           }}
         >
-          <Ionicons name="search" size={20} color={colors.text.secondary} />
+          <Ionicons name="search" size={20} color={'#a1a1aa'} />
         </Pressable>
       </View>
     );
@@ -521,15 +519,15 @@ export function ConsistencyHeatmap({
             styles.filterTab,
             {
               backgroundColor:
-                filterType === filter ? colors.text.primary : colors.background.elevated,
+                filterType === filter ? '#ffffff' : '#18181b',
             },
           ]}
         >
           <Text
-            variant="textSm"
-            weight={filterType === filter ? 'semibold' : 'regular'}
             style={{
-              color: filterType === filter ? colors.background.primary : colors.text.secondary,
+              fontSize: 14,
+              fontWeight: filterType === filter ? '600' : '400',
+              color: filterType === filter ? '#000000' : '#a1a1aa',
             }}
           >
             {filter.charAt(0).toUpperCase() + filter.slice(1)}
@@ -555,13 +553,13 @@ export function ConsistencyHeatmap({
 
   // Common insight banner component
   const renderInsightBanner = () => (
-    <View style={[styles.insightBanner, { backgroundColor: colors.background.elevated }]}>
+    <View style={[styles.insightBanner, { backgroundColor: '#18181b' }]}>
       <View style={styles.insightContent}>
-        <Ionicons name="fitness" size={24} color={colors.accent[500]} />
-        <Text variant="textBase" style={{ flex: 1, fontStyle: 'italic', marginLeft: 12 }}>
+        <Ionicons name="fitness" size={24} color={'#3b82f6'} />
+        <Text style={{ flex: 1, fontStyle: 'italic', marginLeft: 12, fontSize: 15, color: '#ffffff' }}>
           {getInsightMessage()}
         </Text>
-        <Ionicons name="arrow-forward" size={20} color={colors.text.muted} />
+        <Ionicons name="arrow-forward" size={20} color={'#71717a'} />
       </View>
     </View>
   );
@@ -581,11 +579,11 @@ export function ConsistencyHeatmap({
     }
 
     return (
-      <Card variant="glass" style={styles.sevenDayCard}>
+      <View style={[styles.sevenDayCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 24, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
         {renderHeader()}
 
         {/* Separator line */}
-        <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
+        <View style={[styles.separator, { backgroundColor: '#27272A' }]} />
 
         {/* Needle card (for needle view) */}
         {renderNeedleCard()}
@@ -603,10 +601,10 @@ export function ConsistencyHeatmap({
           {/* Day header cells */}
           {dayHeaders.map((day) => (
             <View key={day.fullDate} style={styles.dayCell}>
-              <Text variant="textXs" style={{ color: colors.text.muted }}>
+              <Text style={{ fontSize: 12, color: '#71717a' }}>
                 {day.dayOfWeek}
               </Text>
-              <Text variant="textBase" weight="medium" style={{ marginTop: 2 }}>
+              <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff', marginTop: 2 }}>
                 {day.dayOfMonth}
               </Text>
             </View>
@@ -618,7 +616,7 @@ export function ConsistencyHeatmap({
           <View key={bindIndex} style={styles.bindRow}>
             {/* Bind name */}
             <View style={styles.bindNameCell}>
-              <Text variant="textBase" style={{ color: colors.text.secondary }}>
+              <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                 {bind.bindName}
               </Text>
             </View>
@@ -635,13 +633,13 @@ export function ConsistencyHeatmap({
                         styles.completionCircle,
                         {
                           backgroundColor: completed
-                            ? colors.background.secondary
-                            : colors.background.elevated,
+                            ? '#18181b'
+                            : '#18181b',
                         },
                       ]}
                     >
                       {completed && (
-                        <Ionicons name="checkmark" size={18} color={colors.text.primary} />
+                        <Ionicons name="checkmark" size={18} color={'#ffffff'} />
                       )}
                     </View>
                   </Pressable>
@@ -662,12 +660,12 @@ export function ConsistencyHeatmap({
         >
           <Pressable style={styles.modalOverlay} onPress={() => setShowDayDetailsModal(false)}>
             <Pressable
-              style={[styles.modalContent, { backgroundColor: colors.background.elevated }]}
+              style={[styles.modalContent, { backgroundColor: '#18181b' }]}
               onPress={(e) => e.stopPropagation()}
             >
               {selectedDayData && (
                 <>
-                  <Text variant="textLg" weight="bold" style={styles.modalDate}>
+                  <Text style={[styles.modalDate, { fontSize: 18, fontWeight: 'bold', color: '#ffffff' }]}>
                     {new Date(selectedDayData.date).toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
@@ -676,27 +674,28 @@ export function ConsistencyHeatmap({
                   </Text>
 
                   <View style={styles.modalSection}>
-                    <Text variant="textBase" style={{ color: colors.text.secondary }}>
+                    <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                       Completion Rate
                     </Text>
-                    <Text variant="displayMd" weight="bold" style={styles.modalPercentage}>
+                    <Text style={[styles.modalPercentage, { fontSize: 28, fontWeight: 'bold', color: '#ffffff' }]}>
                       {selectedDayData.completionRate}%
                     </Text>
                   </View>
 
-                  <Button
+                  <TouchableOpacity
                     onPress={handleViewDayEntries}
-                    variant="primary"
-                    style={styles.modalButton}
+                    style={[styles.modalButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}
                   >
-                    View Day&apos;s Entries →
-                  </Button>
+                    <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
+                      View Day&apos;s Entries →
+                    </Text>
+                  </TouchableOpacity>
 
                   <Pressable
                     onPress={() => setShowDayDetailsModal(false)}
                     style={styles.modalCloseButton}
                   >
-                    <Text variant="textBase" style={{ color: colors.text.secondary }}>
+                    <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                       Close
                     </Text>
                   </Pressable>
@@ -715,15 +714,15 @@ export function ConsistencyHeatmap({
         >
           <Pressable style={styles.modalOverlay} onPress={() => setShowSearchModal(false)}>
             <Pressable
-              style={[styles.searchModalContent, { backgroundColor: colors.background.elevated }]}
+              style={[styles.searchModalContent, { backgroundColor: '#18181b' }]}
               onPress={(e) => e.stopPropagation()}
             >
               <View style={styles.searchModalHeader}>
-                <Text variant="textLg" weight="semibold">
+                <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
                   Search Binds
                 </Text>
                 <Pressable onPress={() => setShowSearchModal(false)}>
-                  <Ionicons name="close" size={24} color={colors.text.secondary} />
+                  <Ionicons name="close" size={24} color={'#a1a1aa'} />
                 </Pressable>
               </View>
 
@@ -731,13 +730,13 @@ export function ConsistencyHeatmap({
                 style={[
                   styles.searchInput,
                   {
-                    backgroundColor: colors.background.secondary,
-                    color: colors.text.primary,
-                    borderColor: colors.border.muted,
+                    backgroundColor: '#18181b',
+                    color: '#ffffff',
+                    borderColor: '#27272A',
                   },
                 ]}
                 placeholder="Search for a bind..."
-                placeholderTextColor={colors.text.muted}
+                placeholderTextColor={'#71717a'}
                 value={bindSearchQuery}
                 onChangeText={setBindSearchQuery}
                 autoFocus
@@ -751,7 +750,7 @@ export function ConsistencyHeatmap({
                   .map((bind, index) => (
                     <Pressable
                       key={index}
-                      style={[styles.searchResultItem, { borderBottomColor: colors.border.muted }]}
+                      style={[styles.searchResultItem, { borderBottomColor: '#27272A' }]}
                       onPress={() => {
                         Haptics.selectionAsync();
                         setSelectedBindIndex(allBinds.indexOf(bind));
@@ -759,25 +758,25 @@ export function ConsistencyHeatmap({
                         setBindSearchQuery('');
                       }}
                     >
-                      <Text variant="textBase">{bind.bindName}</Text>
-                      <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+                      <Text style={{ fontSize: 15, color: '#ffffff' }}>{bind.bindName}</Text>
+                      <Ionicons name="chevron-forward" size={20} color={'#71717a'} />
                     </Pressable>
                   ))}
               </ScrollView>
             </Pressable>
           </Pressable>
         </Modal>
-      </Card>
+      </View>
     );
   }
 
   // 2w/1m/90d: Show heat map grid
   return (
-    <Card variant="glass" style={styles.sevenDayCard}>
+    <View style={[styles.sevenDayCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 24, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
       {renderHeader()}
 
       {/* Separator line */}
-      <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
+      <View style={[styles.separator, { backgroundColor: '#27272A' }]} />
 
       {renderFilterTabs()}
       <View style={styles.heatmapContainer}>
@@ -799,7 +798,7 @@ export function ConsistencyHeatmap({
                   },
                 ]}
               >
-                <Text variant="textXs" weight="medium" style={{ color: 'white' }}>
+                <Text style={{ fontSize: 12, fontWeight: '500', color: 'white' }}>
                   {dayOfMonth}
                 </Text>
               </View>
@@ -811,20 +810,20 @@ export function ConsistencyHeatmap({
       {/* Legend */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: colors.emerald[500] }]} />
-          <Text variant="textXs" style={{ color: colors.text.muted }}>
+          <View style={[styles.legendColor, { backgroundColor: '#10b981' }]} />
+          <Text variant="textXs" style={{ color: '#71717a' }}>
             80%+
           </Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: colors.amber[500] }]} />
-          <Text variant="textXs" style={{ color: colors.text.muted }}>
+          <View style={[styles.legendColor, { backgroundColor: '#f59e0b' }]} />
+          <Text variant="textXs" style={{ color: '#71717a' }}>
             50-79%
           </Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: colors.rose[500] }]} />
-          <Text variant="textXs" style={{ color: colors.text.muted }}>
+          <View style={[styles.legendColor, { backgroundColor: '#ef4444' }]} />
+          <Text variant="textXs" style={{ color: '#71717a' }}>
             {'<'}50%
           </Text>
         </View>
@@ -841,12 +840,12 @@ export function ConsistencyHeatmap({
       >
         <Pressable style={styles.modalOverlay} onPress={() => setShowDayDetailsModal(false)}>
           <Pressable
-            style={[styles.modalContent, { backgroundColor: colors.background.elevated }]}
+            style={[styles.modalContent, { backgroundColor: '#18181b' }]}
             onPress={(e) => e.stopPropagation()}
           >
             {selectedDayData && (
               <>
-                <Text variant="textLg" weight="bold" style={styles.modalDate}>
+                <Text style={[styles.modalDate, { fontSize: 18, fontWeight: 'bold', color: '#ffffff' }]}>
                   {new Date(selectedDayData.date).toLocaleDateString('en-US', {
                     month: 'long',
                     day: 'numeric',
@@ -855,23 +854,28 @@ export function ConsistencyHeatmap({
                 </Text>
 
                 <View style={styles.modalSection}>
-                  <Text variant="textBase" style={{ color: colors.text.secondary }}>
+                  <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                     Completion Rate
                   </Text>
-                  <Text variant="displayMd" weight="bold" style={styles.modalPercentage}>
+                  <Text style={[styles.modalPercentage, { fontSize: 28, fontWeight: 'bold', color: '#ffffff' }]}>
                     {selectedDayData.completionRate}%
                   </Text>
                 </View>
 
-                <Button onPress={handleViewDayEntries} variant="primary" style={styles.modalButton}>
-                  View Day&apos;s Entries →
-                </Button>
+                <TouchableOpacity
+                  onPress={handleViewDayEntries}
+                  style={[styles.modalButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}
+                >
+                  <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
+                    View Day&apos;s Entries →
+                  </Text>
+                </TouchableOpacity>
 
                 <Pressable
                   onPress={() => setShowDayDetailsModal(false)}
                   style={styles.modalCloseButton}
                 >
-                  <Text variant="textBase" style={{ color: colors.text.secondary }}>
+                  <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                     Close
                   </Text>
                 </Pressable>
@@ -890,15 +894,15 @@ export function ConsistencyHeatmap({
       >
         <Pressable style={styles.modalOverlay} onPress={() => setShowSearchModal(false)}>
           <Pressable
-            style={[styles.searchModalContent, { backgroundColor: colors.background.elevated }]}
+            style={[styles.searchModalContent, { backgroundColor: '#18181b' }]}
             onPress={(e) => e.stopPropagation()}
           >
             <View style={styles.searchModalHeader}>
-              <Text variant="textLg" weight="semibold">
+              <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
                 Search Binds
               </Text>
               <Pressable onPress={() => setShowSearchModal(false)}>
-                <Ionicons name="close" size={24} color={colors.text.secondary} />
+                <Ionicons name="close" size={24} color={'#a1a1aa'} />
               </Pressable>
             </View>
 
@@ -906,13 +910,13 @@ export function ConsistencyHeatmap({
               style={[
                 styles.searchInput,
                 {
-                  backgroundColor: colors.background.secondary,
-                  color: colors.text.primary,
-                  borderColor: colors.border.muted,
+                  backgroundColor: '#18181b',
+                  color: '#ffffff',
+                  borderColor: '#27272A',
                 },
               ]}
               placeholder="Search for a bind..."
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor={'#71717a'}
               value={bindSearchQuery}
               onChangeText={setBindSearchQuery}
               autoFocus
@@ -926,7 +930,7 @@ export function ConsistencyHeatmap({
                 .map((bind, index) => (
                   <Pressable
                     key={index}
-                    style={[styles.searchResultItem, { borderBottomColor: colors.border.muted }]}
+                    style={[styles.searchResultItem, { borderBottomColor: '#27272A' }]}
                     onPress={() => {
                       Haptics.selectionAsync();
                       setSelectedBindIndex(allBinds.indexOf(bind));
@@ -934,15 +938,15 @@ export function ConsistencyHeatmap({
                       setBindSearchQuery('');
                     }}
                   >
-                    <Text variant="textBase">{bind.bindName}</Text>
-                    <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+                    <Text style={{ fontSize: 15, color: '#ffffff' }}>{bind.bindName}</Text>
+                    <Ionicons name="chevron-forward" size={20} color={'#71717a'} />
                   </Pressable>
                 ))}
             </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>
-    </Card>
+    </View>
   );
 }
 

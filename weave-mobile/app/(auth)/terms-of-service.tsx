@@ -16,677 +16,650 @@ import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Button, Text, useTheme } from '@/design-system';
+import { Text as RNText, TouchableOpacity } from 'react-native';
 
 export default function TermsOfServiceScreen() {
   const router = useRouter();
-  const { colors, spacing } = useTheme();
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background.primary }]}
+      style={[styles.container, { backgroundColor: '#0a0a0a' }]}
       edges={['top']}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text variant="displayMd" weight="bold" style={{ color: colors.text.primary }}>
+          <RNText style={{ fontSize: 32, fontWeight: '700', color: '#ffffff' }}>
             Terms of Service
-          </Text>
-          <View style={[styles.badge, { backgroundColor: `${colors.accent[500]}20` }]}>
-            <Text variant="textXs" style={{ color: colors.accent[400] }}>
+          </RNText>
+          <View style={[styles.badge, { backgroundColor: 'rgba(59, 130, 246, 0.13)' }]}>
+            <RNText style={{ fontSize: 12, color: '#60a5fa' }}>
               Last updated: December 19, 2024
-            </Text>
+            </RNText>
           </View>
         </View>
 
         {/* Introduction */}
         <View style={styles.section}>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.primary }]}>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: '#ffffff' }]}>
             Welcome to Weave! These Terms of Service ("Terms") govern your use of the Weave mobile
             application and related services (collectively, the "Service"). By creating an account
             or using the Service, you agree to be bound by these Terms.
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Please read these Terms carefully. If you do not agree with any part of these Terms, you
             may not use the Service.
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
-            <Text weight="semibold" style={{ color: colors.text.primary }}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
+            <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
               Contact Us:{' '}
-            </Text>
+            </RNText>
             legal@weavelight.com | support@weavelight.com
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 1 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             1. Acceptance of Terms
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             By accessing or using Weave, you confirm that:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • You are at least 13 years old (or the age of majority in your jurisdiction)
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • You have the legal capacity to enter into binding contracts
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • You agree to comply with these Terms and our Privacy Policy
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • All information you provide is accurate and truthful
-            </Text>
+            </RNText>
           </View>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             We reserve the right to modify these Terms at any time. We will notify you of material
             changes via email or in-app notification. Your continued use of the Service after such
             changes constitutes acceptance of the updated Terms.
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 2 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             2. Description of Service
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Weave is a goal achievement and habit formation mobile application that helps you:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Set and track personal goals ("Needles") and consistent actions ("Binds")
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Receive AI-powered coaching and personalized daily plans ("Triads")
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Capture proof of completed tasks with photos, notes, and audio
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Journal daily reflections with fulfillment scores
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Visualize progress through consistency metrics, streaks, and ranks
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Develop a stronger personal identity through the "Weave" journey
-            </Text>
+            </RNText>
           </View>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             The Service is provided "as-is" and "as-available" without any warranties or guarantees
             of uptime, accuracy, or specific results.
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 3 - AI Disclaimer (CRITICAL) */}
         <View
           style={[
             styles.section,
-            { backgroundColor: `${colors.rose[500]}15`, padding: 16, borderRadius: 12 },
+            { backgroundColor: 'rgba(244, 63, 94, 0.08)', padding: 16, borderRadius: 12 },
           ]}
         >
-          <Text variant="textLg" weight="semibold" style={{ color: colors.rose[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#fb7185' }}>
             3. AI Coaching Disclaimer (CRITICAL - READ CAREFULLY)
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.primary }]}>
-            <Text weight="bold">
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: '#ffffff' }]}>
+            <RNText style={{ fontWeight: '700' }}>
               WEAVE IS NOT A SUBSTITUTE FOR PROFESSIONAL MEDICAL, MENTAL HEALTH, OR THERAPEUTIC
               SERVICES.
-            </Text>
-          </Text>
+            </RNText>
+          </RNText>
 
           <View
             style={{
-              backgroundColor: `${colors.rose[500]}25`,
+              backgroundColor: 'rgba(244, 63, 94, 0.15)',
               marginBottom: spacing[3],
               padding: 12,
               borderRadius: 8,
             }}
           >
-            <Text variant="textSm" weight="semibold" style={{ color: colors.rose[300] }}>
+            <RNText style={{ fontSize: 14, fontWeight: '600', color: '#fca5a5' }}>
               ⚠️ Important Limitations:
-            </Text>
+            </RNText>
             <View style={styles.bulletList}>
-              <Text variant="textSm" style={[styles.bullet, { color: colors.text.secondary }]}>
+              <RNText style={[styles.bullet, { fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }]}>
                 • Weave's AI coaching is for personal development, NOT medical or mental health
                 treatment
-              </Text>
-              <Text variant="textSm" style={[styles.bullet, { color: colors.text.secondary }]}>
+              </RNText>
+              <RNText style={[styles.bullet, { fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }]}>
                 • Our AI coaches are NOT licensed therapists, counselors, or medical professionals
-              </Text>
-              <Text variant="textSm" style={[styles.bullet, { color: colors.text.secondary }]}>
+              </RNText>
+              <RNText style={[styles.bullet, { fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }]}>
                 • AI-generated advice is based on patterns and algorithms, NOT personalized medical
                 assessment
-              </Text>
-              <Text variant="textSm" style={[styles.bullet, { color: colors.text.secondary }]}>
+              </RNText>
+              <RNText style={[styles.bullet, { fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }]}>
                 • You make your own decisions - we provide suggestions, not directives
-              </Text>
+              </RNText>
             </View>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             Mental Health Emergencies:
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             If you are experiencing a mental health crisis, suicidal thoughts, or emergency:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • <Text weight="semibold">Call 988</Text> (Suicide & Crisis Lifeline) in the US
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • <Text weight="semibold">Call 911</Text> for immediate emergency assistance
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Contact a licensed mental health professional or go to your nearest emergency room
-            </Text>
+            </RNText>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             When to Seek Professional Help:
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Weave is not appropriate for, and you should consult licensed professionals for:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Depression, anxiety, or other mental health conditions
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Eating disorders or body dysmorphia
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Substance abuse or addiction
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Trauma, PTSD, or serious emotional distress
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Relationship or family therapy
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Medical conditions or health-related goals requiring medical supervision
-            </Text>
+            </RNText>
           </View>
 
           <Text
             variant="textSm"
-            style={[styles.paragraph, { marginTop: spacing[3], color: colors.text.secondary }]}
+            style={[styles.paragraph, { marginTop: 12, fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }]}
           >
             By using Weave, you acknowledge that you understand these limitations and agree that
             Weave and its creators are not liable for any decisions you make based on AI-generated
             content.
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 4 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             4. User Accounts
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             To use Weave, you must create an account:
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             Account Requirements:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Provide a valid email address and create a secure password
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Alternatively, sign in with Apple or Google (subject to their terms)
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Provide accurate and complete information during onboarding
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • One account per person - do not create multiple accounts
-            </Text>
+            </RNText>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             Account Security:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • You are responsible for maintaining the confidentiality of your password
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • You are responsible for all activities under your account
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Notify us immediately at support@weavelight.com of any unauthorized access
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • We are not liable for losses due to unauthorized account use
-            </Text>
+            </RNText>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             Account Termination:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • You may delete your account at any time via Settings → Privacy
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • We may suspend or terminate accounts that violate these Terms
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • We may discontinue the Service with 30 days' notice
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Upon termination, most data is deleted within 30 days (see Privacy Policy)
-            </Text>
+            </RNText>
           </View>
         </View>
 
         {/* Section 5 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             5. Acceptable Use Policy
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             You agree to use Weave in a lawful and respectful manner.
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             Permitted Uses:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✓ Personal goal tracking and habit formation
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✓ Using AI coaching for self-improvement and personal development
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✓ Capturing and storing proof of your own completed tasks
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✓ Journaling your personal thoughts and reflections
-            </Text>
+            </RNText>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             Prohibited Uses:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✗ Impersonate others or provide false identity information
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✗ Upload illegal, harmful, threatening, abusive, or offensive content
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✗ Violate others' intellectual property, privacy, or publicity rights
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✗ Use automated tools (bots, scrapers, spiders) to access the Service
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✗ Reverse engineer, decompile, or hack the app or its systems
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✗ Attempt to gain unauthorized access to other users' accounts or data
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✗ Transmit viruses, malware, or other harmful code
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✗ Use the Service for commercial purposes without written permission
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✗ Circumvent usage limits, rate limits, or security measures
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               ✗ Interfere with or disrupt the Service or servers/networks connected to it
-            </Text>
+            </RNText>
           </View>
 
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Violation of this Acceptable Use Policy may result in immediate account suspension or
             termination, with or without notice.
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 6 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             6. User-Generated Content
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             A. Your Content Ownership:
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             You retain ownership of all content you create in Weave:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Goals, Q-goals, and subtasks
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Journal entries and reflections
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Photos, audio recordings, and notes
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Identity documents (archetype, dream self, motivations)
-            </Text>
+            </RNText>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             B. License You Grant to Us:
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             By uploading content to Weave, you grant us a limited, non-exclusive, worldwide,
             royalty-free license to:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Store, process, and display your content to provide the Service
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Send your content to AI providers (OpenAI, Anthropic) to generate coaching responses
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Create backups and ensure data reliability
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Calculate aggregate, anonymized statistics for service improvement
-            </Text>
+            </RNText>
           </View>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             This license terminates when you delete your content or account (subject to retention
             policies in our Privacy Policy).
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             C. AI-Generated Content:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Daily plans ("Triads"), insights, and coaching messages are AI-generated
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • AI suggestions are recommendations, not commands - you decide what to do
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • You can edit, ignore, or customize all AI-generated content
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Once you edit AI content, you own the modified version
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • We do not guarantee accuracy, completeness, or appropriateness of AI outputs
-            </Text>
+            </RNText>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             D. Content Moderation:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • We reserve the right (but have no obligation) to monitor user content
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • We may remove content that violates these Terms or applicable laws
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Report inappropriate content via in-app reporting (future feature)
-            </Text>
+            </RNText>
           </View>
         </View>
 
         {/* Section 7 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             7. Subscription & Payment (Future)
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Weave is currently free during early access. In the future, we may introduce paid
             subscription tiers:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Free tier: Basic goal tracking and limited AI coaching
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Paid tiers: Advanced features, unlimited AI coaching, priority support
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Billing: Monthly or annual subscriptions via Apple App Store or Google Play
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Cancellation: Cancel anytime; access continues until end of billing period
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Refunds: Subject to Apple/Google's refund policies
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Price changes: 30-day notice for existing subscribers
-            </Text>
+            </RNText>
           </View>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Early access users may receive special pricing or lifetime access (details TBD).
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 8 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             8. Intellectual Property
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             A. Our Intellectual Property:
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Weave and its creators own all rights to:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • The Weave name, logo, and branding
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • App design, interface, and user experience
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Source code, algorithms, and software architecture
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • AI prompts, training processes, and coaching methodologies
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Documentation, guides, and marketing materials
-            </Text>
+            </RNText>
           </View>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             All rights not expressly granted to you are reserved by Weave.
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             B. Your Limited License:
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             We grant you a limited, non-exclusive, non-transferable, revocable license to:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Use the Weave app for personal, non-commercial purposes
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Access and use features available to your account tier
-            </Text>
+            </RNText>
           </View>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             This license terminates if you violate these Terms or if we terminate your account.
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 9 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             9. Third-Party Services
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Weave integrates with third-party services, each subject to their own terms:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 OpenAI
-              </Text>{' '}
+              </RNText>{' '}
               (GPT-4o, GPT-4o-mini) - see OpenAI Terms of Use
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Anthropic
-              </Text>{' '}
+              </RNText>{' '}
               (Claude 3.7 Sonnet, Claude 3.5 Haiku) - see Anthropic Terms of Service
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Supabase
-              </Text>{' '}
+              </RNText>{' '}
               (database, auth, storage) - see Supabase Terms
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Apple Sign-In
-              </Text>{' '}
+              </RNText>{' '}
               - see Apple Terms and Conditions
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Google Sign-In
-              </Text>{' '}
+              </RNText>{' '}
               - see Google Terms of Service
-            </Text>
+            </RNText>
           </View>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             We are not responsible for third-party service failures, changes, or discontinuation.
             You use third-party services at your own risk.
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 10 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             10. Data & Privacy
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Your privacy is important to us. Please review our Privacy Policy (linked from the
             signup screen) for complete details. Key points:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Immutable Logs:
-              </Text>{' '}
+              </RNText>{' '}
               Completion events are permanent (integrity of progress tracking)
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Encrypted Storage:
-              </Text>{' '}
+              </RNText>{' '}
               JWT tokens in device keychain, AES-256 for database
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 AI Processing:
-              </Text>{' '}
+              </RNText>{' '}
               Your data sent to OpenAI/Anthropic ONLY for responses
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 No AI Training:
-              </Text>{' '}
+              </RNText>{' '}
               Your data is NOT used to train AI models
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Deletion:
-              </Text>{' '}
+              </RNText>{' '}
               Most data deleted within 30 days of account closure
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Your Rights:
-              </Text>{' '}
+              </RNText>{' '}
               Access, export, delete, and rectify your data (GDPR/CCPA)
-            </Text>
+            </RNText>
           </View>
         </View>
 
@@ -694,374 +667,367 @@ export default function TermsOfServiceScreen() {
         <View
           style={[
             styles.section,
-            { backgroundColor: `${colors.amber[500]}15`, padding: 16, borderRadius: 12 },
+            { backgroundColor: 'rgba(245, 158, 11, 0.08)', padding: 16, borderRadius: 12 },
           ]}
         >
-          <Text variant="textLg" weight="semibold" style={{ color: colors.amber[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#fbbf24' }}>
             11. Disclaimers & Limitation of Liability
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             A. Service "As-Is":
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             THE SERVICE IS PROVIDED "AS-IS" AND "AS-AVAILABLE" WITHOUT WARRANTIES OF ANY KIND,
             EXPRESS OR IMPLIED, INCLUDING:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • No warranty of merchantability, fitness for a particular purpose, or
               non-infringement
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • No guarantee of accuracy, reliability, or completeness of AI-generated content
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • No guarantee of uninterrupted, secure, or error-free operation
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • No guarantee of specific results or outcomes from using the Service
-            </Text>
+            </RNText>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             B. Limitation of Liability:
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             TO THE MAXIMUM EXTENT PERMITTED BY LAW, WEAVE AND ITS CREATORS SHALL NOT BE LIABLE FOR:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Lost data, progress, or content (back up important information)
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Service interruptions, downtime, or technical failures
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Decisions you make based on AI coaching or app suggestions
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Indirect, incidental, consequential, special, or punitive damages
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Damages arising from third-party services or integrations
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Any amount exceeding the fees you paid in the last 12 months (or $100 if using free
               tier)
-            </Text>
+            </RNText>
           </View>
 
           <Text
             variant="textSm"
-            style={[styles.paragraph, { marginTop: spacing[3], color: colors.text.secondary }]}
+            style={[styles.paragraph, { marginTop: 12, fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }]}
           >
             Some jurisdictions do not allow exclusion of certain warranties or limitations on
             liability. In such cases, our liability is limited to the maximum extent permitted by
             law.
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 12 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             12. Indemnification
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             You agree to defend, indemnify, and hold harmless Weave and its creators, employees, and
             agents from any claims, damages, losses, or expenses (including reasonable attorney
             fees) arising from:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Your use or misuse of the Service
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Your violation of these Terms or Privacy Policy
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Your violation of others' rights (intellectual property, privacy, etc.)
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Content you upload or create in the Service
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Any decisions you make based on AI-generated advice
-            </Text>
+            </RNText>
           </View>
         </View>
 
         {/* Section 13 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             13. Termination
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             A. Termination by You:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Delete your account anytime via Settings → Privacy
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Export your data before deletion (30-day retention, then permanent deletion)
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Canceling a paid subscription ends access at the end of the billing period
-            </Text>
+            </RNText>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             B. Termination by Us:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • We may suspend or terminate accounts that violate these Terms
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • We may suspend service temporarily for maintenance or emergencies
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • We may discontinue the Service with 30 days' notice
-            </Text>
+            </RNText>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             C. Effect of Termination:
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Your access is immediately revoked
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Data is deleted per our Privacy Policy retention schedule
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Outstanding payments remain due
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Sections that should survive (disclaimers, liability, etc.) continue to apply
-            </Text>
+            </RNText>
           </View>
         </View>
 
         {/* Section 14 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             14. Dispute Resolution
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             A. Informal Resolution:
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Before filing any legal claim, please contact us at legal@weavelight.com to resolve the
             issue informally. We commit to good-faith efforts to resolve disputes.
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             B. Binding Arbitration (US Users):
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             If informal resolution fails and you are a US user, disputes will be resolved through
             binding arbitration (not court):
-          </Text>
+          </RNText>
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Arbitration administered by American Arbitration Association (AAA)
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Conducted under AAA Consumer Arbitration Rules
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Individual basis only - no class actions, representative actions, or consolidation
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • You may opt out of arbitration within 30 days by emailing legal@weavelight.com
-            </Text>
+            </RNText>
           </View>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             C. Small Claims Court:
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             You or we may bring a claim in small claims court if it qualifies and remains in that
             court.
-          </Text>
+          </RNText>
 
-          <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.subsectionTitle, { color: colors.text.primary }]}
+          <RNText
+            style={[styles.subsectionTitle, { fontSize: 16, fontWeight: '600', color: '#ffffff' }]}
           >
             D. Class Action Waiver:
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             You waive your right to participate in class actions, class arbitrations, or
             representative actions against Weave.
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 15 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             15. Governing Law
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             These Terms are governed by the laws of the State of Delaware, United States, without
             regard to conflict of law principles.
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             For intellectual property disputes, US federal law applies.
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             International users: Local consumer protection laws may provide additional rights not
             waivable by these Terms.
-          </Text>
+          </RNText>
         </View>
 
         {/* Section 16 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             16. Miscellaneous
-          </Text>
+          </RNText>
 
           <View style={styles.bulletList}>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Severability:
-              </Text>{' '}
+              </RNText>{' '}
               If any provision is invalid, the rest remains in effect
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 No Waiver:
-              </Text>{' '}
+              </RNText>{' '}
               Our delay in enforcing rights doesn't waive them
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Assignment:
-              </Text>{' '}
+              </RNText>{' '}
               We may transfer these Terms; you may not without our consent
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Entire Agreement:
-              </Text>{' '}
+              </RNText>{' '}
               These Terms + Privacy Policy = complete agreement
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Force Majeure:
-              </Text>{' '}
+              </RNText>{' '}
               Not liable for events beyond reasonable control (acts of God, war, natural disasters,
               etc.)
-            </Text>
-            <Text variant="textBase" style={[styles.bullet, { color: colors.text.secondary }]}>
+            </RNText>
+            <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               •{' '}
-              <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                 Language:
-              </Text>{' '}
+              </RNText>{' '}
               English version controls; translations for convenience only
-            </Text>
+            </RNText>
           </View>
         </View>
 
         {/* Section 17 */}
         <View style={styles.section}>
-          <Text variant="textLg" weight="semibold" style={{ color: colors.accent[400] }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#60a5fa' }}>
             17. Contact & Support
-          </Text>
-          <Text variant="textBase" style={[styles.paragraph, { color: colors.text.secondary }]}>
+          </RNText>
+          <RNText style={[styles.paragraph, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
             Questions, concerns, or feedback about these Terms? Contact us:
-          </Text>
+          </RNText>
           <View style={{ backgroundColor: `${colors.dark[800]}40`, padding: 16, borderRadius: 12 }}>
             <View style={styles.bulletList}>
-              <Text variant="textBase" style={[styles.bullet, { color: colors.text.primary }]}>
-                <Text weight="semibold" style={{ color: colors.text.primary }}>
+              <RNText style={[styles.bullet, { fontSize: 16, color: '#ffffff' }]}>
+                <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                   Legal Inquiries:
-                </Text>{' '}
+                </RNText>{' '}
                 legal@weavelight.com
-              </Text>
-              <Text variant="textBase" style={[styles.bullet, { color: colors.text.primary }]}>
-                <Text weight="semibold" style={{ color: colors.text.primary }}>
+              </RNText>
+              <RNText style={[styles.bullet, { fontSize: 16, color: '#ffffff' }]}>
+                <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                   General Support:
-                </Text>{' '}
+                </RNText>{' '}
                 support@weavelight.com
-              </Text>
-              <Text variant="textBase" style={[styles.bullet, { color: colors.text.primary }]}>
-                <Text weight="semibold" style={{ color: colors.text.primary }}>
+              </RNText>
+              <RNText style={[styles.bullet, { fontSize: 16, color: '#ffffff' }]}>
+                <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                   Bug Reports:
-                </Text>{' '}
+                </RNText>{' '}
                 GitHub issues (link in app)
-              </Text>
-              <Text variant="textBase" style={[styles.bullet, { color: colors.text.primary }]}>
-                <Text weight="semibold" style={{ color: colors.text.primary }}>
+              </RNText>
+              <RNText style={[styles.bullet, { fontSize: 16, color: '#ffffff' }]}>
+                <RNText style={{ fontWeight: '600', color: '#ffffff' }}>
                   Response Time:
-                </Text>{' '}
+                </RNText>{' '}
                 Within 2-3 business days
-              </Text>
+              </RNText>
             </View>
           </View>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text
-            variant="textSm"
-            style={{ textAlign: 'center', marginBottom: spacing[4], color: colors.text.secondary }}
+          <RNText
+            style={{ fontSize: 14, textAlign: 'center', marginBottom: 16, color: 'rgba(255, 255, 255, 0.7)' }}
           >
             By using Weave, you acknowledge that you have read, understood, and agree to be bound by
             these Terms of Service and our Privacy Policy.
-          </Text>
-          <Text
-            variant="textSm"
-            style={{ textAlign: 'center', marginBottom: spacing[4], color: colors.text.secondary }}
+          </RNText>
+          <RNText
+            style={{ fontSize: 14, textAlign: 'center', marginBottom: 16, color: 'rgba(255, 255, 255, 0.7)' }}
           >
             Thank you for choosing Weave. We're excited to help you achieve your goals! 🎯
-          </Text>
-          <Button variant="secondary" size="lg" onPress={() => router.back()} fullWidth>
-            Go Back
-          </Button>
+          </RNText>
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              paddingVertical: 16,
+              paddingHorizontal: 24,
+              borderRadius: 12,
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+            }}
+            onPress={() => router.back()}
+          >
+            <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+              Go Back
+            </RNText>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

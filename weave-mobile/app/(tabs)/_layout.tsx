@@ -10,6 +10,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Text,
 } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import Animated, {
@@ -19,7 +20,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Text } from '@/design-system';
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -187,7 +187,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                 <View style={styles.chatHeader}>
                   <View style={styles.chatHeaderLeft}>
                     <SymbolView name="sparkles" size={26} tintColor="#a78bfa" />
-                    <Text variant="displayMd" style={styles.chatHeaderTitle}>
+                    <Text style={styles.chatHeaderTitle}>
                       Weave Chat
                     </Text>
                   </View>
@@ -212,19 +212,19 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                       <View style={styles.welcomeIcon}>
                         <SymbolView name="sparkles" size={36} tintColor="#a78bfa" />
                       </View>
-                      <Text variant="displayMd" style={styles.welcomeTitle}>
+                      <Text style={styles.welcomeTitle}>
                         Your AI Coach
                       </Text>
-                      <Text variant="textBase" style={styles.welcomeSubtitle}>
+                      <Text style={styles.welcomeSubtitle}>
                         Epic 6: AI Coaching
                       </Text>
                       <View style={styles.comingSoonBadge}>
-                        <Text variant="textXs" style={styles.comingSoonText}>
+                        <Text style={styles.comingSoonText}>
                           Coming Soon
                         </Text>
                       </View>
 
-                      <Text variant="textLg" style={styles.examplesTitle}>
+                      <Text style={styles.examplesTitle}>
                         Try asking:
                       </Text>
 
@@ -235,7 +235,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                           style={styles.exampleCard}
                         >
                           <SymbolView name="bubble.left.fill" size={18} tintColor="#a78bfa" />
-                          <Text variant="textBase" style={styles.exampleText}>
+                          <Text style={styles.exampleText}>
                             {message}
                           </Text>
                         </TouchableOpacity>
@@ -252,7 +252,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                             msg.isUser ? styles.userMessage : styles.aiMessage,
                           ]}
                         >
-                          <Text variant="textBase" style={styles.messageText}>
+                          <Text style={styles.messageText}>
                             {msg.text}
                           </Text>
                         </View>

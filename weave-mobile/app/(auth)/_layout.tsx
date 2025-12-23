@@ -24,7 +24,6 @@ import React, { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { ActivityIndicator, View } from 'react-native';
-import { useTheme } from '@/design-system';
 import { hasCompletedOnboarding } from '@lib/authHelpers';
 import Constants from 'expo-constants';
 
@@ -36,7 +35,6 @@ export default function AuthLayout() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
-  const { colors } = useTheme();
   const [checkingOnboarding, setCheckingOnboarding] = useState(false);
 
   // Check if testing mode is enabled (bypass all auth checks)
@@ -110,10 +108,10 @@ export default function AuthLayout() {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: colors.background.primary,
+          backgroundColor: '#000000',
         }}
       >
-        <ActivityIndicator size="large" color={colors.accent[500]} />
+        <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
   }
@@ -124,7 +122,7 @@ export default function AuthLayout() {
         headerShown: false,
         animation: 'slide_from_right',
         contentStyle: {
-          backgroundColor: colors.background.primary,
+          backgroundColor: '#000000',
         },
       }}
     >

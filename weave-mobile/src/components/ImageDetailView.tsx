@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Heading } from '@/design-system';
 import { deleteImage } from '../services/imageCapture';
 import { Capture, AIVisionCategory } from '../types/captures';
 import { supabase } from '@lib/supabase';
@@ -321,9 +320,9 @@ export function ImageDetailView({
               activeOpacity={0.7}
             >
               {capture.content_text ? (
-                <Heading variant="displayLg" className="text-white flex-1">
+                <Text className="text-white flex-1" style={{ fontSize: 32, fontWeight: 'bold' }}>
                   {capture.content_text}
-                </Heading>
+                </Text>
               ) : (
                 <Text className="text-neutral-500 text-2xl font-semibold flex-1">
                   Tap to add title...

@@ -1,7 +1,6 @@
 import { Redirect } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { Text, Card } from '@/design-system';
 
 /**
  * Root index route
@@ -35,10 +34,7 @@ export default function Index() {
         {/* Dev Banner (invisible but helps debugging) */}
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }}>
           <View style={{ backgroundColor: '#FF6B00', padding: 8 }}>
-            <Text
-              variant="textSm"
-              style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}
-            >
+            <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
               🧪 DEV MODE: Auth Bypassed
             </Text>
           </View>
@@ -50,13 +46,13 @@ export default function Index() {
   // Loading Screen: Show while checking auth state
   if (isLoading) {
     return (
-      <View className="flex-1 bg-background items-center justify-center p-4">
-        <Card variant="glass" padding="default">
+      <View style={{ flex: 1, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <View style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: 24, borderRadius: 12 }}>
           <ActivityIndicator size="large" color="#3B72F6" />
-          <Text variant="textBase" className="text-muted mt-4">
+          <Text style={{ color: '#888888', marginTop: 16, textAlign: 'center' }}>
             Loading...
           </Text>
-        </Card>
+        </View>
       </View>
     );
   }

@@ -1,10 +1,9 @@
 import React from 'react';
-import { View, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Pressable, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Card, useTheme } from '@/design-system';
 import { supabase } from '@lib/supabase';
 
 interface SubtaskCompletion {
@@ -35,7 +34,6 @@ interface JournalEntry {
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
-  const { colors } = useTheme();
 
   // Fetch daily aggregate
   const { data: dailyData, isLoading: isLoadingDaily } = useQuery({
@@ -177,7 +175,7 @@ export default function DayDetailScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 bg-background items-center justify-center">
-        <ActivityIndicator size="large" color={colors.accent[500]} />
+        <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
   }
@@ -185,7 +183,7 @@ export default function DayDetailScreen() {
   if (!date) {
     return (
       <View className="flex-1 bg-background items-center justify-center p-6">
-        <Text variant="textLg" className="text-neutral-400 text-center">
+        <Text style={{ fontSize: 18, color: '#a1a1aa', textAlign: 'center' }}>
           No date specified
         </Text>
       </View>
@@ -224,11 +222,11 @@ export default function DayDetailScreen() {
 
   // Determine fulfillment color
   const getFulfillmentColor = (score: number | null) => {
-    if (score === null) return colors.neutral[600];
-    if (score >= 8) return colors.semantic.success.base;
-    if (score >= 6) return colors.accent[500];
-    if (score >= 4) return colors.semantic.warning.base;
-    return colors.semantic.error.base;
+    if (score === null) return '#52525b';
+    if (score >= 8) return '#10b981';
+    if (score >= 6) return '#3b82f6';
+    if (score >= 4) return '#f59e0b';
+    return '#ef4444';
   };
 
   const fulfillmentColor = getFulfillmentColor(fulfillmentScore);
@@ -238,8 +236,8 @@ export default function DayDetailScreen() {
       {/* Header */}
       <View className="px-6 pt-16 pb-6 border-b border-neutral-800">
         <Pressable onPress={() => router.back()} className="flex-row items-center mb-4">
-          <Ionicons name="chevron-back" size={24} color={colors.neutral[400]} />
-          <Text variant="textBase" className="text-neutral-400 ml-1">
+          <Ionicons name="chevron-back" size={24} color="#a1a1aa" />
+          <Text style={{ fontSize: 16, color: '#a1a1aa', marginLeft: 4 }}>
             Back
           </Text>
         </Pressable>
@@ -248,22 +246,29 @@ export default function DayDetailScreen() {
           <Ionicons
             name="calendar-outline"
             size={20}
-            color={colors.neutral[400]}
+            color="#a1a1aa"
             style={{ marginRight: 8 }}
           />
-          <Text variant="displayLg" className="text-white">
+          <Text style={{ fontSize: 32, fontWeight: '700', color: '#ffffff' }}>
             {dayOfWeek}
           </Text>
         </View>
-        <Text variant="textLg" className="text-neutral-400">
+        <Text style={{ fontSize: 18, color: '#a1a1aa' }}>
           {formattedDate}
         </Text>
       </View>
 
       <ScrollView className="flex-1 px-6 pt-6">
         {/* Fulfillment Score */}
-        <Card variant="glass" style={{ marginBottom: 16, padding: 24 }}>
-          <Text variant="displayMd" className="text-white mb-4">
+        <View style={{
+          marginBottom: 16,
+          padding: 24,
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: 'rgba(255, 255, 255, 0.1)'
+        }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: '#ffffff', marginBottom: 16 }}>
             Fulfillment Score
           </Text>
 
@@ -273,12 +278,12 @@ export default function DayDetailScreen() {
                 className="w-16 h-16 rounded-full items-center justify-center mr-4"
                 style={{ backgroundColor: `${fulfillmentColor}20` }}
               >
-                <Text variant="displayLg" style={{ color: fulfillmentColor }}>
+                <Text style={{ fontSize: 32, fontWeight: '700', color: fulfillmentColor }}>
                   {fulfillmentScore}
                 </Text>
               </View>
               <View className="flex-1">
-                <Text variant="textBase" className="text-neutral-400">
+                <Text style={{ fontSize: 16, color: '#a1a1aa' }}>
                   {fulfillmentScore >= 8 && 'Highly fulfilled'}
                   {fulfillmentScore >= 6 && fulfillmentScore < 8 && 'Good fulfillment'}
                   {fulfillmentScore >= 4 && fulfillmentScore < 6 && 'Moderate fulfillment'}
@@ -287,19 +292,26 @@ export default function DayDetailScreen() {
               </View>
             </View>
           ) : (
-            <Text variant="textBase" className="text-neutral-500">
+            <Text style={{ fontSize: 16, color: '#71717a' }}>
               No fulfillment score recorded for this day
             </Text>
           )}
-        </Card>
+        </View>
 
         {/* Binds Completion */}
-        <Card variant="glass" style={{ marginBottom: 16, padding: 24 }}>
+        <View style={{
+          marginBottom: 16,
+          padding: 24,
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: 'rgba(255, 255, 255, 0.1)'
+        }}>
           <View className="flex-row items-center justify-between mb-4">
-            <Text variant="displayMd" className="text-white">
+            <Text style={{ fontSize: 24, fontWeight: '700', color: '#ffffff' }}>
               Daily Binds
             </Text>
-            <Text variant="textSm" className="text-neutral-400">
+            <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               {completedSubtasks.length} / {allBinds.length} completed
             </Text>
           </View>
@@ -312,20 +324,22 @@ export default function DayDetailScreen() {
                     <Ionicons
                       name="checkmark-circle"
                       size={24}
-                      color={colors.semantic.success.base}
+                      color="#10b981"
                       style={{ marginRight: 12 }}
                     />
                   ) : (
                     <Ionicons
                       name="ellipse-outline"
                       size={24}
-                      color={colors.neutral[600]}
+                      color="#52525b"
                       style={{ marginRight: 12 }}
                     />
                   )}
                   <Text
-                    variant="textBase"
-                    className={bind.completed ? 'text-white' : 'text-neutral-500'}
+                    style={{
+                      fontSize: 16,
+                      color: bind.completed ? '#ffffff' : '#71717a'
+                    }}
                   >
                     {bind.label}
                   </Text>
@@ -333,15 +347,22 @@ export default function DayDetailScreen() {
               ))}
             </View>
           ) : (
-            <Text variant="textBase" className="text-neutral-500">
+            <Text style={{ fontSize: 16, color: '#71717a' }}>
               No binds active on this day
             </Text>
           )}
-        </Card>
+        </View>
 
         {/* Daily Reflection */}
-        <Card variant="glass" style={{ marginBottom: 24, padding: 24 }}>
-          <Text variant="displayMd" className="text-white mb-4">
+        <View style={{
+          marginBottom: 24,
+          padding: 24,
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: 'rgba(255, 255, 255, 0.1)'
+        }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: '#ffffff', marginBottom: 16 }}>
             Daily Reflection
           </Text>
 
@@ -349,10 +370,10 @@ export default function DayDetailScreen() {
             <View className="space-y-4">
               {journalEntry.journal_text && (
                 <View>
-                  <Text variant="textSm" className="text-neutral-400 mb-2">
+                  <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 8 }}>
                     Your Entry
                   </Text>
-                  <Text variant="textBase" className="text-white leading-6">
+                  <Text style={{ fontSize: 16, color: '#ffffff', lineHeight: 24 }}>
                     {journalEntry.journal_text}
                   </Text>
                 </View>
@@ -360,27 +381,27 @@ export default function DayDetailScreen() {
 
               {journalEntry.reflection_insights && (
                 <View className="mt-4 p-4 bg-brand-500/10 rounded-lg border border-brand-500/20">
-                  <Text variant="textSm" className="text-brand-400 mb-2">
+                  <Text style={{ fontSize: 14, color: '#60a5fa', marginBottom: 8 }}>
                     AI Insights
                   </Text>
-                  <Text variant="textBase" className="text-neutral-200 leading-6">
+                  <Text style={{ fontSize: 16, color: '#e5e5e5', lineHeight: 24 }}>
                     {journalEntry.reflection_insights}
                   </Text>
                 </View>
               )}
 
               {!journalEntry.journal_text && !journalEntry.reflection_insights && (
-                <Text variant="textBase" className="text-neutral-500">
+                <Text style={{ fontSize: 16, color: '#71717a' }}>
                   No reflection recorded for this day
                 </Text>
               )}
             </View>
           ) : (
-            <Text variant="textBase" className="text-neutral-500">
+            <Text style={{ fontSize: 16, color: '#71717a' }}>
               No reflection recorded for this day
             </Text>
           )}
-        </Card>
+        </View>
       </ScrollView>
     </View>
   );

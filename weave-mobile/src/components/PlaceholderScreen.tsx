@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Text } from '@/design-system';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 
 interface PlaceholderScreenProps {
@@ -54,32 +53,32 @@ export default function PlaceholderScreen({
           </View>
 
           {/* Title */}
-          <Text variant="display2xl" style={styles.title}>
+          <Text style={styles.title}>
             {title}
           </Text>
 
           {/* Epic */}
-          <Text variant="textLg" style={styles.epic}>
+          <Text style={styles.epic}>
             {epic}
           </Text>
 
           {/* Story */}
-          <Text variant="textBase" style={styles.story}>
+          <Text style={styles.story}>
             {story}
           </Text>
 
           {/* Status Badge */}
           <View style={styles.badge}>
-            <Text variant="textXs" style={styles.badgeText}>
+            <Text style={styles.badgeText}>
               Coming Soon
             </Text>
           </View>
 
           {/* Description */}
-          <Text variant="textBase" style={styles.description}>
+          <Text style={styles.description}>
             This page has not been developed
           </Text>
-          <Text variant="textSm" style={styles.subdescription}>
+          <Text style={styles.subdescription}>
             Check back soon as we continue building Weave.
           </Text>
 

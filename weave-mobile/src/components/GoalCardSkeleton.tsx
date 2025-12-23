@@ -13,21 +13,19 @@
 
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
 
 export function GoalCardSkeleton() {
-  const { colors, spacing } = useTheme();
-  const skeletonColor = colors.border.subtle;
+  const skeletonColor = '#3f3f46';
 
   return (
-    <View style={{ marginBottom: spacing[4] }}>
+    <View style={{ marginBottom: 16 }}>
       {/* Using plain View instead of Card to avoid React 19 compatibility issues */}
       <View
         style={[
           styles.cardContainer,
           {
-            backgroundColor: colors.background.secondary,
-            borderColor: colors.border.subtle,
+            backgroundColor: '#18181b',
+            borderColor: '#3f3f46',
           },
         ]}
       >

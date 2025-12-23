@@ -44,7 +44,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { Button, Input, Text, Card, useTheme, Checkbox, showSimpleToast } from '@/design-system';
+import { Text as RNText, TextInput, TouchableOpacity } from 'react-native';
 import { AuthError } from '@supabase/supabase-js';
 import { navigateAfterAuth, getAuthErrorMessage } from '@lib/authHelpers';
 import { supabase } from '@lib/supabase';
@@ -66,7 +66,6 @@ const MIN_PASSWORD_LENGTH = 8;
 export default function SignupScreen() {
   const router = useRouter();
   const { user, signUp, signOut, signInWithOAuth, error: authError, clearError } = useAuth();
-  const { colors } = useTheme();
 
   // Form state
   const [email, setEmail] = useState('');
@@ -143,7 +142,7 @@ export default function SignupScreen() {
    */
   const passwordStrength = useMemo(() => {
     if (!password) {
-      return { score: 0, label: '', color: colors.text.muted, progress: 0 };
+      return { score: 0, label: '', color: 'rgba(255, 255, 255, 0.4)', progress: 0 };
     }
 
     let score = 0;
@@ -164,25 +163,25 @@ export default function SignupScreen() {
       return {
         score,
         label: 'Weak',
-        color: colors.rose[500],
+        color: '#f43f5e',
         progress: 0.33,
       };
     } else if (score === 2) {
       return {
         score,
         label: 'Medium',
-        color: colors.accent[500],
+        color: '#3b82f6',
         progress: 0.66,
       };
     } else {
       return {
         score,
         label: 'Strong',
-        color: colors.emerald[500],
+        color: '#10b981',
         progress: 1,
       };
     }
-  }, [password, colors]);
+  }, [password]);
 
   /**
    * Handle email change
@@ -268,7 +267,7 @@ export default function SignupScreen() {
       await signUp(email, password);
 
       // Show success toast
-      showSimpleToast('Account created successfully! 🎉', 'success');
+      // showSimpleToast('Account created successfully! 🎉', 'success');
 
       // Get user ID and navigate appropriately
       const {
@@ -285,13 +284,13 @@ export default function SignupScreen() {
       // Check if account already exists
       if (error.message === 'User already registered') {
         setAccountExists(true);
-        showSimpleToast('Account already exists. Please sign in instead.', 'error');
+        // showSimpleToast('Account already exists. Please sign in instead.', 'error');
         // Don't re-throw, let user see the UI
         return;
       }
 
       // For other errors, show generic error message
-      showSimpleToast(getAuthErrorMessage(error), 'error');
+      // showSimpleToast(getAuthErrorMessage(error), 'error');
       // Error is also set in auth context, displayed below
     } finally {
       setIsLoading(false);
@@ -320,7 +319,7 @@ export default function SignupScreen() {
 
         // Show success toast
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
-        showSimpleToast(`Signed up with ${providerName}! 🎉`, 'success');
+        // showSimpleToast(`Signed up with ${providerName}! 🎉`, 'success');
 
         // Get user ID and navigate appropriately
         const {
@@ -332,7 +331,7 @@ export default function SignupScreen() {
       } catch (error: any) {
         console.error(`[SIGNUP] ${provider} sign in error:`, error);
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
-        showSimpleToast(`Failed to sign up with ${providerName}. Please try again.`, 'error');
+        // showSimpleToast(`Failed to sign up with ${providerName}. Please try again.`, 'error');
         // Error is also set in auth context, displayed in error card below
       } finally {
         setIsOAuthLoading(null);
@@ -360,7 +359,7 @@ export default function SignupScreen() {
       await navigateAfterAuth(user.id, false);
     } catch (error) {
       console.error('[SIGNUP] Continue navigation error:', error);
-      showSimpleToast('Navigation failed. Please try again.', 'error');
+      // showSimpleToast('Navigation failed. Please try again.', 'error');
     } finally {
       setIsContinuing(false);
     }
@@ -373,11 +372,11 @@ export default function SignupScreen() {
     try {
       setIsSigningOut(true);
       await signOut();
-      showSimpleToast('Signed out successfully 👋', 'success');
+      // showSimpleToast('Signed out successfully 👋', 'success');
       // Stay on signup screen after sign out
     } catch (error: any) {
       console.error('[SIGNUP] Sign out error:', error);
-      showSimpleToast('Failed to sign out. Please try again.', 'error');
+      // showSimpleToast('Failed to sign out. Please try again.', 'error');
     } finally {
       setIsSigningOut(false);
     }
@@ -403,7 +402,7 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background.primary }]}
+      style={[styles.container, { backgroundColor: '#0a0a0a' }]}
       edges={['top']}
     >
       <KeyboardAvoidingView
@@ -417,12 +416,12 @@ export default function SignupScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text variant="displayLg" color="primary">
+            <RNText style={{ fontSize: 36, fontWeight: '700', color: '#ffffff', marginBottom: 8 }}>
               {user ? 'Already Signed In' : 'Create Account'}
-            </Text>
-            <Text variant="textLg" color="secondary" className="mt-2">
+            </RNText>
+            <RNText style={{ fontSize: 18, color: 'rgba(255, 255, 255, 0.7)', marginTop: 8 }}>
               {user ? 'You are currently signed in' : 'Start your journey with Weave'}
-            </Text>
+            </RNText>
           </View>
 
           {/* Already Signed In Card */}
@@ -430,48 +429,70 @@ export default function SignupScreen() {
             <View style={{ marginBottom: 24 }}>
               <View
                 style={{
-                  backgroundColor: `${colors.accent[500]}15`,
+                  backgroundColor: 'rgba(59, 130, 246, 0.08)',
                   borderLeftWidth: 4,
-                  borderLeftColor: colors.accent[500],
+                  borderLeftColor: '#3b82f6',
                   borderRadius: 8,
                   padding: 20,
                   gap: 16,
                 }}
               >
                 <View style={{ gap: 8 }}>
-                  <Text variant="textLg" weight="bold" style={{ color: colors.accent[500] }}>
+                  <RNText style={{ fontSize: 18, fontWeight: '700', color: '#3b82f6' }}>
                     ✅ You're Already Signed In
-                  </Text>
-                  <Text variant="textBase" color="secondary">
-                    Signed in as <Text weight="semibold">{user.email}</Text>
-                  </Text>
-                  <Text variant="textSm" color="muted" style={{ marginTop: 4 }}>
+                  </RNText>
+                  <RNText style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    Signed in as <RNText style={{ fontWeight: '600' }}>{user.email}</RNText>
+                  </RNText>
+                  <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)', marginTop: 4 }}>
                     You can continue to your account or sign out to use a different account.
-                  </Text>
+                  </RNText>
                 </View>
 
                 <View style={{ gap: 12 }}>
-                  <Button
-                    variant="primary"
-                    size="lg"
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: '#3b82f6',
+                      paddingVertical: 16,
+                      paddingHorizontal: 24,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      opacity: (isContinuing || isSigningOut) ? 0.5 : 1,
+                    }}
                     onPress={handleContinue}
-                    loading={isContinuing}
                     disabled={isContinuing || isSigningOut}
-                    fullWidth
                   >
-                    {isContinuing ? 'Loading...' : 'Continue to App'}
-                  </Button>
+                    {isContinuing ? (
+                      <ActivityIndicator color="#ffffff" />
+                    ) : (
+                      <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                        Continue to App
+                      </RNText>
+                    )}
+                  </TouchableOpacity>
 
-                  <Button
-                    variant="secondary"
-                    size="lg"
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      paddingVertical: 16,
+                      paddingHorizontal: 24,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      opacity: (isContinuing || isSigningOut) ? 0.5 : 1,
+                    }}
                     onPress={handleSignOutAction}
-                    loading={isSigningOut}
                     disabled={isContinuing || isSigningOut}
-                    fullWidth
                   >
-                    {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-                  </Button>
+                    {isSigningOut ? (
+                      <ActivityIndicator color="#ffffff" />
+                    ) : (
+                      <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                        Sign Out
+                      </RNText>
+                    )}
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -479,41 +500,47 @@ export default function SignupScreen() {
 
           {/* Account Already Exists Card */}
           {accountExists && !user && (
-            <Card
-              variant="glass"
-              padding="default"
+            <View
               style={{
                 ...styles.errorCard,
-                backgroundColor: `${colors.accent[500]}15`,
+                backgroundColor: 'rgba(59, 130, 246, 0.08)',
                 borderLeftWidth: 4,
-                borderLeftColor: colors.accent[500],
+                borderLeftColor: '#3b82f6',
+                borderRadius: 12,
+                padding: 20,
               }}
             >
               <View style={{ gap: 16 }}>
                 <View style={{ gap: 8 }}>
-                  <Text variant="textLg" weight="bold" style={{ color: colors.accent[500] }}>
+                  <RNText style={{ fontSize: 18, fontWeight: '700', color: '#3b82f6' }}>
                     Account Already Exists
-                  </Text>
-                  <Text variant="textBase" color="secondary">
-                    An account with <Text weight="semibold">{email}</Text> already exists. Please
+                  </RNText>
+                  <RNText style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    An account with <RNText style={{ fontWeight: '600' }}>{email}</RNText> already exists. Please
                     sign in instead.
-                  </Text>
+                  </RNText>
                 </View>
-                <Button
-                  variant="primary"
-                  size="lg"
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#3b82f6',
+                    paddingVertical: 16,
+                    paddingHorizontal: 24,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                  }}
                   onPress={() => {
                     router.push({
                       pathname: '/(auth)/login' as any,
                       params: { email },
                     });
                   }}
-                  fullWidth
                 >
-                  Sign In Instead
-                </Button>
+                  <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    Sign In Instead
+                  </RNText>
+                </TouchableOpacity>
               </View>
-            </Card>
+            </View>
           )}
 
           {/* Signup Form - Only show if not signed in */}
@@ -521,67 +548,111 @@ export default function SignupScreen() {
             <>
               {/* Error Message */}
               {authError && !accountExists && (
-                <Card
-                  variant="glass"
-                  padding="default"
-                  style={{ ...styles.errorCard, backgroundColor: `${colors.rose[500]}15` }}
+                <View
+                  style={{
+                    ...styles.errorCard,
+                    backgroundColor: 'rgba(244, 63, 94, 0.08)',
+                    borderRadius: 12,
+                    padding: 20,
+                  }}
                 >
-                  <Text color="error">{getErrorMessage(authError)}</Text>
-                </Card>
+                  <RNText style={{ color: '#f43f5e', fontSize: 14 }}>{getErrorMessage(authError)}</RNText>
+                </View>
               )}
 
               {/* Signup Form */}
               <View style={styles.form}>
                 {/* Email Input */}
-                <Input
-                  label="Email"
-                  placeholder="your.email@example.com"
-                  value={email}
-                  onChangeText={handleEmailChange}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  autoCorrect={false}
-                  errorText={emailError}
-                  variant={emailError ? 'error' : 'default'}
-                  size="lg"
-                  disabled={isLoading || isOAuthLoading !== null}
-                  accessibilityLabel="Email address"
-                  accessibilityHint="Enter your email address"
-                />
+                <View>
+                  <RNText style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 8 }}>
+                    Email
+                  </RNText>
+                  <TextInput
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      borderWidth: 1,
+                      borderColor: emailError ? '#f43f5e' : 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: 12,
+                      paddingVertical: 16,
+                      paddingHorizontal: 16,
+                      fontSize: 16,
+                      color: '#ffffff',
+                    }}
+                    placeholder="your.email@example.com"
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                    value={email}
+                    onChangeText={handleEmailChange}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    autoCorrect={false}
+                    editable={!isLoading && isOAuthLoading === null}
+                    accessibilityLabel="Email address"
+                    accessibilityHint="Enter your email address"
+                  />
+                  {emailError ? (
+                    <RNText style={{ fontSize: 12, color: '#f43f5e', marginTop: 6 }}>
+                      {emailError}
+                    </RNText>
+                  ) : null}
+                </View>
 
                 {/* Password Input */}
                 <View>
-                  <Input
-                    label="Password"
-                    placeholder="Create a password (min 8 characters)"
-                    value={password}
-                    onChangeText={handlePasswordChange}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoComplete="password-new"
-                    autoCorrect={false}
-                    errorText={passwordError}
-                    helperText={
-                      !passwordError ? `Minimum ${MIN_PASSWORD_LENGTH} characters` : undefined
-                    }
-                    variant={passwordError ? 'error' : 'default'}
-                    size="lg"
-                    disabled={isLoading || isOAuthLoading !== null}
-                    accessibilityLabel="Password"
-                    accessibilityHint={`Enter a password with at least ${MIN_PASSWORD_LENGTH} characters`}
-                    rightIcon={
-                      <Pressable
-                        onPress={() => setShowPassword(!showPassword)}
-                        accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                        accessibilityRole="button"
-                      >
-                        <Text variant="textXs" color="muted">
-                          {showPassword ? 'Hide' : 'Show'}
-                        </Text>
-                      </Pressable>
-                    }
-                  />
+                  <RNText style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 8 }}>
+                    Password
+                  </RNText>
+                  <View style={{ position: 'relative' }}>
+                    <TextInput
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderWidth: 1,
+                        borderColor: passwordError ? '#f43f5e' : 'rgba(255, 255, 255, 0.1)',
+                        borderRadius: 12,
+                        paddingVertical: 16,
+                        paddingHorizontal: 16,
+                        paddingRight: 60,
+                        fontSize: 16,
+                        color: '#ffffff',
+                      }}
+                      placeholder="Create a password (min 8 characters)"
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      value={password}
+                      onChangeText={handlePasswordChange}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoComplete="password-new"
+                      autoCorrect={false}
+                      editable={!isLoading && isOAuthLoading === null}
+                      accessibilityLabel="Password"
+                      accessibilityHint={`Enter a password with at least ${MIN_PASSWORD_LENGTH} characters`}
+                    />
+                    <Pressable
+                      style={{
+                        position: 'absolute',
+                        right: 16,
+                        top: 0,
+                        bottom: 0,
+                        justifyContent: 'center',
+                      }}
+                      onPress={() => setShowPassword(!showPassword)}
+                      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                      accessibilityRole="button"
+                    >
+                      <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)' }}>
+                        {showPassword ? 'Hide' : 'Show'}
+                      </RNText>
+                    </Pressable>
+                  </View>
+                  {passwordError ? (
+                    <RNText style={{ fontSize: 12, color: '#f43f5e', marginTop: 6 }}>
+                      {passwordError}
+                    </RNText>
+                  ) : (
+                    <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)', marginTop: 6 }}>
+                      Minimum {MIN_PASSWORD_LENGTH} characters
+                    </RNText>
+                  )}
 
                   {/* Password Strength Indicator */}
                   {password && !passwordError && (
@@ -600,178 +671,228 @@ export default function SignupScreen() {
                       </View>
 
                       {/* Strength Label */}
-                      <Text
-                        variant="textXs"
-                        style={{ color: passwordStrength.color }}
+                      <RNText
+                        style={{ fontSize: 12, color: passwordStrength.color }}
                         accessibilityLabel={`Password strength: ${passwordStrength.label}`}
                       >
                         {passwordStrength.label}
-                      </Text>
+                      </RNText>
                     </View>
                   )}
                 </View>
 
                 {/* Confirm Password Input */}
-                <Input
-                  label="Confirm Password"
-                  placeholder="Re-enter your password"
-                  value={confirmPassword}
-                  onChangeText={handleConfirmPasswordChange}
-                  secureTextEntry={!showConfirmPassword}
-                  autoCapitalize="none"
-                  autoComplete="password-new"
-                  autoCorrect={false}
-                  errorText={confirmPasswordError}
-                  variant={confirmPasswordError ? 'error' : 'default'}
-                  size="lg"
-                  disabled={isLoading || isOAuthLoading !== null}
-                  accessibilityLabel="Confirm password"
-                  accessibilityHint="Re-enter your password to confirm"
-                  rightIcon={
+                <View>
+                  <RNText style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 8 }}>
+                    Confirm Password
+                  </RNText>
+                  <View style={{ position: 'relative' }}>
+                    <TextInput
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderWidth: 1,
+                        borderColor: confirmPasswordError ? '#f43f5e' : 'rgba(255, 255, 255, 0.1)',
+                        borderRadius: 12,
+                        paddingVertical: 16,
+                        paddingHorizontal: 16,
+                        paddingRight: 60,
+                        fontSize: 16,
+                        color: '#ffffff',
+                      }}
+                      placeholder="Re-enter your password"
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      value={confirmPassword}
+                      onChangeText={handleConfirmPasswordChange}
+                      secureTextEntry={!showConfirmPassword}
+                      autoCapitalize="none"
+                      autoComplete="password-new"
+                      autoCorrect={false}
+                      editable={!isLoading && isOAuthLoading === null}
+                      accessibilityLabel="Confirm password"
+                      accessibilityHint="Re-enter your password to confirm"
+                    />
                     <Pressable
+                      style={{
+                        position: 'absolute',
+                        right: 16,
+                        top: 0,
+                        bottom: 0,
+                        justifyContent: 'center',
+                      }}
                       onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                       accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}
                       accessibilityRole="button"
                     >
-                      <Text variant="textXs" color="muted">
+                      <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)' }}>
                         {showConfirmPassword ? 'Hide' : 'Show'}
-                      </Text>
+                      </RNText>
                     </Pressable>
-                  }
-                />
+                  </View>
+                  {confirmPasswordError ? (
+                    <RNText style={{ fontSize: 12, color: '#f43f5e', marginTop: 6 }}>
+                      {confirmPasswordError}
+                    </RNText>
+                  ) : null}
+                </View>
 
                 {/* Terms & Privacy Agreement */}
                 <View style={styles.termsCheckbox}>
-                  <Checkbox
-                    checked={agreedToTerms}
-                    onChange={setAgreedToTerms}
+                  <Pressable
+                    onPress={() => setAgreedToTerms(!agreedToTerms)}
                     disabled={isLoading || isOAuthLoading !== null}
                     accessibilityLabel="Agree to Terms of Service and Privacy Policy"
-                  />
+                    accessibilityRole="checkbox"
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderWidth: 2,
+                      borderColor: agreedToTerms ? '#3b82f6' : 'rgba(255, 255, 255, 0.3)',
+                      backgroundColor: agreedToTerms ? '#3b82f6' : 'transparent',
+                      borderRadius: 6,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {agreedToTerms && (
+                      <RNText style={{ color: '#ffffff', fontSize: 16 }}>✓</RNText>
+                    )}
+                  </Pressable>
                   <View style={styles.termsText}>
-                    <Text variant="textSm" color="secondary">
+                    <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>
                       I agree to the{' '}
-                    </Text>
+                    </RNText>
                     <Pressable
                       onPress={() => router.push('/(auth)/terms-of-service')}
                       disabled={isLoading || isOAuthLoading !== null}
                       accessibilityLabel="Read Terms of Service"
                       accessibilityRole="link"
                     >
-                      <Text
-                        variant="textSm"
-                        weight="semibold"
-                        style={{ color: colors.accent[500] }}
-                      >
+                      <RNText style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
                         Terms of Service
-                      </Text>
+                      </RNText>
                     </Pressable>
-                    <Text variant="textSm" color="secondary">
+                    <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>
                       {' '}
                       and{' '}
-                    </Text>
+                    </RNText>
                     <Pressable
                       onPress={() => router.push('/(auth)/privacy-policy')}
                       disabled={isLoading || isOAuthLoading !== null}
                       accessibilityLabel="Read Privacy Policy"
                       accessibilityRole="link"
                     >
-                      <Text
-                        variant="textSm"
-                        weight="semibold"
-                        style={{ color: colors.accent[500] }}
-                      >
+                      <RNText style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
                         Privacy Policy
-                      </Text>
+                      </RNText>
                     </Pressable>
                   </View>
                 </View>
 
                 {/* Create Account Button */}
-                <Button
-                  variant="primary"
-                  size="lg"
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#3b82f6',
+                    paddingVertical: 16,
+                    paddingHorizontal: 24,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    marginTop: 8,
+                    opacity: (isLoading || !agreedToTerms || isOAuthLoading !== null) ? 0.5 : 1,
+                  }}
                   onPress={handleSignUp}
                   disabled={isLoading || !agreedToTerms || isOAuthLoading !== null}
-                  loading={isLoading}
-                  fullWidth
-                  style={styles.signUpButton}
                   accessibilityLabel="Create account"
                   accessibilityHint="Create a new account with your email and password"
                 >
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
-                </Button>
+                  {isLoading ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      Create Account
+                    </RNText>
+                  )}
+                </TouchableOpacity>
               </View>
 
               {/* Divider */}
               <View style={styles.dividerContainer}>
-                <View style={[styles.divider, { backgroundColor: colors.border.muted }]} />
-                <Text variant="textSm" color="muted" style={styles.dividerText}>
+                <View style={[styles.divider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
+                <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)', marginHorizontal: 16 }}>
                   or continue with
-                </Text>
-                <View style={[styles.divider, { backgroundColor: colors.border.muted }]} />
+                </RNText>
+                <View style={[styles.divider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
               </View>
 
               {/* OAuth Buttons */}
               <View style={styles.oauthButtons}>
                 {/* Sign up with Google - Fully Functional */}
-                <Button
-                  variant="secondary"
-                  size="lg"
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    paddingVertical: 16,
+                    paddingHorizontal: 24,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    opacity: (isLoading || isOAuthLoading !== null) ? 0.5 : 1,
+                  }}
                   onPress={() => handleOAuthSignIn('google')}
                   disabled={isLoading || isOAuthLoading !== null}
-                  loading={isOAuthLoading === 'google'}
-                  fullWidth
-                  style={styles.oauthButton}
                   accessibilityLabel="Sign up with Google"
                 >
                   {isOAuthLoading === 'google' ? (
-                    <ActivityIndicator color={colors.accent[500]} />
+                    <ActivityIndicator color="#3b82f6" />
                   ) : (
-                    'Sign up with Google'
+                    <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      Sign up with Google
+                    </RNText>
                   )}
-                </Button>
+                </TouchableOpacity>
 
                 {/* Sign up with Apple - Disabled (requires Apple Developer Program) */}
                 {Platform.OS === 'ios' && (
                   <View>
-                    <Button
-                      variant="secondary"
-                      size="lg"
-                      onPress={() => {}}
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        paddingVertical: 16,
+                        paddingHorizontal: 24,
+                        borderRadius: 12,
+                        alignItems: 'center',
+                        borderWidth: 1,
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        opacity: 0.5,
+                      }}
                       disabled={true}
-                      fullWidth
-                      style={[styles.oauthButton, { opacity: 0.5 }]}
                       accessibilityLabel="Sign up with Apple (currently disabled)"
                       accessibilityHint="Apple Sign-In requires Apple Developer Program membership"
                     >
-                      Sign up with Apple (Coming Soon)
-                    </Button>
-                    <Text
-                      variant="textXs"
-                      color="muted"
-                      style={{ textAlign: 'center', marginTop: 4 }}
-                    >
+                      <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                        Sign up with Apple (Coming Soon)
+                      </RNText>
+                    </TouchableOpacity>
+                    <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)', textAlign: 'center', marginTop: 4 }}>
                       Requires Apple Developer Program
-                    </Text>
+                    </RNText>
                   </View>
                 )}
               </View>
 
               {/* Login Link */}
               <View style={styles.footer}>
-                <Text variant="textBase" color="secondary">
+                <RNText style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
                   Already have an account?{' '}
-                </Text>
+                </RNText>
                 <Pressable
                   onPress={handleNavigateToLogin}
                   disabled={isLoading || isOAuthLoading !== null}
                   accessibilityLabel="Navigate to login"
                   accessibilityRole="button"
                 >
-                  <Text variant="textBase" weight="semibold" className="text-accent-500">
+                  <RNText style={{ fontSize: 16, fontWeight: '600', color: '#3b82f6' }}>
                     Log In
-                  </Text>
+                  </RNText>
                 </Pressable>
               </View>
             </>

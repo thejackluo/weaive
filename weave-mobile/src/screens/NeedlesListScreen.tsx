@@ -14,19 +14,15 @@
  */
 
 import React from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
+import { View, FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Button, Text } from '@/design-system';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useActiveGoals } from '@/hooks/useActiveGoals';
 import { GoalCard } from '@/components/GoalCard';
 import { GoalCardSkeleton } from '@/components/GoalCardSkeleton';
-import { showSimpleToast } from '@/design-system/components/SimpleToast';
 
 export function NeedlesListScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const { data, isLoading, isError, error, refetch, isFetching } = useActiveGoals();
 
   const goals = data?.data || [];
@@ -40,11 +36,8 @@ export function NeedlesListScreen() {
     if (isAtLimit) {
       // AC3: Show tooltip when at limit
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      showSimpleToast(
-        "You've reached the 3-goal limit. Archive a goal to add a new one.",
-        'info',
-        4000
-      );
+      // TODO: Replace with new toast system
+      // showSimpleToast("You've reached the 3-goal limit. Archive a goal to add a new one.", 'info', 4000);
       return;
     }
 
@@ -55,12 +48,12 @@ export function NeedlesListScreen() {
   // Render loading state (AC5)
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <View style={[styles.container, { backgroundColor: '#000000' }]}>
         <View style={styles.header}>
-          <Text variant="displayLg" weight="bold" style={styles.title}>
+          <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
             Your Needles
           </Text>
-          <Text variant="textBase" color="secondary" style={styles.subtitle}>
+          <Text style={[styles.subtitle, { fontSize: 16, color: '#a1a1aa' }]}>
             Focus on what matters most
           </Text>
         </View>
@@ -77,34 +70,32 @@ export function NeedlesListScreen() {
   // Render error state (AC7)
   if (isError) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <View style={[styles.container, { backgroundColor: '#000000' }]}>
         <View style={styles.header}>
-          <Text variant="displayLg" weight="bold" style={styles.title}>
+          <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
             Your Needles
           </Text>
         </View>
 
         <View style={[styles.centerContent, styles.errorState]} testID="error-state">
-          <Text variant="displayMd" weight="semibold" color="error" style={styles.errorTitle}>
+          <Text style={[styles.errorTitle, { fontSize: 24, fontWeight: '600', color: '#ef4444' }]}>
             Couldn't load your goals
           </Text>
-          <Text variant="textBase" color="secondary" style={styles.errorMessage}>
+          <Text style={[styles.errorMessage, { fontSize: 16, color: '#a1a1aa' }]}>
             Check your connection and try again
           </Text>
           {error && (
-            <Text variant="textSm" color="muted" style={styles.errorDetail}>
+            <Text style={[styles.errorDetail, { fontSize: 14, color: '#71717a' }]}>
               {error.message}
             </Text>
           )}
-          <Button
-            variant="primary"
-            size="md"
+          <TouchableOpacity
             onPress={() => refetch()}
             testID="retry-button"
-            style={styles.retryButton}
+            style={[styles.retryButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}
           >
-            Retry
-          </Button>
+            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -113,29 +104,29 @@ export function NeedlesListScreen() {
   // Render empty state (AC6)
   if (goals.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <View style={[styles.container, { backgroundColor: '#000000' }]}>
         <View style={styles.header}>
-          <Text variant="displayLg" weight="bold" style={styles.title}>
+          <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
             Your Needles
           </Text>
         </View>
 
         <View style={[styles.centerContent, styles.emptyState]} testID="empty-state">
-          <Text variant="displayMd" weight="semibold" style={styles.emptyTitle}>
+          <Text style={[styles.emptyTitle, { fontSize: 24, fontWeight: '600', color: '#ffffff' }]}>
             You haven't set any goals yet
           </Text>
-          <Text variant="textBase" color="secondary" style={styles.emptyMessage}>
+          <Text style={[styles.emptyMessage, { fontSize: 16, color: '#a1a1aa' }]}>
             What do you want to achieve?
           </Text>
-          <Button
-            variant="primary"
-            size="md"
+          <TouchableOpacity
             onPress={handleAddGoal}
             testID="create-first-goal-button"
-            style={styles.createButton}
+            style={[styles.createButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}
           >
-            Create Your First Goal
-          </Button>
+            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
+              Create Your First Goal
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -143,12 +134,12 @@ export function NeedlesListScreen() {
 
   // Render goals list (AC1, AC2)
   return (
-    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+    <View style={[styles.container, { backgroundColor: '#000000' }]}>
       <View style={styles.header}>
-        <Text variant="displayLg" weight="bold" style={styles.title}>
+        <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
           Your Needles
         </Text>
-        <Text variant="textBase" color="secondary" style={styles.subtitle}>
+        <Text style={[styles.subtitle, { fontSize: 16, color: '#a1a1aa' }]}>
           {total} of {activeGoalLimit} active {total === 1 ? 'goal' : 'goals'}
         </Text>
       </View>
@@ -160,9 +151,7 @@ export function NeedlesListScreen() {
         contentContainerStyle={styles.listContainer}
         ListFooterComponent={
           <View style={styles.footer}>
-            <Button
-              variant={isAtLimit ? 'secondary' : 'primary'}
-              size="md"
+            <TouchableOpacity
               onPress={handleAddGoal}
               disabled={isAtLimit}
               testID="add-goal-button"
@@ -173,12 +162,22 @@ export function NeedlesListScreen() {
                   : 'Double tap to create a new goal'
               }
               accessibilityState={{ disabled: isAtLimit }}
-              style={styles.addButton}
+              style={[
+                styles.addButton,
+                {
+                  backgroundColor: isAtLimit ? '#27272a' : '#3b82f6',
+                  padding: 12,
+                  borderRadius: 8,
+                  opacity: isAtLimit ? 0.5 : 1,
+                },
+              ]}
             >
-              {isAtLimit ? 'Goal Limit Reached (3/3)' : 'Add New Goal'}
-            </Button>
+              <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
+                {isAtLimit ? 'Goal Limit Reached (3/3)' : 'Add New Goal'}
+              </Text>
+            </TouchableOpacity>
             {isAtLimit && (
-              <Text variant="textSm" color="secondary" style={styles.limitHint}>
+              <Text style={[styles.limitHint, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
                 Archive a goal to add a new one
               </Text>
             )}

@@ -19,11 +19,11 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Text,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Text, Card, Button } from '@/design-system';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { Ionicons } from '@expo/vector-icons';
 import { useCreateGoal } from '@/hooks/useActiveGoals';
 import type { BindCreate, QGoalCreate } from '@/types/goals';
@@ -32,7 +32,6 @@ type CreationStep = 'input' | 'ai-generating' | 'review';
 
 export function CreateNeedleScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const createGoalMutation = useCreateGoal();
 
   const [currentStep, setCurrentStep] = useState<CreationStep>('input');
@@ -127,13 +126,13 @@ export function CreateNeedleScreen() {
   // Step 1: Input
   if (currentStep === 'input') {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <View style={[styles.container, { backgroundColor: '#000000' }]}>
         {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
+            <Ionicons name="chevron-back" size={24} color="#ffffff" />
           </Pressable>
-          <Text variant="textLg" weight="semibold" style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff', textAlign: 'center' }]}>
             New Needle
           </Text>
           <View style={styles.headerSpacer} />
@@ -147,7 +146,7 @@ export function CreateNeedleScreen() {
         >
           {/* Goal Title Input */}
           <View style={styles.section}>
-            <Text variant="textSm" color="secondary" style={styles.label}>
+            <Text style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
               What's your goal?
             </Text>
             <TextInput
@@ -156,20 +155,20 @@ export function CreateNeedleScreen() {
               style={[
                 styles.input,
                 {
-                  color: colors.text.primary,
-                  borderColor: colors.border.muted,
-                  backgroundColor: colors.background.secondary,
+                  color: '#ffffff',
+                  borderColor: '#27272A',
+                  backgroundColor: '#18181b',
                 },
               ]}
               placeholder="e.g., Get Ripped, Build a Startup, Learn Guitar"
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor="#71717a"
               autoFocus
             />
           </View>
 
           {/* Why It Matters */}
           <View style={styles.section}>
-            <Text variant="textSm" color="secondary" style={styles.label}>
+            <Text style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
               Why is this goal important to you?
             </Text>
             <TextInput
@@ -179,43 +178,42 @@ export function CreateNeedleScreen() {
               style={[
                 styles.textAreaInput,
                 {
-                  color: colors.text.primary,
-                  borderColor: colors.border.muted,
-                  backgroundColor: colors.background.secondary,
+                  color: '#ffffff',
+                  borderColor: '#27272A',
+                  backgroundColor: '#18181b',
                 },
               ]}
               placeholder="Share your motivation... This helps the AI understand what success means to you."
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor="#71717a"
             />
           </View>
 
           {/* Info Card */}
-          <Card variant="glass" style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
             <View style={styles.infoContent}>
-              <Ionicons name="sparkles" size={20} color={colors.violet[400]} />
-              <Text variant="textSm" style={[styles.infoText, { color: colors.text.secondary }]}>
+              <Ionicons name="sparkles" size={20} color="#a78bfa" />
+              <Text style={[styles.infoText, { fontSize: 14, color: '#a1a1aa' }]}>
                 Tap "Generate Plan" and Weave AI will create milestones and daily habits for you.
                 You can edit everything before saving.
               </Text>
             </View>
-          </Card>
+          </View>
         </ScrollView>
 
         {/* Generate Button */}
         <View style={styles.bottomButtonContainer}>
-          <Button
-            variant="primary"
-            size="lg"
+          <TouchableOpacity
             onPress={handleAskAI}
             disabled={!goalTitle.trim() || !whyItMatters.trim()}
+            style={[{ backgroundColor: '#3b82f6', padding: 16, borderRadius: 12, opacity: (!goalTitle.trim() || !whyItMatters.trim()) ? 0.5 : 1 }]}
           >
             <View style={styles.buttonContent}>
               <Ionicons name="sparkles" size={20} color="white" />
-              <Text variant="textBase" weight="semibold" style={{ color: 'white' }}>
+              <Text style={{ fontSize: 15, fontWeight: '600', color: 'white' }}>
                 Generate Plan
               </Text>
             </View>
-          </Button>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -224,13 +222,13 @@ export function CreateNeedleScreen() {
   // Step 2: AI Generating
   if (currentStep === 'ai-generating') {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <View style={[styles.container, { backgroundColor: '#000000' }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent[500]} />
-          <Text variant="textLg" weight="semibold" style={styles.loadingText}>
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text style={[styles.loadingText, { fontSize: 18, fontWeight: '600', color: '#ffffff', textAlign: 'center' }]}>
             Weave AI is creating your plan...
           </Text>
-          <Text variant="textBase" color="secondary" style={styles.loadingSubtext}>
+          <Text style={[styles.loadingSubtext, { fontSize: 15, color: '#a1a1aa', textAlign: 'center' }]}>
             Analyzing your goal and generating milestones
           </Text>
         </View>
@@ -240,13 +238,13 @@ export function CreateNeedleScreen() {
 
   // Step 3: Review AI Suggestions
   return (
-    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+    <View style={[styles.container, { backgroundColor: '#000000' }]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => setCurrentStep('input')} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
+          <Ionicons name="chevron-back" size={24} color="#ffffff" />
         </Pressable>
-        <Text variant="textLg" weight="semibold" style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff', textAlign: 'center' }]}>
           Review Your Plan
         </Text>
         <View style={styles.headerSpacer} />
@@ -259,7 +257,7 @@ export function CreateNeedleScreen() {
       >
         {/* Goal Title (Editable) */}
         <View style={styles.section}>
-          <Text variant="textSm" color="secondary" style={styles.label}>
+          <Text style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
             Goal
           </Text>
           <TextInput
@@ -268,9 +266,9 @@ export function CreateNeedleScreen() {
             style={[
               styles.input,
               {
-                color: colors.text.primary,
-                borderColor: colors.border.muted,
-                backgroundColor: colors.background.secondary,
+                color: '#ffffff',
+                borderColor: '#27272A',
+                backgroundColor: '#18181b',
               },
             ]}
           />
@@ -278,7 +276,7 @@ export function CreateNeedleScreen() {
 
         {/* Why (Editable) */}
         <View style={styles.section}>
-          <Text variant="textSm" color="secondary" style={styles.label}>
+          <Text style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
             Why this matters
           </Text>
           <TextInput
@@ -288,9 +286,9 @@ export function CreateNeedleScreen() {
             style={[
               styles.textAreaInput,
               {
-                color: colors.text.primary,
-                borderColor: colors.border.muted,
-                backgroundColor: colors.background.secondary,
+                color: '#ffffff',
+                borderColor: '#27272A',
+                backgroundColor: '#18181b',
               },
             ]}
           />
@@ -298,10 +296,10 @@ export function CreateNeedleScreen() {
 
         {/* Milestones (Q-Goals) */}
         <View style={styles.section}>
-          <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Milestones
           </Text>
-          <Text variant="textSm" color="secondary" style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionSubtitle, { fontSize: 14, color: '#a1a1aa' }]}>
             Measurable targets to track your progress
           </Text>
           {suggestedQGoals.map((qgoal, index) => (
@@ -312,7 +310,7 @@ export function CreateNeedleScreen() {
                 setEditingQGoalIndex(index);
               }}
             >
-              <Card variant="glass" style={styles.listItemCard}>
+              <View style={[styles.listItemCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
                 <View style={styles.listItemContent}>
                   <View style={styles.listItemInfo}>
                     {editingQGoalIndex === index ? (
@@ -327,31 +325,31 @@ export function CreateNeedleScreen() {
                         autoFocus
                         style={[
                           styles.inlineInput,
-                          { color: colors.text.primary, borderColor: colors.border.focus },
+                          { color: '#ffffff', borderColor: '#3b82f6' },
                         ]}
                       />
                     ) : (
-                      <Text variant="textBase" weight="medium">
+                      <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                         {qgoal.title}
                       </Text>
                     )}
-                    <Text variant="textSm" color="secondary">
+                    <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                       Target: {qgoal.target_value} {qgoal.unit}
                     </Text>
                   </View>
-                  <Ionicons name="pencil" size={20} color={colors.text.secondary} />
+                  <Ionicons name="pencil" size={20} color="#a1a1aa" />
                 </View>
-              </Card>
+              </View>
             </Pressable>
           ))}
         </View>
 
         {/* Daily Habits (Binds) */}
         <View style={styles.section}>
-          <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Daily Habits
           </Text>
-          <Text variant="textSm" color="secondary" style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionSubtitle, { fontSize: 14, color: '#a1a1aa' }]}>
             Consistent actions that will get you there
           </Text>
           {suggestedBinds.map((bind, index) => (
@@ -362,7 +360,7 @@ export function CreateNeedleScreen() {
                 setEditingBindIndex(index);
               }}
             >
-              <Card variant="glass" style={styles.listItemCard}>
+              <View style={[styles.listItemCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
                 <View style={styles.listItemContent}>
                   <View style={styles.listItemInfo}>
                     {editingBindIndex === index ? (
@@ -377,53 +375,52 @@ export function CreateNeedleScreen() {
                         autoFocus
                         style={[
                           styles.inlineInput,
-                          { color: colors.text.primary, borderColor: colors.border.focus },
+                          { color: '#ffffff', borderColor: '#3b82f6' },
                         ]}
                       />
                     ) : (
-                      <Text variant="textBase" weight="medium">
+                      <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                         {bind.title}
                       </Text>
                     )}
-                    <Text variant="textSm" color="secondary">
+                    <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                       {bind.frequency_value}x per{' '}
                       {bind.frequency_type === 'weekly' ? 'week' : 'day'}
                     </Text>
                   </View>
-                  <Ionicons name="pencil" size={20} color={colors.text.secondary} />
+                  <Ionicons name="pencil" size={20} color="#a1a1aa" />
                 </View>
-              </Card>
+              </View>
             </Pressable>
           ))}
         </View>
 
         {/* Info Card */}
-        <Card variant="glass" style={styles.infoCard}>
+        <View style={[styles.infoCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
           <View style={styles.infoContent}>
-            <Ionicons name="information-circle" size={20} color={colors.violet[400]} />
-            <Text variant="textSm" style={[styles.infoText, { color: colors.text.secondary }]}>
+            <Ionicons name="information-circle" size={20} color="#a78bfa" />
+            <Text style={[styles.infoText, { fontSize: 14, color: '#a1a1aa' }]}>
               You can edit these later. Tap "Create Needle" to get started!
             </Text>
           </View>
-        </Card>
+        </View>
       </ScrollView>
 
       {/* Create Button */}
       <View style={styles.bottomButtonContainer}>
-        <Button
-          variant="primary"
-          size="lg"
+        <TouchableOpacity
           onPress={handleCreateGoal}
           disabled={createGoalMutation.isPending}
+          style={[{ backgroundColor: '#3b82f6', padding: 16, borderRadius: 12, opacity: createGoalMutation.isPending ? 0.5 : 1 }]}
         >
           {createGoalMutation.isPending ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
-            <Text variant="textBase" weight="semibold" style={{ color: 'white' }}>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: 'white', textAlign: 'center' }}>
               Create Needle
             </Text>
           )}
-        </Button>
+        </TouchableOpacity>
       </View>
     </View>
   );

@@ -30,12 +30,13 @@ import {
   StyleSheet,
   ActivityIndicator,
   Pressable,
-  Text as RNText,
+  Text,
+  TextInput,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { Button, Input, Text, useTheme, showSimpleToast } from '@/design-system';
 import { AuthError } from '@supabase/supabase-js';
 import { navigateAfterAuth, getAuthErrorMessage, bypassAuthForDev } from '@lib/authHelpers';
 import { supabase } from '@lib/supabase';
@@ -53,7 +54,6 @@ export default function LoginScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user, signIn, signOut, signInWithOAuth, error: authError, clearError } = useAuth();
-  const { colors } = useTheme();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isContinuing, setIsContinuing] = useState(false);
 
@@ -158,7 +158,7 @@ export default function LoginScreen() {
 
       // Show success toast
       console.log('[LOGIN] Sign in successful, calling showSimpleToast...');
-      showSimpleToast('Welcome back! 🎉', 'success');
+      // showSimpleToast('Welcome back! 🎉', 'success');
 
       // Get user ID and navigate appropriately based on onboarding status
       const {
@@ -170,7 +170,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       console.error('[LOGIN] Sign in error:', error);
       console.log('[LOGIN] Calling showSimpleToast for error...');
-      showSimpleToast(getAuthErrorMessage(error), 'error');
+      // showSimpleToast(getAuthErrorMessage(error), 'error');
       // Error is also set in auth context, displayed in error card below
     } finally {
       setIsLoading(false);
@@ -188,7 +188,7 @@ export default function LoginScreen() {
 
         // Show success toast
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
-        showSimpleToast(`Signed in with ${providerName}! 🎉`, 'success');
+        // showSimpleToast(`Signed in with ${providerName}! 🎉`, 'success');
 
         // Get user ID and navigate appropriately based on onboarding status
         const {
@@ -200,7 +200,7 @@ export default function LoginScreen() {
       } catch (error: any) {
         console.error(`[LOGIN] ${provider} sign in error:`, error);
         const providerName = provider === 'apple' ? 'Apple' : 'Google';
-        showSimpleToast(`Failed to sign in with ${providerName}. Please try again.`, 'error');
+        // showSimpleToast(`Failed to sign in with ${providerName}. Please try again.`, 'error');
         // Error is also set in auth context, displayed in error card below
       } finally {
         setIsOAuthLoading(null);
@@ -228,7 +228,7 @@ export default function LoginScreen() {
       await navigateAfterAuth(user.id, false);
     } catch (error) {
       console.error('[LOGIN] Continue navigation error:', error);
-      showSimpleToast('Navigation failed. Please try again.', 'error');
+      // showSimpleToast('Navigation failed. Please try again.', 'error');
     } finally {
       setIsContinuing(false);
     }
@@ -241,12 +241,12 @@ export default function LoginScreen() {
     try {
       setIsSigningOut(true);
       await signOut();
-      showSimpleToast('Signed out successfully 👋', 'success');
+      // showSimpleToast('Signed out successfully 👋', 'success');
       // Stay on login screen after sign out
     } catch (error: any) {
       console.error('[LOGIN] Sign out error:', error);
-      showSimpleToast('Failed to sign out. Please try again.', 'error');
-    } finally {
+      // showSimpleToast('Failed to sign out. Please try again.', 'error');
+    } finally{
       setIsSigningOut(false);
     }
   }, [signOut]);
@@ -271,7 +271,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background.primary }]}
+      style={[styles.container, { backgroundColor: '#000000' }]}
       edges={['top']}
     >
       <KeyboardAvoidingView
@@ -285,10 +285,10 @@ export default function LoginScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text variant="displayLg" color="primary">
+            <Text style={{ color: '#ffffff', fontSize: 32, fontWeight: 'bold' }}>
               {user ? 'Already Signed In' : 'Welcome Back'}
             </Text>
-            <Text variant="textLg" color="secondary" className="mt-2">
+            <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 18, marginTop: 8 }}>
               {user ? 'You are currently signed in' : 'Sign in to continue your journey'}
             </Text>
           </View>
@@ -298,48 +298,60 @@ export default function LoginScreen() {
             <View style={styles.alreadySignedInCard}>
               <View
                 style={{
-                  backgroundColor: `${colors.accent[500]}15`,
+                  backgroundColor: 'rgba(59, 114, 246, 0.15)',
                   borderLeftWidth: 4,
-                  borderLeftColor: colors.accent[500],
+                  borderLeftColor: '#3b82f6',
                   borderRadius: 8,
                   padding: 20,
                   gap: 16,
                 }}
               >
                 <View style={{ gap: 8 }}>
-                  <Text variant="textLg" weight="bold" style={{ color: colors.accent[500] }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }}>
                     ✅ You're Already Signed In
                   </Text>
-                  <Text variant="textBase" color="secondary">
-                    Signed in as <Text weight="semibold">{user.email}</Text>
+                  <Text style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    Signed in as <Text style={{ fontWeight: '600' }}>{user.email}</Text>
                   </Text>
-                  <Text variant="textSm" color="muted" style={{ marginTop: 4 }}>
+                  <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.5)', marginTop: 4 }}>
                     You can continue to your account or sign out to use a different account.
                   </Text>
                 </View>
 
                 <View style={{ gap: 12 }}>
-                  <Button
-                    variant="primary"
-                    size="lg"
+                  <TouchableOpacity
                     onPress={handleContinue}
-                    loading={isContinuing}
                     disabled={isContinuing || isSigningOut}
-                    fullWidth
+                    style={{
+                      backgroundColor: '#3b82f6',
+                      paddingVertical: 16,
+                      paddingHorizontal: 24,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      opacity: isContinuing || isSigningOut ? 0.5 : 1,
+                    }}
                   >
-                    {isContinuing ? 'Loading...' : 'Continue to App'}
-                  </Button>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      {isContinuing ? 'Loading...' : 'Continue to App'}
+                    </Text>
+                  </TouchableOpacity>
 
-                  <Button
-                    variant="secondary"
-                    size="lg"
+                  <TouchableOpacity
                     onPress={handleSignOut}
-                    loading={isSigningOut}
                     disabled={isContinuing || isSigningOut}
-                    fullWidth
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      paddingVertical: 16,
+                      paddingHorizontal: 24,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      opacity: isContinuing || isSigningOut ? 0.5 : 1,
+                    }}
                   >
-                    {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-                  </Button>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -375,117 +387,166 @@ export default function LoginScreen() {
             <>
               <View style={styles.form}>
                 {/* Email Input */}
-                <Input
-                  label="Email"
-                  placeholder="your.email@example.com"
-                  value={email}
-                  onChangeText={handleEmailChange}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  autoCorrect={false}
-                  errorText={emailError}
-                  variant={emailError ? 'error' : 'default'}
-                  size="lg"
-                  disabled={isLoading || isOAuthLoading !== null}
-                  accessibilityLabel="Email address"
-                  accessibilityHint="Enter your email address"
-                />
+                <View>
+                  <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 14, marginBottom: 8, fontWeight: '500' }}>Email</Text>
+                  <TextInput
+                    placeholder="your.email@example.com"
+                    value={email}
+                    onChangeText={handleEmailChange}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    autoCorrect={false}
+                    editable={!(isLoading || isOAuthLoading !== null)}
+                    accessibilityLabel="Email address"
+                    accessibilityHint="Enter your email address"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      borderWidth: 1,
+                      borderColor: emailError ? '#ef4444' : 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                      fontSize: 16,
+                      color: '#ffffff',
+                    }}
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                  />
+                  {emailError ? <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{emailError}</Text> : null}
+                </View>
 
                 {/* Password Input */}
-                <Input
-                  label="Password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChangeText={handlePasswordChange}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoComplete="password"
-                  autoCorrect={false}
-                  errorText={passwordError}
-                  variant={passwordError ? 'error' : 'default'}
-                  size="lg"
-                  disabled={isLoading || isOAuthLoading !== null}
-                  accessibilityLabel="Password"
-                  accessibilityHint="Enter your password"
-                  rightIcon={
+                <View>
+                  <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 14, marginBottom: 8, fontWeight: '500' }}>Password</Text>
+                  <View style={{ position: 'relative' }}>
+                    <TextInput
+                      placeholder="Enter your password"
+                      value={password}
+                      onChangeText={handlePasswordChange}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoComplete="password"
+                      autoCorrect={false}
+                      editable={!(isLoading || isOAuthLoading !== null)}
+                      accessibilityLabel="Password"
+                      accessibilityHint="Enter your password"
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderWidth: 1,
+                        borderColor: passwordError ? '#ef4444' : 'rgba(255, 255, 255, 0.1)',
+                        borderRadius: 12,
+                        paddingHorizontal: 16,
+                        paddingVertical: 14,
+                        paddingRight: 60,
+                        fontSize: 16,
+                        color: '#ffffff',
+                      }}
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                    />
                     <Pressable
                       onPress={() => setShowPassword(!showPassword)}
                       accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
                       accessibilityRole="button"
+                      style={{ position: 'absolute', right: 16, top: 14 }}
                     >
-                      <Text variant="textXs" color="muted">
+                      <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>
                         {showPassword ? 'Hide' : 'Show'}
                       </Text>
                     </Pressable>
-                  }
-                />
+                  </View>
+                  {passwordError ? <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{passwordError}</Text> : null}
+                </View>
 
                 {/* Sign In Button */}
-                <Button
-                  variant="primary"
-                  size="lg"
+                <TouchableOpacity
                   onPress={handleSignIn}
                   disabled={isLoading || isOAuthLoading !== null}
-                  loading={isLoading}
-                  fullWidth
-                  style={styles.signInButton}
                   accessibilityLabel="Sign in"
                   accessibilityHint="Sign in with your email and password"
+                  style={[
+                    styles.signInButton,
+                    {
+                      backgroundColor: '#3b82f6',
+                      paddingVertical: 16,
+                      paddingHorizontal: 24,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      opacity: isLoading || isOAuthLoading !== null ? 0.5 : 1,
+                    },
+                  ]}
                 >
-                  {isLoading ? 'Signing In...' : 'Sign In'}
-                </Button>
+                  {isLoading ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      Sign In
+                    </Text>
+                  )}
+                </TouchableOpacity>
               </View>
 
               {/* Divider */}
               <View style={styles.divider}>
-                <View style={[styles.dividerLine, { backgroundColor: colors.border.muted }]} />
-                <Text variant="textXs" color="muted">
+                <View style={[styles.dividerLine, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
+                <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)' }}>
                   or continue with
                 </Text>
-                <View style={[styles.dividerLine, { backgroundColor: colors.border.muted }]} />
+                <View style={[styles.dividerLine, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
               </View>
 
               {/* OAuth Buttons */}
               <View style={styles.oauthButtons}>
                 {/* Sign in with Google - Fully Functional */}
-                <Button
-                  variant="secondary"
-                  size="lg"
+                <TouchableOpacity
                   onPress={() => handleOAuthSignIn('google')}
                   disabled={isLoading || isOAuthLoading !== null}
-                  loading={isOAuthLoading === 'google'}
-                  fullWidth
-                  style={styles.oauthButton}
                   accessibilityLabel="Sign in with Google"
+                  style={[
+                    styles.oauthButton,
+                    {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      paddingVertical: 16,
+                      paddingHorizontal: 24,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      opacity: isLoading || isOAuthLoading !== null ? 0.5 : 1,
+                    },
+                  ]}
                 >
                   {isOAuthLoading === 'google' ? (
-                    <ActivityIndicator color={colors.accent[500]} />
+                    <ActivityIndicator color="#3b82f6" />
                   ) : (
-                    'Sign in with Google'
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      Sign in with Google
+                    </Text>
                   )}
-                </Button>
+                </TouchableOpacity>
 
                 {/* Sign in with Apple - Disabled (requires Apple Developer Program) */}
                 {Platform.OS === 'ios' && (
                   <View>
-                    <Button
-                      variant="secondary"
-                      size="lg"
+                    <TouchableOpacity
                       onPress={() => {}}
                       disabled={true}
-                      fullWidth
-                      style={[styles.oauthButton, { opacity: 0.5 }]}
                       accessibilityLabel="Sign in with Apple (currently disabled)"
                       accessibilityHint="Apple Sign-In requires Apple Developer Program membership"
+                      style={[
+                        styles.oauthButton,
+                        {
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          paddingVertical: 16,
+                          paddingHorizontal: 24,
+                          borderRadius: 12,
+                          alignItems: 'center',
+                          opacity: 0.5,
+                        },
+                      ]}
                     >
-                      Sign in with Apple (Coming Soon)
-                    </Button>
-                    <Text
-                      variant="textXs"
-                      color="muted"
-                      style={{ textAlign: 'center', marginTop: 4 }}
-                    >
+                      <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                        Sign in with Apple (Coming Soon)
+                      </Text>
+                    </TouchableOpacity>
+                    <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: 4 }}>
                       Requires Apple Developer Program
                     </Text>
                   </View>
@@ -494,7 +555,7 @@ export default function LoginScreen() {
 
               {/* Sign Up Link */}
               <View style={styles.footer}>
-                <Text variant="textBase" color="secondary">
+                <Text style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
                   Don't have an account?{' '}
                 </Text>
                 <Pressable
@@ -504,7 +565,7 @@ export default function LoginScreen() {
                   accessibilityRole="button"
                   style={{ opacity: isLoading || isOAuthLoading !== null ? 0.5 : 1 }}
                 >
-                  <Text variant="textBase" weight="semibold" className="text-accent-500">
+                  <Text style={{ fontSize: 16, color: '#3b82f6', fontWeight: '600' }}>
                     Sign Up
                   </Text>
                 </Pressable>
@@ -513,21 +574,23 @@ export default function LoginScreen() {
               {/* Development Bypass Button - Only in DEV mode */}
               {__DEV__ && (
                 <View style={styles.devBypass}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <TouchableOpacity
                     onPress={() => bypassAuthForDev()}
                     disabled={isLoading || isOAuthLoading !== null}
                     accessibilityLabel="Development bypass"
-                    style={{ opacity: 0.6 }}
+                    style={{
+                      paddingVertical: 12,
+                      paddingHorizontal: 16,
+                      borderRadius: 8,
+                      alignItems: 'center',
+                      opacity: 0.6,
+                    }}
                   >
-                    🔧 Skip Auth (Dev Only)
-                  </Button>
-                  <Text
-                    variant="textXs"
-                    color="muted"
-                    style={{ textAlign: 'center', marginTop: 4 }}
-                  >
+                    <Text style={{ color: '#ffffff', fontSize: 14 }}>
+                      🔧 Skip Auth (Dev Only)
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: 4 }}>
                     Development mode only - bypasses authentication
                   </Text>
                 </View>

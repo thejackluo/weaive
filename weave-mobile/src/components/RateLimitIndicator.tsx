@@ -25,11 +25,8 @@
  */
 
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
-import { Text } from '@/design-system/components/Text/Text';
-import { Card } from '@/design-system/components/Card/Card';
 
 export interface RateLimitIndicatorProps {
   /**
@@ -74,8 +71,6 @@ export function RateLimitIndicator({
   compact = false,
   onLimitExceeded: _onLimitExceeded,
 }: RateLimitIndicatorProps) {
-  const { colors, spacing, radius } = useTheme();
-
   /**
    * Calculate usage percentages
    */
@@ -106,11 +101,11 @@ export function RateLimitIndicator({
   const getStatusColor = (status: 'normal' | 'warning' | 'error'): string => {
     switch (status) {
       case 'error':
-        return colors.text.error;
+        return '#ef4444';
       case 'warning':
-        return colors.text.warning;
+        return '#f59e0b';
       default:
-        return colors.text.success;
+        return '#10b981';
     }
   };
 
@@ -154,8 +149,8 @@ export function RateLimitIndicator({
         style={[
           styles.progressBarContainer,
           {
-            backgroundColor: colors.neutral[700],
-            borderRadius: radius.sm,
+            backgroundColor: '#3f3f46',
+            borderRadius: 4,
           },
         ]}
       >
@@ -165,7 +160,7 @@ export function RateLimitIndicator({
             {
               width: `${percentage}%`,
               backgroundColor: getStatusColor(status),
-              borderRadius: radius.sm,
+              borderRadius: 4,
             },
           ]}
         />
@@ -182,10 +177,7 @@ export function RateLimitIndicator({
           size={20}
           color={getStatusColor(overallStatus)}
         />
-        <Text
-          variant="textXs"
-          style={{ color: getStatusColor(overallStatus), marginLeft: spacing[2] }}
-        >
+        <Text style={{ fontSize: 12, color: getStatusColor(overallStatus), marginLeft: 8 }}>
           {Math.max(requestPercentage, durationPercentage).toFixed(0)}%
         </Text>
       </View>
@@ -193,10 +185,10 @@ export function RateLimitIndicator({
   }
 
   return (
-    <Card variant="subtle" style={{ padding: spacing[4] }}>
+    <View style={[styles.card, { padding: 16 }]}>
       <View style={styles.container}>
         {/* Header */}
-        <View style={[styles.header, { marginBottom: spacing[3] }]}>
+        <View style={[styles.header, { marginBottom: 12 }]}>
           <View style={styles.headerLeft}>
             <MaterialIcons
               name={getStatusIcon(overallStatus) as any}
@@ -204,10 +196,10 @@ export function RateLimitIndicator({
               color={getStatusColor(overallStatus)}
             />
             <Text
-              variant="textBase"
               style={{
-                color: colors.text.primary,
-                marginLeft: spacing[2],
+                fontSize: 16,
+                color: '#fafafa',
+                marginLeft: 8,
                 fontWeight: '600',
               }}
             >
@@ -216,22 +208,22 @@ export function RateLimitIndicator({
           </View>
 
           {overallStatus !== 'normal' && (
-            <Text variant="textXs" style={{ color: colors.text.secondary }}>
+            <Text style={{ fontSize: 12, color: '#a1a1aa' }}>
               Resets in {getTimeUntilReset()}
             </Text>
           )}
         </View>
 
         {/* Request count */}
-        <View style={{ marginBottom: spacing[3] }}>
-          <View style={[styles.labelRow, { marginBottom: spacing[2] }]}>
-            <Text variant="textSm" style={{ color: colors.text.secondary }}>
+        <View style={{ marginBottom: 12 }}>
+          <View style={[styles.labelRow, { marginBottom: 8 }]}>
+            <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               Transcriptions
             </Text>
             <Text
-              variant="textSm"
               style={{
-                color: requestStatus === 'error' ? colors.text.error : colors.text.primary,
+                fontSize: 14,
+                color: requestStatus === 'error' ? '#ef4444' : '#fafafa',
                 fontWeight: '600',
               }}
             >
@@ -243,14 +235,14 @@ export function RateLimitIndicator({
 
         {/* Duration */}
         <View>
-          <View style={[styles.labelRow, { marginBottom: spacing[2] }]}>
-            <Text variant="textSm" style={{ color: colors.text.secondary }}>
+          <View style={[styles.labelRow, { marginBottom: 8 }]}>
+            <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               Audio duration
             </Text>
             <Text
-              variant="textSm"
               style={{
-                color: durationStatus === 'error' ? colors.text.error : colors.text.primary,
+                fontSize: 14,
+                color: durationStatus === 'error' ? '#ef4444' : '#fafafa',
                 fontWeight: '600',
               }}
             >
@@ -262,18 +254,24 @@ export function RateLimitIndicator({
 
         {/* Warning message */}
         {overallStatus === 'error' && (
-          <View style={[styles.warningContainer, { marginTop: spacing[3] }]}>
-            <Text variant="textXs" style={{ color: colors.text.error, textAlign: 'center' }}>
+          <View style={[styles.warningContainer, { marginTop: 12 }]}>
+            <Text style={{ fontSize: 12, color: '#ef4444', textAlign: 'center' }}>
               Daily limit reached. Limit resets at midnight.
             </Text>
           </View>
         )}
       </View>
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#18181b',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#27272a',
+  },
   container: {
     width: '100%',
   },

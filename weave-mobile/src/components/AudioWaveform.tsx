@@ -34,7 +34,6 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
 
 export interface AudioWaveformProps {
   /**
@@ -89,9 +88,7 @@ export function AudioWaveform({
   color,
   minBarHeight = 0.1,
 }: AudioWaveformProps) {
-  const { colors } = useTheme();
-
-  const waveformColor = color ?? colors.accent[500];
+  const waveformColor = color ?? '#3b82f6';
 
   /**
    * Normalize dB value (-160 to 0) to 0.0-1.0 scale

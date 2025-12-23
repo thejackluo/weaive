@@ -18,14 +18,11 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Pressable, ActivityIndicator, Text } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
-import { Text } from '@/design-system/components/Text/Text';
-import { Card } from '@/design-system/components/Card/Card';
 
 export interface AudioPlayerProps {
   /**
@@ -58,8 +55,6 @@ export function AudioPlayer({
   onPlaybackComplete,
   onError,
 }: AudioPlayerProps) {
-  const { colors, spacing, radius } = useTheme();
-
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -272,55 +267,45 @@ export function AudioPlayer({
   };
 
   /**
-   * Get speed button color
-   */
-  const _getSpeedButtonColor = (speed: PlaybackSpeed): string => {
-    return speed === playbackSpeed ? colors.accent[500] : colors.text.secondary;
-  };
-
-  /**
    * Calculate progress percentage
    */
   const progressPercent = duration > 0 ? (position / duration) * 100 : 0;
 
   if (error) {
     return (
-      <Card variant="glass" style={{ padding: spacing[6] }}>
+      <View style={[styles.card, { padding: 24 }]}>
         <View style={styles.errorContainer}>
-          <MaterialIcons name="error" size={48} color={colors.text.error} />
-          <Text
-            variant="textLg"
-            style={{ color: colors.text.error, marginTop: spacing[4], textAlign: 'center' }}
-          >
+          <MaterialIcons name="error" size={48} color="#ef4444" />
+          <Text style={{ fontSize: 18, color: '#ef4444', marginTop: 16, textAlign: 'center' }}>
             {error}
           </Text>
         </View>
-      </Card>
+      </View>
     );
   }
 
   return (
-    <Card variant="glass" style={{ padding: spacing[6] }}>
+    <View style={[styles.card, { padding: 24 }]}>
       <View style={styles.container}>
         {/* Time display - Large and prominent */}
-        <View style={[styles.timeRow, { marginBottom: spacing[4] }]}>
-          <Text variant="textLg" style={{ color: colors.text.primary, fontWeight: '600' }}>
+        <View style={[styles.timeRow, { marginBottom: 16 }]}>
+          <Text style={{ fontSize: 18, color: '#fafafa', fontWeight: '600' }}>
             {formatTime(position)}
           </Text>
-          <Text variant="textBase" style={{ color: colors.text.secondary }}>
+          <Text style={{ fontSize: 16, color: '#a1a1aa' }}>
             {formatTime(duration)}
           </Text>
         </View>
 
         {/* Progress bar - Full width with visual fill */}
-        <View style={[styles.progressBarContainer, { marginBottom: spacing[6] }]}>
+        <View style={[styles.progressBarContainer, { marginBottom: 24 }]}>
           {/* Background track */}
           <View
             style={[
               styles.progressBarTrack,
               {
-                backgroundColor: colors.neutral[700],
-                borderRadius: radius.full,
+                backgroundColor: '#3f3f46',
+                borderRadius: 9999,
               },
             ]}
           />
@@ -331,8 +316,8 @@ export function AudioPlayer({
               styles.progressBarFill,
               {
                 width: `${progressPercent}%`,
-                backgroundColor: colors.accent[500],
-                borderRadius: radius.full,
+                backgroundColor: '#3b82f6',
+                borderRadius: 9999,
               },
             ]}
           />
@@ -350,13 +335,13 @@ export function AudioPlayer({
             maximumValue={1}
             minimumTrackTintColor="transparent"
             maximumTrackTintColor="transparent"
-            thumbTintColor={colors.accent[500]}
+            thumbTintColor="#3b82f6"
             disabled={isLoading || duration === 0}
           />
         </View>
 
         {/* Controls - Play/pause with skip buttons */}
-        <View style={[styles.controlsRow, { marginBottom: spacing[6] }]}>
+        <View style={[styles.controlsRow, { marginBottom: 24 }]}>
           {/* Skip backward */}
           <Pressable
             onPress={skipBackward}
@@ -368,7 +353,7 @@ export function AudioPlayer({
               },
             ]}
           >
-            <MaterialIcons name="replay-10" size={32} color={colors.text.primary} />
+            <MaterialIcons name="replay-10" size={32} color="#fafafa" />
           </Pressable>
 
           {/* Play/pause - Large and centered */}
@@ -378,18 +363,18 @@ export function AudioPlayer({
             style={[
               styles.playButton,
               {
-                backgroundColor: colors.accent[500],
-                borderRadius: radius.full,
+                backgroundColor: '#3b82f6',
+                borderRadius: 9999,
               },
             ]}
           >
             {isLoading ? (
-              <ActivityIndicator size="large" color={colors.text.inverse} />
+              <ActivityIndicator size="large" color="#ffffff" />
             ) : (
               <MaterialIcons
                 name={isPlaying ? 'pause' : 'play-arrow'}
                 size={40}
-                color={colors.text.inverse}
+                color="#ffffff"
               />
             )}
           </Pressable>
@@ -405,17 +390,14 @@ export function AudioPlayer({
               },
             ]}
           >
-            <MaterialIcons name="forward-10" size={32} color={colors.text.primary} />
+            <MaterialIcons name="forward-10" size={32} color="#fafafa" />
           </Pressable>
         </View>
 
         {/* Speed control - Bottom row */}
         {showSpeedControl && (
           <View style={styles.speedRow}>
-            <Text
-              variant="textSm"
-              style={{ color: colors.text.secondary, marginRight: spacing[3] }}
-            >
+            <Text style={{ fontSize: 14, color: '#a1a1aa', marginRight: 12 }}>
               Speed:
             </Text>
             <View style={styles.speedContainer}>
@@ -427,18 +409,17 @@ export function AudioPlayer({
                   style={[
                     styles.speedButton,
                     {
-                      backgroundColor:
-                        speed === playbackSpeed ? colors.accent[500] : colors.neutral[700],
-                      borderRadius: radius.md,
-                      paddingHorizontal: spacing[4],
-                      paddingVertical: spacing[3],
+                      backgroundColor: speed === playbackSpeed ? '#3b82f6' : '#3f3f46',
+                      borderRadius: 8,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
                     },
                   ]}
                 >
                   <Text
-                    variant="textSm"
                     style={{
-                      color: speed === playbackSpeed ? colors.text.inverse : colors.text.secondary,
+                      fontSize: 14,
+                      color: speed === playbackSpeed ? '#ffffff' : '#a1a1aa',
                       fontWeight: speed === playbackSpeed ? '600' : '400',
                     }}
                   >
@@ -450,11 +431,17 @@ export function AudioPlayer({
           </View>
         )}
       </View>
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#18181b',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#27272a',
+  },
   container: {
     width: '100%',
   },

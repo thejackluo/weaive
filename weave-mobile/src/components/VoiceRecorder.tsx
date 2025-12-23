@@ -20,7 +20,7 @@
  */
 
 import React, { useEffect, useCallback } from 'react';
-import { View, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, StyleSheet, Pressable, Alert, Text } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -34,8 +34,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
-import { Text } from '@/design-system/components/Text/Text';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
 import { RecordingResult } from '@/services/audioRecording';
 
@@ -79,8 +77,6 @@ export function VoiceRecorder({
   showDuration = true,
   showWaveform = true,
 }: VoiceRecorderProps) {
-  const { colors, spacing } = useTheme();
-
   const {
     isRecording,
     isPaused: _isPaused,
@@ -273,7 +269,7 @@ export function VoiceRecorder({
             barStyle,
             {
               transform: [{ rotate: `${angle}deg` }],
-              backgroundColor: colors.text.error,
+              backgroundColor: '#ef4444',
             },
           ]}
         />
@@ -298,7 +294,7 @@ export function VoiceRecorder({
               width: size + 20,
               height: size + 20,
               borderRadius: (size + 20) / 2,
-              borderColor: colors.text.error,
+              borderColor: '#ef4444',
             },
           ]}
         />
@@ -313,7 +309,7 @@ export function VoiceRecorder({
             width: size,
             height: size,
             borderRadius: size / 2,
-            backgroundColor: isRecording ? colors.text.error : colors.neutral[600],
+            backgroundColor: isRecording ? '#ef4444' : '#52525b',
           },
         ]}
         onPress={handlePress}
@@ -322,7 +318,7 @@ export function VoiceRecorder({
         <MaterialIcons
           name={isRecording ? 'stop' : 'mic'}
           size={size * 0.5}
-          color={colors.text.inverse}
+          color="#ffffff"
         />
       </AnimatedPressable>
 
@@ -332,11 +328,11 @@ export function VoiceRecorder({
           style={[
             styles.durationContainer,
             {
-              marginTop: spacing[4],
+              marginTop: 16,
             },
           ]}
         >
-          <Text variant="textBase" style={{ color: colors.text.error }}>
+          <Text style={{ fontSize: 16, color: '#ef4444' }}>
             {formatDuration(duration)}
           </Text>
         </View>
@@ -344,8 +340,8 @@ export function VoiceRecorder({
 
       {/* Permission prompt */}
       {!hasPermission && !isRequestingPermission && (
-        <View style={[styles.permissionPrompt, { marginTop: spacing[4] }]}>
-          <Text variant="textSm" style={{ color: colors.text.primary, textAlign: 'center' }}>
+        <View style={[styles.permissionPrompt, { marginTop: 16 }]}>
+          <Text style={{ fontSize: 14, color: '#fafafa', textAlign: 'center' }}>
             Microphone access required
           </Text>
         </View>
@@ -353,8 +349,8 @@ export function VoiceRecorder({
 
       {/* Error display */}
       {error && (
-        <View style={[styles.errorContainer, { marginTop: spacing[4] }]}>
-          <Text variant="textSm" style={{ color: colors.text.error, textAlign: 'center' }}>
+        <View style={[styles.errorContainer, { marginTop: 16 }]}>
+          <Text style={{ fontSize: 14, color: '#ef4444', textAlign: 'center' }}>
             {error}
           </Text>
         </View>

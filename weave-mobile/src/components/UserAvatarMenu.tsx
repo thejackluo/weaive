@@ -12,7 +12,6 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { showSimpleToast } from '@/design-system';
 
 export function UserAvatarMenu() {
   const router = useRouter();
@@ -38,8 +37,9 @@ export function UserAvatarMenu() {
             await signOut();
 
             // Show success toast
-            console.log('[USER MENU] Calling showSimpleToast for logout...');
-            showSimpleToast('Signed out successfully. See you soon! 👋', 'success');
+            console.log('[USER MENU] Logout successful');
+            // TODO: Replace with new toast system
+            // showSimpleToast('Signed out successfully. See you soon! 👋', 'success');
 
             // Redirect to login screen
             router.replace('/(auth)/login');

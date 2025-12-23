@@ -12,12 +12,10 @@
  */
 
 import React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { Card, Text } from '@/design-system';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
 import type { Goal } from '@/types/goals';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -35,7 +33,6 @@ export interface GoalCardProps {
  */
 export function GoalCard({ goal, testID }: GoalCardProps) {
   const router = useRouter();
-  const { colors, spacing } = useTheme();
   const scale = useSharedValue(1);
 
   // Format consistency percentage
@@ -87,15 +84,21 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[animatedStyle, { marginBottom: spacing[4] }]}
+      style={[animatedStyle, { marginBottom: 16 }]}
     >
-      <Card variant="glass" padding="spacious">
+      <View
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: 12,
+          padding: 20,
+          borderWidth: 1,
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+        }}
+      >
         <View style={styles.container}>
           {/* Goal Title */}
           <Text
-            variant="displayMd"
-            weight="semibold"
-            style={[styles.title, { color: '#FFFFFF' }]}
+            style={[styles.title, { fontSize: 24, fontWeight: '600', color: '#FFFFFF' }]}
             numberOfLines={2}
           >
             {goal.title}
@@ -105,26 +108,24 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
           <View style={styles.statsRow}>
             {/* Consistency */}
             <View style={styles.statItem}>
-              <Text variant="textSm" style={[styles.statLabel, { color: '#A1A1AA' }]}>
-                Consistency
+              <Text style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
+                CONSISTENCY
               </Text>
               <View style={styles.consistencyContainer}>
                 {isNewGoal ? (
-                  <View style={[styles.newBadge, { backgroundColor: colors.semantic.ai.bg }]}>
-                    <Text variant="labelBase" color="ai" style={styles.newBadgeText}>
+                  <View style={[styles.newBadge, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
+                    <Text style={[styles.newBadgeText, { color: '#8b5cf6' }]}>
                       NEW
                     </Text>
                   </View>
                 ) : (
                   <>
                     <Text
-                      variant="displayMd"
-                      weight="bold"
-                      style={[styles.consistencyValue, { color: '#FFFFFF' }]}
+                      style={[styles.consistencyValue, { fontSize: 32, fontWeight: 'bold', color: '#FFFFFF' }]}
                     >
                       {Math.round(goal.consistency_7d!)}
                     </Text>
-                    <Text variant="textLg" style={{ color: '#D4D4DC' }}>
+                    <Text style={{ fontSize: 18, color: '#D4D4DC' }}>
                       %
                     </Text>
                   </>
@@ -132,13 +133,13 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
               </View>
               {/* Visual progress bar */}
               {!isNewGoal && (
-                <View style={[styles.progressBar, { backgroundColor: colors.border.subtle }]}>
+                <View style={[styles.progressBar, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
                   <View
                     style={[
                       styles.progressFill,
                       {
                         width: `${Math.min(goal.consistency_7d!, 100)}%`,
-                        backgroundColor: colors.semantic.ai.base,
+                        backgroundColor: '#8b5cf6',
                       },
                     ]}
                   />
@@ -148,18 +149,18 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
 
             {/* Active Binds Count */}
             <View style={styles.statItem}>
-              <Text variant="textSm" style={[styles.statLabel, { color: '#A1A1AA' }]}>
-                Active Binds
+              <Text style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
+                ACTIVE BINDS
               </Text>
               <View style={styles.bindsContainer}>
-                <Text variant="displayMd" weight="bold" style={{ color: '#FFFFFF' }}>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFFFFF' }}>
                   {goal.active_binds_count}
                 </Text>
               </View>
             </View>
           </View>
         </View>
-      </Card>
+      </View>
     </AnimatedPressable>
   );
 }

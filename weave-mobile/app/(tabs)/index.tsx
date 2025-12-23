@@ -12,7 +12,7 @@ import { View, Text as RNText, Pressable, Modal, ScrollView, TouchableOpacity } 
 import { Link, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { SymbolView } from 'expo-symbols';
-import { Button, Text, showSimpleToast } from '@/design-system';
+// Removed: import { Button, Text, showSimpleToast } from '@/design-system';
 import CountdownTimer from '@/components/features/journal/CountdownTimer';
 import { ProofCaptureSheet } from '@/components/ProofCaptureSheet';
 import { ImageGallery } from '@/components/ImageGallery';
@@ -34,8 +34,8 @@ export default function HomeScreen() {
   return (
     <View className="flex-1 items-center justify-center bg-background-primary p-4 gap-6">
       <View className="items-center gap-2">
-        <Text className="text-7xl font-bold text-text-primary">Weave MVP</Text>
-        <Text className="text-base text-text-secondary">Foundation Setup Complete ✅</Text>
+        <RNText style={{ fontSize: 72, fontWeight: 'bold', color: '#fafafa' }}>Weave MVP</RNText>
+        <RNText style={{ fontSize: 16, color: '#a1a1aa' }}>Foundation Setup Complete ✅</RNText>
       </View>
 
       {/* Design System Buttons */}
@@ -44,18 +44,18 @@ export default function HomeScreen() {
           onPress={() => router.push('/(tabs)/design-system-showcase')}
           className="bg-accent-500 px-6 py-4 rounded-lg active:opacity-80 active:scale-98"
         >
-          <Text className="text-dark-900 text-sm font-medium tracking-wide text-center">
+          <RNText style={{ color: '#18181b', fontSize: 14, fontWeight: '500', letterSpacing: 1, textAlign: 'center' }}>
             View Full Design System
-          </Text>
+          </RNText>
         </Pressable>
 
         <Pressable
           onPress={() => router.push('/(tabs)/component-testing')}
           className="bg-violet-600 px-6 py-4 rounded-lg active:opacity-80 active:scale-98 border border-violet-500"
         >
-          <Text className="text-dark-50 text-sm font-medium tracking-wide text-center">
+          <RNText style={{ color: '#fafafa', fontSize: 14, fontWeight: '500', letterSpacing: 1, textAlign: 'center' }}>
             🧪 Component Testing
-          </Text>
+          </RNText>
         </Pressable>
       </View>
 
@@ -65,9 +65,9 @@ export default function HomeScreen() {
       >
         {/* Story 3.1: Today's Binds */}
         <View className="mb-8">
-          <Text variant="displayMd" className="text-white mb-4 font-semibold">
+          <RNText style={{ fontSize: 36, fontWeight: '600', color: '#ffffff', marginBottom: 16 }}>
             Today's Binds
-          </Text>
+          </RNText>
 
           {/* Morning Workout Bind */}
           <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
@@ -76,15 +76,15 @@ export default function HomeScreen() {
                 <View className="w-10 h-10 rounded-full bg-blue-500/20 items-center justify-center">
                   <SymbolView name="figure.run" size={20} tintColor="#60a5fa" />
                 </View>
-                <Text variant="textLg" className="text-white font-semibold">
+                <RNText style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
                   Morning Workout
-                </Text>
+                </RNText>
               </View>
               <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
             </View>
-            <Text variant="textSm" className="text-white/60 ml-13">
+            <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginLeft: 52 }}>
               Complete your 30-minute strength training session
-            </Text>
+            </RNText>
           </TouchableOpacity>
 
           {/* Deep Work Block Bind */}
@@ -94,15 +94,15 @@ export default function HomeScreen() {
                 <View className="w-10 h-10 rounded-full bg-purple-500/20 items-center justify-center">
                   <SymbolView name="book.fill" size={20} tintColor="#a78bfa" />
                 </View>
-                <Text variant="textLg" className="text-white font-semibold">
+                <RNText style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
                   Deep Work Block
-                </Text>
+                </RNText>
               </View>
               <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
             </View>
-            <Text variant="textSm" className="text-white/60 ml-13">
+            <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginLeft: 52 }}>
               2 hours of focused project work
-            </Text>
+            </RNText>
           </TouchableOpacity>
 
           {/* Evening Meditation Bind */}
@@ -112,15 +112,15 @@ export default function HomeScreen() {
                 <View className="w-10 h-10 rounded-full bg-emerald-500/20 items-center justify-center">
                   <SymbolView name="sparkles" size={20} tintColor="#34d399" />
                 </View>
-                <Text variant="textLg" className="text-white font-semibold">
+                <RNText style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
                   Evening Meditation
-                </Text>
+                </RNText>
               </View>
               <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
             </View>
-            <Text variant="textSm" className="text-white/60 ml-13">
+            <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginLeft: 52 }}>
               10-minute mindfulness practice
-            </Text>
+            </RNText>
           </TouchableOpacity>
         </View>
 
@@ -239,72 +239,160 @@ export default function HomeScreen() {
 
         {/* Quick Actions - Primary Navigation */}
         <View className="mb-8">
-          <Text variant="textLg" className="text-white mb-4 font-semibold">
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 16 }}>
             Quick Actions
-          </Text>
+          </RNText>
           <View className="flex-row gap-3 mb-3">
             <Link href="/(tabs)/dashboard" asChild className="flex-1">
-              <Button variant="primary" size="md">
-                📊 Dashboard
-              </Button>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#3b82f6',
+                  paddingVertical: 12,
+                  paddingHorizontal: 20,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  flex: 1,
+                }}
+              >
+                <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+                  📊 Dashboard
+                </RNText>
+              </TouchableOpacity>
             </Link>
             <Link href="/journal" asChild className="flex-1">
-              <Button variant="ai" size="md">
-                📝 Journal
-              </Button>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#a855f7',
+                  paddingVertical: 12,
+                  paddingHorizontal: 20,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  flex: 1,
+                }}
+              >
+                <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+                  📝 Journal
+                </RNText>
+              </TouchableOpacity>
             </Link>
           </View>
           <View className="flex-row gap-3 mb-3">
             <Link href="/goals" asChild className="flex-1">
-              <Button variant="secondary" size="md">
-                🎯 Goals
-              </Button>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  paddingVertical: 12,
+                  paddingHorizontal: 20,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                  flex: 1,
+                }}
+              >
+                <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+                  🎯 Goals
+                </RNText>
+              </TouchableOpacity>
             </Link>
             <Link href="/captures" asChild className="flex-1">
-              <Button variant="success" size="md">
-                📸 Captures
-              </Button>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#10b981',
+                  paddingVertical: 12,
+                  paddingHorizontal: 20,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  flex: 1,
+                }}
+              >
+                <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+                  📸 Captures
+                </RNText>
+              </TouchableOpacity>
             </Link>
           </View>
           <Link href="/(tabs)/needles" asChild className="w-full">
-            <Button variant="secondary" size="md">
-              📍 View Needles (Story 2.1)
-            </Button>
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                paddingVertical: 12,
+                paddingHorizontal: 20,
+                borderRadius: 12,
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+              }}
+            >
+              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+                📍 View Needles (Story 2.1)
+              </RNText>
+            </TouchableOpacity>
           </Link>
         </View>
 
         {/* Development Tools */}
         <View className="pt-6 border-t border-white/5 mb-8">
-          <Text variant="textSm" className="text-white/30 mb-3 text-center">
+          <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.3)', marginBottom: 12, textAlign: 'center' }}>
             Development Tools
-          </Text>
+          </RNText>
           <View className="gap-3">
             <Link href="/(tabs)/settings" asChild>
-              <Button variant="ghost" size="sm">
-                ⚙️ Settings
-              </Button>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'transparent',
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <RNText style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
+                  ⚙️ Settings
+                </RNText>
+              </TouchableOpacity>
             </Link>
             <Link href="/(tabs)/settings/reflection" asChild>
-              <Button variant="ghost" size="sm">
-                💭 Test Reflection (Direct)
-              </Button>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'transparent',
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <RNText style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
+                  💭 Test Reflection (Direct)
+                </RNText>
+              </TouchableOpacity>
             </Link>
             <Link href="/sitemap" asChild>
-              <Button variant="ghost" size="sm">
-                🗺️ View Sitemap
-              </Button>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'transparent',
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <RNText style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
+                  🗺️ View Sitemap
+                </RNText>
+              </TouchableOpacity>
             </Link>
           </View>
         </View>
 
         {/* Footer */}
         <View className="pt-8 pb-4">
-          <Text variant="textXs" className="text-white/20 text-center mb-1">
+          <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.2)', textAlign: 'center', marginBottom: 4 }}>
             React Native-First Design System
-          </Text>
-          <Text variant="textXs" className="text-white/20 text-center">
+          </RNText>
+          <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.2)', textAlign: 'center' }}>
             NativeWind v5 • Tailwind v4 • Liquid Glass UI
-          </Text>
+          </RNText>
         </View>
       </ScrollView>
 
@@ -319,7 +407,7 @@ export default function HomeScreen() {
           }}
           onSuccess={(result) => {
             console.log('✅ Upload success:', result);
-            showSimpleToast('Image uploaded successfully! 🎉', 'success');
+            // showSimpleToast('Image uploaded successfully! 🎉', 'success');
             setShowCaptureSheet(false);
             // Invalidate images query to refetch gallery
             queryClient.invalidateQueries({ queryKey: ['images'] });
@@ -336,7 +424,7 @@ export default function HomeScreen() {
             capture={selectedImage}
             onClose={() => setSelectedImage(null)}
             onDelete={() => {
-              showSimpleToast('Image deleted', 'success');
+              // showSimpleToast('Image deleted', 'success');
               setSelectedImage(null);
               // Invalidate images query to refetch gallery
               queryClient.invalidateQueries({ queryKey: ['images'] });

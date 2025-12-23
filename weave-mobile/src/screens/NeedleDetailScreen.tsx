@@ -24,17 +24,16 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Text,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Text, Card, Button } from '@/design-system';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useGoalById, useUpdateGoal, useArchiveGoal } from '@/hooks/useActiveGoals';
 import { Ionicons } from '@expo/vector-icons';
 
 export function NeedleDetailScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [isEditMode, setIsEditMode] = useState(false);
@@ -133,12 +132,12 @@ export function NeedleDetailScreen() {
   // Loading state
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <View style={[styles.container, { backgroundColor: '#000000' }]}>
         <View style={styles.header}>
           <Pressable onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
+            <Ionicons name="chevron-back" size={24} color="#ffffff" />
           </Pressable>
-          <Text variant="textLg" weight="semibold" style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
             Loading...
           </Text>
         </View>
@@ -149,22 +148,22 @@ export function NeedleDetailScreen() {
   // Error state
   if (isError || !goal) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <View style={[styles.container, { backgroundColor: '#000000' }]}>
         <View style={styles.header}>
           <Pressable onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
+            <Ionicons name="chevron-back" size={24} color="#ffffff" />
           </Pressable>
-          <Text variant="textLg" weight="semibold" style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
             Error
           </Text>
         </View>
         <View style={styles.errorContainer}>
-          <Text variant="textBase" color="error">
+          <Text style={{ fontSize: 15, color: '#ef4444' }}>
             {error?.message || 'Goal not found'}
           </Text>
-          <Button variant="primary" size="sm" onPress={handleBack} style={styles.backToListButton}>
-            Back to Dashboard
-          </Button>
+          <TouchableOpacity onPress={handleBack} style={[styles.backToListButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}>
+            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Back to Dashboard</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -188,11 +187,11 @@ export function NeedleDetailScreen() {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+    <View style={[styles.container, { backgroundColor: '#000000' }]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={handleBack} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
+          <Ionicons name="chevron-back" size={24} color="#ffffff" />
         </Pressable>
 
         {isEditMode ? (
@@ -201,16 +200,14 @@ export function NeedleDetailScreen() {
             onChangeText={setEditedTitle}
             style={[
               styles.headerTitleInput,
-              { color: colors.text.primary, borderColor: colors.border.focus },
+              { color: '#ffffff', borderColor: '#3b82f6' },
             ]}
             placeholder="Needle title"
-            placeholderTextColor={colors.text.muted}
+            placeholderTextColor="#71717a"
           />
         ) : (
           <Text
-            variant="textLg"
-            weight="semibold"
-            style={[styles.headerTitle, { color: colors.text.primary }]}
+            style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}
           >
             {editedTitle}
           </Text>
@@ -222,9 +219,9 @@ export function NeedleDetailScreen() {
           disabled={updateGoalMutation.isPending}
         >
           {updateGoalMutation.isPending ? (
-            <ActivityIndicator size="small" color={colors.accent[500]} />
+            <ActivityIndicator size="small" color="#3b82f6" />
           ) : (
-            <Text variant="textSm" weight="semibold" style={{ color: colors.accent[500] }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
               {isEditMode ? 'Done' : 'Edit'}
             </Text>
           )}
@@ -239,11 +236,9 @@ export function NeedleDetailScreen() {
         {/* Needle Title Section (View Mode) */}
         {!isEditMode && (
           <View style={styles.section}>
-            <View style={[styles.colorBar, { backgroundColor: colors.accent[500] }]} />
+            <View style={[styles.colorBar, { backgroundColor: '#3b82f6' }]} />
             <Text
-              variant="displayMd"
-              weight="bold"
-              style={[styles.needleTitle, { color: colors.text.primary }]}
+              style={[styles.needleTitle, { fontSize: 28, fontWeight: 'bold', color: '#ffffff' }]}
             >
               {editedTitle}
             </Text>
@@ -252,7 +247,7 @@ export function NeedleDetailScreen() {
 
         {/* Why Section */}
         <View style={styles.section}>
-          <Text variant="textSm" color="secondary" style={styles.sectionLabel}>
+          <Text style={[styles.sectionLabel, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
             Why this matters
           </Text>
           {isEditMode ? (
@@ -263,16 +258,16 @@ export function NeedleDetailScreen() {
               style={[
                 styles.textAreaInput,
                 {
-                  color: colors.text.primary,
-                  borderColor: colors.border.muted,
-                  backgroundColor: colors.background.secondary,
+                  color: '#ffffff',
+                  borderColor: '#27272A',
+                  backgroundColor: '#18181b',
                 },
               ]}
               placeholder="Your motivation for this goal..."
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor="#71717a"
             />
           ) : (
-            <Text variant="textBase" style={[styles.whyText, { color: colors.text.secondary }]}>
+            <Text style={[styles.whyText, { fontSize: 15, color: '#a1a1aa' }]}>
               {editedWhy || 'No description provided'}
             </Text>
           )}
@@ -280,46 +275,46 @@ export function NeedleDetailScreen() {
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
-          <Card variant="glass" style={styles.statCard}>
-            <Text variant="textSm" color="secondary" style={styles.statLabel}>
+          <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+            <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               7-day consistency
             </Text>
-            <Text variant="textLg" weight="bold">
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.consistency_7d}%
             </Text>
-          </Card>
+          </View>
 
-          <Card variant="glass" style={styles.statCard}>
-            <Text variant="textSm" color="secondary" style={styles.statLabel}>
+          <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+            <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               Total completions
             </Text>
-            <Text variant="textLg" weight="bold">
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.total_completions}
             </Text>
-          </Card>
+          </View>
 
-          <Card variant="glass" style={styles.statCard}>
-            <Text variant="textSm" color="secondary" style={styles.statLabel}>
+          <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
+            <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               Current streak
             </Text>
-            <Text variant="textLg" weight="bold">
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.current_streak}
             </Text>
-          </Card>
+          </View>
         </View>
 
         {/* Milestones Section */}
         <View style={styles.section}>
-          <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Milestones
           </Text>
           {milestones.map((milestone) => (
-            <Card key={milestone.id} variant="glass" style={styles.milestoneCard}>
+            <View key={milestone.id} style={[styles.milestoneCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
               <View style={styles.milestoneHeader}>
-                <Text variant="textBase" weight="medium">
+                <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                   {milestone.title}
                 </Text>
-                <Text variant="textSm" color="secondary">
+                <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                   {milestone.progress}%
                 </Text>
               </View>
@@ -329,64 +324,62 @@ export function NeedleDetailScreen() {
                     styles.progressBarFill,
                     {
                       width: `${milestone.progress}%`,
-                      backgroundColor: colors.accent[500],
+                      backgroundColor: '#3b82f6',
                     },
                   ]}
                 />
               </View>
-              <Text variant="textSm" color="secondary" style={styles.milestoneValues}>
+              <Text style={[styles.milestoneValues, { fontSize: 14, color: '#a1a1aa' }]}>
                 {milestone.current} / {milestone.target}
               </Text>
-            </Card>
+            </View>
           ))}
         </View>
 
         {/* Binds Section */}
         <View style={styles.section}>
-          <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Your Binds
           </Text>
           {binds.map((bind) => (
-            <Card key={bind.id} variant="glass" style={styles.bindCard}>
+            <View key={bind.id} style={[styles.bindCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
               <View style={styles.bindContent}>
                 <View style={styles.bindInfo}>
-                  <Text variant="textBase" weight="medium">
+                  <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                     {bind.title}
                   </Text>
-                  <Text variant="textSm" color="secondary">
+                  <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                     {bind.frequency}
                   </Text>
                 </View>
                 <View style={styles.bindStatus}>
                   {bind.completedToday ? (
-                    <Ionicons name="checkmark-circle" size={24} color={colors.emerald[500]} />
+                    <Ionicons name="checkmark-circle" size={24} color="#10b981" />
                   ) : (
-                    <View style={[styles.incompleteDot, { borderColor: colors.border.muted }]} />
+                    <View style={[styles.incompleteDot, { borderColor: '#27272A' }]} />
                   )}
                 </View>
               </View>
-            </Card>
+            </View>
           ))}
         </View>
 
         {/* Archive Button */}
         {!isEditMode && (
           <View style={styles.section}>
-            <Button
-              variant="secondary"
-              size="md"
+            <TouchableOpacity
               onPress={handleArchive}
-              style={[styles.archiveButton, { borderColor: colors.rose[500] }]}
+              style={[styles.archiveButton, { borderColor: '#ef4444', borderWidth: 1, padding: 12, borderRadius: 8, backgroundColor: 'transparent' }]}
               disabled={archiveGoalMutation.isPending}
             >
               {archiveGoalMutation.isPending ? (
-                <ActivityIndicator size="small" color={colors.rose[500]} />
+                <ActivityIndicator size="small" color="#ef4444" />
               ) : (
-                <Text variant="textBase" weight="medium" style={{ color: colors.rose[500] }}>
+                <Text style={{ fontSize: 15, fontWeight: '500', color: '#ef4444', textAlign: 'center' }}>
                   Archive Needle
                 </Text>
               )}
-            </Button>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -395,7 +388,7 @@ export function NeedleDetailScreen() {
       {isEditMode && (
         <Pressable
           onPress={handleAskAI}
-          style={[styles.aiFab, { backgroundColor: colors.violet[500] }]}
+          style={[styles.aiFab, { backgroundColor: '#8b5cf6' }]}
         >
           <Ionicons name="sparkles" size={24} color="white" />
         </Pressable>

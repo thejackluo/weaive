@@ -19,7 +19,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Button, showSimpleToast } from '@/design-system';
+import { ActivityIndicator, TouchableOpacity } from 'react-native';
 import { signInWithApple, signInWithGoogle } from '@lib/auth';
 import { bypassAuthForDev } from '@lib/authHelpers';
 import { supabase as _supabase } from '@lib/supabase';
@@ -47,14 +47,14 @@ export default function AuthenticationScreen() {
       }
 
       // Show success toast
-      showSimpleToast('Signed in successfully! 🎉', 'success');
+      // showSimpleToast('Signed in successfully! 🎉', 'success');
 
       // Success - navigate to next onboarding step
       router.push('/(onboarding)/identity-bootup' as any);
     } catch (err: any) {
       const errorMessage = err.message || 'Unable to sign in with Google. Please try again.';
       setError(errorMessage);
-      showSimpleToast(errorMessage, 'error');
+      // showSimpleToast(errorMessage, 'error');
       Alert.alert('Authentication Error', errorMessage);
     } finally {
       setLoading(false);
@@ -75,14 +75,14 @@ export default function AuthenticationScreen() {
       }
 
       // Show success toast
-      showSimpleToast('Signed in successfully! 🎉', 'success');
+      // showSimpleToast('Signed in successfully! 🎉', 'success');
 
       // Success - navigate to next onboarding step
       router.push('/(onboarding)/identity-bootup' as any);
     } catch (err: any) {
       const errorMessage = err.message || 'Unable to sign in with Apple. Please try again.';
       setError(errorMessage);
-      showSimpleToast(errorMessage, 'error');
+      // showSimpleToast(errorMessage, 'error');
       Alert.alert('Authentication Error', errorMessage);
     } finally {
       setLoading(false);
@@ -113,11 +113,11 @@ export default function AuthenticationScreen() {
     try {
       setIsSigningOut(true);
       await signOut();
-      showSimpleToast('Signed out successfully 👋', 'success');
+      // showSimpleToast('Signed out successfully 👋', 'success');
       // Stay on authentication screen after sign out
     } catch (err: any) {
       console.error('[ONBOARDING_AUTH] Sign out error:', err);
-      showSimpleToast('Failed to sign out. Please try again.', 'error');
+      // showSimpleToast('Failed to sign out. Please try again.', 'error');
     } finally {
       setIsSigningOut(false);
     }
@@ -231,26 +231,45 @@ export default function AuthenticationScreen() {
               </View>
 
               <View style={{ gap: 12 }}>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  fullWidth
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#3b82f6',
+                    paddingVertical: 16,
+                    paddingHorizontal: 24,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    opacity: (loading || isSigningOut) ? 0.5 : 1,
+                  }}
                   onPress={handleContinueOnboarding}
                   disabled={loading || isSigningOut}
                 >
-                  Continue to Next Step
-                </Button>
+                  <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    Continue to Next Step
+                  </Text>
+                </TouchableOpacity>
 
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  fullWidth
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    paddingVertical: 16,
+                    paddingHorizontal: 24,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    opacity: (loading || isSigningOut) ? 0.5 : 1,
+                  }}
                   onPress={handleSignOut}
-                  loading={isSigningOut}
                   disabled={loading || isSigningOut}
                 >
-                  {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-                </Button>
+                  {isSigningOut ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      Sign Out
+                    </Text>
+                  )}
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -263,31 +282,63 @@ export default function AuthenticationScreen() {
             style={{ flex: 1, justifyContent: 'center', marginBottom: 24 }}
           >
             <View className="mb-4" style={{ marginBottom: 16 }}>
-              <Button
-                variant="primary"
-                size="lg"
-                fullWidth
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#3b82f6',
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  borderRadius: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 12,
+                  opacity: loading ? 0.5 : 1,
+                }}
                 onPress={handleGoogleSignIn}
                 disabled={loading}
-                loading={loading && activeProvider === 'google'}
-                leftIcon={<Text style={{ fontSize: 20 }}>G</Text>}
               >
-                Continue with Google
-              </Button>
+                {loading && activeProvider === 'google' ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <>
+                    <Text style={{ fontSize: 20 }}>G</Text>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      Continue with Google
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
 
             <View className="mb-4" style={{ marginBottom: 16 }}>
-              <Button
-                variant="secondary"
-                size="lg"
-                fullWidth
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  borderRadius: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 12,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                  opacity: loading ? 0.5 : 1,
+                }}
                 onPress={handleAppleSignIn}
                 disabled={loading}
-                loading={loading && activeProvider === 'apple'}
-                leftIcon={<Text style={{ fontSize: 20 }}></Text>}
               >
-                Sign in with Apple
-              </Button>
+                {loading && activeProvider === 'apple' ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <>
+                    <Text style={{ fontSize: 20 }}></Text>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      Sign in with Apple
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
 
             <View
@@ -311,16 +362,28 @@ export default function AuthenticationScreen() {
             </View>
 
             <View className="mb-4" style={{ marginBottom: 16 }}>
-              <Button
-                variant="secondary"
-                size="lg"
-                fullWidth
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  paddingVertical: 16,
+                  paddingHorizontal: 24,
+                  borderRadius: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 12,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                  opacity: loading ? 0.5 : 1,
+                }}
                 onPress={handleEmailSignIn}
                 disabled={loading}
-                leftIcon={<Text style={{ fontSize: 20 }}>✉️</Text>}
               >
-                Sign in with Email
-              </Button>
+                <Text style={{ fontSize: 20 }}>✉️</Text>
+                <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                  Sign in with Email
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -340,16 +403,35 @@ export default function AuthenticationScreen() {
           className="mt-auto pt-6 items-center"
           style={{ marginTop: 'auto', paddingTop: 24, alignItems: 'center' }}
         >
-          <Button variant="ghost" size="md" onPress={handleBack} disabled={loading || isSigningOut}>
-            Back
-          </Button>
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'transparent',
+              paddingVertical: 12,
+              paddingHorizontal: 20,
+              borderRadius: 8,
+              alignItems: 'center',
+              opacity: (loading || isSigningOut) ? 0.5 : 1,
+            }}
+            onPress={handleBack}
+            disabled={loading || isSigningOut}
+          >
+            <Text style={{ color: '#9ca3af', fontSize: 15, fontWeight: '500' }}>
+              Back
+            </Text>
+          </TouchableOpacity>
 
           {/* Development Bypass Button - Only in DEV mode and not signed in */}
           {__DEV__ && !user && (
             <View style={{ marginTop: 16, alignItems: 'center' }}>
-              <Button
-                variant="ghost"
-                size="sm"
+              <TouchableOpacity
+                style={{
+                  backgroundColor: 'transparent',
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 6,
+                  alignItems: 'center',
+                  opacity: loading ? 0.3 : 0.6,
+                }}
                 onPress={async () => {
                   try {
                     setLoading(true);
@@ -361,22 +443,23 @@ export default function AuthenticationScreen() {
                     );
 
                     if (success) {
-                      showSimpleToast('🔧 Dev bypass: Continuing to onboarding', 'success');
+                      // showSimpleToast('🔧 Dev bypass: Continuing to onboarding', 'success');
                       // For onboarding flow, continue to identity-bootup
                       router.push('/(onboarding)/identity-bootup' as any);
                     }
                   } catch (err) {
                     console.error('[ONBOARDING_AUTH] Dev bypass failed:', err);
-                    showSimpleToast('Dev bypass failed', 'error');
+                    // showSimpleToast('Dev bypass failed', 'error');
                   } finally {
                     setLoading(false);
                   }
                 }}
                 disabled={loading}
-                style={{ opacity: 0.6 }}
               >
-                🔧 Skip Auth (Dev Only)
-              </Button>
+                <Text style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
+                  🔧 Skip Auth (Dev Only)
+                </Text>
+              </TouchableOpacity>
               <Text
                 style={{
                   fontSize: 12,

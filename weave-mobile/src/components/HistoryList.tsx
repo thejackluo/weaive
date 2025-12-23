@@ -1,7 +1,5 @@
 import React from 'react';
-import { View, FlatList, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
-import { Text, Card } from '@/design-system';
-import { colors } from '@/design-system';
+import { View, FlatList, ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { useHistory } from '@/hooks/useHistory';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -32,8 +30,8 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
   if (isLoading) {
     return (
       <View className="py-8 items-center">
-        <ActivityIndicator size="large" color={colors.accent[500]} />
-        <Text variant="textSm" className="mt-2" style={{ color: colors.text.secondary }}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text className="mt-2" style={{ fontSize: 14, color: '#a1a1aa' }}>
           Loading history...
         </Text>
       </View>
@@ -43,13 +41,12 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
   if (isError) {
     return (
       <View className="py-4">
-        <Text variant="textSm" style={{ color: colors.text.error }}>
+        <Text style={{ fontSize: 14, color: '#ef4444' }}>
           {error?.message || 'Failed to load history'}
         </Text>
         <Text
-          variant="textSm"
           className="mt-2"
-          style={{ color: colors.accent[500] }}
+          style={{ fontSize: 14, color: '#3b82f6' }}
           onPress={() => refetch()}
         >
           Tap to retry
@@ -63,7 +60,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
   if (historyItems.length === 0) {
     return (
       <View className="py-8 items-center">
-        <Text variant="textSm" style={{ color: colors.text.secondary }}>
+        <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
           No activity yet. Start completing binds to build your history!
         </Text>
       </View>
@@ -94,15 +91,15 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
     const getTypeConfig = (type: string) => {
       switch (type) {
         case 'journal':
-          return { label: 'Thread', color: colors.violet[500] };
+          return { label: 'Thread', color: '#8b5cf6' };
         case 'completion':
-          return { label: 'Bind', color: colors.emerald[500] };
+          return { label: 'Bind', color: '#10b981' };
         case 'goal_created':
-          return { label: 'Thread', color: colors.accent[500] };
+          return { label: 'Thread', color: '#3b82f6' };
         case 'goal_archived':
-          return { label: 'Thread', color: colors.text.muted };
+          return { label: 'Thread', color: '#71717a' };
         default:
-          return { label: 'Activity', color: colors.text.secondary };
+          return { label: 'Activity', color: '#a1a1aa' };
       }
     };
 
@@ -135,25 +132,33 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
 
     return (
       <Pressable onPress={handlePress} style={styles.cardWrapper}>
-        <Card variant="glass" style={styles.historyCard}>
+        <View
+          style={[
+            styles.historyCard,
+            {
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+            },
+          ]}
+        >
           {/* Header row: Type badge and timestamp */}
           <View style={styles.headerRow}>
             <View style={[styles.typeBadge, { backgroundColor: config.color + '30' }]}>
-              <Text variant="textSm" weight="medium" style={{ color: config.color }}>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: config.color }}>
                 {config.label}
               </Text>
             </View>
-            <Text variant="textSm" style={{ color: colors.text.muted }}>
+            <Text style={{ fontSize: 14, color: '#71717a' }}>
               {formatTime(item.timestamp)}
             </Text>
           </View>
 
           {/* Content */}
           <Text
-            variant="textBase"
-            weight="medium"
             numberOfLines={3}
-            style={[styles.content, { color: colors.text.primary }]}
+            style={[styles.content, { fontSize: 16, fontWeight: '500', color: '#ffffff' }]}
           >
             {getContent()}
           </Text>
@@ -161,9 +166,9 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
           {/* Footer row: View arrow */}
           <View style={styles.footerRow}>
             <View style={{ flex: 1 }} />
-            <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+            <Ionicons name="chevron-forward" size={16} color="#71717a" />
           </View>
-        </Card>
+        </View>
       </Pressable>
     );
   };
@@ -174,9 +179,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
       {Object.entries(groupedItems).map(([date, items]) => (
         <View key={date} style={styles.dateGroup}>
           <Text
-            variant="textBase"
-            weight="semibold"
-            style={[styles.dateHeader, { color: colors.text.secondary }]}
+            style={[styles.dateHeader, { fontSize: 16, fontWeight: '600', color: '#a1a1aa' }]}
           >
             {date}
           </Text>

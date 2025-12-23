@@ -34,13 +34,10 @@
  */
 
 import React, { useState, forwardRef, useCallback, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Text, Pressable } from 'react-native';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useTheme } from '@/design-system/theme/ThemeProvider';
-import { Text } from '@/design-system/components/Text/Text';
-import { Button } from '@/design-system/components/Button/Button';
 import { VoiceRecorder } from './VoiceRecorder';
 import { AudioWaveform } from './AudioWaveform';
 import { TranscriptPreview } from './TranscriptPreview';
@@ -82,8 +79,6 @@ export interface VoiceRecordSheetProps {
 
 export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
   ({ onSave, goalId, subtaskInstanceId, maxDuration = 300, language = 'en' }, ref) => {
-    const { colors, spacing } = useTheme();
-
     const [currentStep, setCurrentStep] = useState<WorkflowStep>('record');
     const [recordingResult, setRecordingResult] = useState<RecordingResult | null>(null);
     const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResponse | null>(
@@ -224,8 +219,8 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
       switch (currentStep) {
         case 'record':
           return (
-            <View style={[styles.stepContainer, { padding: spacing[6] }]}>
-              <Text variant="displayMd" style={{ textAlign: 'center', marginBottom: spacing[6] }}>
+            <View style={[styles.stepContainer, { padding: 24 }]}>
+              <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
                 Record Voice Note
               </Text>
 
@@ -236,11 +231,11 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
               />
 
               <Text
-                variant="textSm"
                 style={{
+                  fontSize: 14,
                   textAlign: 'center',
-                  color: colors.text.secondary,
-                  marginTop: spacing[6],
+                  color: '#a1a1aa',
+                  marginTop: 24,
                 }}
               >
                 Tap to start recording
@@ -250,8 +245,8 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
 
         case 'transcribing':
           return (
-            <View style={[styles.stepContainer, { padding: spacing[6] }]}>
-              <Text variant="displayMd" style={{ textAlign: 'center', marginBottom: spacing[6] }}>
+            <View style={[styles.stepContainer, { padding: 24 }]}>
+              <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
                 Transcribing...
               </Text>
 
@@ -265,11 +260,11 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
               )}
 
               <Text
-                variant="textBase"
                 style={{
+                  fontSize: 16,
                   textAlign: 'center',
-                  color: colors.text.secondary,
-                  marginTop: spacing[6],
+                  color: '#a1a1aa',
+                  marginTop: 24,
                 }}
               >
                 Processing audio...
@@ -281,9 +276,9 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
           return (
             <ScrollView
               style={styles.scrollView}
-              contentContainerStyle={[styles.stepContainer, { padding: spacing[6] }]}
+              contentContainerStyle={[styles.stepContainer, { padding: 24 }]}
             >
-              <Text variant="displayMd" style={{ marginBottom: spacing[6] }}>
+              <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 24 }}>
                 Review Transcript
               </Text>
 
@@ -297,26 +292,36 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
               )}
 
               {recordingResult && (
-                <View style={{ marginTop: spacing[4] }}>
+                <View style={{ marginTop: 16 }}>
                   <AudioPlayer audioUri={recordingResult.uri} />
                 </View>
               )}
 
-              <View style={[styles.actions, { marginTop: spacing[6], gap: spacing[3] }]}>
-                <Button variant="secondary" size="md" onPress={handleCancel} style={{ flex: 1 }}>
-                  Cancel
-                </Button>
-                <Button variant="primary" size="md" onPress={handleFinalSave} style={{ flex: 1 }}>
-                  Save
-                </Button>
+              <View style={[styles.actions, { marginTop: 24, gap: 12 }]}>
+                <Pressable
+                  onPress={handleCancel}
+                  style={[styles.button, { flex: 1, backgroundColor: '#27272a' }]}
+                >
+                  <Text style={{ fontSize: 16, color: '#fafafa', fontWeight: '600' }}>
+                    Cancel
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleFinalSave}
+                  style={[styles.button, { flex: 1, backgroundColor: '#3b82f6' }]}
+                >
+                  <Text style={{ fontSize: 16, color: '#ffffff', fontWeight: '600' }}>
+                    Save
+                  </Text>
+                </Pressable>
               </View>
             </ScrollView>
           );
 
         case 'complete':
           return (
-            <View style={[styles.stepContainer, { padding: spacing[6] }]}>
-              <Text variant="displayMd" style={{ textAlign: 'center' }}>
+            <View style={[styles.stepContainer, { padding: 24 }]}>
+              <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center' }}>
                 Saved!
               </Text>
             </View>
@@ -336,10 +341,10 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
           backdropComponent={renderBackdrop}
           enablePanDownToClose
           backgroundStyle={{
-            backgroundColor: colors.background.secondary,
+            backgroundColor: '#18181b',
           }}
           handleIndicatorStyle={{
-            backgroundColor: colors.border.muted,
+            backgroundColor: '#27272a',
           }}
         >
           <BottomSheetView>{renderContent()}</BottomSheetView>
@@ -350,6 +355,13 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
 );
 
 const styles = StyleSheet.create({
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   stepContainer: {
     alignItems: 'center',
     minHeight: 400,
