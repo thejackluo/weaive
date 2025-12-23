@@ -129,17 +129,28 @@ export function VoiceRecordModal({
       setTranscriptionError(null);
 
       try {
+        // Simulate initial progress to show activity
+        setTranscriptionProgress(5);
+
         // Call real STT API
         const transcriptionResult: TranscriptionResult = await transcribeAudio({
           audioUri: result.uri,
           language: _language,
           onProgress: (progress) => {
-            // Update upload progress (0-100%)
-            setTranscriptionProgress(Math.round(progress * 100));
+            // Map upload progress (0-1) to UI progress (5-90%)
+            // Reserve 0-5% for initial state and 90-100% for processing
+            const uiProgress = 5 + Math.round(progress * 85);
+            setTranscriptionProgress(uiProgress);
           },
         });
 
         console.log('[VOICE_MODAL] ✅ Transcription success:', transcriptionResult);
+
+        // Show final processing step
+        setTranscriptionProgress(100);
+
+        // Small delay to show 100% completion before transitioning
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
         setTranscript(transcriptionResult.transcript);
         setTranscriptConfidence(transcriptionResult.confidence);

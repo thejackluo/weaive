@@ -207,8 +207,9 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
               enrichedError.retryable = error.retryable;
               enrichedError.retryAfter = error.retryAfter;
               reject(enrichedError);
-            } catch {
+            } catch (parseError) {
               // Couldn't parse error response - check if it's 404
+              console.warn('Failed to parse error response:', parseError);
               if (xhr.status === 404) {
                 const error: any = new Error(
                   'Backend transcription service is not available. Please start the backend server.'
