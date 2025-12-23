@@ -61,7 +61,7 @@ export function useImageDelete() {
           ...old,
           pages: old.pages.map((page) => ({
             ...page,
-            data: page.data.filter((img) => img.id !== imageId),
+            data: page.data.filter((img: { id: string }) => img.id !== imageId),
           })),
         };
       });

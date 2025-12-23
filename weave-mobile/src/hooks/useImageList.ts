@@ -15,7 +15,7 @@ interface ImageFilters {
   endDate?: string;
 }
 
-interface ImagePage {
+export interface ImagePage {
   data: Capture[];
   meta: {
     total: number;

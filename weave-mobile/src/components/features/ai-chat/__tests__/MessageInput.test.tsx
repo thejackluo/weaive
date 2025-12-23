@@ -15,7 +15,7 @@ describe('MessageInput Component', () => {
   it('renders text input and send button', () => {
     // GIVEN: MessageInput component
     const { getByTestId } = render(
-      <MessageInput value="" onChange={jest.fn()} onSend={jest.fn()} disabled={false} />
+      <MessageInput value="" onChangeText={jest.fn()} onSend={jest.fn()} disabled={false} />
     );
 
     // THEN: Input and button are rendered
@@ -31,7 +31,7 @@ describe('MessageInput Component', () => {
   it('disables send button when input is empty', () => {
     // GIVEN: Empty input
     const { getByTestId } = render(
-      <MessageInput value="" onChange={jest.fn()} onSend={jest.fn()} disabled={false} />
+      <MessageInput value="" onChangeText={jest.fn()} onSend={jest.fn()} disabled={false} />
     );
 
     // THEN: Send button is disabled
@@ -47,7 +47,7 @@ describe('MessageInput Component', () => {
   it('enables send button when input has text', () => {
     // GIVEN: Input with text
     const { getByTestId } = render(
-      <MessageInput value="Hello Weave" onChange={jest.fn()} onSend={jest.fn()} disabled={false} />
+      <MessageInput value="Hello Weave" onChangeText={jest.fn()} onSend={jest.fn()} disabled={false} />
     );
 
     // THEN: Send button is enabled
@@ -64,7 +64,7 @@ describe('MessageInput Component', () => {
     // GIVEN: MessageInput with mock callback
     const mockOnChange = jest.fn();
     const { getByTestId } = render(
-      <MessageInput value="" onChange={mockOnChange} onSend={jest.fn()} disabled={false} />
+      <MessageInput value="" onChangeText={mockOnChange} onSend={jest.fn()} disabled={false} />
     );
 
     // WHEN: User types
@@ -86,7 +86,7 @@ describe('MessageInput Component', () => {
     const { getByTestId } = render(
       <MessageInput
         value="Test message"
-        onChange={jest.fn()}
+        onChangeText={jest.fn()}
         onSend={mockOnSend}
         disabled={false}
       />
@@ -109,7 +109,7 @@ describe('MessageInput Component', () => {
     // GIVEN: Input with 450 characters
     const longText = 'a'.repeat(450);
     const { getByTestId } = render(
-      <MessageInput value={longText} onChange={jest.fn()} onSend={jest.fn()} disabled={false} />
+      <MessageInput value={longText} onChangeText={jest.fn()} onSend={jest.fn()} disabled={false} />
     );
 
     // THEN: Character counter is displayed
@@ -125,7 +125,7 @@ describe('MessageInput Component', () => {
   it('shows 500/500 when at character limit', () => {
     // GIVEN: Input with exactly 500 characters
     const maxText = 'a'.repeat(500);
-    render(<MessageInput value={maxText} onChange={jest.fn()} onSend={jest.fn()} disabled={false} />);
+    render(<MessageInput value={maxText} onChangeText={jest.fn()} onSend={jest.fn()} disabled={false} />);
 
     // THEN: Character counter shows limit
     expect(screen.getByText('500/500')).toBeTruthy();
@@ -140,7 +140,7 @@ describe('MessageInput Component', () => {
     // GIVEN: MessageInput
     const mockOnChange = jest.fn();
     const { getByTestId } = render(
-      <MessageInput value="" onChange={mockOnChange} onSend={jest.fn()} disabled={false} />
+      <MessageInput value="" onChangeText={mockOnChange} onSend={jest.fn()} disabled={false} />
     );
 
     // WHEN: User tries to type 501 characters
@@ -160,7 +160,7 @@ describe('MessageInput Component', () => {
   it('disables input and button when disabled prop is true', () => {
     // GIVEN: Disabled MessageInput
     const { getByTestId } = render(
-      <MessageInput value="" onChange={jest.fn()} onSend={jest.fn()} disabled={true} />
+      <MessageInput value="" onChangeText={jest.fn()} onSend={jest.fn()} disabled={true} />
     );
 
     // THEN: Both input and button are disabled
@@ -182,7 +182,7 @@ describe('MessageInput Component', () => {
     const { getByTestId } = render(
       <MessageInput
         value="Test message"
-        onChange={jest.fn()}
+        onChangeText={jest.fn()}
         onSend={mockOnSend}
         disabled={false}
       />
@@ -204,7 +204,7 @@ describe('MessageInput Component', () => {
   it('displays correct placeholder text', () => {
     // GIVEN: MessageInput
     const { getByTestId } = render(
-      <MessageInput value="" onChange={jest.fn()} onSend={jest.fn()} disabled={false} />
+      <MessageInput value="" onChangeText={jest.fn()} onSend={jest.fn()} disabled={false} />
     );
 
     // THEN: Placeholder is "Talk to Weave..."
@@ -220,7 +220,7 @@ describe('MessageInput Component', () => {
   it('animates send button on press', () => {
     // GIVEN: MessageInput with text
     const { getByTestId } = render(
-      <MessageInput value="Test" onChange={jest.fn()} onSend={jest.fn()} disabled={false} />
+      <MessageInput value="Test" onChangeText={jest.fn()} onSend={jest.fn()} disabled={false} />
     );
 
     // WHEN: User presses send button
