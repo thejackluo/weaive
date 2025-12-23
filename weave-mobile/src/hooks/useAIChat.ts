@@ -1,7 +1,15 @@
 /**
  * useAIChat - AI Chat API Hook (Story 6.1)
  *
- * Features:
+ * NOTE: This is a STUB implementation for Story 6.1 AI Chat Interface.
+ * The full implementation will be completed in Story 6.1.
+ *
+ * This stub exists to satisfy TypeScript compilation for ChatScreen.tsx
+ * which was merged from main but is not yet fully functional in story/1.5.3.
+ *
+ * For AI text generation (Story 1.5.3), use useAITextGeneration instead.
+ *
+ * Features (when fully implemented in Story 6.1):
  * - Send chat messages with rate limiting
  * - Get usage statistics (tiered: premium/free/monthly)
  * - List conversations
@@ -9,10 +17,9 @@
  * - React Query integration for caching
  */
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/services/apiClient';
+import { useQuery } from '@tanstack/react-query';
 
-// Types matching backend Pydantic models
+// Types matching backend Pydantic models (Story 6.1)
 interface ChatMessageResponse {
   message_id: string;
   response: string;
@@ -51,13 +58,11 @@ interface ConversationDetail {
 }
 
 /**
- * Custom hook for AI chat functionality
+ * Custom hook for AI chat functionality (STUB - Story 6.1)
  */
 export function useAIChat() {
-  const queryClient = useQueryClient();
-
   /**
-   * Send a chat message
+   * Send a chat message (STUB)
    */
   const sendMessage = async ({
     message,
@@ -66,82 +71,56 @@ export function useAIChat() {
     message: string;
     conversation_id?: string;
   }): Promise<ChatMessageResponse> => {
-    const response = await apiClient.post<{ data: ChatMessageResponse }>('/api/ai-chat/messages', {
-      message,
-      conversation_id,
-    });
-
-    return response.data.data;
+    throw new Error(
+      'useAIChat.sendMessage() is not yet implemented. This is a stub for Story 6.1. Use useAITextGeneration for AI text generation (Story 1.5.3).'
+    );
   };
 
   /**
-   * Get user's AI usage statistics
+   * Get user's AI usage statistics (STUB with default data)
    */
   const getUsageStats = async (): Promise<UsageStats> => {
-    const response = await apiClient.get<{ data: UsageStats }>('/api/ai/usage');
-    return response.data.data;
+    // Return default stats to satisfy TypeScript
+    return {
+      premium_today: { used: 0, limit: 10 },
+      free_today: { used: 0, limit: 3 },
+      monthly: { used: 0, limit: 100 },
+      tier: 'free',
+    };
   };
 
   /**
-   * List user's conversation history
+   * List user's conversation history (STUB)
    */
   const listConversations = async (): Promise<ConversationSummary[]> => {
-    const response = await apiClient.get<{ data: ConversationSummary[] }>(
-      '/api/ai-chat/conversations'
-    );
-    return response.data.data;
+    return [];
   };
 
   /**
-   * Get full conversation thread
+   * Get full conversation thread (STUB)
    */
   const getConversation = async (conversationId: string): Promise<ConversationDetail> => {
-    const response = await apiClient.get<{ data: ConversationDetail }>(
-      `/api/ai-chat/conversations/${conversationId}`
+    throw new Error(
+      'useAIChat.getConversation() is not yet implemented. This is a stub for Story 6.1.'
     );
-    return response.data.data;
   };
 
   /**
-   * Query: List conversations
+   * React Query hook for usage stats
    */
-  const conversationsQuery = useQuery({
-    queryKey: ['ai-chat-conversations'],
-    queryFn: listConversations,
-    staleTime: 30000, // 30 seconds
-  });
-
-  /**
-   * Query: Get specific conversation
-   */
-  const useConversation = (conversationId: string) => {
+  const useUsageStats = () => {
     return useQuery({
-      queryKey: ['ai-chat-conversation', conversationId],
-      queryFn: () => getConversation(conversationId),
-      enabled: !!conversationId,
+      queryKey: ['ai-usage-stats'],
+      queryFn: getUsageStats,
+      staleTime: 60000, // 1 minute
     });
   };
 
   return {
-    // Mutations
     sendMessage,
-
-    // Queries
     getUsageStats,
     listConversations,
     getConversation,
-
-    // Query hooks
-    conversations: conversationsQuery.data,
-    isLoading: conversationsQuery.isLoading,
-    useConversation,
-
-    // Utils
-    invalidateConversations: () => {
-      queryClient.invalidateQueries({ queryKey: ['ai-chat-conversations'] });
-    },
-    invalidateUsage: () => {
-      queryClient.invalidateQueries({ queryKey: ['ai-usage'] });
-    },
+    useUsageStats,
   };
 }
