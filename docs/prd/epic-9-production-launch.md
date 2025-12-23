@@ -243,6 +243,16 @@ Deploy the Weave MVP to production infrastructure (Railway + Supabase), comply w
 - [ ] Test XSS prevention (input sanitization)
 - [ ] Test CSRF protection (SameSite cookies, CORS headers)
 
+**Supabase Database Security (CRITICAL - Blocks Production):**
+- [ ] Fix mutable search_path vulnerability in 9 PostgreSQL functions:
+  - `reset_daily_ai_counters`, `reset_monthly_ai_counters`, `increment_ai_usage`
+  - `check_max_active_goals`, `prevent_subtask_completion_modification`
+  - `get_daily_cost_by_provider`, `increment_upload_usage`
+  - `increment_ai_vision_usage`, `increment_stt_usage`
+- [ ] Enable HaveIBeenPwned password check in Supabase Auth settings
+- [ ] Review and optimize slow queries (>1s queries identified by advisor)
+- [ ] Run Supabase Advisor and resolve all CRITICAL and HIGH severity issues
+
 **Production-Only Security:**
 - [ ] Disable debug mode (`DEBUG=false`)
 - [ ] Enable HTTPS-only (Railway auto-provides SSL)
@@ -253,6 +263,11 @@ Deploy the Weave MVP to production infrastructure (Railway + Supabase), comply w
 - Use `slowapi` for rate limiting in FastAPI: `uv add slowapi`
 - OWASP ZAP is free and open-source: https://www.zaproxy.org/
 - Security audit can be done by dev team (no external firm needed for MVP)
+- **Mutable search_path fix:** Apply migration `weave-api/migrations/20251223_fix_function_search_path_security.sql`
+  - Sets `search_path = public` on all 9 functions to prevent search_path manipulation attacks
+  - Verification query included in migration file comments
+- **HaveIBeenPwned:** Enable in Supabase Dashboard → Authentication → Password Settings
+- **Slow queries:** Review query performance in Supabase Dashboard → Database → Query Performance
 
 **Story Points:** 5
 
