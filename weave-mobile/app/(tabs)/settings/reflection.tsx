@@ -200,14 +200,14 @@ export default function ReflectionScreen() {
     };
 
     try {
-      if (isEditMode && existingJournalId) {
-        // Update existing journal
+      if (isEditMode && existingJournalId && existingJournalId !== 'temp-id') {
+        // Update existing journal (skip if existingJournalId is temp-id)
         await updateMutation.mutateAsync({
           journalId: existingJournalId,
           data: payload,
         });
       } else {
-        // Create new journal
+        // Create new journal (handles both CREATE mode and temp-id cases)
         await submitMutation.mutateAsync(payload);
         await clearDraft();
       }

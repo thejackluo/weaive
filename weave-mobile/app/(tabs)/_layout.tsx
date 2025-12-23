@@ -372,6 +372,7 @@ export default function TabLayout() {
         <Tabs.Screen name="design-system-showcase" options={{ href: null }} />
         <Tabs.Screen name="needles" options={{ href: null }} />
         <Tabs.Screen name="sitemap" options={{ href: null }} />
+        <Tabs.Screen name="voice-demo" options={{ href: null }} />
 
         {/* Progress Routes (Day Detail Pages) */}
         <Tabs.Screen name="progress/[date]" options={{ href: null }} />
