@@ -39,6 +39,7 @@ export default function ChatScreen() {
   const [showQuickChips, setShowQuickChips] = useState(true);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [showConversationList, setShowConversationList] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const streamingMessageIdRef = useRef<string | null>(null);
 
@@ -69,38 +70,58 @@ export default function ChatScreen() {
   const loadConversationHistory = async () => {
     setIsLoadingHistory(true);
     try {
+      console.log('[HISTORY] 🔍 Loading conversation history...');
+      
       // Fetch latest conversation from backend
       const response = await apiClient.get('/api/ai-chat/conversations');
+      console.log('[HISTORY] 📦 Response:', JSON.stringify(response.data).substring(0, 200));
+      
       const conversations = response.data.data || [];
+      console.log('[HISTORY] 📊 Found conversations:', conversations.length);
 
       if (conversations.length > 0) {
         // Load most recent conversation
         const latestConv = conversations[0];
         setCurrentConversationId(latestConv.id);
+        console.log('[HISTORY] 🔄 Loading conversation:', latestConv.id);
 
-        // Fetch messages for this conversation
-        const messagesResponse = await apiClient.get(`/api/ai-chat/conversations/${latestConv.id}/messages`);
-        const convMessages = messagesResponse.data.data || [];
+        try {
+          // ✅ FIX: Fetch conversation details which includes messages
+          const detailResponse = await apiClient.get(`/api/ai-chat/conversations/${latestConv.id}`);
+          console.log('[HISTORY] 📨 Detail response:', JSON.stringify(detailResponse.data).substring(0, 200));
+          
+          const conversationDetail = detailResponse.data.data;
+          const convMessages = conversationDetail.messages || [];
+          console.log('[HISTORY] 💬 Loaded messages:', convMessages.length);
 
-        // Transform backend messages to UI format
-        const transformedMessages: Message[] = convMessages.map((msg: any) => ({
-          id: msg.id,
-          role: msg.role,
-          content: msg.content,
-          timestamp: new Date(msg.created_at),
-        }));
+          // Transform backend messages to UI format
+          const transformedMessages: Message[] = convMessages.map((msg: any) => ({
+            id: msg.id,
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date(msg.created_at),
+          }));
 
-        if (transformedMessages.length > 0) {
-          setMessages(transformedMessages);
-          setShowQuickChips(false); // Hide chips if conversation exists
-        } else {
+          if (transformedMessages.length > 0) {
+            setMessages(transformedMessages);
+            setShowQuickChips(false); // Hide chips if conversation exists
+            console.log('[HISTORY] ✅ Loaded', transformedMessages.length, 'messages into UI');
+          } else {
+            console.log('[HISTORY] ⚠️ No messages in conversation');
+            loadInitialGreeting();
+          }
+        } catch (detailError: any) {
+          console.error('[HISTORY] ❌ Failed to load conversation detail:', detailError.message);
+          // If detail fetch fails, still show greeting (conversation might be empty)
           loadInitialGreeting();
         }
       } else {
+        console.log('[HISTORY] 📭 No conversations found, showing greeting');
         loadInitialGreeting();
       }
-    } catch (error) {
-      console.error('Failed to load conversation history:', error);
+    } catch (error: any) {
+      console.error('[HISTORY] ❌ Failed to load conversation list:', error.message);
+      // Always fall back to greeting on error
       loadInitialGreeting();
     } finally {
       setIsLoadingHistory(false);
@@ -131,10 +152,12 @@ export default function ChatScreen() {
 
   // Effect: Update conversation ID as soon as metadata arrives (prevents desync)
   useEffect(() => {
-    if (streamMetadata.conversationId && !currentConversationId) {
+    if (streamMetadata.conversationId) {
+      // ✅ FIX: Always update conversation ID from metadata
       setCurrentConversationId(streamMetadata.conversationId);
+      console.log('[CONV] 🆔 Conversation ID set:', streamMetadata.conversationId);
     }
-  }, [streamMetadata.conversationId, currentConversationId]);
+  }, [streamMetadata.conversationId]);
 
   // Effect: Update streaming message in real-time
   useEffect(() => {
