@@ -2,7 +2,7 @@ module.exports = {
   preset: 'react-native',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|@react-navigation|expo|@expo|expo-.*|@unimodules|@supabase|@tanstack)/)',
+    'node_modules/(?!(react-native|@react-native|@react-navigation|expo|@expo|expo-.*|@unimodules|@supabase|@tanstack|react-native-sse)/)',
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -10,8 +10,17 @@ module.exports = {
     '^@/design-system/(.*)$': '<rootDir>/src/design-system/$1',
   },
   testMatch: [
-    '**/__tests__/**/*.test.(ts|tsx|js)',
-    '**/*.test.(ts|tsx|js)',
+    '<rootDir>/src/**/__tests__/**/*.test.(ts|tsx|js)',
+    '<rootDir>/app/**/__tests__/**/*.test.(ts|tsx|js)',
+    '<rootDir>/src/**/*.test.(ts|tsx|js)',
+    '<rootDir>/app/**/*.test.(ts|tsx|js)',
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/archive/',
+    '/__archive__/',
+    '/docs/',
+    '/dev/',
   ],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

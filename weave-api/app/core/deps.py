@@ -108,11 +108,13 @@ def verify_jwt_token(token: str) -> dict:
     try:
         # Decode and verify JWT using Supabase JWT secret
         # Supabase uses HS256 algorithm by default
+        # Add 60s leeway to handle clock skew between mobile device and server
         payload = jwt.decode(
             token,
             settings.SUPABASE_JWT_SECRET,
             algorithms=["HS256"],
             audience="authenticated",  # Supabase default audience
+            leeway=60,  # Allow 60s clock skew tolerance (critical for mobile apps)
         )
 
         logger.debug(f"✅ JWT verified for user: {payload.get('sub')}")

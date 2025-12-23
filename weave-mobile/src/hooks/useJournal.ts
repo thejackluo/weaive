@@ -50,6 +50,8 @@ export function useGetTodayJournal() {
       }
     },
     retry: 1,
+    staleTime: 0, // Always consider data stale (force refetch)
+    gcTime: 0, // Don't cache data after component unmounts
     // Return null instead of throwing on 404
     throwOnError: (error: any) => {
       const shouldThrow = error?.response?.status !== 404;
@@ -106,10 +108,11 @@ export function useSubmitJournal() {
     },
 
     // Refetch on success
-    onSuccess: (data) => {
+    onSuccess: (response) => {
       // CRITICAL: Replace the temp-id optimistic cache with real server response
       // This fixes the bug where the screen tries to PATCH /api/journal-entries/temp-id
-      queryClient.setQueryData(journalKeys.today(), data);
+      // Extract data from response (API now returns { data, meta })
+      queryClient.setQueryData(journalKeys.today(), response.data);
 
       queryClient.invalidateQueries({ queryKey: journalKeys.all });
       queryClient.invalidateQueries({ queryKey: ['daily-aggregates'] });
@@ -140,14 +143,16 @@ export function useUpdateJournal() {
 
       const previousJournal = queryClient.getQueryData(journalKeys.today());
 
-      // Optimistically update
-      queryClient.setQueryData(journalKeys.today(), (old: any) => ({
-        ...old,
-        fulfillment_score: data.fulfillment_score ?? old.fulfillment_score,
-        default_responses: data.default_responses ?? old.default_responses,
-        custom_responses: data.custom_responses ?? old.custom_responses,
-        updated_at: new Date().toISOString(),
-      }));
+      // Optimistically update (only if old data exists)
+      if (previousJournal) {
+        queryClient.setQueryData(journalKeys.today(), (old: any) => ({
+          ...old,
+          fulfillment_score: data.fulfillment_score ?? old.fulfillment_score,
+          default_responses: data.default_responses ?? old.default_responses,
+          custom_responses: data.custom_responses ?? old.custom_responses,
+          updated_at: new Date().toISOString(),
+        }));
+      }
 
       return { previousJournal };
     },
@@ -165,7 +170,10 @@ export function useUpdateJournal() {
     },
 
     // Refetch on success
-    onSuccess: () => {
+    onSuccess: (response) => {
+      // Update cache with real data from server
+      queryClient.setQueryData(journalKeys.today(), response.data);
+
       queryClient.invalidateQueries({ queryKey: journalKeys.all });
       queryClient.invalidateQueries({ queryKey: ['daily-aggregates'] });
 

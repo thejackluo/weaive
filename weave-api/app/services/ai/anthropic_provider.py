@@ -28,14 +28,17 @@ class AnthropicProvider(AIProvider):
     - Manual retry with exponential backoff
     """
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, db=None):
         """
         Initialize Anthropic provider.
 
         Args:
             api_key: Anthropic API key (sk-ant-...)
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
         """
+        super().__init__(db)  # Initialize AIProviderBase
         self.client = Anthropic(api_key=api_key)
+        self.api_key = api_key
 
         # Pricing per million tokens (input/output)
         # Using currently available models (as of Jan 2025)
@@ -43,6 +46,14 @@ class AnthropicProvider(AIProvider):
             "claude-3-5-sonnet-20241022": {"input": 3.00 / 1_000_000, "output": 15.00 / 1_000_000},
             "claude-3-5-haiku-20241022": {"input": 1.00 / 1_000_000, "output": 5.00 / 1_000_000},
         }
+
+    def get_provider_name(self) -> str:
+        """Return provider identifier for logging."""
+        return "anthropic"
+
+    def is_available(self) -> bool:
+        """Check if provider is configured and available."""
+        return self.api_key is not None and len(self.api_key) > 0
 
     def complete(
         self, prompt: str, model: str = "claude-3-5-sonnet-20241022", **kwargs

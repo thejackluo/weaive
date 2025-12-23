@@ -36,30 +36,43 @@ class AssemblyAIProvider(STTProvider):
     Pricing: $0.0025/minute (58% cheaper than Whisper)
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, db=None):
         """
         Initialize AssemblyAI provider.
 
         Args:
             api_key: AssemblyAI API key. If None, reads from ASSEMBLYAI_API_KEY env var.
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
 
         Raises:
             STTProviderError: If API key is not configured
         """
-        self.api_key = api_key or os.getenv("ASSEMBLYAI_API_KEY")
+        super().__init__(db)  # Initialize AIProviderBase
+        self.api_key = api_key or os.getenv('ASSEMBLYAI_API_KEY')
         if not self.api_key:
             raise STTProviderError(
                 message="ASSEMBLYAI_API_KEY not configured",
                 provider="assemblyai",
                 retryable=False,
-                error_code="ASSEMBLYAI_API_KEY_MISSING",
+                error_code="ASSEMBLYAI_API_KEY_MISSING"
             )
 
         # Configure AssemblyAI SDK
         aai.settings.api_key = self.api_key
 
+    def get_provider_name(self) -> str:
+        """Return provider identifier for logging."""
+        return "assemblyai"
+
+    def is_available(self) -> bool:
+        """Check if provider is configured and available."""
+        return self.api_key is not None and len(self.api_key) > 0
+
     async def transcribe(
-        self, audio_file: bytes, language: str = "en", **kwargs
+        self,
+        audio_file: bytes,
+        language: str = 'en',
+        **kwargs
     ) -> TranscriptionResult:
         """
         Transcribe audio using AssemblyAI API.
@@ -111,7 +124,7 @@ class AssemblyAIProvider(STTProvider):
             # Transcribe (blocks until complete - AssemblyAI SDK handles upload + polling)
             transcript = await asyncio.to_thread(
                 transcriber.transcribe,
-                audio_buffer,  # Pass BytesIO buffer, not raw bytes
+                audio_buffer  # Pass BytesIO buffer, not raw bytes
             )
 
             # Check for errors
@@ -120,7 +133,7 @@ class AssemblyAIProvider(STTProvider):
                     message=f"AssemblyAI transcription failed: {transcript.error}",
                     provider="assemblyai",
                     retryable=True,
-                    error_code="STT_PRIMARY_UNAVAILABLE",
+                    error_code="STT_PRIMARY_UNAVAILABLE"
                 )
 
             # Calculate confidence (average of word confidences)
@@ -136,7 +149,7 @@ class AssemblyAIProvider(STTProvider):
                 duration_sec=duration_sec,
                 language=language,
                 provider="assemblyai",
-                cost_usd=cost,
+                cost_usd=cost
             )
 
         except aai.types.TranscriptError as e:
@@ -145,7 +158,7 @@ class AssemblyAIProvider(STTProvider):
                 provider="assemblyai",
                 retryable=True,
                 error_code="STT_PRIMARY_UNAVAILABLE",
-                original_error=e,
+                original_error=e
             )
         except Exception as e:
             # Generic error (network, timeout, etc.)
@@ -154,7 +167,7 @@ class AssemblyAIProvider(STTProvider):
                 provider="assemblyai",
                 retryable=True,
                 error_code="STT_PRIMARY_UNAVAILABLE",
-                original_error=e,
+                original_error=e
             )
 
     def _calculate_confidence(self, transcript: aai.Transcript) -> float:
@@ -193,14 +206,3 @@ class AssemblyAIProvider(STTProvider):
         """
         cost_per_second = 0.00004167  # $0.0025/minute
         return round(duration_seconds * cost_per_second, 4)
-
-    def is_available(self) -> bool:
-        """
-        Check if AssemblyAI is available (API key configured).
-
-        Quick check without making API calls.
-
-        Returns:
-            True if API key is set, False otherwise
-        """
-        return bool(self.api_key)

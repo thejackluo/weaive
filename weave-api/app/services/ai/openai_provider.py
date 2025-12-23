@@ -14,6 +14,8 @@ import logging
 import tiktoken
 from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 
+from app.utils.cost_calculator import calculate_text_cost
+
 from .base import AIProvider, AIProviderError, AIResponse
 
 logger = logging.getLogger(__name__)
@@ -29,22 +31,32 @@ class OpenAIProvider(AIProvider):
     - Latest GPT-4o-mini and GPT-4o models
     """
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, db=None):
         """
         Initialize OpenAI provider.
 
         Args:
             api_key: OpenAI API key (sk-...)
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
         """
+        super().__init__(db)  # Initialize AIProviderBase
         self.client = OpenAI(api_key=api_key)
+        self.api_key = api_key
 
-        # Pricing per million tokens (input/output)
-        self.pricing = {
-            "gpt-4o-mini": {"input": 0.15 / 1_000_000, "output": 0.60 / 1_000_000},
-            "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
-        }
+    def get_provider_name(self) -> str:
+        """Return provider identifier for logging."""
+        return "openai"
 
-    def complete(self, prompt: str, model: str = "gpt-4o-mini", **kwargs) -> AIResponse:
+    def is_available(self) -> bool:
+        """Check if provider is configured and available."""
+        return self.api_key is not None and len(self.api_key) > 0
+
+    def complete(
+        self,
+        prompt: str,
+        model: str = 'gpt-4o-mini',
+        **kwargs
+    ) -> AIResponse:
         """
         Generate completion using OpenAI.
 
@@ -65,10 +77,12 @@ class OpenAIProvider(AIProvider):
             # Call OpenAI Chat Completions API
             response = self.client.chat.completions.create(
                 model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=kwargs.get("temperature", 1.0),
-                max_tokens=kwargs.get("max_tokens", 2000),
-                **{k: v for k, v in kwargs.items() if k not in ["temperature", "max_tokens"]},
+                messages=[
+                    {'role': 'user', 'content': prompt}
+                ],
+                temperature=kwargs.get('temperature', 1.0),
+                max_tokens=kwargs.get('max_tokens', 2000),
+                **{k: v for k, v in kwargs.items() if k not in ['temperature', 'max_tokens']}
             )
 
             # Extract content and usage
@@ -76,8 +90,8 @@ class OpenAIProvider(AIProvider):
             input_tokens = response.usage.prompt_tokens
             output_tokens = response.usage.completion_tokens
 
-            # Calculate cost
-            cost_usd = self.estimate_cost(input_tokens, output_tokens, model)
+            # Calculate cost using centralized cost_calculator (AC-5)
+            cost_usd = calculate_text_cost(model, input_tokens, output_tokens)
 
             logger.info(
                 f"OpenAI success: {input_tokens} input + {output_tokens} output tokens, "
@@ -90,22 +104,25 @@ class OpenAIProvider(AIProvider):
                 output_tokens=output_tokens,
                 model=model,
                 cost_usd=cost_usd,
-                provider="openai",
+                provider='openai',
             )
 
         except RateLimitError as e:
             logger.warning(f"OpenAI rate limit exceeded: {e}")
             raise AIProviderError(
-                f"OpenAI rate limit: {e}", provider="openai", retryable=True, original_error=e
+                f"OpenAI rate limit: {e}",
+                provider='openai',
+                retryable=True,
+                original_error=e
             )
 
         except APIConnectionError as e:
             logger.error(f"OpenAI connection error: {e}")
             raise AIProviderError(
                 f"OpenAI connection failed: {e}",
-                provider="openai",
+                provider='openai',
                 retryable=True,
-                original_error=e,
+                original_error=e
             )
 
         except APIError as e:
@@ -113,13 +130,19 @@ class OpenAIProvider(AIProvider):
             # Some API errors are retryable (5xx), some are not (4xx)
             retryable = e.status_code is None or e.status_code >= 500
             raise AIProviderError(
-                f"OpenAI API error: {e}", provider="openai", retryable=retryable, original_error=e
+                f"OpenAI API error: {e}",
+                provider='openai',
+                retryable=retryable,
+                original_error=e
             )
 
         except Exception as e:
             logger.error(f"OpenAI unexpected error: {e}")
             raise AIProviderError(
-                f"Unexpected OpenAI error: {e}", provider="openai", retryable=True, original_error=e
+                f"Unexpected OpenAI error: {e}",
+                provider='openai',
+                retryable=True,
+                original_error=e
             )
 
     def count_tokens(self, text: str, model: str) -> int:
@@ -150,9 +173,7 @@ class OpenAIProvider(AIProvider):
 
     def estimate_cost(self, input_tokens: int, output_tokens: int, model: str) -> float:
         """
-        Calculate USD cost for token counts.
-
-        Uses OpenAI pricing as of 2025-12-19.
+        Calculate USD cost for token counts (delegates to cost_calculator).
 
         Args:
             input_tokens: Number of input tokens
@@ -162,15 +183,14 @@ class OpenAIProvider(AIProvider):
         Returns:
             Cost in USD
         """
-        # Get pricing for model (default to gpt-4o-mini if unknown)
-        pricing = self.pricing.get(model, self.pricing["gpt-4o-mini"])
+        return calculate_text_cost(model, input_tokens, output_tokens)
 
-        input_cost = input_tokens * pricing["input"]
-        output_cost = output_tokens * pricing["output"]
-
-        return input_cost + output_cost
-
-    def stream(self, prompt: str, model: str = "gpt-4o-mini", **kwargs):
+    def stream(
+        self,
+        prompt: str,
+        model: str = 'gpt-4o-mini',
+        **kwargs
+    ):
         """
         Generate streaming completion using OpenAI.
 
@@ -195,12 +215,14 @@ class OpenAIProvider(AIProvider):
             # Call OpenAI Chat Completions API with streaming enabled
             stream = self.client.chat.completions.create(
                 model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=kwargs.get("temperature", 1.0),
-                max_tokens=kwargs.get("max_tokens", 2000),
+                messages=[
+                    {'role': 'user', 'content': prompt}
+                ],
+                temperature=kwargs.get('temperature', 1.0),
+                max_tokens=kwargs.get('max_tokens', 2000),
                 stream=True,  # Enable streaming
                 stream_options={"include_usage": True},  # Include token usage in final chunk
-                **{k: v for k, v in kwargs.items() if k not in ["temperature", "max_tokens"]},
+                **{k: v for k, v in kwargs.items() if k not in ['temperature', 'max_tokens']}
             )
 
             # Collect full content and stream chunks
@@ -215,15 +237,15 @@ class OpenAIProvider(AIProvider):
                     if delta.content:
                         content = delta.content
                         full_content.append(content)
-                        yield {"type": "chunk", "content": content}
+                        yield {'type': 'chunk', 'content': content}
 
                 # Check for usage information (in final chunk with stream_options)
-                if hasattr(chunk, "usage") and chunk.usage:
+                if hasattr(chunk, 'usage') and chunk.usage:
                     input_tokens = chunk.usage.prompt_tokens
                     output_tokens = chunk.usage.completion_tokens
 
-            # Calculate cost
-            cost_usd = self.estimate_cost(input_tokens, output_tokens, model)
+            # Calculate cost using centralized cost_calculator (AC-5)
+            cost_usd = calculate_text_cost(model, input_tokens, output_tokens)
 
             logger.info(
                 f"OpenAI streaming success: {input_tokens} input + {output_tokens} output tokens, "
@@ -232,40 +254,46 @@ class OpenAIProvider(AIProvider):
 
             # Yield final metadata
             yield {
-                "type": "done",
-                "input_tokens": input_tokens,
-                "output_tokens": output_tokens,
-                "cost_usd": cost_usd,
-                "model": model,
+                'type': 'done',
+                'input_tokens': input_tokens,
+                'output_tokens': output_tokens,
+                'cost_usd': cost_usd,
+                'model': model,
             }
 
         except RateLimitError as e:
             logger.warning(f"OpenAI rate limit exceeded: {e}")
             raise AIProviderError(
-                f"OpenAI rate limit: {e}", provider="openai", retryable=True, original_error=e
+                f"OpenAI rate limit: {e}",
+                provider='openai',
+                retryable=True,
+                original_error=e
             )
 
         except APIConnectionError as e:
             logger.error(f"OpenAI connection error: {e}")
             raise AIProviderError(
                 f"OpenAI connection failed: {e}",
-                provider="openai",
+                provider='openai',
                 retryable=True,
-                original_error=e,
+                original_error=e
             )
 
         except APIError as e:
             logger.error(f"OpenAI API error: {e}")
             retryable = e.status_code is None or e.status_code >= 500
             raise AIProviderError(
-                f"OpenAI API error: {e}", provider="openai", retryable=retryable, original_error=e
+                f"OpenAI API error: {e}",
+                provider='openai',
+                retryable=retryable,
+                original_error=e
             )
 
         except Exception as e:
             logger.error(f"OpenAI unexpected streaming error: {e}")
             raise AIProviderError(
                 f"Unexpected OpenAI streaming error: {e}",
-                provider="openai",
+                provider='openai',
                 retryable=True,
-                original_error=e,
+                original_error=e
             )
