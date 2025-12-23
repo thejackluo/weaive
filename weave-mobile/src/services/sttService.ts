@@ -174,8 +174,8 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
               // Extract data from standard API response format
               const { data } = response;
               resolve(data);
-            } catch (parseError) {
-              console.error('[STT_SERVICE] ❌ Failed to parse response:', parseError);
+            } catch (error) {
+              console.error('[STT_SERVICE] ❌ Failed to parse response:', error);
               reject(new Error('Invalid response format'));
             }
           } else {
@@ -207,9 +207,8 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
               enrichedError.retryable = error.retryable;
               enrichedError.retryAfter = error.retryAfter;
               reject(enrichedError);
-            } catch (parseError) {
+            } catch {
               // Couldn't parse error response - check if it's 404
-              console.warn('Failed to parse error response:', parseError);
               if (xhr.status === 404) {
                 const error: any = new Error(
                   'Backend transcription service is not available. Please start the backend server.'
