@@ -95,36 +95,77 @@ async def get_consistency_data(
         days = timeframe_days.get(timeframe, 7)
         start_date = (date.today() - timedelta(days=days - 1)).isoformat()
 
-        # Fetch daily_aggregates for the timeframe
-        aggregates_response = (
-            supabase.table("daily_aggregates")
-            .select("local_date, completed_count, active_day_with_proof")
+        # Fetch completions from subtask_completions, filtering out archived goals
+        # We need to compute consistency from non-archived goals only
+        completions_response = (
+            supabase.table("subtask_completions")
+            .select(
+                """
+                id,
+                completed_at,
+                subtask_instances!subtask_completions_subtask_instance_id_fkey(
+                    id,
+                    scheduled_for_date,
+                    goals!subtask_instances_goal_id_fkey(id, status)
+                )
+                """
+            )
             .eq("user_id", user_id)
-            .gte("local_date", start_date)
-            .order("local_date", desc=False)
+            .gte("completed_at", start_date)
             .execute()
         )
 
-        aggregates = aggregates_response.data or []
-        logger.info(f"📊 Found {len(aggregates)} days of data for consistency")
+        completions = completions_response.data or []
+        logger.info(f"📊 Found {len(completions)} completions for consistency calculation")
 
-        # Calculate consistency data
-        # Use binary metric: active_day_with_proof = 100%, otherwise = 0%
+        # Filter out completions from archived goals
+        valid_completions = []
+        for completion in completions:
+            instance = completion.get("subtask_instances")
+            if not instance:
+                continue
+
+            goal = instance.get("goals")
+            goal_status = goal.get("status") if goal else None
+
+            # Skip archived goals
+            if goal_status == "archived":
+                continue
+
+            valid_completions.append(completion)
+
+        logger.info(f"📊 After filtering archived goals: {len(valid_completions)} valid completions")
+
+        # Group completions by date
+        from collections import defaultdict
+        completions_by_date = defaultdict(int)
+
+        for completion in valid_completions:
+            instance = completion.get("subtask_instances")
+            if instance:
+                scheduled_date = instance.get("scheduled_for_date")
+                if scheduled_date:
+                    completions_by_date[scheduled_date] += 1
+
+        # Build consistency data for all days in range
         consistency_data = []
+        current_date = date.fromisoformat(start_date)
+        end_date = date.today()
         active_days_count = 0
 
-        for agg in aggregates:
-            completed = agg.get("completed_count", 0)
-            is_active = agg.get("active_day_with_proof", False)
+        while current_date <= end_date:
+            date_str = current_date.isoformat()
+            completed_count = completions_by_date.get(date_str, 0)
 
-            # Consistency: 100% if active day with proof, 0% otherwise
+            # Binary metric: 100% if at least one completion, 0% otherwise
+            is_active = completed_count > 0
             percentage = 100.0 if is_active else 0.0
 
             consistency_data.append(
                 {
-                    "date": agg["local_date"],
+                    "date": date_str,
                     "completion_percentage": percentage,
-                    "completed_count": completed,
+                    "completed_count": completed_count,
                     "total_count": 1,  # Binary metric
                 }
             )
@@ -132,9 +173,13 @@ async def get_consistency_data(
             if is_active:
                 active_days_count += 1
 
+            current_date += timedelta(days=1)
+
         # Calculate overall consistency percentage
         overall_consistency = (
-            round((active_days_count / len(aggregates)) * 100, 1) if aggregates else 0
+            round((active_days_count / len(consistency_data)) * 100, 1)
+            if consistency_data
+            else 0
         )
 
         return {
