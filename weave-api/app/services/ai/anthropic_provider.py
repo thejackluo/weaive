@@ -52,11 +52,11 @@ class AnthropicProvider(AIProvider):
                 'output': 5.00 / 1_000_000
             },
         }
-    
+
     def get_provider_name(self) -> str:
         """Return provider identifier for logging."""
         return "anthropic"
-    
+
     def is_available(self) -> bool:
         """Check if provider is configured and available."""
         return self.api_key is not None and len(self.api_key) > 0

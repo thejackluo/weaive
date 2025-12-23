@@ -87,10 +87,10 @@ class VisionAnalysisResult:
 class VisionProvider(_AIProviderBase, ABC):
     """
     Abstract base class for AI vision providers.
-    
+
     Story 1.5.3: Now inherits from AIProviderBase for unified cost tracking
     and rate limiting across all AI modalities (text/image/audio).
-    
+
     Inherited from AIProviderBase:
     - log_to_ai_runs() - Cost tracking
     - check_rate_limit() - Rate limiting

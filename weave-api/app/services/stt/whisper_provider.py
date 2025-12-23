@@ -55,11 +55,11 @@ class WhisperProvider(STTProvider):
 
         # Initialize async OpenAI client
         self.client = AsyncOpenAI(api_key=self.api_key)
-    
+
     def get_provider_name(self) -> str:
         """Return provider identifier for logging."""
         return "whisper"
-    
+
     def is_available(self) -> bool:
         """Check if provider is configured and available."""
         return self.api_key is not None and len(self.api_key) > 0

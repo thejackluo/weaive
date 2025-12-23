@@ -25,7 +25,7 @@ Environment Variables (override defaults without code changes):
 
 import logging
 import os
-from typing import Dict, Optional
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ DEFAULT_AUDIO_PRICING = {
 def get_text_pricing() -> Dict[str, Dict[str, float]]:
     """
     Get text AI pricing from environment variables or defaults.
-    
+
     Returns:
         Dict[model_name, {'input': cost_per_mtok, 'output': cost_per_mtok}]
     """
@@ -95,7 +95,7 @@ def get_text_pricing() -> Dict[str, Dict[str, float]]:
 def get_image_pricing() -> Dict[str, float]:
     """
     Get image AI pricing from environment variables or defaults.
-    
+
     Returns:
         Dict[model_name, cost_per_image]
     """
@@ -108,13 +108,13 @@ def get_image_pricing() -> Dict[str, float]:
 def get_audio_pricing() -> Dict[str, float]:
     """
     Get audio AI pricing from environment variables or defaults.
-    
+
     Returns:
         Dict[provider_name, cost_per_second]
     """
     assemblyai_cost_per_hour = float(os.getenv('ASSEMBLYAI_COST_PER_HOUR', 0.15))
     whisper_cost_per_minute = float(os.getenv('WHISPER_COST_PER_MINUTE', 0.006))
-    
+
     return {
         'assemblyai': assemblyai_cost_per_hour / 3600,  # Convert to per-second
         'whisper': whisper_cost_per_minute / 60,        # Convert to per-second
@@ -128,20 +128,20 @@ def calculate_text_cost(
 ) -> float:
     """
     Calculate cost for text AI generation.
-    
+
     Args:
         model_name: Model identifier (e.g., 'gpt-4o-mini', 'claude-3.7-sonnet')
         input_tokens: Number of input tokens
         output_tokens: Number of output tokens
-    
+
     Returns:
         Cost in USD (accurate to 6 decimal places)
-    
+
     Raises:
         ValueError: If model_name is not recognized
     """
     pricing = get_text_pricing()
-    
+
     # Normalize model name (handle variants like 'gpt-4o-mini-2024-07-18')
     normalized_name = model_name.lower()
     for known_model in pricing.keys():
@@ -151,18 +151,18 @@ def calculate_text_cost(
     else:
         logger.warning(f"Unknown text AI model: {model_name}, defaulting to gpt-4o-mini pricing")
         model_key = 'gpt-4o-mini'
-    
+
     # Calculate cost (pricing is per million tokens, so divide by 1M)
     input_cost = (input_tokens / 1_000_000) * pricing[model_key]['input']
     output_cost = (output_tokens / 1_000_000) * pricing[model_key]['output']
-    
+
     total_cost = input_cost + output_cost
-    
+
     logger.debug(
         f"Text AI cost: {model_name} | "
         f"{input_tokens} in + {output_tokens} out = ${total_cost:.6f}"
     )
-    
+
     return round(total_cost, 6)
 
 
@@ -172,19 +172,19 @@ def calculate_image_cost(
 ) -> float:
     """
     Calculate cost for image AI analysis.
-    
+
     Args:
         model_name: Model identifier (e.g., 'gemini-3-flash', 'gpt-4o-vision')
         image_count: Number of images analyzed (default: 1)
-    
+
     Returns:
         Cost in USD (accurate to 6 decimal places)
-    
+
     Raises:
         ValueError: If model_name is not recognized
     """
     pricing = get_image_pricing()
-    
+
     # Normalize model name
     normalized_name = model_name.lower()
     for known_model in pricing.keys():
@@ -194,14 +194,14 @@ def calculate_image_cost(
     else:
         logger.warning(f"Unknown image AI model: {model_name}, defaulting to gemini-3-flash pricing")
         model_key = 'gemini-3-flash'
-    
+
     total_cost = pricing[model_key] * image_count
-    
+
     logger.debug(
         f"Image AI cost: {model_name} | "
         f"{image_count} image(s) = ${total_cost:.6f}"
     )
-    
+
     return round(total_cost, 6)
 
 
@@ -211,67 +211,67 @@ def calculate_audio_cost(
 ) -> float:
     """
     Calculate cost for audio AI transcription.
-    
+
     Args:
         provider_name: Provider identifier (e.g., 'assemblyai', 'whisper')
         duration_seconds: Audio duration in seconds
-    
+
     Returns:
         Cost in USD (accurate to 6 decimal places)
-    
+
     Raises:
         ValueError: If provider_name is not recognized
     """
     pricing = get_audio_pricing()
-    
+
     # Normalize provider name
     normalized_name = provider_name.lower()
     if normalized_name not in pricing:
         logger.warning(f"Unknown audio AI provider: {provider_name}, defaulting to assemblyai pricing")
         normalized_name = 'assemblyai'
-    
+
     cost_per_second = pricing[normalized_name]
     total_cost = cost_per_second * duration_seconds
-    
+
     logger.debug(
         f"Audio AI cost: {provider_name} | "
         f"{duration_seconds}s = ${total_cost:.6f}"
     )
-    
+
     return round(total_cost, 6)
 
 
 def get_pricing_table() -> str:
     """
     Generate human-readable pricing table for documentation.
-    
+
     Returns:
         Formatted pricing table string
     """
     text_pricing = get_text_pricing()
     image_pricing = get_image_pricing()
     audio_pricing = get_audio_pricing()
-    
+
     table = []
     table.append("=" * 70)
     table.append("AI Services Pricing (Story 1.5.3)")
     table.append("=" * 70)
     table.append("")
-    
+
     # Text AI section
     table.append("TEXT AI (per million tokens):")
     table.append("-" * 70)
     for model, costs in text_pricing.items():
         table.append(f"  {model:30s} | Input: ${costs['input']:.2f} | Output: ${costs['output']:.2f}")
     table.append("")
-    
+
     # Image AI section
     table.append("IMAGE AI (per image):")
     table.append("-" * 70)
     for model, cost in image_pricing.items():
         table.append(f"  {model:30s} | ${cost:.4f}")
     table.append("")
-    
+
     # Audio AI section
     table.append("AUDIO AI (per second):")
     table.append("-" * 70)
@@ -279,19 +279,19 @@ def get_pricing_table() -> str:
         cost_per_hour = cost_per_sec * 3600
         table.append(f"  {provider:30s} | ${cost_per_sec:.6f}/sec (${cost_per_hour:.2f}/hour)")
     table.append("")
-    
+
     table.append("=" * 70)
     table.append("Note: Pricing can be overridden via environment variables.")
     table.append("See docstring for variable names (e.g., GPT4O_MINI_INPUT_COST)")
     table.append("=" * 70)
-    
+
     return "\n".join(table)
 
 
 if __name__ == "__main__":
     # Print pricing table when run as script
     print(get_pricing_table())
-    
+
     # Example calculations
     print("\nExample Calculations:")
     print(f"  GPT-4o-mini (1000 in, 500 out): ${calculate_text_cost('gpt-4o-mini', 1000, 500):.6f}")

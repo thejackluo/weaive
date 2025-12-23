@@ -82,7 +82,7 @@ class STTProvider(_AIProviderBase, ABC):
     to ensure consistent interface for the orchestrator.
 
     Fallback chain: AssemblyAI → Whisper → Store audio only (manual)
-    
+
     Inherited from AIProviderBase:
     - log_to_ai_runs() - Cost tracking
     - check_rate_limit() - Rate limiting

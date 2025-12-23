@@ -73,7 +73,7 @@ class AIProvider(_AIProviderBase, ABC):
 
     All providers (Bedrock, OpenAI, Anthropic, Deterministic) must implement
     these three methods to ensure consistent interface for the orchestrator.
-    
+
     Inherited from AIProviderBase:
     - log_to_ai_runs() - Cost tracking
     - check_rate_limit() - Rate limiting

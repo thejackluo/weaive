@@ -74,11 +74,11 @@ class BedrockProvider(AIProvider):
                 'output': 5.00 / 1_000_000
             },
         }
-    
+
     def get_provider_name(self) -> str:
         """Return provider identifier for logging."""
         return "bedrock"
-    
+
     def is_available(self) -> bool:
         """Check if provider is configured and available."""
         try:

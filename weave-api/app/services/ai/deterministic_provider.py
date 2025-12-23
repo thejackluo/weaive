@@ -31,15 +31,15 @@ class DeterministicProvider(AIProvider):
     - Budget exceeded (application-wide or per-user)
     - Development/testing without API costs
     """
-    
+
     def __init__(self, db=None):
         """Initialize deterministic provider (no external dependencies)."""
         super().__init__(db)  # Initialize AIProviderBase
-    
+
     def get_provider_name(self) -> str:
         """Return provider identifier for logging."""
         return "deterministic"
-    
+
     def is_available(self) -> bool:
         """Deterministic provider is always available."""
         return True
