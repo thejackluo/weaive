@@ -22,6 +22,8 @@ export interface Goal {
   updated_at: string; // ISO 8601
   created_at: string; // ISO 8601
   user_id: string;
+  why?: string; // Optional: User's motivation for the goal
+  color?: string; // Optional: Visual color identifier (hex code)
 }
 
 /**
