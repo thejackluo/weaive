@@ -1,11 +1,6 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
-import { LogBox } from 'react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider, SimpleToastContainer } from '../src/design-system';
-import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
-import { DevEnvironmentBanner } from '../src/components/DevEnvironmentBanner';
-import { initJournalApi } from '../src/services/journalApi';
+import { ThemeProvider } from '../src/design-system-old';
 import '../global.css';
 
 // Create QueryClient instance (singleton)

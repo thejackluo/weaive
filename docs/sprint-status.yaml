@@ -67,32 +67,18 @@ week-0-retrospective: "docs/sprint-artifacts/epic-0-retrospective-2025-12-20.md"
 week-0-stories:
   epic-0: done
   0-1-project-scaffolding: done                 # 5 pts ✅
-  0-2a-database-schema-core: done               # 3 pts ✅
-  0-2b-database-schema-refinement: done         # 2 pts ✅
-  0-3-authentication-flow: done                 # 3 pts ✅
-  0-4-row-level-security: done                  # 5 pts ✅ (48 RLS tests passing)
-  0-5-cicd-pipeline: done                       # 3 pts ✅
-  0-6-ai-service-abstraction: done              # 3 pts ✅ (AWS Bedrock primary, dual cost tracking, 22 tests passed)
-  0-7-test-infrastructure: done                 # 3 pts ✅ (71 tests passing, 76% backend coverage)
-  0-8-error-handling-framework: backlog         # 3 pts (DEFERRED - stretch goal)
-  0-9-ai-powered-image-service: review          # 8 pts ⚡ EXPANDED (2025-12-21) - Full image service + Gemini 3.0 Flash (5 images/day free tier)
-  0-10-memory-system-architecture: backlog      # 2 pts (Simple PostgreSQL TEXT[] arrays, no vector DB for MVP)
-  0-11-voice-stt-infrastructure: ready-for-dev  # 5 pts ⚡ NEW (2025-12-21) - AssemblyAI primary + Whisper fallback
-  week-0-retrospective: completed               # Retrospective completed 2025-12-20
-
-# Epic 1.5: Development Infrastructure (17-21 pts)
-# ⚡ SPRINT CHANGE (2025-12-21): Epic 1.5 expanded from 8-10 pts (navigation only) to 17-21 pts (frontend + backend + AI standardization)
-epic-1.5-status: planned
-epic-1.5-stories:
-  1-5-1-navigation-architecture: planned        # 8-10 pts - Core navigation scaffolding (3-tab structure, glassmorphism AI chat, 15+ placeholder screens)
-  1-5-2-backend-standardization: planned        # 5-6 pts ⚡ NEW (2025-12-21) - API/model templates, Pydantic schemas, error handling, testing patterns, backend-patterns-guide.md
-  1-5-3-ai-services-standardization: planned    # 4-5 pts ⚡ NEW (2025-12-21) - AIProviderBase abstraction, text/image/audio patterns, cost tracking, rate limiting, ai-services-guide.md
-
-# Epic 0.5: Post-Development Observability (6 pts)
-epic-0.5-status: planned
-epic-0.5-stories:
-  0-12-logrocket-session-replay: planned        # 3 pts ⚡ NEW (2025-12-21) - Session replay and debugging
-  0-13-sentry-error-tracking: planned           # 3 pts ⚡ NEW (2025-12-21) - Error tracking and performance monitoring
+  0-2a-database-schema-core: ready-for-dev      # 3 pts
+  0-2b-database-schema-refinement: ready-for-dev # 2 pts
+  DS-1-foundation-tokens-theme: review          # 5 pts (Design System) ✅
+  0-3-authentication-flow: backlog              # 3 pts
+  0-4-row-level-security: backlog               # 5 pts [CRITICAL]
+  0-5-cicd-pipeline: backlog                    # 3 pts
+  0-6-ai-service-abstraction: backlog           # 3 pts
+  0-7-test-infrastructure: backlog              # 3 pts
+  0-8-error-handling-framework: backlog         # 3 pts
+  0-9-image-upload-error-handling: backlog      # 3 pts
+  0-10-ai-failure-handling: backlog             # 3 pts
+  week-0-retrospective: optional
 
 # ============================================================================
 # SPRINT 1: CORE USER JOURNEY

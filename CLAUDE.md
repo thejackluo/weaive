@@ -636,11 +636,14 @@ npm install --force
 "react-test-renderer": "19.1.0"
 ```
 
-**If npm install fails with peer dependency errors:**
-1. Read the error message carefully - it tells you exactly what's incompatible
-2. Check which package versions are required
-3. Pin exact versions in `package.json` to match
-4. Never use `--legacy-peer-deps` as a shortcut
+Weave uses **`@weave/design-system`** - a custom Opal-inspired dark-first design system built as a standalone package for React Native.
+
+### Package Information
+
+- **Package name:** `@weave/design-system`
+- **Location:** `packages/weave-design-system/`
+- **Version:** Starting at `v0.1.0` (pre-release)
+- **Old system:** `src/design-system/` (deprecated, being replaced)
 
 **Backend (Python/uv):** Similar principle applies - never use `--no-deps` or skip dependency resolution. Always fix conflicts at the root cause.
 
@@ -649,12 +652,7 @@ npm install --force
 **Always use the design system components - never hardcode styles:**
 
 ```tsx
-// ✅ GOOD
-import { Button, Card, Text } from '@/design-system';
-<Card variant="glass">
-  <Text variant="displayLg">Welcome</Text>
-  <Button onPress={handlePress}>Get Started</Button>
-</Card>
+import { Button, Card, Text, Input, useTheme } from '@weave/design-system';
 
 // ❌ BAD - Don't hardcode colors or spacing
 <View style={{ backgroundColor: '#1a1a1a', padding: 16 }}>
@@ -665,9 +663,22 @@ import { Button, Card, Text } from '@/design-system';
 </View>
 ```
 
-**📖 Full guide:** `docs/dev/design-system-guide.md`
+### Available Components (70 total)
+- **Text (11)**: `Text`, `AnimatedText`, `Heading`, `Title`, `Subtitle`, `Body`, `BodySmall`, `Caption`, `Label`, `Link`, `Mono`
+- **Buttons (7)**: `Button`, `PrimaryButton`, `SecondaryButton`, `GhostButton`, `DestructiveButton`, `AIButton`, `IconButton`
+- **Cards (4)**: `Card`, `GlassCard`, `ElevatedCard`, `AICard`
+- **Inputs (10)**: `Input`, `TextArea`, `SearchInput`, `Checkbox`, `BindCheckbox`, `Slider`, `Radio`, `RadioGroup`, `Toggle`, `Select`
+- **Navigation (3)**: `BottomTabBar`, `HeaderBar`, `BackButton`
+- **Badges (6)**: `Badge`, `CountBadge`, `StatusDot`, `StreakBadge`, `AIBadge`, `ConsistencyBadge`
+- **Weave-Specific (6)**: `NeedleCard`, `BindCard`, `CaptureCard`, `InsightCard`, `SuccessCard`, `Timer`
+- **Layout (3)**: `Tabs`, `Divider`, `ListItem`
 
-### State Management
+### Key Principles
+1. **Always use theme hooks** - Never hardcode colors/spacing
+2. **Use semantic color names** - `colors.text.primary` not `colors.dark[100]`
+3. **Prefer pre-built components** - Don't recreate buttons/cards
+4. **Use spacing tokens** - `spacing[4]` not `16`
+5. **Import from package** - Use `@weave/design-system`, not relative paths
 
 **Use the right tool for the right state:**
 

@@ -183,6 +183,63 @@ export {
   StreakBadge,
   AIBadge,
   ConsistencyBadge,
+
+  // Specialized Cards
+  BindCard,
+  CaptureCard,
+
+  // Progress
+  ProgressBar,
+  CircularProgress,
+
+  // Heatmap
+  ConsistencyHeatmap,
+
+  // Navigation
+  BottomTabBar,
+  HeaderBar,
+  BackButton,
+
+  // Overlays
+  Modal,
+  BottomSheet,
+  Toast,
+
+  // Timer
+  Timer,
+
+  // Skeleton Loaders
+  Skeleton,
+  SkeletonText,
+  SkeletonAvatar,
+  SkeletonCard,
+  SkeletonListItem,
+  SkeletonBindCard,
+  SkeletonStatCard,
+  SkeletonProgressCard,
+
+  // Empty States
+  EmptyState,
+  EmptyGoals,
+  EmptyBinds,
+  EmptyCaptures,
+  EmptyJournal,
+  EmptySearch,
+  EmptyNotifications,
+  ErrorState,
+  NoConnectionState,
+  ComingSoonState,
+
+  // Avatars
+  Avatar,
+  AvatarGroup,
+  AvatarWithName,
+
+  // Stat Cards
+  StatCard,
+  StatCardGrid,
+  MiniStatCard,
+  ProgressStatCard,
 } from './components';
 
 export type {
@@ -220,4 +277,67 @@ export type {
   BadgeProps,
   BadgeVariant,
   BadgeSize,
+
+  // Specialized Cards
+  BindCardProps,
+  CaptureCardProps,
+  CaptureType,
+
+  // Progress
+  ProgressBarProps,
+  CircularProgressProps,
+
+  // Heatmap
+  ConsistencyHeatmapProps,
+  DayData,
+
+  // Navigation
+  Tab,
+  BottomTabBarProps,
+  HeaderBarProps,
+  BackButtonProps,
+
+  // Overlays
+  ModalProps,
+  BottomSheetProps,
+  ToastProps,
+  ToastConfig,
+  ToastType,
+
+  // Timer
+  TimerProps,
+
+  // Skeleton Loaders
+  SkeletonProps,
+  SkeletonTextProps,
+  SkeletonAvatarProps,
+  SkeletonCardProps,
+  SkeletonListItemProps,
+
+  // Empty States
+  EmptyStateProps,
+  EmptyStateAction,
+  EmptyGoalsProps,
+  EmptyBindsProps,
+  EmptyCapturesProps,
+  EmptyJournalProps,
+  EmptySearchProps,
+  ErrorStateProps,
+  NoConnectionStateProps,
+  ComingSoonStateProps,
+
+  // Avatars
+  AvatarProps,
+  AvatarSize,
+  AvatarShape,
+  AvatarStatus,
+  AvatarGroupProps,
+  AvatarWithNameProps,
+
+  // Stat Cards
+  StatCardProps,
+  TrendIndicator,
+  StatCardGridProps,
+  MiniStatCardProps,
+  ProgressStatCardProps,
 } from './components';

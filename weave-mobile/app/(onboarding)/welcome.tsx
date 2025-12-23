@@ -56,34 +56,13 @@ export default function WelcomeScreen() {
   };
 
   /**
-   * Handles the "Go to Main App" button press
+   * Handles the "Component Testing" button press
    *
-   * Navigates to the main app tabs (home screen)
+   * Navigates to the component testing screen for validating individual components
    */
-  const handleGoToMainApp = async () => {
+  const handleComponentTesting = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/(tabs)');
-  };
-
-  /**
-   * Handles the "Voice Demo" button press
-   *
-   * Navigates to the voice/STT demo screen for testing Story 0.11 components
-   */
-  const handleVoiceDemo = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/(tabs)/voice-demo');
-  };
-
-  /**
-   * Handles the "Skip to Main App" button press (DEV TESTING ONLY)
-   *
-   * Bypasses onboarding and goes directly to the main app tabs
-   * Useful for testing Story 4.1 reflection screen without completing onboarding
-   */
-  const handleSkipToMainApp = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.replace('/(tabs)');
+    router.push('/(tabs)/component-testing');
   };
 
   return (
@@ -132,11 +111,6 @@ export default function WelcomeScreen() {
 
         {/* CTA Button - AC1, AC3, AC5 */}
         <Pressable
-          className={({ pressed }) =>
-            `bg-primary-500 h-11 rounded-lg w-full justify-center items-center ${
-              pressed ? 'bg-primary-600 scale-[0.98]' : ''
-            }`
-          }
           onPress={handleGetStarted}
           accessibilityRole="button"
           accessible={true}
@@ -158,30 +132,8 @@ export default function WelcomeScreen() {
           </Text>
         </Pressable>
 
-        {/* Dev Preview Buttons */}
-        <Pressable
-          className={({ pressed }) =>
-            `h-11 rounded-lg w-full justify-center items-center ${pressed ? 'scale-[0.98]' : ''}`
-          }
-          onPress={handleGoToMainApp}
-          accessibilityRole="button"
-          accessible={true}
-          style={{
-            backgroundColor: '#10B981',
-            height: 44,
-            borderRadius: 8,
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 8,
-          }}
-        >
-          <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600', letterSpacing: 1 }}>
-            Go to Main App
-          </Text>
-        </Pressable>
-
-        <Pressable
+        {/* Design System Preview Button - TEMPORARILY DISABLED (showcase has undefined components) */}
+        {/* <Pressable
           className={({ pressed }) =>
             `bg-neutral-200 h-11 rounded-lg w-full justify-center items-center ${
               pressed ? 'bg-neutral-300 scale-[0.98]' : ''
@@ -190,15 +142,7 @@ export default function WelcomeScreen() {
           onPress={handleViewDesignSystem}
           accessibilityRole="button"
           accessible={true}
-          style={{
-            backgroundColor: '#e5e5e5',
-            height: 44,
-            borderRadius: 8,
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 8,
-          }}
+          style={{ backgroundColor: '#e5e5e5', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}
         >
           <Text
             className="text-neutral-800 text-sm font-medium tracking-wider"
@@ -260,6 +204,18 @@ export default function WelcomeScreen() {
             style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
           >
             Skip to Main App (Dev)
+          </Text>
+        </Pressable> */}
+
+        {/* Component Testing Button - Dev Tool */}
+        <Pressable
+          onPress={handleComponentTesting}
+          accessibilityRole="button"
+          accessible={true}
+          style={{ backgroundColor: '#7c3aed', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Text className="text-white text-sm font-medium tracking-wider" style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}>
+            🧪 Component Testing
           </Text>
         </Pressable>
       </View>

@@ -828,27 +828,79 @@ This document provides the complete epic and story breakdown for Weave, decompos
 
 ---
 
+### Epic DS: Design System Rebuild (58-62 pts)
+**User Outcome:** Complete rebuild as a new standalone package **`weave-design-system`** with 70 production-ready components built on **Tamagui primitives**, following Atomic Design principles and modern animation standards.
+
+**FRs Covered:** FR-DS-1, FR-DS-2, FR-DS-3, FR-DS-4, FR-DS-5, FR-DS-6, FR-DS-7, FR-DS-8, FR-DS-9, FR-DS-10
+
+**Why This Order:** Design system foundation enables consistent, rapid UI development across all other epics. Must be completed early (ideally before or alongside Epic 1) to prevent design debt and component inconsistencies.
+
+**Package Structure:** New standalone package at `packages/weave-design-system/` with npm package name `@weave/design-system`. Import path: `import { Button } from '@weave/design-system'`. Old system (`src/design-system/`) will be deprecated and removed after migration.
+
+**Context:** The existing design system (`src/design-system`) is "vibe-coded," buggy, and inconsistent. This epic creates a **completely new package** using **Tamagui as the UI primitive layer** (Button, Text, Stack, Input) with 220+ custom design tokens, composable anatomy pattern, spring physics animations, and 75% test coverage.
+
+**Technology Foundation:** Tamagui provides performance-optimized, accessible UI primitives. Weave customizes these with brand tokens, Weave-specific variants, and product-specific components (NeedleCard, BindCard, etc.).
+
+**Stories:**
+
+- **Story DS-1: Foundation (Tokens + Theme + Animations)** (5 pts) - FR-DS-1: Deliver 220+ design tokens (60+ colors, 45+ typography, 25+ spacing, 35+ effects, 20+ borders, 35+ animations). ThemeProvider with runtime dark/light switching. Tamagui-inspired theme builder with nested themes and color-matched shadows. Animation library with spring presets (gentle, snappy, bouncy) using Reanimated. Accessibility support for reduced motion.
+  - **AC:** All tokens exported and typed. Theme switches without reload. Spring animations run at 60fps.
+  - **DoD:** Token documentation in Storybook. Theme hooks tested. Animation presets validated on device.
+
+- **Story DS-2: Core Primitives (Text, Buttons, Icons)** (4-5 pts) - FR-DS-2: **Compose 11 text components using Tamagui.Text** with variant system (Heading, Title, Subtitle, Body, BodySmall, Caption, Label, Link, Mono). **Compose 7 button components using Tamagui.Button** with composable anatomy (`Button.Icon`, `Button.Text`, `Button.Spinner`). Icon wrapper for 100+ Lucide icons with theme colors. **Tamagui handles spring press animations automatically**. Add color-matched shadows using Weave shadow tokens.
+  - **AC:** All 19 components (11 text + 7 buttons + 1 icon) render correctly. Composable anatomy works. Press animations smooth.
+  - **DoD:** Storybook stories for all variants. Unit tests for interactions. VoiceOver labels work.
+
+- **Story DS-3: Form Components** (5-6 pts) - FR-DS-3: **Compose 5 form components using Tamagui.Input primitives:** Input with floating label animation, TextArea with auto-expanding height, SearchInput with debouncing, Checkbox with checkmark animation, BindCheckbox with streak indicator + confetti. **Tamagui provides base input styling and focus states**. Composable anatomy for Input (`Input.Label`, `Input.Field`, `Input.Error`, `Input.Helper`). Support for error, focused, and disabled states.
+  - **AC:** All 5 components functional. Floating labels animate smoothly. Error states styled correctly. Confetti triggers on BindCheckbox.
+  - **DoD:** Form validation examples. Accessibility labels. Reduced motion support.
+
+- **Story DS-4: Layout & Cards** (4-5 pts) - FR-DS-4: **Compose 16 components using Tamagui.Stack primitives:** 4 cards (Card, GlassCard, ElevatedCard, AICard) with composable anatomy (`Card.Header`, `Card.Content`, `Card.Footer`). 3 navigation components (BottomTabBar, HeaderBar, BackButton). 6 badges (Badge, CountBadge, StatusDot, StreakBadge, AIBadge, ConsistencyBadge). 3 avatars (Avatar, AvatarGroup, AvatarWithName) with initials fallback. **Tamagui.Stack provides flexbox layout primitives**. Add glass blur effects and color-matched shadows.
+  - **AC:** All 16 components render. Glass card has blur effect. Navigation integrates with React Navigation. Avatars show initials when no image.
+  - **DoD:** Theme nesting works. Badge semantic colors correct. Avatar status dots positioned correctly.
+
+- **Story DS-5: Feedback & Overlays** (5 pts) - FR-DS-5: Build 3 overlay components: Modal with backdrop + slide-up animation, Toast with auto-dismiss + stacking, BottomSheet with gesture-driven swipe + snap points. All use React Native Gesture Handler + Reanimated for smooth interactions. Overlays render in Portal to avoid z-index issues.
+  - **AC:** Modal dismissable by backdrop tap or swipe. Toast auto-dismisses. BottomSheet snaps to defined heights. Gestures feel natural.
+  - **DoD:** Accessibility focus trap in Modal. Toast queue (max 3 visible). BottomSheet tested on various screen sizes.
+
+- **Story DS-6: Data Visualization & Progress** (6 pts) - FR-DS-6: Build 7 data viz components: 2 progress (ProgressBar with gradient fill, CircularProgress with animated arc). 4 stat cards (StatCard, StatCardGrid, MiniStatCard, ProgressStatCard) with trend indicators. 1 heat map (ConsistencyHeatmap) with GitHub-style 5-level color scale, tap interaction, horizontal scroll.
+  - **AC:** Progress animations smooth. Stat cards show trend arrows (up/down/neutral). Heat map displays 7-row grid. Tap shows tooltip.
+  - **DoD:** Heat map optimized for 365+ days. Circular progress uses SVG. Stat card grid responsive.
+
+- **Story DS-7: Weave-Specific Cards** (8 pts) - FR-DS-7: Build 6 Weave-specific components: NeedleCard (goal + progress ring), BindCard (task + checkbox + streak + confetti), CaptureCard (proof + thumbnail), InsightCard (AI insight + gradient border), SuccessCard (celebration + confetti), Timer (Pomodoro countdown). Most complex story with animations, confetti, haptics.
+  - **AC:** NeedleCard progress ring animates. BindCard checkbox triggers confetti (15-20 particles). InsightCard has violet gradient border. Timer counts down smoothly with haptic feedback every minute.
+  - **DoD:** Confetti classy (not overwhelming). Timer completion includes sound. All cards support dark mode.
+
+- **Story DS-8: Loading & Empty States** (4 pts) - FR-DS-8: Build 18 components: 8 skeletons (Skeleton, SkeletonText, SkeletonAvatar, SkeletonCard, SkeletonListItem, SkeletonBindCard, SkeletonStatCard, SkeletonProgressCard) with shimmer animation. 10 empty states (EmptyState, EmptyGoals, EmptyBinds, EmptyCaptures, EmptyJournal, EmptySearch, EmptyNotifications, ErrorState, NoConnectionState, ComingSoonState).
+  - **AC:** All skeletons use same shimmer animation. Empty states have icons + messages + optional CTAs. Error states include retry functionality.
+  - **DoD:** Shimmer runs smoothly. Empty states support Lottie animations. Presets configured for all Weave screens.
+
+- **Story DS-9: Testing & Storybook** (6 pts) - FR-DS-9: Set up Storybook v7 for all 70 components. Write unit tests achieving 75% coverage (enforced in CI). Integrate Chromatic for visual regression testing. Bundle size analysis (<150KB target). Accessibility audit (WCAG 2.1 AA). CI/CD quality gates (linting, tests, type safety, bundle size, visual regression).
+  - **AC:** Storybook shows all components with interactive controls. Test coverage ≥75%. Chromatic integrated. CI fails on regressions.
+  - **DoD:** README + CONTRIBUTING docs. All components have accessibility labels. Bundle size tracked. Performance targets met (60fps, <16ms render).
+
+- **Story DS-10: Additional Form & Layout Components** (16-18 pts) - FR-DS-10: **Compose 8 critical components using Tamagui primitives:** Slider (use Tamagui.Slider with custom styling + haptic feedback - FR-4.1, FR-7.6, FR-8.2). Radio + RadioGroup (use Tamagui.RadioGroup with composable anatomy - FR-1.13, FR-1.14, FR-2.6). Toggle/Switch (use Tamagui.Switch with spring physics animation - FR-7.6, FR-8.3). Tabs (use Tamagui.Tabs with custom indicator animation - FR-8.3, FR-4.5, FR-5.2). Divider (use Tamagui.Separator). ListItem (compose with Tamagui.ListItem - FR-4.5, FR-8.1). Select (use Tamagui.Select with bottom sheet). **Tamagui provides gesture handling and accessibility out-of-box**. Customize with spring physics using `withSpring()`, composable anatomy pattern, VoiceOver accessibility, keyboard navigation, Weave theme tokens.
+  - **AC:** All 8 components functional. Slider gesture smooth with snap. RadioGroup supports keyboard navigation. Toggle thumb slides with spring. Tabs indicator animates smoothly. ListItem press animation natural. Select opens BottomSheet. All respect reduced motion.
+  - **DoD:** Cross-references to blocked FRs documented. All components in Storybook. Gesture interactions tested on device. Accessibility labels work. Theme customization via tokens. 75% test coverage maintained.
+
+---
+
 ## Epic Summary Table
 
 | Epic | Name | Story Points | Priority FRs (M) | Dependencies | Phase |
 |------|------|--------------|------------------|--------------|-------|
-| 0 | Foundation | 40 | 7 | None (True Foundation) | `[MVP]` |
-| 1 | Onboarding & Identity | 51 | 8 | Epic 0 | `[MVP]` (core) + `[v1.2]` (full) |
-| 2 | Needle/Goal Management | 24 | 5 | Epic 0, 1 | `[v1.2]` |
-| 3 | Daily Actions & Proof | 18 | 3 | Epic 0, 1, 2 | `[MVP]` (basic) + `[v1.1]` (enhanced) |
-| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 2, 3 | `[v1.1]` |
-| 5 | Progress Visualization | 26 | 3 | Epic 0, 1, 2, 3, 4 | `[v1.1]` (basic) + `[v1.2]` (advanced) |
-| 6 | AI Coaching | 24 | 2 | Epic 0, 1, 2, 3, 4 | `[MVP]` (basic chat) + `[v1.2]` (advanced) |
-| 7 | Notifications | 23 | 5 | Epic 0, 1, 2, 3 | `[v1.2]` |
-| 8 | Settings & Profile | 18 | 5 | Epic 0, 1 | `[v1.2]` |
+| 0 | Foundation | 38 | 7 | None (True Foundation) | `[MVP]` |
+| DS | Design System Rebuild | 74 | 10 | Epic 0 (minimal) | `[MVP]` (foundation) + All phases |
+| 1 | Onboarding & Identity | 35 | 8 | Epic 0, DS (recommended) | `[MVP]` (core) + `[v1.2]` (full) |
+| 2 | Needle/Goal Management | 27 | 5 | Epic 0, 1, DS | `[v1.2]` |
+| 3 | Daily Actions & Proof | 38 | 5 | Epic 0, 1, 2, DS | `[MVP]` (basic) + `[v1.1]` (enhanced) |
+| 4 | Reflection & Journaling | 28 | 3 | Epic 0, 1, 2, 3, DS | `[v1.1]` |
+| 5 | Progress Visualization | 39 | 3 | Epic 0, 1, 2, 3, 4, DS | `[v1.1]` (basic) + `[v1.2]` (advanced) |
+| 6 | AI Coaching | 29 | 2 | Epic 0, 1, 2, 3, 4, DS | `[MVP]` (basic chat) + `[v1.2]` (advanced) |
+| 7 | Notifications | 28 | 5 | Epic 0, 1, 2, 3, DS | `[v1.2]` |
+| 8 | Settings & Profile | 23 | 5 | Epic 0, 1, DS | `[v1.2]` |
 
-**Total:** 252 story points across 49 FRs
-
-**Scope Reduction Summary:**
-- **Removed 52 story points** from original 304 pts (17% reduction)
-- Removed 9 user stories: US-2.6, US-3.2, US-3.5, US-3.7, US-5.6, US-5.7, US-6.5, US-7.5, US-8.2
-- Merged US-3.3, US-3.4, US-3.6 into integrated bind completion flow with proof capture
-- Promoted timer tracking (US-3.4) from S to M priority due to integration importance
+**Total:** 359 story points across 68 FRs (58 original + 10 design system)
 
 **Phase Breakdown:**
 - **MVP (v1.0):** Epic 0 (all), Epic 1 (core), Epic 3 (basic), Epic 6 (basic chat) = ~70 pts (Sprint 1)
