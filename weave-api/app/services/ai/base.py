@@ -25,6 +25,7 @@ class AIResponse:
         cached: Whether this response came from cache (no API call)
         run_id: Database ID of the ai_runs record (if persisted)
     """
+
     content: str
     input_tokens: int
     output_tokens: int
@@ -45,12 +46,13 @@ class AIProviderError(Exception):
         retryable: Whether this error can be retried with another provider
         original_error: Original exception that caused this error
     """
+
     def __init__(
         self,
         message: str,
         provider: str,
         retryable: bool = True,
-        original_error: Optional[Exception] = None
+        original_error: Optional[Exception] = None,
     ):
         self.message = message
         self.provider = provider

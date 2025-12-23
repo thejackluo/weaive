@@ -289,11 +289,7 @@ async def get_user_stats(
         today = date.today()
 
         # Create a set of active dates for fast lookup
-        active_dates = {
-            agg["local_date"]
-            for agg in aggregates
-            if agg.get("active_day_with_proof")
-        }
+        active_dates = {agg["local_date"] for agg in aggregates if agg.get("active_day_with_proof")}
 
         # Count backwards from today
         for i in range(len(aggregates) + 1):

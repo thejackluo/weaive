@@ -68,9 +68,9 @@ def get_ai_service() -> Optional[AIService]:
         # Initialize AI service with all available providers
         _ai_service_instance = AIService(
             db=supabase,
-            bedrock_region=getattr(settings, 'AWS_REGION', 'us-east-1'),
+            bedrock_region=getattr(settings, "AWS_REGION", "us-east-1"),
             openai_key=settings.OPENAI_API_KEY,
-            anthropic_key=settings.ANTHROPIC_API_KEY
+            anthropic_key=settings.ANTHROPIC_API_KEY,
         )
         logger.info("✅ AI Service initialized")
 
@@ -182,9 +182,7 @@ def get_current_user(
 
 
 def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(
-        HTTPBearer(auto_error=False)
-    ),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
 ) -> Optional[dict]:
     """
     FastAPI dependency to optionally get current authenticated user.

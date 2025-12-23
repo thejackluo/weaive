@@ -23,7 +23,9 @@ class TestJournalEntryCreation:
     These tests validate the core journal entry creation flow (AC #7).
     """
 
-    def test_create_journal_entry_with_default_questions_only(self, client, create_auth_token, test_user):
+    def test_create_journal_entry_with_default_questions_only(
+        self, client, create_auth_token, test_user
+    ):
         """GIVEN: Valid journal entry data with only default questions
         WHEN: POST /api/journal-entries is called
         THEN: Journal entry is created successfully with 201 status
@@ -36,17 +38,15 @@ class TestJournalEntryCreation:
             "fulfillment_score": 7,
             "default_responses": {
                 "today_reflection": "Today was productive. I completed my morning routine and made progress on my goals.",
-                "tomorrow_focus": "Tomorrow I will finish the presentation for the team meeting."
+                "tomorrow_focus": "Tomorrow I will finish the presentation for the team meeting.",
             },
-            "custom_responses": {}
+            "custom_responses": {},
         }
 
         # WHEN: Creating journal entry via API
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Entry created successfully
@@ -61,7 +61,10 @@ class TestJournalEntryCreation:
         journal = data["data"]
         assert "id" in journal
         assert journal["fulfillment_score"] == 7
-        assert journal["default_responses"]["today_reflection"] == payload["default_responses"]["today_reflection"]
+        assert (
+            journal["default_responses"]["today_reflection"]
+            == payload["default_responses"]["today_reflection"]
+        )
         assert journal["local_date"] == payload["local_date"]
 
         # Validate metadata
@@ -80,26 +83,18 @@ class TestJournalEntryCreation:
             "fulfillment_score": 8,
             "default_responses": {
                 "today_reflection": "Great day!",
-                "tomorrow_focus": "Finish project"
+                "tomorrow_focus": "Finish project",
             },
             "custom_responses": {
-                "uuid-123": {
-                    "question_text": "Did I stick to my diet?",
-                    "response": "Yes"
-                },
-                "uuid-456": {
-                    "question_text": "Rate my energy level",
-                    "response": 9
-                }
-            }
+                "uuid-123": {"question_text": "Did I stick to my diet?", "response": "Yes"},
+                "uuid-456": {"question_text": "Rate my energy level", "response": 9},
+            },
         }
 
         # WHEN: Creating journal entry
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Custom responses stored correctly
@@ -122,19 +117,14 @@ class TestJournalEntryCreation:
         payload = {
             "local_date": date.today().isoformat(),
             "fulfillment_score": 5,
-            "default_responses": {
-                "today_reflection": "",
-                "tomorrow_focus": ""
-            },
-            "custom_responses": {}
+            "default_responses": {"today_reflection": "", "tomorrow_focus": ""},
+            "custom_responses": {},
         }
 
         # WHEN: Creating journal entry
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Entry created successfully (fulfillment score is the only required field)
@@ -158,17 +148,15 @@ class TestJournalEntryCreation:
             "fulfillment_score": 7,
             "default_responses": {
                 "today_reflection": "Good day",
-                "tomorrow_focus": "Continue momentum"
+                "tomorrow_focus": "Continue momentum",
             },
-            "custom_responses": {}
+            "custom_responses": {},
         }
 
         # WHEN: Creating journal entry
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Entry created and daily_aggregates updated
@@ -192,15 +180,13 @@ class TestJournalEntryValidation:
         payload = {
             "local_date": date.today().isoformat(),
             "default_responses": {"today_reflection": "Good day"},
-            "custom_responses": {}
+            "custom_responses": {},
         }
 
         # WHEN: Creating journal entry
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Validation error
@@ -221,14 +207,12 @@ class TestJournalEntryValidation:
             "local_date": date.today().isoformat(),
             "fulfillment_score": 0,
             "default_responses": {},
-            "custom_responses": {}
+            "custom_responses": {},
         }
 
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload_low,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload_low, headers={"Authorization": f"Bearer {token}"}
         )
 
         assert response.status_code == 422
@@ -238,14 +222,12 @@ class TestJournalEntryValidation:
             "local_date": date.today().isoformat(),
             "fulfillment_score": 11,
             "default_responses": {},
-            "custom_responses": {}
+            "custom_responses": {},
         }
 
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload_high,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload_high, headers={"Authorization": f"Bearer {token}"}
         )
 
         assert response.status_code == 422
@@ -258,18 +240,12 @@ class TestJournalEntryValidation:
         Validates: AC #7 (local_date is required)
         """
         # GIVEN: Missing local_date
-        payload = {
-            "fulfillment_score": 7,
-            "default_responses": {},
-            "custom_responses": {}
-        }
+        payload = {"fulfillment_score": 7, "default_responses": {}, "custom_responses": {}}
 
         # WHEN: Creating journal entry
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Validation error
@@ -294,13 +270,11 @@ class TestJournalEntryDuplicateHandling:
             "local_date": date.today().isoformat(),
             "fulfillment_score": 7,
             "default_responses": {"today_reflection": "First entry"},
-            "custom_responses": {}
+            "custom_responses": {},
         }
 
         first_response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
         assert first_response.status_code == 201
 
@@ -308,9 +282,7 @@ class TestJournalEntryDuplicateHandling:
         payload["default_responses"]["today_reflection"] = "Second entry attempt"
 
         second_response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Conflict error with helpful message
@@ -337,7 +309,7 @@ class TestJournalEntryErrorHandling:
             "local_date": date.today().isoformat(),
             "fulfillment_score": 7,
             "default_responses": {},
-            "custom_responses": {}
+            "custom_responses": {},
         }
 
         # WHEN: Creating journal entry without auth
@@ -358,7 +330,7 @@ class TestJournalEntryErrorHandling:
         response = client.post(
             "/api/journal-entries",
             data="invalid json data",
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
         )
 
         # THEN: Validation error (FastAPI returns 422 for invalid JSON)
@@ -383,17 +355,15 @@ class TestJournalEntryCustomResponseValidation:
             "custom_responses": {
                 "uuid-text": {
                     "question_text": "What did I learn today?",
-                    "response": "I learned about TDD and failing tests first"
+                    "response": "I learned about TDD and failing tests first",
                 }
-            }
+            },
         }
 
         # WHEN: Creating journal entry
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Text response stored correctly
@@ -417,19 +387,14 @@ class TestJournalEntryCustomResponseValidation:
             "fulfillment_score": 7,
             "default_responses": {},
             "custom_responses": {
-                "uuid-numeric": {
-                    "question_text": "Rate my productivity (1-10)",
-                    "response": 8
-                }
-            }
+                "uuid-numeric": {"question_text": "Rate my productivity (1-10)", "response": 8}
+            },
         }
 
         # WHEN: Creating journal entry
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Numeric response stored correctly
@@ -455,17 +420,15 @@ class TestJournalEntryCustomResponseValidation:
             "custom_responses": {
                 "uuid-bool": {
                     "question_text": "Did I exercise today?",
-                    "response": "Yes"  # or True, depending on implementation
+                    "response": "Yes",  # or True, depending on implementation
                 }
-            }
+            },
         }
 
         # WHEN: Creating journal entry
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Boolean response stored correctly
@@ -494,14 +457,9 @@ class TestJournalEntryRetrieval:
             fulfillment_score=8,
             default_responses={
                 "today_reflection": "Great day with lots of progress!",
-                "tomorrow_focus": "Continue momentum on project"
+                "tomorrow_focus": "Continue momentum on project",
             },
-            custom_responses={
-                "uuid-123": {
-                    "question_text": "Did I meditate?",
-                    "response": "Yes"
-                }
-            }
+            custom_responses={"uuid-123": {"question_text": "Did I meditate?", "response": "Yes"}},
         )
 
         # Simulate existing entry in database (will be mocked in real implementation)
@@ -510,8 +468,7 @@ class TestJournalEntryRetrieval:
         # WHEN: Retrieving journal entry for today
         token = create_auth_token(user_id="test-user-123")
         response = client.get(
-            "/api/journal-entries/today",
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries/today", headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Existing journal entry is returned
@@ -520,7 +477,10 @@ class TestJournalEntryRetrieval:
 
         assert data["data"]["local_date"] == today
         assert data["data"]["fulfillment_score"] == 8
-        assert data["data"]["default_responses"]["today_reflection"] == "Great day with lots of progress!"
+        assert (
+            data["data"]["default_responses"]["today_reflection"]
+            == "Great day with lots of progress!"
+        )
         assert data["data"]["custom_responses"]["uuid-123"]["response"] == "Yes"
 
     def test_retrieve_journal_entry_when_none_exists(self, client, create_auth_token, test_user):
@@ -535,8 +495,7 @@ class TestJournalEntryRetrieval:
         # WHEN: Attempting to retrieve non-existent journal entry
         token = create_auth_token(user_id="test-user-123")
         response = client.get(
-            "/api/journal-entries/today",
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries/today", headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: 404 Not Found
@@ -568,17 +527,15 @@ class TestJournalEntryTimezoneEdgeCases:
             "fulfillment_score": 9,
             "default_responses": {
                 "today_reflection": "Late night reflection before bed",
-                "tomorrow_focus": "Start fresh tomorrow"
+                "tomorrow_focus": "Start fresh tomorrow",
             },
-            "custom_responses": {}
+            "custom_responses": {},
         }
 
         # WHEN: Creating journal entry with user's local date
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Journal entry saved with user's local_date (not server UTC date)
@@ -593,9 +550,7 @@ class TestJournalEntryTimezoneEdgeCases:
         # (e.g., if they navigate back and try to submit again)
         # WHEN: Attempting duplicate submission
         duplicate_response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Duplicate entry prevented (unique constraint on user_id + local_date)
@@ -618,15 +573,13 @@ class TestJournalEntryTimezoneEdgeCases:
             "local_date": future_date,
             "fulfillment_score": 7,
             "default_responses": {},
-            "custom_responses": {}
+            "custom_responses": {},
         }
 
         # WHEN: Attempting to create journal entry for future date
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Validation error
@@ -642,9 +595,7 @@ class TestJournalEntryTimezoneEdgeCases:
         # WHEN: Attempting to create journal entry for old date
         token = create_auth_token(user_id="test-user-123")
         response = client.post(
-            "/api/journal-entries",
-            json=payload,
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/journal-entries", json=payload, headers={"Authorization": f"Bearer {token}"}
         )
 
         # THEN: Validation error

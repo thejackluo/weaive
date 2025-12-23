@@ -31,11 +31,8 @@ logger.info(f"ANTHROPIC_API_KEY: {'✅ Set' if os.getenv('ANTHROPIC_API_KEY') el
 logger.info(f"ASSEMBLYAI_API_KEY: {'✅ Set' if os.getenv('ASSEMBLYAI_API_KEY') else '❌ Not set'}")
 logger.info("=" * 60)
 
-app = FastAPI(
-    title="Weave API",
-    description="Backend API for Weave MVP",
-    version="0.1.0"
-)
+app = FastAPI(title="Weave API", description="Backend API for Weave MVP", version="0.1.0")
+
 
 # Custom error handler for standard error response format
 @app.exception_handler(HTTPException)
@@ -81,7 +78,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     error_messages = []
 
     for error in errors:
-        field = " -> ".join(str(loc) for loc in error["loc"] if loc not in ["body", "query", "path"])
+        field = " -> ".join(
+            str(loc) for loc in error["loc"] if loc not in ["body", "query", "path"]
+        )
         message = error["msg"]
         error_messages.append(f"{field}: {message}" if field else message)
 
@@ -97,19 +96,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         },
     )
 
+
 # CORS - Environment-based configuration
 # ⚠️ SECURITY WARNING: NEVER use ALLOWED_ORIGINS="*" in production!
 # Set ALLOWED_ORIGINS in .env to specific domains in production
 # Example: ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
-allowed_origins = (
-    settings.ALLOWED_ORIGINS.split(",")
-    if settings.ALLOWED_ORIGINS != "*"
-    else ["*"]
-)
+allowed_origins = settings.ALLOWED_ORIGINS.split(",") if settings.ALLOWED_ORIGINS != "*" else ["*"]
 
 # Runtime check: Warn if using wildcard CORS in production-like environments
 if allowed_origins == ["*"] and settings.ENV in ["production", "prod", "staging"]:
     import logging
+
     logging.warning(
         "⚠️  SECURITY RISK: CORS is set to allow all origins (*) in a production-like environment! "
         "This should NEVER be used in production. Set ALLOWED_ORIGINS to specific domains."
@@ -141,6 +138,7 @@ app.include_router(captures.router, tags=["captures"])
 app.include_router(stats.router, tags=["stats"])  # Progress visualization stats
 app.include_router(admin.router, tags=["admin"])  # Cost monitoring and system maintenance
 
+
 @app.get("/")
 async def root():
     return {"message": "Weave API - Foundation Ready"}
@@ -149,10 +147,10 @@ async def root():
 # Railway deployment support: Bind to dynamic PORT environment variable
 if __name__ == "__main__":
     import uvicorn
-    
+
     # Railway provides dynamic PORT env var
     port = int(os.getenv("PORT", 8000))
-    
+
     # CRITICAL: Must bind to 0.0.0.0 (not 127.0.0.1) for Railway
     # Railway's proxy requires the app to listen on all interfaces
     uvicorn.run(
@@ -160,5 +158,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=port,
         reload=False,  # Disable reload in production
-        log_level="info"
+        log_level="info",
     )

@@ -30,9 +30,7 @@ class Settings(BaseSettings):
 
     # Supabase (optional for Week 0, required for Story 0.2+)
     SUPABASE_URL: str = Field(default="", description="Supabase project URL")
-    SUPABASE_SERVICE_KEY: str = Field(
-        default="", description="Supabase service role key"
-    )
+    SUPABASE_SERVICE_KEY: str = Field(default="", description="Supabase service role key")
     SUPABASE_JWT_SECRET: str = Field(
         default="", description="Supabase JWT secret for token verification (Story 0.3+)"
     )
@@ -41,7 +39,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = Field(default="", description="OpenAI API key")
     ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key")
     ASSEMBLYAI_API_KEY: str = Field(default="", description="AssemblyAI API key (Story 0.11)")
-    GOOGLE_AI_API_KEY: str = Field(default="", description="Google AI (Gemini) API key for vision analysis")
+    GOOGLE_AI_API_KEY: str = Field(
+        default="", description="Google AI (Gemini) API key for vision analysis"
+    )
 
     @field_validator("SUPABASE_URL", "SUPABASE_SERVICE_KEY", "SUPABASE_JWT_SECRET", mode="after")
     @classmethod
@@ -56,14 +56,22 @@ class Settings(BaseSettings):
                 "This will cause database operations to fail."
             )
         elif not v and env == "development":
-            story_requirement = "Story 0.3+" if field_name == "SUPABASE_JWT_SECRET" else "Story 0.2+"
+            story_requirement = (
+                "Story 0.3+" if field_name == "SUPABASE_JWT_SECRET" else "Story 0.2+"
+            )
             logger.warning(
                 f"⚠️  {field_name} is not set. Database features will not work. "
                 f"Set this in .env for {story_requirement}."
             )
         return v
 
-    @field_validator("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ASSEMBLYAI_API_KEY", "GOOGLE_AI_API_KEY", mode="after")
+    @field_validator(
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "ASSEMBLYAI_API_KEY",
+        "GOOGLE_AI_API_KEY",
+        mode="after",
+    )
     @classmethod
     def validate_ai_credentials(cls, v: str, info) -> str:
         """Warn if AI API keys are missing in non-dev environments."""
@@ -76,7 +84,9 @@ class Settings(BaseSettings):
                 "AI features will fail."
             )
         elif not v and env == "development":
-            story_requirement = "Story 0.11+" if field_name == "ASSEMBLYAI_API_KEY" else "Story 0.6+"
+            story_requirement = (
+                "Story 0.11+" if field_name == "ASSEMBLYAI_API_KEY" else "Story 0.6+"
+            )
             logger.warning(
                 f"⚠️  {field_name} is not set. AI features will not work. "
                 f"Set this in .env for {story_requirement}."

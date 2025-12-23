@@ -180,7 +180,13 @@ RULES:
 
             # Validate response structure
             # All fields must be present (even if null) to ensure prompt compliance
-            required_fields = ["validation_score", "summary", "ocr_text", "categories", "quality_score"]
+            required_fields = [
+                "validation_score",
+                "summary",
+                "ocr_text",
+                "categories",
+                "quality_score",
+            ]
             for field in required_fields:
                 if field not in analysis:
                     raise VisionProviderError(

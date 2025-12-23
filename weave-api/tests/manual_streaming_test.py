@@ -42,16 +42,16 @@ load_dotenv()
 
 def print_colored(text, color_code):
     """Print colored text to terminal."""
-    print(f"\033[{color_code}m{text}\033[0m", end='', flush=True)
+    print(f"\033[{color_code}m{text}\033[0m", end="", flush=True)
 
 
 def test_openai_streaming():
     """Test OpenAI streaming with real API calls."""
-    print_colored("\n" + "="*80 + "\n", "1;36")
+    print_colored("\n" + "=" * 80 + "\n", "1;36")
     print_colored("🤖 Testing OpenAI Streaming (GPT-4o-mini)\n", "1;36")
-    print_colored("="*80 + "\n\n", "1;36")
+    print_colored("=" * 80 + "\n\n", "1;36")
 
-    api_key = os.getenv('OPENAI_API_KEY')
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         print_colored("❌ OPENAI_API_KEY not found in .env\n", "1;31")
         return False
@@ -59,7 +59,9 @@ def test_openai_streaming():
     try:
         provider = OpenAIProvider(api_key=api_key)
 
-        prompt = "Write a haiku about streaming AI responses in real-time. Keep it short and poetic."
+        prompt = (
+            "Write a haiku about streaming AI responses in real-time. Keep it short and poetic."
+        )
 
         print_colored("💬 Prompt: ", "1;33")
         print(prompt)
@@ -73,16 +75,16 @@ def test_openai_streaming():
         cost_usd = 0.0
 
         # Stream response
-        for chunk in provider.stream(prompt=prompt, model='gpt-4o-mini', temperature=0.7):
-            if chunk['type'] == 'chunk':
-                content = chunk['content']
+        for chunk in provider.stream(prompt=prompt, model="gpt-4o-mini", temperature=0.7):
+            if chunk["type"] == "chunk":
+                content = chunk["content"]
                 full_content.append(content)
                 # Print each chunk as it arrives (cyan color)
                 print_colored(content, "0;36")
-            elif chunk['type'] == 'done':
-                input_tokens = chunk['input_tokens']
-                output_tokens = chunk['output_tokens']
-                cost_usd = chunk['cost_usd']
+            elif chunk["type"] == "done":
+                input_tokens = chunk["input_tokens"]
+                output_tokens = chunk["output_tokens"]
+                cost_usd = chunk["cost_usd"]
 
         elapsed = time.time() - start_time
 
@@ -105,18 +107,20 @@ def test_openai_streaming():
 
 def test_bedrock_streaming():
     """Test Bedrock streaming with real API calls."""
-    print_colored("\n" + "="*80 + "\n", "1;36")
+    print_colored("\n" + "=" * 80 + "\n", "1;36")
     print_colored("☁️  Testing Bedrock Streaming (Claude 3.5 Haiku)\n", "1;36")
-    print_colored("="*80 + "\n\n", "1;36")
+    print_colored("=" * 80 + "\n\n", "1;36")
 
     # Check AWS credentials
-    if not os.getenv('AWS_ACCESS_KEY_ID') and not os.getenv('AWS_PROFILE'):
+    if not os.getenv("AWS_ACCESS_KEY_ID") and not os.getenv("AWS_PROFILE"):
         print_colored("❌ AWS credentials not configured\n", "1;31")
-        print_colored("   Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or configure AWS_PROFILE\n", "0;37")
+        print_colored(
+            "   Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or configure AWS_PROFILE\n", "0;37"
+        )
         return False
 
     try:
-        provider = BedrockProvider(region='us-east-1')
+        provider = BedrockProvider(region="us-east-1")
 
         prompt = "Write a haiku about AWS cloud services powering AI. Keep it short and elegant."
 
@@ -132,16 +136,16 @@ def test_bedrock_streaming():
         cost_usd = 0.0
 
         # Stream response
-        for chunk in provider.stream(prompt=prompt, model='claude-3-5-haiku', temperature=0.7):
-            if chunk['type'] == 'chunk':
-                content = chunk['content']
+        for chunk in provider.stream(prompt=prompt, model="claude-3-5-haiku", temperature=0.7):
+            if chunk["type"] == "chunk":
+                content = chunk["content"]
                 full_content.append(content)
                 # Print each chunk as it arrives (magenta color)
                 print_colored(content, "0;35")
-            elif chunk['type'] == 'done':
-                input_tokens = chunk['input_tokens']
-                output_tokens = chunk['output_tokens']
-                cost_usd = chunk['cost_usd']
+            elif chunk["type"] == "done":
+                input_tokens = chunk["input_tokens"]
+                output_tokens = chunk["output_tokens"]
+                cost_usd = chunk["cost_usd"]
 
         elapsed = time.time() - start_time
 
@@ -166,17 +170,16 @@ def test_bedrock_streaming():
 
 def test_anthropic_streaming():
     """Test Anthropic streaming with real API calls."""
-    print_colored("\n" + "="*80 + "\n", "1;36")
+    print_colored("\n" + "=" * 80 + "\n", "1;36")
     print_colored("🧠 Testing Anthropic Streaming (Claude 3.5 Haiku)\n", "1;36")
-    print_colored("="*80 + "\n\n", "1;36")
+    print_colored("=" * 80 + "\n\n", "1;36")
 
-    api_key = os.getenv('ANTHROPIC_API_KEY')
+    api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         print_colored("❌ ANTHROPIC_API_KEY not found in .env\n", "1;31")
         return False
 
     try:
-
         provider = AnthropicProvider(api_key=api_key)
         client = provider.client
 
@@ -194,10 +197,10 @@ def test_anthropic_streaming():
 
         # Use Anthropic's native streaming API
         with client.messages.stream(
-            model='claude-3-5-haiku-20241022',
+            model="claude-3-5-haiku-20241022",
             max_tokens=200,
             temperature=0.7,
-            messages=[{'role': 'user', 'content': prompt}]
+            messages=[{"role": "user", "content": prompt}],
         ) as stream:
             for text in stream.text_stream:
                 full_content.append(text)
@@ -210,7 +213,7 @@ def test_anthropic_streaming():
             output_tokens = final_message.usage.output_tokens
 
         elapsed = time.time() - start_time
-        cost_usd = provider.estimate_cost(input_tokens, output_tokens, 'claude-3-5-haiku-20241022')
+        cost_usd = provider.estimate_cost(input_tokens, output_tokens, "claude-3-5-haiku-20241022")
 
         print_colored("\n" + "─" * 80 + "\n", "0;37")
         print_colored("✅ Anthropic Streaming Success!\n", "1;32")
@@ -228,12 +231,12 @@ def test_anthropic_streaming():
 
 def main():
     """Run manual streaming tests."""
-    parser = argparse.ArgumentParser(description='Test AI provider streaming with real API calls')
+    parser = argparse.ArgumentParser(description="Test AI provider streaming with real API calls")
     parser.add_argument(
-        '--provider',
-        choices=['openai', 'bedrock', 'anthropic', 'all'],
-        default='all',
-        help='Which provider to test (default: all)'
+        "--provider",
+        choices=["openai", "bedrock", "anthropic", "all"],
+        default="all",
+        help="Which provider to test (default: all)",
     )
     args = parser.parse_args()
 
@@ -244,19 +247,19 @@ def main():
 
     results = {}
 
-    if args.provider in ['openai', 'all']:
-        results['openai'] = test_openai_streaming()
+    if args.provider in ["openai", "all"]:
+        results["openai"] = test_openai_streaming()
 
-    if args.provider in ['bedrock', 'all']:
-        results['bedrock'] = test_bedrock_streaming()
+    if args.provider in ["bedrock", "all"]:
+        results["bedrock"] = test_bedrock_streaming()
 
-    if args.provider in ['anthropic', 'all']:
-        results['anthropic'] = test_anthropic_streaming()
+    if args.provider in ["anthropic", "all"]:
+        results["anthropic"] = test_anthropic_streaming()
 
     # Summary
-    print_colored("\n" + "="*80 + "\n", "1;36")
+    print_colored("\n" + "=" * 80 + "\n", "1;36")
     print_colored("📊 SUMMARY\n", "1;36")
-    print_colored("="*80 + "\n", "1;36")
+    print_colored("=" * 80 + "\n", "1;36")
 
     for provider, success in results.items():
         status = "✅ PASSED" if success else "❌ FAILED"
