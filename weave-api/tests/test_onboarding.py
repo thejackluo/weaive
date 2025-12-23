@@ -87,9 +87,7 @@ def test_identity_bootup_without_auth():
 
 
 @patch("app.services.onboarding.store_identity_bootup")
-def test_identity_bootup_success(
-    mock_store, valid_jwt_token, valid_identity_bootup_payload
-):
+def test_identity_bootup_success(mock_store, valid_jwt_token, valid_identity_bootup_payload):
     """Test successful identity bootup data submission."""
     # Mock the service layer response
     mock_store.return_value = {
@@ -259,9 +257,7 @@ def test_identity_bootup_duplicate_traits(valid_jwt_token):
 
 
 @patch("app.services.onboarding.store_identity_bootup")
-def test_identity_bootup_user_not_found(
-    mock_store, valid_jwt_token, valid_identity_bootup_payload
-):
+def test_identity_bootup_user_not_found(mock_store, valid_jwt_token, valid_identity_bootup_payload):
     """Test identity bootup when user profile doesn't exist."""
     # Mock service to raise ValueError for user not found
     mock_store.side_effect = ValueError("User profile not found for auth_user_id: test-user-123")

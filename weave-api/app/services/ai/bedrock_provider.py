@@ -34,13 +34,15 @@ class BedrockProvider(AIProvider):
     Authentication: AWS IAM credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION)
     """
 
-    def __init__(self, region: str = 'us-east-1'):
+    def __init__(self, region: str = 'us-east-1', db=None):
         """
         Initialize Bedrock provider.
 
         Args:
             region: AWS region (default us-east-1 for best model availability)
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
         """
+        super().__init__(db)  # Initialize AIProviderBase
         self.client = boto3.client('bedrock-runtime', region_name=region)
         self.region = region
 
@@ -50,10 +52,16 @@ class BedrockProvider(AIProvider):
             'claude-3-5-haiku': 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
             'claude-3-7-sonnet': 'us.anthropic.claude-3-7-sonnet-20250219-v2:0',
             'claude-4-5-haiku': 'us.anthropic.claude-4-5-haiku-20250514-v1:0',
+            # ✅ Fixed: Added aliases without version suffix (for Story 6.1 compatibility)
+            'claude-3-5-haiku-20241022': 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+            'claude-3-haiku-20240307': 'anthropic.claude-3-haiku-20240307-v1:0',  # ✅ Added: Actual Claude 3 Haiku
+            'claude-3-7-sonnet-20250219': 'us.anthropic.claude-3-7-sonnet-20250219-v2:0',
+            'claude-4-5-haiku-20250514': 'us.anthropic.claude-4-5-haiku-20250514-v1:0',
             # Also accept full inference profile IDs directly
             'us.anthropic.claude-3-5-haiku-20241022-v1:0': 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
             'us.anthropic.claude-3-7-sonnet-20250219-v2:0': 'us.anthropic.claude-3-7-sonnet-20250219-v2:0',
             'us.anthropic.claude-4-5-haiku-20250514-v1:0': 'us.anthropic.claude-4-5-haiku-20250514-v1:0',
+            'anthropic.claude-3-haiku-20240307-v1:0': 'anthropic.claude-3-haiku-20240307-v1:0',  # ✅ Added: Direct model ID
         }
 
         # Pricing per million tokens (input/output)
@@ -71,7 +79,25 @@ class BedrockProvider(AIProvider):
                 'input': 1.00 / 1_000_000,
                 'output': 5.00 / 1_000_000
             },
+            # ✅ Added: Claude 3 Haiku pricing (standard single-region model)
+            'anthropic.claude-3-haiku-20240307-v1:0': {
+                'input': 0.25 / 1_000_000,   # Same as 3.5 Haiku
+                'output': 1.25 / 1_000_000
+            },
         }
+
+    def get_provider_name(self) -> str:
+        """Return provider identifier for logging."""
+        return "bedrock"
+
+    def is_available(self) -> bool:
+        """Check if provider is configured and available."""
+        try:
+            # Check if boto3 client is configured with credentials
+            self.client.meta.region_name
+            return True
+        except Exception:
+            return False
 
     def complete(
         self,

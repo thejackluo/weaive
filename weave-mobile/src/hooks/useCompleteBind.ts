@@ -10,6 +10,7 @@ import { bindsQueryKeys } from './useTodayBinds';
 import { consistencyQueryKeys } from './useConsistencyData';
 import { userStatsQueryKeys } from './useUserStats';
 import { historyQueryKeys } from './useHistory';
+import { goalsQueryKeys } from './useActiveGoals';
 
 interface CompleteBindRequest {
   bindId: string;
@@ -84,7 +85,7 @@ export function useCompleteBind() {
       return completeBind(session.access_token, request);
     },
     onSuccess: () => {
-      // Invalidate today's binds query to refetch updated data
+      // Refetch today's binds query immediately (not just invalidate)
       const today = new Date().toISOString().split('T')[0];
       queryClient.invalidateQueries({ queryKey: bindsQueryKeys.today(today) });
 
@@ -92,6 +93,18 @@ export function useCompleteBind() {
       queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: userStatsQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: historyQueryKeys.all });
+      queryClient.refetchQueries({ queryKey: bindsQueryKeys.today(today) });
+
+      // Refetch Dashboard queries to update consistency and stats immediately
+      queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() });
+      queryClient.refetchQueries({ queryKey: ['userStats'] });
+
+      // Refetch Dashboard section queries (Epic 5 - Progress Visualization) immediately
+      queryClient.refetchQueries({ queryKey: ['consistency'] }); // All consistency data
+      queryClient.refetchQueries({ queryKey: ['bindsGrid'] }); // 7d grid view
+      queryClient.refetchQueries({ queryKey: ['history'] }); // History list
+
+      console.log('[COMPLETE_BIND] Refetched Thread, Dashboard, and History queries');
     },
   });
 }

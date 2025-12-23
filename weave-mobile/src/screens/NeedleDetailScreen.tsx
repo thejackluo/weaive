@@ -1,21 +1,15 @@
 /**
  * NeedleDetailScreen (US-2.2: View Goal Details + US-2.4: Edit Needle)
  *
- * Combined View/Edit screen for a single needle (goal).
- *
- * Wireframe: docs/pages/dashboard-page.md (Combined View/Edit Needle Screen section)
- *
- * View Mode (Default):
- * - Shows: Title, Why, Stats (consistency/completions/streak), Milestones, Binds
- * - Archive button at bottom
- *
- * Edit Mode:
- * - All fields editable
- * - "Ask AI to Help" FAB
- * - Save changes with "Done" button
+ * RESTRUCTURED LAYOUT (top to bottom):
+ * 1. Needle name (editable on tap, auto-save)
+ * 2. Motivation text box ("Why this matters" - editable on tap, auto-save)
+ * 3. Plan of Binds (tap bind to navigate to detail)
+ * 4. Memories section (image gallery, max 10 images)
+ * 5. Archive Needle button (bottom)
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -24,35 +18,61 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Image,
+  FlatList,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { Text, Card, Button } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useGoalById, useUpdateGoal, useArchiveGoal } from '@/hooks/useActiveGoals';
+import { useGoalMemories, useUploadMemory, useDeleteMemory } from '@/hooks/useGoalMemories';
+import { useUpdateBind } from '@/hooks/useUpdateBind';
 import { Ionicons } from '@expo/vector-icons';
+import type { Memory } from '@/types/goals';
 
 export function NeedleDetailScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editedTitle, setEditedTitle] = useState('');
-  const [editedWhy, setEditedWhy] = useState('');
+  // State for editable fields
+  const [titleValue, setTitleValue] = useState('');
+  const [motivationValue, setMotivationValue] = useState('');
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [isMotivationEditing, setIsMotivationEditing] = useState(false);
 
+  // State for editing binds
+  const [editingBindId, setEditingBindId] = useState<string | null>(null);
+  const [editingBindTitle, setEditingBindTitle] = useState('');
+  const [editingBindFrequency, setEditingBindFrequency] = useState('daily');
+
+  // Refs for tracking original values (for auto-save comparison)
+  const originalTitleRef = useRef('');
+  const originalMotivationRef = useRef('');
+
+  // Queries and mutations
   const { data, isLoading, isError, error } = useGoalById(id || '');
+  const { data: memoriesData, isLoading: isLoadingMemories } = useGoalMemories(id || '');
   const updateGoalMutation = useUpdateGoal();
   const archiveGoalMutation = useArchiveGoal();
+  const uploadMemoryMutation = useUploadMemory();
+  const deleteMemoryMutation = useDeleteMemory();
+  const updateBindMutation = useUpdateBind();
 
-  // Extract goal data (mock structure for now - will be replaced with real API response)
   const goal = data?.data || null;
+  const memories = memoriesData?.data || [];
+  const memoriesCount = memories.length;
+  const maxMemories = 10;
 
-  // Initialize edit fields when data loads
+  // Initialize editable fields when data loads
   React.useEffect(() => {
     if (goal) {
-      setEditedTitle(goal.title || '');
-      setEditedWhy(goal.description || '');
+      setTitleValue(goal.title || '');
+      setMotivationValue(goal.description || '');
+      originalTitleRef.current = goal.title || '';
+      originalMotivationRef.current = goal.description || '';
     }
   }, [goal]);
 
@@ -61,44 +81,127 @@ export function NeedleDetailScreen() {
     router.back();
   };
 
-  const handleEditToggle = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (isEditMode) {
-      // Client-side validation before saving
-      const trimmedTitle = editedTitle.trim();
+  // Auto-save title on blur
+  const handleTitleBlur = () => {
+    setIsTitleEditing(false);
 
-      if (!trimmedTitle) {
-        Alert.alert('Validation Error', 'Goal title cannot be empty.');
-        return;
-      }
+    const trimmedTitle = titleValue.trim();
 
-      if (trimmedTitle.length > 200) {
-        Alert.alert('Validation Error', 'Goal title must be 200 characters or less.');
-        return;
-      }
+    // Validation
+    if (!trimmedTitle) {
+      Alert.alert('Validation Error', 'Goal title cannot be empty.');
+      setTitleValue(originalTitleRef.current); // Revert to original
+      return;
+    }
 
-      // Save changes
+    if (trimmedTitle.length > 200) {
+      Alert.alert('Validation Error', 'Goal title must be 200 characters or less.');
+      setTitleValue(originalTitleRef.current); // Revert to original
+      return;
+    }
+
+    // Only save if changed
+    if (trimmedTitle !== originalTitleRef.current) {
       updateGoalMutation.mutate(
         {
           goalId: id || '',
-          data: {
-            title: trimmedTitle,
-            description: editedWhy.trim(),
-          },
+          data: { title: trimmedTitle },
         },
         {
           onSuccess: () => {
-            setIsEditMode(false);
-            Alert.alert('Success', 'Goal updated successfully!');
+            originalTitleRef.current = trimmedTitle;
           },
           onError: (error) => {
-            Alert.alert('Error', error.message || 'Failed to update goal. Please try again.');
+            Alert.alert('Error', error.message || 'Failed to update title.');
+            setTitleValue(originalTitleRef.current); // Revert on error
           },
         }
       );
-    } else {
-      setIsEditMode(true);
     }
+  };
+
+  // Auto-save motivation on blur
+  const handleMotivationBlur = () => {
+    setIsMotivationEditing(false);
+
+    const trimmedMotivation = motivationValue.trim();
+
+    // Only save if changed
+    if (trimmedMotivation !== originalMotivationRef.current) {
+      updateGoalMutation.mutate(
+        {
+          goalId: id || '',
+          data: { description: trimmedMotivation },
+        },
+        {
+          onSuccess: () => {
+            originalMotivationRef.current = trimmedMotivation;
+          },
+          onError: (error) => {
+            Alert.alert('Error', error.message || 'Failed to update motivation.');
+            setMotivationValue(originalMotivationRef.current); // Revert on error
+          },
+        }
+      );
+    }
+  };
+
+  // Helper: Convert recurrence_rule to human-readable frequency
+  const parseFrequency = (recurrenceRule: string | null | undefined): string => {
+    if (!recurrenceRule) return 'daily';
+    if (recurrenceRule.includes('DAILY')) return 'daily';
+    if (recurrenceRule.includes('WEEKLY')) return 'weekly';
+    return 'daily';
+  };
+
+  // Helper: Convert human-readable frequency to recurrence_rule
+  const toRecurrenceRule = (frequency: string): string => {
+    if (frequency === 'daily') return 'FREQ=DAILY;INTERVAL=1';
+    if (frequency === 'weekly') return 'FREQ=WEEKLY;INTERVAL=1';
+    return 'FREQ=DAILY;INTERVAL=1';
+  };
+
+  // Start editing a bind
+  const handleBindPress = (bind: any) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setEditingBindId(bind.id);
+    setEditingBindTitle(bind.title || '');
+    setEditingBindFrequency(parseFrequency(bind.recurrence_rule));
+  };
+
+  // Save bind changes
+  const handleSaveBind = () => {
+    if (!editingBindId) return;
+
+    const trimmedTitle = editingBindTitle.trim();
+    if (!trimmedTitle) {
+      Alert.alert('Validation Error', 'Bind title cannot be empty.');
+      return;
+    }
+
+    updateBindMutation.mutate(
+      {
+        bindId: editingBindId,
+        title: trimmedTitle,
+        recurrenceRule: toRecurrenceRule(editingBindFrequency),
+      },
+      {
+        onSuccess: () => {
+          setEditingBindId(null);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+        onError: (error) => {
+          Alert.alert('Error', error.message || 'Failed to update bind.');
+        },
+      }
+    );
+  };
+
+  // Cancel bind editing
+  const handleCancelBindEdit = () => {
+    setEditingBindId(null);
+    setEditingBindTitle('');
+    setEditingBindFrequency('daily');
   };
 
   const handleArchive = () => {
@@ -111,12 +214,10 @@ export function NeedleDetailScreen() {
         onPress: () => {
           archiveGoalMutation.mutate(id || '', {
             onSuccess: () => {
-              // Navigate back immediately without showing success alert
-              // The mutation already invalidates the cache, so the list will update
               router.back();
             },
             onError: (error) => {
-              Alert.alert('Error', error.message || 'Failed to archive goal. Please try again.');
+              Alert.alert('Error', error.message || 'Failed to archive goal.');
             },
           });
         },
@@ -124,10 +225,76 @@ export function NeedleDetailScreen() {
     ]);
   };
 
-  const handleAskAI = () => {
+  const handleAddMemory = async () => {
+    if (memoriesCount >= maxMemories) {
+      Alert.alert(
+        'Memory Limit Reached',
+        `You can only add up to ${maxMemories} memories per goal.`
+      );
+      return;
+    }
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Open Weave AI modal (will implement with Epic 6)
-    // TODO: Navigate to Weave AI chat with needle context
+
+    // Request permission
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert('Permission Required', 'Please allow access to your photo library.');
+      return;
+    }
+
+    // Open image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 0.8,
+      aspect: [4, 3],
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const { uri } = result.assets[0];
+      const fileName = `memory-${Date.now()}.jpg`;
+
+      uploadMemoryMutation.mutate(
+        {
+          goalId: id || '',
+          imageUri: uri,
+          fileName,
+        },
+        {
+          onSuccess: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          },
+          onError: (error) => {
+            Alert.alert('Upload Failed', error.message || 'Failed to upload memory.');
+          },
+        }
+      );
+    }
+  };
+
+  const handleDeleteMemory = (memory: Memory) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    Alert.alert('Delete Memory', 'Are you sure you want to delete this memory?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          deleteMemoryMutation.mutate(
+            { goalId: id || '', memoryId: memory.id },
+            {
+              onSuccess: () => {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              },
+              onError: (error) => {
+                Alert.alert('Error', error.message || 'Failed to delete memory.');
+              },
+            }
+          );
+        },
+      },
+    ]);
   };
 
   // Loading state
@@ -170,64 +337,14 @@ export function NeedleDetailScreen() {
     );
   }
 
-  // Mock data (will be replaced with real API data)
-  const stats = {
-    consistency_7d: goal.consistency_7d || 73,
-    total_completions: goal.active_binds_count * 10 || 24, // Mock
-    current_streak: 12, // Mock
-  };
-
-  const milestones = [
-    { id: '1', title: 'Reach 180 lbs', progress: 60, current: 170, target: 180 },
-    { id: '2', title: 'Bench 225 lbs', progress: 30, current: 185, target: 225 },
-  ];
-
-  const binds = [
-    { id: '1', title: 'Workout', frequency: '5x per week', completedToday: true },
-    { id: '2', title: 'Meal Prep', frequency: '7x per week', completedToday: false },
-  ];
+  const binds = goal.binds || [];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      {/* Header */}
+      {/* Header with Back Button */}
       <View style={styles.header}>
         <Pressable onPress={handleBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
-        </Pressable>
-
-        {isEditMode ? (
-          <TextInput
-            value={editedTitle}
-            onChangeText={setEditedTitle}
-            style={[
-              styles.headerTitleInput,
-              { color: colors.text.primary, borderColor: colors.border.focus },
-            ]}
-            placeholder="Needle title"
-            placeholderTextColor={colors.text.muted}
-          />
-        ) : (
-          <Text
-            variant="textLg"
-            weight="semibold"
-            style={[styles.headerTitle, { color: colors.text.primary }]}
-          >
-            {editedTitle}
-          </Text>
-        )}
-
-        <Pressable
-          onPress={handleEditToggle}
-          style={styles.editButton}
-          disabled={updateGoalMutation.isPending}
-        >
-          {updateGoalMutation.isPending ? (
-            <ActivityIndicator size="small" color={colors.accent[500]} />
-          ) : (
-            <Text variant="textSm" weight="semibold" style={{ color: colors.accent[500] }}>
-              {isEditMode ? 'Done' : 'Edit'}
-            </Text>
-          )}
         </Pressable>
       </View>
 
@@ -236,170 +353,342 @@ export function NeedleDetailScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Needle Title Section (View Mode) */}
-        {!isEditMode && (
-          <View style={styles.section}>
-            <View style={[styles.colorBar, { backgroundColor: colors.accent[500] }]} />
-            <Text
-              variant="displayMd"
-              weight="bold"
-              style={[styles.needleTitle, { color: colors.text.primary }]}
-            >
-              {editedTitle}
-            </Text>
-          </View>
-        )}
+        {/* 1. Needle Name (editable on tap) */}
+        <View style={styles.section}>
+          <Pressable onPress={() => setIsTitleEditing(true)} disabled={isTitleEditing}>
+            {isTitleEditing ? (
+              <TextInput
+                value={titleValue}
+                onChangeText={setTitleValue}
+                onBlur={handleTitleBlur}
+                autoFocus
+                multiline
+                style={[
+                  styles.titleInput,
+                  {
+                    color: colors.text.primary,
+                    borderColor: colors.border.focus,
+                  },
+                ]}
+                placeholder="Needle title"
+                placeholderTextColor={colors.text.muted}
+                maxLength={200}
+              />
+            ) : (
+              <>
+                <Text
+                  variant="displayLg"
+                  weight="bold"
+                  style={[styles.title, { color: colors.text.primary }]}
+                >
+                  {titleValue}
+                </Text>
+                <Text variant="textSm" color="muted" style={styles.tapToEditHint}>
+                  Tap to edit
+                </Text>
+              </>
+            )}
+          </Pressable>
+        </View>
 
-        {/* Why Section */}
+        {/* 2. Motivation Box ("Why this matters") */}
         <View style={styles.section}>
           <Text variant="textSm" color="secondary" style={styles.sectionLabel}>
             Why this matters
           </Text>
-          {isEditMode ? (
-            <TextInput
-              value={editedWhy}
-              onChangeText={setEditedWhy}
-              multiline
-              style={[
-                styles.textAreaInput,
-                {
-                  color: colors.text.primary,
-                  borderColor: colors.border.muted,
-                  backgroundColor: colors.background.secondary,
-                },
-              ]}
-              placeholder="Your motivation for this goal..."
-              placeholderTextColor={colors.text.muted}
-            />
-          ) : (
-            <Text variant="textBase" style={[styles.whyText, { color: colors.text.secondary }]}>
-              {editedWhy || 'No description provided'}
-            </Text>
-          )}
-        </View>
-
-        {/* Stats Row */}
-        <View style={styles.statsRow}>
-          <Card variant="glass" style={styles.statCard}>
-            <Text variant="textSm" color="secondary" style={styles.statLabel}>
-              7-day consistency
-            </Text>
-            <Text variant="textLg" weight="bold">
-              {stats.consistency_7d}%
-            </Text>
-          </Card>
-
-          <Card variant="glass" style={styles.statCard}>
-            <Text variant="textSm" color="secondary" style={styles.statLabel}>
-              Total completions
-            </Text>
-            <Text variant="textLg" weight="bold">
-              {stats.total_completions}
-            </Text>
-          </Card>
-
-          <Card variant="glass" style={styles.statCard}>
-            <Text variant="textSm" color="secondary" style={styles.statLabel}>
-              Current streak
-            </Text>
-            <Text variant="textLg" weight="bold">
-              {stats.current_streak}
-            </Text>
-          </Card>
-        </View>
-
-        {/* Milestones Section */}
-        <View style={styles.section}>
-          <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
-            Milestones
-          </Text>
-          {milestones.map((milestone) => (
-            <Card key={milestone.id} variant="glass" style={styles.milestoneCard}>
-              <View style={styles.milestoneHeader}>
-                <Text variant="textBase" weight="medium">
-                  {milestone.title}
-                </Text>
-                <Text variant="textSm" color="secondary">
-                  {milestone.progress}%
+          <Pressable onPress={() => setIsMotivationEditing(true)} disabled={isMotivationEditing}>
+            {isMotivationEditing ? (
+              <TextInput
+                value={motivationValue}
+                onChangeText={setMotivationValue}
+                onBlur={handleMotivationBlur}
+                autoFocus
+                multiline
+                style={[
+                  styles.motivationInput,
+                  {
+                    color: colors.text.primary,
+                    borderColor: colors.border.focus,
+                    backgroundColor: colors.background.secondary,
+                  },
+                ]}
+                placeholder="Your motivation for this goal..."
+                placeholderTextColor={colors.text.muted}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.motivationBox,
+                  {
+                    backgroundColor: colors.background.secondary,
+                    borderColor: colors.border.muted,
+                  },
+                ]}
+              >
+                <Text variant="textBase" style={{ color: colors.text.secondary }}>
+                  {motivationValue || 'Tap to add your motivation...'}
                 </Text>
               </View>
-              <View style={styles.progressBarContainer}>
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    {
-                      width: `${milestone.progress}%`,
-                      backgroundColor: colors.accent[500],
-                    },
-                  ]}
-                />
-              </View>
-              <Text variant="textSm" color="secondary" style={styles.milestoneValues}>
-                {milestone.current} / {milestone.target}
-              </Text>
-            </Card>
-          ))}
+            )}
+          </Pressable>
         </View>
 
-        {/* Binds Section */}
+        {/* 3. Milestones (Q-Goals) */}
+        {goal.qgoals && goal.qgoals.length > 0 && (
+          <View style={styles.section}>
+            <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
+              Milestones
+            </Text>
+            {goal.qgoals.map((qgoal: any) => (
+              <Card key={qgoal.id} variant="glass" style={styles.milestoneCard}>
+                <View style={styles.milestoneContent}>
+                  <Text variant="textBase" weight="medium">
+                    {qgoal.title}
+                  </Text>
+                  <View style={styles.milestoneProgress}>
+                    <Text variant="textLg" weight="semibold" style={{ color: colors.accent[500] }}>
+                      {qgoal.current_value || 0}
+                    </Text>
+                    <Text variant="textSm" color="secondary" style={{ marginHorizontal: 8 }}>
+                      /
+                    </Text>
+                    <Text variant="textLg" color="secondary">
+                      {qgoal.target_value} {qgoal.unit}
+                    </Text>
+                  </View>
+                  {qgoal.metric_name && (
+                    <Text variant="textSm" color="muted" style={{ marginTop: 4 }}>
+                      {qgoal.metric_name}
+                    </Text>
+                  )}
+                </View>
+              </Card>
+            ))}
+          </View>
+        )}
+
+        {/* 4. Plan of Binds */}
         <View style={styles.section}>
           <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
             Your Binds
           </Text>
-          {binds.map((bind) => (
-            <Card key={bind.id} variant="glass" style={styles.bindCard}>
-              <View style={styles.bindContent}>
-                <View style={styles.bindInfo}>
-                  <Text variant="textBase" weight="medium">
-                    {bind.title}
-                  </Text>
-                  <Text variant="textSm" color="secondary">
-                    {bind.frequency}
-                  </Text>
-                </View>
-                <View style={styles.bindStatus}>
-                  {bind.completedToday ? (
-                    <Ionicons name="checkmark-circle" size={24} color={colors.emerald[500]} />
-                  ) : (
-                    <View style={[styles.incompleteDot, { borderColor: colors.border.muted }]} />
-                  )}
-                </View>
-              </View>
+          {binds.length === 0 ? (
+            <Card variant="glass" style={styles.emptyCard}>
+              <Text variant="textBase" color="secondary" style={styles.emptyText}>
+                No binds yet. Add consistent actions to work toward this goal.
+              </Text>
             </Card>
-          ))}
+          ) : (
+            binds.map((bind) => {
+              const isEditing = editingBindId === bind.id;
+              return (
+                <Card key={bind.id} variant="glass" style={styles.bindCard}>
+                  {isEditing ? (
+                    // Edit mode
+                    <View style={styles.bindEditContainer}>
+                      <View style={styles.bindEditField}>
+                        <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
+                          Name
+                        </Text>
+                        <TextInput
+                          value={editingBindTitle}
+                          onChangeText={setEditingBindTitle}
+                          style={[
+                            styles.bindEditInput,
+                            {
+                              color: colors.text.primary,
+                              backgroundColor: colors.background.primary,
+                              borderColor: colors.border.muted,
+                            },
+                          ]}
+                          placeholder="Bind name"
+                          placeholderTextColor={colors.text.muted}
+                          maxLength={200}
+                        />
+                      </View>
+
+                      <View style={styles.bindEditField}>
+                        <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
+                          Frequency
+                        </Text>
+                        <View style={styles.frequencyButtons}>
+                          <Pressable
+                            style={[
+                              styles.frequencyButton,
+                              {
+                                backgroundColor:
+                                  editingBindFrequency === 'daily'
+                                    ? colors.accent[500]
+                                    : colors.background.secondary,
+                                borderColor: colors.border.muted,
+                              },
+                            ]}
+                            onPress={() => setEditingBindFrequency('daily')}
+                          >
+                            <Text
+                              variant="textSm"
+                              weight="medium"
+                              style={{
+                                color:
+                                  editingBindFrequency === 'daily'
+                                    ? colors.background.primary
+                                    : colors.text.secondary,
+                              }}
+                            >
+                              Daily
+                            </Text>
+                          </Pressable>
+                          <Pressable
+                            style={[
+                              styles.frequencyButton,
+                              {
+                                backgroundColor:
+                                  editingBindFrequency === 'weekly'
+                                    ? colors.accent[500]
+                                    : colors.background.secondary,
+                                borderColor: colors.border.muted,
+                              },
+                            ]}
+                            onPress={() => setEditingBindFrequency('weekly')}
+                          >
+                            <Text
+                              variant="textSm"
+                              weight="medium"
+                              style={{
+                                color:
+                                  editingBindFrequency === 'weekly'
+                                    ? colors.background.primary
+                                    : colors.text.secondary,
+                              }}
+                            >
+                              Weekly
+                            </Text>
+                          </Pressable>
+                        </View>
+                      </View>
+
+                      <View style={styles.bindEditActions}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onPress={handleCancelBindEdit}
+                          style={styles.bindEditButton}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onPress={handleSaveBind}
+                          disabled={updateBindMutation.isPending}
+                          style={styles.bindEditButton}
+                        >
+                          {updateBindMutation.isPending ? 'Saving...' : 'Save'}
+                        </Button>
+                      </View>
+                    </View>
+                  ) : (
+                    // View mode
+                    <Pressable onPress={() => handleBindPress(bind)}>
+                      <View style={styles.bindContent}>
+                        <View style={styles.bindInfo}>
+                          <Text variant="textBase" weight="medium">
+                            {bind.title}
+                          </Text>
+                          <Text variant="textSm" color="muted" style={styles.bindFrequency}>
+                            {parseFrequency(bind.recurrence_rule) === 'daily' ? 'Daily' : 'Weekly'}
+                          </Text>
+                        </View>
+                        <Ionicons name="pencil" size={20} color={colors.text.muted} />
+                      </View>
+                    </Pressable>
+                  )}
+                </Card>
+              );
+            })
+          )}
         </View>
 
-        {/* Archive Button */}
-        {!isEditMode && (
-          <View style={styles.section}>
-            <Button
-              variant="secondary"
-              size="md"
-              onPress={handleArchive}
-              style={[styles.archiveButton, { borderColor: colors.rose[500] }]}
-              disabled={archiveGoalMutation.isPending}
-            >
-              {archiveGoalMutation.isPending ? (
-                <ActivityIndicator size="small" color={colors.rose[500]} />
-              ) : (
-                <Text variant="textBase" weight="medium" style={{ color: colors.rose[500] }}>
-                  Archive Needle
-                </Text>
-              )}
-            </Button>
+        {/* 4. Memories Section */}
+        <View style={styles.section}>
+          <View style={styles.memoriesHeader}>
+            <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
+              Memories
+            </Text>
+            <Text variant="textSm" color="muted">
+              {memoriesCount} / {maxMemories}
+            </Text>
           </View>
-        )}
-      </ScrollView>
 
-      {/* Ask AI to Help FAB (Edit Mode Only) */}
-      {isEditMode && (
-        <Pressable
-          onPress={handleAskAI}
-          style={[styles.aiFab, { backgroundColor: colors.violet[500] }]}
-        >
-          <Ionicons name="sparkles" size={24} color="white" />
-        </Pressable>
-      )}
+          {isLoadingMemories ? (
+            <View style={styles.memoriesLoading}>
+              <ActivityIndicator size="small" color={colors.accent[500]} />
+            </View>
+          ) : memories.length === 0 ? (
+            <Card variant="glass" style={styles.emptyCard}>
+              <Text variant="textBase" color="secondary" style={styles.emptyText}>
+                No memories yet. Add photos that remind you why this goal matters.
+              </Text>
+            </Card>
+          ) : (
+            <FlatList
+              data={memories}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.memoriesGrid}
+              renderItem={({ item }) => (
+                <Pressable onLongPress={() => handleDeleteMemory(item)} style={styles.memoryItem}>
+                  <Image source={{ uri: item.image_url }} style={styles.memoryImage} />
+                </Pressable>
+              )}
+            />
+          )}
+
+          {/* Add Memory Button */}
+          <Button
+            variant="secondary"
+            size="md"
+            onPress={handleAddMemory}
+            disabled={memoriesCount >= maxMemories || uploadMemoryMutation.isPending}
+            style={styles.addMemoryButton}
+          >
+            {uploadMemoryMutation.isPending ? (
+              <ActivityIndicator size="small" color={colors.accent[500]} />
+            ) : (
+              <>
+                <Ionicons name="add-circle-outline" size={20} color={colors.accent[500]} />
+                <Text
+                  variant="textBase"
+                  weight="medium"
+                  style={[styles.addMemoryText, { color: colors.accent[500] }]}
+                >
+                  Add Memory
+                </Text>
+              </>
+            )}
+          </Button>
+        </View>
+
+        {/* 5. Archive Button */}
+        <View style={styles.section}>
+          <Button
+            variant="secondary"
+            size="md"
+            onPress={handleArchive}
+            style={[styles.archiveButton, { borderColor: colors.rose[500] }]}
+            disabled={archiveGoalMutation.isPending}
+          >
+            {archiveGoalMutation.isPending ? (
+              <ActivityIndicator size="small" color={colors.rose[500]} />
+            ) : (
+              <Text variant="textBase" weight="medium" style={{ color: colors.rose[500] }}>
+                Archive Needle
+              </Text>
+            )}
+          </Button>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -413,7 +702,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    gap: 12,
   },
   backButton: {
     width: 36,
@@ -424,19 +712,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-  },
-  headerTitleInput: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-  editButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    marginLeft: 12,
   },
   errorContainer: {
     flex: 1,
@@ -458,24 +734,38 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 24,
   },
-  colorBar: {
-    width: 60,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 12,
+  title: {
+    marginBottom: 4,
   },
-  needleTitle: {
-    marginBottom: 8,
+  tapToEditHint: {
+    marginTop: 4,
+    fontStyle: 'italic',
+    opacity: 0.6,
+  },
+  titleInput: {
+    fontSize: 28,
+    fontWeight: '700',
+    lineHeight: 36,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderRadius: 8,
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
   sectionLabel: {
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  whyText: {
-    lineHeight: 22,
+  motivationBox: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    minHeight: 100,
   },
-  textAreaInput: {
+  motivationInput: {
     fontSize: 15,
     lineHeight: 22,
     paddingHorizontal: 12,
@@ -485,21 +775,6 @@ const styles = StyleSheet.create({
     minHeight: 100,
     textAlignVertical: 'top',
   },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 24,
-  },
-  statCard: {
-    flex: 1,
-    padding: 16,
-    alignItems: 'center',
-    gap: 4,
-  },
-  statLabel: {
-    textAlign: 'center',
-    fontSize: 11,
-  },
   sectionTitle: {
     marginBottom: 12,
   },
@@ -507,25 +782,12 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
-  milestoneHeader: {
+  milestoneContent: {
+    gap: 8,
+  },
+  milestoneProgress: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  progressBarContainer: {
-    height: 6,
-    backgroundColor: '#1F1F23',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  milestoneValues: {
-    fontSize: 12,
+    alignItems: 'baseline',
   },
   bindCard: {
     padding: 16,
@@ -540,31 +802,95 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
-  bindStatus: {
-    marginLeft: 12,
+  bindDescription: {
+    marginTop: 4,
   },
-  incompleteDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
+  bindFrequency: {
+    marginTop: 2,
+    fontSize: 12,
+  },
+  emptyCard: {
+    padding: 16,
+  },
+  emptyText: {
+    textAlign: 'center',
+  },
+  memoriesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  memoriesLoading: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  memoriesGrid: {
+    paddingVertical: 8,
+    gap: 12,
+  },
+  memoryItem: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 12,
+  },
+  memoryImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  addMemoryButton: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  addMemoryText: {
+    marginLeft: 4,
   },
   archiveButton: {
     marginTop: 8,
   },
-  aiFab: {
-    position: 'absolute',
-    bottom: 32,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  bindEditContainer: {
+    padding: 16,
+    gap: 16,
+  },
+  bindEditField: {
+    gap: 8,
+  },
+  bindEditLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  bindEditInput: {
+    fontSize: 15,
+    lineHeight: 22,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  frequencyButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  frequencyButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+  },
+  bindEditActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  bindEditButton: {
+    flex: 1,
   },
 });

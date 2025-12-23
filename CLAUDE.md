@@ -33,7 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **Navigation/Screens** (any UI screen) | **Story 1.5.1: Navigation Patterns** | `docs/stories/1-5-1-navigation-architecture.md` |
 | **API Endpoints** (FastAPI routes) | **Story 1.5.2: Backend Patterns** | `docs/stories/1-5-2-backend-standardization.md` |
 | **Database Models** (Supabase tables) | **Story 1.5.2: Backend Patterns** | `docs/stories/1-5-2-backend-standardization.md` |
-| **AI Services** (text/image/audio AI) | **Story 1.5.3: AI Service Patterns** | `docs/stories/1-5-3-ai-services-standardization.md` |
+| **AI Services** (text/image/audio AI) | **Story 1.5.3: AI Module Orchestration** | `docs/stories/1-5-3-ai-module-orchestration.md` |
 
 ### Story 1.5.1: Navigation/Frontend Patterns
 
@@ -61,6 +61,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Use when:** Creating API endpoints, database models, or backend services
 
 **Standards Include:**
+- ✅ **JWT Authentication** - ALL protected endpoints MUST use `Depends(get_current_user)` (Story 0.3)
 - ✅ API endpoint naming (`GET /api/goals`, `POST /api/completions`)
 - ✅ Pydantic request/response models (`{Resource}Create`, `{Resource}Response`)
 - ✅ Database model conventions (`snake_case`, plural tables, soft delete)
@@ -69,12 +70,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ Service layer decision tree (when to create services vs inline logic)
 
 **Quick Checklist:**
+- [ ] **USE `user: dict = Depends(get_current_user)` for ALL protected endpoints**
+- [ ] Extract user ID: `auth_user_id = user["sub"]`
 - [ ] Use `snake_case` for all API params and DB columns
 - [ ] Follow REST naming: `GET /api/{resources}`, `POST /api/{resources}`
 - [ ] Use `{data, meta}` response wrapper format
 - [ ] Create Pydantic models: `{Resource}Create`, `{Resource}Response`
 - [ ] Add error handling with standard codes (`VALIDATION_ERROR`, `NOT_FOUND`, etc.)
 - [ ] Write pytest tests in `tests/test_{resource}_api.py`
+
+**❌ NEVER use placeholder auth:** `auth_user_id = "placeholder_auth_user_id"` is a **CRITICAL SECURITY VULNERABILITY**
 
 **Templates Available:**
 - API endpoint template (FastAPI router with auth, validation, error handling)
@@ -86,40 +91,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-### Story 1.5.3: AI Services Patterns
+### Story 1.5.3: AI Module Orchestration
 
-**Use when:** Integrating AI features (text generation, image analysis, voice transcription)
+**Use when:** Implementing AI features (goal breakdown, triad planning, AI chat, insights)
+
+**Architecture:** Creates **AI Module Orchestration Layer** on top of existing provider infrastructure (Stories 0.6, 0.9)
+
+```
+Request → AIOrchestrator (NEW - which product module?)
+       → AIModule (NEW - what context to build?)
+       → AIService (EXISTS - which AI provider?)
+       → AIProvider (EXISTS - API call implementation)
+```
 
 **Standards Include:**
-- ✅ Unified `AIProviderBase` abstraction for all AI modalities
-- ✅ Text AI patterns (OpenAI GPT-4o-mini, Claude 3.7 Sonnet fallback)
-- ✅ Image AI patterns (Gemini 3.0 Flash, GPT-4o Vision fallback)
-- ✅ Audio AI patterns (AssemblyAI, Whisper API fallback)
-- ✅ Cost tracking (log to `ai_runs` table with tokens, cost, duration)
-- ✅ Rate limiting (10 text calls/hr, 5 image analyses/day, 50 transcriptions/day)
-- ✅ React Native hooks for AI services
+- ✅ AI Module abstraction (5 product modules: Onboarding Coach, Triad Planner, Daily Recap, Dream Self Advisor, AI Insights Engine)
+- ✅ AIOrchestrator for request routing (maps operation types to modules)
+- ✅ ContextBuilder for user state assembly (identity, goals, history, patterns)
+- ✅ Module Registry pattern (operation → module mapping)
+- ✅ React Native hooks: `useAIChat()`, `useImageAnalysis()`, `useVoiceTranscription()`
+- ✅ Integration with existing AIService (cost tracking, rate limiting, fallback chains)
 
 **Quick Checklist:**
-- [ ] Use `AIProviderBase` abstract class for new AI providers
-- [ ] Implement fallback chain (Primary → Secondary → Graceful degradation)
-- [ ] Log ALL AI calls to `ai_runs` table (cost tracking)
-- [ ] Check rate limits before AI calls (use `daily_aggregates` table)
-- [ ] Use standard React hooks:
-  - `useAIChat()` for text AI
-  - `useImageAnalysis()` for image AI
-  - `useVoiceTranscription()` for audio AI
-- [ ] Handle errors with standard loading states ("Generating...", "Analyzing...")
+- [ ] Use `AIOrchestrator.execute_ai_operation()` for all AI requests
+- [ ] Specify operation_type (e.g., 'generate_goal_breakdown', 'chat_response')
+- [ ] Let module build context automatically (don't manually assemble)
+- [ ] Use standard React hooks for frontend
+- [ ] DO NOT bypass orchestrator to call AIService directly
 
-**Provider Decision Tree:**
-| Use Case | Primary Provider | Fallback | Cost |
-|----------|------------------|----------|------|
-| **Text Generation** (Triad, Journal feedback) | GPT-4o-mini | Claude 3.7 Sonnet | $0.15/$0.60 per MTok |
-| **Complex Reasoning** (Onboarding, Dream Self) | Claude 3.7 Sonnet | GPT-4o | $3.00/$15.00 per MTok |
-| **Image Analysis** (Proof validation, OCR) | Gemini 3.0 Flash | GPT-4o Vision | $0.02/image |
-| **Voice Transcription** (STT) | AssemblyAI | Whisper API | $0.15/hr |
+**Module → Operation Mapping:**
+| Operation Type | Module | Epic/Story Usage |
+|----------------|--------|------------------|
+| `generate_goal_breakdown` | Onboarding Coach | Stories 1.8, 2.3 |
+| `generate_triad` | Triad Planner | Story 4.3 |
+| `generate_recap` | Daily Recap | Story 4.3 |
+| `chat_response` | Dream Self Advisor | Stories 6.1, 6.2 |
+| `generate_weekly_insights` | AI Insights Engine | Story 6.4 |
 
-**Full Spec:** `docs/stories/1-5-3-ai-services-standardization.md`
-**Developer Guide:** `docs/dev/ai-services-guide.md` (created by Story 1.5.3)
+**Full Spec:** `docs/stories/1-5-3-ai-module-orchestration.md`
+**Developer Guide:** `docs/dev/ai-services-guide.md` (sections 8-11 for module orchestration)
 
 ---
 
@@ -149,10 +159,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### ❌ What NOT to Do
 
 **DON'T:**
+- ❌ **Use placeholder authentication** - `auth_user_id = "placeholder_..."` is a CRITICAL security vulnerability
+- ❌ Skip JWT middleware (ALWAYS use `Depends(get_current_user)` for protected endpoints)
 - ❌ Create custom navigation patterns (use Story 1.5.1 structure)
 - ❌ Invent new API response formats (use `{data, meta}` wrapper)
 - ❌ Skip error handling (use standard error codes)
-- ❌ Create new AI provider patterns (use `AIProviderBase` abstraction)
+- ❌ Bypass AIOrchestrator to call AIService directly (use module orchestration pattern)
 - ❌ Ignore rate limiting (check `daily_aggregates` before AI calls)
 - ❌ Use different naming conventions (follow `snake_case` DB, `camelCase` TS)
 
@@ -168,7 +180,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Navigation Patterns:** `docs/stories/1-5-1-navigation-architecture.md`
 - **Backend Patterns:** `docs/stories/1-5-2-backend-standardization.md` + `docs/dev/backend-patterns-guide.md`
-- **AI Service Patterns:** `docs/stories/1-5-3-ai-services-standardization.md` + `docs/dev/ai-services-guide.md`
+- **API Endpoint Registry:** `docs/dev/backend-api-integration.md` ⚡ NEW (28 endpoints mapped)
+- **AI Module Orchestration:** `docs/stories/1-5-3-ai-module-orchestration.md` + `docs/dev/ai-services-guide.md`
 - **Architecture Rules:** `docs/architecture/implementation-patterns-consistency-rules.md`
 
 ---
@@ -226,6 +239,41 @@ uv add fastapi supabase anthropic
 # Lint with ruff
 uv run ruff check .
 ```
+
+### Production Deployment (Railway)
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login to Railway
+railway login
+
+# Link to production project (one-time setup)
+cd weave-api
+railway link <project-id>
+
+# Deploy to production
+railway up
+
+# View production logs
+railway logs
+
+# View deployment status
+railway status
+
+# Rollback to previous deployment
+railway deployments
+railway deployment rollback <deployment-id>
+
+# Manage environment variables
+railway variables
+railway variables set SUPABASE_URL=https://xxx.supabase.co
+```
+
+**Production URL:** `https://weave-api-production.railway.app`
+
+**Automatic Deployment:** Pushes to `main` branch automatically trigger Railway deployment via GitHub Actions (`.github/workflows/railway-deploy.yml`)
 
 ### Documentation Viewer
 
@@ -506,7 +554,19 @@ weavelight/
 │       └── theme/               # ThemeContext and hooks
 │
 ├── docs/
-│   ├── pages/                   # 📁 Page-based implementation guides (NEW)
+│   ├── production/              # 📁 Production deployment, compliance, legal (NEW)
+│   │   ├── README.md            # Production docs overview
+│   │   ├── PRODUCTION_DEPLOYMENT_MANUAL.md  # Step-by-step deployment guide
+│   │   ├── CODE_REVIEW_FIXES_SUMMARY.md     # Code review fixes log (Story 9.1)
+│   │   ├── production-readiness-checklist.md # Pre-launch checklist
+│   │   ├── test-validation-guide.md          # How to verify all tests pass
+│   │   ├── compliance-legal-checklist.md     # Compliance and legal requirements
+│   │   ├── pre-deployment-verification.md    # Automated verification guide
+│   │   └── scripts/             # Automated verification scripts
+│   │       ├── pre-deployment-verification.sh
+│   │       └── run-all-tests.sh
+│   │
+│   ├── pages/                   # 📁 Page-based implementation guides
 │   │   ├── thread-page.md       # Epic 3 + 4 (Daily actions + reflection)
 │   │   ├── dashboard-page.md    # Epic 2 + 5 (Goals + progress viz)
 │   │   ├── weave-ai-page.md     # Epic 6 (AI coaching)
@@ -618,6 +678,8 @@ weavelight/
 
 | Task | Read This | Why |
 |------|-----------|-----|
+| **Tracking MVP progress** | `docs/project-management/mvp-progress-tracker.md` | **Simple checklist-based progress tracker (no Kanban needed)** |
+| **Understanding MVP priorities** | `docs/project-management/mvp-prioritization-guide.md` | What to ship for MVP vs. post-launch |
 | **Implementing a page** | `docs/pages/[page-name].md` | **Complete page spec with all stories, wireframe requirements, and completion criteria** |
 | Understanding page-based strategy | `docs/implementation-strategy.md` | Comprehensive guide to page-based implementation |
 | Implementing a story | `docs/stories/[story-name].md` | Detailed spec with acceptance criteria |
@@ -627,6 +689,11 @@ weavelight/
 | Architecture decisions | `docs/architecture/core-architectural-decisions.md` | Tech stack, patterns, rationale |
 | Database schema | `docs/idea/backend.md` (lines 200-800) | Complete schema with relationships |
 | API patterns | `docs/architecture/implementation-patterns-consistency-rules.md` | Code conventions and guardrails |
+| **Production deployment** | `docs/production/PRODUCTION_DEPLOYMENT_MANUAL.md` | Step-by-step Railway deployment guide (Story 9.1) |
+| **Production readiness check** | `docs/production/production-readiness-checklist.md` | Complete pre-launch checklist (code, security, compliance, legal) |
+| **Verifying all tests pass** | `docs/production/test-validation-guide.md` | How to run and verify backend + mobile + RLS tests |
+| **Compliance & legal** | `docs/production/compliance-legal-checklist.md` | Privacy policy, ToS, GDPR, CCPA, App Store compliance |
+| **Pre-deployment verification** | `docs/production/scripts/pre-deployment-verification.sh` | Automated script to verify production readiness |
 | **Integrating AI services** | `docs/dev/ai-service-integration-guide.md` | Environment config, provider abstraction, fallback chains |
 | Design system usage | `docs/dev/design-system-guide.md` | Components, tokens, examples |
 | Git workflow | `docs/dev/git-workflow-guide.md` | Branching, commits, PRs |

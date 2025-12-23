@@ -24,6 +24,7 @@ import { Text, Card } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useConsistencyData } from '@/hooks/useConsistencyData';
 import { useGetJournalsByDateRange } from '@/hooks/useJournal';
+import { useBindsGrid } from '@/hooks/useBindsGrid';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { DayDetailsModal } from '@/components/dashboard/DayDetailsModal';
@@ -58,6 +59,11 @@ export function ConsistencyHeatmap({
 }: ConsistencyHeatmapProps) {
   const { colors } = useTheme();
   const { data, isLoading, isError, error } = useConsistencyData(timeframe, filterType, filterId);
+  const {
+    data: bindsGridData,
+    isLoading: isBindsGridLoading,
+    isError: isBindsGridError,
+  } = useBindsGrid();
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
 
   // Fetch journal entries for Thread consistency view (7d timeframe)
@@ -84,26 +90,52 @@ export function ConsistencyHeatmap({
 
   // State for modals
   const [showDayDetailsModal, setShowDayDetailsModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [selectedDayData, setSelectedDayData] = useState<{
+    date: string;
+    completionRate: number;
+  } | null>(null);
 
   const timeframeOptions: ('7d' | '2w' | '1m')[] = ['7d', '2w', '1m'];
 
-  if (isLoading) {
-    return (
-      <Card variant="glass" style={styles.card}>
-        <ActivityIndicator size="large" color={colors.accent[500]} />
-      </Card>
-    );
-  }
+  // For 7d grid view, we need binds grid data (not daily aggregates)
+  if (timeframe === '7d') {
+    if (isBindsGridLoading) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <ActivityIndicator size="large" color={colors.accent[500]} />
+        </Card>
+      );
+    }
 
-  if (isError) {
-    return (
-      <Card variant="glass" style={styles.card}>
-        <Text variant="textSm" style={{ color: colors.text.error }}>
-          Error loading consistency data: {error?.message}
-        </Text>
-      </Card>
-    );
+    if (isBindsGridError) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <Text variant="textSm" style={{ color: colors.text.error }}>
+            Error loading bind data
+          </Text>
+        </Card>
+      );
+    }
+  } else {
+    // For heat map views (2w/1m), use daily aggregates
+    if (isLoading) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <ActivityIndicator size="large" color={colors.accent[500]} />
+        </Card>
+      );
+    }
+
+    if (isError) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <Text variant="textSm" style={{ color: colors.text.error }}>
+            Error loading consistency data: {error?.message}
+          </Text>
+        </Card>
+      );
+    }
   }
 
   const consistencyData = data?.data || [];
@@ -180,6 +212,34 @@ export function ConsistencyHeatmap({
       },
     ];
   };
+  // Get real needles data from API (for 7d view only)
+  const needles: SampleNeedle[] =
+    timeframe === '7d' && bindsGridData?.data.needles
+      ? bindsGridData.data.needles.map((needle) => ({
+          id: needle.id,
+          title: needle.title,
+          description: needle.description,
+          binds: needle.binds.map((bind) => ({
+            bindName: bind.name,
+            completions: bind.completions,
+          })),
+        }))
+      : [];
+
+  // All binds combined (for bind and overall views)
+  const allBinds: BindCompletionData[] = needles.flatMap((needle) => needle.binds);
+
+  // Real daily reflection data (for thread view)
+  const dailyReflections: BindCompletionData =
+    timeframe === '7d' && bindsGridData?.data.daily_reflection
+      ? {
+          bindName: 'Daily Reflection',
+          completions: bindsGridData.data.daily_reflection.completions,
+        }
+      : {
+          bindName: 'Daily Reflection',
+          completions: [false, false, false, false, false, false, false],
+        };
 
   const dailyCheckInData: BindCompletionData[] = getJournalCompletionData();
 
@@ -187,11 +247,15 @@ export function ConsistencyHeatmap({
   const getDisplayBinds = (): BindCompletionData[] => {
     switch (filterType) {
       case 'needle':
-        // TODO: Fetch needle-specific bind completion data when API is available
-        return [];
-      case 'bind':
-        // TODO: Fetch bind-specific completion data when API is available
-        return [];
+        return needles[selectedNeedleIndex]?.binds || [];
+      case 'bind': {
+        const filtered = bindSearchQuery
+          ? allBinds.filter((bind) =>
+              bind.bindName.toLowerCase().includes(bindSearchQuery.toLowerCase())
+            )
+          : allBinds;
+        return filtered.length > 0 ? [filtered[selectedBindIndex]] : [];
+      }
       case 'thread':
         return dailyCheckInData;
       case 'overall':
@@ -346,7 +410,158 @@ export function ConsistencyHeatmap({
     </View>
   );
 
-  // Needle and Bind selectors removed - will be re-added when bind completion history API is available
+  // Handle needle scroll to update selected index
+  const handleNeedleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const cardWidth = SCREEN_WIDTH - 48 + 16; // Card width + spacing
+    const index = Math.round(offsetX / cardWidth);
+    if (index !== selectedNeedleIndex && index >= 0 && index < needles.length) {
+      setSelectedNeedleIndex(index);
+      Haptics.selectionAsync();
+    }
+  };
+
+  // Needle card header (for needle view) - now swipeable with clear segments
+  const renderNeedleCard = () => {
+    if (filterType !== 'needle') return null;
+
+    const CARD_WIDTH = SCREEN_WIDTH - 80; // Width of each card (with margins)
+    const CARD_SPACING = 16; // Space between cards
+
+    return (
+      <View style={styles.needleSwipeContainer}>
+        <FlatList
+          ref={needleFlatListRef}
+          data={needles}
+          horizontal
+          pagingEnabled={false}
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={handleNeedleScroll}
+          snapToInterval={CARD_WIDTH + CARD_SPACING}
+          decelerationRate="fast"
+          snapToAlignment="start"
+          contentContainerStyle={{ paddingHorizontal: 24 }}
+          keyExtractor={(item) => item.id}
+          ItemSeparatorComponent={() => <View style={{ width: CARD_SPACING }} />}
+          renderItem={({ item: needle }) => (
+            <View
+              style={[
+                styles.needleCard,
+                {
+                  backgroundColor: colors.background.elevated,
+                  width: CARD_WIDTH,
+                },
+              ]}
+            >
+              <View style={styles.needleCardHeader}>
+                <View
+                  style={[styles.needleColorIndicator, { backgroundColor: colors.emerald[500] }]}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text variant="textBase" weight="semibold" numberOfLines={2}>
+                    {needle.title}
+                  </Text>
+                  <Text
+                    variant="textSm"
+                    style={{ color: colors.text.muted, marginTop: 4, fontStyle: 'italic' }}
+                  >
+                    {needle.description}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Pagination dots */}
+              {needles.length > 1 && (
+                <View style={styles.paginationDots}>
+                  {needles.map((_, index) => (
+                    <Pressable
+                      key={index}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        needleFlatListRef.current?.scrollToIndex({
+                          index,
+                          animated: true,
+                        });
+                        setSelectedNeedleIndex(index);
+                      }}
+                    >
+                      <View
+                        style={[
+                          styles.paginationDot,
+                          {
+                            backgroundColor:
+                              index === selectedNeedleIndex
+                                ? colors.text.primary
+                                : colors.background.secondary,
+                          },
+                        ]}
+                      />
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+        />
+      </View>
+    );
+  };
+
+  // Bind selector (for bind view)
+  const renderBindSelector = () => {
+    if (filterType !== 'bind') return null;
+
+    return (
+      <View style={styles.bindSelectorContainer}>
+        <ScrollView
+          ref={scrollViewRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.bindScrollContent}
+        >
+          {allBinds.map((bind, index) => (
+            <Pressable
+              key={index}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setSelectedBindIndex(index);
+                setBindSearchQuery('');
+              }}
+              style={[
+                styles.bindChip,
+                {
+                  backgroundColor:
+                    index === selectedBindIndex ? colors.text.primary : colors.background.elevated,
+                },
+              ]}
+            >
+              <Text
+                variant="textSm"
+                weight={index === selectedBindIndex ? 'semibold' : 'regular'}
+                style={{
+                  color:
+                    index === selectedBindIndex ? colors.background.primary : colors.text.secondary,
+                }}
+              >
+                {bind.bindName}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        {/* Search button */}
+        <Pressable
+          style={[styles.searchButton, { backgroundColor: colors.background.elevated }]}
+          onPress={() => {
+            Haptics.selectionAsync();
+            setShowSearchModal(true);
+          }}
+        >
+          <Ionicons name="search" size={20} color={colors.text.secondary} />
+        </Pressable>
+      </View>
+    );
+  };
 
   // Common filter tabs component
   const renderFilterTabs = () => (

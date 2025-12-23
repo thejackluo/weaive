@@ -103,11 +103,16 @@ export async function compressImage(uri: string): Promise<CompressedImage> {
 // IMAGE UPLOAD
 // ============================================================================
 
+export interface UploadProgressCallback {
+  (progress: { message: string; percentage: number }): void;
+}
+
 export async function uploadImageToAPI(
   imageUri: string,
   context: ProofCaptureContext,
   runAIAnalysis: boolean = true,
-  signal?: globalThis.AbortSignal
+  signal?: globalThis.AbortSignal,
+  onProgress?: UploadProgressCallback
 ): Promise<UploadImageResponse> {
   try {
     console.log('📤 [UPLOAD START] imageUri:', imageUri);
@@ -115,6 +120,7 @@ export async function uploadImageToAPI(
 
     // Compress image first
     console.log('🔄 [COMPRESS] Compressing image...');
+    onProgress?.({ message: 'Compressing image...', percentage: 20 });
     const compressed = await compressImage(imageUri);
     console.log('✅ [COMPRESS] Compressed:', {
       uri: compressed.uri,
@@ -134,6 +140,7 @@ export async function uploadImageToAPI(
 
     // Prepare form data
     console.log('📦 [FORMDATA] Preparing FormData...');
+    onProgress?.({ message: 'Preparing upload...', percentage: 40 });
     const formData = new FormData();
 
     // Append file (React Native format)
@@ -166,6 +173,7 @@ export async function uploadImageToAPI(
     // Upload to API
     const uploadUrl = `${API_BASE_URL}/api/captures/upload`;
     console.log('☁️  [FETCH] Uploading to:', uploadUrl);
+    onProgress?.({ message: 'Uploading to server...', percentage: 60 });
 
     const uploadResponse = await fetch(uploadUrl, {
       method: 'POST',
@@ -181,6 +189,8 @@ export async function uploadImageToAPI(
       '☁️  [FETCH] Response headers:',
       JSON.stringify(Object.fromEntries(uploadResponse.headers.entries()))
     );
+
+    onProgress?.({ message: 'Processing...', percentage: 80 });
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
@@ -198,6 +208,7 @@ export async function uploadImageToAPI(
 
     const result = await uploadResponse.json();
     console.log('✅ [UPLOAD SUCCESS] Result:', JSON.stringify(result, null, 2));
+    onProgress?.({ message: 'Upload complete!', percentage: 100 });
     return result;
   } catch (error) {
     console.error('❌ [UPLOAD FAIL] Error:', error);
@@ -220,7 +231,8 @@ export async function uploadImageToAPI(
 export async function captureAndUploadProofPhoto(
   context: ProofCaptureContext,
   source: PhotoSource,
-  signal?: globalThis.AbortSignal
+  signal?: globalThis.AbortSignal,
+  onProgress?: UploadProgressCallback
 ): Promise<UploadImageResponse | null> {
   try {
     // Launch camera or gallery
@@ -233,7 +245,7 @@ export async function captureAndUploadProofPhoto(
     const imageUri = result.assets[0].uri;
 
     // Upload with context and abort signal
-    return await uploadImageToAPI(imageUri, context, true, signal);
+    return await uploadImageToAPI(imageUri, context, true, signal, onProgress);
   } catch (error) {
     console.error('Proof photo capture failed:', error);
     throw error;

@@ -49,11 +49,7 @@ async def create_user_profile(
             "locale": locale,
         }
 
-        result = (
-            supabase.table("user_profiles")
-            .insert(profile_data)
-            .execute()
-        )
+        result = supabase.table("user_profiles").insert(profile_data).execute()
 
         if not result.data:
             raise Exception("Failed to create user profile - no data returned")
@@ -69,9 +65,7 @@ async def create_user_profile(
         # Check if error is due to unique constraint violation (duplicate auth_user_id)
         # Supabase/PostgREST returns "duplicate key value violates unique constraint"
         if "duplicate key" in error_msg or "unique constraint" in error_msg:
-            logger.info(
-                f"⚠️  Profile already exists (race condition handled): {auth_user_id}"
-            )
+            logger.info(f"⚠️  Profile already exists (race condition handled): {auth_user_id}")
 
             # Fetch and return the existing profile
             existing = (
@@ -85,17 +79,11 @@ async def create_user_profile(
                 return existing.data[0]
 
             # If we still can't find it, something is wrong
-            logger.error(
-                f"❌ Profile should exist but not found: {auth_user_id}"
-            )
-            raise Exception(
-                "Race condition: profile creation failed but profile not found"
-            )
+            logger.error(f"❌ Profile should exist but not found: {auth_user_id}")
+            raise Exception("Race condition: profile creation failed but profile not found")
 
         # For non-duplicate errors, re-raise
-        logger.error(
-            f"❌ Failed to create user profile for {auth_user_id}: {str(e)}"
-        )
+        logger.error(f"❌ Failed to create user profile for {auth_user_id}: {str(e)}")
         raise
 
 
@@ -115,10 +103,7 @@ async def get_user_profile(
     """
     try:
         result = (
-            supabase.table("user_profiles")
-            .select("*")
-            .eq("auth_user_id", auth_user_id)
-            .execute()
+            supabase.table("user_profiles").select("*").eq("auth_user_id", auth_user_id).execute()
         )
 
         if result.data:
@@ -150,12 +135,7 @@ async def update_user_profile(
         Exception: If update fails
     """
     try:
-        result = (
-            supabase.table("user_profiles")
-            .update(updates)
-            .eq("id", str(user_id))
-            .execute()
-        )
+        result = supabase.table("user_profiles").update(updates).eq("id", str(user_id)).execute()
 
         if not result.data:
             raise Exception("Failed to update user profile")
