@@ -18,8 +18,18 @@
  * - Gray: No data
  */
 
-import React, { useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  StyleSheet,
+  ActivityIndicator,
+  Pressable,
+  FlatList,
+  ScrollView,
+  Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import { Text, Card } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useConsistencyData } from '@/hooks/useConsistencyData';
@@ -28,6 +38,8 @@ import { useBindsGrid } from '@/hooks/useBindsGrid';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { DayDetailsModal } from '@/components/dashboard/DayDetailsModal';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface ConsistencyHeatmapProps {
   timeframe: '7d' | '2w' | '1m';
@@ -47,6 +59,13 @@ interface DayHeader {
   dayOfWeek: string;
   dayOfMonth: number;
   fullDate: string;
+}
+
+interface SampleNeedle {
+  id: string;
+  title: string;
+  description: string;
+  binds: BindCompletionData[];
 }
 
 export function ConsistencyHeatmap({
@@ -95,6 +114,16 @@ export function ConsistencyHeatmap({
     date: string;
     completionRate: number;
   } | null>(null);
+
+  // State for needle/bind filtering
+  const [selectedNeedleIndex, setSelectedNeedleIndex] = useState(0);
+  const [selectedBindIndex, setSelectedBindIndex] = useState(0);
+  const [bindSearchQuery, setBindSearchQuery] = useState('');
+  const [selectedDate, setSelectedDate] = useState<string>('');
+
+  // Refs for scrolling
+  const needleFlatListRef = useRef<FlatList>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const timeframeOptions: ('7d' | '2w' | '1m')[] = ['7d', '2w', '1m'];
 
@@ -977,5 +1006,59 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: 40,
+  },
+  // Needle swipe view styles
+  needleSwipeContainer: {
+    marginBottom: 20,
+  },
+  needleCard: {
+    padding: 16,
+    borderRadius: 12,
+  },
+  needleCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  needleColorIndicator: {
+    width: 4,
+    height: 40,
+    borderRadius: 2,
+  },
+  paginationDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  // Bind selector styles
+  bindSelectorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  bindScrollContent: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingRight: 8,
+  },
+  bindChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  searchButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
