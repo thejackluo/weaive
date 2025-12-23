@@ -628,6 +628,8 @@ weavelight/
 
 | Task | Read This | Why |
 |------|-----------|-----|
+| **Tracking MVP progress** | `docs/project-management/mvp-progress-tracker.md` | **Simple checklist-based progress tracker (no Kanban needed)** |
+| **Understanding MVP priorities** | `docs/project-management/mvp-prioritization-guide.md` | What to ship for MVP vs. post-launch |
 | **Implementing a page** | `docs/pages/[page-name].md` | **Complete page spec with all stories, wireframe requirements, and completion criteria** |
 | Understanding page-based strategy | `docs/implementation-strategy.md` | Comprehensive guide to page-based implementation |
 | Implementing a story | `docs/stories/[story-name].md` | Detailed spec with acceptance criteria |
