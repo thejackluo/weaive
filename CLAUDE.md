@@ -180,6 +180,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 cd weave-mobile
 
+# IMPORTANT: After pulling new code, always sync dependencies first
+npm install
+
 # Start Expo dev server (most common)
 npm start
 
