@@ -193,6 +193,42 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
+// Mock @react-native-async-storage/async-storage
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    setItem: jest.fn(() => Promise.resolve()),
+    getItem: jest.fn(() => Promise.resolve(null)),
+    removeItem: jest.fn(() => Promise.resolve()),
+    multiSet: jest.fn(() => Promise.resolve()),
+    multiGet: jest.fn(() => Promise.resolve([])),
+    multiRemove: jest.fn(() => Promise.resolve()),
+    clear: jest.fn(() => Promise.resolve()),
+    getAllKeys: jest.fn(() => Promise.resolve([])),
+    mergeItem: jest.fn(() => Promise.resolve()),
+  },
+}));
+
+// Mock expo-file-system
+jest.mock('expo-file-system', () => ({
+  documentDirectory: 'file:///mock-document-directory/',
+  cacheDirectory: 'file:///mock-cache-directory/',
+  readAsStringAsync: jest.fn(() => Promise.resolve('')),
+  writeAsStringAsync: jest.fn(() => Promise.resolve()),
+  deleteAsync: jest.fn(() => Promise.resolve()),
+  moveAsync: jest.fn(() => Promise.resolve()),
+  copyAsync: jest.fn(() => Promise.resolve()),
+  makeDirectoryAsync: jest.fn(() => Promise.resolve()),
+  readDirectoryAsync: jest.fn(() => Promise.resolve([])),
+  getInfoAsync: jest.fn(() => Promise.resolve({ exists: true, isDirectory: false, size: 0 })),
+  uploadAsync: jest.fn(() => Promise.resolve({ status: 200 })),
+  downloadAsync: jest.fn(() => Promise.resolve({ uri: 'file:///mock-download.tmp' })),
+  EncodingType: {
+    UTF8: 'utf8',
+    Base64: 'base64',
+  },
+}));
+
 // Mock expo-av (audio recording)
 jest.mock('expo-av', () => ({
   Audio: {
