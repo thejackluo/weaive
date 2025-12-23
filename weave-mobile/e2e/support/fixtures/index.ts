@@ -4,7 +4,7 @@ import { GoalFactory } from './factories/goal.factory';
 
 /**
  * Base Test Fixture
- * 
+ *
  * Provides factories with auto-cleanup for Detox E2E tests
  */
 export class TestFixture {

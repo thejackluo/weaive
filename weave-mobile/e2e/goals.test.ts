@@ -6,7 +6,7 @@ describe('Goal Management', () => {
 
   beforeEach(async () => {
     fixture = await setupTest();
-    
+
     // Create and authenticate test user
     testUser = await fixture.userFactory.createUser();
     await element(by.id('email-input')).typeText(testUser.email);
@@ -29,7 +29,9 @@ describe('Goal Management', () => {
 
     // Fill in goal details
     await element(by.id('goal-title-input')).typeText('Learn TypeScript');
-    await element(by.id('goal-description-input')).typeText('Master TypeScript for better code quality');
+    await element(by.id('goal-description-input')).typeText(
+      'Master TypeScript for better code quality'
+    );
     await element(by.id('create-goal-button')).tap();
 
     // THEN: Goal appears in dashboard
