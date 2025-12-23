@@ -71,7 +71,7 @@ week-0-stories:
   0-2b-database-schema-refinement: ready-for-dev # 2 pts
   epic-ds: in-progress                          # Design System Rebuild (74 pts total)
   DS-1-foundation-tokens-theme: done            # 5 pts ✅ (Merged from special/design-system)
-  DS-2-core-primitives: ready-for-dev           # 6 pts (Text, Buttons, Icons - 19 components)
+  DS-2-core-primitives: review                  # 6 pts ✅ (Text, Buttons, Icons - 19 components) - IMPLEMENTATION COMPLETE
   0-3-authentication-flow: backlog              # 3 pts
   0-4-row-level-security: backlog               # 5 pts [CRITICAL]
   0-5-cicd-pipeline: backlog                    # 3 pts

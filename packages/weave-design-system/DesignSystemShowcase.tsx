@@ -1,21 +1,44 @@
 /**
  * Design System Showcase
  *
- * Starter showcase displaying tokens and theme system
- * Components will be added as they are implemented
+ * Complete visual showcase of DS-1 + DS-2:
+ * - DS-1: 273+ tokens, theme system, spring animations
+ * - DS-2: 19 core primitives (Text, Buttons, Icons)
  *
- * Story DS-1: 273+ tokens, theme system, spring animations
+ * Story DS-2 Complete
  */
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   View,
-  Text,
-  Pressable,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { ThemeProvider, useTheme } from './src/theme';
 import { colors, typography, spacing, borders, shadows } from './src/tokens';
+
+// Import DS-2 Components
+import {
+  Text,
+  AnimatedText,
+  Heading,
+  Title,
+  Subtitle,
+  Body,
+  BodySmall,
+  Caption,
+  Label,
+  Link,
+  Mono,
+  Button,
+  PrimaryButton,
+  SecondaryButton,
+  GhostButton,
+  DestructiveButton,
+  AIButton,
+  IconButton,
+  Icon,
+} from './src/components';
 
 /**
  * Design System Showcase Entry Point
@@ -30,6 +53,16 @@ export function DesignSystemShowcase() {
 
 function ShowcaseContent() {
   const { theme, mode, setTheme } = useTheme();
+  const [loading, setLoading] = useState(false);
+
+  const handlePress = (component: string) => {
+    Alert.alert('Button Pressed', `You pressed: ${component}`);
+  };
+
+  const handleLoadingDemo = () => {
+    setLoading(true);
+    setTimeout(() => setLoading(false), 2000);
+  };
 
   return (
     <ScrollView
@@ -41,94 +74,212 @@ function ShowcaseContent() {
     >
       {/* Header */}
       <View style={styles.section}>
-        <Text
-          style={[
-            styles.title,
-            { color: theme.colors.text.primary },
-            typography.display.lg,
-          ]}
-        >
+        <Heading level={1} color="text.primary">
           Weave Design System
-        </Text>
-        <Text
-          style={[
-            styles.subtitle,
-            { color: theme.colors.text.secondary },
-            typography.label.lg,
-          ]}
-        >
-          273+ Design Tokens • Story DS-1
-        </Text>
-        <Text
-          style={[
-            styles.subtitle,
-            { color: theme.colors.text.tertiary },
-            typography.label.md,
-          ]}
-        >
-          Components coming soon...
-        </Text>
+        </Heading>
+        <Caption color="text.secondary">
+          DS-1: 273+ Tokens • DS-2: 19 Components
+        </Caption>
       </View>
 
       {/* Theme Toggle */}
       <Section title="Theme System" theme={theme}>
-        <Pressable
+        <PrimaryButton
+          size="lg"
           onPress={() => setTheme(mode === 'dark' ? 'light' : 'dark')}
-          style={[
-            styles.button,
-            {
-              backgroundColor: theme.colors.accent.primary,
-              borderRadius: borders.componentRadius.button,
-              padding: spacing[3],
-            },
-            shadows.base,
-          ]}
+          fullWidth
         >
-          <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>
-            {mode === 'dark' ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
-          </Text>
-        </Pressable>
+          <Button.Icon name={mode === 'dark' ? 'sun' : 'moon'} />
+          <Button.Text>
+            {mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          </Button.Text>
+        </PrimaryButton>
       </Section>
 
-      {/* Color Tokens */}
+      {/* DS-2: Text Components */}
+      <Section title="Text Components (11)" theme={theme}>
+        <View style={styles.componentList}>
+          <Text variant="displayLg" color="text.primary">Display Large</Text>
+          <Text variant="displayMd" color="text.primary">Display Medium</Text>
+          <Text variant="displaySm" color="text.primary">Display Small</Text>
+          
+          <Title color="text.primary">Title (titleMd preset)</Title>
+          <Subtitle color="text.secondary">Subtitle (titleSm preset)</Subtitle>
+          
+          <Body color="text.primary">Body text (bodyMd) - The quick brown fox jumps over the lazy dog</Body>
+          <BodySmall color="text.secondary">Body Small (bodySm) - Metadata and supporting text</BodySmall>
+          
+          <Caption color="text.tertiary">Caption text for small labels</Caption>
+          <Label color="text.muted">LABEL TEXT UPPERCASE</Label>
+          
+          <Link href="#" color="text.link" onPress={() => handlePress('Link')}>
+            Interactive Link with Animation
+          </Link>
+          
+          <Mono variant="mono.md" color="text.primary">
+            Monospace: const x = 42;
+          </Mono>
+        </View>
+      </Section>
+
+      {/* DS-2: Animated Text */}
+      <Section title="Animated Text" theme={theme}>
+        <View style={styles.componentList}>
+          <AnimatedText animation="fadeIn" variant="titleLg" color="text.primary">
+            Fade In Animation
+          </AnimatedText>
+          <AnimatedText animation="slideUp" delay={200} variant="bodyLg" color="text.secondary">
+            Slide Up Animation (200ms delay)
+          </AnimatedText>
+        </View>
+      </Section>
+
+      {/* DS-2: Button Variants */}
+      <Section title="Button Variants (7)" theme={theme}>
+        <View style={styles.buttonGrid}>
+          <PrimaryButton size="md" onPress={() => handlePress('Primary')}>
+            <Button.Text>Primary Button</Button.Text>
+          </PrimaryButton>
+
+          <SecondaryButton size="md" onPress={() => handlePress('Secondary')}>
+            <Button.Icon name="settings" />
+            <Button.Text>Secondary</Button.Text>
+          </SecondaryButton>
+
+          <GhostButton size="md" onPress={() => handlePress('Ghost')}>
+            <Button.Text>Ghost Button</Button.Text>
+          </GhostButton>
+
+          <DestructiveButton size="md" onPress={() => handlePress('Destructive')}>
+            <Button.Icon name="trash-2" />
+            <Button.Text>Delete</Button.Text>
+          </DestructiveButton>
+
+          <AIButton size="md" onPress={() => handlePress('AI')}>
+            <Button.Icon name="sparkles" />
+            <Button.Text>Generate with AI</Button.Text>
+          </AIButton>
+        </View>
+      </Section>
+
+      {/* DS-2: Button Sizes */}
+      <Section title="Button Sizes" theme={theme}>
+        <View style={styles.buttonGrid}>
+          <PrimaryButton size="sm" onPress={() => handlePress('Small')}>
+            <Button.Text>Small</Button.Text>
+          </PrimaryButton>
+
+          <PrimaryButton size="md" onPress={() => handlePress('Medium')}>
+            <Button.Text>Medium</Button.Text>
+          </PrimaryButton>
+
+          <PrimaryButton size="lg" onPress={() => handlePress('Large')}>
+            <Button.Text>Large</Button.Text>
+          </PrimaryButton>
+        </View>
+      </Section>
+
+      {/* DS-2: Button States */}
+      <Section title="Button States" theme={theme}>
+        <View style={styles.buttonGrid}>
+          <PrimaryButton 
+            size="md" 
+            loading={loading}
+            onPress={handleLoadingDemo}
+          >
+            <Button.Text>
+              {loading ? 'Loading...' : 'Click to Load'}
+            </Button.Text>
+          </PrimaryButton>
+
+          <PrimaryButton size="md" disabled>
+            <Button.Text>Disabled Button</Button.Text>
+          </PrimaryButton>
+
+          <SecondaryButton size="md" fullWidth onPress={() => handlePress('Full Width')}>
+            <Button.Icon name="arrow-right" />
+            <Button.Text>Full Width Button</Button.Text>
+          </SecondaryButton>
+        </View>
+      </Section>
+
+      {/* DS-2: Icon Buttons */}
+      <Section title="Icon Buttons" theme={theme}>
+        <View style={styles.iconButtonRow}>
+          <IconButton 
+            icon="menu" 
+            variant="primary" 
+            size="sm" 
+            onPress={() => handlePress('Menu')} 
+          />
+          <IconButton 
+            icon="search" 
+            variant="primary" 
+            size="md" 
+            onPress={() => handlePress('Search')} 
+          />
+          <IconButton 
+            icon="settings" 
+            variant="primary" 
+            size="lg" 
+            onPress={() => handlePress('Settings')} 
+          />
+          <IconButton 
+            icon="heart" 
+            variant="secondary" 
+            size="md" 
+            onPress={() => handlePress('Favorite')} 
+          />
+          <IconButton 
+            icon="bell" 
+            variant="ghost" 
+            size="md" 
+            onPress={() => handlePress('Notifications')} 
+          />
+          <IconButton 
+            icon="trash-2" 
+            variant="destructive" 
+            size="md" 
+            onPress={() => handlePress('Delete')} 
+          />
+        </View>
+      </Section>
+
+      {/* DS-2: Icons */}
+      <Section title="Icon Gallery (100+ Available)" theme={theme}>
+        <View style={styles.iconGrid}>
+          <IconDemo icon="sparkles" label="sparkles" theme={theme} />
+          <IconDemo icon="heart" label="heart" theme={theme} />
+          <IconDemo icon="star" label="star" theme={theme} />
+          <IconDemo icon="target" label="target" theme={theme} />
+          <IconDemo icon="zap" label="zap" theme={theme} />
+          <IconDemo icon="home" label="home" theme={theme} />
+          <IconDemo icon="search" label="search" theme={theme} />
+          <IconDemo icon="settings" label="settings" theme={theme} />
+          <IconDemo icon="user" label="user" theme={theme} />
+          <IconDemo icon="bell" label="bell" theme={theme} />
+          <IconDemo icon="calendar" label="calendar" theme={theme} />
+          <IconDemo icon="clock" label="clock" theme={theme} />
+          <IconDemo icon="mail" label="mail" theme={theme} />
+          <IconDemo icon="phone" label="phone" theme={theme} />
+          <IconDemo icon="camera" label="camera" theme={theme} />
+          <IconDemo icon="mic" label="mic" theme={theme} />
+        </View>
+      </Section>
+
+      {/* DS-1: Color Tokens */}
       <Section title="Color Tokens (273+)" theme={theme}>
         <View style={styles.grid}>
           <ColorSwatch label="Primary" color={theme.colors.accent.primary} />
           <ColorSwatch label="Amber" color={theme.colors.accent.amber} />
           <ColorSwatch label="Violet" color={theme.colors.accent.violet} />
-          <ColorSwatch label="Text Primary" color={theme.colors.text.primary} />
-          <ColorSwatch label="Text Secondary" color={theme.colors.text.secondary} />
           <ColorSwatch label="Success" color={colors.success[500]} />
           <ColorSwatch label="Warning" color={colors.warning[500]} />
           <ColorSwatch label="Error" color={colors.error[500]} />
         </View>
       </Section>
 
-      {/* Typography Scale */}
-      <Section title="Typography Tokens (45+)" theme={theme}>
-        <View style={styles.typographyList}>
-          <Text style={[{ color: theme.colors.text.primary }, typography.display.lg]}>
-            Display Large
-          </Text>
-          <Text style={[{ color: theme.colors.text.primary }, typography.display.sm]}>
-            Display Small
-          </Text>
-          <Text style={[{ color: theme.colors.text.primary }, typography.label.lg]}>
-            Label Large - The quick brown fox jumps over the lazy dog
-          </Text>
-          <Text style={[{ color: theme.colors.text.secondary }, typography.label.md]}>
-            Label Medium - The quick brown fox jumps over the lazy dog
-          </Text>
-          <Text style={[{ color: theme.colors.text.tertiary }, typography.label.sm]}>
-            Label Small - Metadata and tags
-          </Text>
-          <Text style={[{ color: theme.colors.text.muted }, typography.mono.md]}>
-            Mono Medium - 0123456789
-          </Text>
-        </View>
-      </Section>
-
-      {/* Spacing Scale */}
+      {/* DS-1: Spacing Scale */}
       <Section title="Spacing Tokens (25+)" theme={theme}>
         <View style={styles.spacingList}>
           {[1, 2, 3, 4, 6, 8, 12, 16].map((size) => (
@@ -141,60 +292,15 @@ function ShowcaseContent() {
                   borderRadius: borders.radius.sm,
                 }}
               />
-              <Text style={[styles.spacingLabel, { color: theme.colors.text.secondary }]}>
+              <Caption color="text.secondary">
                 spacing[{size}] = {spacing[size as keyof typeof spacing]}px
-              </Text>
+              </Caption>
             </View>
           ))}
         </View>
       </Section>
 
-      {/* Border Radius */}
-      <Section title="Border Tokens (20+)" theme={theme}>
-        <View style={styles.grid}>
-          {Object.entries(borders.radius).slice(0, 6).map(([key, value]) => (
-            <View key={key} style={styles.radiusItem}>
-              <View
-                style={{
-                  width: 80,
-                  height: 80,
-                  backgroundColor: theme.colors.accent.violet,
-                  borderRadius: value,
-                }}
-              />
-              <Text style={[styles.radiusLabel, { color: theme.colors.text.tertiary }]}>
-                {key}: {value}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </Section>
-
-      {/* Shadow Effects */}
-      <Section title="Shadow Tokens (35+)" theme={theme}>
-        <View style={styles.shadowList}>
-          {(['sm', 'base', 'md', 'lg', 'xl'] as const).map((size) => (
-            <View
-              key={size}
-              style={[
-                styles.shadowBox,
-                {
-                  backgroundColor: theme.colors.bg.secondary,
-                  borderRadius: borders.componentRadius.card,
-                  padding: spacing[4],
-                },
-                shadows[size],
-              ]}
-            >
-              <Text style={[styles.shadowLabel, { color: theme.colors.text.primary }]}>
-                Shadow {size}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </Section>
-
-      {/* Status Info */}
+      {/* Status Summary */}
       <View
         style={[
           styles.infoCard,
@@ -207,22 +313,19 @@ function ShowcaseContent() {
           },
         ]}
       >
-        <Text style={[styles.infoTitle, { color: theme.colors.text.primary }]}>
-          🚧 Components Coming Soon
-        </Text>
-        <Text style={[styles.infoText, { color: theme.colors.text.secondary }]}>
-          This showcase currently displays the design token foundation (273+ tokens).
+        <Title color="text.primary">✅ DS-2 Complete</Title>
+        <Body color="text.secondary">
+          All 19 core primitive components are now implemented and ready to use:
           {'\n\n'}
-          Components will be added progressively:
-          {'\n'}• Buttons (7 variants)
-          {'\n'}• Cards (4 variants)
-          {'\n'}• Inputs (10 types)
-          {'\n'}• Badges (6 types)
-          {'\n'}• Animations (Spring physics)
-        </Text>
+          • Text Components (11): Text, AnimatedText, Heading, Title, Subtitle, Body, BodySmall, Caption, Label, Link, Mono
+          {'\n'}• Button Components (7): Button, Primary, Secondary, Ghost, Destructive, AI, IconButton
+          {'\n'}• Icon Component (1): Icon (100+ Lucide icons)
+          {'\n\n'}
+          Next: DS.3 (Form Components), DS.4 (Cards & Badges), DS.5 (Overlays)
+        </Body>
       </View>
 
-      <View style={{ height: 40 }} />
+      <View style={{ height: 80 }} />
     </ScrollView>
   );
 }
@@ -238,16 +341,10 @@ function Section({
   theme: any;
 }) {
   return (
-    <View style={[styles.section, { marginBottom: spacing[8] }]}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          { color: theme.colors.text.primary },
-          typography.display.xs,
-        ]}
-      >
+    <View style={[styles.section, { marginBottom: spacing[6] }]}>
+      <Subtitle color="text.primary" style={{ marginBottom: spacing[3] }}>
         {title}
-      </Text>
+      </Subtitle>
       {children}
     </View>
   );
@@ -265,9 +362,16 @@ function ColorSwatch({ label, color }: { label: string; color: string }) {
           },
         ]}
       />
-      <Text style={[styles.swatchLabel, { color: colors.dark[400] }]}>
-        {label}
-      </Text>
+      <Caption color="text.tertiary">{label}</Caption>
+    </View>
+  );
+}
+
+function IconDemo({ icon, label, theme }: { icon: string; label: string; theme: any }) {
+  return (
+    <View style={styles.iconItem}>
+      <Icon name={icon} size="lg" color="text.primary" />
+      <Caption color="text.tertiary">{label}</Caption>
     </View>
   );
 }
@@ -277,24 +381,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
-  title: {
-    marginBottom: 8,
+  componentList: {
+    gap: 16,
   },
-  subtitle: {
-    marginBottom: 4,
+  buttonGrid: {
+    gap: 12,
   },
-  sectionTitle: {
-    marginBottom: 16,
+  iconButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    flexWrap: 'wrap',
   },
-  button: {
+  iconGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  iconItem: {
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    fontWeight: '600',
-    fontSize: 16,
+    width: 80,
+    gap: 8,
   },
   grid: {
     flexDirection: 'row',
@@ -310,13 +418,6 @@ const styles = StyleSheet.create({
     height: 64,
     marginBottom: 8,
   },
-  swatchLabel: {
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  typographyList: {
-    gap: 16,
-  },
   spacingList: {
     gap: 12,
   },
@@ -325,38 +426,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  spacingLabel: {
-    fontSize: 14,
-  },
-  radiusItem: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  radiusLabel: {
-    fontSize: 12,
-  },
-  shadowList: {
-    gap: 16,
-  },
-  shadowBox: {
-    minHeight: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  shadowLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
   infoCard: {
     marginTop: 24,
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  infoText: {
-    fontSize: 14,
-    lineHeight: 22,
   },
 });
