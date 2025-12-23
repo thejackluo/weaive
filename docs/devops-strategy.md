@@ -605,16 +605,55 @@ medium_alerts:
 
 **Backend Rollback (Railway):**
 
+#### Automatic Rollback (Railway Default)
+Railway automatically rolls back if:
+- Health check fails 3 times consecutively
+- Deployment crashes within 5 minutes of start
+
+#### Manual Rollback (Via Railway CLI)
 ```bash
-# Method 1: Redeploy previous commit
+# List recent deployments
+railway deployments
+
+# Rollback to specific deployment
+railway deployment rollback <deployment-id>
+
+# Verify rollback succeeded
+curl https://weave-api-production.railway.app/health
+```
+
+#### Manual Rollback (Via Railway Dashboard)
+1. Go to https://railway.app/dashboard
+2. Select `weave-api-production` project
+3. Click "Deployments" tab
+4. Find previous successful deployment
+5. Click "Redeploy" on that deployment
+6. Confirm rollback
+
+#### Git-Based Rollback
+```bash
+# Method 1: Revert commit and trigger auto-deploy
 git revert HEAD
-git push origin main  # Triggers auto-deploy
+git push origin main  # Triggers GitHub Actions → Railway deploy
 
-# Method 2: Railway CLI
-railway rollback  # Rolls back to previous deployment
+# Method 2: Manual deployment of previous commit
+git checkout <previous-commit-sha>
+railway up
+```
 
-# Method 3: Railway Dashboard
-# Deployments → Select previous deployment → Redeploy
+**Health Check Verification:**
+After any rollback, verify the health endpoint:
+```bash
+curl https://weave-api-production.railway.app/health
+
+# Expected response:
+{
+  "status": "healthy",
+  "service": "weave-api",
+  "database": "connected",
+  "timestamp": "2025-12-23T...",
+  ...
+}
 ```
 
 **Database Rollback:**
