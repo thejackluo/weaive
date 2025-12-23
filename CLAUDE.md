@@ -33,7 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **Navigation/Screens** (any UI screen) | **Story 1.5.1: Navigation Patterns** | `docs/stories/1-5-1-navigation-architecture.md` |
 | **API Endpoints** (FastAPI routes) | **Story 1.5.2: Backend Patterns** | `docs/stories/1-5-2-backend-standardization.md` |
 | **Database Models** (Supabase tables) | **Story 1.5.2: Backend Patterns** | `docs/stories/1-5-2-backend-standardization.md` |
-| **AI Services** (text/image/audio AI) | **Story 1.5.3: AI Service Patterns** | `docs/stories/1-5-3-ai-services-standardization.md` |
+| **AI Services** (text/image/audio AI) | **Story 1.5.3: AI Module Orchestration** | `docs/stories/1-5-3-ai-module-orchestration.md` |
 
 ### Story 1.5.1: Navigation/Frontend Patterns
 
@@ -61,6 +61,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Use when:** Creating API endpoints, database models, or backend services
 
 **Standards Include:**
+- ✅ **JWT Authentication** - ALL protected endpoints MUST use `Depends(get_current_user)` (Story 0.3)
 - ✅ API endpoint naming (`GET /api/goals`, `POST /api/completions`)
 - ✅ Pydantic request/response models (`{Resource}Create`, `{Resource}Response`)
 - ✅ Database model conventions (`snake_case`, plural tables, soft delete)
@@ -69,12 +70,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ Service layer decision tree (when to create services vs inline logic)
 
 **Quick Checklist:**
+- [ ] **USE `user: dict = Depends(get_current_user)` for ALL protected endpoints**
+- [ ] Extract user ID: `auth_user_id = user["sub"]`
 - [ ] Use `snake_case` for all API params and DB columns
 - [ ] Follow REST naming: `GET /api/{resources}`, `POST /api/{resources}`
 - [ ] Use `{data, meta}` response wrapper format
 - [ ] Create Pydantic models: `{Resource}Create`, `{Resource}Response`
 - [ ] Add error handling with standard codes (`VALIDATION_ERROR`, `NOT_FOUND`, etc.)
 - [ ] Write pytest tests in `tests/test_{resource}_api.py`
+
+**❌ NEVER use placeholder auth:** `auth_user_id = "placeholder_auth_user_id"` is a **CRITICAL SECURITY VULNERABILITY**
 
 **Templates Available:**
 - API endpoint template (FastAPI router with auth, validation, error handling)
@@ -86,40 +91,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-### Story 1.5.3: AI Services Patterns
+### Story 1.5.3: AI Module Orchestration
 
-**Use when:** Integrating AI features (text generation, image analysis, voice transcription)
+**Use when:** Implementing AI features (goal breakdown, triad planning, AI chat, insights)
+
+**Architecture:** Creates **AI Module Orchestration Layer** on top of existing provider infrastructure (Stories 0.6, 0.9)
+
+```
+Request → AIOrchestrator (NEW - which product module?)
+       → AIModule (NEW - what context to build?)
+       → AIService (EXISTS - which AI provider?)
+       → AIProvider (EXISTS - API call implementation)
+```
 
 **Standards Include:**
-- ✅ Unified `AIProviderBase` abstraction for all AI modalities
-- ✅ Text AI patterns (OpenAI GPT-4o-mini, Claude 3.7 Sonnet fallback)
-- ✅ Image AI patterns (Gemini 3.0 Flash, GPT-4o Vision fallback)
-- ✅ Audio AI patterns (AssemblyAI, Whisper API fallback)
-- ✅ Cost tracking (log to `ai_runs` table with tokens, cost, duration)
-- ✅ Rate limiting (10 text calls/hr, 5 image analyses/day, 50 transcriptions/day)
-- ✅ React Native hooks for AI services
+- ✅ AI Module abstraction (5 product modules: Onboarding Coach, Triad Planner, Daily Recap, Dream Self Advisor, AI Insights Engine)
+- ✅ AIOrchestrator for request routing (maps operation types to modules)
+- ✅ ContextBuilder for user state assembly (identity, goals, history, patterns)
+- ✅ Module Registry pattern (operation → module mapping)
+- ✅ React Native hooks: `useAIChat()`, `useImageAnalysis()`, `useVoiceTranscription()`
+- ✅ Integration with existing AIService (cost tracking, rate limiting, fallback chains)
 
 **Quick Checklist:**
-- [ ] Use `AIProviderBase` abstract class for new AI providers
-- [ ] Implement fallback chain (Primary → Secondary → Graceful degradation)
-- [ ] Log ALL AI calls to `ai_runs` table (cost tracking)
-- [ ] Check rate limits before AI calls (use `daily_aggregates` table)
-- [ ] Use standard React hooks:
-  - `useAIChat()` for text AI
-  - `useImageAnalysis()` for image AI
-  - `useVoiceTranscription()` for audio AI
-- [ ] Handle errors with standard loading states ("Generating...", "Analyzing...")
+- [ ] Use `AIOrchestrator.execute_ai_operation()` for all AI requests
+- [ ] Specify operation_type (e.g., 'generate_goal_breakdown', 'chat_response')
+- [ ] Let module build context automatically (don't manually assemble)
+- [ ] Use standard React hooks for frontend
+- [ ] DO NOT bypass orchestrator to call AIService directly
 
-**Provider Decision Tree:**
-| Use Case | Primary Provider | Fallback | Cost |
-|----------|------------------|----------|------|
-| **Text Generation** (Triad, Journal feedback) | GPT-4o-mini | Claude 3.7 Sonnet | $0.15/$0.60 per MTok |
-| **Complex Reasoning** (Onboarding, Dream Self) | Claude 3.7 Sonnet | GPT-4o | $3.00/$15.00 per MTok |
-| **Image Analysis** (Proof validation, OCR) | Gemini 3.0 Flash | GPT-4o Vision | $0.02/image |
-| **Voice Transcription** (STT) | AssemblyAI | Whisper API | $0.15/hr |
+**Module → Operation Mapping:**
+| Operation Type | Module | Epic/Story Usage |
+|----------------|--------|------------------|
+| `generate_goal_breakdown` | Onboarding Coach | Stories 1.8, 2.3 |
+| `generate_triad` | Triad Planner | Story 4.3 |
+| `generate_recap` | Daily Recap | Story 4.3 |
+| `chat_response` | Dream Self Advisor | Stories 6.1, 6.2 |
+| `generate_weekly_insights` | AI Insights Engine | Story 6.4 |
 
-**Full Spec:** `docs/stories/1-5-3-ai-services-standardization.md`
-**Developer Guide:** `docs/dev/ai-services-guide.md` (created by Story 1.5.3)
+**Full Spec:** `docs/stories/1-5-3-ai-module-orchestration.md`
+**Developer Guide:** `docs/dev/ai-services-guide.md` (sections 8-11 for module orchestration)
 
 ---
 
@@ -149,10 +159,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### ❌ What NOT to Do
 
 **DON'T:**
+- ❌ **Use placeholder authentication** - `auth_user_id = "placeholder_..."` is a CRITICAL security vulnerability
+- ❌ Skip JWT middleware (ALWAYS use `Depends(get_current_user)` for protected endpoints)
 - ❌ Create custom navigation patterns (use Story 1.5.1 structure)
 - ❌ Invent new API response formats (use `{data, meta}` wrapper)
 - ❌ Skip error handling (use standard error codes)
-- ❌ Create new AI provider patterns (use `AIProviderBase` abstraction)
+- ❌ Bypass AIOrchestrator to call AIService directly (use module orchestration pattern)
 - ❌ Ignore rate limiting (check `daily_aggregates` before AI calls)
 - ❌ Use different naming conventions (follow `snake_case` DB, `camelCase` TS)
 
@@ -168,7 +180,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Navigation Patterns:** `docs/stories/1-5-1-navigation-architecture.md`
 - **Backend Patterns:** `docs/stories/1-5-2-backend-standardization.md` + `docs/dev/backend-patterns-guide.md`
-- **AI Service Patterns:** `docs/stories/1-5-3-ai-services-standardization.md` + `docs/dev/ai-services-guide.md`
+- **API Endpoint Registry:** `docs/dev/backend-api-integration.md` ⚡ NEW (28 endpoints mapped)
+- **AI Module Orchestration:** `docs/stories/1-5-3-ai-module-orchestration.md` + `docs/dev/ai-services-guide.md`
 - **Architecture Rules:** `docs/architecture/implementation-patterns-consistency-rules.md`
 
 ---
@@ -377,6 +390,90 @@ Claude: [Implements using design system, following both wireframe AND page doc c
 **Priority:** Ship complete pages that match wireframes AND meet all acceptance criteria
 
 **Page Documentation:** See `docs/pages/` for detailed page specs and `docs/implementation-strategy.md` for comprehensive guide
+
+---
+
+### ✅ Thread Page Implementation (Epic 3 + 4)
+
+**Status:** ✅ **COMPLETED** in `thread-flow` branch (ready for merge to main)
+
+**What Was Implemented:**
+
+#### Backend (weave-api/)
+- ✅ **Binds API Router** (`app/api/binds/router.py`)
+  - `GET /api/binds/today` - Fetch today's binds with needle context and completion status
+  - `POST /api/binds/{bind_id}/complete` - Mark bind as complete with optional notes/timer
+  - Auto-creates user profiles if missing (handles OAuth edge case)
+  - Follows RLS security pattern (auth.uid() → user_profiles → subtask_instances)
+
+- ✅ **Enhanced Journal API** (`app/api/journal_router.py`)
+  - Better error handling for missing user profiles
+  - Improved reflection submission flow
+
+- ✅ **Database Migrations**
+  - `20251222180000_add_notes_to_completions.sql` - Added optional notes field to completions
+  - RLS policies validated and tested
+
+- ✅ **Test User Setup Script** (`scripts/setup_test_user.py`)
+  - Reusable script to mark test users as onboarding_completed
+
+#### Frontend (weave-mobile/)
+- ✅ **Thread Home Screen** (`src/screens/ThreadHomeScreen.tsx`)
+  - Shows today's binds grouped by needle (goal)
+  - Displays completion status, timer badges, proof indicators
+  - Quick journal reflection prompt at bottom
+  - Uses mock data for development (API integration ready)
+
+- ✅ **Bind Completion Flow** (`src/screens/BindScreen.tsx`)
+  - Full bind detail screen with timer, photo capture, notes
+  - **Pomodoro Timer** (`src/components/thread/PomodoroTimer.tsx`) - 25/15/5 min presets
+  - **Completion Celebration** (`src/components/thread/CompletionCelebration.tsx`) - Animated success screen
+  - Navigation back to Thread home after completion
+
+- ✅ **Thread-Specific Components**
+  - `src/components/thread/BindItem.tsx` - Individual bind card
+  - `src/components/thread/NeedleCard.tsx` - Goal header card with emoji + title
+  - Mock data in `src/data/mockThreadData.ts` for testing
+
+- ✅ **API Integration**
+  - `src/services/binds.ts` - Binds API client
+  - `src/hooks/useTodayBinds.ts` - TanStack Query hook for fetching binds
+  - `src/hooks/useCompleteBind.ts` - Mutation hook for completing binds
+  - Follows standard patterns (same structure as goals.ts)
+
+- ✅ **Routing Updates**
+  - `app/(tabs)/index.tsx` now redirects to ThreadHomeScreen
+  - New routes: `app/(tabs)/binds/[id].tsx` for bind detail screen
+  - Settings dev tools added (`app/(tabs)/settings/dev-tools.tsx`)
+
+**Testing Status:**
+- ✅ Backend tests: All passing (pytest)
+- ✅ Backend linting: Clean (ruff)
+- ⚠️ Mobile tests: 68 passing, 13 failing (VoiceRecorder - pre-existing, unrelated to thread-flow)
+- ✅ Mobile linting: Clean (eslint + prettier)
+
+**Key Features:**
+- Daily action loop: "What should I do today?" answered in Thread tab
+- Bind completion with optional timer, photo proof, notes
+- Celebration animation on completion
+- Journal reflection prompt integration
+- Mock data for independent frontend development
+
+**API Endpoints:**
+```typescript
+GET  /api/binds/today          // Today's binds (Epic 3.1)
+POST /api/binds/{id}/complete  // Complete bind (Epic 3.2)
+GET  /api/journal/today         // Journal reflection (Epic 4.1)
+POST /api/journal/submit        // Submit reflection (Epic 4.2)
+```
+
+**Next Steps After Merge:**
+1. Replace mock data with live API calls (already wired up, just toggle in ThreadHomeScreen)
+2. Add tests for new components (BindScreen, ThreadHomeScreen)
+3. Implement proof photo validation (Epic 3.3 - optional)
+4. Add push notifications for reflection time (Epic 4.3)
+
+---
 
 ## Project Structure (Current Reality)
 

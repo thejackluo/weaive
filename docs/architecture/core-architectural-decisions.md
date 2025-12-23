@@ -716,140 +716,430 @@ OPENAI_API_KEY=your_gpt4o_fallback_key  # Already configured
 
 ---
 
-## Unified AI Service Architecture (Story 1.5.3)
+## AI Module Orchestration Architecture (Story 1.5.3)
 
-**Purpose:** Standardize AI integrations across text, image, and audio modalities with consistent patterns for provider abstraction, cost tracking, and error handling.
+**Purpose:** Create product module orchestration layer on top of existing AI provider infrastructure, enabling feature-specific AI workflows with context-aware calls.
 
-### AIProviderBase Abstraction
+**Story Reference:** `docs/stories/1-5-3-ai-module-orchestration.md` (4-5 story points)
 
-**Pattern:** All AI providers (text/image/audio) inherit from single `AIProviderBase` abstract class.
+### Architectural Overview
 
-**Architecture:**
+Story 1.5.3 creates a **NEW orchestration layer** that sits above existing provider infrastructure:
+
+```
+Request Flow:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Request → AIOrchestrator (NEW - which product module?)
+         → AIModule (NEW - what context to build?)
+         → AIService (EXISTS - which AI provider?)
+         → AIProvider (EXISTS - API call implementation)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Separation of Concerns:**
+- **AIOrchestrator** (NEW): Routes requests to product modules
+- **AIModules** (NEW): Build context and implement product features
+- **AIService** (EXISTS): Routes to AI providers with rate limiting, cost tracking, fallback
+- **AIProviders** (EXISTS): Implement API calls to OpenAI, Anthropic, Gemini
+
+### Existing Infrastructure (Stories 0.6, 0.9)
+
+**Already Implemented - DO NOT DUPLICATE:**
+
+1. **AIProvider Base Class** (`weave-api/app/services/ai/base.py`)
+   ```python
+   class AIProvider(ABC):
+       def complete(self, prompt: str, model: str, **kwargs) -> AIResponse:
+           """Generate AI completion."""
+           pass
+
+       def count_tokens(self, text: str, model: str) -> int:
+           """Count tokens for cost estimation."""
+           pass
+
+       def estimate_cost(self, input_tokens: int, output_tokens: int, model: str) -> float:
+           """Calculate USD cost."""
+           pass
+   ```
+
+2. **AIService Orchestrator** (`weave-api/app/services/ai/ai_service.py`)
+   - 4-tier fallback chain (Bedrock → OpenAI → Anthropic → Deterministic)
+   - 24-hour caching with input_hash
+   - Dual cost tracking (application-wide + per-user)
+   - Role-based rate limiting (admin unlimited, paid 10/hour, free 10/day)
+   - Budget enforcement with auto-throttle
+   - Comprehensive logging to `ai_runs` table
+
+3. **Six AI Providers Implemented:**
+   - `BedrockProvider` - AWS Bedrock text generation
+   - `OpenAIProvider` - GPT-4o/GPT-4o-mini
+   - `AnthropicProvider` - Claude 3.7 Sonnet/Haiku
+   - `DeterministicProvider` - Template fallback
+   - `GeminiVisionProvider` - Image analysis (Story 0.9)
+   - `OpenAIVisionProvider` - Vision fallback (Story 0.9)
+
+### New AI Module Layer (Story 1.5.3)
+
+**AIModuleBase - Product Feature Abstraction:**
+
 ```python
-# weave-api/app/services/ai_provider_base.py
+# weave-api/app/services/ai/ai_module_base.py
 from abc import ABC, abstractmethod
+from app.services.ai import AIService  # Use existing service
 
-class AIProviderBase(ABC):
+class AIModuleBase(ABC):
+    """
+    Base class for all AI product modules.
+
+    Modules represent product features (Onboarding Coach, Triad Planner, etc.)
+    that use existing AIService for provider orchestration.
+    """
+
+    def __init__(self, ai_service: AIService, context_builder):
+        self.ai_service = ai_service  # Use existing service
+        self.context_builder = context_builder
+
     @abstractmethod
-    async def call_ai(self, input: dict, context: dict) -> dict:
-        """Execute AI call with provider-specific logic."""
+    def get_module_name(self) -> str:
+        """Return module identifier (e.g., 'onboarding_coach')."""
         pass
 
     @abstractmethod
-    def estimate_cost(self, input: dict) -> float:
-        """Estimate cost before making call."""
+    async def execute(self, user_id: str, operation_type: str, params: dict) -> dict:
+        """
+        Execute AI module operation.
+
+        Flow:
+        1. Build context using ContextBuilder
+        2. Call existing AIService.generate()
+        3. Parse and validate output
+        """
         pass
-
-    @abstractmethod
-    def get_provider_name(self) -> str:
-        """Return provider identifier (e.g., 'gpt-4o-mini', 'gemini-3-flash')."""
-        pass
-
-    async def log_to_ai_runs(self, operation_type: str, input_tokens: int,
-                             output_tokens: int, cost_usd: float, duration_ms: int):
-        """Unified cost tracking to ai_runs table."""
-        # Common implementation for all providers
-
-    async def check_rate_limit(self, user_id: UUID, operation_type: str):
-        """Check daily_aggregates before AI call."""
-        # Common implementation for all providers
 ```
 
-### Provider Fallback Pattern
+**Five Product Modules Implemented:**
 
-**Standard Fallback Chain:**
-```
-1. Primary Provider (cost-optimized)
-   ↓ (timeout/error)
-2. Secondary Provider (quality-optimized)
-   ↓ (timeout/error)
-3. Graceful Degradation (return None or cached/default response)
-```
+| Module | Purpose | Epic/Story Usage |
+|--------|---------|------------------|
+| **Onboarding Coach** | Goal breakdown from vague input | Stories 1.8, 2.3 |
+| **Triad Planner** | Generate tomorrow's 3-task plan | Story 4.3 |
+| **Daily Recap** | AI feedback after reflection | Story 4.3 |
+| **Dream Self Advisor** | Conversational AI coaching | Stories 6.1, 6.2 |
+| **AI Insights Engine** | Weekly pattern analysis | Story 6.4 |
 
-**Implementation:**
-```python
-async def call_with_fallback(input: dict, context: dict):
-    try:
-        return await primary_provider.call_ai(input, context)
-    except Exception as e:
-        logger.warning(f"Primary provider failed: {e}")
-        try:
-            return await secondary_provider.call_ai(input, context)
-        except Exception as e2:
-            logger.error(f"Secondary provider failed: {e2}")
-            return graceful_degradation_response()
-```
-
-### Unified Cost Tracking
-
-**Pattern:** ALL AI calls log to `ai_runs` table with consistent schema:
+**Module Example:**
 
 ```python
-# Common fields for all AI modalities
-await log_to_ai_runs(
-    operation_type="text_generation" | "image_analysis" | "transcription",
-    provider="gpt-4o-mini" | "gemini-3-flash" | "assemblyai",
-    input_tokens=500,      # or image_count, audio_duration_sec
-    output_tokens=200,     # or null for non-text
-    model="gpt-4o-mini-2024-07-18",
-    cost_usd=0.0025,       # Calculated per-provider pricing
-    duration_ms=1200
-)
+class OnboardingCoachModule(AIModuleBase):
+    """Epic 1, Story 1.8: Generate goal breakdown from vague input."""
+
+    def get_module_name(self) -> str:
+        return "onboarding_coach"
+
+    async def execute(self, user_id: str, operation_type: str, params: dict) -> dict:
+        # 1. Build minimal context (onboarding needs less)
+        context = await self.build_context(user_id, operation_type)
+
+        # 2. Call existing AIService (not a new provider)
+        response: AIResponse = self.ai_service.generate(
+            user_id=user_id,
+            user_role=context.get('role', 'user'),
+            user_tier=context.get('tier', 'free'),
+            module=self.get_module_name(),
+            prompt=self._build_prompt(params, context)
+        )
+
+        # 3. Parse and validate
+        parsed = self._parse_goal_breakdown(response.content)
+        await self.validate_output(parsed)
+
+        return parsed
 ```
 
-### Unified Rate Limiting
+### AIOrchestrator - Request Router
 
-**Pattern:** Check `daily_aggregates` table before ALL AI calls:
+```python
+# weave-api/app/services/ai/ai_orchestrator.py
+class AIOrchestrator:
+    """
+    Routes requests to product modules.
 
-| AI Modality | Rate Limit Column | Limit |
-|-------------|-------------------|-------|
-| Text Generation | `ai_text_count` | 10 calls/hour |
-| Image Analysis | `ai_vision_count` | 5 analyses/day |
-| Voice Transcription | `transcription_count` | 50 transcriptions/day |
+    Does NOT duplicate existing AIService functionality:
+    - Rate limiting → handled by AIService
+    - Cost tracking → handled by AIService
+    - Fallback chains → handled by AIService
+    """
 
-**Enforcement:**
-- HTTP 429 response with `Retry-After` header
-- Error code: `RATE_LIMIT_EXCEEDED`
-- Message includes next reset time in user's timezone
+    def __init__(
+        self,
+        module_registry: AIModuleRegistry,
+        context_builder: ContextBuilder,
+        ai_service: AIService  # Use existing service
+    ):
+        self.module_registry = module_registry
+        self.context_builder = context_builder
+        self.ai_service = ai_service  # Delegate to existing infrastructure
 
-### React Native AI Hooks
+    async def execute_ai_operation(
+        self,
+        user_id: str,
+        operation_type: str,
+        params: dict
+    ) -> dict:
+        """
+        Execute AI operation by routing to correct module.
 
-**Standard Hooks for All Modalities:**
+        Flow:
+        1. Get module for operation_type (NEW)
+        2. Module builds context (NEW)
+        3. Module calls AIService.generate() (EXISTING)
+        4. AIService handles rate limiting, fallback, cost tracking (EXISTING)
+        5. Module parses and validates output (NEW)
+        """
 
+        # Get module
+        module = self.module_registry.get_module(operation_type)
+        if not module:
+            raise ValueError(f"No module registered for operation: {operation_type}")
+
+        # Execute module (module uses existing AIService internally)
+        result = await module.execute(user_id, operation_type, params)
+
+        return result
+```
+
+### ContextBuilder - User State Assembly
+
+```python
+# weave-api/app/services/ai/context_builder.py
+class ContextBuilder:
+    """
+    Assembles canonical user context for AI calls.
+
+    Different operations need different context:
+    - Onboarding: minimal (just user input)
+    - Triad: goals + history + journal
+    - Recap: today's completions + captures + journal
+    - Chat: full context (identity + goals + history + patterns)
+    - Insights: 30-day history + patterns
+    """
+
+    async def get_context(self, user_id: str, operation_type: str) -> dict:
+        """Build context based on operation type."""
+
+        if operation_type == "generate_goal_breakdown":
+            # Minimal context for onboarding
+            return {"identity": await self._get_identity_doc(user_id)}
+
+        elif operation_type == "generate_triad":
+            # Rich context for triad planning
+            return {
+                "goals": await self._get_active_goals(user_id),
+                "history": await self._get_recent_completions(user_id, days=7),
+                "journal": await self._get_recent_journals(user_id, days=3)
+            }
+
+        elif operation_type == "chat_response":
+            # Full context for Dream Self chat
+            return {
+                "identity": await self._get_identity_doc(user_id),
+                "goals": await self._get_active_goals(user_id),
+                "history": await self._get_recent_completions(user_id, days=7),
+                "journal": await self._get_recent_journals(user_id, days=7),
+                "patterns": await self._get_user_patterns(user_id)
+            }
+
+        # ... other operation types
+```
+
+### Module Registry Pattern
+
+```python
+# weave-api/app/services/ai/module_registry.py
+class AIModuleRegistry:
+    """Maps operation types to module instances."""
+
+    def get_module(self, operation_type: str) -> AIModuleBase:
+        """Get module for operation type."""
+
+        operation_module_map = {
+            'generate_goal_breakdown': 'onboarding_coach',
+            'create_identity_doc_v1': 'onboarding_coach',
+            'generate_triad': 'triad_planner',
+            'generate_recap': 'daily_recap',
+            'chat_response': 'dream_self_advisor',
+            'generate_weekly_insights': 'ai_insights'
+        }
+
+        module_name = operation_module_map.get(operation_type)
+        if not module_name:
+            raise ValueError(f"No module registered for operation: {operation_type}")
+
+        return self._modules.get(module_name)
+```
+
+### React Native Hooks
+
+**Existing Hooks (Story 6.1):**
+- ✅ `useAIChat()` - Text AI chat (already implemented)
+
+**New Hooks (Story 1.5.3):**
+- `useImageAnalysis()` - Image AI analysis
+- `useVoiceTranscription()` - Audio STT transcription
+
+**Standard Pattern:**
 ```typescript
-// Text AI
-const { generate, isGenerating, error } = useAIChat();
-const result = await generate({ prompt: "...", context: {...} });
+// weave-mobile/src/hooks/useImageAnalysis.ts
+export function useImageAnalysis() {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-// Image AI
-const { analyze, isAnalyzing, error } = useImageAnalysis();
-const result = await analyze({ imageUrl: "...", operations: [...] });
+  const analyze = async (options: ImageAnalysisOptions): Promise<ImageAnalysisResult> => {
+    setIsAnalyzing(true);
+    setError(null);
 
-// Audio AI
-const { transcribe, isTranscribing, error } = useVoiceTranscription();
-const result = await transcribe({ audioFile: blob, format: "m4a" });
+    try {
+      // Upload image to Supabase Storage
+      const imageUrl = await uploadImage(options.imageUrl);
+
+      // Call image analysis API (uses orchestrator internally)
+      const response = await apiClient.post('/api/ai/analyze-image', {
+        image_url: imageUrl,
+        operations: options.operations
+      });
+
+      return response.data.data;
+    } catch (err: any) {
+      if (err.response?.status === 429) {
+        setError('Daily image analysis limit reached (5/5). Resets at midnight.');
+      } else {
+        setError('Image analysis failed. Try again.');
+      }
+      throw err;
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  return { analyze, isAnalyzing, error };
+}
 ```
 
-**Loading States:**
-- Text: "Generating..."
-- Image: "Analyzing image..."
-- Audio: "Transcribing audio..."
+### FastAPI Integration
 
-**Error States:**
-- Provider failure: "AI service unavailable. Try again."
-- Rate limit: "Daily limit reached. Resets at midnight."
-- Network error: "No internet. Try again when online."
+```python
+# weave-api/app/main.py
+from app.services.ai import AIService  # Existing service
+from app.services.ai.ai_orchestrator import AIOrchestrator
+from app.services.ai.module_registry import AIModuleRegistry
+from app.services.ai.context_builder import ContextBuilder
+from app.services.ai.modules import (
+    OnboardingCoachModule,
+    TriadPlannerModule,
+    DailyRecapModule,
+    DreamSelfAdvisorModule,
+    AIInsightsModule
+)
+
+def create_app() -> FastAPI:
+    app = FastAPI()
+
+    # Initialize existing AIService
+    ai_service = AIService(
+        db=get_supabase_client(),
+        bedrock_region='us-east-1',
+        openai_key=os.getenv('OPENAI_API_KEY'),
+        anthropic_key=os.getenv('ANTHROPIC_API_KEY')
+    )
+
+    # Initialize context builder
+    context_builder = ContextBuilder(db=get_supabase_client())
+
+    # Initialize module registry
+    module_registry = AIModuleRegistry()
+
+    # Register modules
+    module_registry.register_module(OnboardingCoachModule(ai_service, context_builder))
+    module_registry.register_module(TriadPlannerModule(ai_service, context_builder))
+    module_registry.register_module(DailyRecapModule(ai_service, context_builder))
+    module_registry.register_module(DreamSelfAdvisorModule(ai_service, context_builder))
+    module_registry.register_module(AIInsightsModule(ai_service, context_builder))
+
+    # Initialize orchestrator
+    orchestrator = AIOrchestrator(
+        module_registry=module_registry,
+        context_builder=context_builder,
+        ai_service=ai_service  # Pass existing service
+    )
+
+    # Make available via dependency injection
+    app.state.ai_orchestrator = orchestrator
+
+    return app
+
+# Dependency function for routes
+def get_ai_orchestrator(request: Request) -> AIOrchestrator:
+    """Get AI orchestrator from app state."""
+    return request.app.state.ai_orchestrator
+```
+
+**Example API Endpoint:**
+
+```python
+# weave-api/app/api/goals_router.py
+@router.post("/api/goals")
+async def create_goal(
+    goal_data: GoalCreate,
+    user: User = Depends(get_current_user),
+    orchestrator: AIOrchestrator = Depends(get_ai_orchestrator)
+):
+    """Create new goal with AI breakdown."""
+
+    # Orchestrator handles: rate limits, module routing, context, logging
+    ai_result = await orchestrator.execute_ai_operation(
+        user_id=str(user.id),
+        operation_type="generate_goal_breakdown",
+        params={"title": goal_data.title, "description": goal_data.description}
+    )
+
+    # Use AI output to create goal
+    goal = Goal(
+        user_id=user.id,
+        title=goal_data.title,
+        q_goals=ai_result['q_goals'],
+        binds=ai_result['binds']
+    )
+
+    # Save to database...
+
+    return {"data": goal.to_dict()}
+```
 
 ### Complete Documentation
 
-**Developer Guides Created by Story 1.5.3:**
-- `docs/dev/ai-services-guide.md` - Comprehensive AI integration guide
-- Examples for all 3 modalities (text, image, audio)
-- Provider decision tree (when to use which provider)
-- Cost calculation formulas
-- Frontend hook usage patterns
+**Developer Guide:** `docs/dev/ai-services-guide.md`
 
-**Reference:** See Story 1.5.3 acceptance criteria for complete implementation details.
+**Sections:**
+1. Provider Abstraction (existing infrastructure)
+2. Text AI Patterns (existing)
+3. Image AI Patterns (existing)
+4. Audio AI Patterns (existing)
+5. Cost Tracking (existing)
+6. Rate Limiting (existing)
+7. Frontend Hooks (existing + new)
+8. Provider Decision Tree (existing)
+9. **AI Module Abstraction (NEW)**
+10. **AI Orchestrator (NEW)**
+11. **Context Builder Usage (NEW)**
+12. **Implementing New AI Modules (NEW)**
+
+**Integration with Epic 2-8:**
+- 15+ AI integrations use module orchestration pattern
+- Context building standardized (different operations need different data)
+- Module registry enables dynamic feature loading
+- Simplified Epic 2-8 implementation (use orchestrator, not raw AIService)
+
+**Reference:** See `docs/stories/1-5-3-ai-module-orchestration.md` for complete implementation details.
 
 ---
 
@@ -1840,6 +2130,123 @@ npx supabase db diff --linked
 
 **RTO (Recovery Time Objective):** < 15 minutes
 **RPO (Recovery Point Objective):** < 24 hours (daily backups)
+
+---
+
+### AI Module Orchestration Architecture
+
+**Added:** 2025-12-22 (Story 1.5.3 AC-9, AC-10)
+
+**Overview:**
+
+Weave AI system uses a modular architecture with 5 product modules orchestrated centrally. This separates:
+- **AI Providers** (HOW to call APIs): OpenAI, Anthropic, Gemini, AssemblyAI
+- **AI Modules** (WHAT product features): Onboarding, Triad, Recap, Dream Self, Insights
+
+**Architecture Diagram:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      API Endpoint Layer                          │
+│  POST /api/goals, POST /api/ai/recap, POST /api/ai/chat, etc.  │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      AI Orchestrator                             │
+│  - Route requests to correct module                              │
+│  - Enforce rate limiting                                         │
+│  - Log all AI calls to ai_runs                                   │
+│  - Coordinate Context Builder                                    │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│ Module        │  │ Context       │  │ Module        │
+│ Registry      │  │ Builder       │  │ Instances     │
+│               │  │               │  │               │
+│ operation →   │  │ Assemble:     │  │ 1. Onboarding │
+│ module map    │  │ - Identity    │  │ 2. Triad      │
+│               │  │ - Goals       │  │ 3. Recap      │
+│               │  │ - History     │  │ 4. Dream Self │
+│               │  │ - Metrics     │  │ 5. Insights   │
+└───────────────┘  └───────────────┘  └───────┬───────┘
+                                               │
+                            ┌──────────────────┘
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      AI Provider Layer                           │
+│  AIProviderBase → OpenAI, Anthropic, Gemini, AssemblyAI        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Components:**
+
+**1. AI Orchestrator** (`app/services/ai/ai_orchestrator.py`)
+- Central coordinator for all AI operations
+- Routes requests to appropriate module
+- Enforces rate limiting before execution
+- Logs all AI calls to `ai_runs` table
+- Handles fallback chains
+
+**2. Module Registry** (`app/services/ai/module_registry.py`)
+- Maps operation types to module instances
+- Example: `generate_triad` → Triad Planner module
+- Enables dynamic module loading
+
+**3. Context Builder** (`app/services/ai/context_builder.py`)
+- Assembles user context for AI calls
+- Operation-specific context (Triad needs different data than Chat)
+- Prevents redundant database queries
+
+**4. AI Modules** (5 total)
+- Inherit from `AIModuleBase`
+- Implement specific product features
+- Use AI providers through orchestrator
+
+**5 AI Modules:**
+
+| Module | Operations | Used In Stories |
+|--------|-----------|-----------------|
+| **Onboarding Coach** | `generate_goal_breakdown`, `create_identity_doc_v1` | 1.8, 2.3 |
+| **Triad Planner** | `generate_triad` | 4.3 |
+| **Daily Recap** | `generate_recap` | 4.3 |
+| **Dream Self Advisor** | `chat_response` | 6.1, 6.2 |
+| **AI Insights Engine** | `generate_weekly_insights` | 6.4 |
+
+**Benefits:**
+
+1. **Consistent Patterns:** All AI features use orchestrator (no direct provider calls)
+2. **Cost Tracking:** Automatic logging to `ai_runs` table
+3. **Rate Limiting:** Enforced centrally before module execution
+4. **Context Optimization:** Single fetch per operation (via Context Builder)
+5. **Maintainability:** Add new modules without changing orchestrator
+
+**Usage Example:**
+
+```python
+# API route using orchestrator
+from app.services.ai.ai_orchestrator import get_orchestrator
+
+@router.post("/api/goals")
+async def create_goal(goal_data: GoalCreate, user: User = Depends(get_current_user)):
+    orchestrator = get_orchestrator()
+
+    # Orchestrator handles: rate limits, module routing, context, logging
+    ai_result = await orchestrator.execute_ai_operation(
+        user_id=str(user.id),
+        operation_type="generate_goal_breakdown",
+        params={"title": goal_data.title, "description": goal_data.description}
+    )
+
+    # Use AI output to create goal
+    goal = Goal(user_id=user.id, title=goal_data.title, ...)
+    return {"data": goal.to_dict()}
+```
+
+**Reference:** Complete implementation guide in `docs/dev/ai-services-guide.md` (Sections 8-11)
 
 ---
 
