@@ -5,6 +5,25 @@ import prettier from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
 
 export default [
+  // Global ignores (replaces .eslintignore)
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/.expo/**',
+      '**/.expo-shared/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/.next/**',
+      '**/out/**',
+      '**/.cache/**',
+      '**/coverage/**',
+      '**/.nyc_output/**',
+      '**/__snapshots__/**',
+      '**/android/**',
+      '**/ios/**',
+      '**/assets/**',
+    ],
+  },
   js.configs.recommended,
   prettier,
   {

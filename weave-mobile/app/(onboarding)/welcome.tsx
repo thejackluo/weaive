@@ -46,11 +46,11 @@ export default function WelcomeScreen() {
   };
 
   /**
-   * Handles the "View Design System" button press
+   * Handles the "View Design System" button press (currently unused - dev tool)
    *
    * Navigates to the design system showcase screen for previewing components
    */
-  const handleViewDesignSystem = async () => {
+  const _handleViewDesignSystem = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/(tabs)/design-system-showcase');
   };
@@ -63,6 +63,16 @@ export default function WelcomeScreen() {
   const handleComponentTesting = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/(tabs)/component-testing');
+  };
+
+  /**
+   * Handles the "Voice Demo" button press
+   *
+   * Navigates to the voice demo screen for testing STT functionality
+   */
+  const handleVoiceDemo = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/(tabs)/voice-demo');
   };
 
   return (
@@ -180,7 +190,7 @@ export default function WelcomeScreen() {
           </Text>
         </Pressable>
 
-        {/* Skip to Main App Button - Dev Testing Tool (Story 4.1) */}
+        {/* Skip to Main App Button - Dev Testing Tool (Story 4.1) 
         <Pressable
           className={({ pressed }) =>
             `bg-green-600 h-11 rounded-lg w-full justify-center items-center ${
@@ -212,9 +222,19 @@ export default function WelcomeScreen() {
           onPress={handleComponentTesting}
           accessibilityRole="button"
           accessible={true}
-          style={{ backgroundColor: '#7c3aed', height: 44, borderRadius: 8, width: '100%', justifyContent: 'center', alignItems: 'center' }}
+          style={{
+            backgroundColor: '#7c3aed',
+            height: 44,
+            borderRadius: 8,
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
         >
-          <Text className="text-white text-sm font-medium tracking-wider" style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}>
+          <Text
+            className="text-white text-sm font-medium tracking-wider"
+            style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
+          >
             🧪 Component Testing
           </Text>
         </Pressable>
