@@ -15,6 +15,7 @@ import tiktoken
 from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 
 from app.utils.cost_calculator import calculate_text_cost
+
 from .base import AIProvider, AIProviderError, AIResponse
 
 logger = logging.getLogger(__name__)
@@ -41,11 +42,11 @@ class OpenAIProvider(AIProvider):
         super().__init__(db)  # Initialize AIProviderBase
         self.client = OpenAI(api_key=api_key)
         self.api_key = api_key
-    
+
     def get_provider_name(self) -> str:
         """Return provider identifier for logging."""
         return "openai"
-    
+
     def is_available(self) -> bool:
         """Check if provider is configured and available."""
         return self.api_key is not None and len(self.api_key) > 0
