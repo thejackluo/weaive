@@ -1,12 +1,16 @@
-# Story 6.2: Contextual AI Responses (Tech Context Engine)
+# Story 6.2: Contextual AI Responses + AI Tool Use (Tech Context Engine)
 
-Status: ready-for-dev
+Status: ready-for-dev | Story Points: 12 pts
 
 ## Story
 
 As a user,
 I want to receive AI advice that references my actual data (goals, completions, journal entries, identity),
 so that guidance feels personal, not generic, and helps me act on my specific situation.
+
+**ENHANCED (Sprint Change Proposal 2025-12-23):**
+- I want to switch between Dream Self (personalized) and Weave AI (general coach)
+- I want the AI to execute actions directly in chat (e.g., "Change my personality" → AI updates identity doc)
 
 ## Acceptance Criteria
 
@@ -149,6 +153,131 @@ COMMENT ON COLUMN ai_runs.quality_flag IS 'AI response quality: generic (retry t
    - [ ] Test: User with low fulfillment score → AI response acknowledges recent struggle
    - [ ] Test: User on 10-day streak → AI response celebrates momentum
    - [ ] Test: User with no Dream Self doc → Default coach persona used
+
+### Dual Personality System (Sprint Change Proposal 2025-12-23)
+
+10. **Dual AI Personalities**
+```sql
+-- Add active_personality column to user_profiles
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS active_personality TEXT
+  CHECK (active_personality IN ('dream_self', 'weave_ai'))
+  DEFAULT 'weave_ai';
+
+COMMENT ON COLUMN user_profiles.active_personality IS 'Active AI personality: dream_self (personalized) or weave_ai (general coach)';
+```
+   - [ ] Create `PersonalityService` in `weave-api/app/services/personality_service.py`
+   - [ ] Method: `get_active_personality(user_id) -> dict`
+     - If `active_personality = 'dream_self'` → Load from `identity_docs` (type = 'dream_self')
+     - If `active_personality = 'weave_ai'` → Return default Weave AI persona
+     - If Dream Self doc missing → Fallback to Weave AI (graceful degradation)
+   - [ ] Return format:
+     ```python
+     {
+       "personality_type": "dream_self" | "weave_ai",
+       "name": "Alex the Disciplined" | "Weave",
+       "traits": ["supportive", "analytical"] | ["encouraging", "general"],
+       "speaking_style": "Direct but encouraging" | "Supportive and motivating"
+     }
+     ```
+   - [ ] Update `AIService.generate()` to accept `personality: dict` parameter
+   - [ ] Inject personality into system prompt
+   - [ ] API endpoint: `PATCH /api/user-profiles/personality`
+     - Request: `{ "active_personality": "dream_self" | "weave_ai" }`
+     - Response: `{ "data": { "active_personality": "dream_self" }, "meta": {...} }`
+
+### AI Tool Use System (Sprint Change Proposal 2025-12-23)
+
+11. **AI Tool Use ("Mini Private MCP Server")**
+   - [ ] Create `ToolRegistry` in `weave-api/app/services/tools/registry.py`
+   - [ ] Method: `get_tool_definitions() -> list[dict]`
+     - Returns OpenAI/Anthropic-compatible tool schemas
+     - Example schema:
+       ```python
+       {
+         "name": "modify_personality",
+         "description": "Updates the user's AI personality traits (Dream Self)",
+         "parameters": {
+           "type": "object",
+           "properties": {
+             "new_traits": {
+               "type": "string",
+               "description": "Comma-separated personality traits (e.g., 'assertive, direct, supportive')"
+             }
+           },
+           "required": ["new_traits"]
+         }
+       }
+       ```
+   - [ ] Method: `execute_tool(tool_name: str, params: dict, user_id: UUID) -> dict`
+     - Looks up tool by name in registry
+     - Executes tool with params + user_id
+     - Returns structured result: `{"success": bool, "message": str, "data": dict}`
+   - [ ] Create `ToolBase` abstract class in `weave-api/app/services/tools/base.py`
+     - Required methods: `execute()`, `get_schema()`, `get_name()`
+   - [ ] Create `ModifyPersonalityTool` in `weave-api/app/services/tools/modify_personality.py`
+     - Method: `execute(user_id, params) -> dict`
+       - Extract `new_traits` from params
+       - Load current Dream Self personality from `identity_docs`
+       - Update personality document with new traits
+       - Save to `identity_docs` table
+       - Return: `{"success": true, "message": "Personality updated to: {new_traits}"}`
+   - [ ] Enhance `AIService.generate()` with tool use support
+     - Add `tools: list[dict]` parameter
+     - **For Anthropic (Claude):**
+       - Pass tools to `anthropic.messages.create(tools=tools)`
+       - Detect `tool_use` content blocks in response
+       - Execute tools via `ToolRegistry.execute_tool()`
+       - Send tool results back to AI for natural language wrapping
+     - **For OpenAI (GPT-4o):**
+       - Pass tools to `openai.chat.completions.create(tools=tools)`
+       - Detect `tool_calls` in response
+       - Execute tools via `ToolRegistry.execute_tool()`
+       - Send tool results back to AI for natural language wrapping
+   - [ ] Update `POST /api/ai-chat/messages` handler
+     - Load tool definitions from `ToolRegistry.get_tool_definitions()`
+     - Call `AIService.generate()` with `tools=tool_definitions`
+     - If AI returns tool call → Execute via `ToolRegistry.execute_tool()`
+     - Send tool result back to AI → Get natural language wrapper
+     - Return final response to user
+   - [ ] Feature flag: `enable_tool_use` (default: true, can disable for testing)
+   - [ ] Log tool execution to `ai_runs` table with tool name + cost tracking
+
+### Frontend (Personality Switcher UI)
+
+12. **Personality Switching UI**
+   - [ ] Create `PersonalitySwitcher` component in `weave-mobile/src/components/chat/PersonalitySwitcher.tsx`
+   - [ ] **Chat Header Implementation:**
+     - Dropdown button showing current personality with icon
+     - Options: "Dream Self" (avatar icon) | "Weave AI" (app logo)
+     - Behavior:
+       - Tap option → Call `PATCH /api/user-profiles/personality`
+       - Show confirmation toast: "Switched to {personality}"
+       - Refresh chat context (reload personality)
+   - [ ] **Settings Page Implementation:**
+     - Add "AI Preferences" section to Settings screen
+     - Radio buttons: "Dream Self" | "Weave AI"
+     - Description text under each option explaining difference
+     - Behavior: Same API call as chat header switcher
+   - [ ] **State Management:**
+     - Store `activePersonality` in `useAuthStore()` (Zustand)
+     - Update on personality switch (persist across app sessions)
+     - Read from `user_profiles.active_personality` on login
+
+### Additional Testing (Tool Use + Personality Switching)
+
+13. **AI Tool Use Tests**
+   - [ ] Test: User sends "Change my personality to be more direct" → AI calls `modify_personality` → Identity doc updated → Natural response returned
+   - [ ] Test: User sends "I'm stuck on my goal" → AI responds conversationally (no tool call needed)
+   - [ ] Test: User sends "Create a goal: Morning workout" → AI calls `create_goal` tool (future, returns "Tool not implemented yet" stub)
+   - [ ] Test: Tool execution fails → AI handles error gracefully ("Sorry, I couldn't update your personality right now")
+   - [ ] Test: AI calls multiple tools in one response → Both tools execute, AI wraps results naturally
+   - [ ] Test: Tool execution logged to `ai_runs` table with tool name + cost tracking
+
+14. **Dual Personality Tests**
+   - [ ] Test: User with Dream Self doc → Switches to Weave AI → AI response uses general persona
+   - [ ] Test: User without Dream Self doc → Defaults to Weave AI (fallback)
+   - [ ] Test: User switches personality in chat header → Preference persists after app restart
+   - [ ] Test: User switches personality in settings → Chat header updates immediately
 
 ## Tasks / Subtasks
 
@@ -583,7 +712,13 @@ async def send_message(request: ChatMessageCreate, user: User = Depends(get_curr
 
 ## Story Completion Status
 
-**Status:** ready-for-dev ✅ **CREATED (2025-12-23)**
+**Status:** ready-for-dev ✅ **CREATED (2025-12-23)** | **ENHANCED (2025-12-23)**
+
+**Sprint Change Proposal Applied:**
+- See: `docs/sprint-artifacts/sprint-change-proposals/sprint-change-proposal-intent-router-2025-12-23.md`
+- Added: Dual AI Personalities (Dream Self ↔ Weave AI)
+- Added: AI Tool Use System ("mini private MCP server")
+- Story points: **Increased from 8 pts to 12 pts** (+4 pts)
 
 **Context Analysis:** ✅ Complete
 - Loaded Epic 6.2 requirements from PRD
@@ -591,28 +726,32 @@ async def send_message(request: ChatMessageCreate, user: User = Depends(get_curr
 - Reviewed architecture patterns (AI services, backend standardization)
 - Identified existing AIService to enhance (prevent duplication)
 - Extracted context building patterns from similar services
+- **NEW:** Analyzed OpenAI/Anthropic tool use patterns for AI function calling
 
 **Developer Guardrails:** ✅ Complete
-- Clear acceptance criteria (9 items)
-- Detailed task breakdown (9 tasks, 40+ subtasks)
+- Clear acceptance criteria (14 items, includes dual personality + tool use)
+- Detailed task breakdown (will be expanded for tool use system)
 - Architecture compliance requirements
 - Performance requirements (< 500ms context assembly)
-- Testing requirements with examples
+- Testing requirements with examples (includes tool execution tests)
 - File structure specifications
 
 **Implementation-Ready:** ✅ Yes
 - All dependencies identified (no new NPM/uv packages needed)
-- Database schema changes minimal (add 3 columns to `ai_runs`)
-- API contracts defined (update existing endpoints)
-- Service structure outlined (ContextBuilderService)
-- Testing patterns established
+- Database schema changes: Add `active_personality` to `user_profiles`, add 3 columns to `ai_runs`
+- API contracts defined (update existing endpoints + add tool use support)
+- Service structure outlined (ContextBuilderService, PersonalityService, ToolRegistry)
+- Testing patterns established (includes tool execution + personality switching)
 
 **Critical Design Decisions:**
-1. ✅ **Enhance AIService** - Add `user_context` parameter (DO NOT create new service)
+1. ✅ **Enhance AIService** - Add `user_context` + `tools` parameters (DO NOT create new service)
 2. ✅ **Context Structure** - JSON format with goals, activity, journal, identity, metrics
 3. ✅ **Generic Detection** - Regex patterns + retry logic (max 1 attempt)
 4. ✅ **Performance Target** - <500ms context assembly (P95)
 5. ✅ **Caching Strategy** - 5-minute cache for repeat users
+6. ✅ **Dual Personality System** - Dream Self (personalized) ↔ Weave AI (general coach)
+7. ✅ **AI Tool Use** - OpenAI/Anthropic function calling pattern ("mini private MCP server")
+8. ✅ **Tool Registry** - Extensible pattern for 10+ future tools
 
 **Next Steps:**
 1. Run `/bmad:bmm:workflows:dev-story` to implement Story 6.2
