@@ -11,7 +11,7 @@ client = TestClient(app)
 
 def test_health_endpoint():
     """Test health endpoint returns 200 OK with service info."""
-    with patch("app.core.deps.get_supabase") as mock_supabase:
+    with patch("app.core.deps.get_supabase_client") as mock_supabase:
         # Mock successful database connection
         mock_client = MagicMock()
         mock_client.table().select().limit().execute.return_value.data = [{"id": "test"}]
@@ -35,7 +35,7 @@ def test_health_endpoint():
 
 def test_health_endpoint_database_failure():
     """Test health endpoint returns 503 when database connection fails."""
-    with patch("app.core.deps.get_supabase") as mock_supabase:
+    with patch("app.core.deps.get_supabase_client") as mock_supabase:
         # Mock database connection failure
         mock_client = MagicMock()
         mock_client.table().select().limit().execute.side_effect = Exception("Connection refused")

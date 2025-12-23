@@ -4,12 +4,12 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 
-from app.core.deps import get_supabase
+from app.core.deps import get_supabase_client
 
 router = APIRouter()
 
 @router.get("/health")
-async def health_check(supabase: Client = Depends(get_supabase)):
+async def health_check(supabase: Client = Depends(get_supabase_client)):
     """
     Health check endpoint for Railway and monitoring.
     
