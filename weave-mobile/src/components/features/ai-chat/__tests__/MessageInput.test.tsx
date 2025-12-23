@@ -125,9 +125,7 @@ describe('MessageInput Component', () => {
   it('shows 500/500 when at character limit', () => {
     // GIVEN: Input with exactly 500 characters
     const maxText = 'a'.repeat(500);
-    const { getByTestId } = render(
-      <MessageInput value={maxText} onChange={jest.fn()} onSend={jest.fn()} disabled={false} />
-    );
+    render(<MessageInput value={maxText} onChange={jest.fn()} onSend={jest.fn()} disabled={false} />);
 
     // THEN: Character counter shows limit
     expect(screen.getByText('500/500')).toBeTruthy();
