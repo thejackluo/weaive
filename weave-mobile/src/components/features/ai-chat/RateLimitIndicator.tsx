@@ -11,7 +11,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
-import Animated, { FadeIn, useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  useAnimatedStyle,
+  withTiming,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 
 interface RateLimitIndicatorProps {
@@ -78,8 +83,8 @@ export default function RateLimitIndicator({
     <Animated.View entering={FadeIn.duration(300)}>
       <BlurView intensity={15} tint="dark" style={styles.container}>
         {/* ✅ FIX: Collapsible header */}
-        <TouchableOpacity 
-          style={styles.header} 
+        <TouchableOpacity
+          style={styles.header}
           onPress={() => setIsExpanded(!isExpanded)}
           activeOpacity={0.7}
         >
@@ -88,11 +93,7 @@ export default function RateLimitIndicator({
             <Text style={styles.headerSummary}>
               {premiumUsed + freeUsed}/{premiumLimit + freeLimit}
             </Text>
-            <Ionicons 
-              name={isExpanded ? 'chevron-up' : 'chevron-down'} 
-              size={16} 
-              color="#9ca3af" 
-            />
+            <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} color="#9ca3af" />
           </View>
         </TouchableOpacity>
 
@@ -107,65 +108,65 @@ export default function RateLimitIndicator({
           ) : (
             // Usage Stats View
             <View style={styles.statsContainer}>
-            <Text style={styles.title}>Daily Usage</Text>
+              <Text style={styles.title}>Daily Usage</Text>
 
-            {/* Premium Messages */}
-            <View style={styles.statRow}>
-              <View style={styles.statHeader}>
-                <Text style={styles.statLabel}>Premium (Sonnet)</Text>
-                <Text style={styles.statValue}>
-                  {premiumUsed}/{premiumLimit}
-                </Text>
+              {/* Premium Messages */}
+              <View style={styles.statRow}>
+                <View style={styles.statHeader}>
+                  <Text style={styles.statLabel}>Premium (Sonnet)</Text>
+                  <Text style={styles.statValue}>
+                    {premiumUsed}/{premiumLimit}
+                  </Text>
+                </View>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      styles.progressPremium,
+                      { width: `${Math.min(premiumPercent, 100)}%` },
+                    ]}
+                  />
+                </View>
               </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    styles.progressPremium,
-                    { width: `${Math.min(premiumPercent, 100)}%` },
-                  ]}
-                />
+
+              {/* Free Messages */}
+              <View style={styles.statRow}>
+                <View style={styles.statHeader}>
+                  <Text style={styles.statLabel}>Free (Haiku/Mini)</Text>
+                  <Text style={styles.statValue}>
+                    {freeUsed}/{freeLimit}
+                  </Text>
+                </View>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      styles.progressFree,
+                      { width: `${Math.min(freePercent, 100)}%` },
+                    ]}
+                  />
+                </View>
+              </View>
+
+              {/* Monthly Total */}
+              <View style={[styles.statRow, styles.monthlyRow]}>
+                <View style={styles.statHeader}>
+                  <Text style={[styles.statLabel, styles.monthlyLabel]}>Monthly Total</Text>
+                  <Text style={[styles.statValue, styles.monthlyValue]}>
+                    {monthlyUsed}/{monthlyLimit}
+                  </Text>
+                </View>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      styles.progressMonthly,
+                      { width: `${Math.min(monthlyPercent, 100)}%` },
+                    ]}
+                  />
+                </View>
               </View>
             </View>
-
-            {/* Free Messages */}
-            <View style={styles.statRow}>
-              <View style={styles.statHeader}>
-                <Text style={styles.statLabel}>Free (Haiku/Mini)</Text>
-                <Text style={styles.statValue}>
-                  {freeUsed}/{freeLimit}
-                </Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    styles.progressFree,
-                    { width: `${Math.min(freePercent, 100)}%` },
-                  ]}
-                />
-              </View>
-            </View>
-
-            {/* Monthly Total */}
-            <View style={[styles.statRow, styles.monthlyRow]}>
-              <View style={styles.statHeader}>
-                <Text style={[styles.statLabel, styles.monthlyLabel]}>Monthly Total</Text>
-                <Text style={[styles.statValue, styles.monthlyValue]}>
-                  {monthlyUsed}/{monthlyLimit}
-                </Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    styles.progressMonthly,
-                    { width: `${Math.min(monthlyPercent, 100)}%` },
-                  ]}
-                />
-              </View>
-            </View>
-          </View>
           )}
         </Animated.View>
       </BlurView>

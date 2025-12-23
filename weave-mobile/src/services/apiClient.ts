@@ -19,7 +19,7 @@ interface ApiResponse<T = any> {
   data: T;
   status: number;
   statusText: string;
-  headers: Headers;
+  headers: Record<string, string>;
 }
 
 class ApiClient {
@@ -97,8 +97,7 @@ class ApiClient {
 
     if (!response.ok) {
       throw new Error(
-        responseData?.error?.message ||
-          `API Error: ${response.status} ${response.statusText}`
+        responseData?.error?.message || `API Error: ${response.status} ${response.statusText}`
       );
     }
 
@@ -110,7 +109,10 @@ class ApiClient {
     };
   }
 
-  async get<T = any>(url: string, config?: { headers?: Record<string, string> }): Promise<ApiResponse<T>> {
+  async get<T = any>(
+    url: string,
+    config?: { headers?: Record<string, string> }
+  ): Promise<ApiResponse<T>> {
     return this.request<T>('GET', url, undefined, config);
   }
 
@@ -130,7 +132,10 @@ class ApiClient {
     return this.request<T>('PUT', url, data, config);
   }
 
-  async delete<T = any>(url: string, config?: { headers?: Record<string, string> }): Promise<ApiResponse<T>> {
+  async delete<T = any>(
+    url: string,
+    config?: { headers?: Record<string, string> }
+  ): Promise<ApiResponse<T>> {
     return this.request<T>('DELETE', url, undefined, config);
   }
 }

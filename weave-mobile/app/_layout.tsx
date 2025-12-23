@@ -66,7 +66,9 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
           await savePushTokenToBackend(pushToken);
           console.log('[ROOT_LAYOUT] ✅ Push notifications registered and saved');
         } else {
-          console.log('[ROOT_LAYOUT] ⚠️ Push notifications not available (simulator or permissions denied)');
+          console.log(
+            '[ROOT_LAYOUT] ⚠️ Push notifications not available (simulator or permissions denied)'
+          );
         }
       } catch (error) {
         console.error('[ROOT_LAYOUT] ❌ Error initializing push notifications:', error);
