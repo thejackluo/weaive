@@ -1,6 +1,6 @@
 # Story 6.2: Contextual AI Responses + AI Tool Use (Tech Context Engine)
 
-Status: ready-for-dev | Story Points: 12 pts
+Status: in-progress | Story Points: 12 pts
 
 ## Story
 
