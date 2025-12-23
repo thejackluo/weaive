@@ -224,6 +224,41 @@ uv add fastapi supabase anthropic
 uv run ruff check .
 ```
 
+### Production Deployment (Railway)
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login to Railway
+railway login
+
+# Link to production project (one-time setup)
+cd weave-api
+railway link <project-id>
+
+# Deploy to production
+railway up
+
+# View production logs
+railway logs
+
+# View deployment status
+railway status
+
+# Rollback to previous deployment
+railway deployments
+railway deployment rollback <deployment-id>
+
+# Manage environment variables
+railway variables
+railway variables set SUPABASE_URL=https://xxx.supabase.co
+```
+
+**Production URL:** `https://weave-api-production.railway.app`
+
+**Automatic Deployment:** Pushes to `main` branch automatically trigger Railway deployment via GitHub Actions (`.github/workflows/railway-deploy.yml`)
+
 ### Documentation Viewer
 
 ```bash
