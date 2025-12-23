@@ -78,24 +78,24 @@ async def test_transcribe_audio_success_with_assemblyai(
           - Logs to ai_runs table with cost tracking
           - Increments daily_aggregates.stt_request_count
     """
-    with patch('app.api.transcribe.get_stt_service') as mock_stt:
+    with patch("app.api.transcribe.get_stt_service") as mock_stt:
         # Mock STT service to return AssemblyAI success
         mock_service = AsyncMock()
         mock_service.transcribe.return_value = mock_assemblyai_transcription
         mock_stt.return_value = mock_service
 
         # Prepare upload
-        files = {'file': ('voice_note.m4a', test_audio_bytes, 'audio/x-m4a')}
+        files = {"file": ("voice_note.m4a", test_audio_bytes, "audio/x-m4a")}
         data = {
-            'local_date': '2025-12-22',
-            'language': 'en',
+            "local_date": "2025-12-22",
+            "language": "en",
         }
 
         response = client.post(
-            '/api/transcribe',
+            "/api/transcribe",
             files=files,
             data=data,
-            headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+            headers={"Authorization": f"Bearer {user_fixture['token']}"},
         )
 
         # THEN: Success response
@@ -103,18 +103,21 @@ async def test_transcribe_audio_success_with_assemblyai(
         result = response.json()
 
         # Verify response structure
-        assert 'data' in result
-        assert 'meta' in result
+        assert "data" in result
+        assert "meta" in result
 
         # Verify transcription data
-        data_obj = result['data']
-        assert data_obj['transcript'] == "I completed my morning workout today. Felt great and energized."
-        assert data_obj['confidence'] == 0.92
-        assert data_obj['duration_sec'] == 45
-        assert data_obj['language'] == 'en'
-        assert data_obj['provider'] == 'assemblyai'
-        assert 'audio_url' in data_obj  # Signed URL for playback
-        assert data_obj['audio_url'].startswith('https://')
+        data_obj = result["data"]
+        assert (
+            data_obj["transcript"]
+            == "I completed my morning workout today. Felt great and energized."
+        )
+        assert data_obj["confidence"] == 0.92
+        assert data_obj["duration_sec"] == 45
+        assert data_obj["language"] == "en"
+        assert data_obj["provider"] == "assemblyai"
+        assert "audio_url" in data_obj  # Signed URL for playback
+        assert data_obj["audio_url"].startswith("https://")
 
 
 @pytest.mark.asyncio
@@ -129,31 +132,31 @@ async def test_transcribe_audio_with_goal_and_subtask_linking(
     WHEN: POST /api/transcribe is called
     THEN: Capture is linked to goal and subtask
     """
-    with patch('app.api.transcribe.get_stt_service') as mock_stt:
+    with patch("app.api.transcribe.get_stt_service") as mock_stt:
         mock_service = AsyncMock()
         mock_service.transcribe.return_value = mock_assemblyai_transcription
         mock_stt.return_value = mock_service
 
-        files = {'file': ('voice_note.m4a', test_audio_bytes, 'audio/x-m4a')}
+        files = {"file": ("voice_note.m4a", test_audio_bytes, "audio/x-m4a")}
         data = {
-            'local_date': '2025-12-22',
-            'goal_id': str(uuid4()),
-            'subtask_instance_id': str(uuid4()),
+            "local_date": "2025-12-22",
+            "goal_id": str(uuid4()),
+            "subtask_instance_id": str(uuid4()),
         }
 
         response = client.post(
-            '/api/transcribe',
+            "/api/transcribe",
             files=files,
             data=data,
-            headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+            headers={"Authorization": f"Bearer {user_fixture['token']}"},
         )
 
         assert response.status_code == 200
         result = response.json()
 
         # Verify capture is linked
-        assert result['data']['goal_id'] == data['goal_id']
-        assert result['data']['subtask_instance_id'] == data['subtask_instance_id']
+        assert result["data"]["goal_id"] == data["goal_id"]
+        assert result["data"]["subtask_instance_id"] == data["subtask_instance_id"]
 
 
 # ============================================================================
@@ -176,7 +179,7 @@ async def test_transcribe_falls_back_to_whisper_when_assemblyai_fails(
           - Transcript is returned from Whisper
           - Provider is logged as 'whisper' in ai_runs
     """
-    with patch('app.api.transcribe.get_stt_service') as mock_stt:
+    with patch("app.api.transcribe.get_stt_service") as mock_stt:
         # Mock STT service to simulate AssemblyAI failure → Whisper success
         mock_service = AsyncMock()
         mock_service.transcribe.side_effect = [
@@ -185,21 +188,21 @@ async def test_transcribe_falls_back_to_whisper_when_assemblyai_fails(
         ]
         mock_stt.return_value = mock_service
 
-        files = {'file': ('voice_note.m4a', test_audio_bytes, 'audio/x-m4a')}
-        data = {'local_date': '2025-12-22'}
+        files = {"file": ("voice_note.m4a", test_audio_bytes, "audio/x-m4a")}
+        data = {"local_date": "2025-12-22"}
 
         response = client.post(
-            '/api/transcribe',
+            "/api/transcribe",
             files=files,
             data=data,
-            headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+            headers={"Authorization": f"Bearer {user_fixture['token']}"},
         )
 
         # THEN: Success response with Whisper as provider
         assert response.status_code == 200
         result = response.json()
-        assert result['data']['provider'] == 'whisper'
-        assert result['data']['transcript'] is not None
+        assert result["data"]["provider"] == "whisper"
+        assert result["data"]["transcript"] is not None
 
 
 @pytest.mark.asyncio
@@ -216,29 +219,29 @@ async def test_transcribe_stores_audio_only_when_all_providers_fail(
           - Audio URL provided for playback
           - User can retry transcription later
     """
-    with patch('app.api.transcribe.get_stt_service') as mock_stt:
+    with patch("app.api.transcribe.get_stt_service") as mock_stt:
         # Mock both providers failing
         mock_service = AsyncMock()
         mock_service.transcribe.side_effect = Exception("All providers failed")
         mock_stt.return_value = mock_service
 
-        files = {'file': ('voice_note.m4a', test_audio_bytes, 'audio/x-m4a')}
-        data = {'local_date': '2025-12-22'}
+        files = {"file": ("voice_note.m4a", test_audio_bytes, "audio/x-m4a")}
+        data = {"local_date": "2025-12-22"}
 
         response = client.post(
-            '/api/transcribe',
+            "/api/transcribe",
             files=files,
             data=data,
-            headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+            headers={"Authorization": f"Bearer {user_fixture['token']}"},
         )
 
         # THEN: Error response with audio stored
         assert response.status_code == 503
         result = response.json()
-        assert 'error' in result
-        assert result['error']['code'] == 'STT_ALL_PROVIDERS_FAILED'
-        assert result['error']['message'] == 'Transcription failed. Audio saved. Retry?'
-        assert result['error']['retryable'] is True
+        assert "error" in result
+        assert result["error"]["code"] == "STT_ALL_PROVIDERS_FAILED"
+        assert result["error"]["message"] == "Transcription failed. Audio saved. Retry?"
+        assert result["error"]["retryable"] is True
 
 
 # ============================================================================
@@ -263,27 +266,27 @@ async def test_transcribe_enforces_daily_limit_50_requests(
     # For now, this test will fail until migration 20251221000003 is applied
 
     # Mock daily_aggregates to show limit reached
-    with patch('app.api.transcribe.check_rate_limit') as mock_rate_limit:
+    with patch("app.api.transcribe.check_rate_limit") as mock_rate_limit:
         mock_rate_limit.return_value = False  # Rate limit exceeded
 
-        files = {'file': ('voice_note.m4a', test_audio_bytes, 'audio/x-m4a')}
-        data = {'local_date': '2025-12-22'}
+        files = {"file": ("voice_note.m4a", test_audio_bytes, "audio/x-m4a")}
+        data = {"local_date": "2025-12-22"}
 
         response = client.post(
-            '/api/transcribe',
+            "/api/transcribe",
             files=files,
             data=data,
-            headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+            headers={"Authorization": f"Bearer {user_fixture['token']}"},
         )
 
         # THEN: Rate limit error
         assert response.status_code == 429
         result = response.json()
-        assert 'error' in result
-        assert result['error']['code'] == 'STT_RATE_LIMIT_EXCEEDED'
-        assert result['error']['message'] == 'Daily transcription limit reached (50/50 requests)'
-        assert result['error']['retryable'] is False
-        assert 'retryAfter' in result['error']  # Timestamp for midnight reset
+        assert "error" in result
+        assert result["error"]["code"] == "STT_RATE_LIMIT_EXCEEDED"
+        assert result["error"]["message"] == "Daily transcription limit reached (50/50 requests)"
+        assert result["error"]["retryable"] is False
+        assert "retryAfter" in result["error"]  # Timestamp for midnight reset
 
 
 # ============================================================================
@@ -306,23 +309,23 @@ async def test_transcribe_rejects_audio_too_long(
     # Mock audio file metadata to indicate 6 minutes duration
     long_audio = b"fake_audio_data_6_minutes"
 
-    files = {'file': ('long_voice.m4a', long_audio, 'audio/x-m4a')}
-    data = {'local_date': '2025-12-22', 'duration_sec': 360}  # 6 minutes
+    files = {"file": ("long_voice.m4a", long_audio, "audio/x-m4a")}
+    data = {"local_date": "2025-12-22", "duration_sec": 360}  # 6 minutes
 
     response = client.post(
-        '/api/transcribe',
+        "/api/transcribe",
         files=files,
         data=data,
-        headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+        headers={"Authorization": f"Bearer {user_fixture['token']}"},
     )
 
     # THEN: Validation error
     assert response.status_code == 400
     result = response.json()
-    assert 'error' in result
-    assert result['error']['code'] == 'AUDIO_TOO_LONG'
-    assert result['error']['message'] == 'Audio too long (max 5 minutes)'
-    assert result['error']['retryable'] is False
+    assert "error" in result
+    assert result["error"]["code"] == "AUDIO_TOO_LONG"
+    assert result["error"]["message"] == "Audio too long (max 5 minutes)"
+    assert result["error"]["retryable"] is False
 
 
 @pytest.mark.asyncio
@@ -338,23 +341,23 @@ async def test_transcribe_rejects_invalid_audio_format(
     """
     invalid_audio = b"not_real_audio_data"
 
-    files = {'file': ('invalid.avi', invalid_audio, 'video/avi')}
-    data = {'local_date': '2025-12-22'}
+    files = {"file": ("invalid.avi", invalid_audio, "video/avi")}
+    data = {"local_date": "2025-12-22"}
 
     response = client.post(
-        '/api/transcribe',
+        "/api/transcribe",
         files=files,
         data=data,
-        headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+        headers={"Authorization": f"Bearer {user_fixture['token']}"},
     )
 
     # THEN: Format validation error
     assert response.status_code == 400
     result = response.json()
-    assert 'error' in result
-    assert result['error']['code'] == 'INVALID_AUDIO_FORMAT'
-    assert result['error']['message'] == 'Only MP3, M4A, and WAV formats supported'
-    assert result['error']['retryable'] is False
+    assert "error" in result
+    assert result["error"]["code"] == "INVALID_AUDIO_FORMAT"
+    assert result["error"]["message"] == "Only MP3, M4A, and WAV formats supported"
+    assert result["error"]["retryable"] is False
 
 
 @pytest.mark.asyncio
@@ -369,26 +372,26 @@ async def test_transcribe_handles_upload_timeout(
     THEN: Returns HTTP 504 with error code UPLOAD_TIMEOUT
           - User can retry upload
     """
-    with patch('app.api.transcribe.upload_to_storage') as mock_upload:
+    with patch("app.api.transcribe.upload_to_storage") as mock_upload:
         mock_upload.side_effect = TimeoutError("Upload timeout after 30s")
 
-        files = {'file': ('voice_note.m4a', test_audio_bytes, 'audio/x-m4a')}
-        data = {'local_date': '2025-12-22'}
+        files = {"file": ("voice_note.m4a", test_audio_bytes, "audio/x-m4a")}
+        data = {"local_date": "2025-12-22"}
 
         response = client.post(
-            '/api/transcribe',
+            "/api/transcribe",
             files=files,
             data=data,
-            headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+            headers={"Authorization": f"Bearer {user_fixture['token']}"},
         )
 
         # THEN: Timeout error
         assert response.status_code == 504
         result = response.json()
-        assert 'error' in result
-        assert result['error']['code'] == 'UPLOAD_TIMEOUT'
-        assert result['error']['message'] == 'Upload timed out. Check connection.'
-        assert result['error']['retryable'] is True
+        assert "error" in result
+        assert result["error"]["code"] == "UPLOAD_TIMEOUT"
+        assert result["error"]["message"] == "Upload timed out. Check connection."
+        assert result["error"]["retryable"] is True
 
 
 # ============================================================================
@@ -414,19 +417,19 @@ async def test_get_audio_capture_with_signed_url(
     capture_id = str(uuid4())
 
     response = client.get(
-        f'/api/captures/{capture_id}',
-        headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+        f"/api/captures/{capture_id}",
+        headers={"Authorization": f"Bearer {user_fixture['token']}"},
     )
 
     # THEN: Success response with signed URL
     assert response.status_code == 200
     result = response.json()
-    assert 'data' in result
-    assert result['data']['id'] == capture_id
-    assert result['data']['type'] == 'audio'
-    assert 'signed_url' in result['data']
-    assert result['data']['signed_url'].startswith('https://')
-    assert 'content_text' in result['data']  # Transcript
+    assert "data" in result
+    assert result["data"]["id"] == capture_id
+    assert result["data"]["type"] == "audio"
+    assert "signed_url" in result["data"]
+    assert result["data"]["signed_url"].startswith("https://")
+    assert "content_text" in result["data"]  # Transcript
 
 
 @pytest.mark.asyncio
@@ -447,14 +450,14 @@ async def test_delete_audio_capture_cascades_cleanup(
     capture_id = str(uuid4())
 
     response = client.delete(
-        f'/api/captures/{capture_id}',
-        headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+        f"/api/captures/{capture_id}",
+        headers={"Authorization": f"Bearer {user_fixture['token']}"},
     )
 
     # THEN: Successful deletion
     assert response.status_code == 200
     result = response.json()
-    assert result['data']['deleted'] is True
+    assert result["data"]["deleted"] is True
 
 
 @pytest.mark.asyncio
@@ -475,22 +478,22 @@ async def test_re_transcribe_capture_with_different_provider(
 
     capture_id = str(uuid4())
 
-    with patch('app.api.transcribe.get_stt_service') as mock_stt:
+    with patch("app.api.transcribe.get_stt_service") as mock_stt:
         mock_service = AsyncMock()
         mock_service.transcribe.return_value = mock_whisper_transcription
         mock_stt.return_value = mock_service
 
         response = client.post(
-            f'/api/captures/{capture_id}/re-transcribe',
-            json={'provider': 'whisper'},  # Explicitly request Whisper
-            headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+            f"/api/captures/{capture_id}/re-transcribe",
+            json={"provider": "whisper"},  # Explicitly request Whisper
+            headers={"Authorization": f"Bearer {user_fixture['token']}"},
         )
 
         # THEN: Updated transcript
         assert response.status_code == 200
         result = response.json()
-        assert result['data']['content_text'] == mock_whisper_transcription.transcript
-        assert result['data']['provider'] == 'whisper'
+        assert result["data"]["content_text"] == mock_whisper_transcription.transcript
+        assert result["data"]["provider"] == "whisper"
 
 
 # ============================================================================
@@ -516,8 +519,8 @@ async def test_transcribe_prevents_cross_user_audio_access(
     user_b_token = "fake_user_b_token"  # Different user
 
     response = client.get(
-        f'/api/captures/{user_a_capture_id}',
-        headers={'Authorization': f'Bearer {user_b_token}'},
+        f"/api/captures/{user_a_capture_id}",
+        headers={"Authorization": f"Bearer {user_b_token}"},
     )
 
     # THEN: Not found (RLS hiding User A's data from User B)
@@ -546,19 +549,19 @@ async def test_transcribe_logs_cost_to_ai_runs_table(
           - Confidence score
           - Timestamps
     """
-    with patch('app.api.transcribe.get_stt_service') as mock_stt:
+    with patch("app.api.transcribe.get_stt_service") as mock_stt:
         mock_service = AsyncMock()
         mock_service.transcribe.return_value = mock_assemblyai_transcription
         mock_stt.return_value = mock_service
 
-        files = {'file': ('voice_note.m4a', test_audio_bytes, 'audio/x-m4a')}
-        data = {'local_date': '2025-12-22'}
+        files = {"file": ("voice_note.m4a", test_audio_bytes, "audio/x-m4a")}
+        data = {"local_date": "2025-12-22"}
 
         response = client.post(
-            '/api/transcribe',
+            "/api/transcribe",
             files=files,
             data=data,
-            headers={'Authorization': f'Bearer {user_fixture["token"]}'},
+            headers={"Authorization": f"Bearer {user_fixture['token']}"},
         )
 
         assert response.status_code == 200

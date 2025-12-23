@@ -181,12 +181,7 @@ def test_analytics_fetch_event(test_analytics_event_ids):
     test_analytics_event_ids.append(event_id)
 
     # Fetch directly from database
-    result = (
-        supabase.table("analytics_events")
-        .select("*")
-        .eq("id", event_id)
-        .execute()
-    )
+    result = supabase.table("analytics_events").select("*").eq("id", event_id).execute()
 
     assert len(result.data) == 1
     event = result.data[0]
@@ -213,12 +208,7 @@ def test_analytics_multiple_events(test_analytics_event_ids):
 
     # Verify all events exist in database
     for i, event_id in enumerate(created_ids):
-        result = (
-            supabase.table("analytics_events")
-            .select("*")
-            .eq("id", event_id)
-            .execute()
-        )
+        result = supabase.table("analytics_events").select("*").eq("id", event_id).execute()
         assert len(result.data) == 1
         assert result.data[0]["event_name"] == event_names[i]
 
@@ -300,12 +290,7 @@ def test_user_profile_fetch(test_user_profile_ids, valid_jwt_token_for_integrati
     test_user_profile_ids.append(profile_id)
 
     # Fetch directly from database
-    result = (
-        supabase.table("user_profiles")
-        .select("*")
-        .eq("id", profile_id)
-        .execute()
-    )
+    result = supabase.table("user_profiles").select("*").eq("id", profile_id).execute()
 
     assert len(result.data) == 1
     profile = result.data[0]
@@ -343,12 +328,7 @@ def test_user_profile_update(test_user_profile_ids, valid_jwt_token_for_integrat
     assert update_result.data[0]["display_name"] == "Updated Name"
 
     # Verify the update persisted
-    fetch_result = (
-        supabase.table("user_profiles")
-        .select("*")
-        .eq("id", profile_id)
-        .execute()
-    )
+    fetch_result = supabase.table("user_profiles").select("*").eq("id", profile_id).execute()
 
     assert len(fetch_result.data) == 1
     assert fetch_result.data[0]["display_name"] == "Updated Name"
@@ -498,12 +478,7 @@ def test_database_timestamp_defaults(test_analytics_event_ids):
     test_analytics_event_ids.append(event_id)
 
     # Fetch and verify timestamp is within reasonable range
-    result = (
-        supabase.table("analytics_events")
-        .select("*")
-        .eq("id", event_id)
-        .execute()
-    )
+    result = supabase.table("analytics_events").select("*").eq("id", event_id).execute()
 
     assert len(result.data) == 1
     timestamp_str = result.data[0]["timestamp"]
@@ -524,8 +499,13 @@ def test_database_timestamp_defaults(test_analytics_event_ids):
 
     # Timestamp should be within reasonable range (allow 60 second buffer for clock skew)
     from datetime import timedelta
+
     time_buffer = timedelta(seconds=60)
-    assert (before_create - time_buffer) <= event_timestamp.replace(tzinfo=None) <= (after_create + time_buffer)
+    assert (
+        (before_create - time_buffer)
+        <= event_timestamp.replace(tzinfo=None)
+        <= (after_create + time_buffer)
+    )
 
     print("✅ Database timestamp defaults working correctly")
 

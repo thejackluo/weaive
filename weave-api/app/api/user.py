@@ -379,6 +379,7 @@ async def get_user_stats(
         current_streak = 0
         today = date.today()
 
+        # Create a set of active dates for fast lookup
         active_dates = {
             agg["local_date"]
             for agg in aggregates
