@@ -463,6 +463,34 @@ def cleanup_production_test_data(request):
     pass
 
 
+@pytest.fixture
+def complete_test_user(supabase_client):
+    """
+    Create a test user with COMPLETE data for GDPR export testing.
+
+    This fixture uses the gdpr_test_factory to create a user with:
+    - User profile
+    - 3 active goals
+    - 9 subtask templates (3 per goal)
+    - Subtask instances
+    - 10 completions
+    - 5 journal entries
+    - Identity document
+    - 3 AI chat messages
+    - 3 proof photos in Supabase Storage
+    - Daily aggregates
+    - Triad tasks
+
+    Used by: test_gdpr_compliance_api.py (Story 9.4)
+
+    Returns:
+        dict with user_id, auth_user_id, email, goals, completions, journal_entries, proof_photos
+    """
+    from tests.support.factories.gdpr_test_factory import create_complete_test_user
+
+    return lambda client: create_complete_test_user(client)
+
+
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     config.addinivalue_line(
