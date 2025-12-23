@@ -7,14 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.3] - 2025-01-XX
 
-### Changed
-
-- Bumped version to `0.1.3`
-- Kept canonical repository as `thejackluo/weavelight`
-
 ### Added
 
-- GitHub Packages support via `publishConfig` and `.npmrc`
+- **Document Status Workflow** - Track documents as "In Progress", "Archived", or "Finished" with visual status buttons
+- **Priority Levels** - Mark documents as High (red !), Medium (orange), or Low (gray ↓) for better organization
+- **Folder Completion Tracking** - Automatic badges showing progress (e.g., "3/10" or "✓" when complete) on folder headers
+- **Status & Priority Badges** - Color-coded indicators in navigation sidebar for quick overview
+- **Library Stats Dashboard** - Real-time stats card showing total documents, words, lines, and reading time
+- **Server-side Stats API** - New `/api/stats` endpoint for accurate aggregate statistics calculation
+- **Automatic Line Tracking** - Server automatically calculates and includes line counts for all documents
+- **GitHub Packages Support** - Configured for publishing to GitHub Packages via `publishConfig` and `.npmrc`
+
+### Changed
+
+- Bumped version to `0.1.3` (aligns npm package with latest Docs Viewer dashboard features)
+- Kept canonical repository as `thejackluo/weavelight`
+- Stats calculation now uses server-side API for better performance and accuracy
+- Document completion now automatically sets status to "Finished"
 
 ## [0.0.3] - Internal (not published)
 
