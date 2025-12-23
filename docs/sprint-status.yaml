@@ -309,6 +309,24 @@ sprint-6-activities:
   sprint-6-retrospective: optional
 
 # ============================================================================
+# EPIC 9: PRODUCTION LAUNCH & APP STORE PUBLISHING
+# ============================================================================
+# Duration: 2-3 weeks (after MVP core complete)
+# Goal: Deploy backend, configure production database, submit to App Store
+# Points: ~45-60 pts
+
+epic-9-status: planned
+epic-9-stories:
+  9-1-production-backend-deployment: ready-for-dev  # 5 pts ✅ Story created and validated (2025-12-23)
+  9-2-production-database-setup: backlog            # 3 pts
+  9-3-app-store-compliance: backlog                 # 8 pts
+  9-4-subscription-management-iap: backlog          # 13 pts
+  9-5-production-security-hardening: backlog        # 8 pts
+  9-6-testflight-beta-testing: backlog              # 5 pts
+  9-7-production-monitoring-setup: backlog          # 5 pts
+  9-8-app-store-submission: backlog                 # 8 pts
+
+# ============================================================================
 # BACKLOG: POST-MVP FEATURES
 # ============================================================================
 
@@ -340,8 +358,9 @@ epic-completion:
   epic-6-ai-coaching: 0/29             # Sprint 4: 0% complete
   epic-7-notifications: 0/28           # Sprint 3, 5: 0% complete
   epic-8-settings: 0/23                # Sprint 3, 5: 0% complete
+  epic-9-production-launch: 0/55       # Post-MVP: 0% complete (Story 9.1 created and validated 2025-12-23)
 
-total-completion: 27/326 (8%)
+total-completion: 27/381 (7%)
 # Note: Total increased from 305 to 326 pts (+21 pts from Epic 1.5 expansion)
 # Note: Epic 0 core foundation complete. Stretch goals (0.8-0.10) deferred to future sprints.
 
