@@ -101,6 +101,10 @@ export function useImageAnalysis() {
         imageData = imageUri;
       } else {
         // Local file - convert to base64
+        // Check if request was aborted before expensive conversion
+        if (options?.signal?.aborted) {
+          throw new Error('Request aborted');
+        }
         const base64 = await convertLocalImageToBase64(imageUri);
         imageData = `data:image/jpeg;base64,${base64}`;
       }
@@ -139,16 +143,16 @@ export function useImageAnalysis() {
       return responseData.data;
     },
 
-    // Retry configuration (AC-7)
+    // Retry configuration (AC-7): 1s, 2s, 4s
     retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // 1s, 2s, 4s
+    retryDelay: (attemptIndex) => 1000 * 2 ** attemptIndex, // 1s, 2s, 4s
 
     // NO CACHING - each image is unique (AC-7)
     // TanStack Query default: no cache for mutations
 
     // Error logging (dev mode only)
     onError: (error) => {
-      if (__DEV__) {
+      if (process.env.NODE_ENV === 'development') {
         console.error('[useImageAnalysis] Analysis failed:', error);
       }
     },

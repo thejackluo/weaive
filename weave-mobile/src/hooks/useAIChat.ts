@@ -106,7 +106,7 @@ export function useAIChat() {
         },
       };
 
-      const response = await fetch(`${apiBaseUrl}/api/ai/chat`, {
+      const response = await fetch(`${apiBaseUrl}/api/ai/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -128,9 +128,9 @@ export function useAIChat() {
       return responseData.data;
     },
 
-    // Retry configuration (AC-7)
+    // Retry configuration (AC-7): 1s, 2s, 4s
     retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // 1s, 2s, 4s
+    retryDelay: (attemptIndex) => 1000 * 2 ** attemptIndex, // 1s, 2s, 4s
 
     // On success: Update cache with 5-minute TTL
     onSuccess: (data, variables) => {
@@ -143,7 +143,7 @@ export function useAIChat() {
 
     // Error logging (dev mode only)
     onError: (error) => {
-      if (__DEV__) {
+      if (process.env.NODE_ENV === 'development') {
         console.error('[useAIChat] Generation failed:', error);
       }
     },
