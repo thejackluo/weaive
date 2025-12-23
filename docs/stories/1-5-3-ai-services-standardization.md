@@ -45,144 +45,100 @@ so that **I can implement Epic 2-8 AI features without reinventing provider logi
 
 ### AC-2: Text AI Standardization
 
-**Text AI Providers:**
-- [ ] **Primary:** OpenAI GPT-4o-mini ($0.15/$0.60 per MTok) - 90% of text generation (routine operations)
-- [ ] **Secondary:** Claude 3.7 Sonnet ($3.00/$15.00 per MTok) - Complex reasoning, fallback for GPT failures
-- [ ] **Tertiary:** Deterministic/cached responses (when both providers fail)
+**Review Existing Implementation:**
+- [ ] Examine `weave-api/app/services/ai/base.py` - Does current `AIProvider` satisfy AC-1 requirements?
+- [ ] Review existing providers: `openai_provider.py`, `anthropic_provider.py`, `bedrock_provider.py`
+- [ ] Check `cost_tracker.py` and `rate_limiter.py` - Do they match AC-5 and AC-6 patterns?
 
-**Text AI Decision Tree:**
-- [ ] Document when to use GPT-4o-mini vs Claude:
-  - GPT-4o-mini: Triad generation, daily recap, journal feedback, simple Q&A
-  - Claude 3.7 Sonnet: Onboarding dream self, complex reasoning, nuanced coaching
-- [ ] Standard request format:
-  ```json
-  {
-    "messages": [...],
-    "context": {
-      "user_id": "...",
-      "operation_type": "triad_generation",
-      "max_tokens": 500
-    }
-  }
-  ```
-- [ ] Standard response format:
-  ```json
-  {
-    "text": "Generated content...",
-    "provider": "gpt-4o-mini",
-    "model": "gpt-4o-mini-2024-07-18",
-    "tokens_used": {
-      "input": 120,
-      "output": 300
-    },
-    "cost_usd": 0.0025,
-    "duration_ms": 1450
-  }
-  ```
+**Providers & Decision Tree:**
+- [ ] **Primary:** GPT-4o-mini ($0.15/$0.60/MTok) - Triad generation, daily recap, journal feedback
+- [ ] **Secondary:** Claude 3.7 Sonnet ($3.00/$15.00/MTok) - Onboarding, complex reasoning, coaching
+- [ ] **Tertiary:** Deterministic/cached (fallback)
+- [ ] Document decision tree in AI services guide
 
-**Refactor Existing Text AI Services:**
-- [ ] Update `weave-api/app/services/text_ai_service.py` (from Story 0.6) to inherit from `AIProviderBase`
-- [ ] Extract provider-specific logic into separate classes: `OpenAIProvider`, `ClaudeProvider`
+**Standardization Tasks:**
+- [ ] If existing `ai/base.py` needs changes: Refactor to match unified `AIProviderBase` (AC-1)
+- [ ] If already compliant: Document as reference implementation
+- [ ] Verify standard request/response format (see "Standard AI Patterns" section below)
 - [ ] Maintain backwards compatibility with existing API endpoints
 
 ---
 
 ### AC-3: Image AI Standardization
 
-**Image AI Providers:**
-- [ ] **Primary:** Gemini 3.0 Flash (~$0.0005 per image, free tier: 5 images/day) - Proof validation, OCR, classification
-- [ ] **Secondary:** GPT-4o Vision ($5/MTok, ~$0.02 per image) - Fallback for complex image analysis
-- [ ] **Tertiary:** Store image without AI analysis (manual review later)
+**Review Existing Implementation:**
+- [ ] Examine `weave-api/app/services/images/vision_service.py` - Current fallback chain
+- [ ] Review providers: `gemini_vision_provider.py`, `openai_vision_provider.py`
+- [ ] Check if they follow same interface as text AI (polymorphism)
 
-**Image AI Pattern:**
-- [ ] Standard request format:
-  ```json
-  {
-    "image_url": "https://...",
-    "prompt": "Analyze this proof image for task completion...",
-    "operations": ["proof_validation", "ocr", "classification"],
-    "max_tokens": 300
-  }
-  ```
-- [ ] Standard response format:
-  ```json
-  {
-    "proof_validated": true,
-    "quality_score": 8,
-    "extracted_text": "Completed workout at gym...",
-    "categories": ["fitness", "outdoor", "workout"],
-    "analysis": "Image shows clear evidence of...",
-    "provider": "gemini-3-flash",
-    "cost_usd": 0.0005
-  }
-  ```
+**Providers & Use Cases:**
+- [ ] **Primary:** Gemini 3.0 Flash (~$0.0005/image) - Proof validation, OCR, classification
+- [ ] **Secondary:** GPT-4o Vision (~$0.02/image) - Complex analysis fallback
+- [ ] **Tertiary:** Store without analysis (graceful degradation)
 
-**Refactor Existing Image AI Services:**
-- [ ] Update `weave-api/app/services/image_ai_service.py` (from Story 0.9) to inherit from `AIProviderBase`
-- [ ] Extract provider-specific logic into `GeminiProvider`, `GPT4VisionProvider` classes
-- [ ] Maintain backwards compatibility with existing `/api/captures/images/analyze` endpoint
+**Standardization Tasks:**
+- [ ] Refactor image providers to inherit from unified `AIProviderBase` (AC-1)
+- [ ] Align method signatures with text AI pattern (polymorphism)
+- [ ] Verify standard request/response format (see "Standard AI Patterns" section below)
+- [ ] Test backwards compatibility with `/api/captures/images/analyze` endpoint
 
 ---
 
 ### AC-4: Audio AI Standardization
 
-**Audio AI Providers:**
-- [ ] **Primary:** AssemblyAI ($0.15/hr = $0.0025/min) - Speech-to-text transcription
-- [ ] **Secondary:** OpenAI Whisper API ($0.006/min) - Fallback for edge cases or AssemblyAI downtime
-- [ ] **Tertiary:** Store audio without transcript (manual transcription later)
+**Review Existing Implementation:**
+- [ ] Examine `weave-api/app/services/stt/base.py` - Does `STTProvider` match unified pattern?
+- [ ] Review providers: `assemblyai_provider.py`, `whisper_provider.py`
+- [ ] Check `stt_service.py` fallback chain - Align with text/image patterns
 
-**Audio AI Pattern:**
-- [ ] Standard request format:
-  ```json
-  {
-    "audio_file": bytes,
-    "format": "m4a",
-    "language": "en",
-    "max_duration_sec": 300
-  }
-  ```
-- [ ] Standard response format:
-  ```json
-  {
-    "transcript": "Today I completed my morning workout...",
-    "confidence": 0.94,
-    "duration_sec": 45.2,
-    "word_count": 78,
-    "provider": "assemblyai",
-    "cost_usd": 0.0019
-  }
-  ```
+**Providers & Use Cases:**
+- [ ] **Primary:** AssemblyAI ($0.15/hr) - Speech-to-text transcription
+- [ ] **Secondary:** OpenAI Whisper ($0.006/min) - Fallback for edge cases
+- [ ] **Tertiary:** Store without transcript (graceful degradation)
 
-**Refactor Existing Audio AI Services:**
-- [ ] Update `weave-api/app/services/stt_service.py` (from Story 0.11) to inherit from `AIProviderBase`
-- [ ] Extract provider-specific logic into `AssemblyAIProvider`, `WhisperProvider` classes
-- [ ] Maintain backwards compatibility with existing `/api/transcribe` endpoint
+**Standardization Tasks:**
+- [ ] Refactor audio providers to inherit from unified `AIProviderBase` (AC-1)
+- [ ] Align `STTProvider` interface with text/image AI (polymorphism - same method names where applicable)
+- [ ] Verify standard request/response format (see "Standard AI Patterns" section below)
+- [ ] Test backwards compatibility with `/api/transcribe` endpoint
 
 ---
 
 ### AC-5: Cost Tracking Standardization
 
-**Unified Cost Logging:**
-- [ ] All AI calls log to `ai_runs` table with:
-  - `operation_type`: "text_generation", "image_analysis", "transcription"
-  - `provider`: "gpt-4o-mini", "gemini-3-flash", "assemblyai"
-  - `model`: Specific model name (e.g., "gpt-4o-mini-2024-07-18")
-  - `input_tokens` (for text), `image_count` (for image), `audio_duration_sec` (for audio)
-  - `output_tokens` (for text), `quality_score` (for image), `confidence` (for audio)
-  - `cost_usd`: Calculated per-provider pricing
-  - `duration_ms`: API call latency
-  - `user_id`, `timestamp`, `input_hash` (for caching)
+**Review Existing Implementation:**
+- [ ] Check if `weave-api/app/services/ai/cost_tracker.py` already logs to `ai_runs` table
+- [ ] Verify logged fields: `operation_type`, `provider`, `model`, `input_tokens`, `output_tokens`, `cost_usd`, `duration_ms`, `user_id`, `timestamp`, `input_hash`
+- [ ] Check if image/audio services use same cost tracking pattern
 
-**Cost Calculation Utility:**
-- [ ] Create `weave-api/app/utils/cost_calculator.py`
-- [ ] Function: `calculate_cost(provider, operation_type, input_data, output_data) -> float`
-- [ ] Document per-provider pricing:
-  - GPT-4o-mini: $0.15/$0.60 per MTok
-  - Claude 3.7 Sonnet: $3.00/$15.00 per MTok
-  - Gemini 3.0 Flash: ~$0.0005 per image (free tier: 5/day)
-  - AssemblyAI: $0.15/hr ($0.0025/min)
-  - Whisper API: $0.006/min
-- [ ] Update cost on pricing changes via environment variables
+**Standardization Tasks:**
+- [ ] Extend cost tracker to support all 3 modalities (text/image/audio)
+- [ ] Unified logging format:
+  - Text: `input_tokens`, `output_tokens`
+  - Image: `image_count`, `quality_score`
+  - Audio: `audio_duration_sec`, `confidence`
+- [ ] Create/update `weave-api/app/utils/cost_calculator.py` with model-specific pricing
+
+**Model-Specific Pricing Configuration:**
+- [ ] Use environment variables for pricing (update without code changes):
+  ```bash
+  # Text AI
+  GPT4O_MINI_INPUT_COST=0.15  # per MTok
+  GPT4O_MINI_OUTPUT_COST=0.60
+  CLAUDE_SONNET_INPUT_COST=3.00
+  CLAUDE_SONNET_OUTPUT_COST=15.00
+  
+  # Image AI
+  GEMINI_FLASH_IMAGE_COST=0.0005  # per image
+  GPT4O_VISION_IMAGE_COST=0.02
+  
+  # Audio AI
+  ASSEMBLYAI_COST_PER_HOUR=0.15
+  WHISPER_COST_PER_MINUTE=0.006
+  ```
+- [ ] Cost calculator reads from env: `calculate_cost(model_name, input_data, output_data)`
+- [ ] Log warnings on missing price config (fallback to documented defaults)
+- [ ] Document pricing in `docs/dev/ai-services-guide.md` (pricing table)
 
 ---
 
@@ -218,61 +174,180 @@ so that **I can implement Epic 2-8 AI features without reinventing provider logi
 
 ### AC-7: React Native Hooks & Frontend Integration
 
-**Standardized React Native Hooks:**
+**TanStack Query Integration (Critical for Offline Support):**
+- [ ] Query keys:
+  - Text: `['ai', 'chat', context.operation_type, context.user_id]`
+  - Image: `['ai', 'image', imageUri]` (no cache - unique inputs)
+  - Audio: `['ai', 'audio', audioUri]` (no cache - unique inputs)
+- [ ] Cache strategy:
+  - Text AI: 5min cache (triads change daily, show cached while refetching)
+  - Image/Audio: No cache (always fresh, unique inputs per request)
+- [ ] Stale-while-revalidate: Text AI only
+- [ ] Error retry: 3 attempts, exponential backoff (1s, 2s, 4s)
+- [ ] Rate limit handling: `onError` callback shows `retryAfter` time to user
 
 **useAIChat Hook (Text AI):**
 - [ ] Create `weave-mobile/src/hooks/useAIChat.ts`
-- [ ] API: `const { generate, isGenerating, error } = useAIChat();`
+- [ ] API: `const { generate, isGenerating, error, data } = useAIChat();`
 - [ ] Usage: `const result = await generate({ prompt: "...", context: {...} });`
-- [ ] Loading state: "Generating..." (customizable)
-- [ ] Error state: "AI service unavailable. Try again." (customizable)
-- [ ] Automatic retry on transient failures (3 attempts, exponential backoff)
+- [ ] TanStack Query: Cache 5min, stale-while-revalidate enabled
+- [ ] Loading: "Generating..." | Error: "AI unavailable. Retry in {retryAfter}s"
 
 **useImageAnalysis Hook (Image AI):**
 - [ ] Create `weave-mobile/src/hooks/useImageAnalysis.ts`
 - [ ] API: `const { analyze, isAnalyzing, error } = useImageAnalysis();`
 - [ ] Usage: `const result = await analyze({ imageUri: "...", operations: ["proof_validation", "ocr"] });`
-- [ ] Loading state: "Analyzing image..." (customizable)
-- [ ] Error state: "Image analysis failed. Try again." (customizable)
+- [ ] TanStack Query: No cache (unique inputs)
+- [ ] Loading: "Analyzing image..." | Error: "Analysis failed. Try again."
 
 **useVoiceTranscription Hook (Audio AI):**
 - [ ] Create `weave-mobile/src/hooks/useVoiceTranscription.ts`
 - [ ] API: `const { transcribe, isTranscribing, error } = useVoiceTranscription();`
 - [ ] Usage: `const result = await transcribe({ audioUri: "...", language: "en" });`
-- [ ] Loading state: "Transcribing audio..." (customizable)
-- [ ] Error state: "Transcription failed. Try again." (customizable)
+- [ ] TanStack Query: No cache (unique inputs)
+- [ ] Loading: "Transcribing..." | Error: "Transcription failed. Try again."
 
 **Common Hook Patterns:**
-- [ ] All hooks use TanStack Query for caching and retry logic
-- [ ] All hooks handle rate limiting (show user-friendly error with retry time)
-- [ ] All hooks support abort signals (cancel in-progress requests)
-- [ ] All hooks log errors to console (debug mode)
+- [ ] All use TanStack Query `useMutation` for API calls
+- [ ] All handle HTTP 429 (rate limit) - parse `retryAfter` from response
+- [ ] All support abort signals - `signal: abortController.signal`
+- [ ] All log errors in `__DEV__` mode
 
 ---
 
 ### AC-8: Documentation
 
-**AI Services Guide:**
-- [ ] Create `docs/dev/ai-services-guide.md` with sections:
-  - Provider Abstraction (`AIProviderBase`)
-  - Text AI Patterns (GPT-4o-mini vs Claude)
-  - Image AI Patterns (Gemini vs GPT-4o Vision)
-  - Audio AI Patterns (AssemblyAI vs Whisper)
-  - Cost Tracking (unified logging, cost calculation)
-  - Rate Limiting (enforcement, admin exemption)
-  - Frontend Hooks (`useAIChat`, `useImageAnalysis`, `useVoiceTranscription`)
-- [ ] Include provider decision tree (when to use which provider)
-- [ ] Include complete integration examples for all 3 modalities
-- [ ] Link from `CLAUDE.md` standardization section (Story 1.5.3 reference)
+**AI Services Guide (Extend Existing):**
+- [ ] Review `docs/dev/ai-service-integration-guide.md` (Story 0.11 learnings)
+- [ ] Extend with Story 1.5.3 additions:
+  - Unified `AIProviderBase` specification (AC-1)
+  - Text AI decision tree (GPT-4o-mini vs Claude)
+  - Image AI patterns (Gemini vs GPT-4o Vision)
+  - React Native hooks usage (`useAIChat`, `useImageAnalysis`, `useVoiceTranscription`)
+  - TanStack Query patterns (caching, offline support, retry logic)
+  - Model-specific pricing configuration (environment variables)
+- [ ] Rename to: `docs/dev/ai-services-guide.md` (consolidate naming)
+- [ ] Add provider decision tree diagram
+- [ ] Add complete examples for all 3 modalities
+- [ ] Link from `CLAUDE.md` Story 1.5.3 reference
 
 **Update Architecture Docs:**
 - [ ] Update `docs/architecture/core-architectural-decisions.md`:
   - Add section: "Unified AI Service Architecture (Story 1.5.3)"
-  - Include provider fallback diagram (Primary → Secondary → Graceful degradation)
-  - Document cost tracking and rate limiting patterns
+  - Provider fallback diagram (Primary → Secondary → Graceful degradation)
+  - Polymorphism pattern (shared interface, DRY)
+  - Cost tracking and rate limiting unified patterns
 - [ ] Update `docs/architecture/implementation-patterns-consistency-rules.md`:
-  - Add reference to Story 1.5.3 AI standardization
+  - Add Story 1.5.3 AI standardization reference
   - Link to `docs/dev/ai-services-guide.md`
+
+---
+
+### AC-9: Testing
+
+**Unit Tests:**
+- [ ] Test unified `AIProviderBase` inheritance for all providers (text/image/audio)
+- [ ] Test cost calculation for each provider (GPT-4o-mini, Claude, Gemini, AssemblyAI, Whisper)
+- [ ] Test rate limit checks (user hits limit, admin bypasses)
+- [ ] Test fallback chain (primary fails → secondary succeeds → tertiary graceful degradation)
+- [ ] Test model-specific pricing from environment variables
+
+**Integration Tests:**
+- [ ] Test text AI generation: GPT-4o-mini + Claude fallback chain
+- [ ] Test image analysis: Gemini + GPT-4o Vision fallback chain
+- [ ] Test audio transcription: AssemblyAI + Whisper fallback chain
+- [ ] Test rate limiting enforcement (HTTP 429 response with `Retry-After` header)
+- [ ] Test graceful degradation (all providers down - store partial results)
+- [ ] Test cost logging (verify `ai_runs` table entries)
+
+**React Native Hook Tests:**
+- [ ] Test `useAIChat` loading/error states + TanStack Query caching (5min)
+- [ ] Test `useImageAnalysis` with no cache (unique inputs)
+- [ ] Test `useVoiceTranscription` with no cache (unique inputs)
+- [ ] Test abort signal handling (cancel in-progress requests)
+- [ ] Test rate limit error UI (parse `retryAfter`, show user-friendly message)
+
+**Backwards Compatibility Tests:**
+- [ ] Verify Story 0.6 text AI endpoints still work
+- [ ] Verify Story 0.9 image AI endpoint (`/api/captures/images/analyze`) still works
+- [ ] Verify Story 0.11 audio endpoint (`/api/transcribe`) still works
+- [ ] Verify cost tracking format unchanged
+- [ ] Verify rate limiting behavior unchanged
+
+**Coverage Target:** 80%+ for `services/ai/`, `services/images/`, `services/stt/`
+
+---
+
+## Standard AI Patterns (Applies to AC-2, AC-3, AC-4)
+
+**Request Format (Text AI):**
+```json
+{
+  "messages": [{"role": "user", "content": "..."}],
+  "context": {
+    "user_id": "uuid",
+    "operation_type": "triad_generation",
+    "max_tokens": 500
+  }
+}
+```
+
+**Response Format (Text AI):**
+```json
+{
+  "text": "Generated content...",
+  "provider": "gpt-4o-mini",
+  "model": "gpt-4o-mini-2024-07-18",
+  "tokens_used": {"input": 120, "output": 300},
+  "cost_usd": 0.0025,
+  "duration_ms": 1450
+}
+```
+
+**Request Format (Image AI):**
+```json
+{
+  "image_url": "https://...",
+  "prompt": "Analyze this proof image...",
+  "operations": ["proof_validation", "ocr", "classification"],
+  "max_tokens": 300
+}
+```
+
+**Response Format (Image AI):**
+```json
+{
+  "proof_validated": true,
+  "quality_score": 8,
+  "extracted_text": "Completed workout...",
+  "categories": ["fitness", "outdoor"],
+  "analysis": "Image shows clear evidence...",
+  "provider": "gemini-3-flash",
+  "cost_usd": 0.0005
+}
+```
+
+**Request Format (Audio AI):**
+```json
+{
+  "audio_file": "<bytes>",
+  "format": "m4a",
+  "language": "en",
+  "max_duration_sec": 300
+}
+```
+
+**Response Format (Audio AI):**
+```json
+{
+  "transcript": "Today I completed my workout...",
+  "confidence": 0.94,
+  "duration_sec": 45.2,
+  "word_count": 78,
+  "provider": "assemblyai",
+  "cost_usd": 0.0019
+}
+```
 
 ---
 
@@ -311,36 +386,52 @@ so that **I can implement Epic 2-8 AI features without reinventing provider logi
   - [ ] 7.3: Create `useVoiceTranscription.ts` hook
   - [ ] 7.4: Test hooks with loading/error states
 - [ ] Task 8: Write documentation (AC-8)
-  - [ ] 8.1: Create `docs/dev/ai-services-guide.md`
-  - [ ] 8.2: Update architecture docs
+  - [ ] 8.1: Extend `docs/dev/ai-service-integration-guide.md` → rename to `ai-services-guide.md`
+  - [ ] 8.2: Update architecture docs with unified patterns
   - [ ] 8.3: Link from CLAUDE.md
+- [ ] Task 9: Testing (AC-9)
+  - [ ] 9.1: Unit tests (provider inheritance, cost calculation, rate limits, fallback chains)
+  - [ ] 9.2: Integration tests (text/image/audio with real providers + fallback)
+  - [ ] 9.3: React Native hook tests (loading/error states, TanStack Query caching)
+  - [ ] 9.4: Backwards compatibility tests (Stories 0.6, 0.9, 0.11 APIs still work)
 
 ---
 
 ## Dev Notes
 
-### Architecture Alignment
+### Existing AI Infrastructure (CRITICAL - Read First)
 
-**From Epic 1.5 Standardization Goals:**
-- Unified AI provider abstraction prevents pattern divergence across 15+ AI integrations in Epic 2-8
-- Cost tracking standardization ensures visibility into which features/users drive AI costs
-- Rate limiting enforcement prevents cost overruns ($83.33/day budget)
+**Text AI Services (Story 0.6) - ✅ EXISTS:**
+- **Location:** `weave-api/app/services/ai/`
+- **Base:** `base.py` with `AIProvider` abstract class
+- **Providers:** `bedrock_provider.py`, `anthropic_provider.py`, `openai_provider.py`, `deterministic_provider.py`
+- **Cost tracking:** `cost_tracker.py` logs to `ai_runs` table
+- **Rate limiting:** `rate_limiter.py` checks `daily_aggregates`
+- **Fallback chain:** Bedrock → OpenAI → Anthropic → Deterministic
+- **Task:** Review if `ai/base.py` can serve as unified `AIProviderBase` or needs refactoring
 
-**From Story 0.6 (AI Service Abstraction):**
-- AWS Bedrock primary provider pattern (most runway, long-term strategic choice)
-- Fallback chain: Bedrock → OpenAI → Anthropic → Deterministic
-- Dual cost tracking: Application-wide + per-user
-- Role-based rate limits: Admin users unlimited, regular users strict limits
+**Image AI Services (Story 0.9) - ✅ EXISTS:**
+- **Location:** `weave-api/app/services/images/`
+- **Providers:** `gemini_vision_provider.py`, `openai_vision_provider.py`
+- **Service:** `vision_service.py` orchestrates fallback (Gemini → GPT-4o Vision)
+- **Task:** Refactor to inherit from unified `AIProviderBase` (if needed)
 
-**From Story 0.9 (AI-Powered Image Service):**
-- Gemini 3.0 Flash primary for image analysis (58% cheaper than GPT-4o Vision)
-- Rate limiting: 5 images/day free tier (controls storage costs at 10 cents/user/day)
-- Proof validation, OCR, content classification patterns
+**Audio AI Services (Story 0.11) - ✅ EXISTS:**
+- **Location:** `weave-api/app/services/stt/`
+- **Base:** `base.py` with `STTProvider` abstract class
+- **Providers:** `assemblyai_provider.py`, `whisper_provider.py`
+- **Service:** `stt_service.py` orchestrates fallback (AssemblyAI → Whisper)
+- **Task:** Align with unified pattern (polymorphism, same interface as text/image)
 
-**From Story 0.11 (Voice/STT Infrastructure):**
-- AssemblyAI primary for transcription (58% cheaper than Whisper API)
-- Rate limiting: 50 transcriptions/day, 5 minutes audio length per request
-- Provider abstraction pattern (`STTProvider` abstract class)
+**Integration Guide - ✅ EXISTS:**
+- **Location:** `docs/dev/ai-service-integration-guide.md` (700+ lines, Story 0.11 learnings)
+- **Covers:** Environment config, provider abstraction, fallback chains, error handling, graceful degradation
+- **Task:** Extend (not replace) with Story 1.5.3 React Native hooks + standardization patterns
+
+**Architecture Alignment:**
+- Unified `AIProviderBase` prevents pattern divergence across 15+ Epic 2-8 AI integrations
+- Cost tracking standardization ensures per-feature/per-user visibility
+- Rate limiting enforcement prevents cost overruns ($83.33/day = $2,500/month budget)
 
 ### Refactoring Strategy
 
@@ -398,44 +489,51 @@ so that **I can implement Epic 2-8 AI features without reinventing provider logi
 - Test fallback chain (disable primary provider, verify secondary works)
 - Test rate limiting UI (hit limit, verify error message)
 
-### Project Structure Notes
+### Project Structure (Polymorphism & DRY)
 
-**Backend Structure:**
+**Existing Backend Structure (DO NOT CREATE, REFACTOR IF NEEDED):**
 ```
-weave-api/
-├── app/
-│   ├── services/
-│   │   ├── ai_provider_base.py          # NEW - Abstract base class
-│   │   ├── text_ai_service.py           # REFACTOR - Use AIProviderBase
-│   │   ├── image_ai_service.py          # REFACTOR - Use AIProviderBase
-│   │   ├── stt_service.py               # REFACTOR - Use AIProviderBase
-│   │   ├── providers/                   # NEW - Provider implementations
-│   │   │   ├── openai_provider.py       # GPT-4o-mini, Whisper
-│   │   │   ├── claude_provider.py       # Claude 3.7 Sonnet
-│   │   │   ├── gemini_provider.py       # Gemini 3.0 Flash
-│   │   │   └── assemblyai_provider.py   # AssemblyAI STT
-│   ├── utils/
-│   │   ├── cost_calculator.py           # NEW - Cost calculation utility
+weave-api/app/services/
+├── ai/                                  # ✅ Text AI (Story 0.6)
+│   ├── base.py                          # Review: Can this be unified AIProviderBase?
+│   ├── openai_provider.py
+│   ├── anthropic_provider.py
+│   ├── bedrock_provider.py
+│   ├── cost_tracker.py                  # Extend for image/audio
+│   └── rate_limiter.py                  # Extend for image/audio
+├── images/                              # ✅ Image AI (Story 0.9)
+│   ├── gemini_vision_provider.py        # Refactor to inherit from unified base
+│   ├── openai_vision_provider.py        # Refactor to inherit from unified base
+│   └── vision_service.py                # Update fallback chain
+├── stt/                                 # ✅ Audio AI (Story 0.11)
+│   ├── base.py                          # Align with unified AIProviderBase
+│   ├── assemblyai_provider.py           # Refactor to match unified pattern
+│   ├── whisper_provider.py              # Refactor to match unified pattern
+│   └── stt_service.py                   # Update fallback chain
 ```
 
-**Frontend Structure:**
-```
-weave-mobile/
-├── src/
-│   ├── hooks/
-│   │   ├── useAIChat.ts                 # NEW - Text AI hook
-│   │   ├── useImageAnalysis.ts          # NEW - Image AI hook
-│   │   └── useVoiceTranscription.ts     # NEW - Audio AI hook
-```
+**Files to Create/Modify:**
+- [ ] `weave-api/app/services/ai_provider_base.py` - Unified base (IF needed, review `ai/base.py` first)
+- [ ] `weave-api/app/utils/cost_calculator.py` - Model-specific pricing utility
+- [ ] `weave-mobile/src/hooks/useAIChat.ts` - NEW (Story 1.5.3)
+- [ ] `weave-mobile/src/hooks/useImageAnalysis.ts` - NEW (Story 1.5.3)
+- [ ] `weave-mobile/src/hooks/useVoiceTranscription.ts` - NEW (Story 1.5.3)
+
+**Polymorphism Pattern:**
+- All providers inherit from single `AIProviderBase` (or extend existing `ai/base.py`)
+- Shared interface: `call_ai()`, `estimate_cost()`, `get_provider_name()`, `is_available()`
+- Fallback chain logic reusable across text/image/audio
+- Cost tracking/rate limiting unified for all modalities
 
 ### References
 
-- [Source: docs/prd/epic-1.5-app-navigation-scaffolding.md#Story-1.5.3]
-- [Source: docs/stories/epic-0/0-6-ai-service-abstraction.md]
-- [Source: docs/stories/epic-0/0-9-ai-powered-image-service.md]
-- [Source: docs/stories/epic-0/0-11-voice-stt-infrastructure.md]
-- [Source: docs/architecture/core-architectural-decisions.md]
-- [Source: CLAUDE.md#Story-1.5.3-AI-Service-Patterns]
+- [Source: docs/prd/epic-1.5-app-navigation-scaffolding.md#Story-1.5.3] ✅
+- [Existing: weave-api/app/services/ai/] - Text AI implementation (Story 0.6)
+- [Existing: weave-api/app/services/images/] - Image AI implementation (Story 0.9)
+- [Existing: weave-api/app/services/stt/] - Audio AI implementation (Story 0.11)
+- [Existing: docs/dev/ai-service-integration-guide.md] - Integration patterns (Story 0.11)
+- [Source: docs/architecture/core-architectural-decisions.md] ✅
+- [Source: CLAUDE.md#Story-1.5.3-AI-Service-Patterns] ✅
 
 ---
 
