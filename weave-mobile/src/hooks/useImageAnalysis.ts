@@ -31,6 +31,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { getApiBaseUrl } from '@/utils/api';
+import * as FileSystem from 'expo-file-system';
 
 // ===========================
 // TYPES
@@ -103,7 +104,9 @@ export function useImageAnalysis() {
         // Local file - convert to base64
         // Check if request was aborted before expensive conversion
         if (options?.signal?.aborted) {
-          throw new Error('Request aborted');
+          const abortError = new Error('Request aborted');
+          abortError.name = 'AbortError';
+          throw abortError;
         }
         const base64 = await convertLocalImageToBase64(imageUri);
         imageData = `data:image/jpeg;base64,${base64}`;
@@ -131,21 +134,21 @@ export function useImageAnalysis() {
         if (response.status === 429) {
           // Rate limit exceeded
           throw new RateLimitException(
-            errorData.error.message,
-            errorData.error.retryAfter || 86400 // Default: 1 day
+            errorData?.error?.message || 'Rate limit exceeded',
+            errorData?.error?.retryAfter || 86400 // Default: 1 day
           );
         }
 
-        throw new Error(errorData.error.message || 'Image analysis failed');
+        throw new Error(errorData?.error?.message || 'Image analysis failed');
       }
 
       const responseData = await response.json();
       return responseData.data;
     },
 
-    // Retry configuration (AC-7): 1s, 2s, 4s
-    retry: 3,
-    retryDelay: (attemptIndex) => 1000 * 2 ** attemptIndex, // 1s, 2s, 4s
+    // Retry configuration (AC-7): 3 total attempts (1 initial + 2 retries) with delays 1s, 2s
+    retry: 2,
+    retryDelay: (attemptIndex) => 1000 * 2 ** attemptIndex, // 1s, 2s
 
     // NO CACHING - each image is unique (AC-7)
     // TanStack Query default: no cache for mutations
@@ -197,25 +200,18 @@ export function useImageAnalysis() {
 
 /**
  * Convert local image URI to base64 string.
+ * Uses expo-file-system which works in both React Native and Jest environments.
  *
  * @param imageUri - Local file URI (e.g., "file:///path/to/image.jpg")
  * @returns Base64-encoded image string
  */
 async function convertLocalImageToBase64(imageUri: string): Promise<string> {
-  const response = await fetch(imageUri);
-  const blob = await response.blob();
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
-      const base64String = base64.split(',')[1];
-      resolve(base64String);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
+  // Use expo-file-system which works in both React Native and Jest
+  const base64String = await FileSystem.readAsStringAsync(imageUri, {
+    encoding: 'base64',
   });
+
+  return base64String;
 }
 
 // ===========================
