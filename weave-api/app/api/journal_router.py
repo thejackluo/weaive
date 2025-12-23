@@ -407,15 +407,15 @@ async def get_today_journal_entry(
     today_date = date.today().isoformat()
 
     # Query journal entry for today
-logger.info(f"[GET /today] 🔍 Querying with user_id={profile_id}, local_date={today_date}")
-      response = (
-          supabase.table("journal_entries")
-          .select("*")
-          .eq("user_id", profile_id)
-          .eq("local_date", today_date)
-          .execute()
-      )
-      logger.info(f"[GET /today] 📊 Query result: found {len(response.data) if response.data else 0} entries")
+    logger.info(f"[GET /today] 🔍 Querying with user_id={profile_id}, local_date={today_date}")
+    response = (
+        supabase.table("journal_entries")
+        .select("*")
+        .eq("user_id", profile_id)
+        .eq("local_date", today_date)
+        .execute()
+    )
+    logger.info(f"[GET /today] 📊 Query result: found {len(response.data) if response.data else 0} entries")
 
     if not response.data or len(response.data) == 0:
         logger.info("[GET /today] ❌ No journal found - returning 404")
