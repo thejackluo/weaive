@@ -317,7 +317,7 @@ sprint-6-activities:
 
 epic-9-status: planned
 epic-9-stories:
-  9-1-production-backend-deployment: ready-for-dev  # 5 pts ✅ Story created and validated (2025-12-23)
+  9-1-production-backend-deployment: review         # 5 pts ✅ Infrastructure complete, pending manual deployment (2025-12-23)
   9-2-production-database-setup: backlog            # 3 pts
   9-3-app-store-compliance: backlog                 # 8 pts
   9-4-subscription-management-iap: backlog          # 13 pts
