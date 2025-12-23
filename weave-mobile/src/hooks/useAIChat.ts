@@ -1,197 +1,126 @@
 /**
- * useAIChat Hook - Text AI Generation with TanStack Query
+ * useAIChat - AI Chat API Hook (Story 6.1)
  *
- * Story: 1.5.3 - AI Services Standardization (AC-7)
- * Provides text AI generation with caching, error handling, and rate limiting support.
+ * NOTE: This is a STUB implementation for Story 6.1 AI Chat Interface.
+ * The full implementation will be completed in Story 6.1.
  *
- * Features:
- * - TanStack Query mutation for API calls
- * - 5-minute cache with stale-while-revalidate
- * - HTTP 429 rate limit handling with retryAfter
- * - Abort signal support for cancelling requests
- * - Automatic retry with exponential backoff (3 attempts: 1s, 2s, 4s)
- * - Loading/error states for UI integration
+ * This stub exists to satisfy TypeScript compilation for ChatScreen.tsx
+ * which was merged from main but is not yet fully functional in story/1.5.3.
  *
- * Provider fallback chain (handled by backend):
- * - Primary: GPT-4o-mini ($0.15/$0.60 per MTok)
- * - Secondary: Claude 3.7 Sonnet ($3.00/$15.00 per MTok)
- * - Tertiary: Deterministic/cached response
+ * For AI text generation (Story 1.5.3), use useAITextGeneration instead.
  *
- * Usage:
- * ```tsx
- * const { generate, isGenerating, error, data } = useAIChat();
- *
- * const result = await generate({
- *   prompt: "What are 3 tasks to move toward my goal today?",
- *   context: {
- *     operation_type: "triad_generation",
- *     user_id: "user-123",
- *     max_tokens: 500
- *   }
- * });
- * ```
+ * Features (when fully implemented in Story 6.1):
+ * - Send chat messages with rate limiting
+ * - Get usage statistics (tiered: premium/free/monthly)
+ * - List conversations
+ * - Get conversation details
+ * - React Query integration for caching
  */
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getApiBaseUrl } from '@/utils/api';
+import { useQuery } from '@tanstack/react-query';
 
-// ===========================
-// TYPES
-// ===========================
-
-interface AITextRequest {
-  prompt: string;
-  context: {
-    user_id?: string;
-    operation_type: string; // 'triad_generation', 'journal_feedback', 'dream_self_chat', etc.
-    max_tokens?: number;
-  };
+// Types matching backend Pydantic models (Story 6.1)
+interface ChatMessageResponse {
+  message_id: string;
+  response: string;
+  response_id: string;
+  conversation_id: string;
+  tokens_used: number;
 }
 
-interface AITextResponse {
-  text: string;
-  provider: string; // 'gpt-4o-mini', 'claude-sonnet', 'deterministic'
-  model: string; // Full model name (e.g., 'gpt-4o-mini-2024-07-18')
-  tokens_used: {
-    input: number;
-    output: number;
-  };
-  cost_usd: number;
-  duration_ms: number;
+interface UsageStats {
+  premium_today: { used: number; limit: number };
+  free_today: { used: number; limit: number };
+  monthly: { used: number; limit: number };
+  tier: 'free' | 'pro' | 'admin';
 }
 
-// Rate limit error structure (parsed from API response)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface RateLimitError {
-  code: 'RATE_LIMIT_EXCEEDED';
-  message: string;
-  retryAfter: number; // Seconds until rate limit resets
-  limit: number; // Rate limit threshold
-  usage: number; // Current usage
+interface ConversationSummary {
+  id: string;
+  started_at: string;
+  last_message_at: string;
+  initiated_by: 'user' | 'system';
+  last_message_preview: string;
 }
 
-interface APIErrorResponse {
-  error: {
-    code: string;
-    message: string;
-    retryAfter?: number;
-  };
+interface ConversationDetail {
+  id: string;
+  started_at: string;
+  last_message_at: string;
+  initiated_by: 'user' | 'system';
+  messages: Array<{
+    id: string;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    created_at: string;
+    tokens_used?: number;
+  }>;
 }
 
-interface GenerateOptions {
-  signal?: AbortSignal; // For cancelling requests
-}
-
-// ===========================
-// HOOK
-// ===========================
-
+/**
+ * Custom hook for AI chat functionality (STUB - Story 6.1)
+ */
 export function useAIChat() {
-  const queryClient = useQueryClient();
-  const apiBaseUrl = getApiBaseUrl();
+  /**
+   * Send a chat message (STUB)
+   */
+  const sendMessage = async ({
+    message,
+    conversation_id,
+  }: {
+    message: string;
+    conversation_id?: string;
+  }): Promise<ChatMessageResponse> => {
+    throw new Error(
+      'useAIChat.sendMessage() is not yet implemented. This is a stub for Story 6.1. Use useAITextGeneration for AI text generation (Story 1.5.3).'
+    );
+  };
 
-  const mutation = useMutation({
-    mutationFn: async (
-      request: AITextRequest & { options?: GenerateOptions }
-    ): Promise<AITextResponse> => {
-      const { prompt, context, options } = request;
+  /**
+   * Get user's AI usage statistics (STUB with default data)
+   */
+  const getUsageStats = async (): Promise<UsageStats> => {
+    // Return default stats to satisfy TypeScript
+    return {
+      premium_today: { used: 0, limit: 10 },
+      free_today: { used: 0, limit: 3 },
+      monthly: { used: 0, limit: 100 },
+      tier: 'free',
+    };
+  };
 
-      // Build messages format (OpenAI/Anthropic compatible)
-      const payload = {
-        messages: [{ role: 'user', content: prompt }],
-        context: {
-          user_id: context.user_id,
-          operation_type: context.operation_type,
-          max_tokens: context.max_tokens || 500,
-        },
-      };
+  /**
+   * List user's conversation history (STUB)
+   */
+  const listConversations = async (): Promise<ConversationSummary[]> => {
+    return [];
+  };
 
-      const response = await fetch(`${apiBaseUrl}/api/ai/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: options?.signal,
-      });
+  /**
+   * Get full conversation thread (STUB)
+   */
+  const getConversation = async (conversationId: string): Promise<ConversationDetail> => {
+    throw new Error(
+      'useAIChat.getConversation() is not yet implemented. This is a stub for Story 6.1.'
+    );
+  };
 
-      if (!response.ok) {
-        const errorData: APIErrorResponse = await response.json();
-
-        if (response.status === 429) {
-          // Rate limit exceeded
-          throw new RateLimitException(errorData.error.message, errorData.error.retryAfter || 3600);
-        }
-
-        throw new Error(errorData.error.message || 'AI generation failed');
-      }
-
-      const responseData = await response.json();
-      return responseData.data;
-    },
-
-    // Retry configuration (AC-7): 1s, 2s, 4s
-    retry: 3,
-    retryDelay: (attemptIndex) => 1000 * 2 ** attemptIndex, // 1s, 2s, 4s
-
-    // On success: Update cache with 5-minute TTL
-    onSuccess: (data, variables) => {
-      const queryKey = ['ai', 'chat', variables.context.operation_type, variables.context.user_id];
-
-      queryClient.setQueryData(queryKey, data, {
-        updatedAt: Date.now(),
-      });
-    },
-
-    // Error logging (dev mode only)
-    onError: (error) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[useAIChat] Generation failed:', error);
-      }
-    },
-  });
+  /**
+   * React Query hook for usage stats
+   */
+  const useUsageStats = () => {
+    return useQuery({
+      queryKey: ['ai-usage-stats'],
+      queryFn: getUsageStats,
+      staleTime: 60000, // 1 minute
+    });
+  };
 
   return {
-    /**
-     * Generate AI text response.
-     *
-     * @param request - Prompt and context
-     * @param options - Optional abort signal
-     * @returns AI response with provider info and cost tracking
-     */
-    generate: (request: AITextRequest, options?: GenerateOptions) =>
-      mutation.mutateAsync({ ...request, options }),
-
-    /**
-     * Loading state - True while AI is generating response.
-     */
-    isGenerating: mutation.isPending,
-
-    /**
-     * Error state - Populated on failure (includes rate limit errors).
-     */
-    error: mutation.error,
-
-    /**
-     * Response data - Populated on successful generation.
-     */
-    data: mutation.data,
-
-    /**
-     * Reset hook state (clear error/data).
-     */
-    reset: mutation.reset,
+    sendMessage,
+    getUsageStats,
+    listConversations,
+    getConversation,
+    useUsageStats,
   };
-}
-
-// ===========================
-// CUSTOM ERRORS
-// ===========================
-
-class RateLimitException extends Error {
-  public retryAfter: number;
-
-  constructor(message: string, retryAfter: number) {
-    super(message);
-    this.name = 'RateLimitException';
-    this.retryAfter = retryAfter;
-  }
 }

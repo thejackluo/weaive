@@ -1,9 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { useAIChat } from '../useAIChat';
+import { useAITextGeneration } from '../useAITextGeneration';
 
-describe('useAIChat Hook', () => {
+describe('useAITextGeneration Hook', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -20,9 +20,9 @@ describe('useAIChat Hook', () => {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   }
 
-  describe('AC-7: React Native Hooks - useAIChat', () => {
+  describe('AC-7: React Native Hooks - useAITextGeneration', () => {
     it('should provide generate function, isGenerating state, and error handling', () => {
-      const { result } = renderHook(() => useAIChat(), { wrapper });
+      const { result } = renderHook(() => useAITextGeneration(), { wrapper });
 
       expect(result.current.generate).toBeDefined();
       expect(typeof result.current.generate).toBe('function');
@@ -32,7 +32,7 @@ describe('useAIChat Hook', () => {
     });
 
     it('should set isGenerating to true while calling AI API', async () => {
-      const { result } = renderHook(() => useAIChat(), { wrapper });
+      const { result } = renderHook(() => useAITextGeneration(), { wrapper });
 
       const generatePromise = result.current.generate({
         prompt: 'Hello AI',
@@ -45,7 +45,7 @@ describe('useAIChat Hook', () => {
     });
 
     it('should return AI response with provider info and cost tracking', async () => {
-      const { result } = renderHook(() => useAIChat(), { wrapper });
+      const { result } = renderHook(() => useAITextGeneration(), { wrapper });
 
       await result.current.generate({
         prompt: 'Generate triad tasks',
@@ -78,7 +78,7 @@ describe('useAIChat Hook', () => {
         } as Response)
       );
 
-      const { result } = renderHook(() => useAIChat(), { wrapper });
+      const { result } = renderHook(() => useAITextGeneration(), { wrapper });
 
       await result.current.generate({
         prompt: 'Test prompt',
@@ -95,7 +95,7 @@ describe('useAIChat Hook', () => {
     it('should support abort signal for cancelling requests', async () => {
       const abortController = new AbortController();
 
-      const { result } = renderHook(() => useAIChat(), { wrapper });
+      const { result } = renderHook(() => useAITextGeneration(), { wrapper });
 
       const generatePromise = result.current.generate(
         {
@@ -114,7 +114,7 @@ describe('useAIChat Hook', () => {
     });
 
     it('should use 5-minute cache for text AI queries', async () => {
-      const { result } = renderHook(() => useAIChat(), { wrapper });
+      const { result } = renderHook(() => useAITextGeneration(), { wrapper });
 
       const contextParams = {
         prompt: 'Cached prompt',
@@ -158,7 +158,7 @@ describe('useAIChat Hook', () => {
         } as Response);
       });
 
-      const { result } = renderHook(() => useAIChat(), { wrapper });
+      const { result } = renderHook(() => useAITextGeneration(), { wrapper });
 
       await result.current.generate({
         prompt: 'Test retry',
@@ -197,7 +197,7 @@ describe('useAIChat Hook', () => {
         } as Response);
       });
 
-      const { result } = renderHook(() => useAIChat(), { wrapper });
+      const { result } = renderHook(() => useAITextGeneration(), { wrapper });
 
       await result.current.generate({
         prompt: 'Test fallback',
