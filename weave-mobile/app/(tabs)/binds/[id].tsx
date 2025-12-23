@@ -1,3 +1,5 @@
+import { BindScreen } from '@/screens/BindScreen';
+
 /**
  * Bind Detail Screen
  * Epic 3: Daily Actions & Proof
@@ -6,7 +8,6 @@
  * Route: /(tabs)/binds/[id]
  * Shows bind completion screen with timer, photo capture, and celebration
  */
-
-import { BindScreen } from '@/screens/BindScreen';
-
-export default BindScreen;
+export default function BindDetailScreen() {
+  return <BindScreen />;
+}

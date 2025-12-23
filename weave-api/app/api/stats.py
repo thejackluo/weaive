@@ -10,7 +10,7 @@ Implements US-5.2, US-5.3, US-5.5
 """
 
 import logging
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -807,6 +807,8 @@ async def get_history(
                 }
             )
 
+        # Note: Goal creation/archival NOT tracked in history (user preference)
+        # History only shows: completions (binds), journal entries (threads), weave chats
         # Fetch recent goal activities (created/archived) - also threads
         if fetch_threads:
             query = (
@@ -873,4 +875,212 @@ async def get_history(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch history",
+        )
+
+
+@router.get("/day/{date}")
+async def get_day_details(
+    date: str,
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Get detailed activity for a specific day (Dashboard day details modal).
+
+    Path Parameters:
+    - date: Date in YYYY-MM-DD format
+
+    Returns:
+    - data: Day activity object with binds and journal
+    - meta: Metadata with timestamp
+
+    Data format:
+    {
+      "date": "2025-12-20",
+      "binds": [
+        {
+          "id": "uuid",
+          "title": "Morning meditation",
+          "notes": "Felt calm and focused",
+          "has_proof": true,
+          "completed_at": "2025-12-20T09:00:00Z",
+          "duration_minutes": 10,
+          "needle_title": "Be present"
+        }
+      ],
+      "journal": {
+        "id": "uuid",
+        "fulfillment_score": 8,
+        "default_responses": {
+          "today_reflection": "Great day, made progress on goals",
+          "tomorrow_focus": "Continue momentum"
+        },
+        "custom_responses": {},
+        "created_at": "2025-12-20T22:00:00Z"
+      },
+      "total_completions": 3
+    }
+    """
+    if not supabase:
+        logger.error("❌ Supabase client not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not configured",
+        )
+
+    # Extract user ID from JWT
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field (user ID)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    logger.info(f"[DAY_DETAILS_API] Request for date {date} from auth_user_id: {auth_user_id}")
+
+    try:
+        # Get user_profile.id
+        user_profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+
+        if not user_profile_response.data:
+            logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found",
+            )
+
+        user_id = user_profile_response.data["id"]
+
+        # Fetch all completions for this date
+        completions_response = (
+            supabase.table("subtask_completions")
+            .select("id, subtask_instance_id, completed_at, duration_minutes, notes")
+            .eq("user_id", user_id)
+            .eq("local_date", date)
+            .order("completed_at", desc=False)
+            .execute()
+        )
+
+        completions = completions_response.data or []
+        logger.info(f"📊 Found {len(completions)} completions for {date}")
+
+        # For each completion, fetch bind details
+        binds = []
+        for completion in completions:
+            try:
+                # Fetch subtask instance to get title and goal
+                instance_response = (
+                    supabase.table("subtask_instances")
+                    .select("id, title_override, subtask_template_id, goal_id")
+                    .eq("id", completion["subtask_instance_id"])
+                    .single()
+                    .execute()
+                )
+
+                if not instance_response.data:
+                    continue
+
+                instance = instance_response.data
+
+                # Get template title
+                template_response = (
+                    supabase.table("subtask_templates")
+                    .select("title, goal_id")
+                    .eq("id", instance["subtask_template_id"])
+                    .single()
+                    .execute()
+                )
+
+                bind_title = instance.get("title_override") or (
+                    template_response.data.get("title") if template_response.data else "Untitled"
+                )
+
+                # Get goal title (needle)
+                goal_title = None
+                goal_id = instance.get("goal_id") or (
+                    template_response.data.get("goal_id") if template_response.data else None
+                )
+
+                if goal_id:
+                    goal_response = (
+                        supabase.table("goals")
+                        .select("title")
+                        .eq("id", goal_id)
+                        .single()
+                        .execute()
+                    )
+                    if goal_response.data:
+                        goal_title = goal_response.data.get("title")
+
+                # Check if has proof
+                proof_response = (
+                    supabase.table("captures")
+                    .select("id")
+                    .eq("subtask_instance_id", completion["subtask_instance_id"])
+                    .eq("user_id", user_id)
+                    .limit(1)
+                    .execute()
+                )
+
+                has_proof = len(proof_response.data) > 0
+
+                binds.append({
+                    "id": completion["id"],
+                    "title": bind_title,
+                    "notes": completion.get("notes"),
+                    "has_proof": has_proof,
+                    "completed_at": completion["completed_at"],
+                    "duration_minutes": completion.get("duration_minutes"),
+                    "needle_title": goal_title,
+                })
+
+            except Exception as bind_error:
+                logger.warning(f"⚠️ Could not fetch bind details: {str(bind_error)}")
+                continue
+
+        # Fetch journal entry for this date
+        journal = None
+        try:
+            journal_response = (
+                supabase.table("journal_entries")
+                .select("id, fulfillment_score, default_responses, custom_responses, created_at")
+                .eq("user_id", user_id)
+                .eq("local_date", date)
+                .single()
+                .execute()
+            )
+
+            if journal_response.data:
+                journal = journal_response.data
+                logger.info(f"📖 Found journal entry for {date}")
+        except Exception:
+            # No journal for this date (404 is expected)
+            logger.info(f"📖 No journal entry for {date}")
+
+        return {
+            "data": {
+                "date": date,
+                "binds": binds,
+                "journal": journal,
+                "total_completions": len(binds),
+            },
+            "meta": {
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error fetching day details: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch day details",
         )
