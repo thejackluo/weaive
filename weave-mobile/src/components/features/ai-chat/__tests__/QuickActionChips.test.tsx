@@ -31,9 +31,7 @@ describe('QuickActionChips Component', () => {
   it('calls onAction with correct prompt when "Plan my day" tapped', () => {
     // GIVEN: QuickActionChips with mock callback
     const mockOnAction = jest.fn();
-    const { getByTestId } = render(
-      <QuickActionChips onAction={mockOnAction}  />
-    );
+    const { getByTestId } = render(<QuickActionChips onAction={mockOnAction} />);
 
     // WHEN: User taps "Plan my day" chip
     const planDayChip = getByTestId('chip-plan-day');
@@ -46,9 +44,7 @@ describe('QuickActionChips Component', () => {
   it('calls onAction with correct prompt when "I\'m stuck" tapped', () => {
     // GIVEN: QuickActionChips with mock callback
     const mockOnAction = jest.fn();
-    const { getByTestId } = render(
-      <QuickActionChips onAction={mockOnAction}  />
-    );
+    const { getByTestId } = render(<QuickActionChips onAction={mockOnAction} />);
 
     // WHEN: User taps "I'm stuck" chip
     const stuckChip = getByTestId('chip-im-stuck');
@@ -67,7 +63,7 @@ describe('QuickActionChips Component', () => {
    */
   it('hides chips when visible prop is false', () => {
     // GIVEN: QuickActionChips with visible=false
-    const { getByTestId } = render(<QuickActionChips onAction={jest.fn()}  />);
+    const { getByTestId } = render(<QuickActionChips onAction={jest.fn()} />);
 
     // THEN: Container is hidden
     const container = getByTestId('quick-action-chips-container');
@@ -82,9 +78,7 @@ describe('QuickActionChips Component', () => {
   it('does not trigger onAction when disabled', () => {
     // GIVEN: Disabled chips
     const mockOnAction = jest.fn();
-    const { getByTestId } = render(
-      <QuickActionChips onAction={mockOnAction}   />
-    );
+    const { getByTestId } = render(<QuickActionChips onAction={mockOnAction} />);
 
     // WHEN: User taps chip
     const chip = getByTestId('chip-plan-day');
@@ -101,7 +95,7 @@ describe('QuickActionChips Component', () => {
    */
   it('animates chip on press', async () => {
     // GIVEN: QuickActionChips
-    const { getByTestId } = render(<QuickActionChips onAction={jest.fn()}  />);
+    const { getByTestId } = render(<QuickActionChips onAction={jest.fn()} />);
 
     // WHEN: User presses chip
     const chip = getByTestId('chip-plan-day');
@@ -119,7 +113,7 @@ describe('QuickActionChips Component', () => {
    */
   it('displays correct chip labels', () => {
     // GIVEN: QuickActionChips
-    const { getByText } = render(<QuickActionChips onAction={jest.fn()}  />);
+    const { getByText } = render(<QuickActionChips onAction={jest.fn()} />);
 
     // THEN: Labels are correct
     expect(getByText('Plan my day')).toBeTruthy();
