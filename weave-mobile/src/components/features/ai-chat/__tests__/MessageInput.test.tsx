@@ -47,7 +47,12 @@ describe('MessageInput Component', () => {
   it('enables send button when input has text', () => {
     // GIVEN: Input with text
     const { getByTestId } = render(
-      <MessageInput value="Hello Weave" onChangeText={jest.fn()} onSend={jest.fn()} disabled={false} />
+      <MessageInput
+        value="Hello Weave"
+        onChangeText={jest.fn()}
+        onSend={jest.fn()}
+        disabled={false}
+      />
     );
 
     // THEN: Send button is enabled
@@ -125,7 +130,9 @@ describe('MessageInput Component', () => {
   it('shows 500/500 when at character limit', () => {
     // GIVEN: Input with exactly 500 characters
     const maxText = 'a'.repeat(500);
-    render(<MessageInput value={maxText} onChangeText={jest.fn()} onSend={jest.fn()} disabled={false} />);
+    render(
+      <MessageInput value={maxText} onChangeText={jest.fn()} onSend={jest.fn()} disabled={false} />
+    );
 
     // THEN: Character counter shows limit
     expect(screen.getByText('500/500')).toBeTruthy();

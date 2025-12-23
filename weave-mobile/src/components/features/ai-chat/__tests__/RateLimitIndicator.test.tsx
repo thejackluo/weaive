@@ -21,7 +21,17 @@ describe('RateLimitIndicator Component', () => {
       tier: 'free' as const,
     };
 
-    const { getByText } = render(<RateLimitIndicator premiumUsed={usage.premium_today.used} premiumLimit={usage.premium_today.limit} freeUsed={usage.free_today.used} freeLimit={usage.free_today.limit} monthlyUsed={usage.monthly.used} monthlyLimit={usage.monthly.limit} isRateLimited={false} />);
+    const { getByText } = render(
+      <RateLimitIndicator
+        premiumUsed={usage.premium_today.used}
+        premiumLimit={usage.premium_today.limit}
+        freeUsed={usage.free_today.used}
+        freeLimit={usage.free_today.limit}
+        monthlyUsed={usage.monthly.used}
+        monthlyLimit={usage.monthly.limit}
+        isRateLimited={false}
+      />
+    );
 
     // THEN: Premium usage displayed
     expect(getByText(/5\/10.*premium/i)).toBeTruthy();
@@ -36,7 +46,17 @@ describe('RateLimitIndicator Component', () => {
       tier: 'free' as const,
     };
 
-    const { getByText } = render(<RateLimitIndicator premiumUsed={usage.premium_today.used} premiumLimit={usage.premium_today.limit} freeUsed={usage.free_today.used} freeLimit={usage.free_today.limit} monthlyUsed={usage.monthly.used} monthlyLimit={usage.monthly.limit} isRateLimited={false} />);
+    const { getByText } = render(
+      <RateLimitIndicator
+        premiumUsed={usage.premium_today.used}
+        premiumLimit={usage.premium_today.limit}
+        freeUsed={usage.free_today.used}
+        freeLimit={usage.free_today.limit}
+        monthlyUsed={usage.monthly.used}
+        monthlyLimit={usage.monthly.limit}
+        isRateLimited={false}
+      />
+    );
 
     // THEN: Free usage displayed
     expect(getByText(/20\/40.*free/i)).toBeTruthy();
@@ -51,7 +71,17 @@ describe('RateLimitIndicator Component', () => {
       tier: 'free' as const,
     };
 
-    const { getByText } = render(<RateLimitIndicator premiumUsed={usage.premium_today.used} premiumLimit={usage.premium_today.limit} freeUsed={usage.free_today.used} freeLimit={usage.free_today.limit} monthlyUsed={usage.monthly.used} monthlyLimit={usage.monthly.limit} isRateLimited={false} />);
+    const { getByText } = render(
+      <RateLimitIndicator
+        premiumUsed={usage.premium_today.used}
+        premiumLimit={usage.premium_today.limit}
+        freeUsed={usage.free_today.used}
+        freeLimit={usage.free_today.limit}
+        monthlyUsed={usage.monthly.used}
+        monthlyLimit={usage.monthly.limit}
+        isRateLimited={false}
+      />
+    );
 
     // THEN: Monthly usage displayed
     expect(getByText(/25\/500.*this month/i)).toBeTruthy();
@@ -71,7 +101,17 @@ describe('RateLimitIndicator Component', () => {
       tier: 'free' as const,
     };
 
-    const { getByText } = render(<RateLimitIndicator premiumUsed={usage.premium_today.used} premiumLimit={usage.premium_today.limit} freeUsed={usage.free_today.used} freeLimit={usage.free_today.limit} monthlyUsed={usage.monthly.used} monthlyLimit={usage.monthly.limit} isRateLimited={false} />);
+    const { getByText } = render(
+      <RateLimitIndicator
+        premiumUsed={usage.premium_today.used}
+        premiumLimit={usage.premium_today.limit}
+        freeUsed={usage.free_today.used}
+        freeLimit={usage.free_today.limit}
+        monthlyUsed={usage.monthly.used}
+        monthlyLimit={usage.monthly.limit}
+        isRateLimited={false}
+      />
+    );
 
     // THEN: Premium limit message displayed
     expect(getByText(/you've used all 10 premium messages today/i)).toBeTruthy();
@@ -91,7 +131,17 @@ describe('RateLimitIndicator Component', () => {
       tier: 'free' as const,
     };
 
-    const { getByText } = render(<RateLimitIndicator premiumUsed={usage.premium_today.used} premiumLimit={usage.premium_today.limit} freeUsed={usage.free_today.used} freeLimit={usage.free_today.limit} monthlyUsed={usage.monthly.used} monthlyLimit={usage.monthly.limit} isRateLimited={false} />);
+    const { getByText } = render(
+      <RateLimitIndicator
+        premiumUsed={usage.premium_today.used}
+        premiumLimit={usage.premium_today.limit}
+        freeUsed={usage.free_today.used}
+        freeLimit={usage.free_today.limit}
+        monthlyUsed={usage.monthly.used}
+        monthlyLimit={usage.monthly.limit}
+        isRateLimited={false}
+      />
+    );
 
     // THEN: Free limit message displayed
     expect(getByText(/you've used all 40 free messages today/i)).toBeTruthy();
@@ -131,7 +181,17 @@ describe('RateLimitIndicator Component', () => {
       tier: 'free' as const,
     };
 
-    const { getByTestId, getByText } = render(<RateLimitIndicator premiumUsed={usage.premium_today.used} premiumLimit={usage.premium_today.limit} freeUsed={usage.free_today.used} freeLimit={usage.free_today.limit} monthlyUsed={usage.monthly.used} monthlyLimit={usage.monthly.limit} isRateLimited={false} />);
+    const { getByTestId, getByText } = render(
+      <RateLimitIndicator
+        premiumUsed={usage.premium_today.used}
+        premiumLimit={usage.premium_today.limit}
+        freeUsed={usage.free_today.used}
+        freeLimit={usage.free_today.limit}
+        monthlyUsed={usage.monthly.used}
+        monthlyLimit={usage.monthly.limit}
+        isRateLimited={false}
+      />
+    );
 
     // THEN: Countdown timer displayed
     expect(getByTestId('reset-countdown-timer')).toBeTruthy();
@@ -152,7 +212,17 @@ describe('RateLimitIndicator Component', () => {
       tier: 'pro' as const,
     };
 
-    const { getByText } = render(<RateLimitIndicator premiumUsed={usage.premium_today.used} premiumLimit={usage.premium_today.limit} freeUsed={usage.free_today.used} freeLimit={usage.free_today.limit} monthlyUsed={usage.monthly.used} monthlyLimit={usage.monthly.limit} isRateLimited={false} />);
+    const { getByText } = render(
+      <RateLimitIndicator
+        premiumUsed={usage.premium_today.used}
+        premiumLimit={usage.premium_today.limit}
+        freeUsed={usage.free_today.used}
+        freeLimit={usage.free_today.limit}
+        monthlyUsed={usage.monthly.used}
+        monthlyLimit={usage.monthly.limit}
+        isRateLimited={false}
+      />
+    );
 
     // THEN: Pro limits displayed
     expect(getByText(/50\/200.*premium/i)).toBeTruthy();
@@ -174,7 +244,17 @@ describe('RateLimitIndicator Component', () => {
       tier: 'free' as const,
     };
 
-    const { getByTestId } = render(<RateLimitIndicator premiumUsed={usage.premium_today.used} premiumLimit={usage.premium_today.limit} freeUsed={usage.free_today.used} freeLimit={usage.free_today.limit} monthlyUsed={usage.monthly.used} monthlyLimit={usage.monthly.limit} isRateLimited={false} />);
+    const { getByTestId } = render(
+      <RateLimitIndicator
+        premiumUsed={usage.premium_today.used}
+        premiumLimit={usage.premium_today.limit}
+        freeUsed={usage.free_today.used}
+        freeLimit={usage.free_today.limit}
+        monthlyUsed={usage.monthly.used}
+        monthlyLimit={usage.monthly.limit}
+        isRateLimited={false}
+      />
+    );
 
     // THEN: Warning indicator displayed
     const indicator = getByTestId('rate-limit-indicator');
@@ -195,7 +275,17 @@ describe('RateLimitIndicator Component', () => {
       tier: 'free' as const,
     };
 
-    const { getByTestId } = render(<RateLimitIndicator premiumUsed={usage.premium_today.used} premiumLimit={usage.premium_today.limit} freeUsed={usage.free_today.used} freeLimit={usage.free_today.limit} monthlyUsed={usage.monthly.used} monthlyLimit={usage.monthly.limit} isRateLimited={false} />);
+    const { getByTestId } = render(
+      <RateLimitIndicator
+        premiumUsed={usage.premium_today.used}
+        premiumLimit={usage.premium_today.limit}
+        freeUsed={usage.free_today.used}
+        freeLimit={usage.free_today.limit}
+        monthlyUsed={usage.monthly.used}
+        monthlyLimit={usage.monthly.limit}
+        isRateLimited={false}
+      />
+    );
 
     // THEN: Glassmorphism styling applied
     const container = getByTestId('rate-limit-indicator');
