@@ -16,11 +16,9 @@ describe('useVoiceTranscription Hook', () => {
     jest.clearAllMocks();
   });
 
-  const wrapper = ({ children }: { children: React.ReactNode }) => {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-  };
+  function wrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  }
 
   describe('AC-7: React Native Hooks - useVoiceTranscription', () => {
     it('should provide transcribe function, isTranscribing state, and error handling', () => {

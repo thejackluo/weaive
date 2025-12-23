@@ -16,11 +16,9 @@ describe('useAIChat Hook', () => {
     jest.clearAllMocks();
   });
 
-  const wrapper = ({ children }: { children: React.ReactNode }) => {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-  };
+  function wrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  }
 
   describe('AC-7: React Native Hooks - useAIChat', () => {
     it('should provide generate function, isGenerating state, and error handling', () => {

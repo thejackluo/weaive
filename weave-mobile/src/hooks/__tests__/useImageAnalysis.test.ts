@@ -16,11 +16,9 @@ describe('useImageAnalysis Hook', () => {
     jest.clearAllMocks();
   });
 
-  const wrapper = ({ children }: { children: React.ReactNode }) => {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-  };
+  function wrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  }
 
   describe('AC-7: React Native Hooks - useImageAnalysis', () => {
     it('should provide analyze function, isAnalyzing state, and error handling', () => {
