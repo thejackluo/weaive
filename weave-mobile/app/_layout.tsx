@@ -7,6 +7,26 @@ import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
 import { DevEnvironmentBanner } from '../src/components/DevEnvironmentBanner';
 import { initJournalApi } from '../src/services/journalApi';
 import '../global.css';
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: 'https://6376c2a36a9e23ca22646f5d5024e6ac@o4507389087580160.ingest.us.sentry.io/4510585166888960',
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: true,
+
+  // Configure Session Replay
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1,
+  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 // Create QueryClient instance (singleton)
 // Story 4.1: Added for journal and user preferences queries
@@ -75,7 +95,7 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
  *
  * @returns Stack navigation component wrapped with providers
  */
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   return (
     <ThemeProvider initialMode="dark">
       <AuthProvider>
@@ -93,4 +113,4 @@ export default function RootLayout() {
       </AuthProvider>
     </ThemeProvider>
   );
-}
+});
