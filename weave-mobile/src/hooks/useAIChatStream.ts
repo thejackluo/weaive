@@ -166,10 +166,10 @@ export function useAIChatStream(): UseAIChatStreamReturn {
         });
 
         // Handle incoming messages
-        eventSourceRef.current.addEventListener('message', (event) => {
+        eventSourceRef.current.addEventListener('message', (event: any) => {
           try {
             if (__DEV__) console.log('[STREAM_DEBUG] 📨 Received SSE event:', event.data);
-            const chunk: StreamChunk = JSON.parse(event.data);
+            const chunk: StreamChunk = JSON.parse(event.data as string);
 
             if (chunk.type === 'metadata') {
               // Store message and conversation IDs
