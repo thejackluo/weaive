@@ -454,7 +454,19 @@ weavelight/
 │       └── theme/               # ThemeContext and hooks
 │
 ├── docs/
-│   ├── pages/                   # 📁 Page-based implementation guides (NEW)
+│   ├── production/              # 📁 Production deployment, compliance, legal (NEW)
+│   │   ├── README.md            # Production docs overview
+│   │   ├── PRODUCTION_DEPLOYMENT_MANUAL.md  # Step-by-step deployment guide
+│   │   ├── CODE_REVIEW_FIXES_SUMMARY.md     # Code review fixes log (Story 9.1)
+│   │   ├── production-readiness-checklist.md # Pre-launch checklist
+│   │   ├── test-validation-guide.md          # How to verify all tests pass
+│   │   ├── compliance-legal-checklist.md     # Compliance and legal requirements
+│   │   ├── pre-deployment-verification.md    # Automated verification guide
+│   │   └── scripts/             # Automated verification scripts
+│   │       ├── pre-deployment-verification.sh
+│   │       └── run-all-tests.sh
+│   │
+│   ├── pages/                   # 📁 Page-based implementation guides
 │   │   ├── thread-page.md       # Epic 3 + 4 (Daily actions + reflection)
 │   │   ├── dashboard-page.md    # Epic 2 + 5 (Goals + progress viz)
 │   │   ├── weave-ai-page.md     # Epic 6 (AI coaching)
@@ -575,6 +587,11 @@ weavelight/
 | Architecture decisions | `docs/architecture/core-architectural-decisions.md` | Tech stack, patterns, rationale |
 | Database schema | `docs/idea/backend.md` (lines 200-800) | Complete schema with relationships |
 | API patterns | `docs/architecture/implementation-patterns-consistency-rules.md` | Code conventions and guardrails |
+| **Production deployment** | `docs/production/PRODUCTION_DEPLOYMENT_MANUAL.md` | Step-by-step Railway deployment guide (Story 9.1) |
+| **Production readiness check** | `docs/production/production-readiness-checklist.md` | Complete pre-launch checklist (code, security, compliance, legal) |
+| **Verifying all tests pass** | `docs/production/test-validation-guide.md` | How to run and verify backend + mobile + RLS tests |
+| **Compliance & legal** | `docs/production/compliance-legal-checklist.md` | Privacy policy, ToS, GDPR, CCPA, App Store compliance |
+| **Pre-deployment verification** | `docs/production/scripts/pre-deployment-verification.sh` | Automated script to verify production readiness |
 | **Integrating AI services** | `docs/dev/ai-service-integration-guide.md` | Environment config, provider abstraction, fallback chains |
 | Design system usage | `docs/dev/design-system-guide.md` | Components, tokens, examples |
 | Git workflow | `docs/dev/git-workflow-guide.md` | Branching, commits, PRs |
