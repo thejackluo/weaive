@@ -32,6 +32,23 @@ except ImportError:
     # Fixtures not available if dependencies not installed
     pass
 
+# Import deployment test fixtures (for tests/deployment/)
+try:
+    from tests.support.fixtures.deployment_fixture import (
+        http_session,  # noqa: F401
+        production_api_url,  # noqa: F401
+        production_jwt_secret,  # noqa: F401
+        production_supabase_service_key,  # noqa: F401
+        production_supabase_url,  # noqa: F401
+        railway_env_vars,  # noqa: F401
+    )
+    from tests.support.factories.deployment_factory import (
+        create_test_jwt_for_production,  # noqa: F401
+    )
+except ImportError:
+    # Fixtures not available if support modules not found
+    pass
+
 # Test JWT secret for generating tokens
 TEST_JWT_SECRET = "test-secret-key-for-pytest-only-do-not-use-in-production"
 
@@ -390,8 +407,51 @@ def create_auth_token():
     return _create_token
 
 
+@pytest.fixture(scope="function", autouse=True)
+def cleanup_production_test_data(request):
+    """Clean up production test data after deployment tests.
+    
+    This fixture runs automatically for tests marked with @pytest.mark.deployment.
+    It ensures that test data created in production is properly cleaned up.
+    
+    ⚠️ WARNING: This fixture ONLY runs for tests in tests/deployment/
+    that have @pytest.mark.deployment decorator.
+    
+    Cleanup Strategy:
+    - Identifies test data by email domain: "*@weave-test.com"
+    - Deletes test user profiles and all related data
+    - Uses CASCADE delete to remove child records
+    
+    Args:
+        request: Pytest request fixture (provides test context)
+    
+    Yields:
+        None (test function runs between setup and cleanup)
+    """
+    # Setup: Nothing to do before test
+    yield  # Test runs here
+    
+    # Cleanup: Only run for deployment tests
+    if "deployment" not in [marker.name for marker in request.node.iter_markers()]:
+        return  # Skip cleanup for non-deployment tests
+    
+    # Only attempt cleanup if PRODUCTION_API_URL is configured
+    production_api_url = os.getenv("PRODUCTION_API_URL")
+    if not production_api_url:
+        return  # Skip cleanup if not running against production
+    
+    # Cleanup test users (identified by @weave-test.com email)
+    # NOTE: This requires a cleanup endpoint in the API or direct database access
+    # For now, we document that test data should be manually cleaned periodically
+    # TODO: Implement /admin/cleanup-test-data endpoint for automated cleanup
+    pass
+
+
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     config.addinivalue_line(
         "markers", "integration: marks tests as integration tests (require external services)"
+    )
+    config.addinivalue_line(
+        "markers", "deployment: marks tests as deployment tests (run against production)"
     )

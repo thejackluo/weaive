@@ -46,7 +46,7 @@ class TestSecurityConfiguration:
             "Production Supabase URL should be a valid Supabase URL"
     
     def test_jwt_secret_is_strong(self, production_jwt_secret):
-        """Verify JWT_SECRET is at least 256 bits (32 characters)."""
+        """Verify JWT_SECRET is at least 256 bits (32 characters) with sufficient entropy."""
         assert len(production_jwt_secret) >= 32, \
             f"JWT_SECRET should be at least 32 characters (256 bits), got {len(production_jwt_secret)}"
         
@@ -62,6 +62,15 @@ class TestSecurityConfiguration:
         
         assert production_jwt_secret not in weak_secrets, \
             "JWT_SECRET appears to be a weak/default value"
+        
+        # Check entropy: should have at least 16 unique characters
+        unique_chars = len(set(production_jwt_secret))
+        assert unique_chars >= 16, \
+            f"JWT_SECRET has insufficient entropy: only {unique_chars} unique characters (need >= 16)"
+        
+        # Check it's not all same character repeated (e.g., 'aaaaa...')
+        assert not all(c == production_jwt_secret[0] for c in production_jwt_secret), \
+            "JWT_SECRET is all the same character (no entropy)"
     
     def test_debug_mode_disabled_production(self, production_api_url, http_session):
         """Verify DEBUG=false in production environment."""
