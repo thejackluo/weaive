@@ -24,32 +24,32 @@ PersonalityPreset = Literal['gen_c_default', 'supportive_coach', 'concise_mentor
 class AIPersonalityConfig:
     """
     AI personality configuration for coaching responses.
-    
+
     Design Philosophy:
     - Gen C vibes: short, thoughtful, warm, friendly
     - Gentle slay energy: supportive but real
     - NOT corporate AI: no "stay motivated" generic advice
     - Evidence-based: reference user's actual data
     """
-    
+
     # ========================================
     # Current Personality
     # ========================================
-    
+
     PERSONALITY: PersonalityPreset = os.getenv('AI_PERSONALITY', 'gen_c_default')
     """Active personality preset (default: gen_c_default)"""
-    
+
     # ========================================
     # Message Length Constraints
     # ========================================
-    
+
     MESSAGE_MAX_WORDS: int = int(os.getenv('AI_MESSAGE_MAX_LENGTH', '50'))
     """Max words per AI message (default: 50 for concise responses)"""
-    
+
     # ========================================
     # Personality Presets
     # ========================================
-    
+
     PRESETS: Dict[PersonalityPreset, Dict[str, str]] = {
         'gen_z_default': {
             'system_prompt': (
@@ -84,7 +84,7 @@ class AIPersonalityConfig:
             'max_words': 50,
             'style_tags': ['warm', 'concise', 'gen_c', 'gentle_slay'],
         },
-        
+
         'supportive_coach': {
             'system_prompt': (
                 "You are Weave, a supportive AI coach helping users achieve their goals.\n\n"
@@ -100,7 +100,7 @@ class AIPersonalityConfig:
             'max_words': 80,
             'style_tags': ['encouraging', 'accountability', 'data_driven'],
         },
-        
+
         'concise_mentor': {
             'system_prompt': (
                 "You are Weave, an ultra-concise AI coach.\n\n"
@@ -115,7 +115,7 @@ class AIPersonalityConfig:
             'max_words': 30,
             'style_tags': ['concise', 'direct', 'actionable'],
         },
-        
+
         'custom': {
             'system_prompt': (
                 "You are Weave, an AI coach using this user's personalized coaching style.\n\n"
@@ -126,40 +126,40 @@ class AIPersonalityConfig:
             'style_tags': ['custom', 'identity_driven'],
         },
     }
-    
+
     # ========================================
     # Helper Methods
     # ========================================
-    
+
     @classmethod
     def get_system_prompt(cls, personality: PersonalityPreset = None) -> str:
         """
         Get system prompt for specified personality.
-        
+
         Args:
             personality: Personality preset (defaults to current config)
-        
+
         Returns:
             System prompt string for AI model
         """
         personality = personality or cls.PERSONALITY
         preset = cls.PRESETS.get(personality, cls.PRESETS['gen_z_default'])
         return preset['system_prompt']
-    
+
     @classmethod
     def get_max_words(cls, personality: PersonalityPreset = None) -> int:
         """Get max words for specified personality."""
         personality = personality or cls.PERSONALITY
         preset = cls.PRESETS.get(personality, cls.PRESETS['gen_z_default'])
         return preset.get('max_words', cls.MESSAGE_MAX_WORDS)
-    
+
     @classmethod
     def get_tone_examples(cls, personality: PersonalityPreset = None) -> list[str]:
         """Get tone examples for specified personality."""
         personality = personality or cls.PERSONALITY
         preset = cls.PRESETS.get(personality, cls.PRESETS['gen_z_default'])
         return preset.get('tone_examples', [])
-    
+
     @classmethod
     def build_context_prompt(
         cls,
@@ -169,18 +169,18 @@ class AIPersonalityConfig:
     ) -> str:
         """
         Build full prompt with personality, context, and user message.
-        
+
         Args:
             user_message: User's input message
             personality: Personality preset (defaults to current config)
             user_context: Dict with user data (goals, completions, identity_docs)
-        
+
         Returns:
             Full prompt string for AI model
         """
         personality = personality or cls.PERSONALITY
         system_prompt = cls.get_system_prompt(personality)
-        
+
         # Future: Add user context from identity_docs, goals, completions
         # For now, just combine system prompt and user message
         context_section = ""
@@ -188,10 +188,10 @@ class AIPersonalityConfig:
             # TODO: Format user context (goals, completions, identity)
             # This will be implemented when integrating with Context Builder (Story 1.5.3)
             pass
-        
+
         full_prompt = f"{system_prompt}\n\n{context_section}User: {user_message}"
         return full_prompt
-    
+
     @classmethod
     def validate(cls) -> None:
         """Validate configuration on startup."""
@@ -199,12 +199,12 @@ class AIPersonalityConfig:
         if cls.PERSONALITY not in cls.PRESETS:
             print(f"⚠️  AI_PERSONALITY='{cls.PERSONALITY}' not found, defaulting to 'gen_c_default'")
             cls.PERSONALITY = 'gen_c_default'
-        
+
         # Ensure max words is reasonable
         if cls.MESSAGE_MAX_WORDS < 10 or cls.MESSAGE_MAX_WORDS > 500:
             print(f"⚠️  AI_MESSAGE_MAX_LENGTH={cls.MESSAGE_MAX_WORDS} out of range (10-500), using 50")
             cls.MESSAGE_MAX_WORDS = 50
-        
+
         print(f"✅ AI Personality: {cls.PERSONALITY} (max {cls.get_max_words()} words)")
 
 

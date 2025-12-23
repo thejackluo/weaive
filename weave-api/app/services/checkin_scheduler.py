@@ -140,8 +140,8 @@ class CheckInSchedulerService:
         """
         try:
             user_tz = pytz.timezone(timezone_name)
-        except:
-            logger.warning(f"Invalid timezone {timezone_name}, using UTC")
+        except Exception as e:
+            logger.warning(f"Invalid timezone {timezone_name}, using UTC: {e}")
             user_tz = pytz.UTC
 
         user_now = datetime.now(user_tz)
@@ -190,7 +190,8 @@ class CheckInSchedulerService:
         """
         try:
             user_tz = pytz.timezone(timezone_name)
-        except:
+        except Exception as e:
+            logger.warning(f"Invalid timezone {timezone_name}, using UTC: {e}")
             user_tz = pytz.UTC
 
         current_time = datetime.now(user_tz)
@@ -212,7 +213,8 @@ class CheckInSchedulerService:
                 if last_checkin.date() == current_time.date():
                     logger.debug(f"Already sent check-in today at {last_checkin}")
                     return False
-            except:
+            except Exception as e:
+                logger.debug(f"Error parsing last_checkin_at: {e}. Proceeding with check-in.")
                 pass  # If parsing fails, proceed with check-in
 
         logger.debug(f"✅ Check-in time matched: current={current_time}, target={checkin_time}, diff={time_diff}s")

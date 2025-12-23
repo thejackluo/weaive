@@ -14,7 +14,6 @@ Endpoints:
 
 import json
 import logging
-import os
 from datetime import datetime
 from typing import AsyncGenerator, Optional
 from uuid import UUID
@@ -23,6 +22,8 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from supabase import Client as SupabaseClient
 
+from app.config.ai_chat_config import AIChatConfig
+from app.config.ai_personality_config import AIPersonalityConfig
 from app.core.deps import get_current_user, get_supabase_client
 from app.models.ai_chat_models import (
     ChatMessage,
@@ -38,8 +39,6 @@ from app.models.ai_chat_models import (
 )
 from app.services.ai import AIService
 from app.services.ai.tiered_rate_limiter import TieredRateLimiter
-from app.config.ai_chat_config import AIChatConfig
-from app.config.ai_personality_config import AIPersonalityConfig
 
 logger = logging.getLogger(__name__)
 
@@ -230,14 +229,15 @@ async def send_chat_message(
     try:
         user_result = db.table('user_profiles').select('subscription_tier').eq('id', str(user_id)).single().execute()
         subscription_tier = user_result.data.get('subscription_tier', 'free') if user_result.data else 'free'
-    except:
+    except Exception as e:
+        logger.warning(f"Error getting subscription tier for user {user_id}: {e}")
         subscription_tier = 'free'
 
-    # Model selection with fallback chain  
+    # Model selection with fallback chain
     # ✅ Fixed: Use actual AWS Bedrock model IDs from documentation
     models_to_try = [
         'claude-3-5-haiku-20241022',       # Claude 3.5 Haiku (exists in Bedrock)
-        'claude-3-haiku-20240307',         # Claude 3 Haiku (exists in Bedrock) 
+        'claude-3-haiku-20240307',         # Claude 3 Haiku (exists in Bedrock)
         'gpt-4o-mini',                     # OpenAI fallback
         'gpt-3.5-turbo'                    # Final OpenAI fallback
     ]
@@ -268,19 +268,19 @@ async def send_chat_message(
     ai_response = None
     response_text = None
     tokens_used = 0
-    
+
     # Build context-aware prompt
     system_prompt = (
         "You are Weave, a supportive AI coach helping users achieve their goals. "
         "Be encouraging, concise, and actionable. Focus on progress and accountability."
     )
     full_prompt = f"{system_prompt}\n\nUser: {request.message}"
-    
+
     # Try each model in sequence
     for i, model_to_try in enumerate(models_to_try):
         try:
             logger.info(f"🔄 [MODEL_FALLBACK] Trying model {i+1}/{len(models_to_try)}: {model_to_try}")
-            
+
             # Call existing AIService
             ai_response = ai_service.generate(
                 user_id=str(user_id),
@@ -294,11 +294,11 @@ async def send_chat_message(
 
             response_text = ai_response.get('content', 'Sorry, I encountered an issue. Please try again.')
             tokens_used = ai_response.get('total_tokens', 0)
-            
+
             logger.info(f"✅ [MODEL_FALLBACK] Success with model: {model_to_try}")
             model = model_to_try  # Update model for usage tracking
             break  # Success! Exit the loop
-            
+
         except Exception as e:
             logger.warning(f"⚠️  [MODEL_FALLBACK] Model {model_to_try} failed: {e}")
             if i == len(models_to_try) - 1:  # Last model failed
@@ -392,14 +392,15 @@ async def send_chat_message_stream(
             try:
                 user_result = db.table('user_profiles').select('subscription_tier').eq('id', str(user_id)).single().execute()
                 subscription_tier = user_result.data.get('subscription_tier', 'free') if user_result.data else 'free'
-            except:
+            except Exception as e:
+                logger.warning(f"Error getting subscription tier for user {user_id}: {e}")
                 subscription_tier = 'free'
 
             # Model selection with fallback chain
             # ✅ Fixed: Use actual AWS Bedrock model IDs from documentation
             models_to_try = [
                 'claude-3-5-haiku-20241022',       # Claude 3.5 Haiku (exists in Bedrock)
-                'claude-3-haiku-20240307',         # Claude 3 Haiku (exists in Bedrock) 
+                'claude-3-haiku-20240307',         # Claude 3 Haiku (exists in Bedrock)
                 'gpt-4o-mini',                     # OpenAI fallback
                 'gpt-3.5-turbo'                    # Final OpenAI fallback
             ]
@@ -417,11 +418,11 @@ async def send_chat_message_stream(
             except HTTPException as e:
                 # ✅ FIX: Stream error message character by character for better UX
                 error_msg = e.detail.get("message", "Rate limit exceeded")
-                
+
                 # Send metadata first
                 metadata_event = json.dumps({"type": "metadata", "message_id": None, "conversation_id": None})
                 yield f"data: {metadata_event}\n\n"
-                
+
                 # Stream error message as chunks (fake stream for UX)
                 import asyncio
                 for i in range(0, len(error_msg), 10):  # 10 chars at a time
@@ -429,7 +430,7 @@ async def send_chat_message_stream(
                     chunk_event = json.dumps({"type": "chunk", "content": chunk})
                     yield f"data: {chunk_event}\n\n"
                     await asyncio.sleep(0.05)  # 50ms delay for typing effect
-                
+
                 # Send final error event
                 error_event = json.dumps({
                     "type": "error",
@@ -760,7 +761,8 @@ async def get_usage_stats(
     try:
         user_result = db.table('user_profiles').select('subscription_tier').eq('id', str(user_id)).single().execute()
         subscription_tier = user_result.data.get('subscription_tier', 'free') if user_result.data else 'free'
-    except:
+    except Exception as e:
+        logger.warning(f"Error getting subscription tier for user {user_id}: {e}")
         subscription_tier = 'free'
 
     # Get usage stats from rate limiter
