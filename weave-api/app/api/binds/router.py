@@ -170,6 +170,15 @@ async def get_today_binds(
         completed_count = 0
 
         for instance in instances:
+            # Get needle info first and skip archived goals
+            goal = instance.get("goals") or {}
+            goal_status = goal.get("status") if goal else None
+
+            # Skip binds for archived goals
+            if goal_status == "archived":
+                logger.debug(f"[BINDS_API] Skipping bind {instance['id']} - goal is archived")
+                continue
+
             # Check if completed (subtask_completions table)
             completion_response = (
                 supabase.table("subtask_completions")
@@ -199,7 +208,6 @@ async def get_today_binds(
             has_proof = len(proof_response.data) > 0
 
             # Get needle info
-            goal = instance.get("goals") or {}
             goal_id = goal.get("id") if goal else None
             goal_title = goal.get("title", "Untitled Goal") if goal else "Untitled Goal"
 
