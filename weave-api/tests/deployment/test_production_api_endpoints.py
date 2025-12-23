@@ -184,3 +184,91 @@ class TestErrorHandling:
             
             assert response.status_code == 401, \
                 f"{endpoint} should return 401 with invalid token, got {response.status_code}"
+    
+    def test_production_endpoints_reject_expired_token(
+        self,
+        production_api_url,
+        production_jwt_secret,
+        http_session
+    ):
+        """Verify endpoints return 401 with expired JWT."""
+        import jwt
+        from datetime import datetime, timedelta
+        
+        # Create expired token (expired 1 hour ago)
+        expired_payload = {
+            "sub": "test-user-id",
+            "email": "test@weave-test.com",
+            "iat": datetime.utcnow() - timedelta(hours=2),
+            "exp": datetime.utcnow() - timedelta(hours=1)
+        }
+        
+        expired_token = jwt.encode(expired_payload, production_jwt_secret, algorithm="HS256")
+        headers = {"Authorization": f"Bearer {expired_token}"}
+        
+        response = http_session.get(
+            f"{production_api_url}/api/goals",
+            headers=headers,
+            timeout=10
+        )
+        
+        assert response.status_code == 401, \
+            f"Expired token should return 401, got {response.status_code}"
+    
+    def test_production_endpoints_reject_wrong_signature(
+        self,
+        production_api_url,
+        http_session
+    ):
+        """Verify endpoints return 401 with JWT signed with wrong secret."""
+        import jwt
+        from datetime import datetime, timedelta
+        
+        # Create token with wrong secret
+        payload = {
+            "sub": "test-user-id",
+            "email": "test@weave-test.com",
+            "iat": datetime.utcnow(),
+            "exp": datetime.utcnow() + timedelta(hours=1)
+        }
+        
+        wrong_token = jwt.encode(payload, "wrong-secret-key", algorithm="HS256")
+        headers = {"Authorization": f"Bearer {wrong_token}"}
+        
+        response = http_session.get(
+            f"{production_api_url}/api/goals",
+            headers=headers,
+            timeout=10
+        )
+        
+        assert response.status_code == 401, \
+            f"Token with wrong signature should return 401, got {response.status_code}"
+    
+    def test_production_endpoints_reject_missing_claims(
+        self,
+        production_api_url,
+        production_jwt_secret,
+        http_session
+    ):
+        """Verify endpoints return 401 with JWT missing required claims."""
+        import jwt
+        from datetime import datetime, timedelta
+        
+        # Create token missing 'sub' claim
+        incomplete_payload = {
+            "email": "test@weave-test.com",
+            "iat": datetime.utcnow(),
+            "exp": datetime.utcnow() + timedelta(hours=1)
+        }
+        
+        incomplete_token = jwt.encode(incomplete_payload, production_jwt_secret, algorithm="HS256")
+        headers = {"Authorization": f"Bearer {incomplete_token}"}
+        
+        response = http_session.get(
+            f"{production_api_url}/api/goals",
+            headers=headers,
+            timeout=10
+        )
+        
+        assert response.status_code == 401, \
+            f"Token missing 'sub' claim should return 401, got {response.status_code}"
