@@ -65,8 +65,8 @@ export function useAIChat() {
    * Send a chat message (STUB)
    */
   const sendMessage = async ({
-    message,
-    conversation_id,
+    message: _message,
+    conversation_id: _conversation_id,
   }: {
     message: string;
     conversation_id?: string;
@@ -99,7 +99,7 @@ export function useAIChat() {
   /**
    * Get full conversation thread (STUB)
    */
-  const getConversation = async (conversationId: string): Promise<ConversationDetail> => {
+  const getConversation = async (_conversationId: string): Promise<ConversationDetail> => {
     throw new Error(
       'useAIChat.getConversation() is not yet implemented. This is a stub for Story 6.1.'
     );
