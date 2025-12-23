@@ -14,6 +14,7 @@ import logging
 import tiktoken
 from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 
+from app.utils.cost_calculator import calculate_text_cost
 from .base import AIProvider, AIProviderError, AIResponse
 
 logger = logging.getLogger(__name__)
@@ -40,18 +41,6 @@ class OpenAIProvider(AIProvider):
         super().__init__(db)  # Initialize AIProviderBase
         self.client = OpenAI(api_key=api_key)
         self.api_key = api_key
-
-        # Pricing per million tokens (input/output)
-        self.pricing = {
-            'gpt-4o-mini': {
-                'input': 0.15 / 1_000_000,
-                'output': 0.60 / 1_000_000
-            },
-            'gpt-4o': {
-                'input': 2.50 / 1_000_000,
-                'output': 10.00 / 1_000_000
-            },
-        }
     
     def get_provider_name(self) -> str:
         """Return provider identifier for logging."""
@@ -100,8 +89,8 @@ class OpenAIProvider(AIProvider):
             input_tokens = response.usage.prompt_tokens
             output_tokens = response.usage.completion_tokens
 
-            # Calculate cost
-            cost_usd = self.estimate_cost(input_tokens, output_tokens, model)
+            # Calculate cost using centralized cost_calculator (AC-5)
+            cost_usd = calculate_text_cost(model, input_tokens, output_tokens)
 
             logger.info(
                 f"OpenAI success: {input_tokens} input + {output_tokens} output tokens, "
@@ -183,9 +172,7 @@ class OpenAIProvider(AIProvider):
 
     def estimate_cost(self, input_tokens: int, output_tokens: int, model: str) -> float:
         """
-        Calculate USD cost for token counts.
-
-        Uses OpenAI pricing as of 2025-12-19.
+        Calculate USD cost for token counts (delegates to cost_calculator).
 
         Args:
             input_tokens: Number of input tokens
@@ -195,16 +182,7 @@ class OpenAIProvider(AIProvider):
         Returns:
             Cost in USD
         """
-        # Get pricing for model (default to gpt-4o-mini if unknown)
-        pricing = self.pricing.get(
-            model,
-            self.pricing['gpt-4o-mini']
-        )
-
-        input_cost = input_tokens * pricing['input']
-        output_cost = output_tokens * pricing['output']
-
-        return input_cost + output_cost
+        return calculate_text_cost(model, input_tokens, output_tokens)
 
     def stream(
         self,
@@ -265,8 +243,8 @@ class OpenAIProvider(AIProvider):
                     input_tokens = chunk.usage.prompt_tokens
                     output_tokens = chunk.usage.completion_tokens
 
-            # Calculate cost
-            cost_usd = self.estimate_cost(input_tokens, output_tokens, model)
+            # Calculate cost using centralized cost_calculator (AC-5)
+            cost_usd = calculate_text_cost(model, input_tokens, output_tokens)
 
             logger.info(
                 f"OpenAI streaming success: {input_tokens} input + {output_tokens} output tokens, "
