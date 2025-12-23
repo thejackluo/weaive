@@ -109,11 +109,17 @@ class ApiClient {
       );
     }
 
+    // Convert Headers to Record<string, string>
+    const headersRecord: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      headersRecord[key] = value;
+    });
+
     return {
       data: responseData,
       status: response.status,
       statusText: response.statusText,
-      headers: response.headers,
+      headers: headersRecord,
     };
   }
 
