@@ -174,8 +174,8 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
               // Extract data from standard API response format
               const { data } = response;
               resolve(data);
-            } catch (parseError) {
-              console.error('[STT_SERVICE] ❌ Failed to parse response:', parseError);
+            } catch (error) {
+              console.error('[STT_SERVICE] ❌ Failed to parse response:', error);
               reject(new Error('Invalid response format'));
             }
           } else {

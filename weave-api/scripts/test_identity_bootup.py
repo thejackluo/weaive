@@ -27,9 +27,9 @@ def create_test_jwt_for_existing_user(auth_user_id: str) -> str:
 
 def test_identity_bootup_with_user(auth_user_id: str, user_index: int):
     """Test identity bootup endpoint with a specific auth_user_id."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"🧪 Test {user_index}: auth_user_id = {auth_user_id}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Create JWT token
     token = create_test_jwt_for_existing_user(auth_user_id)
@@ -39,7 +39,7 @@ def test_identity_bootup_with_user(auth_user_id: str, user_index: int):
     test_data = {
         "preferred_name": f"TestUser{user_index}",
         "core_personality": "supportive_direct",
-        "identity_traits": ["Disciplined", "Focused", "Resilient"]
+        "identity_traits": ["Disciplined", "Focused", "Resilient"],
     }
 
     # Call API
@@ -47,7 +47,7 @@ def test_identity_bootup_with_user(auth_user_id: str, user_index: int):
     response = requests.post(
         "http://localhost:8000/api/onboarding/identity-bootup",
         json=test_data,
-        headers={"Authorization": f"Bearer {token}"}
+        headers={"Authorization": f"Bearer {token}"},
     )
 
     print(f"📊 Response Status: {response.status_code}")
@@ -67,22 +67,29 @@ def main():
     print("🔍 Fetching all user_profiles from database...")
 
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
-    profiles = supabase.table('user_profiles').select('id, auth_user_id, preferred_name').order('created_at').execute()
+    profiles = (
+        supabase.table("user_profiles")
+        .select("id, auth_user_id, preferred_name")
+        .order("created_at")
+        .execute()
+    )
 
     print(f"Found {len(profiles.data)} user profiles")
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Testing identity bootup endpoint with each user...")
-    print("="*60)
+    print("=" * 60)
 
     success_count = 0
     failed_auth_user_ids = []
 
     for i, profile in enumerate(profiles.data, 1):
-        auth_user_id = profile['auth_user_id']
+        auth_user_id = profile["auth_user_id"]
 
         # Skip if already has preferred_name (already went through bootup)
-        if profile.get('preferred_name'):
-            print(f"\n⏭️  Skipping user {i} (already has preferred_name: {profile['preferred_name']})")
+        if profile.get("preferred_name"):
+            print(
+                f"\n⏭️  Skipping user {i} (already has preferred_name: {profile['preferred_name']})"
+            )
             continue
 
         success = test_identity_bootup_with_user(auth_user_id, i)
@@ -92,9 +99,9 @@ def main():
         else:
             failed_auth_user_ids.append(auth_user_id)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 SUMMARY")
-    print("="*60)
+    print("=" * 60)
     print(f"✅ Successful: {success_count}/{len(profiles.data)}")
     print(f"❌ Failed: {len(failed_auth_user_ids)}/{len(profiles.data)}")
 

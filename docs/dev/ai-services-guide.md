@@ -705,5 +705,320 @@ except Exception as e:
 
 ---
 
-**Last Updated:** 2025-12-22 (Story 0.11 completion)
-**Next Review:** When adding new AI service (Story 1.7+)
+## Story 1.5.3 Updates: Unified AI Services Architecture
+
+### Overview
+
+Story 1.5.3 introduced unified patterns across all AI modalities (text/image/audio) with:
+- **AIProviderBase:** Single abstract class for all AI providers
+- **Cost Calculator:** Unified pricing utility with environment variable overrides
+- **React Native Hooks:** Standardized hooks for all three modalities
+- **Consistent Patterns:** Polymorphism, fallback chains, cost tracking
+
+### Unified AIProviderBase
+
+All AI providers now inherit from `app/services/ai_provider_base.py`:
+
+```python
+from app.services.ai_provider_base import AIProviderBase
+
+class MyAIProvider(AIProviderBase):
+    def __init__(self, api_key: str, db=None):
+        super().__init__(db)  # Initialize base (enables cost tracking)
+        self.api_key = api_key
+    
+    def get_provider_name(self) -> str:
+        return "my-provider-name"
+    
+    def is_available(self) -> bool:
+        return self.api_key is not None
+    
+    # Modality-specific method (complete/analyze_image/transcribe)
+    async def complete(self, prompt: str) -> dict:
+        # Call AI API
+        result = await self.api_client.generate(prompt)
+        
+        # Log to ai_runs table for cost tracking
+        self.log_to_ai_runs(
+            user_id=user_id,
+            operation_type='text_generation',
+            input_tokens=result.input_tokens,
+            output_tokens=result.output_tokens,
+            cost_usd=result.cost,
+            duration_ms=result.duration
+        )
+        
+        return result
+```
+
+**Inherited Methods:**
+- `log_to_ai_runs()` - Logs all AI calls to `ai_runs` table
+- `check_rate_limit()` - Checks user's tier limits (admin users bypass)
+
+### Cost Calculator Utility
+
+**Location:** `app/utils/cost_calculator.py`
+
+Provides model-specific pricing with environment variable overrides:
+
+```python
+from app.utils.cost_calculator import (
+    calculate_text_cost,
+    calculate_image_cost,
+    calculate_audio_cost,
+    get_pricing_table
+)
+
+# Text AI
+cost = calculate_text_cost('gpt-4o-mini', input_tokens=1000, output_tokens=500)
+# Returns: 0.000450 (= 0.15 * 1000/1M + 0.60 * 500/1M)
+
+# Image AI
+cost = calculate_image_cost('gemini-3-flash', image_count=1)
+# Returns: 0.0005
+
+# Audio AI
+cost = calculate_audio_cost('assemblyai', duration_seconds=60)
+# Returns: 0.0025 (= 60 * 0.00004167)
+```
+
+**Pricing Configuration (Environment Variables):**
+
+```bash
+# Text AI (per million tokens)
+GPT4O_MINI_INPUT_COST=0.15
+GPT4O_MINI_OUTPUT_COST=0.60
+CLAUDE_SONNET_INPUT_COST=3.00
+CLAUDE_SONNET_OUTPUT_COST=15.00
+
+# Image AI (per image)
+GEMINI_FLASH_IMAGE_COST=0.0005
+GPT4O_VISION_IMAGE_COST=0.02
+
+# Audio AI
+ASSEMBLYAI_COST_PER_HOUR=0.15
+WHISPER_COST_PER_MINUTE=0.006
+```
+
+**View pricing table:**
+```bash
+cd weave-api
+uv run python -m app.utils.cost_calculator
+```
+
+### Provider Decision Tree
+
+| Use Case | Primary Provider | Fallback | Cost (Input/Output per MTok) |
+|----------|------------------|----------|------------------------------|
+| **Text Generation** (Triad, Journal) | GPT-4o-mini | Claude 3.7 Sonnet | $0.15/$0.60 → $3.00/$15.00 |
+| **Complex Reasoning** (Onboarding) | Claude 3.7 Sonnet | GPT-4o | $3.00/$15.00 → $2.50/$10.00 |
+| **Image Analysis** (Proof validation) | Gemini 3.0 Flash | GPT-4o Vision | $0.0005 → $0.02 per image |
+| **Voice Transcription** (STT) | AssemblyAI | Whisper | $0.15/hr → $0.006/min |
+
+### React Native Hooks (Story 1.5.3)
+
+#### useAIChat Hook (Text AI)
+
+**Location:** `weave-mobile/src/hooks/useAIChat.ts`
+
+```tsx
+import { useAIChat } from '@/hooks/useAIChat';
+
+function TriadScreen() {
+  const { generate, isGenerating, error, data } = useAIChat();
+  
+  const handleGenerate = async () => {
+    try {
+      const result = await generate({
+        prompt: "Generate 3 tasks for my fitness goal today",
+        context: {
+          user_id: userId,
+          operation_type: 'triad_generation',
+          max_tokens: 500
+        }
+      });
+      
+      console.log(result.text);           // AI-generated text
+      console.log(result.provider);       // 'gpt-4o-mini' or 'claude-sonnet'
+      console.log(result.cost_usd);       // Cost tracking
+      console.log(result.tokens_used);    // {input: 120, output: 300}
+      
+    } catch (err) {
+      if (err.name === 'RateLimitException') {
+        alert(`Rate limit reached. Retry in ${err.retryAfter} seconds`);
+      }
+    }
+  };
+  
+  return (
+    <Button onPress={handleGenerate} disabled={isGenerating}>
+      {isGenerating ? "Generating..." : "Generate Triad"}
+    </Button>
+  );
+}
+```
+
+**Features:**
+- ✅ 5-minute TanStack Query cache (stale-while-revalidate)
+- ✅ Automatic retry (3 attempts: 1s, 2s, 4s backoff)
+- ✅ Rate limit handling (HTTP 429 with `retryAfter`)
+- ✅ Abort signal support (`signal: abortController.signal`)
+
+#### useImageAnalysis Hook (Image AI)
+
+**Location:** `weave-mobile/src/hooks/useImageAnalysis.ts`
+
+```tsx
+import { useImageAnalysis } from '@/hooks/useImageAnalysis';
+
+function ProofCaptureScreen() {
+  const { analyze, isAnalyzing, error, data } = useImageAnalysis();
+  
+  const handleAnalyze = async (imageUri: string) => {
+    const result = await analyze({
+      imageUri,
+      operations: ['proof_validation', 'ocr'],
+      bindDescription: 'Workout at gym with weights'
+    });
+    
+    console.log(result.proof_validated);  // true/false
+    console.log(result.quality_score);    // 1-5
+    console.log(result.extracted_text);   // OCR text or null
+    console.log(result.categories);       // [{label: 'gym', confidence: 0.9}]
+    console.log(result.provider);         // 'gemini-3-flash' or 'gpt-4o-vision'
+  };
+  
+  return (
+    <Button onPress={() => handleAnalyze(imageUri)}>
+      {isAnalyzing ? "Analyzing..." : "Validate Proof"}
+    </Button>
+  );
+}
+```
+
+**Features:**
+- ✅ NO caching (each image is unique)
+- ✅ Automatic retry (3 attempts)
+- ✅ Rate limit: 5 images/day (free tier)
+
+#### useVoiceTranscription Hook (Audio AI)
+
+**Location:** `weave-mobile/src/hooks/useVoiceTranscription.ts`
+
+```tsx
+import { useVoiceTranscription } from '@/hooks/useVoiceTranscription';
+
+function VoiceRecordScreen() {
+  const { transcribe, isTranscribing, error, data } = useVoiceTranscription();
+  
+  const handleTranscribe = async (audioUri: string) => {
+    const result = await transcribe({
+      audioUri,
+      language: 'en',
+      maxDuration: 300
+    });
+    
+    console.log(result.transcript);    // Transcribed text
+    console.log(result.confidence);    // 0.0-1.0 accuracy score
+    console.log(result.duration_sec);  // Audio duration
+    console.log(result.provider);      // 'assemblyai' or 'whisper'
+  };
+  
+  return (
+    <Button onPress={() => handleTranscribe(audioUri)}>
+      {isTranscribing ? "Transcribing..." : "Transcribe Audio"}
+    </Button>
+  );
+}
+```
+
+**Features:**
+- ✅ NO caching (each recording is unique)
+- ✅ Automatic retry (3 attempts)
+- ✅ Rate limit: 50 transcriptions/day (free tier)
+
+### Common Patterns Across All Hooks
+
+**1. Loading States:**
+```tsx
+{isGenerating && <Text>Generating...</Text>}
+{isAnalyzing && <Text>Analyzing image...</Text>}
+{isTranscribing && <Text>Transcribing...</Text>}
+```
+
+**2. Error Handling:**
+```tsx
+if (error) {
+  if (error.name === 'RateLimitException') {
+    return <Text>Rate limit reached. Retry in {error.retryAfter}s</Text>;
+  }
+  return <Text>Error: {error.message}</Text>;
+}
+```
+
+**3. Abort Requests:**
+```tsx
+const abortController = new AbortController();
+
+const result = await generate(request, { signal: abortController.signal });
+
+// Cancel if user navigates away
+return () => abortController.abort();
+```
+
+### Integration Checklist (Updated for Story 1.5.3)
+
+When integrating a new AI service:
+
+- [ ] **1. Provider Class**
+  - [ ] Inherit from `AIProviderBase`
+  - [ ] Implement `get_provider_name()` and `is_available()`
+  - [ ] Accept optional `db` parameter in `__init__`
+  - [ ] Call `super().__init__(db)`
+  - [ ] Implement modality-specific method (`complete`/`analyze_image`/`transcribe`)
+  - [ ] Call `self.log_to_ai_runs()` after successful API call
+
+- [ ] **2. Cost Tracking**
+  - [ ] Add pricing to `app/utils/cost_calculator.py`
+  - [ ] Add environment variables for pricing overrides
+  - [ ] Test cost calculation with example inputs
+
+- [ ] **3. React Native Hook**
+  - [ ] Use TanStack Query `useMutation` pattern
+  - [ ] Implement retry with exponential backoff (3 attempts)
+  - [ ] Handle HTTP 429 rate limit errors
+  - [ ] Support abort signal
+  - [ ] Add loading/error states
+  - [ ] Write unit tests in `src/hooks/__tests__/`
+
+- [ ] **4. Documentation**
+  - [ ] Add to this guide with examples
+  - [ ] Update provider decision tree
+  - [ ] Document pricing and rate limits
+
+- [ ] **5. Testing**
+  - [ ] Unit tests for provider class
+  - [ ] Integration tests for fallback chain
+  - [ ] React Native hook tests
+  - [ ] Cost tracking validation
+
+### Architecture Benefits
+
+**Polymorphism:**
+- All providers share common interface (`get_provider_name`, `is_available`, `log_to_ai_runs`)
+- Enables generic fallback chain logic
+
+**DRY Principle:**
+- Cost tracking written once in `AIProviderBase`
+- Rate limiting logic unified across modalities
+- Consistent error handling patterns
+
+**Maintainability:**
+- Adding new provider = implement 3 methods + add pricing
+- Pricing updates via environment variables (no code changes)
+- Centralized cost tracking for budget enforcement
+
+---
+
+**Last Updated:** 2025-12-23 (Story 1.5.3 completion - Unified AI Services)
+**Next Review:** When adding new AI provider or modality

@@ -82,9 +82,7 @@ def test_create_origin_story_duplicate_fails(
     assert "already exists" in response_json["error"]["message"].lower()
 
 
-def test_create_origin_story_unauthenticated_fails(
-    client, valid_origin_story_data
-):
+def test_create_origin_story_unauthenticated_fails(client, valid_origin_story_data):
     """Test that creating origin story without authentication fails."""
     response = client.post(
         "/api/onboarding/origin-story",
@@ -139,9 +137,7 @@ def test_create_origin_story_invalid_text_length(
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_create_origin_story_missing_fields(
-    authenticated_client, test_user_token
-):
+def test_create_origin_story_missing_fields(authenticated_client, test_user_token):
     """Test that all required fields are validated."""
     # Missing photo_base64
     response = authenticated_client.post(

@@ -28,8 +28,10 @@ router = APIRouter(prefix="/api/goals")
 
 # Request/Response Models
 
+
 class QGoalCreate(BaseModel):
     """Q-Goal (Milestone) creation model"""
+
     title: str = Field(..., min_length=1, max_length=200)
     metric_name: Optional[str] = None
     target_value: Optional[float] = None
@@ -39,6 +41,7 @@ class QGoalCreate(BaseModel):
 
 class BindCreate(BaseModel):
     """Bind (Subtask Template) creation model"""
+
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
     frequency_type: str = Field(..., pattern="^(daily|weekly|custom)$")
@@ -47,6 +50,7 @@ class BindCreate(BaseModel):
 
 class GoalCreate(BaseModel):
     """Goal creation request model"""
+
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None  # "Why it matters"
     qgoals: Optional[List[QGoalCreate]] = []
@@ -55,6 +59,7 @@ class GoalCreate(BaseModel):
 
 class GoalUpdate(BaseModel):
     """Goal update request model"""
+
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     status: Optional[str] = Field(None, pattern="^(active|archived)$")
@@ -229,7 +234,9 @@ async def get_goal_by_id(
         # Fetch the goal (RLS enforced - user can only see their own goals)
         goal_response = (
             supabase.table("goals")
-            .select("id, title, description, status, start_date, target_date, created_at, updated_at, user_id")
+            .select(
+                "id, title, description, status, start_date, target_date, created_at, updated_at, user_id"
+            )
             .eq("id", goal_id)
             .eq("user_id", user_id)
             .single()
@@ -254,7 +261,9 @@ async def get_goal_by_id(
         try:
             qgoals_response = (
                 supabase.table("qgoals")
-                .select("id, goal_id, title, metric_name, target_value, current_value, unit, created_at, updated_at")
+                .select(
+                    "id, goal_id, title, metric_name, target_value, current_value, unit, created_at, updated_at"
+                )
                 .eq("goal_id", goal_id)
                 .order("created_at", desc=False)
                 .execute()
@@ -426,21 +435,23 @@ async def create_goal(
             binds_inserts = []
             for bind in goal_data.binds:
                 # Convert frequency_type/frequency_value to recurrence_rule (iCal RRULE format)
-                if bind.frequency_type == 'daily':
+                if bind.frequency_type == "daily":
                     recurrence_rule = "FREQ=DAILY;INTERVAL=1"
-                elif bind.frequency_type == 'weekly':
+                elif bind.frequency_type == "weekly":
                     recurrence_rule = f"FREQ=WEEKLY;INTERVAL=1;COUNT={bind.frequency_value}"
                 else:  # custom
                     recurrence_rule = f"FREQ=DAILY;INTERVAL={bind.frequency_value}"
 
-                binds_inserts.append({
-                    "user_id": user_id,  # Required field
-                    "goal_id": goal_id,
-                    "title": bind.title,
-                    "default_estimated_minutes": 30,  # Default to 30 minutes
-                    "recurrence_rule": recurrence_rule,
-                    "is_archived": False,
-                })
+                binds_inserts.append(
+                    {
+                        "user_id": user_id,  # Required field
+                        "goal_id": goal_id,
+                        "title": bind.title,
+                        "default_estimated_minutes": 30,  # Default to 30 minutes
+                        "recurrence_rule": recurrence_rule,
+                        "is_archived": False,
+                    }
+                )
 
             binds_response = supabase.table("subtask_templates").insert(binds_inserts).execute()
             logger.info(f"✅ Created {len(binds_response.data)} binds for goal {goal_id}")
@@ -690,9 +701,7 @@ async def archive_goal(
         )
 
 
-async def _enrich_goals_with_stats(
-    supabase: Client, goals: list[dict], user_id: str
-) -> list[dict]:
+async def _enrich_goals_with_stats(supabase: Client, goals: list[dict], user_id: str) -> list[dict]:
     """
     Enrich goals with consistency_7d and active_binds_count.
 
@@ -728,9 +737,7 @@ async def _enrich_goals_with_stats(
             )
 
             aggregates = aggregates_response.data
-            logger.debug(
-                f"📊 Goal {goal_id}: Found {len(aggregates)} daily aggregates"
-            )
+            logger.debug(f"📊 Goal {goal_id}: Found {len(aggregates)} daily aggregates")
 
             # Calculate consistency_7d (% of active days with proof)
             if len(aggregates) >= 7:

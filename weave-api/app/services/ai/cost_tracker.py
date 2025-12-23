@@ -56,19 +56,20 @@ class CostTracker:
         """
         try:
             # Use UTC for consistent daily boundaries
-            today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            today_start = datetime.now(timezone.utc).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
             tomorrow_start = today_start + timedelta(days=1)
 
-            result = self.db.table('ai_runs') \
-                .select('cost_estimate') \
-                .gte('created_at', today_start.isoformat()) \
-                .lt('created_at', tomorrow_start.isoformat()) \
+            result = (
+                self.db.table("ai_runs")
+                .select("cost_estimate")
+                .gte("created_at", today_start.isoformat())
+                .lt("created_at", tomorrow_start.isoformat())
                 .execute()
-
-            total = sum(
-                row.get('cost_estimate', 0) or 0
-                for row in result.data
             )
+
+            total = sum(row.get("cost_estimate", 0) or 0 for row in result.data)
 
             logger.debug(f"Total daily cost (UTC): ${total:.6f}")
             return float(total)
@@ -92,20 +93,21 @@ class CostTracker:
         """
         try:
             # Use UTC for consistent daily boundaries
-            today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            today_start = datetime.now(timezone.utc).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
             tomorrow_start = today_start + timedelta(days=1)
 
-            result = self.db.table('ai_runs') \
-                .select('cost_estimate') \
-                .eq('user_id', user_id) \
-                .gte('created_at', today_start.isoformat()) \
-                .lt('created_at', tomorrow_start.isoformat()) \
+            result = (
+                self.db.table("ai_runs")
+                .select("cost_estimate")
+                .eq("user_id", user_id)
+                .gte("created_at", today_start.isoformat())
+                .lt("created_at", tomorrow_start.isoformat())
                 .execute()
-
-            total = sum(
-                row.get('cost_estimate', 0) or 0
-                for row in result.data
             )
+
+            total = sum(row.get("cost_estimate", 0) or 0 for row in result.data)
 
             logger.debug(f"User {user_id} daily cost (UTC): ${total:.6f}")
             return float(total)
@@ -139,11 +141,7 @@ class CostTracker:
 
         return False
 
-    def is_user_budget_exceeded(
-        self,
-        user_id: str,
-        user_tier: str = 'free'
-    ) -> bool:
+    def is_user_budget_exceeded(self, user_id: str, user_tier: str = "free") -> bool:
         """
         Check if per-user daily budget is exceeded.
 
@@ -159,7 +157,7 @@ class CostTracker:
         # Get tier-specific budget
         tier_budget = (
             self.PAID_USER_DAILY_BUDGET_USD
-            if user_tier == 'paid'
+            if user_tier == "paid"
             else self.FREE_USER_DAILY_BUDGET_USD
         )
 
@@ -180,12 +178,7 @@ class CostTracker:
         return False
 
     def record_cost(
-        self,
-        run_id: str,
-        input_tokens: int,
-        output_tokens: int,
-        model: str,
-        cost_usd: float
+        self, run_id: str, input_tokens: int, output_tokens: int, model: str, cost_usd: float
     ) -> None:
         """
         Record cost for an AI run (updates ai_runs table).
@@ -198,15 +191,14 @@ class CostTracker:
             cost_usd: Cost in USD
         """
         try:
-            self.db.table('ai_runs') \
-                .update({
-                    'input_tokens': input_tokens,
-                    'output_tokens': output_tokens,
-                    'model': model,
-                    'cost_estimate': cost_usd,
-                }) \
-                .eq('id', run_id) \
-                .execute()
+            self.db.table("ai_runs").update(
+                {
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "model": model,
+                    "cost_estimate": cost_usd,
+                }
+            ).eq("id", run_id).execute()
 
             logger.debug(
                 f"Recorded cost for run {run_id}: ${cost_usd:.6f} "
@@ -233,10 +225,12 @@ class CostTracker:
             cutoff_date = date(cutoff_date.year, cutoff_date.month, cutoff_date.day - days + 1)
             cutoff_str = cutoff_date.isoformat()
 
-            result = self.db.table('ai_runs') \
-                .select('provider, model, cost_estimate, user_id, created_at') \
-                .gte('created_at', f'{cutoff_str}T00:00:00') \
+            result = (
+                self.db.table("ai_runs")
+                .select("provider, model, cost_estimate, user_id, created_at")
+                .gte("created_at", f"{cutoff_str}T00:00:00")
                 .execute()
+            )
 
             # Aggregate stats
             total_cost = 0.0
@@ -244,27 +238,27 @@ class CostTracker:
             model_costs = {}
 
             for row in result.data:
-                cost = row.get('cost_estimate', 0) or 0
-                provider = row.get('provider', 'unknown')
-                model = row.get('model', 'unknown')
+                cost = row.get("cost_estimate", 0) or 0
+                provider = row.get("provider", "unknown")
+                model = row.get("model", "unknown")
 
                 total_cost += cost
                 provider_costs[provider] = provider_costs.get(provider, 0) + cost
                 model_costs[model] = model_costs.get(model, 0) + cost
 
             return {
-                'total_cost': total_cost,
-                'provider_breakdown': provider_costs,
-                'model_breakdown': model_costs,
-                'days': days,
+                "total_cost": total_cost,
+                "provider_breakdown": provider_costs,
+                "model_breakdown": model_costs,
+                "days": days,
             }
 
         except Exception as e:
             logger.error(f"Error getting cost stats: {e}")
             return {
-                'total_cost': 0.0,
-                'provider_breakdown': {},
-                'model_breakdown': {},
-                'days': days,
-                'error': str(e),
+                "total_cost": 0.0,
+                "provider_breakdown": {},
+                "model_breakdown": {},
+                "days": days,
+                "error": str(e),
             }

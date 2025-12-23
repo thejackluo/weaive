@@ -32,16 +32,18 @@ class WhisperProvider(STTProvider):
     Max File Size: 25MB
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, db=None):
         """
         Initialize Whisper provider.
 
         Args:
             api_key: OpenAI API key. If None, reads from OPENAI_API_KEY env var.
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
 
         Raises:
             STTProviderError: If API key is not configured
         """
+        super().__init__(db)  # Initialize AIProviderBase
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
         if not self.api_key:
             raise STTProviderError(
@@ -53,6 +55,14 @@ class WhisperProvider(STTProvider):
 
         # Initialize async OpenAI client
         self.client = AsyncOpenAI(api_key=self.api_key)
+
+    def get_provider_name(self) -> str:
+        """Return provider identifier for logging."""
+        return "whisper"
+
+    def is_available(self) -> bool:
+        """Check if provider is configured and available."""
+        return self.api_key is not None and len(self.api_key) > 0
 
     async def transcribe(
         self,
@@ -150,14 +160,3 @@ class WhisperProvider(STTProvider):
         """
         cost_per_second = 0.0001  # $0.006/minute
         return round(duration_seconds * cost_per_second, 4)
-
-    def is_available(self) -> bool:
-        """
-        Check if Whisper is available (API key configured).
-
-        Quick check without making API calls.
-
-        Returns:
-            True if API key is set, False otherwise
-        """
-        return bool(self.api_key)

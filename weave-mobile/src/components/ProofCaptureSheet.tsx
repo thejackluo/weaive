@@ -25,6 +25,7 @@ export function ProofCaptureSheet({
 }: ProofCaptureSheetProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [uploadPercentage, setUploadPercentage] = useState<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Fetch current upload usage
@@ -50,11 +51,16 @@ export function ProofCaptureSheet({
 
       setUploading(true);
       setUploadProgress(source === PhotoSource.CAMERA ? 'Opening camera...' : 'Opening gallery...');
+      setUploadPercentage(10);
 
       const result = await captureAndUploadProofPhoto(
         context,
         source,
-        abortControllerRef.current.signal
+        abortControllerRef.current.signal,
+        (progress) => {
+          setUploadProgress(progress.message);
+          setUploadPercentage(progress.percentage);
+        }
       );
 
       if (!result) {
@@ -112,6 +118,18 @@ export function ProofCaptureSheet({
         <View className="items-center py-12">
           <ActivityIndicator size="large" color="#3b82f6" />
           <Text className="text-neutral-400 mt-4">{uploadProgress}</Text>
+
+          {/* Progress Bar */}
+          <View className="w-full mt-6 px-4">
+            <View className="h-2 bg-neutral-800 rounded-full overflow-hidden">
+              <View
+                className="h-full bg-blue-500 rounded-full"
+                style={{ width: `${uploadPercentage}%` }}
+              />
+            </View>
+            <Text className="text-neutral-500 text-xs text-center mt-2">{uploadPercentage}%</Text>
+          </View>
+
           <TouchableOpacity
             onPress={handleCancelUpload}
             className="mt-6 px-6 py-3 bg-neutral-800 rounded-lg"
