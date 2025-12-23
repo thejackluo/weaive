@@ -119,3 +119,112 @@ Users interact with the Dream Self Advisor for personalized coaching, clarificat
 - Removed US-6.5 (AI Goal Suggestions)
 
 ---
+
+## Technical Implementation
+
+### Configuration Management Pattern (Story 6.1+)
+
+**Feature config modules** are used for centralized, environment-aware configuration instead of hardcoding values in business logic.
+
+**Pattern Location:** `weave-api/app/config/{feature}_config.py`
+
+**AI Chat Config Module:** `weave-api/app/config/ai_chat_config.py`
+
+**What Goes in Config:**
+- ✅ Rate limits (daily, monthly, per-tier)
+- ✅ Feature flags (check-ins enabled/disabled)
+- ✅ Admin bypass keys
+- ✅ Timeouts and thresholds
+- ✅ Scheduler intervals
+
+**What Stays in Business Logic:**
+- ❌ Core algorithms
+- ❌ Database queries
+- ❌ API response formats
+
+**Config Structure:**
+```python
+class AIChatConfig:
+    # Rate limits (loaded from .env with defaults)
+    FREE_PREMIUM_DAILY_LIMIT: int = int(os.getenv('AI_FREE_PREMIUM_DAILY_LIMIT', '10'))
+    FREE_FREE_DAILY_LIMIT: int = int(os.getenv('AI_FREE_FREE_DAILY_LIMIT', '40'))
+    FREE_MONTHLY_LIMIT: int = int(os.getenv('AI_FREE_MONTHLY_LIMIT', '500'))
+    PRO_MONTHLY_LIMIT: int = int(os.getenv('AI_PRO_MONTHLY_LIMIT', '5000'))
+
+    # Admin bypass
+    ADMIN_API_KEY: Optional[str] = os.getenv('AI_ADMIN_KEY', None)
+
+    # Feature flags
+    CHECK_IN_ENABLED: bool = os.getenv('AI_CHECK_IN_ENABLED', 'true').lower() == 'true'
+
+    @classmethod
+    def validate(cls):
+        """Validate config on startup - catches errors early"""
+        assert cls.FREE_PREMIUM_DAILY_LIMIT > 0
+        assert cls.FREE_MONTHLY_LIMIT >= cls.FREE_PREMIUM_DAILY_LIMIT
+```
+
+**Usage in Business Logic:**
+```python
+from app.config.ai_chat_config import AIChatConfig
+
+class TieredRateLimiter:
+    def __init__(self, db):
+        self.db = db
+        # Load from config (environment-aware)
+        self.free_premium_daily_limit = AIChatConfig.FREE_PREMIUM_DAILY_LIMIT
+        self.pro_monthly_limit = AIChatConfig.PRO_MONTHLY_LIMIT
+```
+
+**Setting Config Values:**
+
+1. **Create `.env` file:**
+   ```bash
+   cd weave-api
+   cp .env.example .env
+   ```
+
+2. **Edit `.env` with your values:**
+   ```bash
+   AI_FREE_PREMIUM_DAILY_LIMIT=10
+   AI_ADMIN_KEY=abc123def456  # Generate with: openssl rand -hex 32
+   ```
+
+3. **Config loads on server start** (restart required after changes)
+
+**Environment-Specific Examples:**
+
+**Development:**
+```bash
+AI_FREE_PREMIUM_DAILY_LIMIT=100   # Higher limits for testing
+AI_CHECK_IN_ENABLED=false         # Disable check-ins
+AI_ADMIN_KEY=dev-key-12345        # Simple key
+```
+
+**Production:**
+```bash
+AI_FREE_PREMIUM_DAILY_LIMIT=10    # Strict limits
+AI_CHECK_IN_ENABLED=true          # Enable check-ins
+AI_ADMIN_KEY=secure-key-xyz789    # 32-char secure key
+```
+
+**Benefits:**
+- ✅ Different limits per environment (dev/staging/prod)
+- ✅ No code changes to adjust limits
+- ✅ Type-safe with validation
+- ✅ Single source of truth
+- ✅ Reusable pattern for all features
+
+**Files Using This Pattern:**
+- `weave-api/app/config/ai_chat_config.py` - Config module
+- `weave-api/app/services/ai/tiered_rate_limiter.py` - Loads limits
+- `weave-api/app/api/ai_chat_router.py` - Uses admin key
+
+**Future Features Can Follow This Pattern:**
+- `app/config/upload_config.py` - File upload limits
+- `app/config/api_config.py` - General API rate limits
+- `app/config/feature_flags.py` - Feature toggles
+
+**Reference:** See Story 6.1 for detailed implementation guide
+
+---

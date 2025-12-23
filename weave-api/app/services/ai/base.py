@@ -3,11 +3,16 @@ Base AI Provider Interface
 
 Defines abstract base class for all AI providers, ensuring consistent interface.
 All providers must implement: complete(), count_tokens(), estimate_cost()
+
+Story 1.5.3: Refactored to inherit from unified AIProviderBase for shared
+cost tracking, rate limiting, and error handling across text/image/audio providers.
 """
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
+
+from app.services.ai_provider_base import AIProviderBase as _AIProviderBase
 
 
 @dataclass
@@ -61,12 +66,21 @@ class AIProviderError(Exception):
         super().__init__(self.message)
 
 
-class AIProvider(ABC):
+class AIProvider(_AIProviderBase, ABC):
     """
-    Abstract base class for AI providers.
+    Abstract base class for AI text providers.
+
+    Story 1.5.3: Now inherits from AIProviderBase for unified cost tracking
+    and rate limiting across all AI modalities (text/image/audio).
 
     All providers (Bedrock, OpenAI, Anthropic, Deterministic) must implement
     these three methods to ensure consistent interface for the orchestrator.
+
+    Inherited from AIProviderBase:
+    - log_to_ai_runs() - Cost tracking
+    - check_rate_limit() - Rate limiting
+    - get_provider_name() - Provider identification
+    - is_available() - Availability check
     """
 
     @abstractmethod

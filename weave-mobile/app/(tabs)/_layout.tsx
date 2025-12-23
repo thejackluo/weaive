@@ -6,8 +6,6 @@ import {
   Modal,
   StyleSheet,
   Pressable,
-  TextInput,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -26,12 +24,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 
 /**
- * Center AI Button Component
+ * Center AI Button Component (Story 6.1)
  *
  * Magical glassmorphism button that opens AI Chat overlay
  * Inspired by new Siri (iOS 18) design
+ *
+ * Features:
+ * - Unread badge indicator for server-initiated check-ins
+ * - Haptic feedback on press
+ * - Spring animation
  */
-function CenterAIButton({ onPress }: { onPress: () => void }) {
+function CenterAIButton({ onPress, hasUnread }: { onPress: () => void; hasUnread: boolean }) {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -62,28 +65,34 @@ function CenterAIButton({ onPress }: { onPress: () => void }) {
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <SymbolView name="sparkles" size={28} tintColor="#ffffff" resizeMode="center" />
+
+          {/* Unread badge indicator */}
+          {hasUnread && (
+            <View style={styles.unreadBadge}>
+              <View style={styles.unreadBadgeInner} />
+            </View>
+          )}
         </TouchableOpacity>
       </Animated.View>
     </View>
   );
 }
 
+import ChatScreen from '@/components/features/ai-chat/ChatScreen';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '@/services/apiClient';
+
 /**
- * AI Chat Overlay - Complete Rebuild
+ * AI Chat Overlay - Real Implementation (Story 6.1)
  *
- * Clean, well-structured AI chat interface with:
- * - Blur background modal (dismissible)
- * - Card slides up from bottom (70% height)
- * - Fixed header with title and close button
- * - Scrollable content (welcome state OR messages)
- * - Fixed input area at bottom
- * - Purple glow border, glassmorphism aesthetic
+ * Full-featured AI chat with:
+ * - Real API integration with SSE streaming
+ * - JWT authentication
+ * - Tiered rate limiting (10 premium + 40 free/day)
+ * - Message persistence
+ * - Swipe-to-dismiss modal
  */
 function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const [messageInput, setMessageInput] = React.useState('');
-  const [messages, setMessages] = React.useState<
-    Array<{ id: string; text: string; isUser: boolean }>
-  >([]);
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(500);
   const startY = useSharedValue(0);
@@ -129,41 +138,6 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
     transform: [{ translateY: translateY.value }],
   }));
 
-  const handleSendMessage = () => {
-    if (messageInput.trim()) {
-      // Add user message
-      const userMessage = {
-        id: Date.now().toString(),
-        text: messageInput,
-        isUser: true,
-      };
-      setMessages((prev) => [...prev, userMessage]);
-
-      // Simulate AI response
-      setTimeout(() => {
-        const aiMessage = {
-          id: (Date.now() + 1).toString(),
-          text: 'This is a preview of the AI Coach. The full feature is coming soon!',
-          isUser: false,
-        };
-        setMessages((prev) => [...prev, aiMessage]);
-      }, 600);
-
-      setMessageInput('');
-    }
-  };
-
-  const handleExampleTap = (message: string) => {
-    setMessageInput(message);
-  };
-
-  const exampleMessages = [
-    'What should I focus on today?',
-    'Help me break down my goal',
-    'Why did I miss my bind yesterday?',
-    'Show my progress this week',
-  ];
-
   if (!visible) return null;
 
   return (
@@ -177,13 +151,14 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
 
         {/* Chat Card with Swipe-to-Dismiss */}
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.keyboardAvoidingView}
+          keyboardVerticalOffset={0}
         >
           <GestureDetector gesture={panGesture}>
             <Animated.View style={[styles.chatCard, cardStyle]}>
               <Pressable onPress={(e) => e.stopPropagation()} style={styles.chatCardInner}>
-                {/* Header */}
+                {/* Header with Close Button */}
                 <View style={styles.chatHeader}>
                   <View style={styles.chatHeaderLeft}>
                     <SymbolView name="sparkles" size={26} tintColor="#a78bfa" />
@@ -200,90 +175,9 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                   </TouchableOpacity>
                 </View>
 
-                {/* Content Area */}
-                <ScrollView
-                  style={styles.chatContent}
-                  contentContainerStyle={styles.chatContentContainer}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {messages.length === 0 ? (
-                    // Welcome State
-                    <View style={styles.welcomeContainer}>
-                      <View style={styles.welcomeIcon}>
-                        <SymbolView name="sparkles" size={36} tintColor="#a78bfa" />
-                      </View>
-                      <Text variant="displayMd" style={styles.welcomeTitle}>
-                        Your AI Coach
-                      </Text>
-                      <Text variant="textBase" style={styles.welcomeSubtitle}>
-                        Epic 6: AI Coaching
-                      </Text>
-                      <View style={styles.comingSoonBadge}>
-                        <Text variant="textXs" style={styles.comingSoonText}>
-                          Coming Soon
-                        </Text>
-                      </View>
-
-                      <Text variant="textLg" style={styles.examplesTitle}>
-                        Try asking:
-                      </Text>
-
-                      {exampleMessages.map((message, index) => (
-                        <TouchableOpacity
-                          key={index}
-                          onPress={() => handleExampleTap(message)}
-                          style={styles.exampleCard}
-                        >
-                          <SymbolView name="bubble.left.fill" size={18} tintColor="#a78bfa" />
-                          <Text variant="textBase" style={styles.exampleText}>
-                            {message}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  ) : (
-                    // Messages State
-                    <View style={styles.messagesContainer}>
-                      {messages.map((msg) => (
-                        <View
-                          key={msg.id}
-                          style={[
-                            styles.messageBubble,
-                            msg.isUser ? styles.userMessage : styles.aiMessage,
-                          ]}
-                        >
-                          <Text variant="textBase" style={styles.messageText}>
-                            {msg.text}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </ScrollView>
-
-                {/* Input Area */}
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputWrapper}>
-                    <TextInput
-                      style={styles.textInput}
-                      placeholder="Type a message..."
-                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                      value={messageInput}
-                      onChangeText={setMessageInput}
-                      multiline
-                      maxLength={500}
-                      returnKeyType="send"
-                      onSubmitEditing={handleSendMessage}
-                      blurOnSubmit={false}
-                    />
-                    <TouchableOpacity
-                      onPress={handleSendMessage}
-                      style={[styles.sendButton, !messageInput.trim() && styles.sendButtonDisabled]}
-                      disabled={!messageInput.trim()}
-                    >
-                      <SymbolView name="arrow.up" size={22} tintColor="#ffffff" weight="bold" />
-                    </TouchableOpacity>
-                  </View>
+                {/* Real ChatScreen Component (Story 6.1) */}
+                <View style={{ flex: 1 }}>
+                  <ChatScreen />
                 </View>
               </Pressable>
             </Animated.View>
@@ -305,7 +199,32 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
 export default function TabLayout() {
   const { user, isLoading } = useAuth();
   const [aiChatVisible, setAIChatVisible] = useState(false);
+  const [hasUnreadCheckins, setHasUnreadCheckins] = useState(false);
   const insets = useSafeAreaInsets();
+
+  // ✅ FIX: ALL hooks must be BEFORE early returns to maintain consistent hook order
+  // Check for unread check-in conversations (system-initiated)
+  const { data: conversations } = useQuery({
+    queryKey: ['ai-chat-conversations'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/ai-chat/conversations');
+      return response.data.data || [];
+    },
+    refetchInterval: 30000, // Check every 30 seconds
+    enabled: !isLoading && !aiChatVisible && !!user, // Only run when authenticated and chat is closed
+  });
+
+  // Update unread badge when conversations change
+  // ✅ MOVED BEFORE EARLY RETURNS - must be called every render
+  React.useEffect(() => {
+    if (conversations && conversations.length > 0) {
+      // Check if there are any system-initiated conversations
+      // TODO: In a real app, track which conversations have been viewed
+      // For now, we'll show badge if there are any system-initiated conversations
+      const hasSystemInitiated = conversations.some((conv: any) => conv.initiated_by === 'system');
+      setHasUnreadCheckins(hasSystemInitiated);
+    }
+  }, [conversations]);
 
   // Auth guard: redirect to login if not authenticated
   if (!isLoading && !user) {
@@ -319,6 +238,8 @@ export default function TabLayout() {
 
   const openAIChat = () => {
     setAIChatVisible(true);
+    // Clear unread badge when chat is opened
+    setHasUnreadCheckins(false);
   };
 
   const closeAIChat = () => {
@@ -372,6 +293,7 @@ export default function TabLayout() {
         <Tabs.Screen name="design-system-showcase" options={{ href: null }} />
         <Tabs.Screen name="needles" options={{ href: null }} />
         <Tabs.Screen name="sitemap" options={{ href: null }} />
+        <Tabs.Screen name="voice-demo" options={{ href: null }} />
 
         {/* Progress Routes (Day Detail Pages) */}
         <Tabs.Screen name="progress/[date]" options={{ href: null }} />
@@ -400,10 +322,11 @@ export default function TabLayout() {
         <Tabs.Screen name="settings/identity" options={{ href: null }} />
         <Tabs.Screen name="settings/subscription" options={{ href: null }} />
         <Tabs.Screen name="settings/reflection" options={{ href: null }} />
+        <Tabs.Screen name="settings/dev-tools" options={{ href: null }} />
       </Tabs>
 
       {/* Center AI Button (elevated above tab bar) */}
-      <CenterAIButton onPress={openAIChat} />
+      <CenterAIButton onPress={openAIChat} hasUnread={hasUnreadCheckins} />
 
       {/* AI Chat Overlay */}
       <AIChatOverlay visible={aiChatVisible} onClose={closeAIChat} />
@@ -435,6 +358,28 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  unreadBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  unreadBadgeInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ef4444', // Red accent color
+  },
 
   // AI Chat Overlay Styles
   overlayBackground: {
@@ -448,14 +393,17 @@ const styles = StyleSheet.create({
     zIndex: 101,
   },
   chatCard: {
-    marginHorizontal: '5%',
+    marginHorizontal: 8,
     marginBottom: 0,
-    height: '70%',
+    height: '95%', // ✅ FIX: Full screen height (was 70%)
+    width: undefined,
+    alignSelf: 'stretch',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
   chatCardInner: {
     flex: 1,
+    width: '100%', // ✅ Explicit 100% width
     backgroundColor: 'rgba(26, 26, 26, 0.98)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -489,145 +437,5 @@ const styles = StyleSheet.create({
   },
   chatCloseButton: {
     padding: 4,
-  },
-  chatContent: {
-    flex: 1,
-  },
-  chatContentContainer: {
-    padding: 20,
-    flexGrow: 1,
-  },
-
-  // Welcome State Styles
-  welcomeContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  welcomeIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(167, 139, 250, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  welcomeTitle: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  welcomeSubtitle: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  comingSoonBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-    marginBottom: 32,
-  },
-  comingSoonText: {
-    color: '#fbbf24',
-    fontWeight: '600',
-  },
-  examplesTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-    alignSelf: 'flex-start',
-  },
-  exampleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    width: '100%',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginBottom: 12,
-  },
-  exampleText: {
-    color: '#ffffff',
-    flex: 1,
-  },
-
-  // Messages State Styles
-  messagesContainer: {
-    flex: 1,
-  },
-  messageBubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 16,
-    marginBottom: 12,
-    maxWidth: '80%',
-  },
-  userMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#3B72F6',
-  },
-  aiMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  messageText: {
-    color: '#ffffff',
-  },
-
-  // Input Area Styles
-  inputContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    backgroundColor: 'rgba(26, 26, 26, 0.5)',
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 10,
-  },
-  textInput: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    color: '#ffffff',
-    fontSize: 16,
-    maxHeight: 100,
-    minHeight: 44,
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#3B72F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#3B72F6',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  sendButtonDisabled: {
-    backgroundColor: 'rgba(59, 114, 246, 0.3)',
-    shadowOpacity: 0,
   },
 });

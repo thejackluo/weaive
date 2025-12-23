@@ -32,30 +32,43 @@ class WhisperProvider(STTProvider):
     Max File Size: 25MB
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, db=None):
         """
         Initialize Whisper provider.
 
         Args:
             api_key: OpenAI API key. If None, reads from OPENAI_API_KEY env var.
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
 
         Raises:
             STTProviderError: If API key is not configured
         """
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        super().__init__(db)  # Initialize AIProviderBase
+        self.api_key = api_key or os.getenv('OPENAI_API_KEY')
         if not self.api_key:
             raise STTProviderError(
                 message="OPENAI_API_KEY not configured",
                 provider="whisper",
                 retryable=False,
-                error_code="OPENAI_API_KEY_MISSING",
+                error_code="OPENAI_API_KEY_MISSING"
             )
 
         # Initialize async OpenAI client
         self.client = AsyncOpenAI(api_key=self.api_key)
 
+    def get_provider_name(self) -> str:
+        """Return provider identifier for logging."""
+        return "whisper"
+
+    def is_available(self) -> bool:
+        """Check if provider is configured and available."""
+        return self.api_key is not None and len(self.api_key) > 0
+
     async def transcribe(
-        self, audio_file: bytes, language: str = "en", **kwargs
+        self,
+        audio_file: bytes,
+        language: str = 'en',
+        **kwargs
     ) -> TranscriptionResult:
         """
         Transcribe audio using OpenAI Whisper API.
@@ -78,7 +91,6 @@ class WhisperProvider(STTProvider):
         """
         try:
             import logging
-
             logger = logging.getLogger(__name__)
 
             # Log audio file metadata
@@ -99,18 +111,14 @@ class WhisperProvider(STTProvider):
             transcript_response = await self.client.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_buffer,
-                language=language
-                if language != "en"
-                else None,  # Optional: let Whisper detect if not English
-                response_format="verbose_json",  # Get duration and language info
+                language=language if language != 'en' else None,  # Optional: let Whisper detect if not English
+                response_format="verbose_json"  # Get duration and language info
             )
 
             # Extract transcript and metadata
             transcript_text = transcript_response.text
             detected_language = transcript_response.language or language
-            duration_sec = (
-                int(transcript_response.duration) if hasattr(transcript_response, "duration") else 0
-            )
+            duration_sec = int(transcript_response.duration) if hasattr(transcript_response, 'duration') else 0
 
             # Calculate cost
             cost = self.get_cost(duration_sec)
@@ -121,26 +129,21 @@ class WhisperProvider(STTProvider):
                 duration_sec=duration_sec,
                 language=detected_language,
                 provider="whisper",
-                cost_usd=cost,
+                cost_usd=cost
             )
 
         except Exception as e:
             # OpenAI SDK raises generic exceptions
             # Determine if retryable based on error message
             error_str = str(e).lower()
-            retryable = any(
-                keyword in error_str
-                for keyword in ["timeout", "network", "503", "504", "502", "500"]
-            )
+            retryable = any(keyword in error_str for keyword in ['timeout', 'network', '503', '504', '502', '500'])
 
             raise STTProviderError(
                 message=f"Whisper API error: {str(e)}",
                 provider="whisper",
                 retryable=retryable,
-                error_code="STT_ALL_PROVIDERS_FAILED"
-                if not retryable
-                else "STT_PRIMARY_UNAVAILABLE",
-                original_error=e,
+                error_code="STT_ALL_PROVIDERS_FAILED" if not retryable else "STT_PRIMARY_UNAVAILABLE",
+                original_error=e
             )
 
     def get_cost(self, duration_seconds: int) -> float:
@@ -157,14 +160,3 @@ class WhisperProvider(STTProvider):
         """
         cost_per_second = 0.0001  # $0.006/minute
         return round(duration_seconds * cost_per_second, 4)
-
-    def is_available(self) -> bool:
-        """
-        Check if Whisper is available (API key configured).
-
-        Quick check without making API calls.
-
-        Returns:
-            True if API key is set, False otherwise
-        """
-        return bool(self.api_key)

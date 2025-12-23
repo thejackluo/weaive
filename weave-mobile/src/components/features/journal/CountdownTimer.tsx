@@ -6,7 +6,7 @@
  * - Shows time remaining until midnight
  * - Updates every minute (battery efficient)
  * - Turns urgent/red when < 1 hour remaining
- * - Navigates to reflection screen on tap
+ * - Display-only (not tappable) - use "Begin" button to start reflection
  * - Uses device timezone with fallback to stored preference
  *
  * Usage:
@@ -15,8 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 
 interface CountdownTimerProps {
   /**
@@ -24,12 +23,6 @@ interface CountdownTimerProps {
    * If not provided, uses device timezone
    */
   timezone?: string;
-
-  /**
-   * Optional callback when timer is tapped
-   * If not provided, navigates to reflection screen
-   */
-  onPress?: () => void;
 
   /**
    * Optional style overrides for container
@@ -88,15 +81,10 @@ function formatCountdown(ms: number): {
 
 /**
  * CountdownTimer component
- * Updates every minute, shows time until midnight, navigates to reflection
+ * Updates every minute, shows time until midnight
+ * Display-only component - use "Begin" button to start reflection
  */
-export default function CountdownTimer({
-  timezone,
-  onPress,
-  style,
-  debug = false,
-}: CountdownTimerProps) {
-  const router = useRouter();
+export default function CountdownTimer({ timezone, style, debug = false }: CountdownTimerProps) {
   const [msRemaining, setMsRemaining] = useState(() => calculateMsUntilMidnight(timezone));
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
@@ -125,30 +113,14 @@ export default function CountdownTimer({
 
   const { text, isUrgent } = formatCountdown(msRemaining);
 
-  const handlePress = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      // Default: Navigate to reflection screen
-      router.push('/settings/reflection'); // TODO: Update to /thread/reflection when Story 3.1 complete
-    }
-  };
-
   return (
-    <TouchableOpacity
-      style={[styles.container, isUrgent && styles.containerUrgent, style]}
-      onPress={handlePress}
-      activeOpacity={0.7}
-    >
+    <View style={[styles.container, isUrgent && styles.containerUrgent, style]}>
       <View style={styles.content}>
         {/* Timer Icon */}
         <Text style={[styles.icon, isUrgent && styles.iconUrgent]}>⏰</Text>
 
         {/* Countdown Text */}
         <Text style={[styles.text, isUrgent && styles.textUrgent]}>{text}</Text>
-
-        {/* Arrow Indicator */}
-        <Text style={[styles.arrow, isUrgent && styles.arrowUrgent]}>→</Text>
       </View>
 
       {/* Debug Info (dev mode only) */}
@@ -157,50 +129,38 @@ export default function CountdownTimer({
           TZ: {timezone || 'device'} | Updated: {lastUpdate.toLocaleTimeString()}
         </Text>
       )}
-    </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)', // Subtle blue background
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
+    backgroundColor: 'rgba(59, 130, 246, 0.05)', // Very subtle blue background
+    borderRadius: 8,
+    padding: 12,
   },
   containerUrgent: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)', // Red background when urgent
-    borderColor: 'rgba(239, 68, 68, 0.4)',
+    backgroundColor: 'rgba(239, 68, 68, 0.05)', // Very subtle red background when urgent
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   icon: {
-    fontSize: 20,
-    marginRight: 12,
+    fontSize: 18,
+    marginRight: 8,
   },
   iconUrgent: {
     // Icon stays same color
   },
   text: {
-    flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(59, 130, 246, 1)', // Blue text
+    color: 'rgba(255, 255, 255, 0.7)', // Muted text since it's not interactive
   },
   textUrgent: {
-    color: 'rgba(239, 68, 68, 1)', // Red text when urgent
-  },
-  arrow: {
-    fontSize: 18,
-    color: 'rgba(59, 130, 246, 0.7)',
-    marginLeft: 8,
-  },
-  arrowUrgent: {
-    color: 'rgba(239, 68, 68, 0.8)',
+    color: 'rgba(239, 68, 68, 0.9)', // Red text when urgent
   },
   debugText: {
     marginTop: 8,

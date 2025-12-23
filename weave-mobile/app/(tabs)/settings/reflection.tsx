@@ -32,6 +32,7 @@ import CustomQuestionInput, {
 } from '@/components/features/journal/CustomQuestionInput';
 import ManageQuestionsModal from '@/components/features/journal/ManageQuestionsModal';
 import { UserAvatarMenu } from '@/components/UserAvatarMenu';
+import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
 
 const DRAFT_KEY = '@weave_reflection_draft';
 
@@ -51,6 +52,13 @@ export default function ReflectionScreen() {
   const [userName, _setUserName] = useState('there'); // TODO: Fetch from user profile
   const [showManageQuestionsModal, setShowManageQuestionsModal] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+
+  // Celebration modal state
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationData, setCelebrationData] = useState<{
+    level: number;
+    levelProgress: number;
+  } | null>(null);
 
   // Hooks
   console.log('[REFLECTION_SCREEN] 🎣 Initializing hooks...');
@@ -200,21 +208,34 @@ export default function ReflectionScreen() {
     };
 
     try {
-      if (isEditMode && existingJournalId) {
-        // Update existing journal
-        await updateMutation.mutateAsync({
+      let result;
+      if (isEditMode && existingJournalId && existingJournalId !== 'temp-id') {
+        // Update existing journal (skip if existingJournalId is temp-id)
+        result = await updateMutation.mutateAsync({
           journalId: existingJournalId,
           data: payload,
         });
       } else {
-        // Create new journal
-        await submitMutation.mutateAsync(payload);
+        // Create new journal (handles both CREATE mode and temp-id cases)
+        result = await submitMutation.mutateAsync(payload);
         await clearDraft();
       }
 
-      // Navigate to AI Feedback screen (Story 4.3)
-      // For now, just go back
-      router.back();
+      // Show celebration modal with level data (only for NEW reflections, not edits)
+      if (
+        !isEditMode &&
+        result?.meta?.level !== undefined &&
+        result?.meta?.level_progress !== undefined
+      ) {
+        setCelebrationData({
+          level: result.meta.level,
+          levelProgress: result.meta.level_progress,
+        });
+        setShowCelebration(true);
+      } else {
+        // If editing or no level data, just go back
+        router.back();
+      }
     } catch (error) {
       console.error('Failed to submit journal:', error);
       // Error handling will be improved in Task 2
@@ -435,6 +456,21 @@ export default function ReflectionScreen() {
           onSave={handleSaveCustomQuestions}
         />
       </ScrollView>
+
+      {/* Celebration Modal */}
+      {celebrationData && (
+        <CompletionCelebration
+          visible={showCelebration}
+          needleName="your goals"
+          level={celebrationData.level}
+          levelProgress={celebrationData.levelProgress}
+          showNotes={false}
+          onComplete={() => {
+            setShowCelebration(false);
+            router.back();
+          }}
+        />
+      )}
     </View>
   );
 }
