@@ -10,8 +10,17 @@ module.exports = {
     '^@/design-system/(.*)$': '<rootDir>/src/design-system/$1',
   },
   testMatch: [
-    '**/__tests__/**/*.test.(ts|tsx|js)',
-    '**/*.test.(ts|tsx|js)',
+    '<rootDir>/src/**/__tests__/**/*.test.(ts|tsx|js)',
+    '<rootDir>/app/**/__tests__/**/*.test.(ts|tsx|js)',
+    '<rootDir>/src/**/*.test.(ts|tsx|js)',
+    '<rootDir>/app/**/*.test.(ts|tsx|js)',
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/archive/',
+    '/__archive__/',
+    '/docs/',
+    '/dev/',
   ],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

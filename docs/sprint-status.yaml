@@ -1,7 +1,7 @@
 # Sprint Status Tracking
-# Generated: 2025-12-16 (Updated: 2025-12-21 for Sprint Change Proposals - AI Services + Observability + Epic 1.5 Expansion)
+# Generated: 2025-12-16 (Updated: 2025-12-22 for Sprint Change Proposal - Epic 9 Production Launch)
 # Project: Weave MVP
-# Total Scope: 347 story points across 10 epics (+28 pts Epic 1, +10 pts Epic 0 expansion, +6 pts Epic 0.5, +21 pts Epic 1.5 expansion)
+# Total Scope: 375 story points across 11 epics (+28 pts Epic 1, +10 pts Epic 0 expansion, +6 pts Epic 0.5, +3 pts Epic 1.5 expansion, +45 pts Epic 9)
 # Sprint Length: 2 weeks (10 work days)
 # Team Capacity: 50 points/sprint
 #
@@ -17,12 +17,31 @@
 #      - Story 0.12: LogRocket session replay (3 pts)
 #      - Story 0.13: Sentry error tracking (3 pts)
 #
-# 3. Epic 1.5 Expansion (APPROVED 2025-12-21):
-#    - Epic 1.5: EXPANDED from 8-10 pts (navigation only) to 17-21 pts (complete development infrastructure)
+# 3. Epic 1.5 Expansion (APPROVED 2025-12-22):
+#    - Epic 1.5: EXPANDED from 8-10 pts (navigation only) to 21-27 pts (complete development infrastructure)
 #    - Epic renamed: "App Navigation Scaffolding" → "Development Infrastructure"
-#    - Story 1.5.2: NEW - Backend API/Model Standardization (5-6 pts) - API templates, model conventions, testing patterns
-#    - Story 1.5.3: NEW - AI Services Standardization (4-5 pts) - AIProviderBase abstraction, text/image/audio patterns
-#    - ROI: 20-30% velocity improvement for Epic 2-8 (40+ future stories)
+#    - Story 1.5.2: EXPANDED - Backend API/Model Standardization + API Endpoint Mapping (7-9 pts)
+#      - AC-9: 28 API endpoint stubs across Epic 2-8 (goals, actions, reflection, progress, AI chat, notifications, settings)
+#      - Creates docs/dev/backend-api-integration.md
+#    - Story 1.5.3: EXPANDED - AI Services Standardization + AI Orchestration (6-8 pts)
+#      - AC-9: AI Module Abstraction (5 modules: Onboarding Coach, Triad Planner, Daily Recap, Dream Self Advisor, AI Insights Engine)
+#      - AC-10: AI Orchestrator + Context Builder + Module Registry
+#      - Updates docs/dev/ai-services-guide.md with orchestration sections
+#    - ROI: 25-35% velocity improvement for Epic 2-8 (40+ future stories)
+#
+# 4. Epic 9 Addition (APPROVED 2025-12-22):
+#    - Epic 9: NEW - Production Launch & App Store Publishing (45 pts)
+#      - Story 9.1: Production Backend Deployment (Railway) - 5 pts
+#      - Story 9.2: Production Database Setup (Supabase Pro) - 5 pts
+#      - Story 9.3: App Store Compliance (Privacy/Terms/Metadata) - 8 pts
+#      - Story 9.4: Subscription Management (Apple IAP via RevenueCat) - 8 pts
+#      - Story 9.5: Production Security Hardening (Rate limiting, OWASP scan) - 5 pts
+#      - Story 9.6: TestFlight Beta Testing - 3 pts
+#      - Story 9.7: Production Monitoring Setup (Sentry/LogRocket/UptimeRobot) - 3 pts
+#      - Story 9.8: App Store Submission - 8 pts
+#    - Infrastructure Cost Impact: $172-208/month (Railway $20-50, Supabase Pro $25, LogRocket $99, Sentry $26, Apple Dev $8)
+#    - AI Cost Budget: $2,240/month (within $2,500 target)
+#    - Timeline: Start Week 19 (parallel with Epic 7-8), complete Week 26 for M4 Launch milestone
 
 # STATUS DEFINITIONS:
 # ==================
@@ -80,13 +99,16 @@ week-0-stories:
   0-11-voice-stt-infrastructure: ready-for-dev  # 5 pts ⚡ NEW (2025-12-21) - AssemblyAI primary + Whisper fallback
   week-0-retrospective: completed               # Retrospective completed 2025-12-20
 
-# Epic 1.5: Development Infrastructure (17-21 pts)
-# ⚡ SPRINT CHANGE (2025-12-21): Epic 1.5 expanded from 8-10 pts (navigation only) to 17-21 pts (frontend + backend + AI standardization)
+# Epic 1.5: Development Infrastructure (19-24 pts)
+# ⚡ SPRINT CHANGE (2025-12-22): Epic 1.5 expanded, then corrected after validation
+# - Original: 8-10 pts (navigation only)
+# - Expanded: 21-27 pts (navigation + backend + AI standardization)
+# - Corrected: 19-24 pts (validation found duplicate work in Story 1.5.3, reduced from 6-8 pts to 4-5 pts)
 epic-1.5-status: planned
 epic-1.5-stories:
   1-5-1-navigation-architecture: planned        # 8-10 pts - Core navigation scaffolding (3-tab structure, glassmorphism AI chat, 15+ placeholder screens)
-  1-5-2-backend-standardization: planned        # 5-6 pts ⚡ NEW (2025-12-21) - API/model templates, Pydantic schemas, error handling, testing patterns, backend-patterns-guide.md
-  1-5-3-ai-services-standardization: in-progress      # 4-5 pts ⚡ NEW (2025-12-21) - AIProviderBase abstraction, text/image/audio patterns, cost tracking, rate limiting, ai-services-guide.md
+  1-5-2-backend-standardization: planned        # 7-9 pts ⚡ EXPANDED (2025-12-22) - API/model templates + 28 API endpoint stubs, backend-patterns-guide.md + backend-api-integration.md
+  1-5-3-ai-services-standardization: in-progress      # 4-5 pts ⚡ NEW (2025-12-21) - AIProviderBase abstraction, text/image/audio patterns, cost tracking, rate limiting, ai-services-guide.md (ACTIVE in PR #82)
 
 # Epic 0.5: Post-Development Observability (6 pts)
 epic-0.5-status: planned
@@ -309,6 +331,37 @@ sprint-6-activities:
   sprint-6-retrospective: optional
 
 # ============================================================================
+# PHASE 6: PRODUCTION LAUNCH & APP STORE PUBLISHING
+# ============================================================================
+# Duration: 4 weeks (Weeks 23-26)
+# Goal: Deploy to production, complete App Store submission, launch publicly
+# Points: 45 (Epic 9) + infrastructure setup
+# Note: Start Week 19 (parallel with Sprint 5) for infrastructure work
+
+phase-6-status: planned
+phase-6-start-date: null
+phase-6-end-date: null
+
+phase-6-stories:
+  # Epic 9: Production Launch & App Store Publishing (45 pts)
+  epic-9: backlog
+  # Week 23: Production Infrastructure (18 pts)
+  9-1-production-backend-deployment: backlog    # 5 pts - Railway setup, env vars, health checks
+  9-2-production-database-setup: backlog        # 5 pts - Supabase Pro, migrations, RLS audit, backups
+  9-7-production-monitoring-setup: backlog      # 3 pts - Sentry, LogRocket, UptimeRobot integration
+  9-5-production-security-hardening: backlog    # 5 pts - Rate limiting, OWASP scan, penetration testing
+  # Week 24: Compliance & Monetization (16 pts)
+  9-3-app-store-compliance: backlog             # 8 pts - Privacy policy, ToS, App Store metadata, screenshots
+  9-4-subscription-management-iap: backlog      # 8 pts - RevenueCat, Apple IAP, subscription tiers
+  # Week 25: Testing & Submission (11 pts)
+  9-6-testflight-beta-testing: backlog          # 3 pts - EAS build, TestFlight upload, beta testing (10-20 users)
+  9-8-app-store-submission: backlog             # 8 pts - Demo account, submission, App Review response
+  # Week 26: Launch & Post-Launch
+  phase-6-launch-milestone: backlog             # M4: Public App Store launch 🚀
+
+  phase-6-retrospective: optional
+
+# ============================================================================
 # BACKLOG: POST-MVP FEATURES
 # ============================================================================
 
@@ -332,7 +385,7 @@ backlog-post-mvp:
 epic-completion:
   epic-0-foundation: 27/41             # Week 0: DONE ✅ (7/7 core stories, 66% pts, 14 pts deferred as stretch goals: 0.8 error framework, 0.9 image handling, 0.10 AI failure)
   epic-1-onboarding-hybrid: 0/50       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1, Phases 6-7: Sprint 2, +2 for name entry + personality)
-  epic-1.5-development-infrastructure: 0/21  # Week 0: 0% complete ⚡ NEW (2025-12-21) - Frontend (8-10 pts) + Backend (5-6 pts) + AI (4-5 pts) standardization
+  epic-1.5-development-infrastructure: 0/21.5  # Week 0: 0% complete ⚡ CORRECTED (2025-12-22) - Frontend (8-10 pts) + Backend + API Mapping (7-9 pts) + AI Module Orchestration (4-5 pts, reduced after validation)
   epic-2-goal-management: 0/27         # Sprint 3: 0% complete
   epic-3-daily-actions: 0/38           # Sprint 1-2, 5: 0% complete
   epic-4-reflection: 0/28              # Sprint 2: 0% complete
@@ -340,9 +393,10 @@ epic-completion:
   epic-6-ai-coaching: 0/29             # Sprint 4: 0% complete
   epic-7-notifications: 0/28           # Sprint 3, 5: 0% complete
   epic-8-settings: 0/23                # Sprint 3, 5: 0% complete
+  epic-9-production-launch: 0/45       # Phase 6 (Weeks 23-26): 0% complete ⚡ NEW (2025-12-22) - Production deployment, App Store compliance, subscriptions, security, testing, launch
 
-total-completion: 27/326 (8%)
-# Note: Total increased from 305 to 326 pts (+21 pts from Epic 1.5 expansion)
+total-completion: 27/375 (7%)
+# Note: Total increased from 330 to 375 pts (+45 pts from Epic 9: Production Launch & App Store Publishing)
 # Note: Epic 0 core foundation complete. Stretch goals (0.8-0.10) deferred to future sprints.
 
 # ============================================================================

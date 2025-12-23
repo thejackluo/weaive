@@ -52,10 +52,16 @@ class BedrockProvider(AIProvider):
             'claude-3-5-haiku': 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
             'claude-3-7-sonnet': 'us.anthropic.claude-3-7-sonnet-20250219-v2:0',
             'claude-4-5-haiku': 'us.anthropic.claude-4-5-haiku-20250514-v1:0',
+            # ✅ Fixed: Added aliases without version suffix (for Story 6.1 compatibility)
+            'claude-3-5-haiku-20241022': 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+            'claude-3-haiku-20240307': 'anthropic.claude-3-haiku-20240307-v1:0',  # ✅ Added: Actual Claude 3 Haiku
+            'claude-3-7-sonnet-20250219': 'us.anthropic.claude-3-7-sonnet-20250219-v2:0',
+            'claude-4-5-haiku-20250514': 'us.anthropic.claude-4-5-haiku-20250514-v1:0',
             # Also accept full inference profile IDs directly
             'us.anthropic.claude-3-5-haiku-20241022-v1:0': 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
             'us.anthropic.claude-3-7-sonnet-20250219-v2:0': 'us.anthropic.claude-3-7-sonnet-20250219-v2:0',
             'us.anthropic.claude-4-5-haiku-20250514-v1:0': 'us.anthropic.claude-4-5-haiku-20250514-v1:0',
+            'anthropic.claude-3-haiku-20240307-v1:0': 'anthropic.claude-3-haiku-20240307-v1:0',  # ✅ Added: Direct model ID
         }
 
         # Pricing per million tokens (input/output)
@@ -72,6 +78,11 @@ class BedrockProvider(AIProvider):
             'us.anthropic.claude-4-5-haiku-20250514-v1:0': {
                 'input': 1.00 / 1_000_000,
                 'output': 5.00 / 1_000_000
+            },
+            # ✅ Added: Claude 3 Haiku pricing (standard single-region model)
+            'anthropic.claude-3-haiku-20240307-v1:0': {
+                'input': 0.25 / 1_000_000,   # Same as 3.5 Haiku
+                'output': 1.25 / 1_000_000
             },
         }
 
