@@ -55,6 +55,14 @@ class ApiClient {
     console.log('[API_CLIENT] 🔒 Admin mode disabled - normal rate limits');
   }
 
+  /**
+   * Get admin key (for SSE streaming which needs direct access)
+   * ✅ FIX: Public getter instead of @ts-ignore access
+   */
+  public getAdminKey(): string | null {
+    return this.adminKey;
+  }
+
   private async getAuthHeaders(): Promise<Record<string, string>> {
     const accessToken = await getAccessToken();
     const headers: Record<string, string> = {

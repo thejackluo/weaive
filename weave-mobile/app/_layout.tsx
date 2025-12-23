@@ -50,10 +50,14 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
     initJournalApi(getAuthToken);
 
     // 🔓 Enable admin mode for unlimited rate limits (DEVELOPMENT ONLY)
-    // TODO: Remove this before production or gate behind __DEV__
-    const ADMIN_KEY = 'dev-admin-key-12345-change-in-production'; // Must match backend AI_ADMIN_KEY
-    apiClient.enableAdminMode(ADMIN_KEY);
-    console.log('[ROOT_LAYOUT] ✅ Admin mode enabled for testing');
+    // ✅ FIX: Only enable in development, use env var for key
+    if (__DEV__) {
+      const devAdminKey = process.env.EXPO_PUBLIC_DEV_ADMIN_KEY;
+      if (devAdminKey) {
+        apiClient.enableAdminMode(devAdminKey);
+        console.log('[ROOT_LAYOUT] ✅ Admin mode enabled for testing');
+      }
+    }
 
     // 📬 Initialize push notifications (Story 6.1)
     (async () => {

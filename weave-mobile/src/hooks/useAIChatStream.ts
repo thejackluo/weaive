@@ -137,19 +137,20 @@ export function useAIChatStream(): UseAIChatStreamReturn {
         }
 
         // ✅ Add admin key if available (for unlimited rate limits in dev)
-        // @ts-ignore - accessing private property for streaming
-        if (apiClient.adminKey) {
-          // @ts-ignore
-          headers['X-Admin-Key'] = apiClient.adminKey;
-          console.log('[STREAM_DEBUG] 🔑 Admin key added to headers:', apiClient.adminKey);
+        // ✅ FIX: Use public getter instead of @ts-ignore
+        const adminKey = apiClient.getAdminKey();
+        if (adminKey) {
+          headers['X-Admin-Key'] = adminKey;
+          if (__DEV__) console.log('[STREAM_DEBUG] 🔑 Admin key added to headers');
         } else {
-          console.log('[STREAM_DEBUG] ⚠️ No admin key found on apiClient');
+          if (__DEV__) console.log('[STREAM_DEBUG] ⚠️ No admin key found');
         }
 
-        console.log('[STREAM_DEBUG] 📤 Sending headers:', Object.keys(headers));
+        if (__DEV__) console.log('[STREAM_DEBUG] 📤 Sending headers:', Object.keys(headers));
 
         // ✅ Use EventSource from react-native-sse for proper React Native SSE support
-        console.log('[STREAM_DEBUG] 🚀 Setting up EventSource with react-native-sse...');
+        if (__DEV__)
+          console.log('[STREAM_DEBUG] 🚀 Setting up EventSource with react-native-sse...');
 
         // Create EventSource-compatible URL with POST data as query params for SSE
         const sseUrl = `${baseURL}/api/ai-chat/messages/stream`;
@@ -167,7 +168,7 @@ export function useAIChatStream(): UseAIChatStreamReturn {
         // Handle incoming messages
         eventSourceRef.current.addEventListener('message', (event) => {
           try {
-            console.log('[STREAM_DEBUG] 📨 Received SSE event:', event.data);
+            if (__DEV__) console.log('[STREAM_DEBUG] 📨 Received SSE event:', event.data);
             const chunk: StreamChunk = JSON.parse(event.data);
 
             if (chunk.type === 'metadata') {
@@ -210,13 +211,14 @@ export function useAIChatStream(): UseAIChatStreamReturn {
               eventSourceRef.current?.close();
             }
           } catch (parseError) {
-            console.error('[STREAM_DEBUG] Failed to parse SSE event:', parseError, event.data);
+            if (__DEV__)
+              console.error('[STREAM_DEBUG] Failed to parse SSE event:', parseError, event.data);
           }
         });
 
         // Handle EventSource errors
         eventSourceRef.current.addEventListener('error', (error) => {
-          console.error('[STREAM_DEBUG] EventSource error:', error);
+          if (__DEV__) console.error('[STREAM_DEBUG] EventSource error:', error);
           setError('Connection error - please try again');
           setIsStreaming(false);
           eventSourceRef.current?.close();
@@ -224,15 +226,15 @@ export function useAIChatStream(): UseAIChatStreamReturn {
 
         // Handle EventSource open
         eventSourceRef.current.addEventListener('open', () => {
-          console.log('[STREAM_DEBUG] ✅ EventSource connection opened');
+          if (__DEV__) console.log('[STREAM_DEBUG] ✅ EventSource connection opened');
         });
       } catch (err: any) {
         // Handle errors and clean up
         if (err.name === 'AbortError') {
-          console.log('Stream cancelled by user or timed out');
+          if (__DEV__) console.log('Stream cancelled by user or timed out');
           // Error already set if timeout, otherwise user cancellation
         } else {
-          console.error('Streaming error:', err);
+          if (__DEV__) console.error('Streaming error:', err);
           setError(err.message || 'Failed to stream response');
         }
         setIsStreaming(false);
