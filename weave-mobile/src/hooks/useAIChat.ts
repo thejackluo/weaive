@@ -1,9 +1,9 @@
 /**
  * useAIChat Hook - Text AI Generation with TanStack Query
- * 
+ *
  * Story: 1.5.3 - AI Services Standardization (AC-7)
  * Provides text AI generation with caching, error handling, and rate limiting support.
- * 
+ *
  * Features:
  * - TanStack Query mutation for API calls
  * - 5-minute cache with stale-while-revalidate
@@ -11,16 +11,16 @@
  * - Abort signal support for cancelling requests
  * - Automatic retry with exponential backoff (3 attempts: 1s, 2s, 4s)
  * - Loading/error states for UI integration
- * 
+ *
  * Provider fallback chain (handled by backend):
  * - Primary: GPT-4o-mini ($0.15/$0.60 per MTok)
  * - Secondary: Claude 3.7 Sonnet ($3.00/$15.00 per MTok)
  * - Tertiary: Deterministic/cached response
- * 
+ *
  * Usage:
  * ```tsx
  * const { generate, isGenerating, error, data } = useAIChat();
- * 
+ *
  * const result = await generate({
  *   prompt: "What are 3 tasks to move toward my goal today?",
  *   context: {
@@ -43,15 +43,15 @@ interface AITextRequest {
   prompt: string;
   context: {
     user_id?: string;
-    operation_type: string;  // 'triad_generation', 'journal_feedback', 'dream_self_chat', etc.
+    operation_type: string; // 'triad_generation', 'journal_feedback', 'dream_self_chat', etc.
     max_tokens?: number;
   };
 }
 
 interface AITextResponse {
   text: string;
-  provider: string;          // 'gpt-4o-mini', 'claude-sonnet', 'deterministic'
-  model: string;             // Full model name (e.g., 'gpt-4o-mini-2024-07-18')
+  provider: string; // 'gpt-4o-mini', 'claude-sonnet', 'deterministic'
+  model: string; // Full model name (e.g., 'gpt-4o-mini-2024-07-18')
   tokens_used: {
     input: number;
     output: number;
@@ -60,12 +60,14 @@ interface AITextResponse {
   duration_ms: number;
 }
 
+// Rate limit error structure (parsed from API response)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface RateLimitError {
   code: 'RATE_LIMIT_EXCEEDED';
   message: string;
-  retryAfter: number;  // Seconds until rate limit resets
-  limit: number;       // Rate limit threshold
-  usage: number;       // Current usage
+  retryAfter: number; // Seconds until rate limit resets
+  limit: number; // Rate limit threshold
+  usage: number; // Current usage
 }
 
 interface APIErrorResponse {
@@ -77,7 +79,7 @@ interface APIErrorResponse {
 }
 
 interface GenerateOptions {
-  signal?: AbortSignal;  // For cancelling requests
+  signal?: AbortSignal; // For cancelling requests
 }
 
 // ===========================
@@ -116,10 +118,7 @@ export function useAIChat() {
 
         if (response.status === 429) {
           // Rate limit exceeded
-          throw new RateLimitException(
-            errorData.error.message,
-            errorData.error.retryAfter || 3600
-          );
+          throw new RateLimitException(errorData.error.message, errorData.error.retryAfter || 3600);
         }
 
         throw new Error(errorData.error.message || 'AI generation failed');
@@ -135,12 +134,7 @@ export function useAIChat() {
 
     // On success: Update cache with 5-minute TTL
     onSuccess: (data, variables) => {
-      const queryKey = [
-        'ai',
-        'chat',
-        variables.context.operation_type,
-        variables.context.user_id,
-      ];
+      const queryKey = ['ai', 'chat', variables.context.operation_type, variables.context.user_id];
 
       queryClient.setQueryData(queryKey, data, {
         updatedAt: Date.now(),
@@ -158,7 +152,7 @@ export function useAIChat() {
   return {
     /**
      * Generate AI text response.
-     * 
+     *
      * @param request - Prompt and context
      * @param options - Optional abort signal
      * @returns AI response with provider info and cost tracking
