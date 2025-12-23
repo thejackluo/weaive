@@ -68,9 +68,9 @@ def get_ai_service() -> Optional[AIService]:
         # Initialize AI service with all available providers
         _ai_service_instance = AIService(
             db=supabase,
-            bedrock_region=getattr(settings, 'AWS_REGION', 'us-east-1'),
+            bedrock_region=getattr(settings, "AWS_REGION", "us-east-1"),
             openai_key=settings.OPENAI_API_KEY,
-            anthropic_key=settings.ANTHROPIC_API_KEY
+            anthropic_key=settings.ANTHROPIC_API_KEY,
         )
         logger.info("✅ AI Service initialized")
 
@@ -108,11 +108,13 @@ def verify_jwt_token(token: str) -> dict:
     try:
         # Decode and verify JWT using Supabase JWT secret
         # Supabase uses HS256 algorithm by default
+        # Add 60s leeway to handle clock skew between mobile device and server
         payload = jwt.decode(
             token,
             settings.SUPABASE_JWT_SECRET,
             algorithms=["HS256"],
             audience="authenticated",  # Supabase default audience
+            leeway=60,  # Allow 60s clock skew tolerance (critical for mobile apps)
         )
 
         logger.debug(f"✅ JWT verified for user: {payload.get('sub')}")
@@ -182,9 +184,7 @@ def get_current_user(
 
 
 def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(
-        HTTPBearer(auto_error=False)
-    ),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
 ) -> Optional[dict]:
     """
     FastAPI dependency to optionally get current authenticated user.

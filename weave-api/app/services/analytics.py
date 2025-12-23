@@ -49,25 +49,16 @@ async def track_event(
             event_record["timestamp"] = timestamp.isoformat()
 
         # Insert into database
-        result = (
-            supabase.table("analytics_events")
-            .insert(event_record)
-            .execute()
-        )
+        result = supabase.table("analytics_events").insert(event_record).execute()
 
         if not result.data:
             raise Exception("Failed to insert analytics event - no data returned")
 
         event = result.data[0]
-        logger.info(
-            f"✅ Analytics event tracked: {event_name} "
-            f"(user_id: {user_id or 'anonymous'})"
-        )
+        logger.info(f"✅ Analytics event tracked: {event_name} (user_id: {user_id or 'anonymous'})")
 
         return event
 
     except Exception as e:
-        logger.error(
-            f"❌ Failed to track analytics event '{event_name}': {str(e)}"
-        )
+        logger.error(f"❌ Failed to track analytics event '{event_name}': {str(e)}")
         raise

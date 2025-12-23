@@ -32,6 +32,7 @@ router = APIRouter(prefix="/api/ai", tags=["ai"])
 # AI Module Enum (matches database ai_module type)
 class AIModule(str, Enum):
     """Valid AI module identifiers."""
+
     ONBOARDING = "onboarding"
     TRIAD = "triad"
     RECAP = "recap"
@@ -44,9 +45,15 @@ class AIModule(str, Enum):
 # Request/Response Models
 class AIGenerateRequest(BaseModel):
     """Request body for AI generation."""
-    module: AIModule = Field(..., description="AI module (onboarding, triad, recap, dream_self, weekly_insights, goal_breakdown, chat)")
+
+    module: AIModule = Field(
+        ...,
+        description="AI module (onboarding, triad, recap, dream_self, weekly_insights, goal_breakdown, chat)",
+    )
     prompt: str = Field(..., description="User input prompt")
-    model: Optional[str] = Field(None, description="Override default model (gpt-4o-mini, claude-3-5-haiku, etc.)")
+    model: Optional[str] = Field(
+        None, description="Override default model (gpt-4o-mini, claude-3-5-haiku, etc.)"
+    )
     max_tokens: Optional[int] = Field(2000, description="Maximum tokens to generate")
     temperature: Optional[float] = Field(None, description="Sampling temperature (0.0-1.0)")
     system: Optional[str] = Field(None, description="System message to prepend")
@@ -54,6 +61,7 @@ class AIGenerateRequest(BaseModel):
 
 class AIGenerateResponse(BaseModel):
     """Response body for AI generation."""
+
     content: str
     input_tokens: int
     output_tokens: int
@@ -80,9 +88,9 @@ def get_ai_service() -> AIService:
 
     load_dotenv()
 
-    openai_key = os.getenv('OPENAI_API_KEY')
-    anthropic_key = os.getenv('ANTHROPIC_API_KEY')
-    aws_region = os.getenv('AWS_REGION', 'us-east-1')
+    openai_key = os.getenv("OPENAI_API_KEY")
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
 
     db = get_supabase_client()
 
@@ -119,11 +127,13 @@ async def generate_ai(
     **Response time:** 1-3 seconds (Bedrock/OpenAI), <100ms (cache hit)
     """
     try:
-        user_id = current_user['id']
-        user_role = current_user.get('role', 'user')
-        user_tier = current_user.get('tier', 'free')
+        user_id = current_user["id"]
+        user_role = current_user.get("role", "user")
+        user_tier = current_user.get("tier", "free")
 
-        logger.info(f"AI generate request: user={user_id}, module={request.module}, model={request.model}")
+        logger.info(
+            f"AI generate request: user={user_id}, module={request.module}, model={request.model}"
+        )
 
         # Generate with AI service (handles fallback, caching, budgets, rate limits)
         response: AIResponse = ai_service.generate(
@@ -163,8 +173,8 @@ async def generate_ai(
                 "message": str(e),
                 "user_tier": e.user_tier,
                 "limit": e.limit,
-                "retry_after": e.retry_after.isoformat() if e.retry_after else None
-            }
+                "retry_after": e.retry_after.isoformat() if e.retry_after else None,
+            },
         )
 
     except Exception as e:
@@ -212,11 +222,13 @@ async def generate_ai_stream(
     - Long-form generation (weekly insights)
     """
     try:
-        user_id = current_user['id']
-        user_role = current_user.get('role', 'user')
-        user_tier = current_user.get('tier', 'free')
+        user_id = current_user["id"]
+        user_role = current_user.get("role", "user")
+        user_tier = current_user.get("tier", "free")
 
-        logger.info(f"AI stream request: user={user_id}, module={request.module}, model={request.model}")
+        logger.info(
+            f"AI stream request: user={user_id}, module={request.module}, model={request.model}"
+        )
 
         # Create streaming generator
         async def event_stream() -> AsyncGenerator[str, None]:
@@ -238,12 +250,12 @@ async def generate_ai_stream(
                     system=request.system,
                 ):
                     # Chunk event (word-by-word or sentence-by-sentence)
-                    if chunk.get('type') == 'chunk':
+                    if chunk.get("type") == "chunk":
                         yield f"data: {json.dumps({'type': 'chunk', 'content': chunk['content']})}\n\n"
                         await asyncio.sleep(0)  # Yield control to event loop
 
                     # Done event (final metadata)
-                    elif chunk.get('type') == 'done':
+                    elif chunk.get("type") == "done":
                         yield f"data: {json.dumps({'type': 'done', 'input_tokens': chunk['input_tokens'], 'output_tokens': chunk['output_tokens'], 'cost_usd': chunk['cost_usd'], 'provider': chunk['provider'], 'run_id': chunk.get('run_id')})}\n\n"
 
             except AIProviderError as e:
@@ -266,7 +278,7 @@ async def generate_ai_stream(
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
                 "X-Accel-Buffering": "no",  # Disable nginx buffering
-            }
+            },
         )
 
     except Exception as e:

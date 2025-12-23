@@ -52,6 +52,19 @@ function getTitleFromFilename(fileName) {
         .join(' ');
 }
 
+// Calculate file stats (lines, words, reading time)
+function calculateFileStats(filePath) {
+    try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        const lines = content.split('\n').length;
+        const words = content.trim().split(/\s+/).length;
+        const readingTime = Math.ceil(words / 200); // 200 words per minute
+        return { lines, words, readingTime };
+    } catch (error) {
+        return { lines: 0, words: 0, readingTime: 0 };
+    }
+}
+
 function buildFolderStructure(dir, basePath = '', level = 0) {
     const structure = {
         folders: {},
@@ -73,11 +86,13 @@ function buildFolderStructure(dir, basePath = '', level = 0) {
                 structure.folders[item.name] = buildFolderStructure(fullPath, relativePath, level + 1);
             } else if (item.isFile() && item.name.endsWith('.md')) {
                 const webPath = relativePath.replace(/\\/g, '/');
+                const stats = calculateFileStats(fullPath);
                 structure.files.push({
                     path: webPath,
                     title: getTitleFromFilename(item.name),
                     icon: getIconForFile(fullPath, item.name),
-                    name: item.name
+                    name: item.name,
+                    ...stats // Include lines, words, readingTime
                 });
             }
         }
@@ -97,6 +112,29 @@ function countDocs(structure) {
         count += countDocs(structure.folders[folder]);
     }
     return count;
+}
+
+// Calculate aggregate stats from structure
+function calculateAggregateStats(structure) {
+    let totalFiles = 0;
+    let totalWords = 0;
+    let totalLines = 0;
+    let totalReadingTime = 0;
+
+    function traverse(struct) {
+        totalFiles += struct.files.length;
+        for (const file of struct.files) {
+            totalWords += file.words || 0;
+            totalLines += file.lines || 0;
+            totalReadingTime += file.readingTime || 0;
+        }
+        for (const folderName in struct.folders) {
+            traverse(struct.folders[folderName]);
+        }
+    }
+
+    traverse(structure);
+    return { totalFiles, totalWords, totalLines, totalReadingTime };
 }
 
 function startServer(port, docsDir) {
@@ -122,6 +160,19 @@ function startServer(port, docsDir) {
 
             const structure = buildFolderStructure(DOCS_DIR);
             res.end(JSON.stringify(structure, null, 2));
+            return;
+        }
+
+        // API endpoint for aggregate stats
+        if (req.url === '/api/stats') {
+            res.writeHead(200, {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            });
+
+            const structure = buildFolderStructure(DOCS_DIR);
+            const stats = calculateAggregateStats(structure);
+            res.end(JSON.stringify(stats, null, 2));
             return;
         }
 

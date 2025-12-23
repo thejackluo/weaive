@@ -3,6 +3,7 @@
 __all__ = [
     "admin",
     "ai_router",
+    "ai_chat_router",
     "analytics",
     "binds",
     "captures",
@@ -11,7 +12,7 @@ __all__ = [
     "journal_router",
     "memories_router",
     "onboarding",
-    "transcribe",
     "stats",
+    "transcribe",
     "user",
 ]

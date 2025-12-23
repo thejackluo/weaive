@@ -6,7 +6,33 @@ import { ThemeProvider, SimpleToastContainer } from '../src/design-system';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
 import { DevEnvironmentBanner } from '../src/components/DevEnvironmentBanner';
 import { initJournalApi } from '../src/services/journalApi';
+import apiClient from '../src/services/apiClient';
+import {
+  registerForPushNotificationsAsync,
+  savePushTokenToBackend,
+  setupNotificationListeners,
+} from '../src/services/notificationService';
 import '../global.css';
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: 'https://6376c2a36a9e23ca22646f5d5024e6ac@o4507389087580160.ingest.us.sentry.io/4510585166888960',
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: true,
+
+  // Configure Session Replay
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1,
+  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 // Create QueryClient instance (singleton)
 // Story 4.1: Added for journal and user preferences queries
@@ -42,6 +68,44 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
     // Initialize journalApi with shared auth token getter
     // Reduces duplicate supabase.auth.getSession() calls
     initJournalApi(getAuthToken);
+
+    // 🔓 Enable admin mode for unlimited rate limits (DEVELOPMENT ONLY)
+    // ✅ FIX: Only enable in development, use env var for key
+    if (__DEV__) {
+      const devAdminKey = process.env.EXPO_PUBLIC_DEV_ADMIN_KEY;
+      if (devAdminKey) {
+        apiClient.enableAdminMode(devAdminKey);
+        console.log('[ROOT_LAYOUT] ✅ Admin mode enabled for testing');
+      }
+    }
+
+    // 📬 Initialize push notifications (Story 6.1)
+    (async () => {
+      try {
+        // Register for push notifications and get token
+        const pushToken = await registerForPushNotificationsAsync();
+
+        if (pushToken) {
+          // Save token to backend
+          await savePushTokenToBackend(pushToken);
+          console.log('[ROOT_LAYOUT] ✅ Push notifications registered and saved');
+        } else {
+          console.log(
+            '[ROOT_LAYOUT] ⚠️ Push notifications not available (simulator or permissions denied)'
+          );
+        }
+      } catch (error) {
+        console.error('[ROOT_LAYOUT] ❌ Error initializing push notifications:', error);
+      }
+    })();
+
+    // Setup notification listeners
+    const cleanupListeners = setupNotificationListeners();
+
+    // Cleanup on unmount
+    return () => {
+      cleanupListeners();
+    };
   }, [getAuthToken]);
 
   return <>{children}</>;
@@ -75,7 +139,7 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
  *
  * @returns Stack navigation component wrapped with providers
  */
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   return (
     <ThemeProvider initialMode="dark">
       <AuthProvider>
@@ -93,4 +157,4 @@ export default function RootLayout() {
       </AuthProvider>
     </ThemeProvider>
   );
-}
+});

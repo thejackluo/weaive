@@ -76,12 +76,14 @@ async def get_or_create_user_profile(supabase, auth_user_id: str) -> str:
 # Pydantic Models
 class DefaultResponses(BaseModel):
     """Default reflection questions responses"""
+
     today_reflection: Optional[str] = Field(None, max_length=500)
     tomorrow_focus: Optional[str] = Field(None, max_length=100)
 
 
 class JournalEntryCreate(BaseModel):
     """Create journal entry request"""
+
     local_date: str = Field(..., description="Local date in YYYY-MM-DD format")
     fulfillment_score: int = Field(..., ge=1, le=10, description="Daily fulfillment rating 1-10")
     default_responses: Optional[DefaultResponses] = None
@@ -90,6 +92,7 @@ class JournalEntryCreate(BaseModel):
 
 class JournalEntryUpdate(BaseModel):
     """Update journal entry request (partial update)"""
+
     fulfillment_score: Optional[int] = Field(None, ge=1, le=10)
     default_responses: Optional[DefaultResponses] = None
     custom_responses: Optional[dict] = None
@@ -97,6 +100,7 @@ class JournalEntryUpdate(BaseModel):
 
 class JournalEntryResponse(BaseModel):
     """Journal entry response"""
+
     id: str
     user_id: str
     local_date: str
@@ -109,15 +113,13 @@ class JournalEntryResponse(BaseModel):
 
 class ApiResponse(BaseModel):
     """Standard API response wrapper"""
+
     data: JournalEntryResponse
     meta: dict = Field(default_factory=lambda: {"timestamp": datetime.utcnow().isoformat()})
 
 
 async def trigger_ai_feedback_generation(
-    ai_service: Optional[AIService],
-    user_id: str,
-    journal_id: str,
-    journal_data: dict
+    ai_service: Optional[AIService], user_id: str, journal_id: str, journal_data: dict
 ):
     """
     Trigger AI feedback generation asynchronously (Story 4.1, AC #15)
@@ -134,14 +136,16 @@ async def trigger_ai_feedback_generation(
         journal_data: Journal entry data including custom_responses
     """
     if not ai_service:
-        logger.warning(f"⚠️  AI service not available - skipping feedback generation for journal {journal_id}")
+        logger.warning(
+            f"⚠️  AI service not available - skipping feedback generation for journal {journal_id}"
+        )
         return
 
     try:
         # Extract data for AI prompt
-        fulfillment_score = journal_data.get('fulfillment_score', 5)
-        default_responses = journal_data.get('default_responses', {})
-        custom_responses = journal_data.get('custom_responses', {})
+        fulfillment_score = journal_data.get("fulfillment_score", 5)
+        default_responses = journal_data.get("default_responses", {})
+        custom_responses = journal_data.get("custom_responses", {})
 
         # Build context for AI (Story 4.1, AC #15: Pass custom responses to AI)
         context_parts = [
@@ -149,8 +153,8 @@ async def trigger_ai_feedback_generation(
         ]
 
         if default_responses:
-            today_reflection = default_responses.get('today_reflection', '')
-            tomorrow_focus = default_responses.get('tomorrow_focus', '')
+            today_reflection = default_responses.get("today_reflection", "")
+            tomorrow_focus = default_responses.get("tomorrow_focus", "")
             if today_reflection:
                 context_parts.append(f"Today's Reflection: {today_reflection}")
             if tomorrow_focus:
@@ -160,8 +164,8 @@ async def trigger_ai_feedback_generation(
         if custom_responses:
             context_parts.append("\nCustom Tracking:")
             for question_id, response_data in custom_responses.items():
-                question_text = response_data.get('question_text', 'Unknown')
-                response = response_data.get('response', 'N/A')
+                question_text = response_data.get("question_text", "Unknown")
+                response = response_data.get("response", "N/A")
                 context_parts.append(f"  • {question_text}: {response}")
 
         prompt = "\n".join(context_parts)
@@ -170,13 +174,15 @@ async def trigger_ai_feedback_generation(
         logger.info(f"🤖 Generating AI feedback for journal {journal_id}")
         response = ai_service.generate(
             user_id=user_id,
-            user_role='user',  # TODO: Get from user_profiles
-            user_tier='free',  # TODO: Get from user_profiles
-            module='recap',
-            prompt=prompt
+            user_role="user",  # TODO: Get from user_profiles
+            user_tier="free",  # TODO: Get from user_profiles
+            module="recap",
+            prompt=prompt,
         )
 
-        logger.info(f"✅ AI feedback generated for journal {journal_id}: {response.content[:100]}...")
+        logger.info(
+            f"✅ AI feedback generated for journal {journal_id}: {response.content[:100]}..."
+        )
 
     except Exception as e:
         # Don't fail the request if AI generation fails
@@ -204,7 +210,7 @@ async def create_journal_entry(
     if not supabase:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database connection not configured. Check SUPABASE_URL and SUPABASE_SERVICE_KEY in .env"
+            detail="Database connection not configured. Check SUPABASE_URL and SUPABASE_SERVICE_KEY in .env",
         )
 
     # Get user's profile ID (convert auth_user_id → user_profiles.id)
@@ -221,7 +227,9 @@ async def create_journal_entry(
 
     # Insert journal entry
     try:
-        logger.info(f"📝 Attempting to insert journal entry: user_id={profile_id}, local_date={entry.local_date}")
+        logger.info(
+            f"📝 Attempting to insert journal entry: user_id={profile_id}, local_date={entry.local_date}"
+        )
         logger.debug(f"Journal data: {journal_data}")
 
         response = supabase.table("journal_entries").insert(journal_data).execute()
@@ -235,28 +243,31 @@ async def create_journal_entry(
         if "duplicate key value violates unique constraint" in str(e):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Journal entry already exists for this date. Use PATCH to update."
+                detail="Journal entry already exists for this date. Use PATCH to update.",
             )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create journal entry: {str(e)}"
+            detail=f"Failed to create journal entry: {str(e)}",
         )
 
     if not response.data:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create journal entry"
+            detail="Failed to create journal entry",
         )
 
     created_journal = response.data[0]
 
     # Update daily_aggregates.has_journal = true
     try:
-        supabase.table("daily_aggregates").upsert({
-            "user_id": profile_id,
-            "local_date": entry.local_date,
-            "has_journal": True,
-        }, on_conflict="user_id,local_date").execute()
+        supabase.table("daily_aggregates").upsert(
+            {
+                "user_id": profile_id,
+                "local_date": entry.local_date,
+                "has_journal": True,
+            },
+            on_conflict="user_id,local_date",
+        ).execute()
     except Exception as e:
         # Log error but don't fail the request
         print(f"Failed to update daily_aggregates: {str(e)}")
@@ -289,7 +300,7 @@ async def create_journal_entry(
             ai_service=ai_service,
             user_id=profile_id,
             journal_id=created_journal["id"],
-            journal_data=created_journal
+            journal_data=created_journal,
         )
     )
 
@@ -326,12 +337,17 @@ async def get_today_journal_entry(
     today_date = date.today().isoformat()
 
     # Query journal entry for today
-    response = supabase.table("journal_entries").select("*").eq("user_id", profile_id).eq("local_date", today_date).execute()
+    response = (
+        supabase.table("journal_entries")
+        .select("*")
+        .eq("user_id", profile_id)
+        .eq("local_date", today_date)
+        .execute()
+    )
 
     if not response.data or len(response.data) == 0:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No journal entry found for today"
+            status_code=status.HTTP_404_NOT_FOUND, detail="No journal entry found for today"
         )
 
     journal = response.data[0]
@@ -361,12 +377,17 @@ async def update_journal_entry(
     profile_id = await get_or_create_user_profile(supabase, user_id)
 
     # Verify journal entry exists and belongs to user
-    journal_response = supabase.table("journal_entries").select("*").eq("id", journal_id).eq("user_id", profile_id).execute()
+    journal_response = (
+        supabase.table("journal_entries")
+        .select("*")
+        .eq("id", journal_id)
+        .eq("user_id", profile_id)
+        .execute()
+    )
 
     if not journal_response.data:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Journal entry not found or access denied"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Journal entry not found or access denied"
         )
 
     # Prepare update data (only include provided fields)
@@ -383,28 +404,33 @@ async def update_journal_entry(
 
     # Update journal entry
     try:
-        response = supabase.table("journal_entries").update(update_data).eq("id", journal_id).execute()
+        response = (
+            supabase.table("journal_entries").update(update_data).eq("id", journal_id).execute()
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update journal entry: {str(e)}"
+            detail=f"Failed to update journal entry: {str(e)}",
         )
 
     if not response.data:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update journal entry"
+            detail="Failed to update journal entry",
         )
 
     updated_journal = response.data[0]
 
     # Update daily_aggregates.has_journal = true (idempotent)
     try:
-        supabase.table("daily_aggregates").upsert({
-            "user_id": profile_id,
-            "local_date": updated_journal["local_date"],
-            "has_journal": True,
-        }, on_conflict="user_id,local_date").execute()
+        supabase.table("daily_aggregates").upsert(
+            {
+                "user_id": profile_id,
+                "local_date": updated_journal["local_date"],
+                "has_journal": True,
+            },
+            on_conflict="user_id,local_date",
+        ).execute()
     except Exception as e:
         print(f"Failed to update daily_aggregates: {str(e)}")
 
@@ -434,7 +460,7 @@ async def update_journal_entry(
             ai_service=ai_service,
             user_id=profile_id,
             journal_id=journal_id,
-            journal_data=updated_journal
+            journal_data=updated_journal,
         )
     )
 

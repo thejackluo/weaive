@@ -28,33 +28,35 @@ class AnthropicProvider(AIProvider):
     - Manual retry with exponential backoff
     """
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, db=None):
         """
         Initialize Anthropic provider.
 
         Args:
             api_key: Anthropic API key (sk-ant-...)
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
         """
+        super().__init__(db)  # Initialize AIProviderBase
         self.client = Anthropic(api_key=api_key)
+        self.api_key = api_key
 
         # Pricing per million tokens (input/output)
         # Using currently available models (as of Jan 2025)
         self.pricing = {
-            'claude-3-5-sonnet-20241022': {
-                'input': 3.00 / 1_000_000,
-                'output': 15.00 / 1_000_000
-            },
-            'claude-3-5-haiku-20241022': {
-                'input': 1.00 / 1_000_000,
-                'output': 5.00 / 1_000_000
-            },
+            "claude-3-5-sonnet-20241022": {"input": 3.00 / 1_000_000, "output": 15.00 / 1_000_000},
+            "claude-3-5-haiku-20241022": {"input": 1.00 / 1_000_000, "output": 5.00 / 1_000_000},
         }
 
+    def get_provider_name(self) -> str:
+        """Return provider identifier for logging."""
+        return "anthropic"
+
+    def is_available(self) -> bool:
+        """Check if provider is configured and available."""
+        return self.api_key is not None and len(self.api_key) > 0
+
     def complete(
-        self,
-        prompt: str,
-        model: str = 'claude-3-5-sonnet-20241022',
-        **kwargs
+        self, prompt: str, model: str = "claude-3-5-sonnet-20241022", **kwargs
     ) -> AIResponse:
         """
         Generate completion using Anthropic Claude.
@@ -75,25 +77,23 @@ class AnthropicProvider(AIProvider):
 
             # Build request parameters
             request_params = {
-                'model': model,
-                'max_tokens': kwargs.get('max_tokens', 2000),
-                'messages': [
-                    {'role': 'user', 'content': prompt}
-                ],
+                "model": model,
+                "max_tokens": kwargs.get("max_tokens", 2000),
+                "messages": [{"role": "user", "content": prompt}],
             }
 
             # Add optional parameters
-            if 'temperature' in kwargs and kwargs['temperature'] is not None:
-                request_params['temperature'] = kwargs['temperature']
+            if "temperature" in kwargs and kwargs["temperature"] is not None:
+                request_params["temperature"] = kwargs["temperature"]
 
             # Handle system parameter (must be a list)
-            if 'system' in kwargs and kwargs['system'] is not None:
-                system = kwargs['system']
+            if "system" in kwargs and kwargs["system"] is not None:
+                system = kwargs["system"]
                 if isinstance(system, str):
                     # Convert string to list format expected by Anthropic API
-                    request_params['system'] = [{'type': 'text', 'text': system}]
+                    request_params["system"] = [{"type": "text", "text": system}]
                 elif isinstance(system, list):
-                    request_params['system'] = system
+                    request_params["system"] = system
 
             # Call Anthropic Messages API
             response = self.client.messages.create(**request_params)
@@ -117,16 +117,13 @@ class AnthropicProvider(AIProvider):
                 output_tokens=output_tokens,
                 model=model,
                 cost_usd=cost_usd,
-                provider='anthropic',
+                provider="anthropic",
             )
 
         except RateLimitError as e:
             logger.warning(f"Anthropic rate limit exceeded: {e}")
             raise AIProviderError(
-                f"Anthropic rate limit: {e}",
-                provider='anthropic',
-                retryable=True,
-                original_error=e
+                f"Anthropic rate limit: {e}", provider="anthropic", retryable=True, original_error=e
             )
 
         except APIError as e:
@@ -135,18 +132,18 @@ class AnthropicProvider(AIProvider):
             retryable = True
             raise AIProviderError(
                 f"Anthropic API error: {e}",
-                provider='anthropic',
+                provider="anthropic",
                 retryable=retryable,
-                original_error=e
+                original_error=e,
             )
 
         except Exception as e:
             logger.error(f"Anthropic unexpected error: {e}")
             raise AIProviderError(
                 f"Unexpected Anthropic error: {e}",
-                provider='anthropic',
+                provider="anthropic",
                 retryable=True,
-                original_error=e
+                original_error=e,
             )
 
     def count_tokens(self, text: str, model: str) -> int:
@@ -182,12 +179,9 @@ class AnthropicProvider(AIProvider):
             Cost in USD
         """
         # Get pricing for model (default to Sonnet if unknown)
-        pricing = self.pricing.get(
-            model,
-            self.pricing['claude-3-5-sonnet-20241022']
-        )
+        pricing = self.pricing.get(model, self.pricing["claude-3-5-sonnet-20241022"])
 
-        input_cost = input_tokens * pricing['input']
-        output_cost = output_tokens * pricing['output']
+        input_cost = input_tokens * pricing["input"]
+        output_cost = output_tokens * pricing["output"]
 
         return input_cost + output_cost
