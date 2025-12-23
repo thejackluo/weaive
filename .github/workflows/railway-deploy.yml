@@ -1,0 +1,41 @@
+name: Deploy to Railway Production
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'weave-api/**'
+      - '.github/workflows/railway-deploy.yml'
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway up --detach
+
+      - name: Wait for deployment
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          HEALTH_URL="https://weave-api-production.railway.app/health"
+          curl -f $HEALTH_URL || exit 1
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Railway deployment failed"
+          echo "Check Railway dashboard: https://railway.app/dashboard"
