@@ -60,7 +60,12 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
 
   const historyItems = data?.data || [];
 
-  if (historyItems.length === 0) {
+  // Filter out goal lifecycle events (only show threads, binds, weave_chats)
+  const filteredItems = historyItems.filter(
+    (item) => item.type === 'journal' || item.type === 'completion' || item.type === 'weave_chat'
+  );
+
+  if (filteredItems.length === 0) {
     return (
       <View className="py-8 items-center">
         <Text variant="textSm" style={{ color: colors.text.secondary }}>
@@ -71,7 +76,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
   }
 
   // Group items by date
-  const groupedItems = historyItems.reduce(
+  const groupedItems = filteredItems.reduce(
     (acc, item) => {
       const date = new Date(item.timestamp);
       const dateKey = date.toLocaleDateString('en-US', {

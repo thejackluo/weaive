@@ -3,6 +3,7 @@ Story 4.1a: Journal Entry API Endpoints
 
 FastAPI router for journal entry operations:
 - POST /api/journal-entries: Create new journal entry
+- GET /api/journal-entries: Retrieve journal entries (with optional date range filters)
 - GET /api/journal-entries/today: Retrieve today's journal entry
 - PATCH /api/journal-entries/{journal_id}: Update existing journal entry
 """
@@ -325,6 +326,53 @@ async def create_journal_entry(
             "timestamp": datetime.utcnow().isoformat(),
             "level": level,
             "level_progress": round(level_progress, 1),
+        }
+    }
+
+
+@router.get("", response_model=dict)
+async def get_journal_entries(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    user: dict = Depends(get_current_user),
+):
+    """
+    Retrieve journal entries for authenticated user
+
+    Query Parameters:
+    - start_date: Filter entries >= this date (YYYY-MM-DD format)
+    - end_date: Filter entries <= this date (YYYY-MM-DD format)
+
+    Returns:
+    - List of journal entries in {data: [...], meta: {...}} format
+    """
+    user_id = user["sub"]  # Extract user ID from JWT payload
+    supabase = get_supabase_client()
+
+    # Get user's profile ID
+    profile_id = await get_or_create_user_profile(supabase, user_id)
+
+    # Build query
+    query = supabase.table("journal_entries").select("*").eq("user_id", profile_id)
+
+    # Apply date filters if provided
+    if start_date:
+        query = query.gte("local_date", start_date)
+    if end_date:
+        query = query.lte("local_date", end_date)
+
+    # Order by date descending
+    query = query.order("local_date", desc=True)
+
+    # Execute query
+    response = query.execute()
+
+    # Return in standard format
+    return {
+        "data": [JournalEntryResponse(**journal).dict() for journal in response.data],
+        "meta": {
+            "timestamp": datetime.utcnow().isoformat(),
+            "count": len(response.data),
         }
     }
 

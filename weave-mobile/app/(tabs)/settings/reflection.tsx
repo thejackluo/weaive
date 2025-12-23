@@ -1,5 +1,5 @@
 /**
- * Daily Reflection Entry - Simplified Version
+ * Story 4.1a + 4.1b: Daily Reflection Entry - Default + Custom Questions
  *
  * TEMPORARY LOCATION: Settings tab (for development testing)
  * PRODUCTION LOCATION: Move to app/(tabs)/thread/reflection.tsx when Story 3.1 complete
@@ -7,7 +7,9 @@
  * This screen allows users to:
  * - Reflect on their day (Question 1: multi-line text)
  * - Set tomorrow's focus (Question 2: single-line text)
- * - Rate daily fulfillment (1-10 drag slider)
+ * - Rate daily fulfillment (1-10 slider)
+ * - Answer custom tracking questions (text, numeric, yes/no)
+ * - Manage custom questions (add/edit/delete)
  * - Edit existing journal entries
  */
 
@@ -20,19 +22,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import {
-  useSubmitJournal,
-  useUpdateJournal,
-  useGetTodayJournal,
-  journalKeys,
-} from '@/hooks/useJournal';
+import { Ionicons } from '@expo/vector-icons';
+import { useSubmitJournal, useUpdateJournal, useGetTodayJournal } from '@/hooks/useJournal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
 
@@ -41,7 +37,6 @@ const DRAFT_KEY = '@weave_reflection_draft';
 export default function ReflectionScreen() {
   console.log('[REFLECTION_SCREEN] 🎬 Component mounting...');
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   // Form state
   const [todayReflection, setTodayReflection] = useState('');
@@ -52,7 +47,6 @@ export default function ReflectionScreen() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [existingJournalId, setExistingJournalId] = useState<string | null>(null);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Prevent double-click
 
   // Celebration modal state
   const [showCelebration, setShowCelebration] = useState(false);
@@ -75,16 +69,6 @@ export default function ReflectionScreen() {
     isLoadingJournal,
     hasJournalError: !!journalError,
   });
-
-  // Clear corrupted cache on mount (temp-id from failed submissions)
-  useEffect(() => {
-    const cachedData = queryClient.getQueryData(journalKeys.today());
-    if (cachedData && (cachedData as any).id === 'temp-id') {
-      console.log('[REFLECTION_SCREEN] 🧹 Clearing corrupted cache (temp-id detected)');
-      queryClient.removeQueries({ queryKey: journalKeys.today() });
-      queryClient.invalidateQueries({ queryKey: journalKeys.today() });
-    }
-  }, [queryClient]);
 
   // Character counts
   const reflectionCount = todayReflection.length;
@@ -125,7 +109,10 @@ export default function ReflectionScreen() {
         console.error(`[REFLECTION_SCREEN] ⚠️  TIMEOUT after ${elapsed}s!`);
         console.error('[REFLECTION_SCREEN] 🔍 Debug info:', {
           isLoadingJournal,
-          journalError: journalError ? String(journalError) : null,
+          journalError:
+            journalError && typeof journalError === 'object' && 'message' in journalError
+              ? (journalError as Error).message
+              : 'Unknown error',
         });
         setLoadingTimeout(true);
       }, 10000); // 10-second timeout
@@ -136,7 +123,7 @@ export default function ReflectionScreen() {
         console.log(`[REFLECTION_SCREEN] ⏱️  Timeout cleared after ${elapsed}s`);
       };
     } else {
-      console.log('[REFLECTION_SCREEN] ✅ Loading complete - query finished');
+      console.log('[REFLECTION_SCREEN] ✅ Loading complete - journal query finished');
       setLoadingTimeout(false);
     }
   }, [isLoadingJournal, journalError]);
@@ -185,14 +172,6 @@ export default function ReflectionScreen() {
   };
 
   const handleSubmit = async () => {
-    // Prevent double-click
-    if (isSubmitting) {
-      console.log('[REFLECTION_SCREEN] ⚠️ Already submitting, ignoring duplicate click');
-      return;
-    }
-
-    setIsSubmitting(true);
-
     const payload = {
       fulfillment_score: fulfillmentScore,
       default_responses: {
@@ -203,22 +182,17 @@ export default function ReflectionScreen() {
 
     try {
       let result;
-      if (isEditMode && existingJournalId) {
-        // Update existing journal
+      if (isEditMode && existingJournalId && existingJournalId !== 'temp-id') {
+        // Update existing journal (skip if existingJournalId is temp-id)
         result = await updateMutation.mutateAsync({
           journalId: existingJournalId,
           data: payload,
         });
       } else {
-        // Create new journal
+        // Create new journal (handles both CREATE mode and temp-id cases)
         result = await submitMutation.mutateAsync(payload);
         await clearDraft();
       }
-
-      // Manually invalidate journal query to force refresh on Thread home screen
-      console.log('[REFLECTION_SCREEN] 🔄 Invalidating journal queries after submission');
-      await queryClient.invalidateQueries({ queryKey: journalKeys.today() });
-      await queryClient.invalidateQueries({ queryKey: journalKeys.all });
 
       // Show celebration modal with level data (only for NEW reflections, not edits)
       if (
@@ -232,26 +206,23 @@ export default function ReflectionScreen() {
         });
         setShowCelebration(true);
       } else {
-        // If editing or no level data, navigate to Thread home
-        console.log('[REFLECTION_SCREEN] ✅ Journal saved, navigating to Thread home');
-        router.push('/(tabs)/');
+        // If editing or no level data, just go back
+        router.back();
       }
     } catch (error) {
       console.error('Failed to submit journal:', error);
       // Error handling will be improved in Task 2
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const isSubmitEnabled = fulfillmentScore >= 1 && fulfillmentScore <= 10;
-  const isLoading = submitMutation.isPending || updateMutation.isPending || isSubmitting;
+  const isLoading = submitMutation.isPending || updateMutation.isPending;
 
   if (isLoadingJournal) {
     console.log('[REFLECTION_SCREEN] 🔄 Rendering loading state...');
 
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         {!loadingTimeout ? (
           <>
             <ActivityIndicator size="large" color="#6366f1" />
@@ -264,8 +235,8 @@ export default function ReflectionScreen() {
           <>
             <Text style={styles.errorText}>⚠️ Cannot load reflection</Text>
             <Text style={styles.errorSubtext}>
-              {journalError
-                ? `Journal error: ${String(journalError)}`
+              {journalError && typeof journalError === 'object' && 'message' in journalError
+                ? `Journal error: ${(journalError as Error).message}`
                 : 'Loading took too long. Check your connection and try again.'}
             </Text>
             <Text style={styles.errorDebugText}>
@@ -284,24 +255,23 @@ export default function ReflectionScreen() {
             </TouchableOpacity>
           </>
         )}
-      </View>
+      </SafeAreaView>
     );
   }
 
   console.log('[REFLECTION_SCREEN] ✅ Rendering main form');
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }} edges={['top']}>
-      {/* Header with back button */}
-      <View style={styles.headerBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Daily Check-In</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        {/* Header with Back Button */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Daily Check-in</Text>
+        </View>
+
         {/* Question 1: Today's Reflection */}
         <View style={styles.questionContainer}>
           <Text style={styles.questionLabel}>
@@ -379,12 +349,14 @@ export default function ReflectionScreen() {
           {isLoading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>{isEditMode ? 'Update Check-In' : 'Submit'}</Text>
+            <Text style={styles.submitButtonText}>
+              {isEditMode ? 'Update Reflection' : 'Submit'}
+            </Text>
           )}
         </TouchableOpacity>
         {isLoading && (
           <Text style={styles.loadingText}>
-            {isEditMode ? 'Updating your check-in...' : 'Submitting your check-in...'}
+            {isEditMode ? 'Updating your reflection...' : 'Submitting your reflection...'}
           </Text>
         )}
       </ScrollView>
@@ -398,9 +370,8 @@ export default function ReflectionScreen() {
           levelProgress={celebrationData.levelProgress}
           showNotes={false}
           onComplete={() => {
-            console.log('[REFLECTION_SCREEN] 🎉 Celebration complete, navigating to Thread home');
             setShowCelebration(false);
-            router.push('/(tabs)/');
+            router.back();
           }}
         />
       )}
@@ -414,9 +385,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
   },
   contentContainer: {
-    padding: 20,
-    paddingTop: 16, // Reduced from 20 to fit more on screen
-    paddingBottom: 40,
+    padding: 16,
+    paddingBottom: 24,
   },
   loadingContainer: {
     flex: 1,
@@ -470,46 +440,47 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  headerBar: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#0a0a0a',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
+    marginTop: 8,
+    marginBottom: 20,
+    gap: 12,
   },
   backButton: {
     padding: 4,
-    width: 40,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '600',
     color: '#fff',
-    flex: 1,
+  },
+  timerContainer: {
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
+  timerLabel: {
+    fontSize: 12,
+    color: '#71717A',
+    marginBottom: 8,
     textAlign: 'center',
   },
-  headerSpacer: {
-    width: 40, // Balance the back button
-  },
   questionContainer: {
-    marginBottom: 28,
+    marginBottom: 20,
   },
   questionLabel: {
     fontSize: 16,
     fontWeight: '500',
     color: '#fff',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   multilineInput: {
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
-    padding: 16,
+    padding: 14,
     color: '#fff',
     fontSize: 15,
-    minHeight: 120,
+    minHeight: 100,
     textAlignVertical: 'top',
     borderWidth: 1,
     borderColor: '#2a2a2a',
@@ -517,7 +488,7 @@ const styles = StyleSheet.create({
   singleLineInput: {
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
-    padding: 16,
+    padding: 14,
     color: '#fff',
     fontSize: 15,
     borderWidth: 1,
@@ -527,7 +498,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'right',
-    marginTop: 8,
+    marginTop: 6,
   },
   hint: {
     fontSize: 12,
@@ -535,17 +506,16 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   sliderContainer: {
-    paddingVertical: 16,
+    paddingVertical: 12,
   },
   scoreDisplay: {
-    fontSize: 48,
+    fontSize: 42,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sliderWrapper: {
-    width: '100%',
     paddingHorizontal: 4,
     marginBottom: 8,
   },
@@ -556,6 +526,7 @@ const styles = StyleSheet.create({
   sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 4,
   },
   sliderLabel: {
     fontSize: 12,
@@ -564,9 +535,9 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: '#3b82f6',
     borderRadius: 12,
-    padding: 18,
+    padding: 16,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 16,
   },
   submitButtonDisabled: {
     backgroundColor: '#2a2a2a',

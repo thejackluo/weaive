@@ -73,6 +73,15 @@ export function ConsistencyHeatmap({
     endDate
   );
 
+  // Debug journal data
+  console.log('[CONSISTENCY_HEATMAP] Journal data debug:', {
+    startDate,
+    endDate,
+    journalLoading,
+    journalDataLength: journalData?.length || 0,
+    journalData: journalData?.map((j) => ({ date: j.local_date, score: j.fulfillment_score })),
+  });
+
   // State for modals
   const [showDayDetailsModal, setShowDayDetailsModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -135,6 +144,7 @@ export function ConsistencyHeatmap({
   // Convert journal entries to completion boolean array for last 7 days
   const getJournalCompletionData = (): BindCompletionData[] => {
     if (!journalData || journalData.length === 0) {
+      console.log('[CONSISTENCY_HEATMAP] No journal data - returning empty completions');
       // Return empty array with no completions
       return [
         {
@@ -146,15 +156,22 @@ export function ConsistencyHeatmap({
 
     // Create map of dates to journal entries
     const journalMap = new Map(journalData.map((j) => [j.local_date, j]));
+    console.log('[CONSISTENCY_HEATMAP] Journal map:', Array.from(journalMap.keys()));
 
     // Generate completion array for last 7 days
     const completions: boolean[] = [];
+    const dateChecks: { date: string; hasEntry: boolean }[] = [];
     for (let i = 6; i >= 0; i--) {
       const checkDate = new Date(today);
       checkDate.setDate(today.getDate() - i);
       const dateStr = checkDate.toISOString().split('T')[0];
-      completions.push(journalMap.has(dateStr));
+      const hasEntry = journalMap.has(dateStr);
+      completions.push(hasEntry);
+      dateChecks.push({ date: dateStr, hasEntry });
     }
+
+    console.log('[CONSISTENCY_HEATMAP] Date checks:', dateChecks);
+    console.log('[CONSISTENCY_HEATMAP] Final completions:', completions);
 
     return [
       {
