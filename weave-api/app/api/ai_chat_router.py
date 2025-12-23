@@ -694,7 +694,7 @@ async def get_conversation(
         msg_result = db.table('ai_chat_messages') \
             .select('id, role, content, tokens_used, created_at') \
             .eq('conversation_id', str(conversation_id)) \
-            .order('created_at', asc=True) \
+            .order('created_at', desc=False) \
             .execute()
 
         messages = [
