@@ -35,6 +35,7 @@ import {
 import { Text, Card, Button } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useConsistencyData } from '@/hooks/useConsistencyData';
+import { useBindsGrid } from '@/hooks/useBindsGrid';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -80,6 +81,11 @@ export function ConsistencyHeatmap({
   const router = useRouter();
   const { colors } = useTheme();
   const { data, isLoading, isError, error } = useConsistencyData(timeframe, filterType, filterId);
+  const {
+    data: bindsGridData,
+    isLoading: isBindsGridLoading,
+    isError: isBindsGridError,
+  } = useBindsGrid();
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
 
   // State for needle/bind filtering
@@ -97,57 +103,49 @@ export function ConsistencyHeatmap({
     completionRate: number;
   } | null>(null);
 
-  // Temporary: Force sample data for demo purposes until user has real data
-  const FORCE_SAMPLE_DATA = false;
-
   const timeframeOptions: ('7d' | '2w' | '1m')[] = ['7d', '2w', '1m'];
 
-  if (isLoading && !FORCE_SAMPLE_DATA) {
-    return (
-      <Card variant="glass" style={styles.card}>
-        <ActivityIndicator size="large" color={colors.accent[500]} />
-      </Card>
-    );
-  }
+  // For 7d grid view, we need binds grid data (not daily aggregates)
+  if (timeframe === '7d') {
+    if (isBindsGridLoading) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <ActivityIndicator size="large" color={colors.accent[500]} />
+        </Card>
+      );
+    }
 
-  if (isError) {
-    return (
-      <Card variant="glass" style={styles.card}>
-        <Text variant="textSm" style={{ color: colors.text.error }}>
-          Error loading consistency data: {error?.message}
-        </Text>
-      </Card>
-    );
+    if (isBindsGridError) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <Text variant="textSm" style={{ color: colors.text.error }}>
+            Error loading bind data
+          </Text>
+        </Card>
+      );
+    }
+  } else {
+    // For heat map views (2w/1m), use daily aggregates
+    if (isLoading) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <ActivityIndicator size="large" color={colors.accent[500]} />
+        </Card>
+      );
+    }
+
+    if (isError) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <Text variant="textSm" style={{ color: colors.text.error }}>
+            Error loading consistency data: {error?.message}
+          </Text>
+        </Card>
+      );
+    }
   }
 
   let consistencyData = data?.data || [];
-
-  // Calculate expected days for timeframe
-  const timeframeDays = { '7d': 7, '2w': 14, '1m': 30 };
-  const expectedDays = timeframeDays[timeframe];
-
-  // If sparse or no data (less than 50% of expected days), show sample data
-  const useSampleData = FORCE_SAMPLE_DATA || consistencyData.length < expectedDays * 0.5;
-
-  if (useSampleData) {
-    // Generate sample data for the selected timeframe
-    consistencyData = Array.from({ length: expectedDays }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (expectedDays - 1 - i));
-
-      // Generate realistic sample percentages (60-90% range with some variation)
-      const basePercentage = 70;
-      const variation = Math.sin(i * 0.5) * 15; // Wave pattern
-      const percentage = Math.max(0, Math.min(100, basePercentage + variation));
-
-      return {
-        date: date.toISOString().split('T')[0],
-        completion_percentage: Math.round(percentage),
-        completed_count: percentage > 50 ? Math.floor(percentage / 25) : 0,
-        total_count: 4,
-      };
-    });
-  }
 
   const getColorForPercentage = (percentage: number) => {
     if (percentage >= 80) return colors.emerald[500]; // Green - high
@@ -155,52 +153,40 @@ export function ConsistencyHeatmap({
     return colors.rose[500]; // Red - low
   };
 
-  // Sample needle data (for needle view)
-  const sampleNeedles: SampleNeedle[] = [
-    {
-      id: '1',
-      title: 'Make $1 Million in Profit this Year',
-      description: "Why: to live a free life that's not constrained to a job",
-      binds: [
-        { bindName: 'Deep Work', completions: [false, false, true, false, true, false, true] },
-        { bindName: 'Reading', completions: [false, true, false, true, true, true, true] },
-        { bindName: 'Meditation', completions: [true, true, true, true, false, true, true] },
-      ],
-    },
-    {
-      id: '2',
-      title: 'Get in Best Physical Shape',
-      description: 'Why: to feel confident and energized',
-      binds: [
-        { bindName: 'Workout', completions: [true, true, true, true, true, true, true] },
-        { bindName: 'Meal Prep', completions: [true, false, true, true, false, true, true] },
-      ],
-    },
-    {
-      id: '3',
-      title: 'Build Strong Relationships',
-      description: 'Why: to have meaningful connections',
-      binds: [
-        { bindName: 'Daily Check-in', completions: [true, true, false, true, true, true, false] },
-        { bindName: 'Quality Time', completions: [false, true, true, false, true, true, true] },
-      ],
-    },
-  ];
+  // Get real needles data from API (for 7d view only)
+  const needles: SampleNeedle[] =
+    timeframe === '7d' && bindsGridData?.data.needles
+      ? bindsGridData.data.needles.map((needle) => ({
+          id: needle.id,
+          title: needle.title,
+          description: needle.description,
+          binds: needle.binds.map((bind) => ({
+            bindName: bind.name,
+            completions: bind.completions,
+          })),
+        }))
+      : [];
 
   // All binds combined (for bind and overall views)
-  const allBinds: BindCompletionData[] = sampleNeedles.flatMap((needle) => needle.binds);
+  const allBinds: BindCompletionData[] = needles.flatMap((needle) => needle.binds);
 
-  // Sample daily reflection data (for thread view)
-  const dailyReflections: BindCompletionData = {
-    bindName: 'Daily Reflection',
-    completions: [false, true, false, true, false, true, true],
-  };
+  // Real daily reflection data (for thread view)
+  const dailyReflections: BindCompletionData =
+    timeframe === '7d' && bindsGridData?.data.daily_reflection
+      ? {
+          bindName: 'Daily Reflection',
+          completions: bindsGridData.data.daily_reflection.completions,
+        }
+      : {
+          bindName: 'Daily Reflection',
+          completions: [false, false, false, false, false, false, false],
+        };
 
   // Determine which binds to display based on filter type
   const getDisplayBinds = (): BindCompletionData[] => {
     switch (filterType) {
       case 'needle':
-        return sampleNeedles[selectedNeedleIndex]?.binds || [];
+        return needles[selectedNeedleIndex]?.binds || [];
       case 'bind': {
         const filtered = bindSearchQuery
           ? allBinds.filter((bind) =>
@@ -357,7 +343,7 @@ export function ConsistencyHeatmap({
     const offsetX = event.nativeEvent.contentOffset.x;
     const cardWidth = SCREEN_WIDTH - 48 + 16; // Card width + spacing
     const index = Math.round(offsetX / cardWidth);
-    if (index !== selectedNeedleIndex && index >= 0 && index < sampleNeedles.length) {
+    if (index !== selectedNeedleIndex && index >= 0 && index < needles.length) {
       setSelectedNeedleIndex(index);
       Haptics.selectionAsync();
     }
@@ -374,7 +360,7 @@ export function ConsistencyHeatmap({
       <View style={styles.needleSwipeContainer}>
         <FlatList
           ref={needleFlatListRef}
-          data={sampleNeedles}
+          data={needles}
           horizontal
           pagingEnabled={false}
           showsHorizontalScrollIndicator={false}
@@ -413,9 +399,9 @@ export function ConsistencyHeatmap({
               </View>
 
               {/* Pagination dots */}
-              {sampleNeedles.length > 1 && (
+              {needles.length > 1 && (
                 <View style={styles.paginationDots}>
-                  {sampleNeedles.map((_, index) => (
+                  {needles.map((_, index) => (
                     <Pressable
                       key={index}
                       onPress={() => {

@@ -15,7 +15,7 @@ interface HistoryListProps {
 }
 
 /**
- * HistoryList - Displays recent user activity (completions, journal entries, goal changes)
+ * HistoryList - Displays recent user activity (bind completions, journal reflections)
  *
  * US-5.5: History Section
  */
@@ -97,10 +97,6 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
           return { label: 'Thread', color: colors.violet[500] };
         case 'completion':
           return { label: 'Bind', color: colors.emerald[500] };
-        case 'goal_created':
-          return { label: 'Thread', color: colors.accent[500] };
-        case 'goal_archived':
-          return { label: 'Thread', color: colors.text.muted };
         default:
           return { label: 'Activity', color: colors.text.secondary };
       }
