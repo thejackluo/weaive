@@ -49,7 +49,6 @@ class GoalCreate(BaseModel):
     """Goal creation request model"""
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None  # "Why it matters"
-    priority: Optional[str] = Field(None, pattern="^(low|medium|high)$")
     qgoals: Optional[List[QGoalCreate]] = []
     binds: Optional[List[BindCreate]] = []
 
@@ -58,7 +57,6 @@ class GoalUpdate(BaseModel):
     """Goal update request model"""
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
-    priority: Optional[str] = Field(None, pattern="^(low|medium|high)$")
     status: Optional[str] = Field(None, pattern="^(active|archived)$")
 
 
@@ -231,7 +229,7 @@ async def get_goal_by_id(
         # Fetch the goal (RLS enforced - user can only see their own goals)
         goal_response = (
             supabase.table("goals")
-            .select("id, title, description, status, priority, start_date, target_date, created_at, updated_at, user_id")
+            .select("id, title, description, status, start_date, target_date, created_at, updated_at, user_id")
             .eq("id", goal_id)
             .eq("user_id", user_id)
             .single()
@@ -314,7 +312,6 @@ async def create_goal(
     Request Body:
     - title: Goal title (required)
     - description: Why it matters (optional)
-    - priority: low/medium/high (optional, default: medium)
     - qgoals: Array of milestone objects (optional)
     - binds: Array of bind/subtask templates (optional)
 
@@ -382,16 +379,10 @@ async def create_goal(
             )
 
         # Create the goal
-        # Map 'medium' to 'med' to match database enum
-        priority = goal_data.priority or "medium"
-        if priority == "medium":
-            priority = "med"
-
         goal_insert = {
             "user_id": user_id,
             "title": goal_data.title,
             "description": goal_data.description,
-            "priority": priority,
             "status": "active",
         }
 
@@ -472,7 +463,6 @@ async def update_goal(
     Request Body:
     - title: Updated goal title (optional)
     - description: Updated description/why (optional)
-    - priority: Updated priority (optional)
     - status: Updated status (optional)
 
     Returns:
@@ -524,8 +514,6 @@ async def update_goal(
             update_payload["title"] = goal_data.title
         if goal_data.description is not None:
             update_payload["description"] = goal_data.description
-        if goal_data.priority is not None:
-            update_payload["priority"] = goal_data.priority
         if goal_data.status is not None:
             update_payload["status"] = goal_data.status
 

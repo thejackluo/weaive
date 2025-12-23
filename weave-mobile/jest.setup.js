@@ -142,6 +142,25 @@ jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(),
 }));
 
+// Mock expo-modules-core (required by @expo/vector-icons)
+jest.mock('expo-modules-core', () => ({
+  EventEmitter: class MockEventEmitter {
+    constructor() {
+      this.addListener = jest.fn();
+      this.removeAllListeners = jest.fn();
+      this.removeSubscription = jest.fn();
+    }
+  },
+  NativeModulesProxy: {},
+  requireNativeViewManager: jest.fn(),
+}));
+
+// Mock expo-font (required by @expo/vector-icons)
+jest.mock('expo-font', () => ({
+  loadAsync: jest.fn(() => Promise.resolve()),
+  isLoaded: jest.fn(() => true),
+}));
+
 // Mock @expo/vector-icons
 jest.mock('@expo/vector-icons', () => {
   const React = require('react');
@@ -173,6 +192,55 @@ jest.mock('@expo/vector-icons', () => {
     Zocial: createIconComponent('zocial'),
   };
 });
+
+// Mock expo-av (audio recording)
+jest.mock('expo-av', () => ({
+  Audio: {
+    requestPermissionsAsync: jest.fn(() =>
+      Promise.resolve({ status: 'granted', granted: true })
+    ),
+    setAudioModeAsync: jest.fn(() => Promise.resolve()),
+    Recording: class MockRecording {
+      constructor() {
+        this.prepareToRecordAsync = jest.fn(() => Promise.resolve());
+        this.startAsync = jest.fn(() => Promise.resolve());
+        this.stopAndUnloadAsync = jest.fn(() => Promise.resolve());
+        this.pauseAsync = jest.fn(() => Promise.resolve());
+        this.getStatusAsync = jest.fn(() =>
+          Promise.resolve({
+            isRecording: true,
+            durationMillis: 0,
+            metering: -160,
+          })
+        );
+        this.getURI = jest.fn(() => 'file://test-audio.m4a');
+      }
+    },
+    RecordingOptionsPresets: {
+      HIGH_QUALITY: {
+        android: {
+          extension: '.m4a',
+          outputFormat: 2,
+          audioEncoder: 3,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+        },
+        ios: {
+          extension: '.m4a',
+          outputFormat: 'mpeg4AAC',
+          audioQuality: 127,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+      },
+    },
+  },
+}));
 
 jest.mock('expo-blur', () => {
   const React = require('react');

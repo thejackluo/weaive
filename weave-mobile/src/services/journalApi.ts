@@ -180,8 +180,9 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
 /**
  * POST /api/journal-entries
  * Create new journal entry
+ * Returns full response with data + meta (includes level/progress for celebration)
  */
-export async function createJournalEntry(entry: JournalEntryCreate): Promise<JournalEntryResponse> {
+export async function createJournalEntry(entry: JournalEntryCreate): Promise<any> {
   try {
     const token = await getAuthToken();
 
@@ -208,7 +209,8 @@ export async function createJournalEntry(entry: JournalEntryCreate): Promise<Jou
     }
 
     const result = await response.json();
-    return result.data;
+    // Return full response (data + meta with level info)
+    return result;
   } catch (error) {
     console.error('createJournalEntry error:', error);
     throw error;
@@ -218,11 +220,12 @@ export async function createJournalEntry(entry: JournalEntryCreate): Promise<Jou
 /**
  * PATCH /api/journal-entries/{journal_id}
  * Update existing journal entry (partial update)
+ * Returns full response with data + meta (includes level/progress for celebration)
  */
 export async function updateJournalEntry(
   journalId: string,
   update: JournalEntryUpdate
-): Promise<JournalEntryResponse> {
+): Promise<any> {
   try {
     const token = await getAuthToken();
 
@@ -243,7 +246,8 @@ export async function updateJournalEntry(
     }
 
     const result = await response.json();
-    return result.data;
+    // Return full response (data + meta with level info)
+    return result;
   } catch (error) {
     console.error('updateJournalEntry error:', error);
     throw error;

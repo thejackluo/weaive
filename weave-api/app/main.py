@@ -1,3 +1,6 @@
+import logging
+import os
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,14 +11,27 @@ from app.api import (
     ai_chat_router,
     ai_router,
     analytics,
+    binds,
     captures,
     goals,
     health,
     journal_router,
     onboarding,
+    stats,
+    transcribe,
     user,
 )
 from app.core.config import settings
+
+# Log environment status on startup
+logger = logging.getLogger(__name__)
+logger.info("=" * 60)
+logger.info("ENVIRONMENT VARIABLES CHECK")
+logger.info("=" * 60)
+logger.info(f"OPENAI_API_KEY: {'✅ Set' if os.getenv('OPENAI_API_KEY') else '❌ Not set'}")
+logger.info(f"ANTHROPIC_API_KEY: {'✅ Set' if os.getenv('ANTHROPIC_API_KEY') else '❌ Not set'}")
+logger.info(f"ASSEMBLYAI_API_KEY: {'✅ Set' if os.getenv('ASSEMBLYAI_API_KEY') else '❌ Not set'}")
+logger.info("=" * 60)
 
 app = FastAPI(
     title="Weave API",
@@ -122,8 +138,11 @@ app.include_router(onboarding.router, tags=["onboarding"])
 app.include_router(ai_router.router, tags=["ai"])
 app.include_router(ai_chat_router.router, tags=["ai-chat"])  # Story 6.1: AI Chat with streaming
 app.include_router(journal_router.router, prefix="/api", tags=["journal"])
+app.include_router(transcribe.router, tags=["stt"])
 app.include_router(goals.router, tags=["goals"])
 app.include_router(captures.router, tags=["captures"])
+app.include_router(stats.router, tags=["stats"])  # Progress visualization stats
+app.include_router(binds.router, tags=["binds"])  # Thread: Today's binds (US-3.1)
 app.include_router(admin.router, tags=["admin"])  # Cost monitoring and system maintenance
 
 @app.get("/")
