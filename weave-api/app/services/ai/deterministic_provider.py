@@ -35,10 +35,10 @@ class DeterministicProvider(AIProvider):
     def complete(
         self,
         prompt: str,
-        model: str = 'deterministic',
-        module: str = 'triad',
-        variant: str = 'default',
-        **kwargs
+        model: str = "deterministic",
+        module: str = "triad",
+        variant: str = "default",
+        **kwargs,
     ) -> AIResponse:
         """
         Generate deterministic response from templates.
@@ -68,12 +68,12 @@ class DeterministicProvider(AIProvider):
             content=content,
             input_tokens=estimated_tokens // 2,  # Approximate split
             output_tokens=estimated_tokens // 2,
-            model='deterministic',
+            model="deterministic",
             cost_usd=0.0,  # Always free
-            provider='deterministic',
+            provider="deterministic",
         )
 
-    def count_tokens(self, text: str, model: str = 'deterministic') -> int:
+    def count_tokens(self, text: str, model: str = "deterministic") -> int:
         """
         Estimate token count (simple word-based approximation).
 
@@ -88,10 +88,7 @@ class DeterministicProvider(AIProvider):
         return int(len(text.split()) * 1.3)
 
     def estimate_cost(
-        self,
-        input_tokens: int,
-        output_tokens: int,
-        model: str = 'deterministic'
+        self, input_tokens: int, output_tokens: int, model: str = "deterministic"
     ) -> float:
         """
         Calculate cost (always $0).

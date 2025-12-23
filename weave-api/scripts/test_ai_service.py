@@ -20,23 +20,23 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-OPENAI_KEY = os.getenv('OPENAI_API_KEY')
-ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY')
-AWS_ACCESS_KEY = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY")
+AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 
 
 def print_header(title):
     """Print formatted header."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print(f"  {title}")
-    print("="*70)
+    print("=" * 70)
 
 
 def test_openai():
     """Test OpenAI provider."""
-    if not OPENAI_KEY or OPENAI_KEY == 'your-openai-api-key-here':
+    if not OPENAI_KEY or OPENAI_KEY == "your-openai-api-key-here":
         print("\n⚠️  Skipping OpenAI (API key not configured)")
         return None
 
@@ -47,7 +47,7 @@ def test_openai():
     provider = OpenAIProvider(api_key=OPENAI_KEY)
 
     prompt = "Say 'hello' in exactly one word"
-    model = 'gpt-4o-mini'
+    model = "gpt-4o-mini"
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🎯 Model: {model}")
@@ -72,7 +72,7 @@ def test_openai():
 
 def test_anthropic():
     """Test Anthropic provider."""
-    if not ANTHROPIC_KEY or ANTHROPIC_KEY == 'your-anthropic-api-key-here':
+    if not ANTHROPIC_KEY or ANTHROPIC_KEY == "your-anthropic-api-key-here":
         print("\n⚠️  Skipping Anthropic (API key not configured)")
         return None
 
@@ -83,7 +83,7 @@ def test_anthropic():
     provider = AnthropicProvider(api_key=ANTHROPIC_KEY)
 
     prompt = "Say 'hi' in exactly one word"
-    model = 'claude-3-5-haiku-20241022'  # Current available model (Jan 2025)
+    model = "claude-3-5-haiku-20241022"  # Current available model (Jan 2025)
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🎯 Model: {model}")
@@ -119,7 +119,7 @@ def test_bedrock():
     provider = BedrockProvider(region=AWS_REGION)
 
     prompt = "Say 'hey' in exactly one word"
-    model = 'claude-3-5-haiku'  # User-friendly name (maps to us.anthropic.claude-3-5-haiku-20241022-v1:0)
+    model = "claude-3-5-haiku"  # User-friendly name (maps to us.anthropic.claude-3-5-haiku-20241022-v1:0)
 
     print(f"\n📝 Prompt: '{prompt}'")
     print(f"🎯 Model: {model}")
@@ -152,7 +152,7 @@ def test_deterministic():
     provider = DeterministicProvider()
 
     prompt = "test"
-    module = 'triad'
+    module = "triad"
 
     print(f"\n📦 Module: {module}")
     print("💰 Cost: $0.00 (always free)")
@@ -161,10 +161,10 @@ def test_deterministic():
     response = provider.complete(
         prompt,
         module=module,
-        variant='default',
-        task_1='Complete report',
-        task_2='Review code',
-        task_3='Exercise 30min'
+        variant="default",
+        task_1="Complete report",
+        task_2="Review code",
+        task_3="Exercise 30min",
     )
 
     print("\n✅ SUCCESS!")
@@ -177,22 +177,22 @@ def test_deterministic():
 
 def main():
     """Run all provider tests."""
-    print("\n" + "🚀 "*20)
+    print("\n" + "🚀 " * 20)
     print("AI SERVICE MANUAL TESTING")
-    print("🚀 "*20)
+    print("🚀 " * 20)
 
     results = {
-        'openai': None,
-        'anthropic': None,
-        'bedrock': None,
-        'deterministic': None,
+        "openai": None,
+        "anthropic": None,
+        "bedrock": None,
+        "deterministic": None,
     }
 
     # Test all providers
-    results['openai'] = test_openai()
-    results['anthropic'] = test_anthropic()
-    results['bedrock'] = test_bedrock()
-    results['deterministic'] = test_deterministic()
+    results["openai"] = test_openai()
+    results["anthropic"] = test_anthropic()
+    results["bedrock"] = test_bedrock()
+    results["deterministic"] = test_deterministic()
 
     # Summary
     print_header("📊 Test Summary")
@@ -208,10 +208,10 @@ def main():
             total_cost += response.cost_usd
             success_count += 1
 
-    print("\n" + "-"*70)
+    print("\n" + "-" * 70)
     print(f"💵 Total cost: ${total_cost:.6f}")
     print(f"✅ Successful tests: {success_count}/4")
-    print("="*70)
+    print("=" * 70)
 
     # Cost verification instructions
     if total_cost > 0:
@@ -231,8 +231,8 @@ def main():
         print("FROM ai_runs")
         print("WHERE DATE(created_at) = CURRENT_DATE")
         print("GROUP BY DATE(created_at), provider;")
-        print("\n" + "="*70 + "\n")
+        print("\n" + "=" * 70 + "\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

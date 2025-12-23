@@ -120,12 +120,14 @@ async def get_consistency_data(
             # Consistency: 100% if active day with proof, 0% otherwise
             percentage = 100.0 if is_active else 0.0
 
-            consistency_data.append({
-                "date": agg["local_date"],
-                "completion_percentage": percentage,
-                "completed_count": completed,
-                "total_count": 1,  # Binary metric
-            })
+            consistency_data.append(
+                {
+                    "date": agg["local_date"],
+                    "completion_percentage": percentage,
+                    "completed_count": completed,
+                    "total_count": 1,  # Binary metric
+                }
+            )
 
             if is_active:
                 active_days_count += 1
@@ -245,11 +247,13 @@ async def get_fulfillment_data(
             rolling_window = scores[-7:] if len(scores) >= 7 else scores
             rolling_avg = round(sum(rolling_window) / len(rolling_window), 1)
 
-            fulfillment_data.append({
-                "date": entry["local_date"],
-                "fulfillment_score": score,
-                "rolling_average_7d": rolling_avg,
-            })
+            fulfillment_data.append(
+                {
+                    "date": entry["local_date"],
+                    "fulfillment_score": score,
+                    "rolling_average_7d": rolling_avg,
+                }
+            )
 
         # Calculate overall average
         overall_average = round(sum(scores) / len(scores), 1) if scores else 0
@@ -349,7 +353,9 @@ async def get_streak_data(
         # Reverse to start from most recent
         for agg in reversed(aggregates):
             if agg.get("active_day_with_proof"):
-                if temp_streak == 0 or agg["local_date"] == str(date.today() - timedelta(days=current_streak)):
+                if temp_streak == 0 or agg["local_date"] == str(
+                    date.today() - timedelta(days=current_streak)
+                ):
                     current_streak += 1
                 temp_streak += 1
             else:
@@ -393,7 +399,8 @@ async def get_history(
         None, description="Filter by timeframe: days (7d), weeks (4w), months (3m)"
     ),
     type: Optional[Literal["threads", "binds", "weave_chats"]] = Query(
-        None, description="Filter by type: threads (journals/goals), binds (completions), weave_chats"
+        None,
+        description="Filter by type: threads (journals/goals), binds (completions), weave_chats",
     ),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
@@ -480,7 +487,9 @@ async def get_history(
             )
             if start_date:
                 query = query.gte("completed_at", start_date)
-            completions_response = query.order("completed_at", desc=True).limit(limit // 2).execute()
+            completions_response = (
+                query.order("completed_at", desc=True).limit(limit // 2).execute()
+            )
 
             completions = completions_response.data or []
         else:
@@ -523,16 +532,20 @@ async def get_history(
                             if goal_response.data:
                                 goal_title = goal_response.data.get("title")
 
-                        history_items.append({
-                            "id": completion["id"],
-                            "type": "completion",
-                            "timestamp": completion["completed_at"],
-                            "description": f"Completed '{subtask_title}'",
-                            "related_goal_id": goal_id,
-                            "related_goal_title": goal_title,
-                        })
+                        history_items.append(
+                            {
+                                "id": completion["id"],
+                                "type": "completion",
+                                "timestamp": completion["completed_at"],
+                                "description": f"Completed '{subtask_title}'",
+                                "related_goal_id": goal_id,
+                                "related_goal_title": goal_title,
+                            }
+                        )
             except Exception as e:
-                logger.warning(f"⚠️ Could not fetch details for completion {completion['id']}: {str(e)}")
+                logger.warning(
+                    f"⚠️ Could not fetch details for completion {completion['id']}: {str(e)}"
+                )
                 continue
 
         # Fetch recent journal entries (threads)
@@ -551,14 +564,16 @@ async def get_history(
             journals = []
 
         for journal in journals:
-            history_items.append({
-                "id": journal["id"],
-                "type": "journal",
-                "timestamp": journal["created_at"],
-                "description": f"Reflected on {journal['local_date']} (fulfillment: {journal.get('fulfillment_score', 0)}/10)",
-                "related_goal_id": None,
-                "related_goal_title": None,
-            })
+            history_items.append(
+                {
+                    "id": journal["id"],
+                    "type": "journal",
+                    "timestamp": journal["created_at"],
+                    "description": f"Reflected on {journal['local_date']} (fulfillment: {journal.get('fulfillment_score', 0)}/10)",
+                    "related_goal_id": None,
+                    "related_goal_title": None,
+                }
+            )
 
         # Fetch recent goal activities (created/archived) - also threads
         if fetch_threads:
@@ -579,25 +594,29 @@ async def get_history(
             # If goal was recently created (within last 30 days)
             created_date = date.fromisoformat(goal["created_at"].split("T")[0])
             if (date.today() - created_date).days <= 30:
-                history_items.append({
-                    "id": goal["id"],
-                    "type": "goal_created",
-                    "timestamp": goal["created_at"],
-                    "description": f"Created goal '{goal['title']}'",
-                    "related_goal_id": goal["id"],
-                    "related_goal_title": goal["title"],
-                })
+                history_items.append(
+                    {
+                        "id": goal["id"],
+                        "type": "goal_created",
+                        "timestamp": goal["created_at"],
+                        "description": f"Created goal '{goal['title']}'",
+                        "related_goal_id": goal["id"],
+                        "related_goal_title": goal["title"],
+                    }
+                )
 
             # If goal was archived
             if goal["status"] == "archived":
-                history_items.append({
-                    "id": goal["id"],
-                    "type": "goal_archived",
-                    "timestamp": goal["updated_at"],
-                    "description": f"Archived goal '{goal['title']}'",
-                    "related_goal_id": goal["id"],
-                    "related_goal_title": goal["title"],
-                })
+                history_items.append(
+                    {
+                        "id": goal["id"],
+                        "type": "goal_archived",
+                        "timestamp": goal["updated_at"],
+                        "description": f"Archived goal '{goal['title']}'",
+                        "related_goal_id": goal["id"],
+                        "related_goal_title": goal["title"],
+                    }
+                )
 
         # Sort all items by timestamp (most recent first)
         history_items.sort(key=lambda x: x["timestamp"], reverse=True)

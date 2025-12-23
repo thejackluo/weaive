@@ -44,9 +44,7 @@ class PainpointSelectionResponse(BaseModel):
 
     success: bool = Field(..., description="Whether the operation succeeded")
     painpoints: List[str] = Field(..., description="Confirmed painpoints stored")
-    user_id: Optional[UUID] = Field(
-        None, description="User ID if authenticated"
-    )
+    user_id: Optional[UUID] = Field(None, description="User ID if authenticated")
 
     model_config = {
         "json_schema_extra": {
@@ -86,6 +84,7 @@ class IdentityBootupData(BaseModel):
     def validate_preferred_name(cls, v: str) -> str:
         """Validate name contains only allowed characters."""
         import re
+
         # Allow letters, numbers, spaces, hyphens, apostrophes
         if not re.match(r"^[a-zA-Z0-9\s\-']+$", v):
             raise ValueError(
@@ -230,9 +229,7 @@ class OriginStoryData(BaseModel):
         import re
 
         # Check data URI format
-        match = re.match(
-            r"^data:(audio/(?:aac|mp4|mpeg|x-m4a));base64,(.+)$", v
-        )
+        match = re.match(r"^data:(audio/(?:aac|mp4|mpeg|x-m4a));base64,(.+)$", v)
         if not match:
             raise ValueError(
                 "Audio must be a data URI with format: data:audio/(aac|mp4|mpeg|x-m4a);base64,..."
@@ -281,13 +278,9 @@ class OriginStoryResponse(BaseModel):
     user_id: UUID = Field(..., description="User profile UUID")
     photo_url: str = Field(..., description="Public URL of uploaded photo")
     audio_url: str = Field(..., description="Public URL of uploaded audio")
-    first_bind_completed: bool = Field(
-        ..., description="Whether this was the user's first bind"
-    )
+    first_bind_completed: bool = Field(..., description="Whether this was the user's first bind")
     user_level: int = Field(..., description="User's current level (should be 1)")
-    created_at: datetime = Field(
-        ..., description="Timestamp when origin story was created"
-    )
+    created_at: datetime = Field(..., description="Timestamp when origin story was created")
 
     model_config = {
         "json_schema_extra": {
