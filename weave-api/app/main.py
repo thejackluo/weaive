@@ -16,6 +16,7 @@ from app.api import (
     goals,
     health,
     journal_router,
+    memories_router,
     onboarding,
     stats,
     transcribe,
@@ -140,6 +141,7 @@ app.include_router(goals.router, tags=["goals"])
 app.include_router(captures.router, tags=["captures"])
 app.include_router(stats.router, tags=["stats"])  # Progress visualization stats
 app.include_router(binds.router, tags=["binds"])  # Thread: Today's binds (US-3.1)
+app.include_router(memories_router.router, prefix="/api", tags=["memories"])  # Goal memories
 app.include_router(admin.router, tags=["admin"])  # Cost monitoring and system maintenance
 
 

@@ -120,7 +120,8 @@ export function ThreadHomeScreen() {
 
   // Handle bind press
   const handleBindPress = (bind: Bind) => {
-    router.push(`/(tabs)/thread/bind/${bind.id}`);
+    console.log('[ThreadHome] Navigate to bind:', bind.id);
+    router.push(`/(tabs)/binds/${bind.id}`);
   };
 
   // Handle AI insight tap
