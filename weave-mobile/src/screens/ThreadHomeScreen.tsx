@@ -18,6 +18,7 @@ import { NeedleCard } from '@/components/thread/NeedleCard';
 import CountdownTimer from '@/components/features/journal/CountdownTimer';
 import { useTodayBinds } from '@/hooks/useTodayBinds';
 import { useGetTodayJournal } from '@/hooks/useJournal';
+import { useActiveGoals } from '@/hooks/useActiveGoals';
 import type { Bind } from '@/types/binds';
 import { mockUser, getGreeting, getRandomInsight } from '@/data/mockThreadData';
 
@@ -28,6 +29,9 @@ export function ThreadHomeScreen() {
 
   // Fetch today's binds
   const { data, isLoading, isError, error, refetch } = useTodayBinds();
+
+  // Fetch active goals (needles) - to show goals even without binds
+  const { data: goalsData, isLoading: isLoadingGoals } = useActiveGoals();
 
   // Check if today's journal entry exists (for completion status)
   const { data: todayJournal, refetch: refetchJournal } = useGetTodayJournal();
@@ -80,38 +84,58 @@ export function ThreadHomeScreen() {
     setExpandedNeedleId((prev) => (prev === needleId ? null : needleId));
   };
 
-  // Group binds by needle
+  // Group binds by needle + include active needles without binds
   const groupBindsByNeedle = () => {
-    if (!data?.data) return [];
-
-    // Group binds by needle_id
     const needleMap = new Map<string, { needle: any; binds: Bind[] }>();
 
-    data.data.forEach((bind) => {
-      const needleId = bind.needle_id || 'no-needle';
+    // First, add all binds from today
+    if (data?.data) {
+      data.data.forEach((bind) => {
+        const needleId = bind.needle_id || 'no-needle';
 
-      if (!needleMap.has(needleId)) {
-        needleMap.set(needleId, {
-          needle: {
-            id: needleId,
-            title: bind.needle_title,
-            why: 'Focus on your goals', // TODO: Get from goals API
-            color: bind.needle_color,
-            completedBinds: 0,
-            totalBinds: 0,
-            consistency7d: null,
-          },
-          binds: [],
-        });
-      }
+        if (!needleMap.has(needleId)) {
+          needleMap.set(needleId, {
+            needle: {
+              id: needleId,
+              title: bind.needle_title,
+              why: 'Focus on your goals',
+              color: bind.needle_color,
+              completedBinds: 0,
+              totalBinds: 0,
+              consistency7d: null,
+            },
+            binds: [],
+          });
+        }
 
-      const group = needleMap.get(needleId)!;
-      group.binds.push(bind);
-      group.needle.totalBinds += 1;
-      if (bind.completed) {
-        group.needle.completedBinds += 1;
-      }
-    });
+        const group = needleMap.get(needleId)!;
+        group.binds.push(bind);
+        group.needle.totalBinds += 1;
+        if (bind.completed) {
+          group.needle.completedBinds += 1;
+        }
+      });
+    }
+
+    // Then, add active goals that don't have binds today
+    if (goalsData?.data) {
+      goalsData.data.forEach((goal) => {
+        if (!needleMap.has(goal.id)) {
+          needleMap.set(goal.id, {
+            needle: {
+              id: goal.id,
+              title: goal.title,
+              why: goal.why || 'Focus on your goals',
+              color: goal.color || '#6366f1', // Default accent color
+              completedBinds: 0,
+              totalBinds: 0,
+              consistency7d: goal.consistency_7d,
+            },
+            binds: [], // No binds scheduled for today
+          });
+        }
+      });
+    }
 
     return Array.from(needleMap.values());
   };
@@ -120,7 +144,7 @@ export function ThreadHomeScreen() {
 
   // Handle bind press
   const handleBindPress = (bind: Bind) => {
-    router.push(`/(tabs)/thread/bind/${bind.id}`);
+    router.push(`/(tabs)/binds/${bind.id}`);
   };
 
   // Handle AI insight tap
@@ -135,7 +159,7 @@ export function ThreadHomeScreen() {
   };
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || isLoadingGoals) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background.primary }]}
@@ -144,7 +168,7 @@ export function ThreadHomeScreen() {
         <View style={[styles.centerContent, { padding: spacing[4] }]}>
           <ActivityIndicator size="large" color={colors.accent[500]} />
           <Body style={{ color: colors.text.secondary, marginTop: spacing[4] }}>
-            Loading today's binds...
+            Loading your needles...
           </Body>
         </View>
       </SafeAreaView>
@@ -274,7 +298,7 @@ export function ThreadHomeScreen() {
                 variant="displayLg"
                 style={{ color: colors.text.primary, marginBottom: spacing[3] }}
               >
-                No Binds Today
+                No Needles Yet
               </Heading>
               <Body
                 style={{
@@ -283,11 +307,10 @@ export function ThreadHomeScreen() {
                   textAlign: 'center',
                 }}
               >
-                You don't have any tasks scheduled for today. Create a goal and add consistent
-                actions to get started!
+                Create your first needle to get started with consistent actions toward your goals!
               </Body>
-              <Button variant="primary" onPress={() => router.push('/(tabs)/needles')}>
-                View Goals
+              <Button variant="primary" onPress={() => router.push('/(tabs)/dashboard')}>
+                Add Your First Needle
               </Button>
             </Card>
           ) : (

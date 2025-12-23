@@ -1,5 +1,5 @@
 /**
- * Story 4.1a + 4.1b: Daily Reflection Entry - Default + Custom Questions
+ * Daily Reflection Entry - Simplified Version
  *
  * TEMPORARY LOCATION: Settings tab (for development testing)
  * PRODUCTION LOCATION: Move to app/(tabs)/thread/reflection.tsx when Story 3.1 complete
@@ -7,9 +7,7 @@
  * This screen allows users to:
  * - Reflect on their day (Question 1: multi-line text)
  * - Set tomorrow's focus (Question 2: single-line text)
- * - Rate daily fulfillment (1-10 slider)
- * - Answer custom tracking questions (text, numeric, yes/no)
- * - Manage custom questions (add/edit/delete)
+ * - Rate daily fulfillment (1-10 drag slider)
  * - Edit existing journal entries
  */
 
@@ -24,14 +22,18 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSubmitJournal, useUpdateJournal, useGetTodayJournal } from '@/hooks/useJournal';
-import { useUserPreferences, useUpdateCustomQuestions } from '@/hooks/useUserPreferences';
+import { useQueryClient } from '@tanstack/react-query';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import Slider from '@react-native-community/slider';
+import * as Haptics from 'expo-haptics';
+import {
+  useSubmitJournal,
+  useUpdateJournal,
+  useGetTodayJournal,
+  journalKeys,
+} from '@/hooks/useJournal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import CustomQuestionInput, {
-  CustomQuestion,
-} from '@/components/features/journal/CustomQuestionInput';
-import ManageQuestionsModal from '@/components/features/journal/ManageQuestionsModal';
-import { UserAvatarMenu } from '@/components/UserAvatarMenu';
 import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
 
 const DRAFT_KEY = '@weave_reflection_draft';
@@ -39,19 +41,18 @@ const DRAFT_KEY = '@weave_reflection_draft';
 export default function ReflectionScreen() {
   console.log('[REFLECTION_SCREEN] 🎬 Component mounting...');
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Form state
   const [todayReflection, setTodayReflection] = useState('');
   const [tomorrowFocus, setTomorrowFocus] = useState('');
   const [fulfillmentScore, setFulfillmentScore] = useState(5);
-  const [customResponses, setCustomResponses] = useState<Record<string, any>>({});
 
   // UI state
   const [isEditMode, setIsEditMode] = useState(false);
   const [existingJournalId, setExistingJournalId] = useState<string | null>(null);
-  const [userName, _setUserName] = useState('there'); // TODO: Fetch from user profile
-  const [showManageQuestionsModal, setShowManageQuestionsModal] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Prevent double-click
 
   // Celebration modal state
   const [showCelebration, setShowCelebration] = useState(false);
@@ -67,21 +68,23 @@ export default function ReflectionScreen() {
     isLoading: isLoadingJournal,
     error: journalError,
   } = useGetTodayJournal();
-  const {
-    data: customQuestions = [],
-    isLoading: isLoadingQuestions,
-    error: questionsError,
-  } = useUserPreferences();
   const submitMutation = useSubmitJournal();
   const updateMutation = useUpdateJournal();
-  const updateQuestionsMutation = useUpdateCustomQuestions();
 
   console.log('[REFLECTION_SCREEN] 📊 Loading states:', {
     isLoadingJournal,
-    isLoadingQuestions,
     hasJournalError: !!journalError,
-    hasQuestionsError: !!questionsError,
   });
+
+  // Clear corrupted cache on mount (temp-id from failed submissions)
+  useEffect(() => {
+    const cachedData = queryClient.getQueryData(journalKeys.today());
+    if (cachedData && (cachedData as any).id === 'temp-id') {
+      console.log('[REFLECTION_SCREEN] 🧹 Clearing corrupted cache (temp-id detected)');
+      queryClient.removeQueries({ queryKey: journalKeys.today() });
+      queryClient.invalidateQueries({ queryKey: journalKeys.today() });
+    }
+  }, [queryClient]);
 
   // Character counts
   const reflectionCount = todayReflection.length;
@@ -104,7 +107,6 @@ export default function ReflectionScreen() {
       setTodayReflection(todayJournal.default_responses?.today_reflection || '');
       setTomorrowFocus(todayJournal.default_responses?.tomorrow_focus || '');
       setFulfillmentScore(todayJournal.fulfillment_score);
-      setCustomResponses(todayJournal.custom_responses || {});
     } else {
       // Create mode: Try to restore draft
       console.log('[REFLECTION_SCREEN] ➕ Entering CREATE mode - loading draft if exists');
@@ -114,7 +116,7 @@ export default function ReflectionScreen() {
 
   // Set timeout after 10 seconds of loading
   useEffect(() => {
-    if (isLoadingJournal || isLoadingQuestions) {
+    if (isLoadingJournal) {
       console.log('[REFLECTION_SCREEN] ⏱️  Loading in progress - starting 10s timeout timer');
       const startTime = performance.now();
 
@@ -123,9 +125,7 @@ export default function ReflectionScreen() {
         console.error(`[REFLECTION_SCREEN] ⚠️  TIMEOUT after ${elapsed}s!`);
         console.error('[REFLECTION_SCREEN] 🔍 Debug info:', {
           isLoadingJournal,
-          isLoadingQuestions,
-          journalError: journalError?.message,
-          questionsError: questionsError?.message,
+          journalError: journalError ? String(journalError) : null,
         });
         setLoadingTimeout(true);
       }, 10000); // 10-second timeout
@@ -136,10 +136,10 @@ export default function ReflectionScreen() {
         console.log(`[REFLECTION_SCREEN] ⏱️  Timeout cleared after ${elapsed}s`);
       };
     } else {
-      console.log('[REFLECTION_SCREEN] ✅ Loading complete - both queries finished');
+      console.log('[REFLECTION_SCREEN] ✅ Loading complete - query finished');
       setLoadingTimeout(false);
     }
-  }, [isLoadingJournal, isLoadingQuestions, journalError, questionsError]);
+  }, [isLoadingJournal, journalError]);
 
   // Auto-save draft every 5 seconds
   useEffect(() => {
@@ -185,17 +185,13 @@ export default function ReflectionScreen() {
   };
 
   const handleSubmit = async () => {
-    // Build custom responses with question text (AC #13)
-    const formattedCustomResponses: Record<string, any> = {};
-    Object.keys(customResponses).forEach((questionId) => {
-      const question = customQuestions.find((q) => q.id === questionId);
-      if (question) {
-        formattedCustomResponses[questionId] = {
-          question_text: question.question,
-          response: customResponses[questionId],
-        };
-      }
-    });
+    // Prevent double-click
+    if (isSubmitting) {
+      console.log('[REFLECTION_SCREEN] ⚠️ Already submitting, ignoring duplicate click');
+      return;
+    }
+
+    setIsSubmitting(true);
 
     const payload = {
       fulfillment_score: fulfillmentScore,
@@ -203,8 +199,6 @@ export default function ReflectionScreen() {
         today_reflection: todayReflection,
         tomorrow_focus: tomorrowFocus,
       },
-      custom_responses:
-        Object.keys(formattedCustomResponses).length > 0 ? formattedCustomResponses : undefined,
     };
 
     try {
@@ -221,6 +215,11 @@ export default function ReflectionScreen() {
         await clearDraft();
       }
 
+      // Manually invalidate journal query to force refresh on Thread home screen
+      console.log('[REFLECTION_SCREEN] 🔄 Invalidating journal queries after submission');
+      await queryClient.invalidateQueries({ queryKey: journalKeys.today() });
+      await queryClient.invalidateQueries({ queryKey: journalKeys.all });
+
       // Show celebration modal with level data (only for NEW reflections, not edits)
       if (
         !isEditMode &&
@@ -233,38 +232,22 @@ export default function ReflectionScreen() {
         });
         setShowCelebration(true);
       } else {
-        // If editing or no level data, just go back
-        router.back();
+        // If editing or no level data, navigate to Thread home
+        console.log('[REFLECTION_SCREEN] ✅ Journal saved, navigating to Thread home');
+        router.push('/(tabs)/');
       }
     } catch (error) {
       console.error('Failed to submit journal:', error);
       // Error handling will be improved in Task 2
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const isSubmitEnabled = fulfillmentScore >= 1 && fulfillmentScore <= 10;
-  const isLoading = submitMutation.isPending || updateMutation.isPending;
+  const isLoading = submitMutation.isPending || updateMutation.isPending || isSubmitting;
 
-  // Handle custom question response change (AC #10)
-  const handleCustomResponseChange = (questionId: string, value: string | number | boolean) => {
-    setCustomResponses((prev) => ({
-      ...prev,
-      [questionId]: value,
-    }));
-  };
-
-  // Handle saving custom questions from modal (AC #11)
-  const handleSaveCustomQuestions = async (questions: CustomQuestion[]) => {
-    try {
-      await updateQuestionsMutation.mutateAsync(questions);
-      setShowManageQuestionsModal(false);
-    } catch (error) {
-      console.error('Failed to save custom questions:', error);
-      // TODO: Show error toast
-    }
-  };
-
-  if (isLoadingJournal || isLoadingQuestions) {
+  if (isLoadingJournal) {
     console.log('[REFLECTION_SCREEN] 🔄 Rendering loading state...');
 
     return (
@@ -275,8 +258,6 @@ export default function ReflectionScreen() {
             <Text style={styles.loadingText}>Loading your reflection...</Text>
             <Text style={styles.loadingDebugText}>
               Journal: {isLoadingJournal ? 'Loading...' : 'Done'}
-              {'\n'}
-              Questions: {isLoadingQuestions ? 'Loading...' : 'Done'}
             </Text>
           </>
         ) : (
@@ -284,16 +265,12 @@ export default function ReflectionScreen() {
             <Text style={styles.errorText}>⚠️ Cannot load reflection</Text>
             <Text style={styles.errorSubtext}>
               {journalError
-                ? `Journal error: ${journalError.message}`
-                : questionsError
-                  ? `Questions error: ${questionsError.message}`
-                  : 'Loading took too long. Check your connection and try again.'}
+                ? `Journal error: ${String(journalError)}`
+                : 'Loading took too long. Check your connection and try again.'}
             </Text>
             <Text style={styles.errorDebugText}>
               Debug Info:{'\n'}• Journal:{' '}
               {isLoadingJournal ? 'Still loading' : journalError ? 'Error' : 'Done'}
-              {'\n'}• Questions:{' '}
-              {isLoadingQuestions ? 'Still loading' : questionsError ? 'Error' : 'Done'}
             </Text>
             <TouchableOpacity
               style={styles.retryButton}
@@ -314,17 +291,17 @@ export default function ReflectionScreen() {
   console.log('[REFLECTION_SCREEN] ✅ Rendering main form');
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* User Avatar Menu - Top Right */}
-      <UserAvatarMenu />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }} edges={['top']}>
+      {/* Header with back button */}
+      <View style={styles.headerBar}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Daily Check-In</Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>How did today go, {userName}?</Text>
-          <Text style={styles.headerSubtitle}>Take 60 seconds to reflect</Text>
-        </View>
-
         {/* Question 1: Today's Reflection */}
         <View style={styles.questionContainer}>
           <Text style={styles.questionLabel}>
@@ -367,66 +344,31 @@ export default function ReflectionScreen() {
           <Text style={styles.questionLabel}>Overall, how fulfilled do you feel about today?</Text>
           <View style={styles.sliderContainer}>
             <Text style={styles.scoreDisplay}>{fulfillmentScore}</Text>
-            <View style={styles.sliderTrack}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                <TouchableOpacity
-                  key={num}
-                  style={[styles.sliderDot, num <= fulfillmentScore && styles.sliderDotActive]}
-                  onPress={() => setFulfillmentScore(num)}
-                >
-                  <Text style={styles.sliderDotText}>{num}</Text>
-                </TouchableOpacity>
-              ))}
+            <View style={styles.sliderWrapper}>
+              <Slider
+                style={styles.slider}
+                value={fulfillmentScore}
+                onValueChange={(value) => {
+                  const rounded = Math.round(value);
+                  if (rounded !== fulfillmentScore) {
+                    setFulfillmentScore(rounded);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                }}
+                minimumValue={1}
+                maximumValue={10}
+                step={1}
+                minimumTrackTintColor="#3b82f6"
+                maximumTrackTintColor="#2a2a2a"
+                thumbTintColor="#3b82f6"
+              />
             </View>
             <View style={styles.sliderLabels}>
-              <Text style={styles.sliderLabel}>Low</Text>
-              <Text style={styles.sliderLabel}>High</Text>
+              <Text style={styles.sliderLabel}>1 - Low</Text>
+              <Text style={styles.sliderLabel}>10 - High</Text>
             </View>
           </View>
-          <Text style={styles.sliderFeedback}>
-            {fulfillmentScore <= 3 && '🤔 Tomorrow is a fresh start'}
-            {fulfillmentScore > 3 && fulfillmentScore <= 6 && '💭 Steady progress'}
-            {fulfillmentScore > 6 && '✨ Great momentum!'}
-          </Text>
         </View>
-
-        {/* Custom Questions (AC #10) */}
-        {customQuestions.length > 0 && (
-          <View style={styles.customQuestionsSection}>
-            <View style={styles.customQuestionsHeader}>
-              <Text style={styles.customQuestionsSectionTitle}>Your Custom Questions</Text>
-              <TouchableOpacity onPress={() => setShowManageQuestionsModal(true)}>
-                <Text style={styles.manageQuestionsLink}>Manage</Text>
-              </TouchableOpacity>
-            </View>
-            {customQuestions.map((question) => (
-              <CustomQuestionInput
-                key={question.id}
-                question={question}
-                value={customResponses[question.id]}
-                onChange={(value) => handleCustomResponseChange(question.id, value)}
-              />
-            ))}
-          </View>
-        )}
-
-        {/* Add Custom Questions Link (AC #11) */}
-        {customQuestions.length === 0 && (
-          <TouchableOpacity
-            style={styles.addCustomQuestionsButton}
-            onPress={() => setShowManageQuestionsModal(true)}
-          >
-            <Text style={styles.addCustomQuestionsText}>+ Add custom tracking questions</Text>
-          </TouchableOpacity>
-        )}
-        {customQuestions.length > 0 && customQuestions.length < 5 && (
-          <TouchableOpacity
-            style={styles.addMoreQuestionsButton}
-            onPress={() => setShowManageQuestionsModal(true)}
-          >
-            <Text style={styles.addMoreQuestionsText}>+ Add more questions</Text>
-          </TouchableOpacity>
-        )}
 
         {/* Submit Button */}
         <TouchableOpacity
@@ -437,24 +379,14 @@ export default function ReflectionScreen() {
           {isLoading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>
-              {isEditMode ? 'Update Reflection' : 'Submit'}
-            </Text>
+            <Text style={styles.submitButtonText}>{isEditMode ? 'Update Check-In' : 'Submit'}</Text>
           )}
         </TouchableOpacity>
         {isLoading && (
           <Text style={styles.loadingText}>
-            {isEditMode ? 'Updating your reflection...' : 'Submitting your reflection...'}
+            {isEditMode ? 'Updating your check-in...' : 'Submitting your check-in...'}
           </Text>
         )}
-
-        {/* Manage Questions Modal */}
-        <ManageQuestionsModal
-          visible={showManageQuestionsModal}
-          questions={customQuestions}
-          onClose={() => setShowManageQuestionsModal(false)}
-          onSave={handleSaveCustomQuestions}
-        />
       </ScrollView>
 
       {/* Celebration Modal */}
@@ -466,12 +398,13 @@ export default function ReflectionScreen() {
           levelProgress={celebrationData.levelProgress}
           showNotes={false}
           onComplete={() => {
+            console.log('[REFLECTION_SCREEN] 🎉 Celebration complete, navigating to Thread home');
             setShowCelebration(false);
-            router.back();
+            router.push('/(tabs)/');
           }}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -482,6 +415,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
+    paddingTop: 16, // Reduced from 20 to fit more on screen
     paddingBottom: 40,
   },
   loadingContainer: {
@@ -536,28 +470,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  header: {
-    marginBottom: 24,
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#0a0a0a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  backButton: {
+    padding: 4,
+    width: 40,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '600',
     color: '#fff',
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-  },
-  timerContainer: {
-    marginBottom: 32,
-    paddingHorizontal: 16,
-  },
-  timerLabel: {
-    fontSize: 12,
-    color: '#71717A',
-    marginBottom: 8,
+    flex: 1,
     textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 40, // Balance the back button
   },
   questionContainer: {
     marginBottom: 28,
@@ -609,26 +544,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 16,
   },
-  sliderTrack: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  sliderWrapper: {
+    width: '100%',
+    paddingHorizontal: 4,
     marginBottom: 8,
   },
-  sliderDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#2a2a2a',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sliderDotActive: {
-    backgroundColor: '#3b82f6',
-  },
-  sliderDotText: {
-    fontSize: 10,
-    color: '#fff',
-    fontWeight: '600',
+  slider: {
+    width: '100%',
+    height: 40,
   },
   sliderLabels: {
     flexDirection: 'row',
@@ -637,12 +560,6 @@ const styles = StyleSheet.create({
   sliderLabel: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.6)',
-  },
-  sliderFeedback: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
-    marginTop: 12,
   },
   submitButton: {
     backgroundColor: '#3b82f6',
@@ -659,49 +576,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  customQuestionsSection: {
-    marginTop: 32,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
-  },
-  customQuestionsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  customQuestionsSectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  manageQuestionsLink: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#3b82f6',
-  },
-  addCustomQuestionsButton: {
-    marginTop: 20,
-    marginBottom: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  addCustomQuestionsText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#10b981',
-  },
-  addMoreQuestionsButton: {
-    marginTop: 8,
-    marginBottom: 12,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  addMoreQuestionsText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: 'rgba(16, 185, 129, 0.8)',
   },
 });

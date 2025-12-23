@@ -15,15 +15,14 @@ import {
   ActivityIndicator,
   Pressable,
   PanResponder,
-  Modal,
   Dimensions,
 } from 'react-native';
-import { Text, Card, Button } from '@/design-system';
+import { Text, Card } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useFulfillmentData } from '@/hooks/useFulfillmentData';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { DayDetailsModal } from '@/components/dashboard/DayDetailsModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -33,7 +32,6 @@ interface FulfillmentChartProps {
 }
 
 export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentChartProps) {
-  const router = useRouter();
   const { colors } = useTheme();
   const { data, isLoading, isError, error } = useFulfillmentData(timeframe);
 
@@ -41,10 +39,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
   const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
   const [showDayDetailsModal, setShowDayDetailsModal] = useState(false);
-  const [selectedDayData, setSelectedDayData] = useState<{
-    date: string;
-    fulfillmentScore: number;
-  } | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>('');
 
   // Refs for drag calculations (using refs so PanResponder closure has access to current values)
   const chartWidthRef = useRef<number>(0);
@@ -77,9 +72,9 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
   };
 
   // Handler for opening day details modal
-  const handleTooltipPress = (date: string, fulfillmentScore: number) => {
+  const handleTooltipPress = (date: string, _fulfillmentScore: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSelectedDayData({ date, fulfillmentScore });
+    setSelectedDate(date);
     setShowDayDetailsModal(true);
   };
 
@@ -117,12 +112,9 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
     })
   ).current;
 
-  // Temporary: Force sample data for demo purposes until user has real data
-  const FORCE_SAMPLE_DATA = false;
-
   const timeframeOptions: ('7d' | '2w' | '1m')[] = ['7d', '2w', '1m'];
 
-  if (isLoading && !FORCE_SAMPLE_DATA) {
+  if (isLoading) {
     return (
       <Card variant="glass" style={styles.card}>
         <ActivityIndicator size="large" color={colors.accent[500]} />
@@ -140,53 +132,62 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
     );
   }
 
-  let fulfillmentData = data?.data || [];
-  let averageFulfillment = data?.meta?.average_fulfillment || 0;
+  const fulfillmentData = data?.data || [];
+  const averageFulfillment = data?.meta?.average_fulfillment || 0;
 
-  // Calculate expected days for timeframe
+  // Calculate expected days based on timeframe
   const timeframeDays = { '7d': 7, '2w': 14, '1m': 30 };
   const expectedDays = timeframeDays[timeframe];
 
-  // If sparse or no data (less than 50% of expected days), show sample data
-  const useSampleData = FORCE_SAMPLE_DATA || fulfillmentData.length < expectedDays * 0.5;
+  // Calculate trend percentage (comparing first half vs second half)
+  const calculateTrendPercentage = (): number => {
+    if (fulfillmentData.length === 0) return 0;
+    if (fulfillmentData.length === 1) return 0; // Can't calculate trend with 1 point
 
-  if (useSampleData) {
-    // Generate sample data for the selected timeframe
-    const sampleData: Array<{
-      date: string;
-      fulfillment_score: number;
-      rolling_average_7d: number;
-    }> = [];
+    const midpoint = Math.floor(fulfillmentData.length / 2);
+    const firstHalf = fulfillmentData.slice(0, midpoint);
+    const secondHalf = fulfillmentData.slice(midpoint);
 
-    for (let i = 0; i < expectedDays; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() - (expectedDays - 1 - i));
+    if (firstHalf.length === 0 || secondHalf.length === 0) return 0;
 
-      // Generate realistic sample scores (6-9 range with some variation)
-      const baseScore = 7.5;
-      const variation = Math.sin(i * 0.3) * 1.5; // Wave pattern
-      const score = Math.max(1, Math.min(10, baseScore + variation));
+    const firstAvg = firstHalf.reduce((sum, d) => sum + d.fulfillment_score, 0) / firstHalf.length;
+    const secondAvg =
+      secondHalf.reduce((sum, d) => sum + d.fulfillment_score, 0) / secondHalf.length;
 
-      // Calculate rolling average for last 7 days
-      const rollingWindow = sampleData.slice(Math.max(0, i - 6));
-      const rollingAvg =
-        rollingWindow.length > 0
-          ? (rollingWindow.reduce((sum, d) => sum + d.fulfillment_score, 0) + score) /
-            (rollingWindow.length + 1)
-          : score;
+    if (firstAvg === 0) return 0;
 
-      sampleData.push({
-        date: date.toISOString().split('T')[0],
-        fulfillment_score: Number(score.toFixed(1)),
-        rolling_average_7d: Number(rollingAvg.toFixed(1)),
-      });
-    }
+    // Calculate percentage change
+    const percentChange = ((secondAvg - firstAvg) / firstAvg) * 100;
+    return Math.round(percentChange);
+  };
 
-    fulfillmentData = sampleData;
+  const trendPercentage = calculateTrendPercentage();
 
-    // Calculate average
-    const sum = fulfillmentData.reduce((acc, d) => acc + d.fulfillment_score, 0);
-    averageFulfillment = Number((sum / fulfillmentData.length).toFixed(1));
+  // Show empty state if no data
+  if (fulfillmentData.length === 0) {
+    return (
+      <Card variant="glass" style={styles.card}>
+        <View style={styles.headerSection}>
+          <Text variant="textLg" weight="semibold">
+            Average Fulfillment
+          </Text>
+          <Text variant="displayLg" weight="bold" style={styles.averageText}>
+            0.0
+          </Text>
+        </View>
+        <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
+        <View style={styles.emptyState}>
+          <Ionicons name="heart-outline" size={64} color={colors.text.muted} />
+          <Text
+            variant="textBase"
+            style={{ color: colors.text.secondary, marginTop: 16, textAlign: 'center' }}
+          >
+            No fulfillment data yet. Submit a daily reflection and your fulfillment score will
+            appear here!
+          </Text>
+        </View>
+      </Card>
+    );
   }
 
   // Always use 10 as max for consistent Y-axis scale
@@ -246,14 +247,6 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
   const handleDismissTooltip = () => {
     if (selectedBarIndex !== null) {
       setSelectedBarIndex(null);
-    }
-  };
-
-  // Handler for navigating to day's entries
-  const handleViewDayEntries = () => {
-    if (selectedDayData) {
-      setShowDayDetailsModal(false);
-      router.push(`/(tabs)/progress/${selectedDayData.date}`);
     }
   };
 
@@ -326,11 +319,33 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
             )}
           </View>
 
-          {/* Average Score Display */}
-          <View style={styles.averageContainer}>
+          {/* Average Score Display with Trend Badge */}
+          <View style={styles.averageRow}>
             <Text variant="displayLg" weight="bold" style={styles.averageText}>
               {averageFulfillment.toFixed(1)}
             </Text>
+            {fulfillmentData.length > 1 && (
+              <View
+                style={[
+                  styles.trendBadge,
+                  {
+                    backgroundColor:
+                      trendPercentage >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  },
+                ]}
+              >
+                <Text
+                  variant="textSm"
+                  weight="semibold"
+                  style={{
+                    color: trendPercentage >= 0 ? colors.emerald[500] : colors.rose[500],
+                  }}
+                >
+                  {trendPercentage >= 0 ? '+' : ''}
+                  {trendPercentage}%
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -354,10 +369,16 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
 
           {/* Chart area */}
           <View style={styles.chartArea}>
-            {/* Bars with drag interaction */}
+            {/* Bars with drag interaction - proportional to actual data */}
             <View
               ref={barsContainerRef}
-              style={styles.barsContainer}
+              style={[
+                styles.barsContainer,
+                {
+                  // Bars only take up proportional space based on actual data
+                  width: `${(displayData.length / expectedDays) * 100}%`,
+                },
+              ]}
               onLayout={handleChartLayout}
               {...panResponder.panHandlers}
             >
@@ -461,57 +482,11 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
         </View>
 
         {/* Day Details Modal */}
-        <Modal
+        <DayDetailsModal
           visible={showDayDetailsModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowDayDetailsModal(false)}
-        >
-          <Pressable style={styles.modalOverlay} onPress={() => setShowDayDetailsModal(false)}>
-            <Pressable
-              style={[styles.modalContent, { backgroundColor: colors.background.elevated }]}
-              onPress={(e) => e.stopPropagation()}
-            >
-              {selectedDayData && (
-                <>
-                  <Text variant="textLg" weight="bold" style={styles.modalDate}>
-                    {new Date(selectedDayData.date).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </Text>
-
-                  <View style={styles.modalSection}>
-                    <Text variant="textBase" style={{ color: colors.text.secondary }}>
-                      Fulfillment Score
-                    </Text>
-                    <Text variant="displayMd" weight="bold" style={styles.modalPercentage}>
-                      {selectedDayData.fulfillmentScore.toFixed(1)}
-                    </Text>
-                  </View>
-
-                  <Button
-                    onPress={handleViewDayEntries}
-                    variant="primary"
-                    style={styles.modalButton}
-                  >
-                    View Day&apos;s Entries →
-                  </Button>
-
-                  <Pressable
-                    onPress={() => setShowDayDetailsModal(false)}
-                    style={styles.modalCloseButton}
-                  >
-                    <Text variant="textBase" style={{ color: colors.text.secondary }}>
-                      Close
-                    </Text>
-                  </Pressable>
-                </>
-              )}
-            </Pressable>
-          </Pressable>
-        </Modal>
+          date={selectedDate}
+          onClose={() => setShowDayDetailsModal(false)}
+        />
       </Card>
     </Pressable>
   );
@@ -561,10 +536,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
   },
+  averageRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 12,
+  },
   averageText: {
     fontSize: 64,
     lineHeight: 72,
     letterSpacing: -2,
+  },
+  trendBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   separator: {
     height: 1,
@@ -691,5 +676,9 @@ const styles = StyleSheet.create({
   },
   modalCloseButton: {
     paddingVertical: 8,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
   },
 });

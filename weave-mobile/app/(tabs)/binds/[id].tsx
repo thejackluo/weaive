@@ -1,4 +1,4 @@
-import PlaceholderScreen from '@/components/PlaceholderScreen';
+import { BindScreen } from '@/screens/BindScreen';
 
 /**
  * Bind Detail Screen
@@ -6,14 +6,5 @@ import PlaceholderScreen from '@/components/PlaceholderScreen';
  * Story 3.3: Start and Complete Bind
  */
 export default function BindDetailScreen() {
-  return (
-    <PlaceholderScreen
-      title="Bind Details"
-      epic="Epic 3: Daily Actions & Proof"
-      story="Story 3.3: Start and Complete Bind"
-      iconName="checkmark.circle.fill"
-      iconColor="#34d399"
-      backgroundColors={{ from: '#065f46', to: '#022c22' }}
-    />
-  );
+  return <BindScreen />;
 }

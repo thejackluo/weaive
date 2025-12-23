@@ -418,6 +418,45 @@ async def complete_bind(
                 # Don't fail the entire completion if capture creation fails
                 logger.error(f"❌ Error creating capture record: {str(capture_error)}")
 
+        # Update daily_aggregates (CRITICAL: Dashboard data source)
+        try:
+            local_date = date.today().isoformat()
+
+            # Fetch current daily_aggregates for this date
+            current_agg_response = (
+                supabase.table("daily_aggregates")
+                .select("completed_count, has_journal, has_proof")
+                .eq("user_id", user_id)
+                .eq("local_date", local_date)
+                .single()
+                .execute()
+            )
+
+            # Calculate new values
+            current_completed = current_agg_response.data.get("completed_count", 0) if current_agg_response.data else 0
+            current_has_journal = current_agg_response.data.get("has_journal", False) if current_agg_response.data else False
+            current_has_proof = current_agg_response.data.get("has_proof", False) if current_agg_response.data else False
+
+            new_completed_count = current_completed + 1
+            new_has_proof = current_has_proof or request.photo_used or False
+
+            # North star metric: active_day_with_proof = ≥1 completion + (has_proof OR has_journal)
+            active_day_with_proof = new_completed_count >= 1 and (new_has_proof or current_has_journal)
+
+            # Upsert daily_aggregates
+            supabase.table("daily_aggregates").upsert({
+                "user_id": user_id,
+                "local_date": local_date,
+                "completed_count": new_completed_count,
+                "has_proof": new_has_proof,
+                "active_day_with_proof": active_day_with_proof,
+            }, on_conflict="user_id,local_date").execute()
+
+            logger.info(f"✅ Updated daily_aggregates: completed_count={new_completed_count}, has_proof={new_has_proof}, active_day_with_proof={active_day_with_proof}")
+        except Exception as agg_error:
+            # Log error but don't fail the completion
+            logger.error(f"❌ Error updating daily_aggregates: {str(agg_error)}")
+
         # Calculate level and progress
         # Simple level system: 10 completions per level
         try:
