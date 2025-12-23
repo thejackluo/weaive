@@ -144,3 +144,21 @@ app.include_router(admin.router, tags=["admin"])  # Cost monitoring and system m
 @app.get("/")
 async def root():
     return {"message": "Weave API - Foundation Ready"}
+
+
+# Railway deployment support: Bind to dynamic PORT environment variable
+if __name__ == "__main__":
+    import uvicorn
+    
+    # Railway provides dynamic PORT env var
+    port = int(os.getenv("PORT", 8000))
+    
+    # CRITICAL: Must bind to 0.0.0.0 (not 127.0.0.1) for Railway
+    # Railway's proxy requires the app to listen on all interfaces
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=False,  # Disable reload in production
+        log_level="info"
+    )
