@@ -282,8 +282,7 @@ export async function getJournalEntryForDate(_date: string): Promise<JournalEntr
 }
 
 /**
- * GET /api/journal-entries?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
- * Fetch journal entries within a date range
+ * Get journal entries within a date range
  * Returns empty array if no entries found
  */
 export async function getJournalEntriesByDateRange(

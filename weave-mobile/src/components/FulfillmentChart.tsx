@@ -9,22 +9,13 @@
  */
 
 import React, { useState, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  Pressable,
-  PanResponder,
-  Dimensions,
-} from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Pressable, PanResponder } from 'react-native';
 import { Text, Card } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useFulfillmentData } from '@/hooks/useFulfillmentData';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { DayDetailsModal } from '@/components/dashboard/DayDetailsModal';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface FulfillmentChartProps {
   timeframe: '7d' | '2w' | '1m';
@@ -89,7 +80,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
           // If tapping same bar, open modal
           if (barIndex === selectedBarIndex) {
             const day = displayDataRef.current[barIndex];
-            if (day) {
+            if (day && day.hasData && day.fulfillment_score !== null) {
               handleTooltipPress(day.date, day.fulfillment_score);
             }
           } else {
@@ -138,6 +129,9 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
   // Calculate expected days based on timeframe
   const timeframeDays = { '7d': 7, '2w': 14, '1m': 30 };
   const expectedDays = timeframeDays[timeframe];
+
+  // Calculate bar width percentage (for consistent column widths regardless of data points)
+  const barWidthPercentage = 100 / expectedDays;
 
   // Calculate trend percentage (comparing first half vs second half)
   const calculateTrendPercentage = (): number => {
@@ -191,46 +185,44 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
   }
 
   // Always use 10 as max for consistent Y-axis scale
-  const range = 10;
 
-  // Show all data points as bars
-  const displayData = fulfillmentData;
+  // Generate full timeframe array with placeholders for missing days
+  // Ordered from most recent (left) to oldest (right)
+  const generateFullTimeframe = () => {
+    const today = new Date();
+    const result = [];
+
+    for (let i = 0; i < expectedDays; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+
+      // Find data for this date
+      const dayData = fulfillmentData.find((d) => d.date === dateStr);
+
+      result.push({
+        date: dateStr,
+        fulfillment_score: dayData ? Math.min(dayData.fulfillment_score, 10) : null, // null = no data
+        hasData: !!dayData,
+      });
+    }
+
+    return result;
+  };
+
+  const displayData = generateFullTimeframe();
 
   // Update ref so PanResponder has access to current data
   displayDataRef.current = displayData;
 
-  // Determine which date labels to show based on timeframe (reduce count for space)
-  const getDateLabelIndices = () => {
-    const totalBars = displayData.length;
+  // Note: dateLabelIndices logic removed - now showing all dates on X-axis
 
-    if (timeframe === '7d') {
-      // Show all 7 labels (day numbers only)
-      return Array.from({ length: totalBars }, (_, i) => i);
-    }
-
-    if (timeframe === '2w') {
-      // Show 4 labels with full dates (start, 1/3, 2/3, end)
-      return [0, Math.floor(totalBars / 3), Math.floor((2 * totalBars) / 3), totalBars - 1];
-    }
-
-    if (timeframe === '1m') {
-      // Show 3 labels with full dates (start, middle, end)
-      return [0, Math.floor(totalBars / 2), totalBars - 1];
-    }
-
-    return [];
-  };
-
-  const dateLabelIndices = new Set(getDateLabelIndices());
-
-  // Format date label based on timeframe
+  // Format date label - numeric format MM/DD
   const formatDateLabel = (dateStr: string) => {
     const date = new Date(dateStr);
-    if (timeframe === '7d') {
-      return date.getDate().toString();
-    }
-    // For longer timeframes, show M/D format
-    return `${date.getMonth() + 1}/${date.getDate()}`;
+    const month = date.getMonth() + 1; // getMonth() is 0-indexed
+    const day = date.getDate();
+    return `${month}/${day}`;
   };
 
   // Handler for chart layout measurement
@@ -353,43 +345,75 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
         <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
 
         {/* Chart with Y-axis */}
-        <View style={styles.chartContainer}>
-          {/* Y-axis labels */}
-          <View style={styles.yAxis}>
-            <Text variant="textXs" style={{ color: colors.text.muted }}>
-              10
-            </Text>
-            <Text variant="textXs" style={{ color: colors.text.muted }}>
-              5
-            </Text>
-            <Text variant="textXs" style={{ color: colors.text.muted }}>
-              0
-            </Text>
-          </View>
+        <View style={styles.chartWithLabelsContainer}>
+          <View style={styles.chartRow}>
+            {/* Y-axis labels - perfectly aligned */}
+            <View style={styles.yAxis}>
+              <Text variant="textXs" style={{ color: colors.text.muted }}>
+                10
+              </Text>
+              <Text variant="textXs" style={{ color: colors.text.muted }}>
+                5
+              </Text>
+              <Text variant="textXs" style={{ color: colors.text.muted }}>
+                0
+              </Text>
+            </View>
 
-          {/* Chart area */}
-          <View style={styles.chartArea}>
-            {/* Bars with drag interaction - proportional to actual data */}
-            <View
-              ref={barsContainerRef}
-              style={[
-                styles.barsContainer,
-                {
-                  // Bars only take up proportional space based on actual data
-                  width: `${(displayData.length / expectedDays) * 100}%`,
-                },
-              ]}
-              onLayout={handleChartLayout}
-              {...panResponder.panHandlers}
-            >
-              {displayData.map((day, index) => {
-                const scoreHeight = (day.fulfillment_score / range) * 100;
-                const isSelected = selectedBarIndex === index;
+            {/* Bars container */}
+            <View style={styles.chartArea}>
+              <View
+                ref={barsContainerRef}
+                style={styles.barsContainer}
+                onLayout={handleChartLayout}
+                {...panResponder.panHandlers}
+              >
+                {displayData.map((day, index) => {
+                  // Only calculate score height if there's data
+                  const hasData = day.hasData && day.fulfillment_score !== null;
+                  const score = day.fulfillment_score ?? 0;
+                  const clampedScore = hasData ? Math.max(0, Math.min(score, 10)) : 0;
+                  const scoreHeight = hasData ? Math.max(2, (clampedScore / 10) * 100) : 0;
+                  const isSelected = selectedBarIndex === index && hasData;
 
-                return (
-                  <View key={day.date} style={styles.barWrapper}>
-                    <View style={styles.barPressable}>
-                      {/* Vertical indicator line */}
+                  return (
+                    <View
+                      key={day.date}
+                      style={[styles.barColumn, { width: `${barWidthPercentage}%` }]}
+                    >
+                      {/* Tooltip - only show if there's data */}
+                      {isSelected && (
+                        <Pressable
+                          style={[styles.tooltip, { backgroundColor: colors.background.elevated }]}
+                          onPress={() => handleTooltipPress(day.date, day.fulfillment_score!)}
+                        >
+                          <View style={styles.tooltipIcon}>
+                            <Ionicons
+                              name="arrow-forward-outline"
+                              size={12}
+                              color={colors.text.muted}
+                              style={{ transform: [{ rotate: '-45deg' }] }}
+                            />
+                          </View>
+                          <Text
+                            variant="textSm"
+                            weight="semibold"
+                            numberOfLines={1}
+                            style={{ color: colors.text.primary }}
+                          >
+                            {formatDateLabel(day.date)}
+                          </Text>
+                          <Text
+                            variant="textLg"
+                            weight="bold"
+                            style={{ color: colors.text.muted, marginTop: 4 }}
+                          >
+                            {clampedScore.toFixed(1)}
+                          </Text>
+                        </Pressable>
+                      )}
+
+                      {/* Vertical indicator line - only show if there's data */}
                       {isSelected && (
                         <View
                           style={[
@@ -399,45 +423,8 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                         />
                       )}
 
-                      {/* Tooltip */}
-                      {isSelected && (
-                        <Pressable
-                          style={[styles.tooltip, { backgroundColor: colors.background.elevated }]}
-                          onPress={() => handleTooltipPress(day.date, day.fulfillment_score)}
-                        >
-                          {/* Interactive icon indicator */}
-                          <View style={styles.tooltipIcon}>
-                            <Ionicons
-                              name="arrow-forward-outline"
-                              size={12}
-                              color={colors.text.muted}
-                              style={{ transform: [{ rotate: '-45deg' }] }}
-                            />
-                          </View>
-
-                          <Text
-                            variant="textSm"
-                            weight="semibold"
-                            numberOfLines={1}
-                            style={{ color: colors.text.primary }}
-                          >
-                            {new Date(day.date).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </Text>
-                          <Text
-                            variant="textLg"
-                            weight="bold"
-                            style={{ color: colors.text.muted, marginTop: 4 }}
-                          >
-                            {day.fulfillment_score.toFixed(1)}
-                          </Text>
-                        </Pressable>
-                      )}
-
-                      {/* Bar */}
-                      <View style={styles.barContainer}>
+                      {/* Bar - only render if there's data */}
+                      {hasData && (
                         <View
                           style={[
                             styles.bar,
@@ -447,27 +434,73 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                             },
                           ]}
                         />
-                      </View>
+                      )}
                     </View>
-                  </View>
-                );
-              })}
+                  );
+                })}
+              </View>
             </View>
+          </View>
 
-            {/* X-axis date labels - only render containers for actual labels */}
-            <View style={styles.xAxisLabels}>
-              {Array.from(dateLabelIndices)
-                .sort((a, b) => a - b)
-                .map((labelIndex) => (
-                  <Text
-                    key={displayData[labelIndex].date}
-                    variant="textXs"
-                    style={{ color: colors.text.muted }}
+          {/* X-axis date labels - positioned below bars */}
+          <View style={styles.xAxisRow}>
+            <View style={styles.yAxisSpacer} />
+            {timeframe === '7d' ? (
+              // For 7d: Show all dates aligned under their bars
+              <View style={styles.xAxisLabelsComplete}>
+                {displayData.map((day) => (
+                  <View
+                    key={day.date}
+                    style={[styles.xAxisLabelItem, { width: `${barWidthPercentage}%` }]}
                   >
-                    {formatDateLabel(displayData[labelIndex].date)}
-                  </Text>
+                    {day.hasData && (
+                      <Text
+                        variant="textXs"
+                        weight="medium"
+                        numberOfLines={1}
+                        style={{ color: colors.text.secondary }}
+                      >
+                        {formatDateLabel(day.date)}
+                      </Text>
+                    )}
+                  </View>
                 ))}
-            </View>
+              </View>
+            ) : (
+              // For 2w and 1m: Show evenly spaced labels
+              <View style={styles.xAxisLabelsSpaced}>
+                {(() => {
+                  const labelsToShow: string[] = [];
+
+                  if (timeframe === '2w') {
+                    // Show ~4 evenly spaced labels for 2 weeks (0, 4, 9, 13)
+                    [0, 4, 9, 13].forEach((idx) => {
+                      if (idx < displayData.length && displayData[idx].hasData) {
+                        labelsToShow.push(displayData[idx].date);
+                      }
+                    });
+                  } else if (timeframe === '1m') {
+                    // Show ~3 evenly spaced labels for 1 month (0, 15, 29)
+                    [0, 15, 29].forEach((idx) => {
+                      if (idx < displayData.length && displayData[idx].hasData) {
+                        labelsToShow.push(displayData[idx].date);
+                      }
+                    });
+                  }
+
+                  return labelsToShow.map((date) => (
+                    <Text
+                      key={date}
+                      variant="textXs"
+                      weight="medium"
+                      style={{ color: colors.text.secondary }}
+                    >
+                      {formatDateLabel(date)}
+                    </Text>
+                  ));
+                })()}
+              </View>
+            )}
           </View>
         </View>
 
@@ -532,10 +565,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  averageContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
   averageRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -556,48 +585,52 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     opacity: 0.1,
   },
-  chartContainer: {
+  chartWithLabelsContainer: {
+    marginBottom: 16,
+  },
+  chartRow: {
     flexDirection: 'row',
-    height: 180,
-    marginBottom: 24,
     alignItems: 'flex-end',
   },
   yAxis: {
-    width: 40,
-    height: 140,
+    width: 32,
+    height: 160,
     justifyContent: 'space-between',
+    alignItems: 'flex-end',
     paddingRight: 8,
-    paddingBottom: 0,
+    paddingBottom: 2,
+  },
+  yAxisLabel: {
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
   },
   chartArea: {
     flex: 1,
   },
   barsContainer: {
-    height: 140,
+    height: 160,
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 0.5,
+    justifyContent: 'flex-start',
   },
-  barWrapper: {
-    flex: 1,
+  barColumn: {
     height: '100%',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
     position: 'relative',
   },
-  barPressable: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  barContainer: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'flex-end',
-  },
   bar: {
-    width: '100%',
-    borderTopLeftRadius: 2,
-    borderTopRightRadius: 2,
-    minHeight: 4,
+    width: '90%',
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+  },
+  xAxisRow: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  yAxisSpacer: {
+    width: 32,
   },
   indicatorLine: {
     position: 'absolute',
@@ -634,6 +667,22 @@ const styles = StyleSheet.create({
     height: 24,
     paddingHorizontal: 4,
   },
+  xAxisLabelsComplete: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  xAxisLabelsSpaced: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 4,
+  },
+  xAxisLabelItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 4,
+    overflow: 'visible',
+  },
   insightBanner: {
     marginTop: 20,
     paddingTop: 20,
@@ -646,36 +695,6 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: 'rgba(139, 92, 246, 0.1)',
     borderRadius: 12,
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: SCREEN_WIDTH - 48,
-    borderRadius: 20,
-    padding: 32,
-    alignItems: 'center',
-  },
-  modalDate: {
-    marginBottom: 24,
-  },
-  modalSection: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  modalPercentage: {
-    marginTop: 8,
-  },
-  modalButton: {
-    width: '100%',
-    marginBottom: 16,
-  },
-  modalCloseButton: {
-    paddingVertical: 8,
   },
   emptyState: {
     alignItems: 'center',

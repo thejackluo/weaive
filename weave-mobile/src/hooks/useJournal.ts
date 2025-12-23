@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fulfillmentQueryKeys } from './useFulfillmentData';
 import { userStatsQueryKeys } from './useUserStats';
 import { historyQueryKeys } from './useHistory';
+import { consistencyQueryKeys } from './useConsistencyData';
 
 const OFFLINE_QUEUE_KEY = '@weave_journal_offline_queue';
 
@@ -149,6 +150,7 @@ export function useSubmitJournal() {
 
       // Invalidate dashboard stats (auto-refresh Dashboard after journal submission)
       queryClient.invalidateQueries({ queryKey: fulfillmentQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: userStatsQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: historyQueryKeys.all });
 
@@ -214,6 +216,7 @@ export function useUpdateJournal() {
 
       // Invalidate dashboard stats (auto-refresh Dashboard after journal update)
       queryClient.invalidateQueries({ queryKey: fulfillmentQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: userStatsQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: historyQueryKeys.all });
 
