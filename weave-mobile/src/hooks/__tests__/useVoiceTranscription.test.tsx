@@ -192,7 +192,7 @@ describe('useVoiceTranscription Hook', () => {
       await result.current.transcribe({
         audioUri: 'file:///very-long-audio.m4a',
         language: 'en',
-        maxDurationSec: 300,
+        maxDuration: 300,
       });
 
       await waitFor(() => {
