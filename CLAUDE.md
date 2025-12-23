@@ -33,7 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **Navigation/Screens** (any UI screen) | **Story 1.5.1: Navigation Patterns** | `docs/stories/1-5-1-navigation-architecture.md` |
 | **API Endpoints** (FastAPI routes) | **Story 1.5.2: Backend Patterns** | `docs/stories/1-5-2-backend-standardization.md` |
 | **Database Models** (Supabase tables) | **Story 1.5.2: Backend Patterns** | `docs/stories/1-5-2-backend-standardization.md` |
-| **AI Services** (text/image/audio AI) | **Story 1.5.3: AI Service Patterns** | `docs/stories/1-5-3-ai-services-standardization.md` |
+| **AI Services** (text/image/audio AI) | **Story 1.5.3: AI Module Orchestration** | `docs/stories/1-5-3-ai-module-orchestration.md` |
 
 ### Story 1.5.1: Navigation/Frontend Patterns
 
@@ -61,6 +61,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Use when:** Creating API endpoints, database models, or backend services
 
 **Standards Include:**
+- ✅ **JWT Authentication** - ALL protected endpoints MUST use `Depends(get_current_user)` (Story 0.3)
 - ✅ API endpoint naming (`GET /api/goals`, `POST /api/completions`)
 - ✅ Pydantic request/response models (`{Resource}Create`, `{Resource}Response`)
 - ✅ Database model conventions (`snake_case`, plural tables, soft delete)
@@ -69,12 +70,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ Service layer decision tree (when to create services vs inline logic)
 
 **Quick Checklist:**
+- [ ] **USE `user: dict = Depends(get_current_user)` for ALL protected endpoints**
+- [ ] Extract user ID: `auth_user_id = user["sub"]`
 - [ ] Use `snake_case` for all API params and DB columns
 - [ ] Follow REST naming: `GET /api/{resources}`, `POST /api/{resources}`
 - [ ] Use `{data, meta}` response wrapper format
 - [ ] Create Pydantic models: `{Resource}Create`, `{Resource}Response`
 - [ ] Add error handling with standard codes (`VALIDATION_ERROR`, `NOT_FOUND`, etc.)
 - [ ] Write pytest tests in `tests/test_{resource}_api.py`
+
+**❌ NEVER use placeholder auth:** `auth_user_id = "placeholder_auth_user_id"` is a **CRITICAL SECURITY VULNERABILITY**
 
 **Templates Available:**
 - API endpoint template (FastAPI router with auth, validation, error handling)
@@ -86,40 +91,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-### Story 1.5.3: AI Services Patterns
+### Story 1.5.3: AI Module Orchestration
 
-**Use when:** Integrating AI features (text generation, image analysis, voice transcription)
+**Use when:** Implementing AI features (goal breakdown, triad planning, AI chat, insights)
+
+**Architecture:** Creates **AI Module Orchestration Layer** on top of existing provider infrastructure (Stories 0.6, 0.9)
+
+```
+Request → AIOrchestrator (NEW - which product module?)
+       → AIModule (NEW - what context to build?)
+       → AIService (EXISTS - which AI provider?)
+       → AIProvider (EXISTS - API call implementation)
+```
 
 **Standards Include:**
-- ✅ Unified `AIProviderBase` abstraction for all AI modalities
-- ✅ Text AI patterns (OpenAI GPT-4o-mini, Claude 3.7 Sonnet fallback)
-- ✅ Image AI patterns (Gemini 3.0 Flash, GPT-4o Vision fallback)
-- ✅ Audio AI patterns (AssemblyAI, Whisper API fallback)
-- ✅ Cost tracking (log to `ai_runs` table with tokens, cost, duration)
-- ✅ Rate limiting (10 text calls/hr, 5 image analyses/day, 50 transcriptions/day)
-- ✅ React Native hooks for AI services
+- ✅ AI Module abstraction (5 product modules: Onboarding Coach, Triad Planner, Daily Recap, Dream Self Advisor, AI Insights Engine)
+- ✅ AIOrchestrator for request routing (maps operation types to modules)
+- ✅ ContextBuilder for user state assembly (identity, goals, history, patterns)
+- ✅ Module Registry pattern (operation → module mapping)
+- ✅ React Native hooks: `useAIChat()`, `useImageAnalysis()`, `useVoiceTranscription()`
+- ✅ Integration with existing AIService (cost tracking, rate limiting, fallback chains)
 
 **Quick Checklist:**
-- [ ] Use `AIProviderBase` abstract class for new AI providers
-- [ ] Implement fallback chain (Primary → Secondary → Graceful degradation)
-- [ ] Log ALL AI calls to `ai_runs` table (cost tracking)
-- [ ] Check rate limits before AI calls (use `daily_aggregates` table)
-- [ ] Use standard React hooks:
-  - `useAIChat()` for text AI
-  - `useImageAnalysis()` for image AI
-  - `useVoiceTranscription()` for audio AI
-- [ ] Handle errors with standard loading states ("Generating...", "Analyzing...")
+- [ ] Use `AIOrchestrator.execute_ai_operation()` for all AI requests
+- [ ] Specify operation_type (e.g., 'generate_goal_breakdown', 'chat_response')
+- [ ] Let module build context automatically (don't manually assemble)
+- [ ] Use standard React hooks for frontend
+- [ ] DO NOT bypass orchestrator to call AIService directly
 
-**Provider Decision Tree:**
-| Use Case | Primary Provider | Fallback | Cost |
-|----------|------------------|----------|------|
-| **Text Generation** (Triad, Journal feedback) | GPT-4o-mini | Claude 3.7 Sonnet | $0.15/$0.60 per MTok |
-| **Complex Reasoning** (Onboarding, Dream Self) | Claude 3.7 Sonnet | GPT-4o | $3.00/$15.00 per MTok |
-| **Image Analysis** (Proof validation, OCR) | Gemini 3.0 Flash | GPT-4o Vision | $0.02/image |
-| **Voice Transcription** (STT) | AssemblyAI | Whisper API | $0.15/hr |
+**Module → Operation Mapping:**
+| Operation Type | Module | Epic/Story Usage |
+|----------------|--------|------------------|
+| `generate_goal_breakdown` | Onboarding Coach | Stories 1.8, 2.3 |
+| `generate_triad` | Triad Planner | Story 4.3 |
+| `generate_recap` | Daily Recap | Story 4.3 |
+| `chat_response` | Dream Self Advisor | Stories 6.1, 6.2 |
+| `generate_weekly_insights` | AI Insights Engine | Story 6.4 |
 
-**Full Spec:** `docs/stories/1-5-3-ai-services-standardization.md`
-**Developer Guide:** `docs/dev/ai-services-guide.md` (created by Story 1.5.3)
+**Full Spec:** `docs/stories/1-5-3-ai-module-orchestration.md`
+**Developer Guide:** `docs/dev/ai-services-guide.md` (sections 8-11 for module orchestration)
 
 ---
 
@@ -149,10 +159,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### ❌ What NOT to Do
 
 **DON'T:**
+- ❌ **Use placeholder authentication** - `auth_user_id = "placeholder_..."` is a CRITICAL security vulnerability
+- ❌ Skip JWT middleware (ALWAYS use `Depends(get_current_user)` for protected endpoints)
 - ❌ Create custom navigation patterns (use Story 1.5.1 structure)
 - ❌ Invent new API response formats (use `{data, meta}` wrapper)
 - ❌ Skip error handling (use standard error codes)
-- ❌ Create new AI provider patterns (use `AIProviderBase` abstraction)
+- ❌ Bypass AIOrchestrator to call AIService directly (use module orchestration pattern)
 - ❌ Ignore rate limiting (check `daily_aggregates` before AI calls)
 - ❌ Use different naming conventions (follow `snake_case` DB, `camelCase` TS)
 
@@ -168,7 +180,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Navigation Patterns:** `docs/stories/1-5-1-navigation-architecture.md`
 - **Backend Patterns:** `docs/stories/1-5-2-backend-standardization.md` + `docs/dev/backend-patterns-guide.md`
-- **AI Service Patterns:** `docs/stories/1-5-3-ai-services-standardization.md` + `docs/dev/ai-services-guide.md`
+- **API Endpoint Registry:** `docs/dev/backend-api-integration.md` ⚡ NEW (28 endpoints mapped)
+- **AI Module Orchestration:** `docs/stories/1-5-3-ai-module-orchestration.md` + `docs/dev/ai-services-guide.md`
 - **Architecture Rules:** `docs/architecture/implementation-patterns-consistency-rules.md`
 
 ---
