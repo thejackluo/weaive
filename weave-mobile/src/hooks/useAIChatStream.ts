@@ -161,7 +161,7 @@ export function useAIChatStream(): UseAIChatStreamReturn {
           headers,
           body: JSON.stringify({
             message,
-            conversation_id: conversationId,
+            conversation_id: conversationId || null,
           }),
         });
 
