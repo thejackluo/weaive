@@ -117,6 +117,8 @@ export default [
       'tailwind.config.js',  // CommonJS config file
       'jest.setup.js',  // Jest setup with class field syntax
       'src/_archive/**',  // Archived code from old implementations
+      'src/hooks/__tests__/**',  // Skip test files (JSX parsing issues)
+      'e2e/**',  // Skip e2e test files
     ],
   },
 ];
