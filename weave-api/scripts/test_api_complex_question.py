@@ -26,14 +26,14 @@ load_dotenv()
 
 def test_complex_question():
     """Test AI service with a complex factual question."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("  🧪 Testing AI Service with Complex Question")
-    print("="*70)
+    print("=" * 70)
 
     # Initialize AI service
-    openai_key = os.getenv('OPENAI_API_KEY')
-    anthropic_key = os.getenv('ANTHROPIC_API_KEY')
-    aws_region = os.getenv('AWS_REGION', 'us-east-1')
+    openai_key = os.getenv("OPENAI_API_KEY")
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
 
     db = get_supabase_client()
 
@@ -44,7 +44,7 @@ def test_complex_question():
             db=db,
             bedrock_region=aws_region,  # Fixed: using correct parameter name
             openai_key=openai_key,
-            anthropic_key=anthropic_key
+            anthropic_key=anthropic_key,
         )
         print("\n✅ AIService initialized successfully")
     except Exception as e:
@@ -57,38 +57,38 @@ def test_complex_question():
         {
             "question": "What is the capital of France?",
             "expected_contains": ["Paris", "paris"],
-            "description": "Simple factual question"
+            "description": "Simple factual question",
         },
         {
             "question": "Explain the difference between machine learning and deep learning in one sentence.",
             "expected_contains": ["neural", "network", "learn", "model"],
-            "description": "Complex conceptual question"
+            "description": "Complex conceptual question",
         },
         {
             "question": "If I have 3 apples and buy 2 more, then give 1 to my friend, how many do I have?",
             "expected_contains": ["4", "four"],
-            "description": "Multi-step reasoning question"
-        }
+            "description": "Multi-step reasoning question",
+        },
     ]
 
     passed = 0
     failed = 0
 
     for i, test_case in enumerate(test_cases, 1):
-        print(f"\n{'─'*70}")
+        print(f"\n{'─' * 70}")
         print(f"  Test {i}/{len(test_cases)}: {test_case['description']}")
-        print(f"{'─'*70}")
+        print(f"{'─' * 70}")
         print(f"\n📝 Question: {test_case['question']}")
 
         try:
             # Generate response
             # Note: Using a test user ID (should exist in database)
             response = service.generate(
-                user_id='test-user-id',
-                user_role='admin',  # Admin = unlimited rate limit
-                user_tier='free',
-                module='dream_self',  # Dream Self module for Q&A
-                prompt=test_case['question'],
+                user_id="test-user-id",
+                user_role="admin",  # Admin = unlimited rate limit
+                user_tier="free",
+                module="dream_self",  # Dream Self module for Q&A
+                prompt=test_case["question"],
                 max_tokens=150,
             )
 
@@ -101,7 +101,9 @@ def test_complex_question():
 
             # Validate response contains expected keywords
             content_lower = response.content.lower()
-            matches = any(keyword.lower() in content_lower for keyword in test_case['expected_contains'])
+            matches = any(
+                keyword.lower() in content_lower for keyword in test_case["expected_contains"]
+            )
 
             if matches:
                 print("\n✅ PASS: Response contains expected keywords")
@@ -116,9 +118,9 @@ def test_complex_question():
             failed += 1
 
     # Summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("  📊 TEST SUMMARY")
-    print("="*70)
+    print("=" * 70)
     print(f"\n✅ Passed: {passed}/{len(test_cases)}")
     print(f"❌ Failed: {failed}/{len(test_cases)}")
 
@@ -130,6 +132,6 @@ def test_complex_question():
         return False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     success = test_complex_question()
     sys.exit(0 if success else 1)

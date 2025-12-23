@@ -196,7 +196,9 @@ class VisionService:
                 logger.warning(f"⚠️ {e.provider} failed: {e.message}")
 
                 if not e.retryable:
-                    logger.error(f"Non-retryable error from {e.provider}, skipping remaining providers")
+                    logger.error(
+                        f"Non-retryable error from {e.provider}, skipping remaining providers"
+                    )
                     break
 
                 continue

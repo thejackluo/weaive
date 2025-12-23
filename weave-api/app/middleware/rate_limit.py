@@ -150,11 +150,7 @@ async def get_or_create_daily_aggregate(
         "ai_vision_count": 0,
     }
 
-    response = (
-        supabase.table("daily_aggregates")
-        .insert(new_record)
-        .execute()
-    )
+    response = supabase.table("daily_aggregates").insert(new_record).execute()
 
     if not response.data:
         raise RuntimeError(f"Failed to create daily_aggregate for {user_id} on {local_date}")
@@ -321,9 +317,9 @@ async def increment_ai_vision_usage(
 
         new_count = agg.get("ai_vision_count", 0) + 1
 
-        supabase.table("daily_aggregates").update(
-            {"ai_vision_count": new_count}
-        ).eq("user_id", str(user_id)).eq("local_date", local_date).execute()
+        supabase.table("daily_aggregates").update({"ai_vision_count": new_count}).eq(
+            "user_id", str(user_id)
+        ).eq("local_date", local_date).execute()
 
 
 async def get_upload_usage(

@@ -2,6 +2,7 @@
 Quick script to create user_profile for an existing auth user.
 Run with: uv run python create_user_profile.py
 """
+
 import os
 
 from supabase import create_client
@@ -14,10 +15,7 @@ if not AUTH_USER_ID:
     exit(1)
 
 # Connect to Supabase
-supabase = create_client(
-    os.environ["SUPABASE_URL"],
-    os.environ["SUPABASE_SERVICE_KEY"]
-)
+supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
 
 # Check if user_profile already exists
 existing = supabase.table("user_profiles").select("*").eq("auth_user_id", AUTH_USER_ID).execute()
@@ -28,11 +26,17 @@ if existing.data:
     exit(0)
 
 # Create user_profile
-result = supabase.table("user_profiles").insert({
-    "auth_user_id": AUTH_USER_ID,
-    "timezone": "America/Los_Angeles",
-    "locale": "en-US",
-}).execute()
+result = (
+    supabase.table("user_profiles")
+    .insert(
+        {
+            "auth_user_id": AUTH_USER_ID,
+            "timezone": "America/Los_Angeles",
+            "locale": "en-US",
+        }
+    )
+    .execute()
+)
 
 if result.data:
     print(f"✅ Created user_profile for {AUTH_USER_ID}")

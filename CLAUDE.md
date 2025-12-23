@@ -237,6 +237,41 @@ uv add fastapi supabase anthropic
 uv run ruff check .
 ```
 
+### Production Deployment (Railway)
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login to Railway
+railway login
+
+# Link to production project (one-time setup)
+cd weave-api
+railway link <project-id>
+
+# Deploy to production
+railway up
+
+# View production logs
+railway logs
+
+# View deployment status
+railway status
+
+# Rollback to previous deployment
+railway deployments
+railway deployment rollback <deployment-id>
+
+# Manage environment variables
+railway variables
+railway variables set SUPABASE_URL=https://xxx.supabase.co
+```
+
+**Production URL:** `https://weave-api-production.railway.app`
+
+**Automatic Deployment:** Pushes to `main` branch automatically trigger Railway deployment via GitHub Actions (`.github/workflows/railway-deploy.yml`)
+
 ### Documentation Viewer
 
 ```bash
@@ -516,7 +551,19 @@ weavelight/
 │       └── theme/               # ThemeContext and hooks
 │
 ├── docs/
-│   ├── pages/                   # 📁 Page-based implementation guides (NEW)
+│   ├── production/              # 📁 Production deployment, compliance, legal (NEW)
+│   │   ├── README.md            # Production docs overview
+│   │   ├── PRODUCTION_DEPLOYMENT_MANUAL.md  # Step-by-step deployment guide
+│   │   ├── CODE_REVIEW_FIXES_SUMMARY.md     # Code review fixes log (Story 9.1)
+│   │   ├── production-readiness-checklist.md # Pre-launch checklist
+│   │   ├── test-validation-guide.md          # How to verify all tests pass
+│   │   ├── compliance-legal-checklist.md     # Compliance and legal requirements
+│   │   ├── pre-deployment-verification.md    # Automated verification guide
+│   │   └── scripts/             # Automated verification scripts
+│   │       ├── pre-deployment-verification.sh
+│   │       └── run-all-tests.sh
+│   │
+│   ├── pages/                   # 📁 Page-based implementation guides
 │   │   ├── thread-page.md       # Epic 3 + 4 (Daily actions + reflection)
 │   │   ├── dashboard-page.md    # Epic 2 + 5 (Goals + progress viz)
 │   │   ├── weave-ai-page.md     # Epic 6 (AI coaching)
@@ -639,6 +686,11 @@ weavelight/
 | Architecture decisions | `docs/architecture/core-architectural-decisions.md` | Tech stack, patterns, rationale |
 | Database schema | `docs/idea/backend.md` (lines 200-800) | Complete schema with relationships |
 | API patterns | `docs/architecture/implementation-patterns-consistency-rules.md` | Code conventions and guardrails |
+| **Production deployment** | `docs/production/PRODUCTION_DEPLOYMENT_MANUAL.md` | Step-by-step Railway deployment guide (Story 9.1) |
+| **Production readiness check** | `docs/production/production-readiness-checklist.md` | Complete pre-launch checklist (code, security, compliance, legal) |
+| **Verifying all tests pass** | `docs/production/test-validation-guide.md` | How to run and verify backend + mobile + RLS tests |
+| **Compliance & legal** | `docs/production/compliance-legal-checklist.md` | Privacy policy, ToS, GDPR, CCPA, App Store compliance |
+| **Pre-deployment verification** | `docs/production/scripts/pre-deployment-verification.sh` | Automated script to verify production readiness |
 | **Integrating AI services** | `docs/dev/ai-service-integration-guide.md` | Environment config, provider abstraction, fallback chains |
 | Design system usage | `docs/dev/design-system-guide.md` | Components, tokens, examples |
 | Git workflow | `docs/dev/git-workflow-guide.md` | Branching, commits, PRs |

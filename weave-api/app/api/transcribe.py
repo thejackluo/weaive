@@ -84,8 +84,10 @@ def get_user_profile(user: dict, supabase: Client) -> tuple[UUID, str]:
 # PYDANTIC MODELS
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TranscribeResponse(BaseModel):
     """POST /api/transcribe response"""
+
     transcript: str
     confidence: float = Field(..., ge=0.0, le=1.0)
     duration_sec: int
@@ -96,6 +98,7 @@ class TranscribeResponse(BaseModel):
 
 class CaptureResponse(BaseModel):
     """GET /api/captures/{capture_id} response"""
+
     id: str
     user_id: str
     type: str
@@ -111,12 +114,14 @@ class CaptureResponse(BaseModel):
 
 class ApiResponse(BaseModel):
     """Standard API response wrapper"""
+
     data: dict
     meta: dict = Field(default_factory=lambda: {"timestamp": datetime.utcnow().isoformat()})
 
 
 class ErrorResponse(BaseModel):
     """Standard error response"""
+
     error: dict
 
 
@@ -124,7 +129,10 @@ class ErrorResponse(BaseModel):
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════
 
-async def check_rate_limit(user_id: UUID, supabase, user_timezone: str = "UTC", limits: dict = None):
+
+async def check_rate_limit(
+    user_id: UUID, supabase, user_timezone: str = "UTC", limits: dict = None
+):
     """
     Check STT rate limits for user in their local timezone.
 
@@ -155,12 +163,14 @@ async def check_rate_limit(user_id: UUID, supabase, user_timezone: str = "UTC", 
     local_date = user_now.date().isoformat()
 
     # Query daily_aggregates for today's usage (user's local day)
-    result = supabase.table('daily_aggregates') \
-        .select('stt_request_count, stt_duration_minutes') \
-        .eq('user_id', str(user_id)) \
-        .eq('local_date', local_date) \
-        .maybe_single() \
+    result = (
+        supabase.table("daily_aggregates")
+        .select("stt_request_count, stt_duration_minutes")
+        .eq("user_id", str(user_id))
+        .eq("local_date", local_date)
+        .maybe_single()
         .execute()
+    )
 
     # Handle None result (query failed or no data)
     if result is None:
@@ -169,15 +179,15 @@ async def check_rate_limit(user_id: UUID, supabase, user_timezone: str = "UTC", 
         return
 
     if result.data:
-        request_count = result.data.get('stt_request_count', 0)
-        duration_minutes = result.data.get('stt_duration_minutes', 0)
+        request_count = result.data.get("stt_request_count", 0)
+        duration_minutes = result.data.get("stt_duration_minutes", 0)
 
         # Calculate next reset time (midnight in user's timezone)
         tomorrow = user_now.date() + timedelta(days=1)
         reset_time = user_tz.localize(datetime.combine(tomorrow, datetime.min.time())).isoformat()
 
         # Check request limit
-        if request_count >= limits['max_requests']:
+        if request_count >= limits["max_requests"]:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail={
@@ -185,13 +195,13 @@ async def check_rate_limit(user_id: UUID, supabase, user_timezone: str = "UTC", 
                         "code": "STT_RATE_LIMIT_EXCEEDED",
                         "message": f"Daily transcription limit reached ({request_count}/{limits['max_requests']} requests)",
                         "retryable": False,
-                        "retryAfter": reset_time
+                        "retryAfter": reset_time,
                     }
-                }
+                },
             )
 
         # Check duration limit
-        if duration_minutes >= limits['max_minutes']:
+        if duration_minutes >= limits["max_minutes"]:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail={
@@ -199,9 +209,9 @@ async def check_rate_limit(user_id: UUID, supabase, user_timezone: str = "UTC", 
                         "code": "STT_RATE_LIMIT_EXCEEDED",
                         "message": f"Daily audio duration limit reached ({duration_minutes:.1f}/{limits['max_minutes']} minutes)",
                         "retryable": False,
-                        "retryAfter": reset_time
+                        "retryAfter": reset_time,
                     }
-                }
+                },
             )
 
 
@@ -232,22 +242,28 @@ async def increment_usage(user_id: str, duration_sec: int, supabase, user_timezo
     # Call PostgreSQL function for atomic increment
     # This function handles INSERT OR UPDATE atomically
     try:
-        supabase.rpc('increment_stt_usage', {
-            'p_user_id': user_id,
-            'p_local_date': local_date,
-            'p_duration_minutes': duration_minutes
-        }).execute()
+        supabase.rpc(
+            "increment_stt_usage",
+            {
+                "p_user_id": user_id,
+                "p_local_date": local_date,
+                "p_duration_minutes": duration_minutes,
+            },
+        ).execute()
     except Exception as e:
         # Fallback to safe upsert if RPC function doesn't exist yet
         logger.warning(f"RPC function not found, using fallback upsert: {e}")
 
         # Supabase upsert with onConflict (safe, no SQL injection)
-        supabase.table('daily_aggregates').upsert({
-            'user_id': user_id,
-            'local_date': local_date,
-            'stt_request_count': 1,
-            'stt_duration_minutes': duration_minutes
-        }, on_conflict='user_id,local_date').execute()
+        supabase.table("daily_aggregates").upsert(
+            {
+                "user_id": user_id,
+                "local_date": local_date,
+                "stt_request_count": 1,
+                "stt_duration_minutes": duration_minutes,
+            },
+            on_conflict="user_id,local_date",
+        ).execute()
 
 
 async def log_ai_run(
@@ -256,7 +272,7 @@ async def log_ai_run(
     duration_sec: int,
     cost_usd: float,
     confidence_score: float,
-    supabase
+    supabase,
 ) -> str:
     """
     Log STT request to ai_runs table for cost tracking.
@@ -278,38 +294,46 @@ async def log_ai_run(
         ai_runs record ID
     """
     # Map STT provider to correct model and provider names
-    if provider == 'whisper':
-        model_name = 'whisper-1'
-        provider_name = 'openai'
-    elif provider == 'assemblyai':
-        model_name = 'assemblyai'
-        provider_name = 'assemblyai'  # ✅ FIXED: AssemblyAI is separate service
+    if provider == "whisper":
+        model_name = "whisper-1"
+        provider_name = "openai"
+    elif provider == "assemblyai":
+        model_name = "assemblyai"
+        provider_name = "assemblyai"  # ✅ FIXED: AssemblyAI is separate service
     else:  # 'manual' or unknown
-        model_name = 'manual'
-        provider_name = 'manual'
+        model_name = "manual"
+        provider_name = "manual"
 
-    result = supabase.table('ai_runs').insert({
-        'user_id': user_id,
-        'module': 'transcription',
-        'input_hash': f'audio_{duration_sec}_{confidence_score}',
-        'prompt_version': 'stt-v1.0',
-        'model': model_name,
-        'provider': provider_name,
-        'params_json': {
-            'stt_provider': provider,  # Original provider name for reference
-            'audio_duration_sec': duration_sec,
-            'confidence_score': confidence_score
-        },
-        'status': 'success',
-        'cost_estimate': cost_usd,
-        'input_tokens': 0,  # STT uses duration-based pricing, not tokens
-        'output_tokens': 0,
-    }).execute()
+    result = (
+        supabase.table("ai_runs")
+        .insert(
+            {
+                "user_id": user_id,
+                "module": "transcription",
+                "input_hash": f"audio_{duration_sec}_{confidence_score}",
+                "prompt_version": "stt-v1.0",
+                "model": model_name,
+                "provider": provider_name,
+                "params_json": {
+                    "stt_provider": provider,  # Original provider name for reference
+                    "audio_duration_sec": duration_sec,
+                    "confidence_score": confidence_score,
+                },
+                "status": "success",
+                "cost_estimate": cost_usd,
+                "input_tokens": 0,  # STT uses duration-based pricing, not tokens
+                "output_tokens": 0,
+            }
+        )
+        .execute()
+    )
 
-    return result.data[0]['id']
+    return result.data[0]["id"]
 
 
-async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "audio") -> Tuple[bytes, Optional[str]]:
+async def convert_audio_to_mp3(
+    audio_bytes: bytes, original_filename: str = "audio"
+) -> Tuple[bytes, Optional[str]]:
     """
     Convert audio to MP3 or WAV format using ffmpeg.
 
@@ -352,8 +376,8 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
 
         # Create temp files - use delete=False and close explicitly for Windows compatibility
         # Windows doesn't allow other processes to open files while Python has them open
-        input_file = tempfile.NamedTemporaryFile(suffix='.m4a', delete=False)
-        output_file = tempfile.NamedTemporaryFile(suffix='.mp3', delete=False)
+        input_file = tempfile.NamedTemporaryFile(suffix=".m4a", delete=False)
+        output_file = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
 
         input_path = input_file.name
         output_path = output_file.name
@@ -372,6 +396,7 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
 
             # Verify temp file was created and has data
             import os
+
             if not os.path.exists(input_path):
                 logger.error(f"[FFMPEG] Temp file doesn't exist after writing: {input_path}")
                 return audio_bytes, "Failed to create temp file"
@@ -380,7 +405,9 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
             logger.info(f"[FFMPEG] Temp file verified: {input_path} ({file_size} bytes)")
 
             if file_size != len(audio_bytes):
-                logger.error(f"[FFMPEG] Size mismatch! Expected {len(audio_bytes)}, got {file_size}")
+                logger.error(
+                    f"[FFMPEG] Size mismatch! Expected {len(audio_bytes)}, got {file_size}"
+                )
                 return audio_bytes, f"Temp file size mismatch: {file_size} != {len(audio_bytes)}"
 
             logger.info(f"[FFMPEG] Input temp file ready: {input_path}")
@@ -398,21 +425,31 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
         try:
             # Convert using ffmpeg (optimized for speech transcription)
             ffmpeg_cmd = [
-                ffmpeg_exe,                # Use bundled ffmpeg binary
-                '-i', input_path,          # Input file
-                '-codec:a', 'libmp3lame',  # MP3 encoder
-                '-qscale:a', '2',          # High quality (2 = ~192kbps)
-                '-ar', '16000',            # 16kHz sample rate (optimal for speech)
-                '-ac', '1',                # Mono (reduces file size, good for speech)
-                '-y',                      # Overwrite output without asking
-                '-loglevel', 'error',      # Only show errors, not version info
-                output_path                # Output file
+                ffmpeg_exe,  # Use bundled ffmpeg binary
+                "-i",
+                input_path,  # Input file
+                "-codec:a",
+                "libmp3lame",  # MP3 encoder
+                "-qscale:a",
+                "2",  # High quality (2 = ~192kbps)
+                "-ar",
+                "16000",  # 16kHz sample rate (optimal for speech)
+                "-ac",
+                "1",  # Mono (reduces file size, good for speech)
+                "-y",  # Overwrite output without asking
+                "-loglevel",
+                "error",  # Only show errors, not version info
+                output_path,  # Output file
             ]
 
-            logger.info(f"[FFMPEG] Running command: {' '.join(ffmpeg_cmd[:3])}... (full command logged at debug level)")
+            logger.info(
+                f"[FFMPEG] Running command: {' '.join(ffmpeg_cmd[:3])}... (full command logged at debug level)"
+            )
             logger.debug(f"[FFMPEG] Full command: {' '.join(ffmpeg_cmd)}")
 
-            result = subprocess.run(ffmpeg_cmd, capture_output=True, timeout=AUDIO_CONVERSION_TIMEOUT_SEC, text=True)
+            result = subprocess.run(
+                ffmpeg_cmd, capture_output=True, timeout=AUDIO_CONVERSION_TIMEOUT_SEC, text=True
+            )
 
             # Check if conversion succeeded
             if result.returncode != 0:
@@ -425,24 +462,33 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
                 logger.info("[FFMPEG] Trying WAV fallback (no encoding required)...")
 
                 import os
-                wav_output = output_path.replace('.mp3', '.wav')
+
+                wav_output = output_path.replace(".mp3", ".wav")
                 temp_files_to_cleanup.append(wav_output)  # Track WAV file for cleanup
 
                 wav_cmd = [
                     ffmpeg_exe,
-                    '-i', input_path,
-                    '-ar', '16000',            # 16kHz sample rate
-                    '-ac', '1',                # Mono
-                    '-y',
-                    '-loglevel', 'error',
-                    wav_output
+                    "-i",
+                    input_path,
+                    "-ar",
+                    "16000",  # 16kHz sample rate
+                    "-ac",
+                    "1",  # Mono
+                    "-y",
+                    "-loglevel",
+                    "error",
+                    wav_output,
                 ]
 
                 logger.debug(f"[FFMPEG] WAV command: {' '.join(wav_cmd)}")
-                wav_result = subprocess.run(wav_cmd, capture_output=True, timeout=AUDIO_CONVERSION_TIMEOUT_SEC, text=True)
+                wav_result = subprocess.run(
+                    wav_cmd, capture_output=True, timeout=AUDIO_CONVERSION_TIMEOUT_SEC, text=True
+                )
 
                 if wav_result.returncode != 0:
-                    logger.error(f"[FFMPEG] WAV fallback also failed (exit code {wav_result.returncode})")
+                    logger.error(
+                        f"[FFMPEG] WAV fallback also failed (exit code {wav_result.returncode})"
+                    )
                     logger.error(f"[FFMPEG] WAV STDERR: {wav_result.stderr}")
                     # ✅ Cleanup handled by finally block
                     error_summary = result.stderr[:200] if result.stderr else "Unknown ffmpeg error"
@@ -453,11 +499,15 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
                 output_path = wav_output  # Use WAV file (cleanup handled by finally)
 
             # Read converted audio
-            with open(output_path, 'rb') as f:
+            with open(output_path, "rb") as f:
                 converted_bytes = f.read()
 
-            logger.info(f"[FFMPEG] ✅ Conversion successful: {len(audio_bytes)} → {len(converted_bytes)} bytes")
-            logger.info(f"[FFMPEG] Compression ratio: {len(converted_bytes)/len(audio_bytes)*100:.1f}%")
+            logger.info(
+                f"[FFMPEG] ✅ Conversion successful: {len(audio_bytes)} → {len(converted_bytes)} bytes"
+            )
+            logger.info(
+                f"[FFMPEG] Compression ratio: {len(converted_bytes) / len(audio_bytes) * 100:.1f}%"
+            )
 
             return converted_bytes, None
 
@@ -472,6 +522,7 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
         finally:
             # ✅ GUARANTEED cleanup: Always delete temp files, even on crash/timeout
             import os
+
             for temp_file in temp_files_to_cleanup:
                 try:
                     if os.path.exists(temp_file):
@@ -490,6 +541,7 @@ async def convert_audio_to_mp3(audio_bytes: bytes, original_filename: str = "aud
 # API ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════
 
+
 @router.post("/transcribe", response_model=ApiResponse, status_code=status.HTTP_200_OK)
 async def transcribe_audio(
     audio: UploadFile = File(..., description="Audio file (MP3, M4A, WAV, FLAC, OGG)"),
@@ -497,8 +549,8 @@ async def transcribe_audio(
     capture_id: Optional[str] = Form(None, description="Optional capture ID to link"),
     subtask_instance_id: Optional[str] = Form(None, description="Optional subtask instance ID"),
     goal_id: Optional[str] = Form(None, description="Optional goal ID"),
-    user = Depends(get_current_user),
-    supabase = Depends(get_supabase_client)
+    user=Depends(get_current_user),
+    supabase=Depends(get_supabase_client),
 ):
     """
     Transcribe audio file with provider fallback chain.
@@ -547,13 +599,22 @@ async def transcribe_audio(
                     "error": {
                         "code": "INVALID_LANGUAGE",
                         "message": f"Language '{language}' not supported. Use ISO 639-1 codes (e.g., 'en', 'es', 'fr')",
-                        "retryable": False
+                        "retryable": False,
                     }
-                }
+                },
             )
 
         # Validate audio format
-        allowed_types = ['audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/wav', 'audio/wave', 'audio/flac', 'audio/ogg', 'audio/m4a']
+        allowed_types = [
+            "audio/mpeg",
+            "audio/mp4",
+            "audio/x-m4a",
+            "audio/wav",
+            "audio/wave",
+            "audio/flac",
+            "audio/ogg",
+            "audio/m4a",
+        ]
         if audio.content_type not in allowed_types:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -561,9 +622,9 @@ async def transcribe_audio(
                     "error": {
                         "code": "INVALID_AUDIO_FORMAT",
                         "message": "Only MP3, M4A, WAV, FLAC, and OGG formats supported",
-                        "retryable": False
+                        "retryable": False,
                     }
-                }
+                },
             )
 
         # Read audio file
@@ -573,16 +634,18 @@ async def transcribe_audio(
         logger.info(f"[TRANSCRIBE] Read audio file: {len(audio_bytes)} bytes")
         if len(audio_bytes) == 0:
             logger.error("[TRANSCRIBE] ❌ Audio read returned EMPTY bytes!")
-            logger.error(f"[TRANSCRIBE] UploadFile details: filename={audio.filename}, content_type={audio.content_type}")
+            logger.error(
+                f"[TRANSCRIBE] UploadFile details: filename={audio.filename}, content_type={audio.content_type}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={
                     "error": {
                         "code": "EMPTY_AUDIO_FILE",
                         "message": "Audio file is empty or could not be read",
-                        "retryable": False
+                        "retryable": False,
                     }
-                }
+                },
             )
 
         # Log first 16 bytes (magic bytes) to verify audio format
@@ -596,10 +659,10 @@ async def transcribe_audio(
                 detail={
                     "error": {
                         "code": "AUDIO_TOO_LARGE",
-                        "message": f"Audio file too large (max {MAX_AUDIO_FILE_SIZE_MB}MB, got {len(audio_bytes) / (1024*1024):.1f}MB)",
-                        "retryable": False
+                        "message": f"Audio file too large (max {MAX_AUDIO_FILE_SIZE_MB}MB, got {len(audio_bytes) / (1024 * 1024):.1f}MB)",
+                        "retryable": False,
                     }
-                }
+                },
             )
 
         # Check rate limits (using user's timezone for accurate daily limits)
@@ -607,14 +670,15 @@ async def transcribe_audio(
 
         # Upload to Supabase Storage
         from datetime import datetime
+
         timestamp = int(datetime.now().timestamp() * 1000)
         storage_key = f"{user_id}/voice_{timestamp}.m4a"
 
         try:
-            supabase.storage.from_('captures').upload(
+            supabase.storage.from_("captures").upload(
                 path=storage_key,
                 file=audio_bytes,
-                file_options={"content-type": audio.content_type}
+                file_options={"content-type": audio.content_type},
             )
         except Exception as upload_error:
             logger.error(f"Storage upload failed: {str(upload_error)}")
@@ -624,9 +688,9 @@ async def transcribe_audio(
                     "error": {
                         "code": "UPLOAD_FAILED",
                         "message": "Failed to upload audio to storage",
-                        "retryable": True
+                        "retryable": True,
                     }
-                }
+                },
             )
 
         # Convert audio to MP3 for STT compatibility (fixes iOS/Expo format issues)
@@ -634,7 +698,9 @@ async def transcribe_audio(
         converted_bytes, conversion_error = await convert_audio_to_mp3(audio_bytes, audio.filename)
 
         if conversion_error:
-            logger.warning(f"[TRANSCRIBE] Audio conversion failed: {conversion_error}, using original bytes")
+            logger.warning(
+                f"[TRANSCRIBE] Audio conversion failed: {conversion_error}, using original bytes"
+            )
             # Continue with original bytes (might still work for some formats)
         else:
             logger.info("[TRANSCRIBE] Audio converted successfully, using MP3 for transcription")
@@ -645,12 +711,13 @@ async def transcribe_audio(
         logger.info(f"Provider status: {stt_service.get_provider_status()}")
 
         transcription_result: Optional[TranscriptionResult] = await stt_service.transcribe(
-            audio_file=audio_bytes,
-            language=language
+            audio_file=audio_bytes, language=language
         )
 
         if transcription_result:
-            logger.info(f"Transcription successful: provider={transcription_result.provider}, length={len(transcription_result.transcript)}")
+            logger.info(
+                f"Transcription successful: provider={transcription_result.provider}, length={len(transcription_result.transcript)}"
+            )
         else:
             logger.warning("Transcription returned None - all providers failed or unavailable")
 
@@ -659,30 +726,33 @@ async def transcribe_audio(
         from datetime import datetime
 
         import pytz
+
         user_tz = pytz.timezone(user_timezone)
         local_date = datetime.now(user_tz).date().isoformat()
 
         capture_data = {
-            'user_id': str(user_id),  # Convert UUID to string for JSON serialization
-            'type': 'audio',
-            'storage_key': storage_key,
-            'content_text': transcription_result.transcript if transcription_result else None,
-            'duration_sec': transcription_result.duration_sec if transcription_result else None,
-            'goal_id': goal_id,
-            'subtask_instance_id': subtask_instance_id,
-            'local_date': local_date  # User's local date, not server's
+            "user_id": str(user_id),  # Convert UUID to string for JSON serialization
+            "type": "audio",
+            "storage_key": storage_key,
+            "content_text": transcription_result.transcript if transcription_result else None,
+            "duration_sec": transcription_result.duration_sec if transcription_result else None,
+            "goal_id": goal_id,
+            "subtask_instance_id": subtask_instance_id,
+            "local_date": local_date,  # User's local date, not server's
         }
 
         if capture_id:
             # Update existing capture
-            supabase.table('captures').update(capture_data).eq('id', capture_id).execute()
+            supabase.table("captures").update(capture_data).eq("id", capture_id).execute()
         else:
             # Create new capture
-            supabase.table('captures').insert(capture_data).execute()
+            supabase.table("captures").insert(capture_data).execute()
 
         # Increment usage counters (using user's timezone for correct daily tracking)
         if transcription_result:
-            await increment_usage(str(user_id), transcription_result.duration_sec, supabase, user_timezone)
+            await increment_usage(
+                str(user_id), transcription_result.duration_sec, supabase, user_timezone
+            )
 
             # Log to ai_runs (re-enabled after adding 'transcription' to ai_module enum)
             await log_ai_run(
@@ -691,13 +761,12 @@ async def transcribe_audio(
                 duration_sec=transcription_result.duration_sec,
                 cost_usd=transcription_result.cost_usd,
                 confidence_score=transcription_result.confidence,
-                supabase=supabase
+                supabase=supabase,
             )
 
         # Generate signed URL for audio playback (configured expiration)
-        signed_url = supabase.storage.from_('captures').create_signed_url(
-            path=storage_key,
-            expires_in=SIGNED_URL_EXPIRATION_SEC
+        signed_url = supabase.storage.from_("captures").create_signed_url(
+            path=storage_key, expires_in=SIGNED_URL_EXPIRATION_SEC
         )
 
         # Build response
@@ -707,7 +776,7 @@ async def transcribe_audio(
             "duration_sec": transcription_result.duration_sec if transcription_result else 0,
             "language": language,
             "provider": transcription_result.provider if transcription_result else "manual",
-            "audio_url": signed_url['signedURL']
+            "audio_url": signed_url["signedURL"],
         }
 
         return ApiResponse(data=response_data)
@@ -722,17 +791,15 @@ async def transcribe_audio(
                 "error": {
                     "code": "STT_ALL_PROVIDERS_FAILED",
                     "message": "Transcription failed. Audio saved. Retry?",
-                    "retryable": True
+                    "retryable": True,
                 }
-            }
+            },
         )
 
 
 @router.get("/captures/{capture_id}", response_model=ApiResponse, status_code=status.HTTP_200_OK)
 async def get_capture(
-    capture_id: UUID,
-    user = Depends(get_current_user),
-    supabase = Depends(get_supabase_client)
+    capture_id: UUID, user=Depends(get_current_user), supabase=Depends(get_supabase_client)
 ):
     """
     Retrieve audio capture with signed URL.
@@ -754,38 +821,37 @@ async def get_capture(
         user_id, _ = get_user_profile(user, supabase)
 
         # Fetch capture (RLS enforces user ownership)
-        result = supabase.table('captures').select('*').eq('id', str(capture_id)).single().execute()
+        result = supabase.table("captures").select("*").eq("id", str(capture_id)).single().execute()
 
         if not result.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail={"error": {"code": "CAPTURE_NOT_FOUND", "message": "Capture not found"}}
+                detail={"error": {"code": "CAPTURE_NOT_FOUND", "message": "Capture not found"}},
             )
 
         capture = result.data
 
         # Generate signed URL for audio playback (configured expiration)
         signed_url = None
-        if capture['storage_key']:
-            signed_result = supabase.storage.from_('captures').create_signed_url(
-                path=capture['storage_key'],
-                expires_in=SIGNED_URL_EXPIRATION_SEC
+        if capture["storage_key"]:
+            signed_result = supabase.storage.from_("captures").create_signed_url(
+                path=capture["storage_key"], expires_in=SIGNED_URL_EXPIRATION_SEC
             )
-            signed_url = signed_result['signedURL']
+            signed_url = signed_result["signedURL"]
 
         # Build response
         response_data = {
-            "id": capture['id'],
-            "user_id": capture['user_id'],
-            "type": capture['type'],
-            "storage_key": capture['storage_key'],
-            "content_text": capture.get('content_text'),
-            "duration_sec": capture.get('duration_sec'),
-            "goal_id": capture.get('goal_id'),
-            "subtask_instance_id": capture.get('subtask_instance_id'),
-            "local_date": capture['local_date'],
-            "created_at": capture['created_at'],
-            "audio_url": signed_url
+            "id": capture["id"],
+            "user_id": capture["user_id"],
+            "type": capture["type"],
+            "storage_key": capture["storage_key"],
+            "content_text": capture.get("content_text"),
+            "duration_sec": capture.get("duration_sec"),
+            "goal_id": capture.get("goal_id"),
+            "subtask_instance_id": capture.get("subtask_instance_id"),
+            "local_date": capture["local_date"],
+            "created_at": capture["created_at"],
+            "audio_url": signed_url,
         }
 
         return ApiResponse(data=response_data)
@@ -796,15 +862,13 @@ async def get_capture(
         logger.error(f"Get capture error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": {"code": "INTERNAL_ERROR", "message": "Failed to retrieve capture"}}
+            detail={"error": {"code": "INTERNAL_ERROR", "message": "Failed to retrieve capture"}},
         )
 
 
 @router.delete("/captures/{capture_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_capture(
-    capture_id: UUID,
-    user = Depends(get_current_user),
-    supabase = Depends(get_supabase_client)
+    capture_id: UUID, user=Depends(get_current_user), supabase=Depends(get_supabase_client)
 ):
     """
     Delete audio capture (Storage + Database).
@@ -827,22 +891,28 @@ async def delete_capture(
         user_id, _ = get_user_profile(user, supabase)
 
         # Fetch capture (RLS enforces user ownership)
-        result = supabase.table('captures').select('storage_key').eq('id', str(capture_id)).single().execute()
+        result = (
+            supabase.table("captures")
+            .select("storage_key")
+            .eq("id", str(capture_id))
+            .single()
+            .execute()
+        )
 
         if not result.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail={"error": {"code": "CAPTURE_NOT_FOUND", "message": "Capture not found"}}
+                detail={"error": {"code": "CAPTURE_NOT_FOUND", "message": "Capture not found"}},
             )
 
-        storage_key = result.data['storage_key']
+        storage_key = result.data["storage_key"]
 
         # Delete from Storage
         if storage_key:
-            supabase.storage.from_('captures').remove([storage_key])
+            supabase.storage.from_("captures").remove([storage_key])
 
         # Delete from Database
-        supabase.table('captures').delete().eq('id', str(capture_id)).execute()
+        supabase.table("captures").delete().eq("id", str(capture_id)).execute()
 
         return None  # 204 No Content
 
@@ -852,16 +922,22 @@ async def delete_capture(
         logger.error(f"Delete capture error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": {"code": "INTERNAL_ERROR", "message": "Failed to delete capture"}}
+            detail={"error": {"code": "INTERNAL_ERROR", "message": "Failed to delete capture"}},
         )
 
 
-@router.post("/captures/{capture_id}/re-transcribe", response_model=ApiResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "/captures/{capture_id}/re-transcribe",
+    response_model=ApiResponse,
+    status_code=status.HTTP_200_OK,
+)
 async def re_transcribe_capture(
     capture_id: UUID,
-    provider: Optional[str] = Form(None, description="Optional provider: 'assemblyai' or 'whisper'"),
-    user = Depends(get_current_user),
-    supabase = Depends(get_supabase_client)
+    provider: Optional[str] = Form(
+        None, description="Optional provider: 'assemblyai' or 'whisper'"
+    ),
+    user=Depends(get_current_user),
+    supabase=Depends(get_supabase_client),
 ):
     """
     Re-transcribe audio capture (retry with different provider).
@@ -889,19 +965,19 @@ async def re_transcribe_capture(
         user_id, user_timezone = get_user_profile(user, supabase)
 
         # Fetch capture (RLS enforces user ownership)
-        result = supabase.table('captures').select('*').eq('id', str(capture_id)).single().execute()
+        result = supabase.table("captures").select("*").eq("id", str(capture_id)).single().execute()
 
         if not result.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail={"error": {"code": "CAPTURE_NOT_FOUND", "message": "Capture not found"}}
+                detail={"error": {"code": "CAPTURE_NOT_FOUND", "message": "Capture not found"}},
             )
 
         capture = result.data
-        storage_key = capture['storage_key']
+        storage_key = capture["storage_key"]
 
         # Check retry count (first retry is free, subsequent retries count against limits)
-        retry_count = capture.get('metadata_json', {}).get('retry_count', 0)
+        retry_count = capture.get("metadata_json", {}).get("retry_count", 0)
 
         if retry_count > 0:
             # Not first retry - check rate limits
@@ -912,12 +988,12 @@ async def re_transcribe_capture(
             logger.info("[RE-TRANSCRIBE] First retry - complementary (no rate limit check)")
 
         # Download audio from Storage
-        audio_data = supabase.storage.from_('captures').download(storage_key)
+        audio_data = supabase.storage.from_("captures").download(storage_key)
 
         # Re-transcribe
         transcription_result: Optional[TranscriptionResult] = await stt_service.transcribe(
             audio_file=audio_data,
-            language='en'  # TODO: Support language detection
+            language="en",  # TODO: Support language detection
         )
 
         if not transcription_result:
@@ -927,22 +1003,22 @@ async def re_transcribe_capture(
                     "error": {
                         "code": "STT_ALL_PROVIDERS_FAILED",
                         "message": "Re-transcription failed. All providers unavailable.",
-                        "retryable": True
+                        "retryable": True,
                     }
-                }
+                },
             )
 
         # Update captures table with new transcript AND increment retry counter
         update_data = {
-            'content_text': transcription_result.transcript,
-            'duration_sec': transcription_result.duration_sec,
-            'metadata_json': {
-                **capture.get('metadata_json', {}),  # Preserve existing metadata
-                'retry_count': retry_count + 1  # Increment retry counter
-            }
+            "content_text": transcription_result.transcript,
+            "duration_sec": transcription_result.duration_sec,
+            "metadata_json": {
+                **capture.get("metadata_json", {}),  # Preserve existing metadata
+                "retry_count": retry_count + 1,  # Increment retry counter
+            },
         }
 
-        supabase.table('captures').update(update_data).eq('id', str(capture_id)).execute()
+        supabase.table("captures").update(update_data).eq("id", str(capture_id)).execute()
 
         # Log to ai_runs (re-transcription cost tracking)
         await log_ai_run(
@@ -951,28 +1027,27 @@ async def re_transcribe_capture(
             duration_sec=transcription_result.duration_sec,
             cost_usd=transcription_result.cost_usd,
             confidence_score=transcription_result.confidence,
-            supabase=supabase
+            supabase=supabase,
         )
 
         # Generate signed URL
-        signed_url = supabase.storage.from_('captures').create_signed_url(
-            path=storage_key,
-            expires_in=SIGNED_URL_EXPIRATION_SEC
+        signed_url = supabase.storage.from_("captures").create_signed_url(
+            path=storage_key, expires_in=SIGNED_URL_EXPIRATION_SEC
         )
 
         # Build response
         response_data = {
-            "id": capture['id'],
-            "user_id": capture['user_id'],
-            "type": capture['type'],
+            "id": capture["id"],
+            "user_id": capture["user_id"],
+            "type": capture["type"],
             "storage_key": storage_key,
             "content_text": transcription_result.transcript,
             "duration_sec": transcription_result.duration_sec,
-            "goal_id": capture.get('goal_id'),
-            "subtask_instance_id": capture.get('subtask_instance_id'),
-            "local_date": capture['local_date'],
-            "created_at": capture['created_at'],
-            "audio_url": signed_url['signedURL']
+            "goal_id": capture.get("goal_id"),
+            "subtask_instance_id": capture.get("subtask_instance_id"),
+            "local_date": capture["local_date"],
+            "created_at": capture["created_at"],
+            "audio_url": signed_url["signedURL"],
         }
 
         return ApiResponse(data=response_data)
@@ -983,7 +1058,7 @@ async def re_transcribe_capture(
         logger.error(f"Re-transcribe error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": {"code": "INTERNAL_ERROR", "message": "Re-transcription failed"}}
+            detail={"error": {"code": "INTERNAL_ERROR", "message": "Re-transcription failed"}},
         )
 
 
@@ -1002,5 +1077,7 @@ async def get_transcription_status():
     return {
         "providers": provider_status,
         "any_available": any(provider_status.values()),
-        "message": "At least one provider required for transcription" if not any(provider_status.values()) else "Transcription available"
+        "message": "At least one provider required for transcription"
+        if not any(provider_status.values())
+        else "Transcription available",
     }
