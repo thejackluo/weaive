@@ -155,6 +155,229 @@ async def get_consistency_data(
         )
 
 
+@router.get("/binds-grid")
+async def get_binds_grid_data(
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Get bind-level consistency data for 7d grid view.
+
+    Returns binds grouped by needles with completion status for last 7 days.
+    Used for the Dashboard consistency section grid visualization.
+
+    Returns:
+    - data: Object with needles array and daily_reflection
+    - meta: Date range and summary stats
+
+    Data format:
+    {
+      "needles": [
+        {
+          "id": "goal-uuid",
+          "title": "Goal Title",
+          "description": "Goal description",
+          "binds": [
+            {
+              "id": "template-uuid",
+              "name": "Bind Name",
+              "completions": [false, true, false, true, true, false, true]  # Last 7 days
+            }
+          ]
+        }
+      ],
+      "daily_reflection": {
+        "completions": [true, false, true, true, false, false, true]  # Last 7 days
+      }
+    }
+    """
+    if not supabase:
+        logger.error("❌ Supabase client not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not configured",
+        )
+
+    # Extract user ID from JWT
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field (user ID)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    logger.info(f"[BINDS_GRID_API] Request from auth_user_id: {auth_user_id}")
+
+    try:
+        # Get user_profile.id
+        user_profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+
+        if not user_profile_response.data:
+            logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found",
+            )
+
+        user_id = user_profile_response.data["id"]
+
+        # Get last 7 days (including today)
+        end_date = date.today()
+        start_date = end_date - timedelta(days=6)
+        date_range = [
+            (start_date + timedelta(days=i)).isoformat() for i in range(7)
+        ]
+
+        # Get all ACTIVE goals with their templates
+        goals_response = supabase.table("goals").select(
+            "id, title, description, subtask_templates!subtask_templates_goal_id_fkey(id, title)"
+        ).eq("user_id", user_id).eq("status", "active").execute()
+
+        goals = goals_response.data or []
+        logger.info(f"📊 Found {len(goals)} active goals")
+
+        # OPTIMIZATION: Batch fetch all instances and completions for the date range
+        # Extract all template IDs from all goals
+        all_template_ids = []
+        for goal in goals:
+            templates = goal.get("subtask_templates", [])
+            all_template_ids.extend([t["id"] for t in templates])
+
+        if not all_template_ids:
+            # No templates found, return empty structure
+            return {
+                "data": {
+                    "needles": [],
+                    "daily_reflection": {
+                        "completions": [False] * 7,
+                    },
+                },
+                "meta": {
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                    "total_needles": 0,
+                    "total_binds": 0,
+                },
+            }
+
+        # Batch query: Get ALL subtask_instances for ALL templates in date range (1 query instead of N×7)
+        instances_response = supabase.table("subtask_instances").select(
+            "id, template_id, scheduled_for_date"
+        ).eq("user_id", user_id).in_("template_id", all_template_ids).gte(
+            "scheduled_for_date", start_date.isoformat()
+        ).lte("scheduled_for_date", end_date.isoformat()).execute()
+
+        instances = instances_response.data or []
+        logger.info(f"📊 Fetched {len(instances)} instances in batch")
+
+        # Build instance lookup: {template_id: {date: instance_id}}
+        instance_lookup = {}
+        instance_ids = []
+        for instance in instances:
+            template_id = instance["template_id"]
+            scheduled_date = instance["scheduled_for_date"]
+            instance_id = instance["id"]
+
+            if template_id not in instance_lookup:
+                instance_lookup[template_id] = {}
+            instance_lookup[template_id][scheduled_date] = instance_id
+            instance_ids.append(instance_id)
+
+        # Batch query: Get ALL completions for these instances (1 query instead of N×7)
+        completed_instance_ids = set()
+        if instance_ids:
+            completions_response = supabase.table("subtask_completions").select(
+                "subtask_instance_id"
+            ).eq("user_id", user_id).in_("subtask_instance_id", instance_ids).execute()
+
+            completed_instance_ids = {c["subtask_instance_id"] for c in completions_response.data or []}
+            logger.info(f"📊 Found {len(completed_instance_ids)} completions")
+
+        # Build needles structure using lookup tables
+        needles = []
+
+        for goal in goals:
+            templates = goal.get("subtask_templates", [])
+            if not templates:
+                continue
+
+            # Build binds for this needle
+            binds = []
+
+            for template in templates:
+                template_id = template["id"]
+                template_title = template["title"]
+
+                # Check completion status for each day using lookup
+                completions = []
+                for check_date in date_range:
+                    # Check if instance exists for this date
+                    if template_id in instance_lookup and check_date in instance_lookup[template_id]:
+                        instance_id = instance_lookup[template_id][check_date]
+                        # Check if this instance was completed
+                        completions.append(instance_id in completed_instance_ids)
+                    else:
+                        # No instance scheduled for this date
+                        completions.append(False)
+
+                binds.append({
+                    "id": template_id,
+                    "name": template_title,
+                    "completions": completions,
+                })
+
+            needles.append({
+                "id": goal["id"],
+                "title": goal["title"],
+                "description": goal.get("description") or "Focus on your goals",
+                "binds": binds,
+            })
+
+        # Batch query: Get ALL journal entries for date range (1 query instead of 7)
+        journal_response = supabase.table("journal_entries").select(
+            "local_date"
+        ).eq("user_id", user_id).gte(
+            "local_date", start_date.isoformat()
+        ).lte("local_date", end_date.isoformat()).execute()
+
+        journal_dates = {j["local_date"] for j in journal_response.data or []}
+        reflection_completions = [check_date in journal_dates for check_date in date_range]
+
+        logger.info(f"✅ Built binds grid for {len(needles)} needles")
+
+        return {
+            "data": {
+                "needles": needles,
+                "daily_reflection": {
+                    "completions": reflection_completions,
+                },
+            },
+            "meta": {
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "total_needles": len(needles),
+                "total_binds": sum(len(needle["binds"]) for needle in needles),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error fetching binds grid data: {str(e)}")
+        logger.exception("Full traceback:")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch binds grid data: {str(e)}",
+        )
+
+
 @router.get("/fulfillment")
 async def get_fulfillment_data(
     timeframe: Literal["7d", "2w", "1m", "90d"] = Query("7d", description="Timeframe for data"),
@@ -404,7 +627,7 @@ async def get_history(
     Query Parameters:
     - limit: Number of items to return (default: 20, max: 100)
     - timeframe: days (7d), weeks (4w), months (3m) - filter by time period
-    - type: threads (journals/goals), binds (completions), weave_chats - filter by activity type
+    - type: threads (journals), binds (completions), weave_chats - filter by activity type
 
     Returns:
     - data: Array of activity items
@@ -413,11 +636,11 @@ async def get_history(
     Activity item format:
     {
       "id": "uuid",
-      "type": "completion" | "journal" | "goal_created" | "goal_archived",
+      "type": "completion" | "journal",
       "timestamp": "2025-12-20T10:30:00Z",
-      "description": "Completed 'Morning meditation'",
-      "related_goal_id": "uuid" (optional),
-      "related_goal_title": "Be present" (optional)
+      "description": "Completed 'Morning meditation'" | "Reflected on 2025-12-23 (fulfillment: 8/10)",
+      "related_goal_id": "uuid" (optional, for completions only),
+      "related_goal_title": "Be present" (optional, for completions only)
     }
     """
     if not supabase:
@@ -486,42 +709,54 @@ async def get_history(
         else:
             completions = []
 
-        # For each completion, fetch subtask instance to get title and goal
-        for completion in completions:
-            try:
-                instance_response = (
-                    supabase.table("subtask_instances")
-                    .select("subtask_template_id")
-                    .eq("id", completion["subtask_instance_id"])
-                    .single()
-                    .execute()
-                )
+        # OPTIMIZATION: Batch fetch all related data for completions (3 queries instead of N×3)
+        if completions:
+            # Extract all instance IDs
+            instance_ids = [c["subtask_instance_id"] for c in completions]
 
-                if instance_response.data:
-                    template_response = (
-                        supabase.table("subtask_templates")
-                        .select("title, goal_id")
-                        .eq("id", instance_response.data["subtask_template_id"])
-                        .single()
-                        .execute()
-                    )
+            # Batch query 1: Fetch ALL instances with their template IDs
+            instances_response = supabase.table("subtask_instances").select(
+                "id, template_id"
+            ).in_("id", instance_ids).execute()
 
-                    if template_response.data:
-                        subtask_title = template_response.data.get("title", "Unknown task")
-                        goal_id = template_response.data.get("goal_id")
+            instances = instances_response.data or []
+            instance_to_template = {i["id"]: i["template_id"] for i in instances}
 
-                        # Fetch goal title if goal_id exists
-                        goal_title = None
-                        if goal_id:
-                            goal_response = (
-                                supabase.table("goals")
-                                .select("title")
-                                .eq("id", goal_id)
-                                .single()
-                                .execute()
-                            )
-                            if goal_response.data:
-                                goal_title = goal_response.data.get("title")
+            # Extract all template IDs
+            template_ids = list(set(instance_to_template.values()))
+
+            if template_ids:
+                # Batch query 2: Fetch ALL templates with their titles and goal IDs
+                templates_response = supabase.table("subtask_templates").select(
+                    "id, title, goal_id"
+                ).in_("id", template_ids).execute()
+
+                templates = templates_response.data or []
+                template_lookup = {t["id"]: t for t in templates}
+
+                # Extract all goal IDs
+                goal_ids = list(set(t.get("goal_id") for t in templates if t.get("goal_id")))
+
+                # Batch query 3: Fetch ALL goals with their titles
+                goal_lookup = {}
+                if goal_ids:
+                    goals_response = supabase.table("goals").select(
+                        "id, title"
+                    ).in_("id", goal_ids).execute()
+
+                    goals = goals_response.data or []
+                    goal_lookup = {g["id"]: g["title"] for g in goals}
+
+                # Build history items using lookup tables
+                for completion in completions:
+                    instance_id = completion["subtask_instance_id"]
+                    template_id = instance_to_template.get(instance_id)
+
+                    if template_id and template_id in template_lookup:
+                        template = template_lookup[template_id]
+                        subtask_title = template.get("title", "Unknown task")
+                        goal_id = template.get("goal_id")
+                        goal_title = goal_lookup.get(goal_id) if goal_id else None
 
                         history_items.append({
                             "id": completion["id"],
@@ -531,9 +766,10 @@ async def get_history(
                             "related_goal_id": goal_id,
                             "related_goal_title": goal_title,
                         })
-            except Exception as e:
-                logger.warning(f"⚠️ Could not fetch details for completion {completion['id']}: {str(e)}")
-                continue
+                    else:
+                        logger.warning(f"⚠️ Could not find template for completion {completion['id']}")
+            else:
+                logger.warning("⚠️ No templates found for completions")
 
         # Fetch recent journal entries (threads)
         if fetch_threads:
@@ -559,45 +795,6 @@ async def get_history(
                 "related_goal_id": None,
                 "related_goal_title": None,
             })
-
-        # Fetch recent goal activities (created/archived) - also threads
-        if fetch_threads:
-            query = (
-                supabase.table("goals")
-                .select("id, title, status, created_at, updated_at")
-                .eq("user_id", user_id)
-            )
-            if start_date:
-                query = query.gte("updated_at", start_date)
-            goals_response = query.order("updated_at", desc=True).limit(limit // 4).execute()
-
-            goals = goals_response.data or []
-        else:
-            goals = []
-
-        for goal in goals:
-            # If goal was recently created (within last 30 days)
-            created_date = date.fromisoformat(goal["created_at"].split("T")[0])
-            if (date.today() - created_date).days <= 30:
-                history_items.append({
-                    "id": goal["id"],
-                    "type": "goal_created",
-                    "timestamp": goal["created_at"],
-                    "description": f"Created goal '{goal['title']}'",
-                    "related_goal_id": goal["id"],
-                    "related_goal_title": goal["title"],
-                })
-
-            # If goal was archived
-            if goal["status"] == "archived":
-                history_items.append({
-                    "id": goal["id"],
-                    "type": "goal_archived",
-                    "timestamp": goal["updated_at"],
-                    "description": f"Archived goal '{goal['title']}'",
-                    "related_goal_id": goal["id"],
-                    "related_goal_title": goal["title"],
-                })
 
         # Sort all items by timestamp (most recent first)
         history_items.sort(key=lambda x: x["timestamp"], reverse=True)

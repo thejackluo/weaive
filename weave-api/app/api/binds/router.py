@@ -29,6 +29,14 @@ class CompleteBindRequest(BaseModel):
     notes: str | None = Field(None, max_length=500, description="Optional completion notes (e.g., 'Ran 5k in 30min')")
 
 
+class UpdateBindRequest(BaseModel):
+    """Request body for updating a bind template"""
+
+    title: str | None = Field(None, min_length=1, max_length=200, description="Bind title")
+    recurrence_rule: str | None = Field(None, description="iCal RRULE format (e.g., FREQ=DAILY;INTERVAL=1)")
+    default_estimated_minutes: int | None = Field(None, ge=0, description="Default estimated time in minutes")
+
+
 @router.get("/today")
 async def get_today_binds(
     user: dict = Depends(get_current_user),
@@ -473,4 +481,117 @@ async def complete_bind(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to complete bind: {str(e)}",
+        )
+
+
+@router.put("/{bind_id}")
+async def update_bind(
+    bind_id: str,
+    request: UpdateBindRequest,
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Update a bind template (subtask_template).
+
+    Args:
+    - bind_id: UUID of the subtask_template
+    - title: Updated bind title (optional)
+    - recurrence_rule: Updated recurrence rule (optional)
+    - default_estimated_minutes: Updated estimated time (optional)
+
+    Returns:
+    - success: True if update succeeded
+    - data: Updated bind template
+
+    Note: This updates the template, not individual instances.
+    Future instances will use the updated values.
+    """
+    if not supabase:
+        logger.error("❌ Supabase client not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not configured",
+        )
+
+    # Extract user ID from JWT
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field (user ID)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    logger.info(f"[BINDS_API] Update bind request from auth_user_id: {auth_user_id}")
+
+    try:
+        # Get user_profile.id from auth_user_id (RLS pattern)
+        user_profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+
+        if not user_profile_response.data:
+            logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found",
+            )
+
+        user_id = user_profile_response.data["id"]
+        logger.info(f"[BINDS_API] Found user_profile.id: {user_id}")
+
+        # Build update payload (only include fields that are set)
+        update_payload = {}
+        if request.title is not None:
+            update_payload["title"] = request.title
+        if request.recurrence_rule is not None:
+            update_payload["recurrence_rule"] = request.recurrence_rule
+        if request.default_estimated_minutes is not None:
+            update_payload["default_estimated_minutes"] = request.default_estimated_minutes
+
+        if not update_payload:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No fields to update",
+            )
+
+        # Update the bind template (RLS enforced)
+        update_response = (
+            supabase.table("subtask_templates")
+            .update(update_payload)
+            .eq("id", bind_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        if not update_response.data:
+            logger.warning(f"⚠️ Bind {bind_id} not found for user {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Bind not found",
+            )
+
+        updated_bind = update_response.data[0]
+        logger.info(f"✅ Updated bind {bind_id}")
+
+        return {
+            "success": True,
+            "data": updated_bind,
+            "meta": {
+                "timestamp": date.today().isoformat(),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error updating bind {bind_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update bind: {str(e)}",
         )

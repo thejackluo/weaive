@@ -207,7 +207,7 @@ export async function transcribeAudio(options: TranscribeOptions): Promise<Trans
               enrichedError.retryable = error.retryable;
               enrichedError.retryAfter = error.retryAfter;
               reject(enrichedError);
-            } catch (parseError) {
+            } catch {
               // Couldn't parse error response - check if it's 404
               if (xhr.status === 404) {
                 const error: any = new Error(
