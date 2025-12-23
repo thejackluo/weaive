@@ -140,7 +140,7 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
  *
  * @returns Stack navigation component wrapped with providers
  */
-export default Sentry.wrap(function RootLayout() {
+export default function RootLayout() {
   return (
     <ThemeProvider initialMode="dark">
       <AuthProvider>
@@ -158,4 +158,4 @@ export default Sentry.wrap(function RootLayout() {
       </AuthProvider>
     </ThemeProvider>
   );
-});
+}
