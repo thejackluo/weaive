@@ -36,6 +36,7 @@ export default [
         // Browser/React Native globals
         performance: 'readonly',
         AbortController: 'readonly',
+        AbortSignal: 'readonly',
         Blob: 'readonly',
         FormData: 'readonly',
         URLSearchParams: 'readonly',
