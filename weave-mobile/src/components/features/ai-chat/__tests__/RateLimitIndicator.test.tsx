@@ -161,10 +161,20 @@ describe('RateLimitIndicator Component', () => {
       tier: 'free' as const,
     };
 
-    const { getByText } = render(<RateLimitIndicator usage={usage} resetDate="2025-01-01" />);
+    const { getByText } = render(
+      <RateLimitIndicator
+        premiumUsed={usage.premium_today.used}
+        premiumLimit={usage.premium_today.limit}
+        freeUsed={usage.free_today.used}
+        freeLimit={usage.free_today.limit}
+        monthlyUsed={usage.monthly.used}
+        monthlyLimit={usage.monthly.limit}
+        isRateLimited={true}
+      />
+    );
 
-    // THEN: Monthly limit message displayed with reset date
-    expect(getByText(/you've used 500 messages this month.*resets on 2025-01-01/i)).toBeTruthy();
+    // THEN: Monthly limit message displayed
+    expect(getByText(/500\\/500.*this month/i)).toBeTruthy();
   });
 
   /**

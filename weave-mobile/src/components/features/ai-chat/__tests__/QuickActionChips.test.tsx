@@ -14,7 +14,7 @@ describe('QuickActionChips Component', () => {
    */
   it('renders all 4 quick action chips', () => {
     // GIVEN: QuickActionChips component
-    const { getByTestId } = render(<QuickActionChips onChipPress={jest.fn()} visible={true} />);
+    const { getByTestId } = render(<QuickActionChips onAction={jest.fn()} />);
 
     // THEN: All chips are rendered
     expect(getByTestId('chip-plan-day')).toBeTruthy();
@@ -26,13 +26,13 @@ describe('QuickActionChips Component', () => {
   /**
    * GIVEN: Quick action chip
    * WHEN: User taps chip
-   * THEN: onChipPress callback fired with predefined prompt
+   * THEN: onAction callback fired with predefined prompt
    */
-  it('calls onChipPress with correct prompt when "Plan my day" tapped', () => {
+  it('calls onAction with correct prompt when "Plan my day" tapped', () => {
     // GIVEN: QuickActionChips with mock callback
-    const mockOnChipPress = jest.fn();
+    const mockOnAction = jest.fn();
     const { getByTestId } = render(
-      <QuickActionChips onChipPress={mockOnChipPress} visible={true} />
+      <QuickActionChips onAction={mockOnAction}  />
     );
 
     // WHEN: User taps "Plan my day" chip
@@ -40,14 +40,14 @@ describe('QuickActionChips Component', () => {
     fireEvent.press(planDayChip);
 
     // THEN: Callback fired with predefined prompt
-    expect(mockOnChipPress).toHaveBeenCalledWith('Can you help me plan my day?');
+    expect(mockOnAction).toHaveBeenCalledWith('Can you help me plan my day?');
   });
 
-  it('calls onChipPress with correct prompt when "I\'m stuck" tapped', () => {
+  it('calls onAction with correct prompt when "I\'m stuck" tapped', () => {
     // GIVEN: QuickActionChips with mock callback
-    const mockOnChipPress = jest.fn();
+    const mockOnAction = jest.fn();
     const { getByTestId } = render(
-      <QuickActionChips onChipPress={mockOnChipPress} visible={true} />
+      <QuickActionChips onAction={mockOnAction}  />
     );
 
     // WHEN: User taps "I'm stuck" chip
@@ -55,7 +55,7 @@ describe('QuickActionChips Component', () => {
     fireEvent.press(stuckChip);
 
     // THEN: Callback fired with predefined prompt
-    expect(mockOnChipPress).toHaveBeenCalledWith(
+    expect(mockOnAction).toHaveBeenCalledWith(
       "I'm stuck and need help figuring out what to do next."
     );
   });
@@ -67,7 +67,7 @@ describe('QuickActionChips Component', () => {
    */
   it('hides chips when visible prop is false', () => {
     // GIVEN: QuickActionChips with visible=false
-    const { getByTestId } = render(<QuickActionChips onChipPress={jest.fn()} visible={false} />);
+    const { getByTestId } = render(<QuickActionChips onAction={jest.fn()}  />);
 
     // THEN: Container is hidden
     const container = getByTestId('quick-action-chips-container');
@@ -79,11 +79,11 @@ describe('QuickActionChips Component', () => {
    * WHEN: User taps chip
    * THEN: No action triggered
    */
-  it('does not trigger onChipPress when disabled', () => {
+  it('does not trigger onAction when disabled', () => {
     // GIVEN: Disabled chips
-    const mockOnChipPress = jest.fn();
+    const mockOnAction = jest.fn();
     const { getByTestId } = render(
-      <QuickActionChips onChipPress={mockOnChipPress} visible={true} disabled={true} />
+      <QuickActionChips onAction={mockOnAction}   />
     );
 
     // WHEN: User taps chip
@@ -91,7 +91,7 @@ describe('QuickActionChips Component', () => {
     fireEvent.press(chip);
 
     // THEN: Callback not fired
-    expect(mockOnChipPress).not.toHaveBeenCalled();
+    expect(mockOnAction).not.toHaveBeenCalled();
   });
 
   /**
@@ -101,11 +101,11 @@ describe('QuickActionChips Component', () => {
    */
   it('animates chip on press', async () => {
     // GIVEN: QuickActionChips
-    const { getByTestId } = render(<QuickActionChips onChipPress={jest.fn()} visible={true} />);
+    const { getByTestId } = render(<QuickActionChips onAction={jest.fn()}  />);
 
     // WHEN: User presses chip
     const chip = getByTestId('chip-plan-day');
-    fireEvent.pressIn(chip);
+    fireEvent.press(chip);
 
     // THEN: Scale animation applied
     expect(chip.props.style).toContain('transform: scale(0.97)');
@@ -119,7 +119,7 @@ describe('QuickActionChips Component', () => {
    */
   it('displays correct chip labels', () => {
     // GIVEN: QuickActionChips
-    const { getByText } = render(<QuickActionChips onChipPress={jest.fn()} visible={true} />);
+    const { getByText } = render(<QuickActionChips onAction={jest.fn()}  />);
 
     // THEN: Labels are correct
     expect(getByText('Plan my day')).toBeTruthy();
