@@ -23,6 +23,7 @@ from app.core.deps import get_current_user, get_supabase_client
 from app.services.ai.ai_service import AIService
 from app.services.ai.base import AIProviderError, AIResponse
 from app.services.ai.rate_limiter import RateLimitError
+from app.services.context_builder import ContextBuilderService  # Story 6.2
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ class AIGenerateRequest(BaseModel):
     max_tokens: Optional[int] = Field(2000, description="Maximum tokens to generate")
     temperature: Optional[float] = Field(None, description="Sampling temperature (0.0-1.0)")
     system: Optional[str] = Field(None, description="System message to prepend")
+    include_context: bool = Field(True, description="Include user context for personalized responses (Story 6.2)")
 
 
 class AIGenerateResponse(BaseModel):
@@ -62,6 +64,8 @@ class AIGenerateResponse(BaseModel):
     provider: str
     cached: bool
     run_id: Optional[str]
+    context_used: bool = Field(False, description="Whether user context was injected (Story 6.2)")
+    context_assembly_time_ms: Optional[int] = Field(None, description="Time to assemble context in milliseconds")
 
 
 # Dependency Injection (Singleton Pattern)
@@ -123,7 +127,21 @@ async def generate_ai(
         user_role = current_user.get('role', 'user')
         user_tier = current_user.get('tier', 'free')
 
-        logger.info(f"AI generate request: user={user_id}, module={request.module}, model={request.model}")
+        logger.info(f"AI generate request: user={user_id}, module={request.module}, model={request.model}, include_context={request.include_context}")
+
+        # Build user context (Story 6.2)
+        user_context = None
+        context_assembly_time_ms = None
+        if request.include_context:
+            import time
+            start_time = time.time()
+
+            db = get_supabase_client()
+            context_builder = ContextBuilderService(db)
+            user_context = await context_builder.build_context(user_id)
+
+            context_assembly_time_ms = int((time.time() - start_time) * 1000)
+            logger.info(f"Context assembled in {context_assembly_time_ms}ms")
 
         # Generate with AI service (handles fallback, caching, budgets, rate limits)
         response: AIResponse = ai_service.generate(
@@ -132,6 +150,7 @@ async def generate_ai(
             user_tier=user_tier,
             module=request.module,
             prompt=request.prompt,
+            user_context=user_context,  # Pass context to AIService
             model=request.model,
             max_tokens=request.max_tokens,
             temperature=request.temperature,
@@ -147,6 +166,8 @@ async def generate_ai(
             provider=response.provider,
             cached=response.cached,
             run_id=response.run_id,
+            context_used=user_context is not None,
+            context_assembly_time_ms=context_assembly_time_ms,
         )
 
     except AIProviderError as e:

@@ -1,15 +1,16 @@
 """User API endpoints (Story 0.3: Authentication Flow, Story 1.5: Profile Creation, Story 6.1: Push Notifications)"""
 
 import logging
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from supabase import Client
 
 from app.core.deps import get_current_user, get_optional_user, get_supabase_client
 from app.models.user_profile import UserProfileCreate, UserProfileResponse
 from app.services import user_profile
+from app.services.personality_service import PersonalityService  # Story 6.2
 
 logger = logging.getLogger(__name__)
 
@@ -424,4 +425,126 @@ async def get_user_stats(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch user stats",
+        )
+
+
+# ============================================================================
+# Story 6.2: Dual Personality System
+# ============================================================================
+
+class PersonalitySwitchRequest(BaseModel):
+    """Request to switch AI personality."""
+    active_personality: str = Field(
+        ...,
+        description="Personality type: 'dream_self' or 'weave_ai'",
+        pattern="^(dream_self|weave_ai)$"
+    )
+
+
+@router.patch("/personality")
+async def switch_personality(
+    request: PersonalitySwitchRequest,
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Switch user's active AI personality (Story 6.2)
+
+    Allows users to toggle between:
+    - **dream_self**: Personalized AI using Dream Self identity document
+    - **weave_ai**: General coach with supportive persona
+
+    **Authentication Required:**
+    - Include JWT token in Authorization header: `Bearer <token>`
+
+    **Request Body:**
+    ```json
+    {
+      "active_personality": "dream_self"
+    }
+    ```
+
+    **Response:**
+    ```json
+    {
+      "data": {
+        "active_personality": "dream_self",
+        "personality_details": {
+          "personality_type": "dream_self",
+          "name": "Alex the Disciplined",
+          "traits": ["supportive", "analytical"],
+          "speaking_style": "Direct but encouraging"
+        }
+      },
+      "meta": {
+        "timestamp": "2025-12-23T10:00:00Z"
+      }
+    }
+    ```
+
+    **Status Codes:**
+    - 200: Personality switched successfully
+    - 400: Invalid personality type
+    - 401: Unauthorized
+    - 404: User profile not found
+    - 500: Server error
+    """
+    # Get user_profile.id from auth_user_id (RLS pattern)
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token"
+        )
+
+    try:
+        # Lookup user_profile.id from auth_user_id
+        profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+
+        if not profile_response.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found"
+            )
+
+        user_id = profile_response.data["id"]
+
+        # Switch personality
+        personality_service = PersonalityService(supabase)
+        new_personality = await personality_service.switch_personality(
+            user_id=user_id,
+            new_personality=request.active_personality
+        )
+
+        logger.info(f"✅ User {user_id} switched to personality: {request.active_personality}")
+
+        return {
+            "data": {
+                "active_personality": request.active_personality,
+                "personality_details": new_personality,
+            },
+            "meta": {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        }
+
+    except ValueError as e:
+        # Invalid personality type (shouldn't happen due to Pydantic validation)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error switching personality for user {auth_user_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to switch personality: {str(e)}"
         )

@@ -22,6 +22,7 @@ from app.api import (
     user,
 )
 from app.core.config import settings
+from app.services.tools import register_default_tools
 
 # Log environment status on startup
 logger = logging.getLogger(__name__)
@@ -38,6 +39,14 @@ app = FastAPI(
     description="Backend API for Weave MVP",
     version="0.1.0"
 )
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize tools and services on app startup."""
+    logger.info("🚀 Registering AI tools...")
+    register_default_tools()
+    logger.info("✅ AI tools registered successfully")
 
 # Custom error handler for standard error response format
 @app.exception_handler(HTTPException)
