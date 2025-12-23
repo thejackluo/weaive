@@ -30,9 +30,18 @@ jest.mock('react-native-reanimated', () => ({
   withTiming: (value) => value,
   withSpring: (value) => value,
   withSequence: (...values) => values[values.length - 1],
+  withDelay: (delay, animation) => animation, // Added: withDelay mock
+  withRepeat: (animation, numberOfReps) => animation, // Added: withRepeat mock
   interpolate: (value) => value,
   Extrapolate: { CLAMP: 'clamp' },
   createAnimatedComponent: (Component) => Component,
+  Easing: {
+    linear: (t) => t,
+    ease: (t) => t,
+    quad: (t) => t,
+    cubic: (t) => t,
+    bezier: () => (t) => t,
+  },
 }));
 
 // Mock Animated API
