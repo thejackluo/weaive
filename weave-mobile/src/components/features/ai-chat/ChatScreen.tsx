@@ -20,9 +20,12 @@ import QuickActionChips from './QuickActionChips';
 import MessageInput from './MessageInput';
 import RateLimitIndicator from './RateLimitIndicator';
 import TypingIndicator from './TypingIndicator';
+import ConversationList, { Conversation } from './ConversationList';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAIChatStream } from '@/hooks/useAIChatStream';
 import apiClient from '@/services/apiClient';
+import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native';
 
 export interface Message {
   id: string;
@@ -42,6 +45,7 @@ export default function ChatScreen() {
   const [showConversationList, setShowConversationList] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const streamingMessageIdRef = useRef<string | null>(null);
+  const isStreamingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Custom hook for AI chat API (non-streaming fallback)
   const { getUsageStats } = useAIChat();
@@ -59,8 +63,20 @@ export default function ChatScreen() {
   const { data: usageStats, refetch: refetchUsage } = useQuery({
     queryKey: ['ai-usage'],
     queryFn: getUsageStats,
-    refetchInterval: 60000, // Refetch every minute
+    refetchInterval: 60000,
   });
+
+  // Fetch conversations list
+  const { data: conversationsData, refetch: refetchConversations, isRefetching } = useQuery({
+    queryKey: ['ai-conversations'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/ai-chat/conversations');
+      return response.data.data || [];
+    },
+    refetchOnMount: true,
+  });
+
+  const conversations: Conversation[] = conversationsData || [];
 
   // Load conversation history on mount
   useEffect(() => {
@@ -166,6 +182,20 @@ export default function ChatScreen() {
       const streamingMessageId =
         streamingMessageIdRef.current || `assistant-streaming-${Date.now()}`;
       streamingMessageIdRef.current = streamingMessageId;
+      
+      console.log('[STREAM_UPDATE] 📝 Updating message:', streamingMessageId, '- isStreaming: true');
+
+      // Set failsafe timeout (30s) to force clear isStreaming if stuck
+      if (isStreamingTimeoutRef.current) {
+        clearTimeout(isStreamingTimeoutRef.current);
+      }
+      isStreamingTimeoutRef.current = setTimeout(() => {
+        console.log('[STREAM_FAILSAFE] ⚠️ Timeout reached, forcing isStreaming = false');
+        setMessages((prev) =>
+          prev.map((m) => (m.id === streamingMessageIdRef.current ? { ...m, isStreaming: false } : m))
+        );
+        streamingMessageIdRef.current = null;
+      }, 30000);
 
       setMessages((prev) => {
         const existingIndex = prev.findIndex((m) => m.id === streamingMessageId);
@@ -196,15 +226,27 @@ export default function ChatScreen() {
 
   // Effect: Finalize streaming message when complete
   useEffect(() => {
-    // ✅ FIX: Clear streaming state even if no content (fixes stuck typing indicator)
+    console.log('[STREAM_FINALIZE] 🔍 Effect triggered - isStreaming:', isStreaming, 'streamingMessageIdRef:', streamingMessageIdRef.current);
+    
     if (!isStreaming && streamingMessageIdRef.current) {
+      console.log('[STREAM_FINALIZE] ✅ Finalizing streaming message:', streamingMessageIdRef.current);
+      
+      // Clear failsafe timeout
+      if (isStreamingTimeoutRef.current) {
+        clearTimeout(isStreamingTimeoutRef.current);
+        isStreamingTimeoutRef.current = null;
+        console.log('[STREAM_FINALIZE] 🧹 Cleared failsafe timeout');
+      }
+      
       // Mark message as complete (not streaming)
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === streamingMessageIdRef.current
-            ? { ...m, isStreaming: false, id: streamMetadata.responseId || m.id }
-            : m
-        )
+        prev.map((m) => {
+          if (m.id === streamingMessageIdRef.current) {
+            console.log('[STREAM_FINALIZE] 🎯 Found message to finalize:', m.id, '-> isStreaming: false');
+            return { ...m, isStreaming: false, id: streamMetadata.responseId || m.id };
+          }
+          return m;
+        })
       );
 
       // Update conversation ID
@@ -212,16 +254,18 @@ export default function ChatScreen() {
         setCurrentConversationId(streamMetadata.conversationId);
       }
 
-      // Refetch usage stats
+      // Refetch usage stats and conversations
       refetchUsage();
+      refetchConversations();
 
       // Haptic feedback on completion
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
       // Reset streaming message ref
       streamingMessageIdRef.current = null;
+      console.log('[STREAM_FINALIZE] 🏁 Finalization complete');
     }
-  }, [isStreaming, streamingContent, streamMetadata, refetchUsage]);
+  }, [isStreaming, streamingContent, streamMetadata, refetchUsage, refetchConversations]);
 
   // Effect: Handle streaming errors
   useEffect(() => {
@@ -289,6 +333,47 @@ export default function ChatScreen() {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   };
 
+  const handleSelectConversation = async (conversationId: string) => {
+    console.log('[CONV_SWITCH] 🔄 Switching to conversation:', conversationId);
+    try {
+      const response = await apiClient.get(`/api/ai-chat/conversations/${conversationId}`);
+      const conversationDetail = response.data.data;
+      const convMessages = conversationDetail.messages || [];
+
+      const transformedMessages: Message[] = convMessages.map((msg: any) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.created_at),
+      }));
+
+      setMessages(transformedMessages);
+      setCurrentConversationId(conversationId);
+      setShowQuickChips(transformedMessages.length === 0);
+      setShowConversationList(false);
+      
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      console.log('[CONV_SWITCH] ✅ Loaded', transformedMessages.length, 'messages');
+    } catch (error: any) {
+      console.error('[CONV_SWITCH] ❌ Failed to switch conversation:', error.message);
+    }
+  };
+
+  const handleNewConversation = () => {
+    console.log('[CONV_NEW] 🆕 Creating new conversation');
+    setMessages([]);
+    setCurrentConversationId(undefined);
+    setShowQuickChips(true);
+    setShowConversationList(false);
+    loadInitialGreeting();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const toggleConversationList = () => {
+    setShowConversationList(!showConversationList);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
   // Check if rate limited
   const isRateLimited = usageStats
     ? (usageStats.premium_today.used >= usageStats.premium_today.limit &&
@@ -298,8 +383,27 @@ export default function ChatScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header with conversation toggle */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={toggleConversationList} style={styles.headerButton}>
+          <Ionicons 
+            name={showConversationList ? 'chatbubbles' : 'list'} 
+            size={24} 
+            color="#a78bfa" 
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {showConversationList ? 'Conversations' : 'Weave AI'}
+        </Text>
+        {showConversationList && (
+          <TouchableOpacity onPress={handleNewConversation} style={styles.headerButton}>
+            <Ionicons name="add-circle" size={24} color="#a78bfa" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       {/* Rate Limit Indicator */}
-      {usageStats && (
+      {usageStats && !showConversationList && (
         <Animated.View entering={FadeInDown.duration(300)}>
           <RateLimitIndicator
             premiumUsed={usageStats.premium_today.used}
@@ -313,53 +417,66 @@ export default function ChatScreen() {
         </Animated.View>
       )}
 
-      {/* Chat Messages */}
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
-        onContentSizeChange={scrollToBottom}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-      >
-        {messages.map((message) => (
-          <Animated.View
-            key={message.id}
-            style={{ width: '100%' }} // ✅ Force full width
-            entering={
-              message.role === 'user'
-                ? SlideInUp.duration(300).springify()
-                : FadeIn.duration(400).delay(200)
-            }
+      {showConversationList ? (
+        <ConversationList
+          conversations={conversations}
+          currentConversationId={currentConversationId}
+          onSelectConversation={handleSelectConversation}
+          onNewConversation={handleNewConversation}
+          onRefresh={refetchConversations}
+          isRefreshing={isRefetching}
+        />
+      ) : (
+        <>
+          {/* Chat Messages */}
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesContainer}
+            contentContainerStyle={styles.messagesContent}
+            onContentSizeChange={scrollToBottom}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           >
-            <MessageBubble message={message} />
-          </Animated.View>
-        ))}
+            {messages.map((message) => (
+              <Animated.View
+                key={message.id}
+                style={{ width: '100%' }}
+                entering={
+                  message.role === 'user'
+                    ? SlideInUp.duration(300).springify()
+                    : FadeIn.duration(400).delay(200)
+                }
+              >
+                <MessageBubble message={message} />
+              </Animated.View>
+            ))}
 
-        {/* Typing Indicator (only show before content starts streaming) */}
-        {isStreaming && !streamingContent && (
-          <Animated.View entering={FadeIn.duration(300)}>
-            <TypingIndicator />
-          </Animated.View>
-        )}
-      </ScrollView>
+            {/* Typing Indicator */}
+            {isStreaming && !streamingContent && (
+              <Animated.View entering={FadeIn.duration(300)}>
+                <TypingIndicator />
+              </Animated.View>
+            )}
+          </ScrollView>
 
-      {/* Quick Action Chips */}
-      {showQuickChips && !isRateLimited && (
-        <Animated.View entering={FadeInDown.duration(300)}>
-          <QuickActionChips onAction={handleQuickAction} />
-        </Animated.View>
+          {/* Quick Action Chips */}
+          {showQuickChips && !isRateLimited && (
+            <Animated.View entering={FadeInDown.duration(300)}>
+              <QuickActionChips onAction={handleQuickAction} />
+            </Animated.View>
+          )}
+
+          {/* Message Input */}
+          <MessageInput
+            value={inputValue}
+            onChangeText={setInputValue}
+            onSend={handleSendMessage}
+            disabled={isRateLimited || isStreaming}
+            placeholder={isRateLimited ? 'Rate limit reached' : 'Talk to Weave...'}
+          />
+        </>
       )}
-
-      {/* Message Input */}
-      <MessageInput
-        value={inputValue}
-        onChangeText={setInputValue}
-        onSend={handleSendMessage}
-        disabled={isRateLimited || isStreaming}
-        placeholder={isRateLimited ? 'Rate limit reached' : 'Talk to Weave...'}
-      />
     </View>
   );
 }
@@ -367,13 +484,30 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a', // Dark background
+    backgroundColor: '#0a0a0a',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  headerButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   messagesContainer: {
     flex: 1,
   },
   messagesContent: {
-    padding: 8, // ✅ Reduced from 16 to give more width to message bubbles
+    padding: 8,
     paddingBottom: 24,
   },
 });
