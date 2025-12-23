@@ -8,29 +8,30 @@ from app.core.deps import get_supabase_client
 
 router = APIRouter()
 
+
 @router.get("/health")
 async def health_check(supabase: Client = Depends(get_supabase_client)):
     """
     Health check endpoint for Railway and monitoring.
-    
+
     Verifies:
     - Backend is running
     - Database connection is active
-    
+
     Returns:
         dict: Status and timestamp if healthy
-    
+
     Raises:
         HTTPException: 503 if database connection fails
     """
     # Get port from environment (useful for multi-instance debugging)
     port = int(os.getenv("PORT", "8000"))
     env = os.getenv("ENV", "development")
-    
+
     try:
         # Test database connection with minimal query
-        result = supabase.table("user_profiles").select("id").limit(1).execute()
-        
+        supabase.table("user_profiles").select("id").limit(1).execute()
+
         # Connection successful
         return {
             "status": "healthy",
@@ -39,7 +40,7 @@ async def health_check(supabase: Client = Depends(get_supabase_client)):
             "database": "connected",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "port": port,
-            "environment": env
+            "environment": env,
         }
     except Exception as e:
         # Database connection failed
@@ -49,6 +50,6 @@ async def health_check(supabase: Client = Depends(get_supabase_client)):
                 "status": "unhealthy",
                 "error": f"Database connection failed: {str(e)}",
                 "service": "weave-api",
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            }
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
         )
