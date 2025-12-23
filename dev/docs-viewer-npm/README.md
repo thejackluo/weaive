@@ -102,7 +102,7 @@ startServer(3030, './docs');
 
 ## 🤝 Contributing
 
-This is an experimental package (`v0.1.0`). Feedback and contributions welcome!
+This is an experimental package (`v0.0.3`). Feedback and contributions welcome!
 
 ## 📄 License
 
@@ -110,9 +110,9 @@ MIT © Jack Luo
 
 ## 🔗 Links
 
-- [GitHub Repository](https://github.com/jackluo/weavelight)
-- [Report Issues](https://github.com/jackluo/weavelight/issues)
-- [npm Package](https://www.npmjs.com/package/@thejackluo/docs-viewer)
+- [GitHub Repository](https://github.com/thejackluo/weave-prod)
+- [Report Issues](https://github.com/thejackluo/weave-prod/issues)
+- [GitHub Packages](https://github.com/thejackluo/weave-prod/packages)
 
 ---
 

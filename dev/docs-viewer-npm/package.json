@@ -1,6 +1,6 @@
 {
   "name": "@thejackluo/docs-viewer",
-  "version": "0.1.2",
+  "version": "0.0.3",
   "description": "A lightweight, beautiful documentation viewer for markdown files with dark mode, syntax highlighting, and folder navigation",
   "author": "Jack Luo",
   "license": "MIT",
@@ -22,18 +22,22 @@
     "bin",
     "lib",
     "public",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=14.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/thejackluo/weavelight.git",
+    "url": "https://github.com/thejackluo/weave-prod.git",
     "directory": "dev/docs-viewer-npm"
   },
   "bugs": {
-    "url": "https://github.com/thejackluo/weavelight/issues"
+    "url": "https://github.com/thejackluo/weave-prod/issues"
   },
-  "homepage": "https://github.com/thejackluo/weavelight#readme"
+  "homepage": "https://github.com/thejackluo/weave-prod#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
 }
