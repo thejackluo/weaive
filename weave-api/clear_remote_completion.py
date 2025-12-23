@@ -43,21 +43,11 @@ def main():
         # Use RPC to execute raw SQL (bypass triggers)
         completion_id = completion['id']
 
-        # Execute via Supabase RPC (if available) or direct SQL
-        sql = f"""
-        BEGIN;
-        ALTER TABLE subtask_completions DISABLE TRIGGER prevent_update_subtask_completions;
-        ALTER TABLE subtask_completions DISABLE TRIGGER prevent_delete_subtask_completions;
-        DELETE FROM subtask_completions WHERE id = '{completion_id}';
-        ALTER TABLE subtask_completions ENABLE TRIGGER prevent_update_subtask_completions;
-        ALTER TABLE subtask_completions ENABLE TRIGGER prevent_delete_subtask_completions;
-        COMMIT;
-        """
-
         # For remote Supabase, we need to use postgrest RPC
+        # Note: Raw SQL execution not available via Supabase client
         # Let's try direct delete (will fail due to trigger, but let's see the error)
         try:
-            delete_response = supabase.table("subtask_completions").delete().eq("id", completion_id).execute()
+            _ = supabase.table("subtask_completions").delete().eq("id", completion_id).execute()
             print(f"✅ Deleted completion: {completion_id}")
             print("   You can now retest the bind completion flow")
         except Exception as delete_error:
