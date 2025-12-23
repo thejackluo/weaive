@@ -3,7 +3,7 @@
  * RED Phase: Tests written BEFORE implementation
  */
 import React from 'react';
-import { render, fireEvent, screen } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import MessageBubble from '../MessageBubble';
 
 describe('MessageBubble Component', () => {
