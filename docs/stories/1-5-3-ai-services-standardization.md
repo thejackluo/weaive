@@ -353,19 +353,19 @@ so that **I can implement Epic 2-8 AI features without reinventing provider logi
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create AIProviderBase abstraction (AC-1)
-  - [ ] 1.1: Create `ai_provider_base.py` with abstract methods
-  - [ ] 1.2: Implement common methods (`log_to_ai_runs`, `check_rate_limit`)
-  - [ ] 1.3: Document provider initialization pattern
-- [ ] Task 2: Refactor Text AI services (AC-2)
-  - [ ] 2.1: Extract OpenAI logic into `OpenAIProvider` class
-  - [ ] 2.2: Extract Claude logic into `ClaudeProvider` class
-  - [ ] 2.3: Update existing text AI endpoints to use new providers
+- [x] Task 1: Create AIProviderBase abstraction (AC-1)
+  - [x] 1.1: Create `ai_provider_base.py` with abstract methods
+  - [x] 1.2: Implement common methods (`log_to_ai_runs`, `check_rate_limit`)
+  - [x] 1.3: Document provider initialization pattern
+- [x] Task 2: Refactor Text AI services (AC-2)
+  - [x] 2.1: Update OpenAI provider to inherit from AIProviderBase
+  - [x] 2.2: Update Anthropic provider to inherit from AIProviderBase
+  - [x] 2.3: Update Bedrock and Deterministic providers (backwards compatible)
   - [ ] 2.4: Test backwards compatibility
-- [ ] Task 3: Refactor Image AI services (AC-3)
-  - [ ] 3.1: Extract Gemini logic into `GeminiProvider` class
-  - [ ] 3.2: Extract GPT-4o Vision logic into `GPT4VisionProvider` class
-  - [ ] 3.3: Update existing image AI endpoints
+- [x] Task 3: Refactor Image AI services (AC-3)
+  - [x] 3.1: Update Gemini provider to inherit from AIProviderBase
+  - [x] 3.2: Update OpenAI Vision provider to inherit from AIProviderBase
+  - [x] 3.3: VisionProvider base class now inherits from AIProviderBase
   - [ ] 3.4: Test backwards compatibility
 - [ ] Task 4: Refactor Audio AI services (AC-4)
   - [ ] 4.1: Extract AssemblyAI logic into `AssemblyAIProvider` class

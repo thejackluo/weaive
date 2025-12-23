@@ -86,7 +86,7 @@ epic-1.5-status: planned
 epic-1.5-stories:
   1-5-1-navigation-architecture: planned        # 8-10 pts - Core navigation scaffolding (3-tab structure, glassmorphism AI chat, 15+ placeholder screens)
   1-5-2-backend-standardization: planned        # 5-6 pts ⚡ NEW (2025-12-21) - API/model templates, Pydantic schemas, error handling, testing patterns, backend-patterns-guide.md
-  1-5-3-ai-services-standardization: ready-for-dev    # 4-5 pts ⚡ NEW (2025-12-21) - AIProviderBase abstraction, text/image/audio patterns, cost tracking, rate limiting, ai-services-guide.md
+  1-5-3-ai-services-standardization: in-progress      # 4-5 pts ⚡ NEW (2025-12-21) - AIProviderBase abstraction, text/image/audio patterns, cost tracking, rate limiting, ai-services-guide.md
 
 # Epic 0.5: Post-Development Observability (6 pts)
 epic-0.5-status: planned
