@@ -11,10 +11,11 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ScrollView, View, StyleSheet, Keyboard } from 'react-native';
+import { ScrollView, View, StyleSheet, Keyboard, TouchableOpacity, Text } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import Animated, { FadeIn, FadeInDown, SlideInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import MessageBubble from './MessageBubble';
 import QuickActionChips from './QuickActionChips';
 import MessageInput from './MessageInput';
@@ -24,8 +25,6 @@ import ConversationList, { Conversation } from './ConversationList';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAIChatStream } from '@/hooks/useAIChatStream';
 import apiClient from '@/services/apiClient';
-import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity } from 'react-native';
 
 export interface Message {
   id: string;
