@@ -29,6 +29,7 @@ from .cost_tracker import CostTracker
 from .deterministic_provider import DeterministicProvider
 from .openai_provider import OpenAIProvider
 from .rate_limiter import RateLimiter, RateLimitError
+from ..response_quality_checker import ResponseQualityChecker
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,7 @@ class AIService:
         self.db = db
         self.cost_tracker = CostTracker(db)
         self.rate_limiter = RateLimiter(db)
+        self.quality_checker = ResponseQualityChecker()  # Story 6.2
 
         # Initialize providers (4-tier fallback chain)
         self.providers = []
@@ -112,6 +114,7 @@ class AIService:
         user_tier: str = 'free',
         module: str = 'triad',
         prompt: str = '',
+        user_context: Optional[Dict] = None,
         **kwargs
     ) -> AIResponse:
         """
@@ -123,6 +126,7 @@ class AIService:
             user_tier: User tier ('free' or 'paid')
             module: AI module ('onboarding', 'triad', 'recap', 'dream_self', 'weekly_insights')
             prompt: User input text
+            user_context: Optional user context snapshot from ContextBuilderService (Story 6.2)
             **kwargs: Additional parameters (model, temperature, max_tokens, variant, template vars)
 
         Returns:
@@ -141,14 +145,18 @@ class AIService:
             logger.warning(f"🚫 Rate limit exceeded for user {user_id}")
             raise
 
-        # 2. Check cache
-        input_hash = self._compute_hash(prompt, module, kwargs.get('model', 'auto'))
+        # 2. Enrich prompt with user context (Story 6.2)
+        context_used = user_context is not None
+        enriched_prompt = self._enrich_prompt_with_context(prompt, user_context, module)
+
+        # 3. Check cache (use enriched prompt for hash)
+        input_hash = self._compute_hash(enriched_prompt, module, kwargs.get('model', 'auto'))
         cached_response = self._check_cache(user_id, input_hash)
         if cached_response:
             logger.info(f"⚡ Cache hit for user {user_id}, module {module}")
             return cached_response
 
-        # 3. Check budgets (dual: total + per-user)
+        # 4. Check budgets (dual: total + per-user)
         budget_exceeded = self._check_budgets(user_id, user_tier)
 
         # 4. Determine providers to try
@@ -164,27 +172,63 @@ class AIService:
         errors = []
         for provider_name, provider in providers_to_try:
             try:
-                # Create ai_runs record
-                run_id = self._create_run(user_id, module, input_hash, provider_name)
+                # Create ai_runs record with context tracking
+                run_id = self._create_run(user_id, module, input_hash, provider_name, context_used)
 
                 logger.info(f"🔄 Trying provider: {provider_name}")
 
-                # Call provider
+                # Call provider with enriched prompt
                 response = provider.complete(
-                    prompt=prompt,
+                    prompt=enriched_prompt,
                     module=module,
                     **kwargs
                 )
 
-                # Update run as success (includes cost, tokens, model)
-                self._update_run_success(run_id, response, module)
+                # Quality check + retry logic (Story 6.2 AC #4)
+                quality_flag = 'specific'  # Default
+                if user_context:
+                    quality_flag = self.quality_checker.check_response(response.content, user_context)
+
+                    if quality_flag == 'generic':
+                        logger.warning("🔄 Generic response detected, retrying with stronger prompt...")
+
+                        # Build retry prompt
+                        retry_prompt = self.quality_checker.build_retry_prompt(enriched_prompt, user_context)
+
+                        try:
+                            # Retry ONCE with stronger prompt
+                            retry_response = provider.complete(
+                                prompt=retry_prompt,
+                                module=module,
+                                **kwargs
+                            )
+
+                            # Check retry quality
+                            retry_quality = self.quality_checker.check_response(retry_response.content, user_context)
+
+                            if retry_quality in ['specific', 'excellent']:
+                                # Retry succeeded - use retry response
+                                logger.info(f"✅ Retry succeeded with quality: {retry_quality}")
+                                response = retry_response
+                                quality_flag = retry_quality
+                            else:
+                                # Retry still generic - use original anyway
+                                logger.warning("⚠️  Retry still generic, using original response")
+                                quality_flag = 'generic'  # Keep original flag
+
+                        except Exception as e:
+                            # Retry failed - use original response
+                            logger.warning(f"⚠️  Retry failed: {e}, using original response")
+
+                # Update run as success (includes cost, tokens, model, quality_flag)
+                self._update_run_success(run_id, response, module, quality_flag)
 
                 # Create artifact
                 self._create_artifact(run_id, user_id, module, response)
 
                 logger.info(
                     f"✅ {provider_name} success: ${response.cost_usd:.6f}, "
-                    f"{response.input_tokens} in + {response.output_tokens} out tokens"
+                    f"{response.input_tokens} in + {response.output_tokens} out tokens, quality={quality_flag}"
                 )
 
                 response.run_id = run_id
@@ -334,8 +378,8 @@ class AIService:
                     run_id=run_id,
                 )
 
-                # Update run as success
-                self._update_run_success(run_id, response, module)
+                # Update run as success (streaming doesn't have quality check yet)
+                self._update_run_success(run_id, response, module, quality_flag='specific')
 
                 # Create artifact
                 self._create_artifact(run_id, user_id, module, response)
@@ -513,7 +557,8 @@ class AIService:
         user_id: str,
         module: str,
         input_hash: str,
-        provider: str
+        provider: str,
+        context_used: bool = False
     ) -> str:
         """
         Create ai_runs record with status='running'.
@@ -523,25 +568,34 @@ class AIService:
             module: AI module
             input_hash: Input hash
             provider: Provider name
+            context_used: Whether user context was injected (Story 6.2)
 
         Returns:
             Run ID
         """
         try:
+            run_data = {
+                'user_id': user_id,
+                'module': module,
+                'input_hash': input_hash,
+                'prompt_version': f'{module}-v1.0',  # Story 6.1: Added required prompt_version field
+                'provider': provider,
+                'status': 'running',
+                'model': 'unknown',  # Will update on success
+            }
+
+            # Add context_used if column exists (Story 6.2 - graceful for migration)
+            try:
+                run_data['context_used'] = context_used
+            except Exception:
+                pass  # Column doesn't exist yet, skip
+
             result = self.db.table('ai_runs') \
-                .insert({
-                    'user_id': user_id,
-                    'module': module,
-                    'input_hash': input_hash,
-                    'prompt_version': f'{module}-v1.0',  # ✅ Fixed: Added prompt_version (required NOT NULL field)
-                    'provider': provider,
-                    'status': 'running',
-                    'model': 'unknown',  # Will update on success
-                }) \
+                .insert(run_data) \
                 .execute()
 
             run_id = result.data[0]['id']
-            logger.debug(f"Created ai_run: {run_id}")
+            logger.debug(f"Created ai_run: {run_id} (context_used={context_used})")
             return run_id
 
         except Exception as e:
@@ -553,7 +607,8 @@ class AIService:
         self,
         run_id: str,
         response: AIResponse,
-        module: str
+        module: str,
+        quality_flag: str = 'specific'
     ) -> None:
         """
         Update ai_runs record with success status and usage.
@@ -562,16 +617,25 @@ class AIService:
             run_id: Run ID
             response: AIResponse
             module: AI module
+            quality_flag: Response quality ('generic', 'specific', 'excellent') - Story 6.2
         """
         try:
+            update_data = {
+                'status': 'success',
+                'model': response.model,
+                'input_tokens': response.input_tokens,
+                'output_tokens': response.output_tokens,
+                'cost_estimate': response.cost_usd,
+            }
+
+            # Add quality_flag if column exists (Story 6.2 - graceful for migration)
+            try:
+                update_data['quality_flag'] = quality_flag
+            except Exception:
+                pass  # Column doesn't exist yet, skip
+
             self.db.table('ai_runs') \
-                .update({
-                    'status': 'success',
-                    'model': response.model,
-                    'input_tokens': response.input_tokens,
-                    'output_tokens': response.output_tokens,
-                    'cost_estimate': response.cost_usd,
-                }) \
+                .update(update_data) \
                 .eq('id', run_id) \
                 .execute()
 
@@ -644,3 +708,87 @@ class AIService:
             'total_daily_cost': self.cost_tracker.get_total_daily_cost(),
             'daily_budget': self.cost_tracker.DAILY_BUDGET_USD,
         }
+
+    def _enrich_prompt_with_context(
+        self,
+        prompt: str,
+        user_context: Optional[Dict],
+        module: str
+    ) -> str:
+        """
+        Enrich user prompt with context snapshot for personalized AI responses.
+
+        Story 6.2: Context Engine - injects user's goals, activity, identity into prompt.
+
+        Args:
+            prompt: Original user message
+            user_context: User context snapshot from ContextBuilderService
+            module: AI module (affects system prompt template)
+
+        Returns:
+            Enriched prompt with context injection
+        """
+        if not user_context:
+            # No context available - return original prompt
+            return prompt
+
+        # Extract identity info for personality injection
+        identity = user_context.get('identity', {})
+        dream_self_name = identity.get('dream_self_name', 'Your Guide')
+        personality_traits = identity.get('personality_traits', [])
+        speaking_style = identity.get('speaking_style', 'Supportive and encouraging')
+
+        # Build context-enriched system message
+        context_header = f"""You are {dream_self_name}, the user's ideal self.
+
+Your personality: {', '.join(personality_traits) if personality_traits else 'supportive, encouraging'}
+Your speaking style: {speaking_style}
+
+User's Current Situation (reference this data in your response):
+- Active Goals: {len(user_context.get('goals', []))} goals
+"""
+
+        # Add goal details
+        goals = user_context.get('goals', [])
+        if goals:
+            context_header += "\n  Goals:\n"
+            for goal in goals:
+                context_header += f"  - {goal.get('title', 'Unknown goal')}\n"
+
+        # Add recent activity
+        recent_activity = user_context.get('recent_activity', {})
+        completions_count = recent_activity.get('completions_last_7_days', 0)
+        if completions_count > 0:
+            context_header += f"\n- Recent Activity: {completions_count} completions in last 7 days\n"
+            most_recent = recent_activity.get('most_recent_completion')
+            if most_recent:
+                context_header += f"  Most recent: {most_recent.get('bind_title', 'Unknown')} ({most_recent.get('proof_type', 'no proof')})\n"
+
+        # Add metrics (streaks, consistency)
+        metrics = user_context.get('metrics', {})
+        current_streak = metrics.get('current_streak', 0)
+        if current_streak > 0:
+            context_header += f"\n- Current Streak: {current_streak} days\n"
+
+        # Add recent wins
+        recent_wins = user_context.get('recent_wins', [])
+        if recent_wins:
+            context_header += f"\n- Recent Wins: {', '.join(recent_wins)}\n"
+
+        # Instructions for AI
+        context_header += """
+IMPORTANT INSTRUCTIONS:
+1. Reference specific data from above (goal names, streak, completion count)
+2. Avoid generic advice like "stay motivated" without citing actual progress
+3. If user asks about progress, cite their numbers (completion rate, streak days)
+4. Acknowledge specific patterns (e.g., "I see you completed 'Morning workout' 5 times this week")
+5. Celebrate wins when relevant (streaks, milestones, consistency)
+
+"""
+
+        # Combine context with user's actual message
+        enriched_prompt = f"{context_header}\nUser's message:\n{prompt}"
+
+        logger.info(f"✅ Enriched prompt with user context (goals: {len(goals)}, completions: {completions_count}, streak: {current_streak})")
+
+        return enriched_prompt
