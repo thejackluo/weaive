@@ -85,10 +85,10 @@ Run `docs-viewer` from `my-project/` and all your docs will be beautifully rende
 You can also use the viewer programmatically in your Node.js applications:
 
 ```javascript
-const { startServer } = require('@thejackluo/docs-viewer');
+const { startServer } = require("@thejackluo/docs-viewer");
 
 // Start server on port 3030 with docs in ./docs
-startServer(3030, './docs');
+startServer(3030, "./docs");
 ```
 
 ## 📸 Features Showcase
@@ -102,7 +102,7 @@ startServer(3030, './docs');
 
 ## 🤝 Contributing
 
-This is an experimental package (`v0.0.3`). Feedback and contributions welcome!
+This is an experimental package (`v0.1.3`). Feedback and contributions welcome!
 
 ## 📄 License
 
@@ -110,9 +110,9 @@ MIT © Jack Luo
 
 ## 🔗 Links
 
-- [GitHub Repository](https://github.com/thejackluo/weave-prod)
-- [Report Issues](https://github.com/thejackluo/weave-prod/issues)
-- [GitHub Packages](https://github.com/thejackluo/weave-prod/packages)
+- [GitHub Repository](https://github.com/thejackluo/weavelight)
+- [Report Issues](https://github.com/thejackluo/weavelight/issues)
+- [npm Package](https://www.npmjs.com/package/@thejackluo/docs-viewer)
 
 ---
 
