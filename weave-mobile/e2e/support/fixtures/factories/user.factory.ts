@@ -9,7 +9,7 @@ export interface TestUser {
 
 /**
  * User Factory
- * 
+ *
  * Creates test users with auto-cleanup using Supabase API
  */
 export class UserFactory {

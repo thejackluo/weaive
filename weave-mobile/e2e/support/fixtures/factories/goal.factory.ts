@@ -9,7 +9,7 @@ export interface TestGoal {
 
 /**
  * Goal Factory
- * 
+ *
  * Creates test goals with auto-cleanup using API
  */
 export class GoalFactory {

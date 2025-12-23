@@ -1,4 +1,4 @@
-import { device, element, by, expect, setupTest, teardownTest } from './support/fixtures';
+import { element, by, expect, setupTest, teardownTest } from './support/fixtures';
 
 describe('Onboarding Flow', () => {
   let fixture: any;
@@ -44,7 +44,7 @@ describe('Onboarding Flow', () => {
 
     // WHEN: User reaches authentication
     await expect(element(by.id('authentication-screen'))).toBeVisible();
-    
+
     const testUser = await fixture.userFactory.createUser({
       email: 'test@example.com',
       password: 'SecurePass123!',
