@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.api import (
     admin,
+    ai_chat_router,
     ai_router,
     analytics,
     binds,
@@ -135,6 +136,7 @@ app.include_router(user.router, tags=["user"])
 app.include_router(analytics.router, tags=["analytics"])
 app.include_router(onboarding.router, tags=["onboarding"])
 app.include_router(ai_router.router, tags=["ai"])
+app.include_router(ai_chat_router.router, tags=["ai-chat"])  # Story 6.1: AI Chat with streaming
 app.include_router(journal_router.router, prefix="/api", tags=["journal"])
 app.include_router(transcribe.router, tags=["stt"])
 app.include_router(goals.router, tags=["goals"])

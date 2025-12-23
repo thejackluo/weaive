@@ -20,20 +20,64 @@ jest.mock('./src/utils/api', () => ({
 // This prevents "require is not defined" errors from nativewind/babel plugin
 jest.mock('nativewind', () => ({}));
 
-// Mock react-native-reanimated
-jest.mock('react-native-reanimated', () => ({
-  default: {
-    call: () => {},
-  },
-  useSharedValue: (initialValue) => ({ value: initialValue }),
-  useAnimatedStyle: (callback) => callback(),
-  withTiming: (value) => value,
-  withSpring: (value) => value,
-  withSequence: (...values) => values[values.length - 1],
-  interpolate: (value) => value,
-  Extrapolate: { CLAMP: 'clamp' },
-  createAnimatedComponent: (Component) => Component,
-}));
+// Mock react-native-reanimated with animation presets
+jest.mock('react-native-reanimated', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  // Create chainable animation object
+  const createAnimationBuilder = () => ({
+    duration: jest.fn().mockReturnThis(),
+    delay: jest.fn().mockReturnThis(),
+    springify: jest.fn().mockReturnThis(),
+    damping: jest.fn().mockReturnThis(),
+    mass: jest.fn().mockReturnThis(),
+    stiffness: jest.fn().mockReturnThis(),
+    overshootClamping: jest.fn().mockReturnThis(),
+    restDisplacementThreshold: jest.fn().mockReturnThis(),
+    restSpeedThreshold: jest.fn().mockReturnThis(),
+    withInitialValues: jest.fn().mockReturnThis(),
+    randomDelay: jest.fn().mockReturnThis(),
+  });
+
+  return {
+    default: {
+      call: () => {},
+    },
+    useSharedValue: (initialValue) => ({ value: initialValue }),
+    useAnimatedStyle: (callback) => callback(),
+    withTiming: (value) => value,
+    withSpring: (value) => value,
+    withRepeat: (value) => value,
+    withSequence: (...values) => values[values.length - 1],
+    interpolate: (value) => value,
+    Extrapolate: { CLAMP: 'clamp' },
+    createAnimatedComponent: (Component) => Component,
+
+    // Animation presets with chainable methods
+    FadeIn: createAnimationBuilder(),
+    FadeInDown: createAnimationBuilder(),
+    FadeInUp: createAnimationBuilder(),
+    FadeOut: createAnimationBuilder(),
+    FadeOutDown: createAnimationBuilder(),
+    FadeOutUp: createAnimationBuilder(),
+    SlideInUp: createAnimationBuilder(),
+    SlideInDown: createAnimationBuilder(),
+    SlideInLeft: createAnimationBuilder(),
+    SlideInRight: createAnimationBuilder(),
+    SlideOutUp: createAnimationBuilder(),
+    SlideOutDown: createAnimationBuilder(),
+    SlideOutLeft: createAnimationBuilder(),
+    SlideOutRight: createAnimationBuilder(),
+    ZoomIn: createAnimationBuilder(),
+    ZoomOut: createAnimationBuilder(),
+
+    // Animated.View component
+    View: React.forwardRef((props, ref) =>
+      React.createElement(View, { ...props, ref })
+    ),
+  };
+});
 
 // Mock Animated API
 jest.mock('react-native/Libraries/Animated/AnimatedImplementation');
@@ -122,19 +166,30 @@ jest.mock('@expo/vector-icons', () => {
   const React = require('react');
   const { Text } = require('react-native');
 
-  const createMockIcon = (name) => {
-    return React.forwardRef((props, ref) =>
-      React.createElement(Text, { ...props, ref, testID: `icon-${name}` }, '🎤')
-    );
+  const createIconComponent = (iconSet) => {
+    return React.forwardRef((props, ref) => {
+      return React.createElement(Text, {
+        ...props,
+        ref,
+        testID: props.testID || `icon-${iconSet}`,
+      });
+    });
   };
 
   return {
-    MaterialIcons: createMockIcon('MaterialIcons'),
-    Ionicons: createMockIcon('Ionicons'),
-    FontAwesome: createMockIcon('FontAwesome'),
-    FontAwesome5: createMockIcon('FontAwesome5'),
-    Feather: createMockIcon('Feather'),
-    AntDesign: createMockIcon('AntDesign'),
+    Ionicons: createIconComponent('ionicons'),
+    MaterialIcons: createIconComponent('material-icons'),
+    MaterialCommunityIcons: createIconComponent('material-community-icons'),
+    FontAwesome: createIconComponent('font-awesome'),
+    FontAwesome5: createIconComponent('font-awesome5'),
+    Feather: createIconComponent('feather'),
+    AntDesign: createIconComponent('ant-design'),
+    Entypo: createIconComponent('entypo'),
+    EvilIcons: createIconComponent('evil-icons'),
+    Foundation: createIconComponent('foundation'),
+    Octicons: createIconComponent('octicons'),
+    SimpleLineIcons: createIconComponent('simple-line-icons'),
+    Zocial: createIconComponent('zocial'),
   };
 });
 
