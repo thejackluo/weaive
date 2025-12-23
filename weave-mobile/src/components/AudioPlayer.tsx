@@ -274,7 +274,7 @@ export function AudioPlayer({
   /**
    * Get speed button color
    */
-  const getSpeedButtonColor = (speed: PlaybackSpeed): string => {
+  const _getSpeedButtonColor = (speed: PlaybackSpeed): string => {
     return speed === playbackSpeed ? colors.accent[500] : colors.text.secondary;
   };
 

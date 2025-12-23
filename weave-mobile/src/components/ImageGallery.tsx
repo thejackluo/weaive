@@ -19,7 +19,7 @@ import { useImageList } from '../hooks/useImageList';
 import type { Capture } from '../types/captures';
 
 // Type for captures with signed URLs (returned by API)
-type CaptureWithUrl = Capture & { signed_url: string };
+type _CaptureWithUrl = Capture & { signed_url: string };
 
 interface ImageGalleryProps {
   onImagePress: (capture: Capture) => void;
@@ -112,6 +112,18 @@ export function ImageGallery({
       </View>
     );
   };
+
+  // ✅ FIX: When scrollEnabled is false, render non-virtualized grid to avoid nested VirtualizedList warning
+  if (!scrollEnabled) {
+    return (
+      <View className="bg-neutral-900" style={{ padding: 12 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {captures.map((item) => renderImage({ item }))}
+        </View>
+        {isFetchingNextPage && renderFooter()}
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-neutral-900">

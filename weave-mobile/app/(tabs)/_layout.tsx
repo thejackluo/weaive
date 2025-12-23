@@ -374,6 +374,9 @@ export default function TabLayout() {
         <Tabs.Screen name="sitemap" options={{ href: null }} />
         <Tabs.Screen name="voice-demo" options={{ href: null }} />
 
+        {/* Progress Routes (Day Detail Pages) */}
+        <Tabs.Screen name="progress/[date]" options={{ href: null }} />
+
         {/* Binds Routes */}
         <Tabs.Screen name="binds/[id]" options={{ href: null }} />
         <Tabs.Screen name="binds/proof/[id]" options={{ href: null }} />

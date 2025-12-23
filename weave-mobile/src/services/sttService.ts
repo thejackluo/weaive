@@ -11,8 +11,6 @@
  * - Rate limit detection
  */
 
-/* eslint-env browser */
-
 import { supabase } from '@lib/supabase';
 import { getApiBaseUrl } from '@/utils/api';
 
