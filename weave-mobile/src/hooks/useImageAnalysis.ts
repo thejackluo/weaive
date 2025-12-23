@@ -1,9 +1,9 @@
 /**
  * useImageAnalysis Hook - Image AI Analysis with TanStack Query
- * 
+ *
  * Story: 1.5.3 - AI Services Standardization (AC-7)
  * Provides image analysis with proof validation, OCR, and content classification.
- * 
+ *
  * Features:
  * - TanStack Query mutation for API calls
  * - NO caching (unique inputs per request)
@@ -11,16 +11,16 @@
  * - Abort signal support for cancelling requests
  * - Automatic retry with exponential backoff (3 attempts: 1s, 2s, 4s)
  * - Loading/error states for UI integration
- * 
+ *
  * Provider fallback chain (handled by backend):
  * - Primary: Gemini 3.0 Flash (~$0.0005/image)
  * - Secondary: GPT-4o Vision (~$0.02/image)
  * - Tertiary: Store image without analysis (graceful degradation)
- * 
+ *
  * Usage:
  * ```tsx
  * const { analyze, isAnalyzing, error, data } = useImageAnalysis();
- * 
+ *
  * const result = await analyze({
  *   imageUri: "file:///path/to/image.jpg",
  *   operations: ["proof_validation", "ocr"],
@@ -37,34 +37,36 @@ import { getApiBaseUrl } from '@/utils/api';
 // ===========================
 
 interface ImageAnalysisRequest {
-  imageUri: string;           // Local file URI or HTTP URL
+  imageUri: string; // Local file URI or HTTP URL
   operations: ('proof_validation' | 'ocr' | 'classification')[];
-  bindDescription?: string;   // Expected content description for validation
+  bindDescription?: string; // Expected content description for validation
   maxTokens?: number;
 }
 
 interface CategoryScore {
   label: 'gym' | 'food' | 'outdoor' | 'workspace' | 'social' | 'other';
-  confidence: number;  // 0.0-1.0
+  confidence: number; // 0.0-1.0
 }
 
 interface ImageAnalysisResponse {
   proof_validated: boolean;
-  quality_score: number;       // 1-5 rating (1=poor, 5=excellent)
+  quality_score: number; // 1-5 rating (1=poor, 5=excellent)
   extracted_text: string | null;
   categories: CategoryScore[];
-  analysis: string;            // AI-generated description
-  provider: string;            // 'gemini-3-flash' or 'gpt-4o-vision'
+  analysis: string; // AI-generated description
+  provider: string; // 'gemini-3-flash' or 'gpt-4o-vision'
   cost_usd: number;
   duration_ms: number;
 }
 
+// Rate limit error structure (parsed from API response)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface RateLimitError {
   code: 'RATE_LIMIT_EXCEEDED';
   message: string;
-  retryAfter: number;  // Seconds until rate limit resets
-  limit: number;       // Rate limit threshold (5 images/day)
-  usage: number;       // Current usage
+  retryAfter: number; // Seconds until rate limit resets
+  limit: number; // Rate limit threshold (5 images/day)
+  usage: number; // Current usage
 }
 
 interface APIErrorResponse {
@@ -76,7 +78,7 @@ interface APIErrorResponse {
 }
 
 interface AnalyzeOptions {
-  signal?: AbortSignal;  // For cancelling requests
+  signal?: AbortSignal; // For cancelling requests
 }
 
 // ===========================
@@ -126,7 +128,7 @@ export function useImageAnalysis() {
           // Rate limit exceeded
           throw new RateLimitException(
             errorData.error.message,
-            errorData.error.retryAfter || 86400  // Default: 1 day
+            errorData.error.retryAfter || 86400 // Default: 1 day
           );
         }
 
@@ -155,7 +157,7 @@ export function useImageAnalysis() {
   return {
     /**
      * Analyze image with AI providers.
-     * 
+     *
      * @param request - Image URI, operations, and context
      * @param options - Optional abort signal
      * @returns AI analysis with validation, OCR, and categories
@@ -191,7 +193,7 @@ export function useImageAnalysis() {
 
 /**
  * Convert local image URI to base64 string.
- * 
+ *
  * @param imageUri - Local file URI (e.g., "file:///path/to/image.jpg")
  * @returns Base64-encoded image string
  */

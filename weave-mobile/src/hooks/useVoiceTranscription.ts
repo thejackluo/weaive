@@ -1,9 +1,9 @@
 /**
  * useVoiceTranscription Hook - Audio AI Transcription with TanStack Query
- * 
+ *
  * Story: 1.5.3 - AI Services Standardization (AC-7)
  * Provides speech-to-text transcription with confidence scores and language detection.
- * 
+ *
  * Features:
  * - TanStack Query mutation for API calls
  * - NO caching (unique inputs per request)
@@ -11,16 +11,16 @@
  * - Abort signal support for cancelling requests
  * - Automatic retry with exponential backoff (3 attempts: 1s, 2s, 4s)
  * - Loading/error states for UI integration
- * 
+ *
  * Provider fallback chain (handled by backend):
  * - Primary: AssemblyAI ($0.15/hour = $0.00004167/second)
  * - Secondary: OpenAI Whisper ($0.006/minute = $0.0001/second)
  * - Tertiary: Store audio without transcript (graceful degradation)
- * 
+ *
  * Usage:
  * ```tsx
  * const { transcribe, isTranscribing, error, data } = useVoiceTranscription();
- * 
+ *
  * const result = await transcribe({
  *   audioUri: "file:///path/to/recording.m4a",
  *   language: "en"
@@ -37,27 +37,29 @@ import * as FileSystem from 'expo-file-system';
 // ===========================
 
 interface TranscriptionRequest {
-  audioUri: string;      // Local file URI (e.g., "file:///path/to/audio.m4a")
-  language?: string;     // Language code (default: 'en')
-  maxDuration?: number;  // Max duration in seconds (default: 300)
+  audioUri: string; // Local file URI (e.g., "file:///path/to/audio.m4a")
+  language?: string; // Language code (default: 'en')
+  maxDuration?: number; // Max duration in seconds (default: 300)
 }
 
 interface TranscriptionResponse {
   transcript: string;
-  confidence: number;     // 0.0-1.0 confidence score
-  duration_sec: number;   // Audio duration in seconds
+  confidence: number; // 0.0-1.0 confidence score
+  duration_sec: number; // Audio duration in seconds
   word_count: number;
-  language: string;       // Detected/specified language code
-  provider: string;       // 'assemblyai' or 'whisper'
+  language: string; // Detected/specified language code
+  provider: string; // 'assemblyai' or 'whisper'
   cost_usd: number;
 }
 
+// Rate limit error structure (parsed from API response)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface RateLimitError {
   code: 'RATE_LIMIT_EXCEEDED';
   message: string;
-  retryAfter: number;  // Seconds until rate limit resets
-  limit: number;       // Rate limit threshold (50 transcriptions/day)
-  usage: number;       // Current usage
+  retryAfter: number; // Seconds until rate limit resets
+  limit: number; // Rate limit threshold (50 transcriptions/day)
+  usage: number; // Current usage
 }
 
 interface APIErrorResponse {
@@ -69,7 +71,7 @@ interface APIErrorResponse {
 }
 
 interface TranscribeOptions {
-  signal?: AbortSignal;  // For cancelling requests
+  signal?: AbortSignal; // For cancelling requests
 }
 
 // ===========================
@@ -114,7 +116,7 @@ export function useVoiceTranscription() {
           // Rate limit exceeded
           throw new RateLimitException(
             errorData.error.message,
-            errorData.error.retryAfter || 86400  // Default: 1 day
+            errorData.error.retryAfter || 86400 // Default: 1 day
           );
         }
 
@@ -143,7 +145,7 @@ export function useVoiceTranscription() {
   return {
     /**
      * Transcribe audio file to text.
-     * 
+     *
      * @param request - Audio URI, language, and max duration
      * @param options - Optional abort signal
      * @returns Transcription with confidence score and provider info
