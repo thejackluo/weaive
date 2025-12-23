@@ -34,13 +34,15 @@ class BedrockProvider(AIProvider):
     Authentication: AWS IAM credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION)
     """
 
-    def __init__(self, region: str = 'us-east-1'):
+    def __init__(self, region: str = 'us-east-1', db=None):
         """
         Initialize Bedrock provider.
 
         Args:
             region: AWS region (default us-east-1 for best model availability)
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
         """
+        super().__init__(db)  # Initialize AIProviderBase
         self.client = boto3.client('bedrock-runtime', region_name=region)
         self.region = region
 
@@ -72,6 +74,19 @@ class BedrockProvider(AIProvider):
                 'output': 5.00 / 1_000_000
             },
         }
+    
+    def get_provider_name(self) -> str:
+        """Return provider identifier for logging."""
+        return "bedrock"
+    
+    def is_available(self) -> bool:
+        """Check if provider is configured and available."""
+        try:
+            # Check if boto3 client is configured with credentials
+            self.client.meta.region_name
+            return True
+        except Exception:
+            return False
 
     def complete(
         self,

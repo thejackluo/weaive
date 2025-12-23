@@ -29,14 +29,17 @@ class OpenAIProvider(AIProvider):
     - Latest GPT-4o-mini and GPT-4o models
     """
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, db=None):
         """
         Initialize OpenAI provider.
 
         Args:
             api_key: OpenAI API key (sk-...)
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
         """
+        super().__init__(db)  # Initialize AIProviderBase
         self.client = OpenAI(api_key=api_key)
+        self.api_key = api_key
 
         # Pricing per million tokens (input/output)
         self.pricing = {
@@ -49,6 +52,14 @@ class OpenAIProvider(AIProvider):
                 'output': 10.00 / 1_000_000
             },
         }
+    
+    def get_provider_name(self) -> str:
+        """Return provider identifier for logging."""
+        return "openai"
+    
+    def is_available(self) -> bool:
+        """Check if provider is configured and available."""
+        return self.api_key is not None and len(self.api_key) > 0
 
     def complete(
         self,
