@@ -125,7 +125,46 @@ Deploy the Weave MVP to production infrastructure (Railway + Supabase), comply w
 
 ---
 
-### US-9.4: Subscription Management (Apple In-App Purchases)
+### US-9.4: App Store Readiness - Critical Gaps
+
+**Priority:** M (Must Have) - **BLOCKS TESTFLIGHT & SUBMISSION**
+
+**As a** product manager
+**I want to** fix all critical App Store deployment gaps identified in technical research
+**So that** Weave can be submitted to the App Store without immediate rejection
+
+**Acceptance Criteria:**
+- [ ] iOS permission descriptions added to `app.json` (camera, photo library, microphone)
+- [ ] Privacy manifest added to `app.json` (iOS 17+ requirement)
+- [ ] Data export endpoint implemented (`GET /api/user/export-data`)
+- [ ] Account deletion endpoint implemented (`DELETE /api/user/account`)
+- [ ] Account deletion UI added to settings screen
+- [ ] LogRocket user consent flow implemented
+- [ ] Sentry PII scrubbing configured
+- [ ] Privacy policy published to public URL (`weavelight.app/privacy`)
+- [ ] Terms of Service published to public URL (`weavelight.app/terms`)
+- [ ] 12 App Store screenshots created (6 for 6.7", 6 for 5.5")
+- [ ] App icon verified as 1024x1024px PNG
+- [ ] App description, subtitle, keywords written
+- [ ] Apple Developer account created
+- [ ] App Store Connect app record created
+- [ ] `eas.json` submit profile configured
+
+**Technical Notes:**
+- **Background:** Technical research (2025-12-23) identified 10 critical blockers preventing App Store submission
+- **Rejection Risk:** 99% rejection without iOS permissions, 80% without public privacy policy, 60% without GDPR compliance
+- **Full specification:** `docs/stories/epic-9/9-4-app-store-readiness.md`
+- **Sprint Change Proposal:** `_bmad-output/sprint-change-proposal-2025-12-23.md`
+
+**Story Points:** 13
+
+**Dependencies:**
+- Requires: US-9.1 (Backend deployed), US-9.2 (Database setup), US-9.3 (Legal drafting)
+- Unblocks: US-9.6 (TestFlight), US-9.8 (App Store submission)
+
+---
+
+### US-9.5: Subscription Management (Apple In-App Purchases)
 
 **Priority:** M (Must Have)
 
@@ -175,7 +214,7 @@ Deploy the Weave MVP to production infrastructure (Railway + Supabase), comply w
 
 ---
 
-### US-9.5: Production Security Hardening
+### US-9.6: Production Security Hardening
 
 **Priority:** M (Must Have)
 
@@ -219,11 +258,11 @@ Deploy the Weave MVP to production infrastructure (Railway + Supabase), comply w
 
 **Dependencies:**
 - Requires: US-9.1, US-9.2 (production infrastructure exists)
-- Unblocks: US-9.6 (beta testing - security baseline met)
+- Unblocks: US-9.7 (beta testing - security baseline met)
 
 ---
 
-### US-9.6: TestFlight Beta Testing
+### US-9.7: TestFlight Beta Testing
 
 **Priority:** M (Must Have)
 
@@ -261,12 +300,12 @@ Deploy the Weave MVP to production infrastructure (Railway + Supabase), comply w
 **Story Points:** 3
 
 **Dependencies:**
-- Requires: US-9.1, US-9.2, US-9.5 (production infrastructure ready)
-- Unblocks: US-9.8 (final submission after bugs fixed)
+- Requires: US-9.1, US-9.2, US-9.4, US-9.6 (production infrastructure ready, critical gaps fixed)
+- Unblocks: US-9.9 (final submission after bugs fixed)
 
 ---
 
-### US-9.7: Production Monitoring Setup
+### US-9.8: Production Monitoring Setup
 
 **Priority:** M (Must Have)
 
@@ -316,7 +355,7 @@ Deploy the Weave MVP to production infrastructure (Railway + Supabase), comply w
 
 ---
 
-### US-9.8: App Store Submission
+### US-9.9: App Store Submission
 
 **Priority:** M (Must Have)
 
@@ -367,7 +406,7 @@ Deploy the Weave MVP to production infrastructure (Railway + Supabase), comply w
 **Story Points:** 8
 
 **Dependencies:**
-- Requires: ALL previous US-9.1 through US-9.7 complete
+- Requires: ALL previous US-9.1 through US-9.8 complete
 - Unblocks: Public launch, M4 milestone
 
 ---
@@ -379,28 +418,34 @@ Deploy the Weave MVP to production infrastructure (Railway + Supabase), comply w
 | US-9.1 | Production Backend Deployment | M | 5 pts |
 | US-9.2 | Production Database Setup | M | 5 pts |
 | US-9.3 | App Store Compliance | M | 8 pts |
-| US-9.4 | Subscription Management (IAP) | M | 8 pts |
-| US-9.5 | Production Security Hardening | M | 5 pts |
-| US-9.6 | TestFlight Beta Testing | M | 3 pts |
-| US-9.7 | Production Monitoring Setup | M | 3 pts |
-| US-9.8 | App Store Submission | M | 8 pts |
+| US-9.4 | App Store Readiness - Critical Gaps | M | 13 pts |
+| US-9.5 | Subscription Management (IAP) | M | 8 pts |
+| US-9.6 | Production Security Hardening | M | 5 pts |
+| US-9.7 | TestFlight Beta Testing | M | 3 pts |
+| US-9.8 | Production Monitoring Setup | M | 3 pts |
+| US-9.9 | App Store Submission | M | 8 pts |
 
-**Epic Total:** 45 story points
+**Epic Total:** 58 story points
 
-**Estimated Duration:** 2-3 sprints (assuming 15-20 points/sprint)
+**Estimated Duration:** 2-3 sprints (assuming 20-25 points/sprint with parallel work)
 
 **Dependencies:**
 - Depends on: Epic 0 (Foundation), Epic 8 (Subscription UI in settings)
 - Blocks: M4: Launch milestone
 
 **Cost Impact:**
-- Railway production: ~$20-50/month (depends on usage)
-- Supabase Pro Plan: $25/month
-- Apple Developer: $99/year ($8/month amortized)
-- RevenueCat: Free up to $10K MRR
-- LogRocket: $99/month (10K sessions)
-- Sentry: $26/month (50K errors) or free tier (5K errors)
-- **Total: ~$177-208/month** (excluding AI costs already budgeted)
+- **One-time:** $400-1,800 (Apple Developer, legal review, screenshots, icon)
+- **Monthly recurring (MVP launch):**
+  - Railway: ~$20-50/month (usage-based)
+  - Supabase Pro: $25/month (production SLA)
+  - Sentry: $0-26/month (free tier initially, Team plan at 200+ users)
+  - LogRocket: $0-99/month (defer until post-launch recommended)
+  - Apple Developer: $99/year ($8/month amortized)
+  - AI Services: ~$225/month @ 100 users (OpenAI, Anthropic, Google AI, AssemblyAI)
+- **Total at MVP: ~$278-408/month** (Supabase $25 + Railway $50 + AI $225 + Apple $8, deferring Sentry paid & LogRocket)
+- **Total at 500 users: ~$650-1,125/month** (includes Sentry $26 + LogRocket $99 + AI $900)
+
+**Cost Risk:** AI costs can spike; strict rate limiting (10 calls/hr/user) and budget alerts ($100/day) required
 
 **Success Criteria:**
 - [ ] App published on iOS App Store (live for public download)
