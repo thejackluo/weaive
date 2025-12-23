@@ -150,12 +150,12 @@ export function useAIChatStream(): UseAIChatStreamReturn {
 
         // ✅ Use EventSource from react-native-sse for proper React Native SSE support
         console.log('[STREAM_DEBUG] 🚀 Setting up EventSource with react-native-sse...');
-        
+
         // Create EventSource-compatible URL with POST data as query params for SSE
-        const sseUrl = new URL(`${baseURL}/api/ai-chat/messages/stream`);
-        
+        const sseUrl = `${baseURL}/api/ai-chat/messages/stream`;
+
         // Create EventSource instance
-        eventSourceRef.current = new EventSource(sseUrl.toString(), {
+        eventSourceRef.current = new EventSource(sseUrl, {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -188,7 +188,7 @@ export function useAIChatStream(): UseAIChatStreamReturn {
                 clearTimeout(timeoutIdRef.current);
                 timeoutIdRef.current = null;
               }
-              
+
               // Stream complete, store final metadata
               setMetadata((prev) => ({
                 ...prev,
@@ -203,7 +203,7 @@ export function useAIChatStream(): UseAIChatStreamReturn {
                 clearTimeout(timeoutIdRef.current);
                 timeoutIdRef.current = null;
               }
-              
+
               // Handle error event
               setError(chunk.message || 'Unknown error occurred');
               setIsStreaming(false);

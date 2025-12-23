@@ -40,11 +40,10 @@ export default function ChatScreen() {
   const [inputValue, setInputValue] = useState('');
   const [showQuickChips, setShowQuickChips] = useState(true);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [showConversationList, setShowConversationList] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const streamingMessageIdRef = useRef<string | null>(null);
-  const isStreamingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isStreamingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Custom hook for AI chat API (non-streaming fallback)
   const { getUsageStats } = useAIChat();
@@ -66,7 +65,11 @@ export default function ChatScreen() {
   });
 
   // Fetch conversations list
-  const { data: conversationsData, refetch: refetchConversations, isRefetching } = useQuery({
+  const {
+    data: conversationsData,
+    refetch: refetchConversations,
+    isRefetching,
+  } = useQuery({
     queryKey: ['ai-conversations'],
     queryFn: async () => {
       const response = await apiClient.get('/api/ai-chat/conversations');
@@ -86,11 +89,11 @@ export default function ChatScreen() {
     setIsLoadingHistory(true);
     try {
       console.log('[HISTORY] 🔍 Loading conversation history...');
-      
+
       // Fetch latest conversation from backend
       const response = await apiClient.get('/api/ai-chat/conversations');
       console.log('[HISTORY] 📦 Response:', JSON.stringify(response.data).substring(0, 200));
-      
+
       const conversations = response.data.data || [];
       console.log('[HISTORY] 📊 Found conversations:', conversations.length);
 
@@ -103,8 +106,11 @@ export default function ChatScreen() {
         try {
           // ✅ FIX: Fetch conversation details which includes messages
           const detailResponse = await apiClient.get(`/api/ai-chat/conversations/${latestConv.id}`);
-          console.log('[HISTORY] 📨 Detail response:', JSON.stringify(detailResponse.data).substring(0, 200));
-          
+          console.log(
+            '[HISTORY] 📨 Detail response:',
+            JSON.stringify(detailResponse.data).substring(0, 200)
+          );
+
           const conversationDetail = detailResponse.data.data;
           const convMessages = conversationDetail.messages || [];
           console.log('[HISTORY] 💬 Loaded messages:', convMessages.length);
@@ -152,7 +158,8 @@ export default function ChatScreen() {
     } else if (hour < 17) {
       greeting = "hey there! ready to crush your goals today? what's on your mind?";
     } else {
-      greeting = "evening! let's reflect on your day and plan for tomorrow. what would you like to talk about?";
+      greeting =
+        "evening! let's reflect on your day and plan for tomorrow. what would you like to talk about?";
     }
 
     const initialMessage: Message = {
@@ -181,8 +188,12 @@ export default function ChatScreen() {
       const streamingMessageId =
         streamingMessageIdRef.current || `assistant-streaming-${Date.now()}`;
       streamingMessageIdRef.current = streamingMessageId;
-      
-      console.log('[STREAM_UPDATE] 📝 Updating message:', streamingMessageId, '- isStreaming: true');
+
+      console.log(
+        '[STREAM_UPDATE] 📝 Updating message:',
+        streamingMessageId,
+        '- isStreaming: true'
+      );
 
       // Set failsafe timeout (30s) to force clear isStreaming if stuck
       if (isStreamingTimeoutRef.current) {
@@ -191,7 +202,9 @@ export default function ChatScreen() {
       isStreamingTimeoutRef.current = setTimeout(() => {
         console.log('[STREAM_FAILSAFE] ⚠️ Timeout reached, forcing isStreaming = false');
         setMessages((prev) =>
-          prev.map((m) => (m.id === streamingMessageIdRef.current ? { ...m, isStreaming: false } : m))
+          prev.map((m) =>
+            m.id === streamingMessageIdRef.current ? { ...m, isStreaming: false } : m
+          )
         );
         streamingMessageIdRef.current = null;
       }, 30000);
@@ -225,23 +238,35 @@ export default function ChatScreen() {
 
   // Effect: Finalize streaming message when complete
   useEffect(() => {
-    console.log('[STREAM_FINALIZE] 🔍 Effect triggered - isStreaming:', isStreaming, 'streamingMessageIdRef:', streamingMessageIdRef.current);
-    
+    console.log(
+      '[STREAM_FINALIZE] 🔍 Effect triggered - isStreaming:',
+      isStreaming,
+      'streamingMessageIdRef:',
+      streamingMessageIdRef.current
+    );
+
     if (!isStreaming && streamingMessageIdRef.current) {
-      console.log('[STREAM_FINALIZE] ✅ Finalizing streaming message:', streamingMessageIdRef.current);
-      
+      console.log(
+        '[STREAM_FINALIZE] ✅ Finalizing streaming message:',
+        streamingMessageIdRef.current
+      );
+
       // Clear failsafe timeout
       if (isStreamingTimeoutRef.current) {
         clearTimeout(isStreamingTimeoutRef.current);
         isStreamingTimeoutRef.current = null;
         console.log('[STREAM_FINALIZE] 🧹 Cleared failsafe timeout');
       }
-      
+
       // Mark message as complete (not streaming)
       setMessages((prev) =>
         prev.map((m) => {
           if (m.id === streamingMessageIdRef.current) {
-            console.log('[STREAM_FINALIZE] 🎯 Found message to finalize:', m.id, '-> isStreaming: false');
+            console.log(
+              '[STREAM_FINALIZE] 🎯 Found message to finalize:',
+              m.id,
+              '-> isStreaming: false'
+            );
             return { ...m, isStreaming: false, id: streamMetadata.responseId || m.id };
           }
           return m;
@@ -350,7 +375,7 @@ export default function ChatScreen() {
       setCurrentConversationId(conversationId);
       setShowQuickChips(transformedMessages.length === 0);
       setShowConversationList(false);
-      
+
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       console.log('[CONV_SWITCH] ✅ Loaded', transformedMessages.length, 'messages');
     } catch (error: any) {
@@ -385,10 +410,10 @@ export default function ChatScreen() {
       {/* Header with conversation toggle */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleConversationList} style={styles.headerButton}>
-          <Ionicons 
-            name={showConversationList ? 'chatbubbles' : 'list'} 
-            size={24} 
-            color="#a78bfa" 
+          <Ionicons
+            name={showConversationList ? 'chatbubbles' : 'list'}
+            size={24}
+            color="#a78bfa"
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>

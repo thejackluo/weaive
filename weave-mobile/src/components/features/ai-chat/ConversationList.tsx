@@ -71,18 +71,12 @@ export default function ConversationList({
     const isActive = item.id === currentConversationId;
 
     return (
-      <TouchableOpacity
-        onPress={() => handleSelectConversation(item.id)}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity onPress={() => handleSelectConversation(item.id)} activeOpacity={0.7}>
         <Animated.View entering={FadeIn.duration(300)}>
           <BlurView
             intensity={15}
             tint="dark"
-            style={[
-              styles.conversationCard,
-              isActive && styles.conversationCardActive,
-            ]}
+            style={[styles.conversationCard, isActive && styles.conversationCardActive]}
           >
             <View style={styles.conversationHeader}>
               <View style={styles.conversationIcon}>
@@ -126,11 +120,7 @@ export default function ConversationList({
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-            tintColor="#a78bfa"
-          />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#a78bfa" />
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>

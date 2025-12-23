@@ -263,7 +263,7 @@ describe('ChatScreen Component', () => {
    */
   it('displays usage indicator showing messages used', async () => {
     // GIVEN: User has sent 3 premium messages
-    const { getByTestId } = render(<ChatScreen />, { wrapper: TestWrapper });
+    render(<ChatScreen />, { wrapper: TestWrapper });
 
     // THEN: Usage indicator shows "3/10 messages used today"
     await waitFor(() => {
@@ -273,7 +273,7 @@ describe('ChatScreen Component', () => {
 
   it('shows friendly message when rate limit reached', async () => {
     // GIVEN: User has used all 10 premium messages
-    const { getByTestId } = render(<ChatScreen />, { wrapper: TestWrapper });
+    render(<ChatScreen />, { wrapper: TestWrapper });
 
     // THEN: Friendly limit message displayed
     await waitFor(() => {

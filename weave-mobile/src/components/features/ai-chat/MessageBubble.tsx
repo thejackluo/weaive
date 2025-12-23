@@ -126,7 +126,11 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
                   minute: '2-digit',
                 })}
               </Text>
-              <Pressable onPress={handleCopyMessage} style={styles.copyButton} testID="copy-message-button">
+              <Pressable
+                onPress={handleCopyMessage}
+                style={styles.copyButton}
+                testID="copy-message-button"
+              >
                 <Text style={styles.copyButtonText}>Copy</Text>
               </Pressable>
             </Animated.View>

@@ -400,7 +400,10 @@ export async function getAccessToken(): Promise<string | null> {
     // Use Supabase client to get current session (most reliable method)
     // Dynamic import to avoid circular dependency
     const { supabase } = await import('@lib/supabase');
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
 
     if (error) {
       console.error('[SECURE_STORAGE] Error getting session:', error);
