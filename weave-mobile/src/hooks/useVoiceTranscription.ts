@@ -89,7 +89,9 @@ export function useVoiceTranscription() {
 
       // Check if request was aborted before expensive conversion
       if (options?.signal?.aborted) {
-        throw new Error('Request aborted');
+        const abortError = new Error('Request aborted');
+        abortError.name = 'AbortError';
+        throw abortError;
       }
 
       // Read audio file as base64
@@ -120,21 +122,21 @@ export function useVoiceTranscription() {
         if (response.status === 429) {
           // Rate limit exceeded
           throw new RateLimitException(
-            errorData.error.message,
-            errorData.error.retryAfter || 86400 // Default: 1 day
+            errorData?.error?.message || 'Rate limit exceeded',
+            errorData?.error?.retryAfter || 86400 // Default: 1 day
           );
         }
 
-        throw new Error(errorData.error.message || 'Transcription failed');
+        throw new Error(errorData?.error?.message || 'Transcription failed');
       }
 
       const responseData = await response.json();
       return responseData.data;
     },
 
-    // Retry configuration (AC-7): 1s, 2s, 4s
-    retry: 3,
-    retryDelay: (attemptIndex) => 1000 * 2 ** attemptIndex, // 1s, 2s, 4s
+    // Retry configuration (AC-7): 3 total attempts (1 initial + 2 retries) with delays 1s, 2s
+    retry: 2,
+    retryDelay: (attemptIndex) => 1000 * 2 ** attemptIndex, // 1s, 2s
 
     // NO CACHING - each audio file is unique (AC-7)
     // TanStack Query default: no cache for mutations

@@ -128,9 +128,9 @@ export function useAITextGeneration() {
       return responseData.data;
     },
 
-    // Retry configuration (AC-7): 1s, 2s, 4s
-    retry: 3,
-    retryDelay: (attemptIndex) => 1000 * 2 ** attemptIndex, // 1s, 2s, 4s
+    // Retry configuration (AC-7): 3 total attempts (1 initial + 2 retries) with delays 1s, 2s
+    retry: 2,
+    retryDelay: (attemptIndex) => 1000 * 2 ** attemptIndex, // 1s, 2s
 
     // On success: Update cache with 5-minute TTL
     onSuccess: (data, variables) => {
