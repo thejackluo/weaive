@@ -15,9 +15,10 @@ describe('MessageBubble Component', () => {
   it('renders user message with blue styling and right alignment', () => {
     // GIVEN: User message
     const message = {
+      id: '1',
       role: 'user' as const,
       content: 'How do I complete a bind?',
-      timestamp: '2025-12-22T10:00:00Z',
+      timestamp: new Date('2025-12-22T10:00:00Z'),
     };
 
     // WHEN: Rendering message bubble
@@ -37,9 +38,10 @@ describe('MessageBubble Component', () => {
   it('renders assistant message with purple gradient and left alignment', () => {
     // GIVEN: Assistant message
     const message = {
+      id: '2',
       role: 'assistant' as const,
       content: 'To complete a bind, tap the checkmark next to it.',
-      timestamp: '2025-12-22T10:01:00Z',
+      timestamp: new Date('2025-12-22T10:01:00Z'),
     };
 
     // WHEN: Rendering message bubble
@@ -59,9 +61,10 @@ describe('MessageBubble Component', () => {
   it('applies glassmorphism effect to message bubble', () => {
     // GIVEN: Any message
     const message = {
+      id: '3',
       role: 'user' as const,
       content: 'Test message',
-      timestamp: '2025-12-22T10:00:00Z',
+      timestamp: new Date('2025-12-22T10:00:00Z'),
     };
 
     // WHEN: Rendering message bubble
@@ -81,9 +84,10 @@ describe('MessageBubble Component', () => {
   it('shows timestamp on long-press', async () => {
     // GIVEN: Message bubble
     const message = {
+      id: '4',
       role: 'user' as const,
       content: 'Test message',
-      timestamp: '2025-12-22T10:00:00Z',
+      timestamp: new Date('2025-12-22T10:00:00Z'),
     };
 
     const { getByTestId } = render(<MessageBubble message={message} />);
@@ -100,9 +104,10 @@ describe('MessageBubble Component', () => {
   it('shows copy option on long-press', async () => {
     // GIVEN: Message bubble
     const message = {
+      id: '5',
       role: 'user' as const,
       content: 'Test message',
-      timestamp: '2025-12-22T10:00:00Z',
+      timestamp: new Date('2025-12-22T10:00:00Z'),
     };
 
     const { getByTestId } = render(<MessageBubble message={message} />);
@@ -123,10 +128,11 @@ describe('MessageBubble Component', () => {
   it('wraps long content correctly', () => {
     // GIVEN: Long message
     const message = {
+      id: '6',
       role: 'user' as const,
       content:
         'This is a very long message that should wrap properly within the message bubble without overflowing or breaking the layout in any way.',
-      timestamp: '2025-12-22T10:00:00Z',
+      timestamp: new Date('2025-12-22T10:00:00Z'),
     };
 
     // WHEN: Rendering message bubble
