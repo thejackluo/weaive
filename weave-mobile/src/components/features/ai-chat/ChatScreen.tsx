@@ -41,6 +41,7 @@ export default function ChatScreen() {
   const [showQuickChips, setShowQuickChips] = useState(true);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
   const [showConversationList, setShowConversationList] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const streamingMessageIdRef = useRef<string | null>(null);
   const isStreamingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -88,32 +89,34 @@ export default function ChatScreen() {
   const loadConversationHistory = async () => {
     setIsLoadingHistory(true);
     try {
-      console.log('[HISTORY] 🔍 Loading conversation history...');
+      if (__DEV__) console.log('[HISTORY] 🔍 Loading conversation history...');
 
       // Fetch latest conversation from backend
       const response = await apiClient.get('/api/ai-chat/conversations');
-      console.log('[HISTORY] 📦 Response:', JSON.stringify(response.data).substring(0, 200));
+      if (__DEV__)
+        console.log('[HISTORY] 📦 Response:', JSON.stringify(response.data).substring(0, 200));
 
       const conversations = response.data.data || [];
-      console.log('[HISTORY] 📊 Found conversations:', conversations.length);
+      if (__DEV__) console.log('[HISTORY] 📊 Found conversations:', conversations.length);
 
       if (conversations.length > 0) {
         // Load most recent conversation
         const latestConv = conversations[0];
         setCurrentConversationId(latestConv.id);
-        console.log('[HISTORY] 🔄 Loading conversation:', latestConv.id);
+        if (__DEV__) console.log('[HISTORY] 🔄 Loading conversation:', latestConv.id);
 
         try {
           // ✅ FIX: Fetch conversation details which includes messages
           const detailResponse = await apiClient.get(`/api/ai-chat/conversations/${latestConv.id}`);
-          console.log(
-            '[HISTORY] 📨 Detail response:',
-            JSON.stringify(detailResponse.data).substring(0, 200)
-          );
+          if (__DEV__)
+            console.log(
+              '[HISTORY] 📨 Detail response:',
+              JSON.stringify(detailResponse.data).substring(0, 200)
+            );
 
           const conversationDetail = detailResponse.data.data;
           const convMessages = conversationDetail.messages || [];
-          console.log('[HISTORY] 💬 Loaded messages:', convMessages.length);
+          if (__DEV__) console.log('[HISTORY] 💬 Loaded messages:', convMessages.length);
 
           // Transform backend messages to UI format
           const transformedMessages: Message[] = convMessages.map((msg: any) => ({
@@ -126,22 +129,25 @@ export default function ChatScreen() {
           if (transformedMessages.length > 0) {
             setMessages(transformedMessages);
             setShowQuickChips(false); // Hide chips if conversation exists
-            console.log('[HISTORY] ✅ Loaded', transformedMessages.length, 'messages into UI');
+            if (__DEV__)
+              console.log('[HISTORY] ✅ Loaded', transformedMessages.length, 'messages into UI');
           } else {
-            console.log('[HISTORY] ⚠️ No messages in conversation');
-            loadInitialGreeting();
+            // ✅ FIX: Don't add greeting to existing empty conversation
+            if (__DEV__) console.log('[HISTORY] ⚠️ Empty conversation, keeping blank');
+            setShowQuickChips(true);
           }
         } catch (detailError: any) {
-          console.error('[HISTORY] ❌ Failed to load conversation detail:', detailError.message);
-          // If detail fetch fails, still show greeting (conversation might be empty)
-          loadInitialGreeting();
+          if (__DEV__)
+            console.error('[HISTORY] ❌ Failed to load conversation detail:', detailError.message);
+          // ✅ FIX: If detail fetch fails, only show greeting if no conversations at all
         }
       } else {
-        console.log('[HISTORY] 📭 No conversations found, showing greeting');
+        // ✅ FIX: Only show initial greeting if NO conversations exist
+        if (__DEV__) console.log('[HISTORY] 📭 No conversations found, showing greeting');
         loadInitialGreeting();
       }
     } catch (error: any) {
-      console.error('[HISTORY] ❌ Failed to load conversation list:', error.message);
+      if (__DEV__) console.error('[HISTORY] ❌ Failed to load conversation list:', error.message);
       // Always fall back to greeting on error
       loadInitialGreeting();
     } finally {
@@ -177,9 +183,19 @@ export default function ChatScreen() {
     if (streamMetadata.conversationId) {
       // ✅ FIX: Always update conversation ID from metadata
       setCurrentConversationId(streamMetadata.conversationId);
-      console.log('[CONV] 🆔 Conversation ID set:', streamMetadata.conversationId);
+      if (__DEV__) console.log('[CONV] 🆔 Conversation ID set:', streamMetadata.conversationId);
     }
   }, [streamMetadata.conversationId]);
+
+  // ✅ FIX: Cleanup streaming timeout on unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (isStreamingTimeoutRef.current) {
+        clearTimeout(isStreamingTimeoutRef.current);
+        isStreamingTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Effect: Update streaming message in real-time
   useEffect(() => {
@@ -189,18 +205,20 @@ export default function ChatScreen() {
         streamingMessageIdRef.current || `assistant-streaming-${Date.now()}`;
       streamingMessageIdRef.current = streamingMessageId;
 
-      console.log(
-        '[STREAM_UPDATE] 📝 Updating message:',
-        streamingMessageId,
-        '- isStreaming: true'
-      );
+      if (__DEV__)
+        console.log(
+          '[STREAM_UPDATE] 📝 Updating message:',
+          streamingMessageId,
+          '- isStreaming: true'
+        );
 
       // Set failsafe timeout (30s) to force clear isStreaming if stuck
       if (isStreamingTimeoutRef.current) {
         clearTimeout(isStreamingTimeoutRef.current);
       }
       isStreamingTimeoutRef.current = setTimeout(() => {
-        console.log('[STREAM_FAILSAFE] ⚠️ Timeout reached, forcing isStreaming = false');
+        if (__DEV__)
+          console.log('[STREAM_FAILSAFE] ⚠️ Timeout reached, forcing isStreaming = false');
         setMessages((prev) =>
           prev.map((m) =>
             m.id === streamingMessageIdRef.current ? { ...m, isStreaming: false } : m
@@ -238,35 +256,38 @@ export default function ChatScreen() {
 
   // Effect: Finalize streaming message when complete
   useEffect(() => {
-    console.log(
-      '[STREAM_FINALIZE] 🔍 Effect triggered - isStreaming:',
-      isStreaming,
-      'streamingMessageIdRef:',
-      streamingMessageIdRef.current
-    );
-
-    if (!isStreaming && streamingMessageIdRef.current) {
+    if (__DEV__)
       console.log(
-        '[STREAM_FINALIZE] ✅ Finalizing streaming message:',
+        '[STREAM_FINALIZE] 🔍 Effect triggered - isStreaming:',
+        isStreaming,
+        'streamingMessageIdRef:',
         streamingMessageIdRef.current
       );
+
+    if (!isStreaming && streamingMessageIdRef.current) {
+      if (__DEV__)
+        console.log(
+          '[STREAM_FINALIZE] ✅ Finalizing streaming message:',
+          streamingMessageIdRef.current
+        );
 
       // Clear failsafe timeout
       if (isStreamingTimeoutRef.current) {
         clearTimeout(isStreamingTimeoutRef.current);
         isStreamingTimeoutRef.current = null;
-        console.log('[STREAM_FINALIZE] 🧹 Cleared failsafe timeout');
+        if (__DEV__) console.log('[STREAM_FINALIZE] 🧹 Cleared failsafe timeout');
       }
 
       // Mark message as complete (not streaming)
       setMessages((prev) =>
         prev.map((m) => {
           if (m.id === streamingMessageIdRef.current) {
-            console.log(
-              '[STREAM_FINALIZE] 🎯 Found message to finalize:',
-              m.id,
-              '-> isStreaming: false'
-            );
+            if (__DEV__)
+              console.log(
+                '[STREAM_FINALIZE] 🎯 Found message to finalize:',
+                m.id,
+                '-> isStreaming: false'
+              );
             return { ...m, isStreaming: false, id: streamMetadata.responseId || m.id };
           }
           return m;
@@ -287,14 +308,14 @@ export default function ChatScreen() {
 
       // Reset streaming message ref
       streamingMessageIdRef.current = null;
-      console.log('[STREAM_FINALIZE] 🏁 Finalization complete');
+      if (__DEV__) console.log('[STREAM_FINALIZE] 🏁 Finalization complete');
     }
   }, [isStreaming, streamingContent, streamMetadata, refetchUsage, refetchConversations]);
 
   // Effect: Handle streaming errors
   useEffect(() => {
     if (streamError) {
-      console.error('Streaming error:', streamError);
+      if (__DEV__) console.error('Streaming error:', streamError);
 
       // Show error message
       const errorMessage: Message = {
@@ -358,7 +379,7 @@ export default function ChatScreen() {
   };
 
   const handleSelectConversation = async (conversationId: string) => {
-    console.log('[CONV_SWITCH] 🔄 Switching to conversation:', conversationId);
+    if (__DEV__) console.log('[CONV_SWITCH] 🔄 Switching to conversation:', conversationId);
     try {
       const response = await apiClient.get(`/api/ai-chat/conversations/${conversationId}`);
       const conversationDetail = response.data.data;
@@ -377,14 +398,14 @@ export default function ChatScreen() {
       setShowConversationList(false);
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      console.log('[CONV_SWITCH] ✅ Loaded', transformedMessages.length, 'messages');
+      if (__DEV__) console.log('[CONV_SWITCH] ✅ Loaded', transformedMessages.length, 'messages');
     } catch (error: any) {
-      console.error('[CONV_SWITCH] ❌ Failed to switch conversation:', error.message);
+      if (__DEV__) console.error('[CONV_SWITCH] ❌ Failed to switch conversation:', error.message);
     }
   };
 
   const handleNewConversation = () => {
-    console.log('[CONV_NEW] 🆕 Creating new conversation');
+    if (__DEV__) console.log('[CONV_NEW] 🆕 Creating new conversation');
     setMessages([]);
     setCurrentConversationId(undefined);
     setShowQuickChips(true);
@@ -462,6 +483,13 @@ export default function ChatScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
+            {/* ✅ FIX: Show loading state when fetching history */}
+            {isLoadingHistory && messages.length === 0 ? (
+              <View style={{ padding: 16, alignItems: 'center' }}>
+                <Text style={{ color: '#888', fontSize: 14 }}>Loading conversation...</Text>
+              </View>
+            ) : null}
+
             {messages.map((message) => (
               <Animated.View
                 key={message.id}
