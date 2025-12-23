@@ -174,7 +174,7 @@ describe('RateLimitIndicator Component', () => {
     );
 
     // THEN: Monthly limit message displayed
-    expect(getByText(/500\\/500.*this month/i)).toBeTruthy();
+    expect(getByText(/500\/500.*this month/i)).toBeTruthy();
   });
 
   /**
