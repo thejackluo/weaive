@@ -282,6 +282,42 @@ export async function getJournalEntryForDate(_date: string): Promise<JournalEntr
 }
 
 /**
+ * Get journal entries within a date range
+ * Returns empty array if no entries found
+ */
+export async function getJournalEntriesByDateRange(
+  startDate: string,
+  endDate: string
+): Promise<JournalEntryResponse[]> {
+  try {
+    const token = await getAuthToken();
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/journal-entries?start_date=${startDate}&end_date=${endDate}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const errorMessage = errorData?.detail || errorData?.error?.message || response.statusText;
+      throw new Error(`Failed to fetch journal entries: ${errorMessage}`);
+    }
+
+    const result = await response.json();
+    return result.data || [];
+  } catch (error) {
+    console.error('getJournalEntriesByDateRange error:', error);
+    throw error;
+  }
+}
+
+/**
  * Get current authenticated user
  * Note: This is a stub for tests - actual user data comes from AuthContext
  */
@@ -296,5 +332,6 @@ export const journalApi = {
   updateJournalEntry,
   submitJournalEntry,
   getJournalEntryForDate,
+  getJournalEntriesByDateRange,
   getCurrentUser,
 };
