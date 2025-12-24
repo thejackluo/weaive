@@ -21,6 +21,17 @@ import {
 } from '@/services/iap';
 import apiClient from '@/services/apiClient';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
+
+// Conditionally import IAP module to prevent "Cannot find native module" errors in Expo Go
+let InAppPurchases: any = null;
+try {
+  InAppPurchases = require('expo-in-app-purchases');
+} catch (error) {
+  if (__DEV__) {
+    console.warn('⚠️ expo-in-app-purchases not available (requires development build)');
+  }
+}
 
 // Type for subscription verification request
 interface VerifyReceiptRequest {
@@ -50,14 +61,16 @@ export function useSubscriptionProducts() {
       // Initialize IAP connection
       const initialized = await initializeIAP();
       if (!initialized) {
-        throw new Error('Failed to initialize In-App Purchases');
+        // Return empty array instead of throwing - allows UI to render gracefully
+        console.warn('⚠️ IAP not initialized - returning empty products list');
+        return [];
       }
 
       // Fetch products
       return fetchProducts([PRODUCT_IDS.MONTHLY, PRODUCT_IDS.ANNUAL, PRODUCT_IDS.TRIAL]);
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 2,
+    retry: false, // Don't retry if module not available
   });
 }
 
@@ -157,7 +170,15 @@ export function useIAPConnection() {
 
     const initialize = async () => {
       if (isIAPSupported() && isMounted) {
-        await initializeIAP();
+        try {
+          await initializeIAP();
+        } catch (error) {
+          // Silently handle initialization errors
+          // This prevents crashes when native module isn't available
+          if (__DEV__) {
+            console.warn('[IAP] Native module not available:', error);
+          }
+        }
       }
     };
 
@@ -167,7 +188,9 @@ export function useIAPConnection() {
     return () => {
       isMounted = false;
       if (isIAPSupported()) {
-        disconnectIAP();
+        disconnectIAP().catch(() => {
+          // Ignore disconnect errors if module isn't available
+        });
       }
     };
   }, []);
