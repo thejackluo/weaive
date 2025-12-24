@@ -12,12 +12,12 @@ export default function ComponentTestingScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>🧪 Component Testing</RNText>
-        <Text style={styles.subtitle}>Batch 1: Button, Card, Checkbox</RNText>
+        <Text style={styles.title}>🧪 Component Testing</Text>
+        <Text style={styles.subtitle}>Batch 1: Button, Card, Checkbox</Text>
 
         <View style={styles.section}>
-          <Text style={styles.text}>Ready to start testing components.</RNText>
-          <Text style={styles.text}>No errors. Clean slate.</RNText>
+          <Text style={styles.text}>Ready to start testing components.</Text>
+          <Text style={styles.text}>No errors. Clean slate.</Text>
         </View>
       </View>
     </SafeAreaView>

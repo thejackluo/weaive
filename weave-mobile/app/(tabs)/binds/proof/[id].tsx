@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, Pressable, StyleSheet, Text as RNText } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
@@ -17,30 +17,30 @@ export default function AttachProofScreen() {
         {/* Header with Back Button */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <RNText style={styles.backText}>← Back</RNText>
+            <Text style={styles.backText}>← Back</Text>
           </Pressable>
         </View>
 
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           {/* Title */}
-          <RNText style={styles.title}>Attach Proof</RNText>
+          <Text style={styles.title}>Attach Proof</Text>
 
           {/* Epic */}
-          <RNText style={styles.epic}>Epic 3: Daily Actions & Proof</RNText>
+          <Text style={styles.epic}>Epic 3: Daily Actions & Proof</Text>
 
           {/* Story */}
-          <RNText style={styles.story}>Story 3.4: Attach Proof to Bind</RNText>
+          <Text style={styles.story}>Story 3.4: Attach Proof to Bind</Text>
 
           {/* Status Badge */}
           <View style={styles.badge}>
-            <RNText style={styles.badgeText}>Coming Soon</RNText>
+            <Text style={styles.badgeText}>Coming Soon</Text>
           </View>
 
           {/* Description */}
-          <RNText style={styles.description}>This page has not been developed</RNText>
-          <RNText style={styles.subdescription}>
+          <Text style={styles.description}>This page has not been developed</Text>
+          <Text style={styles.subdescription}>
             Check back soon as we continue building Weave.
-          </RNText>
+          </Text>
         </ScrollView>
       </SafeAreaView>
     </View>

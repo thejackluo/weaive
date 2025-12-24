@@ -171,9 +171,9 @@ export function TranscriptPreview({
               size={16}
               color={getConfidenceColor()}
             />
-            <RNText style={{ fontSize: 14, color: getConfidenceColor(), marginLeft: 8 }}>
+            <Text style={{ fontSize: 14, color: getConfidenceColor(), marginLeft: 8 }}>
               {getConfidenceLabel()} confidence
-            </RNText>
+            </Text>
           </View>
 
           {/* Provider badge */}
@@ -189,9 +189,9 @@ export function TranscriptPreview({
               },
             ]}
           >
-            <RNText style={{ fontSize: 12, color: '#a1a1aa' }}>
+            <Text style={{ fontSize: 12, color: '#a1a1aa' }}>
               {getProviderName()}
-            </RNText>
+            </Text>
           </View>
         </View>
 
@@ -203,16 +203,16 @@ export function TranscriptPreview({
           }}
         >
           {editedText.length}/{maxLength}
-        </RNText>
+        </Text>
       </View>
 
       {/* Transcript text */}
       {isLoading ? (
         <View style={[styles.loadingContainer, { paddingVertical: 32 }]}>
           <ActivityIndicator size="large" color="#3b82f6" />
-          <RNText style={{ fontSize: 16, color: '#a1a1aa', marginTop: 16 }}>
+          <Text style={{ fontSize: 16, color: '#a1a1aa', marginTop: 16 }}>
             Transcribing audio...
-          </RNText>
+          </Text>
         </View>
       ) : (
         <TextInput
@@ -243,17 +243,17 @@ export function TranscriptPreview({
             onPress={handleCancel}
             style={[styles.button, { flex: 1, backgroundColor: '#27272a' }]}
           >
-            <RNText style={{ fontSize: 14, color: '#fafafa', fontWeight: '600' }}>
+            <Text style={{ fontSize: 14, color: '#fafafa', fontWeight: '600' }}>
               Cancel
-            </RNText>
+            </Text>
           </Pressable>
           <Pressable
             onPress={handleSave}
             style={[styles.button, { flex: 1, backgroundColor: '#3b82f6' }]}
           >
-            <RNText style={{ fontSize: 14, color: '#ffffff', fontWeight: '600' }}>
+            <Text style={{ fontSize: 14, color: '#ffffff', fontWeight: '600' }}>
               Save
-            </RNText>
+            </Text>
           </Pressable>
         </View>
       )}

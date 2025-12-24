@@ -276,9 +276,9 @@ export function AudioPlayer({
       <View style={[styles.card, { padding: 24 }]}>
         <View style={styles.errorContainer}>
           <MaterialIcons name="error" size={48} color="#ef4444" />
-          <RNText style={{ fontSize: 18, color: '#ef4444', marginTop: 16, textAlign: 'center' }}>
+          <Text style={{ fontSize: 18, color: '#ef4444', marginTop: 16, textAlign: 'center' }}>
             {error}
-          </RNText>
+          </Text>
         </View>
       </View>
     );
@@ -289,12 +289,12 @@ export function AudioPlayer({
       <View style={styles.container}>
         {/* Time display - Large and prominent */}
         <View style={[styles.timeRow, { marginBottom: 16 }]}>
-          <RNText style={{ fontSize: 18, color: '#fafafa', fontWeight: '600' }}>
+          <Text style={{ fontSize: 18, color: '#fafafa', fontWeight: '600' }}>
             {formatTime(position)}
-          </RNText>
-          <RNText style={{ fontSize: 16, color: '#a1a1aa' }}>
+          </Text>
+          <Text style={{ fontSize: 16, color: '#a1a1aa' }}>
             {formatTime(duration)}
-          </RNText>
+          </Text>
         </View>
 
         {/* Progress bar - Full width with visual fill */}
@@ -397,9 +397,9 @@ export function AudioPlayer({
         {/* Speed control - Bottom row */}
         {showSpeedControl && (
           <View style={styles.speedRow}>
-            <RNText style={{ fontSize: 14, color: '#a1a1aa', marginRight: 12 }}>
+            <Text style={{ fontSize: 14, color: '#a1a1aa', marginRight: 12 }}>
               Speed:
-            </RNText>
+            </Text>
             <View style={styles.speedContainer}>
               {([0.5, 1.0, 1.5, 2.0] as PlaybackSpeed[]).map((speed) => (
                 <Pressable
@@ -424,7 +424,7 @@ export function AudioPlayer({
                     }}
                   >
                     {speed}x
-                  </RNText>
+                  </Text>
                 </Pressable>
               ))}
             </View>

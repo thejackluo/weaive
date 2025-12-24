@@ -42,15 +42,15 @@ export function DevEnvironmentBanner() {
     <View style={styles.banner}>
       <View style={styles.content}>
         <View style={styles.textContainer}>
-          <RNText style={styles.text}>🔧 Dev Mode - API Port: {port}</RNText>
-          <RNText style={styles.url}>{apiBaseUrl}</RNText>
+          <Text style={styles.text}>🔧 Dev Mode - API Port: {port}</Text>
+          <Text style={styles.url}>{apiBaseUrl}</Text>
         </View>
         <TouchableOpacity
           onPress={() => setIsDismissed(true)}
           style={styles.closeButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <RNText style={styles.closeButtonText}>✕</RNText>
+          <Text style={styles.closeButtonText}>✕</Text>
         </TouchableOpacity>
       </View>
     </View>

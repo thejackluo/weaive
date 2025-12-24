@@ -142,20 +142,20 @@ export default function CountdownTimer({
     >
       <View style={styles.content}>
         {/* Timer Icon */}
-        <RNText style={[styles.icon, isUrgent && styles.iconUrgent]}>⏰</RNText>
+        <Text style={[styles.icon, isUrgent && styles.iconUrgent]}>⏰</Text>
 
         {/* Countdown Text */}
-        <RNText style={[styles.text, isUrgent && styles.textUrgent]}>{text}</RNText>
+        <Text style={[styles.text, isUrgent && styles.textUrgent]}>{text}</Text>
 
         {/* Arrow Indicator */}
-        <RNText style={[styles.arrow, isUrgent && styles.arrowUrgent]}>→</RNText>
+        <Text style={[styles.arrow, isUrgent && styles.arrowUrgent]}>→</Text>
       </View>
 
       {/* Debug Info (dev mode only) */}
       {debug && (
-        <RNText style={styles.debugText}>
+        <Text style={styles.debugText}>
           TZ: {timezone || 'device'} | Updated: {lastUpdate.toLocaleTimeString()}
-        </RNText>
+        </Text>
       )}
     </TouchableOpacity>
   );

@@ -137,9 +137,9 @@ export function NeedleDetailScreen() {
           <Pressable onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color="#ffffff" />
           </Pressable>
-          <RNText style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
+          <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
             Loading...
-          </RNText>
+          </Text>
         </View>
       </View>
     );
@@ -153,16 +153,16 @@ export function NeedleDetailScreen() {
           <Pressable onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color="#ffffff" />
           </Pressable>
-          <RNText style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
+          <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
             Error
-          </RNText>
+          </Text>
         </View>
         <View style={styles.errorContainer}>
-          <RNText style={{ fontSize: 15, color: '#ef4444' }}>
+          <Text style={{ fontSize: 15, color: '#ef4444' }}>
             {error?.message || 'Goal not found'}
-          </RNText>
+          </Text>
           <TouchableOpacity onPress={handleBack} style={[styles.backToListButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}>
-            <RNText style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Back to Dashboard</RNText>
+            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Back to Dashboard</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -210,7 +210,7 @@ export function NeedleDetailScreen() {
             style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}
           >
             {editedTitle}
-          </RNText>
+          </Text>
         )}
 
         <Pressable
@@ -221,9 +221,9 @@ export function NeedleDetailScreen() {
           {updateGoalMutation.isPending ? (
             <ActivityIndicator size="small" color="#3b82f6" />
           ) : (
-            <RNText style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
               {isEditMode ? 'Done' : 'Edit'}
-            </RNText>
+            </Text>
           )}
         </Pressable>
       </View>
@@ -241,15 +241,15 @@ export function NeedleDetailScreen() {
               style={[styles.needleTitle, { fontSize: 28, fontWeight: 'bold', color: '#ffffff' }]}
             >
               {editedTitle}
-            </RNText>
+            </Text>
           </View>
         )}
 
         {/* Why Section */}
         <View style={styles.section}>
-          <RNText style={[styles.sectionLabel, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
+          <Text style={[styles.sectionLabel, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
             Why this matters
-          </RNText>
+          </Text>
           {isEditMode ? (
             <TextInput
               value={editedWhy}
@@ -267,56 +267,56 @@ export function NeedleDetailScreen() {
               placeholderTextColor="#71717a"
             />
           ) : (
-            <RNText style={[styles.whyText, { fontSize: 15, color: '#a1a1aa' }]}>
+            <Text style={[styles.whyText, { fontSize: 15, color: '#a1a1aa' }]}>
               {editedWhy || 'No description provided'}
-            </RNText>
+            </Text>
           )}
         </View>
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
-            <RNText style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
+            <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               7-day consistency
-            </RNText>
-            <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
+            </Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.consistency_7d}%
-            </RNText>
+            </Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
-            <RNText style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
+            <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               Total completions
-            </RNText>
-            <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
+            </Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.total_completions}
-            </RNText>
+            </Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
-            <RNText style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
+            <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               Current streak
-            </RNText>
-            <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
+            </Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.current_streak}
-            </RNText>
+            </Text>
           </View>
         </View>
 
         {/* Milestones Section */}
         <View style={styles.section}>
-          <RNText style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
+          <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Milestones
-          </RNText>
+          </Text>
           {milestones.map((milestone) => (
             <View key={milestone.id} style={[styles.milestoneCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
               <View style={styles.milestoneHeader}>
-                <RNText style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
+                <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                   {milestone.title}
-                </RNText>
-                <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
+                </Text>
+                <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                   {milestone.progress}%
-                </RNText>
+                </Text>
               </View>
               <View style={styles.progressBarContainer}>
                 <View
@@ -329,28 +329,28 @@ export function NeedleDetailScreen() {
                   ]}
                 />
               </View>
-              <RNText style={[styles.milestoneValues, { fontSize: 14, color: '#a1a1aa' }]}>
+              <Text style={[styles.milestoneValues, { fontSize: 14, color: '#a1a1aa' }]}>
                 {milestone.current} / {milestone.target}
-              </RNText>
+              </Text>
             </View>
           ))}
         </View>
 
         {/* Binds Section */}
         <View style={styles.section}>
-          <RNText style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
+          <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Your Binds
-          </RNText>
+          </Text>
           {binds.map((bind) => (
             <View key={bind.id} style={[styles.bindCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
               <View style={styles.bindContent}>
                 <View style={styles.bindInfo}>
-                  <RNText style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
+                  <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                     {bind.title}
-                  </RNText>
-                  <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
+                  </Text>
+                  <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                     {bind.frequency}
-                  </RNText>
+                  </Text>
                 </View>
                 <View style={styles.bindStatus}>
                   {bind.completedToday ? (
@@ -375,9 +375,9 @@ export function NeedleDetailScreen() {
               {archiveGoalMutation.isPending ? (
                 <ActivityIndicator size="small" color="#ef4444" />
               ) : (
-                <RNText style={{ fontSize: 15, fontWeight: '500', color: '#ef4444', textAlign: 'center' }}>
+                <Text style={{ fontSize: 15, fontWeight: '500', color: '#ef4444', textAlign: 'center' }}>
                   Archive Needle
-                </RNText>
+                </Text>
               )}
             </TouchableOpacity>
           </View>

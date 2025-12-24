@@ -44,7 +44,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { Text as RNText, TextInput, TouchableOpacity } from 'react-native';
+import { Text, TextInput, TouchableOpacity } from 'react-native';
 import { AuthError } from '@supabase/supabase-js';
 import { navigateAfterAuth, getAuthErrorMessage } from '@lib/authHelpers';
 import { supabase } from '@lib/supabase';
@@ -416,12 +416,12 @@ export default function SignupScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <RNText style={{ fontSize: 36, fontWeight: '700', color: '#ffffff', marginBottom: 8 }}>
+            <Text style={{ fontSize: 36, fontWeight: '700', color: '#ffffff', marginBottom: 8 }}>
               {user ? 'Already Signed In' : 'Create Account'}
-            </RNText>
-            <RNText style={{ fontSize: 18, color: 'rgba(255, 255, 255, 0.7)', marginTop: 8 }}>
+            </Text>
+            <Text style={{ fontSize: 18, color: 'rgba(255, 255, 255, 0.7)', marginTop: 8 }}>
               {user ? 'You are currently signed in' : 'Start your journey with Weave'}
-            </RNText>
+            </Text>
           </View>
 
           {/* Already Signed In Card */}
@@ -438,15 +438,15 @@ export default function SignupScreen() {
                 }}
               >
                 <View style={{ gap: 8 }}>
-                  <RNText style={{ fontSize: 18, fontWeight: '700', color: '#3b82f6' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#3b82f6' }}>
                     ✅ You're Already Signed In
-                  </RNText>
-                  <RNText style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
-                    Signed in as <RNText style={{ fontWeight: '600' }}>{user.email}</RNText>
-                  </RNText>
-                  <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)', marginTop: 4 }}>
+                  </Text>
+                  <Text style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    Signed in as <Text style={{ fontWeight: '600' }}>{user.email}</Text>
+                  </Text>
+                  <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)', marginTop: 4 }}>
                     You can continue to your account or sign out to use a different account.
-                  </RNText>
+                  </Text>
                 </View>
 
                 <View style={{ gap: 12 }}>
@@ -465,9 +465,9 @@ export default function SignupScreen() {
                     {isContinuing ? (
                       <ActivityIndicator color="#ffffff" />
                     ) : (
-                      <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                         Continue to App
-                      </RNText>
+                      </Text>
                     )}
                   </TouchableOpacity>
 
@@ -488,9 +488,9 @@ export default function SignupScreen() {
                     {isSigningOut ? (
                       <ActivityIndicator color="#ffffff" />
                     ) : (
-                      <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                         Sign Out
-                      </RNText>
+                      </Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -512,13 +512,13 @@ export default function SignupScreen() {
             >
               <View style={{ gap: 16 }}>
                 <View style={{ gap: 8 }}>
-                  <RNText style={{ fontSize: 18, fontWeight: '700', color: '#3b82f6' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#3b82f6' }}>
                     Account Already Exists
-                  </RNText>
-                  <RNText style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
-                    An account with <RNText style={{ fontWeight: '600' }}>{email}</RNText> already exists. Please
+                  </Text>
+                  <Text style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    An account with <Text style={{ fontWeight: '600' }}>{email}</Text> already exists. Please
                     sign in instead.
-                  </RNText>
+                  </Text>
                 </View>
                 <TouchableOpacity
                   style={{
@@ -535,9 +535,9 @@ export default function SignupScreen() {
                     });
                   }}
                 >
-                  <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                  <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                     Sign In Instead
-                  </RNText>
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -556,7 +556,7 @@ export default function SignupScreen() {
                     padding: 20,
                   }}
                 >
-                  <RNText style={{ color: '#f43f5e', fontSize: 14 }}>{getErrorMessage(authError)}</RNText>
+                  <Text style={{ color: '#f43f5e', fontSize: 14 }}>{getErrorMessage(authError)}</Text>
                 </View>
               )}
 
@@ -564,9 +564,9 @@ export default function SignupScreen() {
               <View style={styles.form}>
                 {/* Email Input */}
                 <View>
-                  <RNText style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 8 }}>
                     Email
-                  </RNText>
+                  </Text>
                   <TextInput
                     style={{
                       backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -591,17 +591,17 @@ export default function SignupScreen() {
                     accessibilityHint="Enter your email address"
                   />
                   {emailError ? (
-                    <RNText style={{ fontSize: 12, color: '#f43f5e', marginTop: 6 }}>
+                    <Text style={{ fontSize: 12, color: '#f43f5e', marginTop: 6 }}>
                       {emailError}
-                    </RNText>
+                    </Text>
                   ) : null}
                 </View>
 
                 {/* Password Input */}
                 <View>
-                  <RNText style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 8 }}>
                     Password
-                  </RNText>
+                  </Text>
                   <View style={{ position: 'relative' }}>
                     <TextInput
                       style={{
@@ -639,19 +639,19 @@ export default function SignupScreen() {
                       accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
                       accessibilityRole="button"
                     >
-                      <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)' }}>
+                      <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)' }}>
                         {showPassword ? 'Hide' : 'Show'}
-                      </RNText>
+                      </Text>
                     </Pressable>
                   </View>
                   {passwordError ? (
-                    <RNText style={{ fontSize: 12, color: '#f43f5e', marginTop: 6 }}>
+                    <Text style={{ fontSize: 12, color: '#f43f5e', marginTop: 6 }}>
                       {passwordError}
-                    </RNText>
+                    </Text>
                   ) : (
-                    <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)', marginTop: 6 }}>
+                    <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)', marginTop: 6 }}>
                       Minimum {MIN_PASSWORD_LENGTH} characters
-                    </RNText>
+                    </Text>
                   )}
 
                   {/* Password Strength Indicator */}
@@ -671,21 +671,21 @@ export default function SignupScreen() {
                       </View>
 
                       {/* Strength Label */}
-                      <RNText
+                      <Text
                         style={{ fontSize: 12, color: passwordStrength.color }}
                         accessibilityLabel={`Password strength: ${passwordStrength.label}`}
                       >
                         {passwordStrength.label}
-                      </RNText>
+                      </Text>
                     </View>
                   )}
                 </View>
 
                 {/* Confirm Password Input */}
                 <View>
-                  <RNText style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 8 }}>
                     Confirm Password
-                  </RNText>
+                  </Text>
                   <View style={{ position: 'relative' }}>
                     <TextInput
                       style={{
@@ -723,15 +723,15 @@ export default function SignupScreen() {
                       accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}
                       accessibilityRole="button"
                     >
-                      <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)' }}>
+                      <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)' }}>
                         {showConfirmPassword ? 'Hide' : 'Show'}
-                      </RNText>
+                      </Text>
                     </Pressable>
                   </View>
                   {confirmPasswordError ? (
-                    <RNText style={{ fontSize: 12, color: '#f43f5e', marginTop: 6 }}>
+                    <Text style={{ fontSize: 12, color: '#f43f5e', marginTop: 6 }}>
                       {confirmPasswordError}
-                    </RNText>
+                    </Text>
                   ) : null}
                 </View>
 
@@ -754,36 +754,36 @@ export default function SignupScreen() {
                     }}
                   >
                     {agreedToTerms && (
-                      <RNText style={{ color: '#ffffff', fontSize: 16 }}>✓</RNText>
+                      <Text style={{ color: '#ffffff', fontSize: 16 }}>✓</Text>
                     )}
                   </Pressable>
                   <View style={styles.termsText}>
-                    <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>
                       I agree to the{' '}
-                    </RNText>
+                    </Text>
                     <Pressable
                       onPress={() => router.push('/(auth)/terms-of-service')}
                       disabled={isLoading || isOAuthLoading !== null}
                       accessibilityLabel="Read Terms of Service"
                       accessibilityRole="link"
                     >
-                      <RNText style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
                         Terms of Service
-                      </RNText>
+                      </Text>
                     </Pressable>
-                    <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>
                       {' '}
                       and{' '}
-                    </RNText>
+                    </Text>
                     <Pressable
                       onPress={() => router.push('/(auth)/privacy-policy')}
                       disabled={isLoading || isOAuthLoading !== null}
                       accessibilityLabel="Read Privacy Policy"
                       accessibilityRole="link"
                     >
-                      <RNText style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
                         Privacy Policy
-                      </RNText>
+                      </Text>
                     </Pressable>
                   </View>
                 </View>
@@ -807,9 +807,9 @@ export default function SignupScreen() {
                   {isLoading ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
-                    <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Create Account
-                    </RNText>
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -817,9 +817,9 @@ export default function SignupScreen() {
               {/* Divider */}
               <View style={styles.dividerContainer}>
                 <View style={[styles.divider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
-                <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)', marginHorizontal: 16 }}>
+                <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)', marginHorizontal: 16 }}>
                   or continue with
-                </RNText>
+                </Text>
                 <View style={[styles.divider, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
               </View>
 
@@ -844,9 +844,9 @@ export default function SignupScreen() {
                   {isOAuthLoading === 'google' ? (
                     <ActivityIndicator color="#3b82f6" />
                   ) : (
-                    <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Sign up with Google
-                    </RNText>
+                    </Text>
                   )}
                 </TouchableOpacity>
 
@@ -868,31 +868,31 @@ export default function SignupScreen() {
                       accessibilityLabel="Sign up with Apple (currently disabled)"
                       accessibilityHint="Apple Sign-In requires Apple Developer Program membership"
                     >
-                      <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                         Sign up with Apple (Coming Soon)
-                      </RNText>
+                      </Text>
                     </TouchableOpacity>
-                    <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)', textAlign: 'center', marginTop: 4 }}>
+                    <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)', textAlign: 'center', marginTop: 4 }}>
                       Requires Apple Developer Program
-                    </RNText>
+                    </Text>
                   </View>
                 )}
               </View>
 
               {/* Login Link */}
               <View style={styles.footer}>
-                <RNText style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
+                <Text style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
                   Already have an account?{' '}
-                </RNText>
+                </Text>
                 <Pressable
                   onPress={handleNavigateToLogin}
                   disabled={isLoading || isOAuthLoading !== null}
                   accessibilityLabel="Navigate to login"
                   accessibilityRole="button"
                 >
-                  <RNText style={{ fontSize: 16, fontWeight: '600', color: '#3b82f6' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#3b82f6' }}>
                     Log In
-                  </RNText>
+                  </Text>
                 </Pressable>
               </View>
             </>

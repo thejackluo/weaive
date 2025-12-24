@@ -194,7 +194,7 @@ export const GoalBreakdownCard: React.FC<GoalBreakdownCardProps> = ({
       <View style={styles.header}>
         {hasBeenEdited && !isEditMode && (
           <View style={styles.editedBadge}>
-            <RNText style={styles.editedBadgeText}>Edited</RNText>
+            <Text style={styles.editedBadgeText}>Edited</Text>
           </View>
         )}
         {!isEditMode && (
@@ -205,7 +205,7 @@ export const GoalBreakdownCard: React.FC<GoalBreakdownCardProps> = ({
             accessibilityLabel="Edit goal"
             accessibilityHint="Opens edit mode for goal title and summary"
           >
-            <RNText style={styles.editButtonText}>Edit</RNText>
+            <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -213,8 +213,8 @@ export const GoalBreakdownCard: React.FC<GoalBreakdownCardProps> = ({
       {/* View Mode */}
       {!isEditMode ? (
         <>
-          <RNText style={styles.title}>{title}</RNText>
-          <RNText style={styles.summary}>{summary}</RNText>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.summary}>{summary}</Text>
         </>
       ) : (
         /* Edit Mode */
@@ -249,7 +249,7 @@ export const GoalBreakdownCard: React.FC<GoalBreakdownCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Cancel editing"
             >
-              <RNText style={styles.cancelButtonText}>Cancel</RNText>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSave}
@@ -257,7 +257,7 @@ export const GoalBreakdownCard: React.FC<GoalBreakdownCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Save changes"
             >
-              <RNText style={styles.saveButtonText}>Save</RNText>
+              <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
           </View>
         </>

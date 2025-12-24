@@ -133,7 +133,7 @@ export function ImageDetailView({
     if (!capture.ai_analysis) {
       return (
         <View className="bg-neutral-800 rounded-lg p-4">
-          <RNText className="text-neutral-400 text-center">AI analysis unavailable</RNText>
+          <Text className="text-neutral-400 text-center">AI analysis unavailable</Text>
         </View>
       );
     }
@@ -145,31 +145,31 @@ export function ImageDetailView({
         {/* Validation Score */}
         <View className="bg-neutral-800 rounded-lg p-4">
           <View className="flex-row items-center justify-between mb-2">
-            <RNText className="text-white font-semibold">AI Verification</RNText>
+            <Text className="text-white font-semibold">AI Verification</Text>
             {capture.ai_verified && (
               <View className="flex-row items-center gap-1">
                 <MaterialIcons name="verified" size={20} color="#10b981" />
-                <RNText className="text-green-500 font-semibold">Verified</RNText>
+                <Text className="text-green-500 font-semibold">Verified</Text>
               </View>
             )}
           </View>
-          <RNText className="text-neutral-400 text-sm">
+          <Text className="text-neutral-400 text-sm">
             Match Score: {analysis.validation_score}/100
-          </RNText>
+          </Text>
         </View>
 
         {/* AI Summary */}
         {analysis.summary && (
           <View className="bg-neutral-800 rounded-lg p-4">
-            <RNText className="text-white font-semibold mb-2">Summary</RNText>
-            <RNText className="text-neutral-300 text-sm">{analysis.summary}</RNText>
+            <Text className="text-white font-semibold mb-2">Summary</Text>
+            <Text className="text-neutral-300 text-sm">{analysis.summary}</Text>
           </View>
         )}
 
         {/* Quality Score */}
         {capture.ai_quality_score && (
           <View className="bg-neutral-800 rounded-lg p-4">
-            <RNText className="text-white font-semibold mb-2">Image Quality</RNText>
+            <Text className="text-white font-semibold mb-2">Image Quality</Text>
             <View className="flex-row">
               {Array.from({ length: 5 }).map((_, i) => (
                 <MaterialIcons
@@ -186,22 +186,22 @@ export function ImageDetailView({
         {/* OCR Text */}
         {analysis.ocr_text && (
           <View className="bg-neutral-800 rounded-lg p-4">
-            <RNText className="text-white font-semibold mb-2">Extracted Text</RNText>
-            <RNText className="text-neutral-300 text-sm">{analysis.ocr_text}</RNText>
+            <Text className="text-white font-semibold mb-2">Extracted Text</Text>
+            <Text className="text-neutral-300 text-sm">{analysis.ocr_text}</Text>
           </View>
         )}
 
         {/* Categories */}
         {analysis.categories && analysis.categories.length > 0 && (
           <View className="bg-neutral-800 rounded-lg p-4">
-            <RNText className="text-white font-semibold mb-3">Categories</RNText>
+            <Text className="text-white font-semibold mb-3">Categories</Text>
             {analysis.categories.slice(0, 2).map((cat: AIVisionCategory, index: number) => (
               <View key={index} className="mb-2">
                 <View className="flex-row justify-between mb-1">
-                  <RNText className="text-neutral-300 text-sm capitalize">{cat.label}</RNText>
-                  <RNText className="text-neutral-400 text-sm">
+                  <Text className="text-neutral-300 text-sm capitalize">{cat.label}</Text>
+                  <Text className="text-neutral-400 text-sm">
                     {Math.round(cat.confidence * 100)}%
-                  </RNText>
+                  </Text>
                 </View>
                 <View className="h-2 bg-neutral-700 rounded-full overflow-hidden">
                   <View
@@ -251,9 +251,9 @@ export function ImageDetailView({
 
         {/* Center: Date */}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <RNText style={{ color: 'white', fontWeight: '500', fontSize: 16 }}>
+          <Text style={{ color: 'white', fontWeight: '500', fontSize: 16 }}>
             {new Date(capture.local_date).toLocaleDateString()}
-          </RNText>
+          </Text>
         </View>
 
         {/* Right: Delete Button */}
@@ -301,7 +301,7 @@ export function ImageDetailView({
                   {savingTitle ? (
                     <ActivityIndicator size="small" color="white" />
                   ) : (
-                    <RNText className="text-white font-semibold">Save</RNText>
+                    <Text className="text-white font-semibold">Save</Text>
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -309,7 +309,7 @@ export function ImageDetailView({
                   disabled={savingTitle}
                   className="flex-1 bg-neutral-700 rounded-lg px-4 py-3 items-center"
                 >
-                  <RNText className="text-white font-semibold">Cancel</RNText>
+                  <Text className="text-white font-semibold">Cancel</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -320,13 +320,13 @@ export function ImageDetailView({
               activeOpacity={0.7}
             >
               {capture.content_text ? (
-                <RNText className="text-white flex-1" style={{ fontSize: 32, fontWeight: 'bold' }}>
+                <Text className="text-white flex-1" style={{ fontSize: 32, fontWeight: 'bold' }}>
                   {capture.content_text}
-                </RNText>
+                </Text>
               ) : (
-                <RNText className="text-neutral-500 text-2xl font-semibold flex-1">
+                <Text className="text-neutral-500 text-2xl font-semibold flex-1">
                   Tap to add title...
-                </RNText>
+                </Text>
               )}
               <MaterialIcons name="edit" size={20} color="#737373" />
             </TouchableOpacity>
@@ -347,9 +347,9 @@ export function ImageDetailView({
           />
         </TouchableOpacity>
 
-        <RNText className="text-neutral-500 text-xs text-center mb-4">
+        <Text className="text-neutral-500 text-xs text-center mb-4">
           Double-tap image to zoom in/out
-        </RNText>
+        </Text>
 
         {/* AI Insights */}
         {renderAIInsights()}
@@ -357,8 +357,8 @@ export function ImageDetailView({
         {/* Note/Caption */}
         {capture.content_text && (
           <View className="bg-neutral-800 rounded-lg p-4 mt-4">
-            <RNText className="text-white font-semibold mb-2">Note</RNText>
-            <RNText className="text-neutral-300">{capture.content_text}</RNText>
+            <Text className="text-white font-semibold mb-2">Note</Text>
+            <Text className="text-neutral-300">{capture.content_text}</Text>
           </View>
         )}
       </ScrollView>

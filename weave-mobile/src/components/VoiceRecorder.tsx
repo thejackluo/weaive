@@ -332,27 +332,27 @@ export function VoiceRecorder({
             },
           ]}
         >
-          <RNText style={{ fontSize: 16, color: '#ef4444' }}>
+          <Text style={{ fontSize: 16, color: '#ef4444' }}>
             {formatDuration(duration)}
-          </RNText>
+          </Text>
         </View>
       )}
 
       {/* Permission prompt */}
       {!hasPermission && !isRequestingPermission && (
         <View style={[styles.permissionPrompt, { marginTop: 16 }]}>
-          <RNText style={{ fontSize: 14, color: '#fafafa', textAlign: 'center' }}>
+          <Text style={{ fontSize: 14, color: '#fafafa', textAlign: 'center' }}>
             Microphone access required
-          </RNText>
+          </Text>
         </View>
       )}
 
       {/* Error display */}
       {error && (
         <View style={[styles.errorContainer, { marginTop: 16 }]}>
-          <RNText style={{ fontSize: 14, color: '#ef4444', textAlign: 'center' }}>
+          <Text style={{ fontSize: 14, color: '#ef4444', textAlign: 'center' }}>
             {error}
-          </RNText>
+          </Text>
         </View>
       )}
     </View>

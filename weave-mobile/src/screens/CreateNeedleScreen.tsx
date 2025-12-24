@@ -132,9 +132,9 @@ export function CreateNeedleScreen() {
           <Pressable onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color="#ffffff" />
           </Pressable>
-          <RNText style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff', textAlign: 'center' }]}>
+          <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff', textAlign: 'center' }]}>
             New Needle
-          </RNText>
+          </Text>
           <View style={styles.headerSpacer} />
         </View>
 
@@ -146,9 +146,9 @@ export function CreateNeedleScreen() {
         >
           {/* Goal Title Input */}
           <View style={styles.section}>
-            <RNText style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
+            <Text style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
               What's your goal?
-            </RNText>
+            </Text>
             <TextInput
               value={goalTitle}
               onChangeText={setGoalTitle}
@@ -168,9 +168,9 @@ export function CreateNeedleScreen() {
 
           {/* Why It Matters */}
           <View style={styles.section}>
-            <RNText style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
+            <Text style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
               Why is this goal important to you?
-            </RNText>
+            </Text>
             <TextInput
               value={whyItMatters}
               onChangeText={setWhyItMatters}
@@ -192,10 +192,10 @@ export function CreateNeedleScreen() {
           <View style={[styles.infoCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
             <View style={styles.infoContent}>
               <Ionicons name="sparkles" size={20} color="#a78bfa" />
-              <RNText style={[styles.infoText, { fontSize: 14, color: '#a1a1aa' }]}>
+              <Text style={[styles.infoText, { fontSize: 14, color: '#a1a1aa' }]}>
                 Tap "Generate Plan" and Weave AI will create milestones and daily habits for you.
                 You can edit everything before saving.
-              </RNText>
+              </Text>
             </View>
           </View>
         </ScrollView>
@@ -209,9 +209,9 @@ export function CreateNeedleScreen() {
           >
             <View style={styles.buttonContent}>
               <Ionicons name="sparkles" size={20} color="white" />
-              <RNText style={{ fontSize: 15, fontWeight: '600', color: 'white' }}>
+              <Text style={{ fontSize: 15, fontWeight: '600', color: 'white' }}>
                 Generate Plan
-              </RNText>
+              </Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -225,12 +225,12 @@ export function CreateNeedleScreen() {
       <View style={[styles.container, { backgroundColor: '#000000' }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3b82f6" />
-          <RNText style={[styles.loadingText, { fontSize: 18, fontWeight: '600', color: '#ffffff', textAlign: 'center' }]}>
+          <Text style={[styles.loadingText, { fontSize: 18, fontWeight: '600', color: '#ffffff', textAlign: 'center' }]}>
             Weave AI is creating your plan...
-          </RNText>
-          <RNText style={[styles.loadingSubtext, { fontSize: 15, color: '#a1a1aa', textAlign: 'center' }]}>
+          </Text>
+          <Text style={[styles.loadingSubtext, { fontSize: 15, color: '#a1a1aa', textAlign: 'center' }]}>
             Analyzing your goal and generating milestones
-          </RNText>
+          </Text>
         </View>
       </View>
     );
@@ -244,9 +244,9 @@ export function CreateNeedleScreen() {
         <Pressable onPress={() => setCurrentStep('input')} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="#ffffff" />
         </Pressable>
-        <RNText style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff', textAlign: 'center' }]}>
+        <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff', textAlign: 'center' }]}>
           Review Your Plan
-        </RNText>
+        </Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -257,9 +257,9 @@ export function CreateNeedleScreen() {
       >
         {/* Goal Title (Editable) */}
         <View style={styles.section}>
-          <RNText style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
+          <Text style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
             Goal
-          </RNText>
+          </Text>
           <TextInput
             value={goalTitle}
             onChangeText={setGoalTitle}
@@ -276,9 +276,9 @@ export function CreateNeedleScreen() {
 
         {/* Why (Editable) */}
         <View style={styles.section}>
-          <RNText style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
+          <Text style={[styles.label, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
             Why this matters
-          </RNText>
+          </Text>
           <TextInput
             value={whyItMatters}
             onChangeText={setWhyItMatters}
@@ -296,12 +296,12 @@ export function CreateNeedleScreen() {
 
         {/* Milestones (Q-Goals) */}
         <View style={styles.section}>
-          <RNText style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
+          <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Milestones
-          </RNText>
-          <RNText style={[styles.sectionSubtitle, { fontSize: 14, color: '#a1a1aa' }]}>
+          </Text>
+          <Text style={[styles.sectionSubtitle, { fontSize: 14, color: '#a1a1aa' }]}>
             Measurable targets to track your progress
-          </RNText>
+          </Text>
           {suggestedQGoals.map((qgoal, index) => (
             <Pressable
               key={index}
@@ -329,13 +329,13 @@ export function CreateNeedleScreen() {
                         ]}
                       />
                     ) : (
-                      <RNText style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
+                      <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                         {qgoal.title}
-                      </RNText>
+                      </Text>
                     )}
-                    <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
+                    <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                       Target: {qgoal.target_value} {qgoal.unit}
-                    </RNText>
+                    </Text>
                   </View>
                   <Ionicons name="pencil" size={20} color="#a1a1aa" />
                 </View>
@@ -346,12 +346,12 @@ export function CreateNeedleScreen() {
 
         {/* Daily Habits (Binds) */}
         <View style={styles.section}>
-          <RNText style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
+          <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Daily Habits
-          </RNText>
-          <RNText style={[styles.sectionSubtitle, { fontSize: 14, color: '#a1a1aa' }]}>
+          </Text>
+          <Text style={[styles.sectionSubtitle, { fontSize: 14, color: '#a1a1aa' }]}>
             Consistent actions that will get you there
-          </RNText>
+          </Text>
           {suggestedBinds.map((bind, index) => (
             <Pressable
               key={index}
@@ -379,14 +379,14 @@ export function CreateNeedleScreen() {
                         ]}
                       />
                     ) : (
-                      <RNText style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
+                      <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                         {bind.title}
-                      </RNText>
+                      </Text>
                     )}
-                    <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
+                    <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                       {bind.frequency_value}x per{' '}
                       {bind.frequency_type === 'weekly' ? 'week' : 'day'}
-                    </RNText>
+                    </Text>
                   </View>
                   <Ionicons name="pencil" size={20} color="#a1a1aa" />
                 </View>
@@ -399,9 +399,9 @@ export function CreateNeedleScreen() {
         <View style={[styles.infoCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
           <View style={styles.infoContent}>
             <Ionicons name="information-circle" size={20} color="#a78bfa" />
-            <RNText style={[styles.infoText, { fontSize: 14, color: '#a1a1aa' }]}>
+            <Text style={[styles.infoText, { fontSize: 14, color: '#a1a1aa' }]}>
               You can edit these later. Tap "Create Needle" to get started!
-            </RNText>
+            </Text>
           </View>
         </View>
       </ScrollView>
@@ -416,9 +416,9 @@ export function CreateNeedleScreen() {
           {createGoalMutation.isPending ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
-            <RNText style={{ fontSize: 15, fontWeight: '600', color: 'white', textAlign: 'center' }}>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: 'white', textAlign: 'center' }}>
               Create Needle
-            </RNText>
+            </Text>
           )}
         </TouchableOpacity>
       </View>

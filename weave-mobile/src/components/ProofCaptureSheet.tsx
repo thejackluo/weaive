@@ -102,21 +102,21 @@ export function ProofCaptureSheet({
   return (
     <View className="flex-1 bg-neutral-900 p-6">
       <View className="mb-8">
-        <RNText className="text-2xl font-bold text-white mb-2">Capture Proof</RNText>
-        <RNText className="text-neutral-400">
+        <Text className="text-2xl font-bold text-white mb-2">Capture Proof</Text>
+        <Text className="text-neutral-400">
           Show your progress with a photo. AI will verify your work.
-        </RNText>
+        </Text>
       </View>
 
       {uploading ? (
         <View className="items-center py-12">
           <ActivityIndicator size="large" color="#3b82f6" />
-          <RNText className="text-neutral-400 mt-4">{uploadProgress}</RNText>
+          <Text className="text-neutral-400 mt-4">{uploadProgress}</Text>
           <TouchableOpacity
             onPress={handleCancelUpload}
             className="mt-6 px-6 py-3 bg-neutral-800 rounded-lg"
           >
-            <RNText className="text-white font-medium">Cancel Upload</RNText>
+            <Text className="text-white font-medium">Cancel Upload</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -127,7 +127,7 @@ export function ProofCaptureSheet({
             className="bg-blue-500 rounded-xl p-4 flex-row items-center justify-center gap-3"
           >
             <MaterialIcons name="camera-alt" size={24} color="white" />
-            <RNText className="text-white font-semibold text-lg">Take Photo</RNText>
+            <Text className="text-white font-semibold text-lg">Take Photo</Text>
           </TouchableOpacity>
 
           {/* Gallery Button */}
@@ -136,13 +136,13 @@ export function ProofCaptureSheet({
             className="bg-neutral-800 rounded-xl p-4 flex-row items-center justify-center gap-3"
           >
             <MaterialIcons name="photo-library" size={24} color="white" />
-            <RNText className="text-white font-semibold text-lg">Choose from Gallery</RNText>
+            <Text className="text-white font-semibold text-lg">Choose from Gallery</Text>
           </TouchableOpacity>
 
           {/* Skip Button */}
           {allowSkip && (
             <TouchableOpacity onPress={onCancel} className="mt-4 p-4 items-center">
-              <RNText className="text-neutral-500 font-medium">Skip for Now</RNText>
+              <Text className="text-neutral-500 font-medium">Skip for Now</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -152,19 +152,19 @@ export function ProofCaptureSheet({
       <View className="mt-auto pt-6 border-t border-neutral-800">
         {usage ? (
           <View className="gap-2">
-            <RNText className="text-neutral-500 text-xs text-center">
+            <Text className="text-neutral-500 text-xs text-center">
               {usage.upload_count}/5 images today ({usage.upload_size_mb.toFixed(1)}MB/5MB)
-            </RNText>
+            </Text>
             {usage.upload_count >= 4 && usage.upload_count < 5 && (
-              <RNText className="text-amber-500 text-xs text-center font-medium">
+              <Text className="text-amber-500 text-xs text-center font-medium">
                 ⚠️ {5 - usage.upload_count} image{5 - usage.upload_count === 1 ? '' : 's'} remaining
-              </RNText>
+              </Text>
             )}
           </View>
         ) : (
-          <RNText className="text-neutral-500 text-xs text-center">
+          <Text className="text-neutral-500 text-xs text-center">
             Free tier: 5 images/day with AI analysis
-          </RNText>
+          </Text>
         )}
       </View>
     </View>

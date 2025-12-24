@@ -31,9 +31,9 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
     return (
       <View className="py-8 items-center">
         <ActivityIndicator size="large" color="#3b82f6" />
-        <RNText className="mt-2" style={{ fontSize: 14, color: '#a1a1aa' }}>
+        <Text className="mt-2" style={{ fontSize: 14, color: '#a1a1aa' }}>
           Loading history...
-        </RNText>
+        </Text>
       </View>
     );
   }
@@ -41,16 +41,16 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
   if (isError) {
     return (
       <View className="py-4">
-        <RNText style={{ fontSize: 14, color: '#ef4444' }}>
+        <Text style={{ fontSize: 14, color: '#ef4444' }}>
           {error?.message || 'Failed to load history'}
-        </RNText>
+        </Text>
         <Text
           className="mt-2"
           style={{ fontSize: 14, color: '#3b82f6' }}
           onPress={() => refetch()}
         >
           Tap to retry
-        </RNText>
+        </Text>
       </View>
     );
   }
@@ -60,9 +60,9 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
   if (historyItems.length === 0) {
     return (
       <View className="py-8 items-center">
-        <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
+        <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
           No activity yet. Start completing binds to build your history!
-        </RNText>
+        </Text>
       </View>
     );
   }
@@ -146,13 +146,13 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
           {/* Header row: Type badge and timestamp */}
           <View style={styles.headerRow}>
             <View style={[styles.typeBadge, { backgroundColor: config.color + '30' }]}>
-              <RNText style={{ fontSize: 14, fontWeight: '500', color: config.color }}>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: config.color }}>
                 {config.label}
-              </RNText>
+              </Text>
             </View>
-            <RNText style={{ fontSize: 14, color: '#71717a' }}>
+            <Text style={{ fontSize: 14, color: '#71717a' }}>
               {formatTime(item.timestamp)}
-            </RNText>
+            </Text>
           </View>
 
           {/* Content */}
@@ -161,7 +161,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
             style={[styles.content, { fontSize: 16, fontWeight: '500', color: '#ffffff' }]}
           >
             {getContent()}
-          </RNText>
+          </Text>
 
           {/* Footer row: View arrow */}
           <View style={styles.footerRow}>
@@ -182,7 +182,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
             style={[styles.dateHeader, { fontSize: 16, fontWeight: '600', color: '#a1a1aa' }]}
           >
             {date}
-          </RNText>
+          </Text>
           <FlatList
             data={items}
             renderItem={renderHistoryItem}

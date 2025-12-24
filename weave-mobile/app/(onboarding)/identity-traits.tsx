@@ -35,7 +35,7 @@ export default function IdentityTraitsScreen() {
           }}
         >
           Identity Traits Selection
-        </RNText>
+        </Text>
         <Text
           style={{
             fontSize: 16,
@@ -49,7 +49,7 @@ export default function IdentityTraitsScreen() {
           This screen is a placeholder.
           {'\n\n'}
           TODO: Implement identity traits selection.
-        </RNText>
+        </Text>
       </View>
     </SafeAreaView>
   );

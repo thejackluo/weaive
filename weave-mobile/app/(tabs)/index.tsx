@@ -8,7 +8,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text as RNText, Pressable, Modal, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Pressable, Modal, ScrollView, TouchableOpacity } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { SymbolView } from 'expo-symbols';
@@ -34,8 +34,8 @@ export default function HomeScreen() {
   return (
     <View className="flex-1 items-center justify-center bg-background-primary p-4 gap-6">
       <View className="items-center gap-2">
-        <RNText style={{ fontSize: 72, fontWeight: 'bold', color: '#fafafa' }}>Weave MVP</RNText>
-        <RNText style={{ fontSize: 16, color: '#a1a1aa' }}>Foundation Setup Complete ✅</RNText>
+        <Text style={{ fontSize: 72, fontWeight: 'bold', color: '#fafafa' }}>Weave MVP</Text>
+        <Text style={{ fontSize: 16, color: '#a1a1aa' }}>Foundation Setup Complete ✅</Text>
       </View>
 
       {/* Design System Buttons */}
@@ -44,18 +44,18 @@ export default function HomeScreen() {
           onPress={() => router.push('/(tabs)/design-system-showcase')}
           className="bg-accent-500 px-6 py-4 rounded-lg active:opacity-80 active:scale-98"
         >
-          <RNText style={{ color: '#18181b', fontSize: 14, fontWeight: '500', letterSpacing: 1, textAlign: 'center' }}>
+          <Text style={{ color: '#18181b', fontSize: 14, fontWeight: '500', letterSpacing: 1, textAlign: 'center' }}>
             View Full Design System
-          </RNText>
+          </Text>
         </Pressable>
 
         <Pressable
           onPress={() => router.push('/(tabs)/component-testing')}
           className="bg-violet-600 px-6 py-4 rounded-lg active:opacity-80 active:scale-98 border border-violet-500"
         >
-          <RNText style={{ color: '#fafafa', fontSize: 14, fontWeight: '500', letterSpacing: 1, textAlign: 'center' }}>
+          <Text style={{ color: '#fafafa', fontSize: 14, fontWeight: '500', letterSpacing: 1, textAlign: 'center' }}>
             🧪 Component Testing
-          </RNText>
+          </Text>
         </Pressable>
       </View>
 
@@ -65,9 +65,9 @@ export default function HomeScreen() {
       >
         {/* Story 3.1: Today's Binds */}
         <View className="mb-8">
-          <RNText style={{ fontSize: 36, fontWeight: '600', color: '#ffffff', marginBottom: 16 }}>
+          <Text style={{ fontSize: 36, fontWeight: '600', color: '#ffffff', marginBottom: 16 }}>
             Today's Binds
-          </RNText>
+          </Text>
 
           {/* Morning Workout Bind */}
           <TouchableOpacity className="p-5 bg-white/5 rounded-xl mb-3 border border-white/10 active:bg-white/10">
@@ -76,15 +76,15 @@ export default function HomeScreen() {
                 <View className="w-10 h-10 rounded-full bg-blue-500/20 items-center justify-center">
                   <SymbolView name="figure.run" size={20} tintColor="#60a5fa" />
                 </View>
-                <RNText style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
                   Morning Workout
-                </RNText>
+                </Text>
               </View>
               <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
             </View>
-            <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginLeft: 52 }}>
+            <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginLeft: 52 }}>
               Complete your 30-minute strength training session
-            </RNText>
+            </Text>
           </TouchableOpacity>
 
           {/* Deep Work Block Bind */}
@@ -94,15 +94,15 @@ export default function HomeScreen() {
                 <View className="w-10 h-10 rounded-full bg-purple-500/20 items-center justify-center">
                   <SymbolView name="book.fill" size={20} tintColor="#a78bfa" />
                 </View>
-                <RNText style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
                   Deep Work Block
-                </RNText>
+                </Text>
               </View>
               <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
             </View>
-            <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginLeft: 52 }}>
+            <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginLeft: 52 }}>
               2 hours of focused project work
-            </RNText>
+            </Text>
           </TouchableOpacity>
 
           {/* Evening Meditation Bind */}
@@ -112,15 +112,15 @@ export default function HomeScreen() {
                 <View className="w-10 h-10 rounded-full bg-emerald-500/20 items-center justify-center">
                   <SymbolView name="sparkles" size={20} tintColor="#34d399" />
                 </View>
-                <RNText style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
                   Evening Meditation
-                </RNText>
+                </Text>
               </View>
               <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.4)" />
             </View>
-            <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginLeft: 52 }}>
+            <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginLeft: 52 }}>
               10-minute mindfulness practice
-            </RNText>
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -136,9 +136,9 @@ export default function HomeScreen() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <RNText style={{ fontSize: 24 }}>📸</RNText>
+            <Text style={{ fontSize: 24 }}>📸</Text>
             <View style={{ flex: 1 }}>
-              <RNText
+              <Text
                 style={{
                   fontSize: 18,
                   fontWeight: 'bold',
@@ -146,10 +146,10 @@ export default function HomeScreen() {
                 }}
               >
                 Story 0.9: Image Capture Test
-              </RNText>
-              <RNText style={{ fontSize: 12, color: '#71717A', marginTop: 4 }}>
+              </Text>
+              <Text style={{ fontSize: 12, color: '#71717A', marginTop: 4 }}>
                 AI-Powered Image Service with Gemini Vision
-              </RNText>
+              </Text>
             </View>
           </View>
 
@@ -171,7 +171,7 @@ export default function HomeScreen() {
               }}
             >
               🎤 Voice Demo (Story 0.11)
-            </RNText>
+            </Text>
           </Pressable>
 
           <Pressable
@@ -184,7 +184,7 @@ export default function HomeScreen() {
               alignItems: 'center',
             }}
           >
-            <RNText
+            <Text
               style={{
                 color: '#FAFAFA',
                 fontSize: 16,
@@ -192,14 +192,14 @@ export default function HomeScreen() {
               }}
             >
               📷 Capture & Upload Image
-            </RNText>
+            </Text>
           </Pressable>
 
           {/* Mini Gallery Preview */}
           <View style={{ gap: 8 }}>
-            <RNText style={{ color: '#A1A1AA', fontSize: 14, fontWeight: '500' }}>
+            <Text style={{ color: '#A1A1AA', fontSize: 14, fontWeight: '500' }}>
               Recent Uploads:
-            </RNText>
+            </Text>
             <View
               style={{
                 height: 400,
@@ -215,16 +215,16 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <RNText
+          <Text
             style={{ fontSize: 11, color: '#71717A', textAlign: 'center', fontStyle: 'italic' }}
           >
             Tap "Capture" → Take/Choose photo → Watch AI analysis → View in gallery
-          </RNText>
+          </Text>
         </View>
 
         {/* Story 4.1c: Countdown Timer (Section C) */}
         <View style={{ width: '100%', maxWidth: 400, paddingHorizontal: 16 }}>
-          <RNText
+          <Text
             style={{
               fontSize: 12,
               color: '#71717A',
@@ -233,15 +233,15 @@ export default function HomeScreen() {
             }}
           >
             Story 4.1c: Countdown Timer Demo
-          </RNText>
+          </Text>
           <CountdownTimer debug={true} />
         </View>
 
         {/* Quick Actions - Primary Navigation */}
         <View className="mb-8">
-          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 16 }}>
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 16 }}>
             Quick Actions
-          </RNText>
+          </Text>
           <View className="flex-row gap-3 mb-3">
             <Link href="/(tabs)/dashboard" asChild className="flex-1">
               <TouchableOpacity
@@ -254,9 +254,9 @@ export default function HomeScreen() {
                   flex: 1,
                 }}
               >
-                <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+                <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
                   📊 Dashboard
-                </RNText>
+                </Text>
               </TouchableOpacity>
             </Link>
             <Link href="/journal" asChild className="flex-1">
@@ -270,9 +270,9 @@ export default function HomeScreen() {
                   flex: 1,
                 }}
               >
-                <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+                <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
                   📝 Journal
-                </RNText>
+                </Text>
               </TouchableOpacity>
             </Link>
           </View>
@@ -290,9 +290,9 @@ export default function HomeScreen() {
                   flex: 1,
                 }}
               >
-                <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+                <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
                   🎯 Goals
-                </RNText>
+                </Text>
               </TouchableOpacity>
             </Link>
             <Link href="/captures" asChild className="flex-1">
@@ -306,9 +306,9 @@ export default function HomeScreen() {
                   flex: 1,
                 }}
               >
-                <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+                <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
                   📸 Captures
-                </RNText>
+                </Text>
               </TouchableOpacity>
             </Link>
           </View>
@@ -324,18 +324,18 @@ export default function HomeScreen() {
                 borderColor: 'rgba(255, 255, 255, 0.2)',
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
                 📍 View Needles (Story 2.1)
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
         </View>
 
         {/* Development Tools */}
         <View className="pt-6 border-t border-white/5 mb-8">
-          <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.3)', marginBottom: 12, textAlign: 'center' }}>
+          <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.3)', marginBottom: 12, textAlign: 'center' }}>
             Development Tools
-          </RNText>
+          </Text>
           <View className="gap-3">
             <Link href="/(tabs)/settings" asChild>
               <TouchableOpacity
@@ -347,9 +347,9 @@ export default function HomeScreen() {
                   alignItems: 'center',
                 }}
               >
-                <RNText style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
+                <Text style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
                   ⚙️ Settings
-                </RNText>
+                </Text>
               </TouchableOpacity>
             </Link>
             <Link href="/(tabs)/settings/reflection" asChild>
@@ -362,9 +362,9 @@ export default function HomeScreen() {
                   alignItems: 'center',
                 }}
               >
-                <RNText style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
+                <Text style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
                   💭 Test Reflection (Direct)
-                </RNText>
+                </Text>
               </TouchableOpacity>
             </Link>
             <Link href="/sitemap" asChild>
@@ -377,9 +377,9 @@ export default function HomeScreen() {
                   alignItems: 'center',
                 }}
               >
-                <RNText style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
+                <Text style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
                   🗺️ View Sitemap
-                </RNText>
+                </Text>
               </TouchableOpacity>
             </Link>
           </View>
@@ -387,12 +387,12 @@ export default function HomeScreen() {
 
         {/* Footer */}
         <View className="pt-8 pb-4">
-          <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.2)', textAlign: 'center', marginBottom: 4 }}>
+          <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.2)', textAlign: 'center', marginBottom: 4 }}>
             React Native-First Design System
-          </RNText>
-          <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.2)', textAlign: 'center' }}>
+          </Text>
+          <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.2)', textAlign: 'center' }}>
             NativeWind v5 • Tailwind v4 • Liquid Glass UI
-          </RNText>
+          </Text>
         </View>
       </ScrollView>
 

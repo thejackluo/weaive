@@ -64,9 +64,9 @@ export const GoalCard: React.FC<GoalCardProps> = ({
         accessibilityHint={selected ? 'Currently selected goal' : 'Tap to select this goal'}
         style={[styles.card, selected ? styles.cardSelected : styles.cardUnselected]}
       >
-        <RNText style={[styles.text, selected ? styles.textSelected : styles.textUnselected]}>
+        <Text style={[styles.text, selected ? styles.textSelected : styles.textUnselected]}>
           {text}
-        </RNText>
+        </Text>
       </TouchableOpacity>
     </Animated.View>
   );

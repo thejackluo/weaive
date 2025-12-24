@@ -73,7 +73,7 @@ export function ImageGallery({
       {/* Quality Score */}
       {item.ai_quality_score && item.ai_quality_score >= 4 && (
         <View className="absolute bottom-2 right-2 bg-black/60 rounded px-2 py-1">
-          <RNText className="text-white text-xs">⭐ {item.ai_quality_score}/5</RNText>
+          <Text className="text-white text-xs">⭐ {item.ai_quality_score}/5</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -84,7 +84,7 @@ export function ImageGallery({
     return (
       <View className="flex-1 items-center justify-center bg-neutral-900">
         <ActivityIndicator size="large" color="#3b82f6" />
-        <RNText className="text-neutral-400 mt-4">Loading images...</RNText>
+        <Text className="text-neutral-400 mt-4">Loading images...</Text>
       </View>
     );
   }
@@ -94,10 +94,10 @@ export function ImageGallery({
     return (
       <View className="flex-1 items-center justify-center bg-neutral-900 p-6">
         <MaterialIcons name="photo-camera" size={64} color="#525252" />
-        <RNText className="text-neutral-400 text-lg mt-4 text-center">No images yet</RNText>
-        <RNText className="text-neutral-500 text-sm mt-2 text-center">
+        <Text className="text-neutral-400 text-lg mt-4 text-center">No images yet</Text>
+        <Text className="text-neutral-500 text-sm mt-2 text-center">
           Capture your first proof to get started!
-        </RNText>
+        </Text>
       </View>
     );
   }
@@ -108,7 +108,7 @@ export function ImageGallery({
     return (
       <View className="py-4">
         <ActivityIndicator size="small" color="#3b82f6" />
-        <RNText className="text-neutral-400 text-center mt-2 text-xs">Loading more...</RNText>
+        <Text className="text-neutral-400 text-center mt-2 text-xs">Loading more...</Text>
       </View>
     );
   };

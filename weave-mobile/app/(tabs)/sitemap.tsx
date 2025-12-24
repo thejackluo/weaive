@@ -1,4 +1,4 @@
-import { View, ScrollView, StyleSheet, Text as RNText, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 // Removed: import { Text, Button } from '@/design-system';
 import { Link } from 'expo-router';
 
@@ -13,18 +13,18 @@ export default function SitemapScreen() {
     <ScrollView className="flex-1" style={{ backgroundColor: '#0a0a0a' }}>
       <View className="p-4">
         {/* Header */}
-        <RNText style={{ fontSize: 48, fontWeight: '700', color: '#ffffff', marginBottom: 8 }}>
+        <Text style={{ fontSize: 48, fontWeight: '700', color: '#ffffff', marginBottom: 8 }}>
           Navigation Sitemap
-        </RNText>
-        <RNText style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.6)', marginBottom: 24 }}>
+        </Text>
+        <Text style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.6)', marginBottom: 24 }}>
           20 screens • 2 main tabs • Color-coded by epic
-        </RNText>
+        </Text>
 
         {/* Main Tabs */}
         <View style={styles.section}>
-          <RNText style={styles.sectionTitle}>
+          <Text style={styles.sectionTitle}>
             Main Tabs
-          </RNText>
+          </Text>
           <Link href="/(tabs)" asChild>
             <TouchableOpacity
               style={{
@@ -36,9 +36,9 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               🏠 Home (Thread)
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
           <Link href="/(tabs)/dashboard" asChild>
@@ -52,21 +52,21 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               📊 Dashboard
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
-          <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)', marginTop: 8 }}>
+          <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)', marginTop: 8 }}>
             ✨ AI Chat accessible via center button
-          </RNText>
+          </Text>
         </View>
 
         {/* Goals Screens - Blue */}
         <View style={styles.section}>
-          <RNText style={styles.sectionTitle}>
+          <Text style={styles.sectionTitle}>
             🎯 Goals
-          </RNText>
+          </Text>
           <Link href="/goals" asChild>
             <TouchableOpacity
               style={{
@@ -78,9 +78,9 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Goals List
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
           <Link href="/goals/example-goal-1" asChild>
@@ -94,9 +94,9 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Goal Detail
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
           <Link href="/goals/new" asChild>
@@ -110,9 +110,9 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Create Goal
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
           <Link href="/goals/edit/example-goal-1" asChild>
@@ -126,18 +126,18 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Edit Goal
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
         </View>
 
         {/* Binds Screens - Green */}
         <View style={styles.section}>
-          <RNText style={styles.sectionTitle}>
+          <Text style={styles.sectionTitle}>
             ✅ Binds
-          </RNText>
+          </Text>
           <Link href="/binds/example-bind-1" asChild>
             <TouchableOpacity
               style={{
@@ -149,9 +149,9 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Bind Detail
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
           <Link href="/binds/proof/example-bind-1" asChild>
@@ -165,18 +165,18 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Attach Proof
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
         </View>
 
         {/* Journal Screens - Purple Gradient */}
         <View style={styles.section}>
-          <RNText style={styles.sectionTitle}>
+          <Text style={styles.sectionTitle}>
             📝 Journal
-          </RNText>
+          </Text>
           <Link href="/journal" asChild>
             <TouchableOpacity
               style={{
@@ -188,9 +188,9 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Daily Reflection
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
           <Link href="/journal/history" asChild>
@@ -204,9 +204,9 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Journal History
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
           <Link href="/journal/2025-12-20" asChild>
@@ -220,18 +220,18 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Past Entry Example
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
         </View>
 
         {/* Captures Screens - Light Blue */}
         <View style={styles.section}>
-          <RNText style={styles.sectionTitle}>
+          <Text style={styles.sectionTitle}>
             📸 Captures
-          </RNText>
+          </Text>
           <Link href="/captures" asChild>
             <TouchableOpacity
               style={{
@@ -245,9 +245,9 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Capture Gallery
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
           <Link href="/captures/example-capture-1" asChild>
@@ -263,18 +263,18 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
+              <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>
               Capture Detail
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
         </View>
 
         {/* Settings Screens - Subtle */}
         <View style={styles.section}>
-          <RNText style={styles.sectionTitle}>
+          <Text style={styles.sectionTitle}>
             ⚙️ Settings
-          </RNText>
+          </Text>
           <Link href="/settings" asChild>
             <TouchableOpacity
               style={{
@@ -286,9 +286,9 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#9ca3af', fontSize: 15, fontWeight: '500' }}>
+              <Text style={{ color: '#9ca3af', fontSize: 15, fontWeight: '500' }}>
               Settings Home
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
           <Link href="/settings/identity" asChild>
@@ -302,9 +302,9 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#9ca3af', fontSize: 15, fontWeight: '500' }}>
+              <Text style={{ color: '#9ca3af', fontSize: 15, fontWeight: '500' }}>
               Edit Identity
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
           <Link href="/settings/subscription" asChild>
@@ -318,18 +318,18 @@ export default function SitemapScreen() {
                 marginBottom: 16,
               }}
             >
-              <RNText style={{ color: '#9ca3af', fontSize: 15, fontWeight: '500' }}>
+              <Text style={{ color: '#9ca3af', fontSize: 15, fontWeight: '500' }}>
               Subscription
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </Link>
         </View>
 
         {/* Footer Stats */}
         <View className="pt-4 pb-8 border-t border-white/10">
-          <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)', textAlign: 'center' }}>
+          <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)', textAlign: 'center' }}>
             20 total screens • 2 main tabs • 5 epic groups
-          </RNText>
+          </Text>
         </View>
       </View>
     </ScrollView>

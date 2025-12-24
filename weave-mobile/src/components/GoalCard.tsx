@@ -102,21 +102,21 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
             numberOfLines={2}
           >
             {goal.title}
-          </RNText>
+          </Text>
 
           {/* Stats Row */}
           <View style={styles.statsRow}>
             {/* Consistency */}
             <View style={styles.statItem}>
-              <RNText style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
+              <Text style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
                 CONSISTENCY
-              </RNText>
+              </Text>
               <View style={styles.consistencyContainer}>
                 {isNewGoal ? (
                   <View style={[styles.newBadge, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
-                    <RNText style={[styles.newBadgeText, { color: '#8b5cf6' }]}>
+                    <Text style={[styles.newBadgeText, { color: '#8b5cf6' }]}>
                       NEW
-                    </RNText>
+                    </Text>
                   </View>
                 ) : (
                   <>
@@ -124,10 +124,10 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
                       style={[styles.consistencyValue, { fontSize: 32, fontWeight: 'bold', color: '#FFFFFF' }]}
                     >
                       {Math.round(goal.consistency_7d!)}
-                    </RNText>
-                    <RNText style={{ fontSize: 18, color: '#D4D4DC' }}>
+                    </Text>
+                    <Text style={{ fontSize: 18, color: '#D4D4DC' }}>
                       %
-                    </RNText>
+                    </Text>
                   </>
                 )}
               </View>
@@ -149,13 +149,13 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
 
             {/* Active Binds Count */}
             <View style={styles.statItem}>
-              <RNText style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
+              <Text style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
                 ACTIVE BINDS
-              </RNText>
+              </Text>
               <View style={styles.bindsContainer}>
-                <RNText style={{ fontSize: 24, fontWeight: 'bold', color: '#FFFFFF' }}>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFFFFF' }}>
                   {goal.active_binds_count}
-                </RNText>
+                </Text>
               </View>
             </View>
           </View>

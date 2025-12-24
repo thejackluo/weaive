@@ -220,9 +220,9 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
         case 'record':
           return (
             <View style={[styles.stepContainer, { padding: 24 }]}>
-              <RNText style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
+              <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
                 Record Voice Note
-              </RNText>
+              </Text>
 
               <VoiceRecorder
                 onRecordingComplete={handleRecordingComplete}
@@ -239,16 +239,16 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
                 }}
               >
                 Tap to start recording
-              </RNText>
+              </Text>
             </View>
           );
 
         case 'transcribing':
           return (
             <View style={[styles.stepContainer, { padding: 24 }]}>
-              <RNText style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
+              <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
                 Transcribing...
-              </RNText>
+              </Text>
 
               {recordingResult && (
                 <AudioWaveform
@@ -268,7 +268,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
                 }}
               >
                 Processing audio...
-              </RNText>
+              </Text>
             </View>
           );
 
@@ -278,9 +278,9 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
               style={styles.scrollView}
               contentContainerStyle={[styles.stepContainer, { padding: 24 }]}
             >
-              <RNText style={{ fontSize: 28, fontWeight: '600', marginBottom: 24 }}>
+              <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 24 }}>
                 Review Transcript
-              </RNText>
+              </Text>
 
               {transcriptionResult && (
                 <TranscriptPreview
@@ -302,17 +302,17 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
                   onPress={handleCancel}
                   style={[styles.button, { flex: 1, backgroundColor: '#27272a' }]}
                 >
-                  <RNText style={{ fontSize: 16, color: '#fafafa', fontWeight: '600' }}>
+                  <Text style={{ fontSize: 16, color: '#fafafa', fontWeight: '600' }}>
                     Cancel
-                  </RNText>
+                  </Text>
                 </Pressable>
                 <Pressable
                   onPress={handleFinalSave}
                   style={[styles.button, { flex: 1, backgroundColor: '#3b82f6' }]}
                 >
-                  <RNText style={{ fontSize: 16, color: '#ffffff', fontWeight: '600' }}>
+                  <Text style={{ fontSize: 16, color: '#ffffff', fontWeight: '600' }}>
                     Save
-                  </RNText>
+                  </Text>
                 </Pressable>
               </View>
             </ScrollView>
@@ -321,9 +321,9 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
         case 'complete':
           return (
             <View style={[styles.stepContainer, { padding: 24 }]}>
-              <RNText style={{ fontSize: 28, fontWeight: '600', textAlign: 'center' }}>
+              <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center' }}>
                 Saved!
-              </RNText>
+              </Text>
             </View>
           );
 

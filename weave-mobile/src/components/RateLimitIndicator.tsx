@@ -177,9 +177,9 @@ export function RateLimitIndicator({
           size={20}
           color={getStatusColor(overallStatus)}
         />
-        <RNText style={{ fontSize: 12, color: getStatusColor(overallStatus), marginLeft: 8 }}>
+        <Text style={{ fontSize: 12, color: getStatusColor(overallStatus), marginLeft: 8 }}>
           {Math.max(requestPercentage, durationPercentage).toFixed(0)}%
-        </RNText>
+        </Text>
       </View>
     );
   }
@@ -204,22 +204,22 @@ export function RateLimitIndicator({
               }}
             >
               Daily Usage
-            </RNText>
+            </Text>
           </View>
 
           {overallStatus !== 'normal' && (
-            <RNText style={{ fontSize: 12, color: '#a1a1aa' }}>
+            <Text style={{ fontSize: 12, color: '#a1a1aa' }}>
               Resets in {getTimeUntilReset()}
-            </RNText>
+            </Text>
           )}
         </View>
 
         {/* Request count */}
         <View style={{ marginBottom: 12 }}>
           <View style={[styles.labelRow, { marginBottom: 8 }]}>
-            <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
+            <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               Transcriptions
-            </RNText>
+            </Text>
             <Text
               style={{
                 fontSize: 14,
@@ -228,7 +228,7 @@ export function RateLimitIndicator({
               }}
             >
               {requestCount}/{maxRequests}
-            </RNText>
+            </Text>
           </View>
           {renderProgressBar(requestPercentage, requestStatus)}
         </View>
@@ -236,9 +236,9 @@ export function RateLimitIndicator({
         {/* Duration */}
         <View>
           <View style={[styles.labelRow, { marginBottom: 8 }]}>
-            <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
+            <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               Audio duration
-            </RNText>
+            </Text>
             <Text
               style={{
                 fontSize: 14,
@@ -247,7 +247,7 @@ export function RateLimitIndicator({
               }}
             >
               {durationMinutes.toFixed(0)}/{maxMinutes} min
-            </RNText>
+            </Text>
           </View>
           {renderProgressBar(durationPercentage, durationStatus)}
         </View>
@@ -255,9 +255,9 @@ export function RateLimitIndicator({
         {/* Warning message */}
         {overallStatus === 'error' && (
           <View style={[styles.warningContainer, { marginTop: 12 }]}>
-            <RNText style={{ fontSize: 12, color: '#ef4444', textAlign: 'center' }}>
+            <Text style={{ fontSize: 12, color: '#ef4444', textAlign: 'center' }}>
               Daily limit reached. Limit resets at midnight.
-            </RNText>
+            </Text>
           </View>
         )}
       </View>

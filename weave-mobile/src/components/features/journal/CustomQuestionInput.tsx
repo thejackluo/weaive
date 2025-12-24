@@ -45,7 +45,7 @@ export default function CustomQuestionInput({
               placeholder="Your answer..."
               placeholderTextColor="#999"
             />
-            <RNText style={styles.characterCount}>{((value as string) || '').length} / 100</RNText>
+            <Text style={styles.characterCount}>{((value as string) || '').length} / 100</Text>
           </View>
         );
 
@@ -53,7 +53,7 @@ export default function CustomQuestionInput({
         const numValue = typeof value === 'number' ? value : 5;
         return (
           <View>
-            <RNText style={styles.scoreDisplay}>{numValue}</RNText>
+            <Text style={styles.scoreDisplay}>{numValue}</Text>
             <View style={styles.sliderTrack}>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                 <TouchableOpacity
@@ -61,7 +61,7 @@ export default function CustomQuestionInput({
                   style={[styles.sliderDot, num <= numValue && styles.sliderDotActive]}
                   onPress={() => onChange(num)}
                 >
-                  <RNText style={styles.sliderDotText}>{num}</RNText>
+                  <Text style={styles.sliderDotText}>{num}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -77,17 +77,17 @@ export default function CustomQuestionInput({
               style={[styles.toggleButton, !boolValue && styles.toggleButtonActive]}
               onPress={() => onChange(false)}
             >
-              <RNText style={[styles.toggleButtonText, !boolValue && styles.toggleButtonTextActive]}>
+              <Text style={[styles.toggleButtonText, !boolValue && styles.toggleButtonTextActive]}>
                 No
-              </RNText>
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toggleButton, boolValue && styles.toggleButtonActive]}
               onPress={() => onChange(true)}
             >
-              <RNText style={[styles.toggleButtonText, boolValue && styles.toggleButtonTextActive]}>
+              <Text style={[styles.toggleButtonText, boolValue && styles.toggleButtonTextActive]}>
                 Yes
-              </RNText>
+              </Text>
             </TouchableOpacity>
           </View>
         );
@@ -100,7 +100,7 @@ export default function CustomQuestionInput({
 
   return (
     <View style={styles.container}>
-      <RNText style={styles.questionLabel}>{question.question}</RNText>
+      <Text style={styles.questionLabel}>{question.question}</Text>
       {renderInput()}
     </View>
   );

@@ -164,48 +164,48 @@ export default function ManageQuestionsModal({
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleCancel}>
-            <RNText style={styles.headerButton}>Cancel</RNText>
+            <Text style={styles.headerButton}>Cancel</Text>
           </TouchableOpacity>
-          <RNText style={styles.headerTitle}>Custom Questions</RNText>
+          <Text style={styles.headerTitle}>Custom Questions</Text>
           <TouchableOpacity onPress={handleSaveAll}>
-            <RNText style={[styles.headerButton, styles.headerButtonPrimary]}>Save</RNText>
+            <Text style={[styles.headerButton, styles.headerButtonPrimary]}>Save</Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
           {/* Info */}
-          <RNText style={styles.infoText}>
+          <Text style={styles.infoText}>
             Track what matters to you. Add up to 5 custom questions to your daily reflection.
-          </RNText>
+          </Text>
 
           {/* Existing Questions List */}
           {localQuestions.length > 0 && (
             <View style={styles.questionsList}>
-              <RNText style={styles.sectionTitle}>Your Questions ({localQuestions.length}/5)</RNText>
+              <Text style={styles.sectionTitle}>Your Questions ({localQuestions.length}/5)</Text>
               {localQuestions.map((question) => (
                 <View key={question.id} style={styles.questionItem}>
                   <View style={styles.questionItemContent}>
-                    <RNText style={styles.questionItemText}>{question.question}</RNText>
-                    <RNText style={styles.questionItemType}>
+                    <Text style={styles.questionItemText}>{question.question}</Text>
+                    <Text style={styles.questionItemType}>
                       {question.type === 'text' && 'Text'}
                       {question.type === 'numeric' && 'Numeric (1-10)'}
                       {question.type === 'yes_no' && 'Yes/No'}
-                    </RNText>
+                    </Text>
                   </View>
                   <View style={styles.questionItemActions}>
                     <TouchableOpacity
                       onPress={() => handleEditQuestion(question.id)}
                       style={styles.actionButton}
                     >
-                      <RNText style={styles.actionButtonText}>Edit</RNText>
+                      <Text style={styles.actionButtonText}>Edit</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDeleteQuestion(question.id)}
                       style={[styles.actionButton, styles.actionButtonDelete]}
                     >
-                      <RNText style={[styles.actionButtonText, styles.actionButtonDeleteText]}>
+                      <Text style={[styles.actionButtonText, styles.actionButtonDeleteText]}>
                         Delete
-                      </RNText>
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -216,11 +216,11 @@ export default function ManageQuestionsModal({
           {/* Add/Edit Question Form */}
           {isAddingQuestion ? (
             <View style={styles.addForm}>
-              <RNText style={styles.sectionTitle}>
+              <Text style={styles.sectionTitle}>
                 {editingQuestionId ? 'Edit Question' : 'Add Question'}
-              </RNText>
+              </Text>
 
-              <RNText style={styles.inputLabel}>Question Text</RNText>
+              <Text style={styles.inputLabel}>Question Text</Text>
               <TextInput
                 style={styles.textInput}
                 value={newQuestionText}
@@ -230,9 +230,9 @@ export default function ManageQuestionsModal({
                 maxLength={100}
                 autoFocus
               />
-              <RNText style={styles.characterCount}>{newQuestionText.length} / 100</RNText>
+              <Text style={styles.characterCount}>{newQuestionText.length} / 100</Text>
 
-              <RNText style={styles.inputLabel}>Question Type</RNText>
+              <Text style={styles.inputLabel}>Question Type</Text>
               <View style={styles.typeSelector}>
                 <TouchableOpacity
                   style={[styles.typeButton, newQuestionType === 'text' && styles.typeButtonActive]}
@@ -245,7 +245,7 @@ export default function ManageQuestionsModal({
                     ]}
                   >
                     Text
-                  </RNText>
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -261,7 +261,7 @@ export default function ManageQuestionsModal({
                     ]}
                   >
                     Numeric
-                  </RNText>
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -277,7 +277,7 @@ export default function ManageQuestionsModal({
                     ]}
                   >
                     Yes/No
-                  </RNText>
+                  </Text>
                 </TouchableOpacity>
               </View>
 
@@ -291,15 +291,15 @@ export default function ManageQuestionsModal({
                     setShowExamples(false);
                   }}
                 >
-                  <RNText style={styles.formButtonSecondaryText}>Cancel</RNText>
+                  <Text style={styles.formButtonSecondaryText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.formButton, styles.formButtonPrimary]}
                   onPress={editingQuestionId ? handleUpdateQuestion : handleSaveNewQuestion}
                 >
-                  <RNText style={styles.formButtonPrimaryText}>
+                  <Text style={styles.formButtonPrimaryText}>
                     {editingQuestionId ? 'Update' : 'Add Question'}
-                  </RNText>
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -309,31 +309,31 @@ export default function ManageQuestionsModal({
               onPress={handleAddQuestion}
               disabled={localQuestions.length >= 5}
             >
-              <RNText style={styles.addButtonText}>
+              <Text style={styles.addButtonText}>
                 {localQuestions.length >= 5
                   ? '✓ Maximum Questions Reached'
                   : '+ Add Custom Question'}
-              </RNText>
+              </Text>
             </TouchableOpacity>
           )}
 
           {/* Example Questions (shown for first question) */}
           {showExamples && (
             <View style={styles.examplesContainer}>
-              <RNText style={styles.sectionTitle}>Example Questions</RNText>
-              <RNText style={styles.examplesSubtitle}>Tap to use, or write your own above</RNText>
+              <Text style={styles.sectionTitle}>Example Questions</Text>
+              <Text style={styles.examplesSubtitle}>Tap to use, or write your own above</Text>
               {EXAMPLE_QUESTIONS.map((example, index) => (
                 <TouchableOpacity
                   key={index}
                   style={styles.exampleItem}
                   onPress={() => handleSelectExample(example)}
                 >
-                  <RNText style={styles.exampleItemText}>{example.question}</RNText>
-                  <RNText style={styles.exampleItemType}>
+                  <Text style={styles.exampleItemText}>{example.question}</Text>
+                  <Text style={styles.exampleItemType}>
                     {example.type === 'text' && 'Text'}
                     {example.type === 'numeric' && 'Numeric'}
                     {example.type === 'yes_no' && 'Yes/No'}
-                  </RNText>
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
