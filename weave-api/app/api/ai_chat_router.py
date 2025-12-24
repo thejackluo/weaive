@@ -1037,7 +1037,7 @@ async def get_usage_stats(
     )
 
 
-@router.get("/api/personality")
+@router.get("/personality")
 async def get_personality(
     user: dict = Depends(get_current_user),
     db: SupabaseClient = Depends(get_supabase_client)
