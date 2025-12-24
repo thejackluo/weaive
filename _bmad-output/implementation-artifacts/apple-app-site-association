@@ -1,0 +1,23 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAM_ID.com.weavelight.app",
+        "paths": [
+          "/goals/*",
+          "/binds/*",
+          "/journal/*",
+          "/ai-chat",
+          "/settings/*",
+          "/subscription"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAM_ID.com.weavelight.app"
+    ]
+  }
+}
