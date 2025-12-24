@@ -19,6 +19,10 @@ interface ChatMessageResponse {
   response_id: string;
   conversation_id: string;
   tokens_used: number;
+  // Story 6.2 metadata
+  context_used?: boolean;
+  personality_type?: 'dream_self' | 'weave_ai';
+  tools_invoked?: string[];
 }
 
 interface UsageStats {
@@ -57,18 +61,24 @@ export function useAIChat() {
   const queryClient = useQueryClient();
 
   /**
-   * Send a chat message
+   * Send a chat message (Story 6.2: with context and tool support)
    */
   const sendMessage = async ({
     message,
     conversation_id,
+    include_context = true,
+    enable_tools = false,
   }: {
     message: string;
     conversation_id?: string;
+    include_context?: boolean;
+    enable_tools?: boolean;
   }): Promise<ChatMessageResponse> => {
     const response = await apiClient.post<{ data: ChatMessageResponse }>('/api/ai-chat/messages', {
       message,
       conversation_id,
+      include_context,  // Story 6.2
+      enable_tools,     // Story 6.2
     });
 
     return response.data.data;
