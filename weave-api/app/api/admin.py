@@ -87,6 +87,106 @@ async def get_daily_cost(
     return {"data": cost_details}
 
 
+@router.post("/reset-rate-limit/{user_id}")
+async def reset_rate_limit(
+    user_id: str,
+    x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key"),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Reset rate limits for a user by clearing their daily_aggregates
+
+    **Admin only** - requires X-Admin-Key header
+
+    Usage:
+        curl -X POST -H "X-Admin-Key: dev_admin_key" http://localhost:8000/api/admin/reset-rate-limit/user_123
+    """
+    # Verify admin key
+    import os
+    expected_admin_key = os.getenv('ADMIN_API_KEY', 'dev_admin_key')
+
+    if not x_admin_key or x_admin_key != expected_admin_key:
+        logger.warning(f"Unauthorized admin reset-rate-limit attempt for user {user_id}")
+        raise HTTPException(status_code=401, detail="Unauthorized - invalid or missing X-Admin-Key header")
+
+    logger.info(f"🔧 Admin resetting rate limits for user {user_id}")
+
+    try:
+        # Get today's date
+        today = date.today().isoformat()
+
+        # Delete today's daily_aggregates for this user
+        result = supabase.table("daily_aggregates").delete().eq("user_id", user_id).eq("local_date", today).execute()
+
+        logger.info(f"✅ Rate limits reset for user {user_id} (deleted {len(result.data)} records)")
+
+        return {
+            "data": {
+                "user_id": user_id,
+                "records_deleted": len(result.data),
+                "date": today,
+            },
+            "meta": {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to reset rate limits for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Rate limit reset failed: {str(e)}")
+
+
+@router.post("/upgrade-to-admin/{user_id}")
+async def upgrade_to_admin(
+    user_id: str,
+    x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key"),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Upgrade a user account to admin tier (unlimited rate limits)
+
+    **Admin only** - requires X-Admin-Key header
+
+    Usage:
+        curl -X POST -H "X-Admin-Key: dev_admin_key" http://localhost:8000/api/admin/upgrade-to-admin/user_123
+    """
+    # Verify admin key
+    import os
+    expected_admin_key = os.getenv('ADMIN_API_KEY', 'dev_admin_key')
+
+    if not x_admin_key or x_admin_key != expected_admin_key:
+        logger.warning(f"Unauthorized admin upgrade attempt for user {user_id}")
+        raise HTTPException(status_code=401, detail="Unauthorized - invalid or missing X-Admin-Key header")
+
+    logger.info(f"🔧 Admin upgrading user {user_id} to admin tier")
+
+    try:
+        # Update user_profiles subscription_tier to 'admin'
+        result = supabase.table("user_profiles").update({"subscription_tier": "admin"}).eq("id", user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+
+        logger.info(f"✅ User {user_id} upgraded to admin tier")
+
+        return {
+            "data": {
+                "user_id": user_id,
+                "subscription_tier": "admin",
+                "updated_at": result.data[0].get("updated_at"),
+            },
+            "meta": {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to upgrade user {user_id} to admin: {e}")
+        raise HTTPException(status_code=500, detail=f"Admin upgrade failed: {str(e)}")
+
+
 @router.get("/context-preview/{user_id}")
 async def preview_user_context(
     user_id: str,

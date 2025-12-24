@@ -93,10 +93,11 @@ class AIOrchestrator:
 
         # Get tool schemas
         tool_schemas = self.tool_registry.get_tool_schemas()
-        logger.info(f"Tool calling enabled with {len(tool_schemas)} available tools")
+        logger.info(f"🔧 [AIOrchestrator] Tool calling enabled with {len(tool_schemas)} available tools: {[t['name'] for t in tool_schemas]}")
 
         # Build tool-augmented prompt
         augmented_prompt = self._build_tool_prompt(prompt, tool_schemas)
+        logger.info(f"📝 [AIOrchestrator] Augmented prompt (first 500 chars):\n{augmented_prompt[:500]}...")
 
         # Track tool execution history
         tool_execution_history = []
@@ -120,7 +121,9 @@ class AIOrchestrator:
             )
 
             # Check for tool calls
+            logger.info(f"🔍 [AIOrchestrator] AI response (first 500 chars):\n{response.content[:500]}...")
             tool_calls = self._parse_tool_calls(response.content)
+            logger.info(f"🔍 [AIOrchestrator] Parsed {len(tool_calls)} tool call(s) from response")
 
             if not tool_calls:
                 # No tool calls - return final response
