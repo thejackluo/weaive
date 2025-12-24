@@ -36,6 +36,7 @@ class DeterministicProvider(AIProvider):
         self,
         prompt: str,
         model: str = 'deterministic',
+        tools: list = None,
         module: str = 'triad',
         variant: str = 'default',
         **kwargs

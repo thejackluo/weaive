@@ -88,6 +88,7 @@ class BedrockProvider(AIProvider):
         self,
         prompt: str,
         model: str = 'claude-3-5-haiku',
+        tools: list = None,
         **kwargs
     ) -> AIResponse:
         """
