@@ -18,6 +18,12 @@ import {
   WeaveAIPreset,
   PersonalityDetails,
 } from '@/services/personalityApi';
+import {
+  PERSONALITY_PRESETS,
+  PERSONALITY_CATEGORIES,
+  getPersonalitiesByCategory,
+  getPersonalityById,
+} from '@/constants/weaveAIPersonalities';
 
 export default function PersonalitySettingsScreen() {
   const router = useRouter();
@@ -86,21 +92,13 @@ export default function PersonalitySettingsScreen() {
   };
 
   const getPresetDisplayName = (preset: WeaveAIPreset): string => {
-    const names: Record<WeaveAIPreset, string> = {
-      gen_z_default: 'Gen Z Default (Short & Warm)',
-      supportive_coach: 'Supportive Coach (Encouraging)',
-      concise_mentor: 'Concise Mentor (Ultra-Brief)',
-    };
-    return names[preset];
+    const info = getPersonalityById(preset);
+    return info ? `${info.emoji} ${info.name}` : preset;
   };
 
   const getPresetDescription = (preset: WeaveAIPreset): string => {
-    const descriptions: Record<WeaveAIPreset, string> = {
-      gen_z_default: 'Text-message style, warm and casual, Gen Z vibes',
-      supportive_coach: 'Encouraging, accountability-focused, data-driven',
-      concise_mentor: 'Ultra-brief, action-oriented, direct guidance',
-    };
-    return descriptions[preset];
+    const info = getPersonalityById(preset);
+    return info?.description || preset;
   };
 
   return (
@@ -312,96 +310,84 @@ export default function PersonalitySettingsScreen() {
               </Text>
             </View>
 
-            {/* Gen Z Default Preset */}
-            <Pressable
-              onPress={() => !loading && handleUpdatePreset('gen_z_default')}
-              disabled={loading}
-              style={{
-                padding: 16,
-                borderBottomWidth: 1,
-                borderBottomColor: '#27272A',
-                backgroundColor: weaveAIPreset === 'gen_z_default' ? '#1E3A5F' : 'transparent',
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: '600',
-                    color: '#FAFAFA',
-                    flex: 1,
-                  }}
-                >
-                  {getPresetDisplayName('gen_z_default')}
-                </Text>
-                {weaveAIPreset === 'gen_z_default' && (
-                  <Text style={{ color: '#3B82F6', fontSize: 18 }}>✓</Text>
-                )}
-              </View>
-              <Text style={{ fontSize: 13, color: '#71717A' }}>
-                {getPresetDescription('gen_z_default')}
-              </Text>
-            </Pressable>
+            {/* Render all personalities organized by category */}
+            {PERSONALITY_CATEGORIES.map((category, categoryIndex) => {
+              const personalitiesInCategory = getPersonalitiesByCategory(category.id);
+              if (personalitiesInCategory.length === 0) return null;
 
-            {/* Supportive Coach Preset */}
-            <Pressable
-              onPress={() => !loading && handleUpdatePreset('supportive_coach')}
-              disabled={loading}
-              style={{
-                padding: 16,
-                borderBottomWidth: 1,
-                borderBottomColor: '#27272A',
-                backgroundColor: weaveAIPreset === 'supportive_coach' ? '#1E3A5F' : 'transparent',
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: '600',
-                    color: '#FAFAFA',
-                    flex: 1,
-                  }}
-                >
-                  {getPresetDisplayName('supportive_coach')}
-                </Text>
-                {weaveAIPreset === 'supportive_coach' && (
-                  <Text style={{ color: '#3B82F6', fontSize: 18 }}>✓</Text>
-                )}
-              </View>
-              <Text style={{ fontSize: 13, color: '#71717A' }}>
-                {getPresetDescription('supportive_coach')}
-              </Text>
-            </Pressable>
+              return (
+                <View key={category.id}>
+                  {/* Category Header */}
+                  <View
+                    style={{
+                      padding: 16,
+                      paddingBottom: 8,
+                      backgroundColor: '#18181B',
+                      borderTopWidth: categoryIndex > 0 ? 1 : 0,
+                      borderTopColor: '#27272A',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '700',
+                        color: '#A1A1AA',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      {category.name}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: '#52525B', marginTop: 2 }}>
+                      {category.description}
+                    </Text>
+                  </View>
 
-            {/* Concise Mentor Preset */}
-            <Pressable
-              onPress={() => !loading && handleUpdatePreset('concise_mentor')}
-              disabled={loading}
-              style={{
-                padding: 16,
-                backgroundColor: weaveAIPreset === 'concise_mentor' ? '#1E3A5F' : 'transparent',
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: '600',
-                    color: '#FAFAFA',
-                    flex: 1,
-                  }}
-                >
-                  {getPresetDisplayName('concise_mentor')}
-                </Text>
-                {weaveAIPreset === 'concise_mentor' && (
-                  <Text style={{ color: '#3B82F6', fontSize: 18 }}>✓</Text>
-                )}
-              </View>
-              <Text style={{ fontSize: 13, color: '#71717A' }}>
-                {getPresetDescription('concise_mentor')}
-              </Text>
-            </Pressable>
+                  {/* Personalities in this category */}
+                  {personalitiesInCategory.map((preset, index) => (
+                    <Pressable
+                      key={preset.id}
+                      onPress={() => !loading && handleUpdatePreset(preset.id)}
+                      disabled={loading}
+                      style={{
+                        padding: 16,
+                        borderBottomWidth:
+                          index < personalitiesInCategory.length - 1 ? 1 : 0,
+                        borderBottomColor: '#27272A',
+                        backgroundColor:
+                          weaveAIPreset === preset.id ? '#1E3A5F' : 'transparent',
+                      }}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          marginBottom: 6,
+                        }}
+                      >
+                        <Text style={{ fontSize: 18, marginRight: 8 }}>{preset.emoji}</Text>
+                        <Text
+                          style={{
+                            fontSize: 15,
+                            fontWeight: '600',
+                            color: '#FAFAFA',
+                            flex: 1,
+                          }}
+                        >
+                          {preset.name}
+                        </Text>
+                        {weaveAIPreset === preset.id && (
+                          <Text style={{ color: '#3B82F6', fontSize: 18 }}>✓</Text>
+                        )}
+                      </View>
+                      <Text style={{ fontSize: 13, color: '#71717A', lineHeight: 18 }}>
+                        {preset.description}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              );
+            })}
           </View>
         )}
 
