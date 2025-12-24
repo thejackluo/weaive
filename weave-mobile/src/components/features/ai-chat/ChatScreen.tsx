@@ -10,7 +10,7 @@
  * - Server-initiated conversation support
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ScrollView, View, StyleSheet, Keyboard, TouchableOpacity, Text } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import Animated, { FadeIn, FadeInDown, SlideInUp } from 'react-native-reanimated';
@@ -21,9 +21,11 @@ import QuickActionChips from './QuickActionChips';
 import MessageInput from './MessageInput';
 import RateLimitIndicator from './RateLimitIndicator';
 import TypingIndicator from './TypingIndicator';
+import ToolExecutionIndicator from './ToolExecutionIndicator';
 import ConversationList, { Conversation } from './ConversationList';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAIChatStream } from '@/hooks/useAIChatStream';
+import { usePersonality } from '@/hooks/usePersonality';
 import apiClient from '@/services/apiClient';
 
 export interface Message {
@@ -56,7 +58,20 @@ export default function ChatScreen() {
     isStreaming,
     error: streamError,
     metadata: streamMetadata,
+    toolExecutions,
+    currentTool,
   } = useAIChatStream();
+
+  // 🔍 DEBUG: Log tool state changes
+  React.useEffect(() => {
+    if (__DEV__) {
+      console.log('[ChatScreen] 🔧 currentTool:', currentTool);
+      console.log('[ChatScreen] 📋 toolExecutions:', toolExecutions);
+    }
+  }, [currentTool, toolExecutions]);
+
+  // Get personality for personalized greetings
+  const { personality } = usePersonality();
 
   // Fetch usage stats
   const { data: usageStats, refetch: refetchUsage } = useQuery({
@@ -155,17 +170,31 @@ export default function ChatScreen() {
     }
   };
 
-  const loadInitialGreeting = () => {
+  const loadInitialGreeting = useCallback(() => {
     const hour = new Date().getHours();
+    const isDreamSelf = personality?.personality_type === 'dream_self';
+    const personalityName = personality?.name || 'Weave';
     let greeting = '';
 
-    if (hour < 12) {
-      greeting = "good morning! I'm weave, your AI coach. how can I help you make today count?";
-    } else if (hour < 17) {
-      greeting = "hey there! ready to crush your goals today? what's on your mind?";
+    if (isDreamSelf) {
+      // Dream Self greeting - more personal and tailored
+      if (hour < 12) {
+        greeting = `Good morning! I'm ${personalityName}, your personalized growth coach. Ready to build your best self today?`;
+      } else if (hour < 17) {
+        greeting = `Hey! ${personalityName} here. What goals are you working toward today?`;
+      } else {
+        greeting = `Evening! Let's reflect on your progress. What did you accomplish today?`;
+      }
     } else {
-      greeting =
-        "evening! let's reflect on your day and plan for tomorrow. what would you like to talk about?";
+      // Weave AI greeting - more general coaching style
+      if (hour < 12) {
+        greeting = "good morning! I'm weave, your AI coach. how can I help you make today count?";
+      } else if (hour < 17) {
+        greeting = "hey there! ready to crush your goals today? what's on your mind?";
+      } else {
+        greeting =
+          "evening! let's reflect on your day and plan for tomorrow. what would you like to talk about?";
+      }
     }
 
     const initialMessage: Message = {
@@ -176,7 +205,7 @@ export default function ChatScreen() {
     };
 
     setMessages([initialMessage]);
-  };
+  }, [personality]);
 
   // Effect: Update conversation ID as soon as metadata arrives (prevents desync)
   useEffect(() => {
@@ -196,6 +225,20 @@ export default function ChatScreen() {
       }
     };
   }, []);
+
+  // ✅ FIX: Reload greeting when personality changes (for intro message updates)
+  useEffect(() => {
+    // Only reload greeting if it's the initial message (no real conversation yet)
+    if (
+      messages.length === 1 &&
+      messages[0].id === 'initial-greeting' &&
+      personality // Wait for personality to load
+    ) {
+      if (__DEV__)
+        console.log('[PERSONALITY] Personality changed, reloading greeting:', personality.name);
+      loadInitialGreeting();
+    }
+  }, [personality?.personality_type, personality?.name, messages, loadInitialGreeting]);
 
   // Effect: Update streaming message in real-time
   useEffect(() => {
@@ -517,8 +560,16 @@ export default function ChatScreen() {
               </Animated.View>
             ))}
 
+            {/* Tool Execution Indicators */}
+            {currentTool && (
+              <Animated.View entering={FadeIn.duration(300)} style={{ paddingHorizontal: 16 }}>
+                {__DEV__ && console.log('[ChatScreen] 🎨 Rendering ToolExecutionIndicator:', currentTool)}
+                <ToolExecutionIndicator toolExecution={currentTool} />
+              </Animated.View>
+            )}
+
             {/* Typing Indicator */}
-            {isStreaming && !streamingContent && (
+            {isStreaming && !streamingContent && !currentTool && (
               <Animated.View entering={FadeIn.duration(300)}>
                 <TypingIndicator />
               </Animated.View>
