@@ -43,13 +43,14 @@ async def health_check(supabase: Client = Depends(get_supabase_client)):
             "environment": env,
         }
     except Exception as e:
-        # Database connection failed
-        raise HTTPException(
+        # Database connection failed - return 503 with proper format
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
             status_code=503,
-            detail={
+            content={
                 "status": "unhealthy",
                 "error": f"Database connection failed: {str(e)}",
                 "service": "weave-api",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-            },
+            }
         )

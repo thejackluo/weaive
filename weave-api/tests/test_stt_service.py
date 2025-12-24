@@ -303,8 +303,8 @@ def test_whisper_provider_is_available_checks_api_key():
     WHEN: is_available() is called
     THEN: Returns True if API key present, raises error if missing
     """
-    from app.services.stt.whisper_provider import WhisperProvider
     from app.services.stt.base import STTProviderError
+    from app.services.stt.whisper_provider import WhisperProvider
 
     # Test with API key present
     with patch.dict("os.environ", {"OPENAI_API_KEY": "fake_key"}):

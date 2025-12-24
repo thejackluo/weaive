@@ -248,7 +248,7 @@ def format_error_response(
         details: Optional additional error details
 
     Returns:
-        Standardized error response dict
+        Standardized error response dict with nested error object
 
     Example:
         return JSONResponse(
@@ -271,19 +271,19 @@ def format_error_response(
             )
         )
     """
-    response = {
-        "error": code,
+    error_obj = {
+        "code": code,
         "message": message,
         "retryable": retryable
     }
 
     if retry_after is not None:
-        response["retryAfter"] = retry_after
+        error_obj["retryAfter"] = retry_after
 
     if details:
-        response["details"] = details
+        error_obj["details"] = details
 
-    return response
+    return {"error": error_obj}
 
 
 def format_validation_error(exc: ValidationError) -> Dict[str, Any]:
@@ -382,6 +382,62 @@ async def validation_exception_handler(
             message="Request validation failed",
             retryable=False,
             details={"errors": errors}
+        )
+    )
+
+
+async def http_exception_handler(request: Request, exc: "HTTPException") -> JSONResponse:
+    """
+    Global handler for FastAPI HTTPException
+
+    Converts FastAPI's default {"detail": "..."} format to our standardized format.
+    This catches HTTPException from FastAPI (e.g., HTTPBearer "Not authenticated").
+
+    Register in main.py:
+        from fastapi import HTTPException
+        app.add_exception_handler(HTTPException, http_exception_handler)
+    """
+    from fastapi import HTTPException as FastAPIHTTPException
+
+    # Map status code to error code
+    status_to_error_code = {
+        401: ErrorCode.UNAUTHORIZED,
+        403: ErrorCode.FORBIDDEN,
+        404: ErrorCode.NOT_FOUND,
+        409: ErrorCode.CONFLICT,
+        422: ErrorCode.UNPROCESSABLE_ENTITY,
+        429: ErrorCode.RATE_LIMIT_EXCEEDED,
+        500: ErrorCode.INTERNAL_ERROR,
+        501: ErrorCode.NOT_IMPLEMENTED,
+        503: ErrorCode.SERVICE_UNAVAILABLE,
+        504: ErrorCode.GATEWAY_TIMEOUT,
+    }
+
+    error_code = status_to_error_code.get(exc.status_code, ErrorCode.INTERNAL_ERROR)
+
+    # Extract message from detail (could be string or dict)
+    if isinstance(exc.detail, dict):
+        # Already in our format (from deps.py)
+        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    else:
+        # Convert string detail to our format
+        message = str(exc.detail)
+
+    logger.warning(
+        f"HTTPException: {exc.status_code} - {message}",
+        extra={
+            "path": request.url.path,
+            "method": request.method,
+            "status_code": exc.status_code
+        }
+    )
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=format_error_response(
+            code=error_code,
+            message=message,
+            retryable=error_code in RETRYABLE_ERROR_CODES
         )
     )
 

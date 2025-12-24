@@ -335,14 +335,14 @@ def test_track_analytics_event_with_user_id():
 
 
 def test_track_analytics_event_invalid_name():
-    """Test that analytics endpoint returns 422 for invalid event names (Pydantic validation)."""
+    """Test that analytics endpoint returns 400 for invalid event names (Pydantic validation)."""
     # Event name too long (>100 chars)
     response = client.post(
         "/api/analytics/events",
         json={"event_name": "a" * 101, "event_data": {}},
     )
 
-    assert response.status_code == 422  # Pydantic validation errors return 422
+    assert response.status_code == 400  # Pydantic validation errors return 400 (custom handler)
     # Check that the error is about validation
     assert "error" in response.json()
 
