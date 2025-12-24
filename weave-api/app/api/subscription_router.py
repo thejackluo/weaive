@@ -6,16 +6,17 @@ Handles Apple IAP receipt verification and subscription tier updates.
 Integrates with TieredRateLimiter (no new middleware needed).
 """
 
+from datetime import datetime, timedelta
+from typing import Optional
+
+import requests
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from supabase import Client
-import requests
-from typing import Optional
-from datetime import datetime, timedelta
 
-from app.core.supabase import get_supabase_client
-from app.core.auth import get_current_user
 from app.config.subscription_config import SubscriptionConfig
+from app.core.auth import get_current_user
+from app.core.supabase import get_supabase_client
 
 router = APIRouter(prefix="/api/subscription", tags=["subscription"])
 
@@ -141,9 +142,7 @@ async def verify_receipt(
             21010: "Account not found or deleted",
         }
 
-        error_msg = error_messages.get(
-            receipt_status, f"Unknown error: {receipt_status}"
-        )
+        error_msg = error_messages.get(receipt_status, f"Unknown error: {receipt_status}")
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -253,9 +252,7 @@ async def get_subscription_status(
     try:
         user_profile = (
             db.table("user_profiles")
-            .select(
-                "subscription_tier, subscription_expires_at, subscription_product_id"
-            )
+            .select("subscription_tier, subscription_expires_at, subscription_product_id")
             .eq("auth_user_id", auth_user_id)
             .single()
             .execute()

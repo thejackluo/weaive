@@ -18,7 +18,7 @@ Used by: tests/test_gdpr_compliance_api.py (Story 9.4 - GDPR Compliance)
 
 import base64
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta, timezone
 
 from faker import Faker
 from supabase import Client
@@ -62,7 +62,9 @@ def create_complete_test_user(supabase: Client) -> dict:
         "email": email,  # Add email to user_profiles (if column exists)
         "timezone": "America/Los_Angeles",
         "onboarding_completed": True,  # User has completed onboarding
-        "created_at": fake.date_time_between(start_date="-30d", end_date="now", tzinfo=timezone.utc).isoformat(),
+        "created_at": fake.date_time_between(
+            start_date="-30d", end_date="now", tzinfo=timezone.utc
+        ).isoformat(),
     }
 
     user_result = supabase.table("user_profiles").insert(user_data).execute()
@@ -77,7 +79,9 @@ def create_complete_test_user(supabase: Client) -> dict:
             elements=["Disciplined", "Creative", "Confident", "Focused", "Resilient"],
             length=3,
         ),
-        "created_at": fake.date_time_between(start_date="-30d", end_date="-25d", tzinfo=timezone.utc).isoformat(),
+        "created_at": fake.date_time_between(
+            start_date="-30d", end_date="-25d", tzinfo=timezone.utc
+        ).isoformat(),
     }
     supabase.table("identity_docs").insert(identity_doc).execute()
 
@@ -90,7 +94,9 @@ def create_complete_test_user(supabase: Client) -> dict:
             "user_id": user_id,
             "title": fake.sentence(nb_words=4).rstrip("."),
             "status": "active",
-            "created_at": fake.date_time_between(start_date="-25d", end_date="-20d", tzinfo=timezone.utc).isoformat(),
+            "created_at": fake.date_time_between(
+                start_date="-25d", end_date="-20d", tzinfo=timezone.utc
+            ).isoformat(),
         }
         goal_result = supabase.table("goals").insert(goal_data).execute()
         goal_id = goal_result.data[0]["id"]
@@ -103,9 +109,13 @@ def create_complete_test_user(supabase: Client) -> dict:
                 "user_id": user_id,
                 "title": fake.sentence(nb_words=5).rstrip("."),
                 "recurrence_pattern": "daily",
-                "created_at": fake.date_time_between(start_date="-20d", end_date="-15d", tzinfo=timezone.utc).isoformat(),
+                "created_at": fake.date_time_between(
+                    start_date="-20d", end_date="-15d", tzinfo=timezone.utc
+                ).isoformat(),
             }
-            template_result = supabase.table("subtask_templates").insert(subtask_template_data).execute()
+            template_result = (
+                supabase.table("subtask_templates").insert(subtask_template_data).execute()
+            )
             subtask_template_ids.append(template_result.data[0]["id"])
 
     # 5. Create subtask instances from templates (bind instances for recent dates)
@@ -117,7 +127,9 @@ def create_complete_test_user(supabase: Client) -> dict:
                 "user_id": user_id,
                 "local_date": (date.today() - timedelta(days=day_offset)).isoformat(),
                 "status": "active",
-                "created_at": fake.date_time_between(start_date="-10d", end_date="now", tzinfo=timezone.utc).isoformat(),
+                "created_at": fake.date_time_between(
+                    start_date="-10d", end_date="now", tzinfo=timezone.utc
+                ).isoformat(),
             }
             instance_result = supabase.table("subtask_instances").insert(instance_data).execute()
             subtask_instance_ids.append(instance_result.data[0]["id"])
@@ -129,7 +141,9 @@ def create_complete_test_user(supabase: Client) -> dict:
         completion_data = {
             "instance_id": instance_id,
             "user_id": user_id,
-            "completed_at": fake.date_time_between(start_date="-10d", end_date="now", tzinfo=timezone.utc).isoformat(),
+            "completed_at": fake.date_time_between(
+                start_date="-10d", end_date="now", tzinfo=timezone.utc
+            ).isoformat(),
             "timer_seconds": fake.random_int(min=300, max=3600),  # 5-60 minutes
             "notes": fake.sentence() if fake.boolean(chance_of_getting_true=70) else None,
         }
@@ -149,9 +163,7 @@ def create_complete_test_user(supabase: Client) -> dict:
 
         try:
             supabase.storage.from_("captures").upload(
-                path=storage_path,
-                file=jpeg_bytes,
-                file_options={"content-type": "image/jpeg"}
+                path=storage_path, file=jpeg_bytes, file_options={"content-type": "image/jpeg"}
             )
             storage_paths.append(storage_path)
 
@@ -161,7 +173,9 @@ def create_complete_test_user(supabase: Client) -> dict:
                 "user_id": user_id,
                 "type": "photo",
                 "storage_path": storage_path,
-                "created_at": fake.date_time_between(start_date="-10d", end_date="now", tzinfo=timezone.utc).isoformat(),
+                "created_at": fake.date_time_between(
+                    start_date="-10d", end_date="now", tzinfo=timezone.utc
+                ).isoformat(),
             }
             supabase.table("captures").insert(capture_data).execute()
         except Exception:
@@ -181,7 +195,9 @@ def create_complete_test_user(supabase: Client) -> dict:
                 "tomorrow_focus": fake.sentence(),
             },
             "custom_responses": {},
-            "created_at": fake.date_time_between(start_date="-10d", end_date="now", tzinfo=timezone.utc).isoformat(),
+            "created_at": fake.date_time_between(
+                start_date="-10d", end_date="now", tzinfo=timezone.utc
+            ).isoformat(),
         }
         journal_result = supabase.table("journal_entries").insert(journal_data).execute()
         journal_entry_ids.append(journal_result.data[0]["id"])
@@ -194,7 +210,9 @@ def create_complete_test_user(supabase: Client) -> dict:
             "ai_provider": fake.random_element(["openai", "anthropic"]),
             "model": fake.random_element(["gpt-4o-mini", "claude-3-7-sonnet"]),
             "total_cost": fake.pydecimal(left_digits=2, right_digits=4, positive=True),
-            "created_at": fake.date_time_between(start_date="-10d", end_date="now", tzinfo=timezone.utc).isoformat(),
+            "created_at": fake.date_time_between(
+                start_date="-10d", end_date="now", tzinfo=timezone.utc
+            ).isoformat(),
         }
         ai_run_result = supabase.table("ai_runs").insert(ai_run_data).execute()
         ai_run_id = ai_run_result.data[0]["id"]
@@ -205,7 +223,9 @@ def create_complete_test_user(supabase: Client) -> dict:
             "user_id": user_id,
             "artifact_type": "chat_message",
             "content_text": fake.paragraph(nb_sentences=3),
-            "created_at": fake.date_time_between(start_date="-10d", end_date="now", tzinfo=timezone.utc).isoformat(),
+            "created_at": fake.date_time_between(
+                start_date="-10d", end_date="now", tzinfo=timezone.utc
+            ).isoformat(),
         }
         supabase.table("ai_artifacts").insert(ai_artifact_data).execute()
 
@@ -218,7 +238,9 @@ def create_complete_test_user(supabase: Client) -> dict:
             "binds_completed": fake.random_int(min=1, max=5),
             "fulfillment_score": fake.random_int(min=1, max=10),
             "total_ai_calls": fake.random_int(min=1, max=10),
-            "created_at": fake.date_time_between(start_date="-10d", end_date="now", tzinfo=timezone.utc).isoformat(),
+            "created_at": fake.date_time_between(
+                start_date="-10d", end_date="now", tzinfo=timezone.utc
+            ).isoformat(),
         }
         supabase.table("daily_aggregates").insert(aggregate_data).execute()
 
@@ -230,7 +252,9 @@ def create_complete_test_user(supabase: Client) -> dict:
             "local_date": task_date.isoformat(),
             "task_text": fake.sentence(nb_words=8),
             "completed": fake.boolean(chance_of_getting_true=60),
-            "created_at": fake.date_time_between(start_date="-10d", end_date="now", tzinfo=timezone.utc).isoformat(),
+            "created_at": fake.date_time_between(
+                start_date="-10d", end_date="now", tzinfo=timezone.utc
+            ).isoformat(),
         }
         supabase.table("triad_tasks").insert(triad_data).execute()
 

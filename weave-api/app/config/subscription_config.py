@@ -14,9 +14,7 @@ class SubscriptionConfig:
     """Subscription feature configuration loaded from environment variables."""
 
     # Apple IAP Configuration
-    APPLE_SHARED_SECRET: str = os.getenv(
-        "APPLE_SHARED_SECRET", ""
-    )  # For receipt verification
+    APPLE_SHARED_SECRET: str = os.getenv("APPLE_SHARED_SECRET", "")  # For receipt verification
     APPLE_TEAM_ID: str = os.getenv("APPLE_TEAM_ID", "")
     BUNDLE_ID: str = os.getenv("BUNDLE_ID", "com.weavelight.app")
 
@@ -36,9 +34,7 @@ class SubscriptionConfig:
 
     # Superwall Configuration (Phase 2 - optional, post-launch)
     SUPERWALL_API_KEY: Optional[str] = os.getenv("SUPERWALL_API_KEY", None)
-    SUPERWALL_ENABLED: bool = (
-        os.getenv("SUPERWALL_ENABLED", "false").lower() == "true"
-    )
+    SUPERWALL_ENABLED: bool = os.getenv("SUPERWALL_ENABLED", "false").lower() == "true"
 
     @classmethod
     def validate(cls) -> None:
@@ -48,9 +44,9 @@ class SubscriptionConfig:
             if os.getenv("ENV", "development") == "production":
                 raise ValueError("APPLE_SHARED_SECRET required in production")
 
-        assert (
-            cls.PRO_TIER_MONTHLY_LIMIT > cls.FREE_TIER_MONTHLY_LIMIT
-        ), "Pro tier limit must be higher than free tier"
+        assert cls.PRO_TIER_MONTHLY_LIMIT > cls.FREE_TIER_MONTHLY_LIMIT, (
+            "Pro tier limit must be higher than free tier"
+        )
 
     @classmethod
     def get_receipt_verification_url(cls) -> str:

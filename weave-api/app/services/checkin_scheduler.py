@@ -60,10 +60,10 @@ class CheckInSchedulerService:
         """
         self.scheduler.add_job(
             self.check_and_send_checkins,
-            'cron',
-            minute='*/5',  # Every 5 minutes
-            id='checkin_scheduler',
-            replace_existing=True
+            "cron",
+            minute="*/5",  # Every 5 minutes
+            id="checkin_scheduler",
+            replace_existing=True,
         )
         self.scheduler.start()
         logger.info("✅ Check-in scheduler started (runs every 5 minutes)")
@@ -83,32 +83,34 @@ class CheckInSchedulerService:
             logger.debug("🔍 Checking for users needing check-ins...")
 
             # Get all users with check-ins enabled
-            result = self.db.table('user_profiles') \
-                .select('id, checkin_enabled, checkin_timezone, checkin_deterministic, last_checkin_at, display_name') \
-                .eq('checkin_enabled', True) \
+            result = (
+                self.db.table("user_profiles")
+                .select(
+                    "id, checkin_enabled, checkin_timezone, checkin_deterministic, last_checkin_at, display_name"
+                )
+                .eq("checkin_enabled", True)
                 .execute()
+            )
 
             users = result.data
             logger.debug(f"Found {len(users)} users with check-ins enabled")
 
             checkin_count = 0
             for user in users:
-                user_id = UUID(user['id'])
-                user_tz_name = user.get('checkin_timezone', 'America/Los_Angeles')
-                deterministic = user.get('checkin_deterministic', False)
-                last_checkin = user.get('last_checkin_at')
+                user_id = UUID(user["id"])
+                user_tz_name = user.get("checkin_timezone", "America/Los_Angeles")
+                deterministic = user.get("checkin_deterministic", False)
+                last_checkin = user.get("last_checkin_at")
 
                 # Calculate check-in time for this user
                 try:
                     checkin_time = self.calculate_checkin_time(
-                        user_id=user_id,
-                        timezone_name=user_tz_name,
-                        deterministic=deterministic
+                        user_id=user_id, timezone_name=user_tz_name, deterministic=deterministic
                     )
 
                     # Check if current time matches check-in time (±2 min window)
                     if self.should_send_checkin(checkin_time, user_tz_name, last_checkin):
-                        await self.send_checkin(user_id, user.get('display_name', 'there'))
+                        await self.send_checkin(user_id, user.get("display_name", "there"))
                         checkin_count += 1
 
                 except Exception as e:
@@ -122,10 +124,7 @@ class CheckInSchedulerService:
             logger.error(f"Error in check-in scheduler: {e}")
 
     def calculate_checkin_time(
-        self,
-        user_id: UUID,
-        timezone_name: str = 'America/Los_Angeles',
-        deterministic: bool = False
+        self, user_id: UUID, timezone_name: str = "America/Los_Angeles", deterministic: bool = False
     ) -> datetime:
         """
         Calculate check-in time for user with optional variation.
@@ -167,15 +166,14 @@ class CheckInSchedulerService:
         variation_minutes = random.randint(10, 15) * random.choice([-1, 1])  # ±10-15 min
 
         actual_time = base_time + timedelta(minutes=variation_minutes)
-        logger.debug(f"User {user_id} hybrid mode: base={base_time}, variation={variation_minutes}min, actual={actual_time}")
+        logger.debug(
+            f"User {user_id} hybrid mode: base={base_time}, variation={variation_minutes}min, actual={actual_time}"
+        )
 
         return actual_time
 
     def should_send_checkin(
-        self,
-        checkin_time: datetime,
-        timezone_name: str,
-        last_checkin_at: Optional[str]
+        self, checkin_time: datetime, timezone_name: str, last_checkin_at: Optional[str]
     ) -> bool:
         """
         Determine if user should receive check-in now.
@@ -206,7 +204,7 @@ class CheckInSchedulerService:
         # Check if already sent today
         if last_checkin_at:
             try:
-                last_checkin = datetime.fromisoformat(last_checkin_at.replace('Z', '+00:00'))
+                last_checkin = datetime.fromisoformat(last_checkin_at.replace("Z", "+00:00"))
                 last_checkin = last_checkin.astimezone(user_tz)
 
                 # If last check-in was today, don't send again
@@ -217,7 +215,9 @@ class CheckInSchedulerService:
                 logger.debug(f"Error parsing last_checkin_at: {e}. Proceeding with check-in.")
                 pass  # If parsing fails, proceed with check-in
 
-        logger.debug(f"✅ Check-in time matched: current={current_time}, target={checkin_time}, diff={time_diff}s")
+        logger.debug(
+            f"✅ Check-in time matched: current={current_time}, target={checkin_time}, diff={time_diff}s"
+        )
         return True
 
     async def send_checkin(self, user_id: UUID, display_name: str = "there"):
@@ -233,39 +233,46 @@ class CheckInSchedulerService:
             message = self.generate_checkin_message(user_id, display_name)
 
             # Create system-initiated conversation
-            conv_result = self.db.table('ai_chat_conversations').insert({
-                'user_id': str(user_id),
-                'initiated_by': 'system',
-                'started_at': datetime.now().isoformat(),
-                'last_message_at': datetime.now().isoformat()
-            }).execute()
+            conv_result = (
+                self.db.table("ai_chat_conversations")
+                .insert(
+                    {
+                        "user_id": str(user_id),
+                        "initiated_by": "system",
+                        "started_at": datetime.now().isoformat(),
+                        "last_message_at": datetime.now().isoformat(),
+                    }
+                )
+                .execute()
+            )
 
-            conversation_id = conv_result.data[0]['id']
+            conversation_id = conv_result.data[0]["id"]
 
             # Save system message
-            self.db.table('ai_chat_messages').insert({
-                'conversation_id': conversation_id,
-                'role': 'system',
-                'content': message,
-                'created_at': datetime.now().isoformat()
-            }).execute()
+            self.db.table("ai_chat_messages").insert(
+                {
+                    "conversation_id": conversation_id,
+                    "role": "system",
+                    "content": message,
+                    "created_at": datetime.now().isoformat(),
+                }
+            ).execute()
 
             # Update last_checkin_at
-            self.db.table('user_profiles').update({
-                'last_checkin_at': datetime.now().isoformat()
-            }).eq('id', str(user_id)).execute()
+            self.db.table("user_profiles").update(
+                {"last_checkin_at": datetime.now().isoformat()}
+            ).eq("id", str(user_id)).execute()
 
             # Log to ai_runs for audit trail
-            self.db.table('ai_runs').insert({
-                'user_id': str(user_id),
-                'operation_type': 'checkin_initiated',
-                'module': 'checkin_scheduler',
-                'status': 'success',
-                'metadata': {
-                    'conversation_id': conversation_id,
-                    'message': message
+            self.db.table("ai_runs").insert(
+                {
+                    "user_id": str(user_id),
+                    "operation_type": "checkin_initiated",
+                    "module": "checkin_scheduler",
+                    "status": "success",
+                    "metadata": {"conversation_id": conversation_id, "message": message},
                 }
-            }).execute()
+            ).execute()
 
             # Send push notification via Expo Push API
             try:
@@ -298,20 +305,24 @@ class CheckInSchedulerService:
         try:
             # Get recent completions (today)
             today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-            completions_result = self.db.table('subtask_completions') \
-                .select('id', count='exact') \
-                .eq('user_id', str(user_id)) \
-                .gte('completed_at', today_start.isoformat()) \
+            completions_result = (
+                self.db.table("subtask_completions")
+                .select("id", count="exact")
+                .eq("user_id", str(user_id))
+                .gte("completed_at", today_start.isoformat())
                 .execute()
+            )
 
             completion_count = completions_result.count or 0
 
             # Get pending binds
-            pending_result = self.db.table('subtask_instances') \
-                .select('id', count='exact') \
-                .eq('user_id', str(user_id)) \
-                .eq('status', 'active') \
+            pending_result = (
+                self.db.table("subtask_instances")
+                .select("id", count="exact")
+                .eq("user_id", str(user_id))
+                .eq("status", "active")
                 .execute()
+            )
 
             pending_count = pending_result.count or 0
 
@@ -347,20 +358,22 @@ class CheckInSchedulerService:
 
         # Get user's push token
         try:
-            user_result = self.db.table('user_profiles') \
-                .select('expo_push_token') \
-                .eq('id', str(user_id)) \
-                .single() \
+            user_result = (
+                self.db.table("user_profiles")
+                .select("expo_push_token")
+                .eq("id", str(user_id))
+                .single()
                 .execute()
+            )
 
-            push_token = user_result.data.get('expo_push_token') if user_result.data else None
+            push_token = user_result.data.get("expo_push_token") if user_result.data else None
 
             if not push_token:
                 logger.info(f"No push token for user {user_id}, skipping notification")
                 return
 
             # Validate Expo push token format
-            if not push_token.startswith('ExponentPushToken['):
+            if not push_token.startswith("ExponentPushToken["):
                 logger.warning(f"Invalid push token format for user {user_id}: {push_token}")
                 return
 
@@ -372,35 +385,37 @@ class CheckInSchedulerService:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    'https://exp.host/--/api/v2/push/send',
+                    "https://exp.host/--/api/v2/push/send",
                     json={
-                        'to': push_token,
-                        'title': 'Weave Check-In 👋',
-                        'body': message,
-                        'data': {
-                            'type': 'checkin',
-                            'conversation_id': conversation_id,
-                            'screen': 'ai-chat'
+                        "to": push_token,
+                        "title": "Weave Check-In 👋",
+                        "body": message,
+                        "data": {
+                            "type": "checkin",
+                            "conversation_id": conversation_id,
+                            "screen": "ai-chat",
                         },
-                        'sound': 'default',
-                        'priority': 'high',
-                        'channelId': 'default'
+                        "sound": "default",
+                        "priority": "high",
+                        "channelId": "default",
                     },
                     headers={
-                        'Accept': 'application/json',
-                        'Accept-Encoding': 'gzip, deflate',
-                        'Content-Type': 'application/json'
-                    }
+                        "Accept": "application/json",
+                        "Accept-Encoding": "gzip, deflate",
+                        "Content-Type": "application/json",
+                    },
                 )
 
                 if response.status_code == 200:
                     result = response.json()
-                    if result.get('data', {}).get('status') == 'ok':
+                    if result.get("data", {}).get("status") == "ok":
                         logger.info(f"✅ Push notification sent to user {user_id}")
                     else:
                         logger.warning(f"Push notification failed for user {user_id}: {result}")
                 else:
-                    logger.error(f"Push notification API error for user {user_id}: {response.status_code} - {response.text}")
+                    logger.error(
+                        f"Push notification API error for user {user_id}: {response.status_code} - {response.text}"
+                    )
 
         except Exception as e:
             logger.error(f"Error sending push notification to user {user_id}: {e}")
