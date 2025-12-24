@@ -267,6 +267,151 @@ class TestPersonalitySwitching:
         assert "error" in data
 
 
+class TestWeaveAIPresetUpdate:
+    """Test Weave AI preset update endpoint (Story 6.1 + 6.2 Integration)."""
+
+    @patch('app.api.user.get_supabase_client')
+    @patch('app.api.user.get_current_user')
+    def test_update_weave_ai_preset_success(
+        self,
+        mock_get_user,
+        mock_get_supabase,
+        test_client,
+        mock_supabase,
+        mock_jwt_token
+    ):
+        """Test successfully updating Weave AI preset."""
+        # Setup mocks
+        mock_get_user.return_value = {"sub": "auth_user_123"}
+        mock_get_supabase.return_value = mock_supabase
+
+        # Mock user_profiles lookup
+        profile_response = MagicMock(
+            data={"id": "user_123", "active_personality": "weave_ai"}
+        )
+
+        # Mock update response
+        update_response = MagicMock()
+
+        # Mock PersonalityService.get_active_personality
+        updated_personality = {
+            "personality_type": "weave_ai",
+            "name": "Weave",
+            "preset": "supportive_coach",
+            "traits": ["encouraging", "accountability", "data_driven"],
+            "speaking_style": "Encouraging, accountability-focused, data-driven",
+            "max_words": 80
+        }
+
+        with patch('app.api.user.PersonalityService') as MockPersonalityService:
+            mock_service = AsyncMock()
+            mock_service.get_active_personality.return_value = updated_personality
+            MockPersonalityService.return_value = mock_service
+
+            mock_supabase.table().select().eq().single().execute.return_value = profile_response
+            mock_supabase.table().update().eq().execute.return_value = update_response
+
+            # Make request
+            response = test_client.patch(
+                "/api/user/personality/preset",
+                json={"weave_ai_preset": "supportive_coach"},
+                headers={"Authorization": mock_jwt_token}
+            )
+
+            # Verify response
+            assert response.status_code == 200
+            data = response.json()
+
+            assert data["data"]["active_personality"] == "weave_ai"
+            assert data["data"]["weave_ai_preset"] == "supportive_coach"
+            assert data["data"]["personality_details"]["preset"] == "supportive_coach"
+            assert "meta" in data
+            assert "timestamp" in data["meta"]
+
+            # Verify database update was called
+            mock_supabase.table().update.assert_called_once_with(
+                {"weave_ai_preset": "supportive_coach"}
+            )
+
+    @patch('app.api.user.get_current_user')
+    def test_update_weave_ai_preset_invalid_preset(
+        self,
+        mock_get_user,
+        test_client,
+        mock_jwt_token
+    ):
+        """Test updating with invalid preset type."""
+        mock_get_user.return_value = {"sub": "auth_user_123"}
+
+        # Make request with invalid preset
+        response = test_client.patch(
+            "/api/user/personality/preset",
+            json={"weave_ai_preset": "invalid_preset"},
+            headers={"Authorization": mock_jwt_token}
+        )
+
+        # Verify validation error (Pydantic validation)
+        assert response.status_code == 422
+        data = response.json()
+        assert "detail" in data
+
+    @patch('app.api.user.get_supabase_client')
+    @patch('app.api.user.get_current_user')
+    def test_update_weave_ai_preset_all_presets(
+        self,
+        mock_get_user,
+        mock_get_supabase,
+        test_client,
+        mock_supabase,
+        mock_jwt_token
+    ):
+        """Test updating to each of the three available presets."""
+        presets = ["gen_z_default", "supportive_coach", "concise_mentor"]
+
+        for preset in presets:
+            # Setup mocks
+            mock_get_user.return_value = {"sub": "auth_user_123"}
+            mock_get_supabase.return_value = mock_supabase
+
+            # Mock user_profiles lookup
+            profile_response = MagicMock(
+                data={"id": "user_123", "active_personality": "weave_ai"}
+            )
+
+            # Mock update response
+            update_response = MagicMock()
+
+            # Mock PersonalityService.get_active_personality
+            updated_personality = {
+                "personality_type": "weave_ai",
+                "name": "Weave",
+                "preset": preset,
+                "traits": ["test"],
+                "speaking_style": f"Style for {preset}",
+                "max_words": 60
+            }
+
+            with patch('app.api.user.PersonalityService') as MockPersonalityService:
+                mock_service = AsyncMock()
+                mock_service.get_active_personality.return_value = updated_personality
+                MockPersonalityService.return_value = mock_service
+
+                mock_supabase.table().select().eq().single().execute.return_value = profile_response
+                mock_supabase.table().update().eq().execute.return_value = update_response
+
+                # Make request
+                response = test_client.patch(
+                    "/api/user/personality/preset",
+                    json={"weave_ai_preset": preset},
+                    headers={"Authorization": mock_jwt_token}
+                )
+
+                # Verify response
+                assert response.status_code == 200
+                data = response.json()
+                assert data["data"]["weave_ai_preset"] == preset
+
+
 class TestAdminContextPreview:
     """Test admin context preview endpoint."""
 
