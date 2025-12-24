@@ -45,7 +45,7 @@ export default function CustomQuestionInput({
               placeholder="Your answer..."
               placeholderTextColor="#999"
             />
-            <Text style={styles.characterCount}>{((value as string) || '').length} / 100</Text>
+            <Text style={styles.characterCount}>{((value as string) || '').length} / 100</RNText>
           </View>
         );
 
@@ -53,7 +53,7 @@ export default function CustomQuestionInput({
         const numValue = typeof value === 'number' ? value : 5;
         return (
           <View>
-            <Text style={styles.scoreDisplay}>{numValue}</Text>
+            <Text style={styles.scoreDisplay}>{numValue}</RNText>
             <View style={styles.sliderTrack}>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                 <TouchableOpacity
@@ -61,7 +61,7 @@ export default function CustomQuestionInput({
                   style={[styles.sliderDot, num <= numValue && styles.sliderDotActive]}
                   onPress={() => onChange(num)}
                 >
-                  <Text style={styles.sliderDotText}>{num}</Text>
+                  <Text style={styles.sliderDotText}>{num}</RNText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -79,7 +79,7 @@ export default function CustomQuestionInput({
             >
               <Text style={[styles.toggleButtonText, !boolValue && styles.toggleButtonTextActive]}>
                 No
-              </Text>
+              </RNText>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toggleButton, boolValue && styles.toggleButtonActive]}
@@ -87,7 +87,7 @@ export default function CustomQuestionInput({
             >
               <Text style={[styles.toggleButtonText, boolValue && styles.toggleButtonTextActive]}>
                 Yes
-              </Text>
+              </RNText>
             </TouchableOpacity>
           </View>
         );
@@ -100,7 +100,7 @@ export default function CustomQuestionInput({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.questionLabel}>{question.question}</Text>
+      <Text style={styles.questionLabel}>{question.question}</RNText>
       {renderInput()}
     </View>
   );

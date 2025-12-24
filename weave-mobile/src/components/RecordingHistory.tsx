@@ -117,10 +117,10 @@ export function RecordingHistory({
           <MaterialIcons name="mic-none" size={64} color="#a1a1aa" />
           <Text style={{ fontSize: 18, color: '#fafafa', marginTop: 16 }}>
             No recordings yet
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 16, color: '#a1a1aa', marginTop: 8, textAlign: 'center' }}>
             Start recording to see your audio history here
-          </Text>
+          </RNText>
         </View>
       </View>
     );
@@ -136,10 +136,10 @@ export function RecordingHistory({
           <MaterialIcons name="error" size={64} color="#ef4444" />
           <Text style={{ fontSize: 18, color: '#ef4444', marginTop: 16, textAlign: 'center' }}>
             Failed to load recordings
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 16, color: '#a1a1aa', marginTop: 8, textAlign: 'center' }}>
             {error instanceof Error ? error.message : 'Unknown error occurred'}
-          </Text>
+          </RNText>
         </View>
       </View>
     );
@@ -172,11 +172,11 @@ export function RecordingHistory({
               <MaterialIcons name="mic" size={20} color="#3b82f6" />
               <Text style={{ fontSize: 14, color: '#a1a1aa', marginLeft: 8 }}>
                 {formatDate(item.created_at)} at {formatTime(item.created_at)}
-              </Text>
+              </RNText>
             </View>
             <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               {formatDuration(item.duration_sec)}
-            </Text>
+            </RNText>
           </View>
 
           {/* Transcript preview */}
@@ -190,7 +190,7 @@ export function RecordingHistory({
             numberOfLines={isExpanded ? undefined : 2}
           >
             {transcriptPreview}
-          </Text>
+          </RNText>
 
           {/* Confidence badge (if transcribed) */}
           {hasTranscript && item.confidence_score !== undefined && (
@@ -209,7 +209,7 @@ export function RecordingHistory({
               >
                 {(item.confidence_score * 100).toFixed(0)}% confidence
                 {item.provider ? ` · ${item.provider}` : ''}
-              </Text>
+              </RNText>
             </View>
           )}
         </Pressable>
@@ -229,7 +229,7 @@ export function RecordingHistory({
               >
                 <Text style={{ fontSize: 14, color: '#a1a1aa', textAlign: 'center' }}>
                   Audio URL not available. Please refresh to reload.
-                </Text>
+                </RNText>
               </View>
             )}
           </View>
@@ -243,10 +243,10 @@ export function RecordingHistory({
     <View style={{ marginBottom: 16 }}>
       <Text style={{ fontSize: 18, fontWeight: '600', color: '#fafafa' }}>
         Recording History
-      </Text>
+      </RNText>
       <Text style={{ fontSize: 14, color: '#a1a1aa', marginTop: 8 }}>
         {recordings?.length || 0} recordings
-      </Text>
+      </RNText>
     </View>
   );
 

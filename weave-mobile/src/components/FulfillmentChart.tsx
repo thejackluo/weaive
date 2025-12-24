@@ -134,7 +134,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
       <View style={[styles.card, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 24, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
         <Text style={{ fontSize: 14, color: '#ef4444' }}>
           Error loading fulfillment data: {error?.message}
-        </Text>
+        </RNText>
       </View>
     );
   }
@@ -264,7 +264,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
           <View style={styles.titleAndDropdownRow}>
             <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
               Average Fulfillment
-            </Text>
+            </RNText>
 
             {/* Timeframe Dropdown */}
             {onTimeframeChange && (
@@ -281,7 +281,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                 >
                   <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                     {timeframe}
-                  </Text>
+                  </RNText>
                   <Ionicons
                     name={showTimeframeDropdown ? 'chevron-up' : 'chevron-down'}
                     size={14}
@@ -315,7 +315,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                           }}
                         >
                           {option}
-                        </Text>
+                        </RNText>
                       </Pressable>
                     ))}
                   </View>
@@ -328,7 +328,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
           <View style={styles.averageContainer}>
             <Text style={[styles.averageText, { fontSize: 64, fontWeight: 'bold', color: '#ffffff' }]}>
               {averageFulfillment.toFixed(1)}
-            </Text>
+            </RNText>
           </View>
         </View>
 
@@ -341,13 +341,13 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
           <View style={styles.yAxis}>
             <Text style={{ fontSize: 12, color: '#71717a' }}>
               10
-            </Text>
+            </RNText>
             <Text style={{ fontSize: 12, color: '#71717a' }}>
               5
-            </Text>
+            </RNText>
             <Text style={{ fontSize: 12, color: '#71717a' }}>
               0
-            </Text>
+            </RNText>
           </View>
 
           {/* Chart area */}
@@ -400,12 +400,12 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                               month: 'short',
                               day: 'numeric',
                             })}
-                          </Text>
+                          </RNText>
                           <Text
                             style={{ fontSize: 18, fontWeight: 'bold', color: '#71717a', marginTop: 4 }}
                           >
                             {day.fulfillment_score.toFixed(1)}
-                          </Text>
+                          </RNText>
                         </Pressable>
                       )}
 
@@ -437,7 +437,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                     style={{ fontSize: 12, color: '#71717a' }}
                   >
                     {formatDateLabel(displayData[labelIndex].date)}
-                  </Text>
+                  </RNText>
                 ))}
             </View>
           </View>
@@ -449,7 +449,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
             <Ionicons name="sparkles" size={20} color="#a78bfa" />
             <Text style={{ flex: 1, marginLeft: 8, fontSize: 14, color: '#a1a1aa' }}>
               AI insights coming soon
-            </Text>
+            </RNText>
           </View>
         </View>
 
@@ -473,15 +473,15 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                       day: 'numeric',
                       year: 'numeric',
                     })}
-                  </Text>
+                  </RNText>
 
                   <View style={styles.modalSection}>
                     <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                       Fulfillment Score
-                    </Text>
+                    </RNText>
                     <Text style={[styles.modalPercentage, { fontSize: 28, fontWeight: 'bold', color: '#ffffff' }]}>
                       {selectedDayData.fulfillmentScore.toFixed(1)}
-                    </Text>
+                    </RNText>
                   </View>
 
                   <TouchableOpacity
@@ -490,7 +490,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                   >
                     <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
                       View Day&apos;s Entries →
-                    </Text>
+                    </RNText>
                   </TouchableOpacity>
 
                   <Pressable
@@ -499,7 +499,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                   >
                     <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                       Close
-                    </Text>
+                    </RNText>
                   </Pressable>
                 </>
               )}

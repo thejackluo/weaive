@@ -164,11 +164,11 @@ export default function ManageQuestionsModal({
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleCancel}>
-            <Text style={styles.headerButton}>Cancel</Text>
+            <Text style={styles.headerButton}>Cancel</RNText>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Custom Questions</Text>
+          <Text style={styles.headerTitle}>Custom Questions</RNText>
           <TouchableOpacity onPress={handleSaveAll}>
-            <Text style={[styles.headerButton, styles.headerButtonPrimary]}>Save</Text>
+            <Text style={[styles.headerButton, styles.headerButtonPrimary]}>Save</RNText>
           </TouchableOpacity>
         </View>
 
@@ -176,28 +176,28 @@ export default function ManageQuestionsModal({
           {/* Info */}
           <Text style={styles.infoText}>
             Track what matters to you. Add up to 5 custom questions to your daily reflection.
-          </Text>
+          </RNText>
 
           {/* Existing Questions List */}
           {localQuestions.length > 0 && (
             <View style={styles.questionsList}>
-              <Text style={styles.sectionTitle}>Your Questions ({localQuestions.length}/5)</Text>
+              <Text style={styles.sectionTitle}>Your Questions ({localQuestions.length}/5)</RNText>
               {localQuestions.map((question) => (
                 <View key={question.id} style={styles.questionItem}>
                   <View style={styles.questionItemContent}>
-                    <Text style={styles.questionItemText}>{question.question}</Text>
+                    <Text style={styles.questionItemText}>{question.question}</RNText>
                     <Text style={styles.questionItemType}>
                       {question.type === 'text' && 'Text'}
                       {question.type === 'numeric' && 'Numeric (1-10)'}
                       {question.type === 'yes_no' && 'Yes/No'}
-                    </Text>
+                    </RNText>
                   </View>
                   <View style={styles.questionItemActions}>
                     <TouchableOpacity
                       onPress={() => handleEditQuestion(question.id)}
                       style={styles.actionButton}
                     >
-                      <Text style={styles.actionButtonText}>Edit</Text>
+                      <Text style={styles.actionButtonText}>Edit</RNText>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDeleteQuestion(question.id)}
@@ -205,7 +205,7 @@ export default function ManageQuestionsModal({
                     >
                       <Text style={[styles.actionButtonText, styles.actionButtonDeleteText]}>
                         Delete
-                      </Text>
+                      </RNText>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -218,9 +218,9 @@ export default function ManageQuestionsModal({
             <View style={styles.addForm}>
               <Text style={styles.sectionTitle}>
                 {editingQuestionId ? 'Edit Question' : 'Add Question'}
-              </Text>
+              </RNText>
 
-              <Text style={styles.inputLabel}>Question Text</Text>
+              <Text style={styles.inputLabel}>Question Text</RNText>
               <TextInput
                 style={styles.textInput}
                 value={newQuestionText}
@@ -230,9 +230,9 @@ export default function ManageQuestionsModal({
                 maxLength={100}
                 autoFocus
               />
-              <Text style={styles.characterCount}>{newQuestionText.length} / 100</Text>
+              <Text style={styles.characterCount}>{newQuestionText.length} / 100</RNText>
 
-              <Text style={styles.inputLabel}>Question Type</Text>
+              <Text style={styles.inputLabel}>Question Type</RNText>
               <View style={styles.typeSelector}>
                 <TouchableOpacity
                   style={[styles.typeButton, newQuestionType === 'text' && styles.typeButtonActive]}
@@ -245,7 +245,7 @@ export default function ManageQuestionsModal({
                     ]}
                   >
                     Text
-                  </Text>
+                  </RNText>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -261,7 +261,7 @@ export default function ManageQuestionsModal({
                     ]}
                   >
                     Numeric
-                  </Text>
+                  </RNText>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -277,7 +277,7 @@ export default function ManageQuestionsModal({
                     ]}
                   >
                     Yes/No
-                  </Text>
+                  </RNText>
                 </TouchableOpacity>
               </View>
 
@@ -291,7 +291,7 @@ export default function ManageQuestionsModal({
                     setShowExamples(false);
                   }}
                 >
-                  <Text style={styles.formButtonSecondaryText}>Cancel</Text>
+                  <Text style={styles.formButtonSecondaryText}>Cancel</RNText>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.formButton, styles.formButtonPrimary]}
@@ -299,7 +299,7 @@ export default function ManageQuestionsModal({
                 >
                   <Text style={styles.formButtonPrimaryText}>
                     {editingQuestionId ? 'Update' : 'Add Question'}
-                  </Text>
+                  </RNText>
                 </TouchableOpacity>
               </View>
             </View>
@@ -313,27 +313,27 @@ export default function ManageQuestionsModal({
                 {localQuestions.length >= 5
                   ? '✓ Maximum Questions Reached'
                   : '+ Add Custom Question'}
-              </Text>
+              </RNText>
             </TouchableOpacity>
           )}
 
           {/* Example Questions (shown for first question) */}
           {showExamples && (
             <View style={styles.examplesContainer}>
-              <Text style={styles.sectionTitle}>Example Questions</Text>
-              <Text style={styles.examplesSubtitle}>Tap to use, or write your own above</Text>
+              <Text style={styles.sectionTitle}>Example Questions</RNText>
+              <Text style={styles.examplesSubtitle}>Tap to use, or write your own above</RNText>
               {EXAMPLE_QUESTIONS.map((example, index) => (
                 <TouchableOpacity
                   key={index}
                   style={styles.exampleItem}
                   onPress={() => handleSelectExample(example)}
                 >
-                  <Text style={styles.exampleItemText}>{example.question}</Text>
+                  <Text style={styles.exampleItemText}>{example.question}</RNText>
                   <Text style={styles.exampleItemType}>
                     {example.type === 'text' && 'Text'}
                     {example.type === 'numeric' && 'Numeric'}
                     {example.type === 'yes_no' && 'Yes/No'}
-                  </Text>
+                  </RNText>
                 </TouchableOpacity>
               ))}
             </View>

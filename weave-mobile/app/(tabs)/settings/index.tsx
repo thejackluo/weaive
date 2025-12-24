@@ -43,7 +43,7 @@ export default function SettingsScreen() {
             }}
           >
             Settings
-          </Text>
+          </RNText>
           <Text
             style={{
               fontSize: 14,
@@ -51,7 +51,7 @@ export default function SettingsScreen() {
             }}
           >
             Manage your preferences and account
-          </Text>
+          </RNText>
         </View>
 
         {/* Reflection Preferences Section */}
@@ -79,7 +79,7 @@ export default function SettingsScreen() {
               }}
             >
               Reflection & Journaling
-            </Text>
+            </RNText>
           </View>
 
           {/* Daily Reflection Link */}
@@ -101,7 +101,7 @@ export default function SettingsScreen() {
                 }}
               >
                 📝 Daily Reflection
-              </Text>
+              </RNText>
               <Text
                 style={{
                   fontSize: 13,
@@ -109,9 +109,9 @@ export default function SettingsScreen() {
                 }}
               >
                 Answer questions and track your progress
-              </Text>
+              </RNText>
             </View>
-            <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
+            <Text style={{ color: '#71717A', fontSize: 18 }}>›</RNText>
           </Pressable>
         </View>
 
@@ -136,7 +136,7 @@ export default function SettingsScreen() {
             More settings coming soon...
             {'\n'}
             Account • Notifications • Privacy
-          </Text>
+          </RNText>
         </View>
       </ScrollView>
     </SafeAreaView>

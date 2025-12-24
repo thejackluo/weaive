@@ -441,12 +441,12 @@ export default function WeavePathGenerationScreen() {
         <View style={styles.errorContainer}>
           <Text style={styles.errorTitle}>
             {loadingState === 'timeout' ? 'Taking too long...' : 'Something went wrong'}
-          </Text>
+          </RNText>
           <Text style={styles.errorMessage}>
             {loadingState === 'timeout'
               ? 'This is taking longer than expected. Please try again.'
               : "We couldn't generate your path. Let's try again."}
-          </Text>
+          </RNText>
 
           {/* Retry Button */}
           <TouchableOpacity
@@ -455,7 +455,7 @@ export default function WeavePathGenerationScreen() {
             accessibilityRole="button"
             accessibilityLabel="Retry goal breakdown generation"
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>Retry</RNText>
           </TouchableOpacity>
 
           {/* Back Button */}
@@ -465,7 +465,7 @@ export default function WeavePathGenerationScreen() {
             accessibilityRole="button"
             accessibilityLabel="Go back to goal input"
           >
-            <Text style={styles.backLinkText}>← Back to goal input</Text>
+            <Text style={styles.backLinkText}>← Back to goal input</RNText>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -481,7 +481,7 @@ export default function WeavePathGenerationScreen() {
           <View style={styles.offlineBanner}>
             <Text style={styles.offlineBannerText}>
               ⚠️ No internet connection. Please check your network.
-            </Text>
+            </RNText>
           </View>
         )}
 
@@ -492,10 +492,10 @@ export default function WeavePathGenerationScreen() {
         >
           {/* Section Header */}
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Your Path Forward</Text>
+            <Text style={styles.sectionTitle}>Your Path Forward</RNText>
             <Text style={styles.sectionSubtext}>
               Review and edit your personalized plan. You can adjust anything before starting.
-            </Text>
+            </RNText>
           </View>
 
           {/* Goal Title & Summary Card (Task 3) */}
@@ -509,7 +509,7 @@ export default function WeavePathGenerationScreen() {
 
           {/* Milestones Section (Task 4) */}
           <View style={styles.section}>
-            <Text style={styles.subsectionTitle}>Milestones</Text>
+            <Text style={styles.subsectionTitle}>Milestones</RNText>
             {breakdown.milestones.map((milestone, index) => (
               <MilestoneCard
                 key={milestone.id}
@@ -526,10 +526,10 @@ export default function WeavePathGenerationScreen() {
 
           {/* Binds Section (Task 5) */}
           <View style={styles.section}>
-            <Text style={styles.subsectionTitle}>Your Daily Binds</Text>
+            <Text style={styles.subsectionTitle}>Your Daily Binds</RNText>
             <Text style={styles.subsectionDescription}>
               These are the consistent actions that will move you toward your goal.
-            </Text>
+            </RNText>
             {breakdown.binds.map((bind, index) => (
               <BindCard
                 key={bind.id}
@@ -556,7 +556,7 @@ export default function WeavePathGenerationScreen() {
             accessibilityRole="button"
             accessibilityLabel="Go back to edit goal"
           >
-            <Text style={styles.editGoalLinkText}>← Edit my goal</Text>
+            <Text style={styles.editGoalLinkText}>← Edit my goal</RNText>
           </TouchableOpacity>
 
           {/* Accept Button */}
@@ -566,7 +566,7 @@ export default function WeavePathGenerationScreen() {
             accessibilityRole="button"
             accessibilityLabel="Accept path and continue"
           >
-            <Text style={styles.acceptButtonText}>Looks good – Let's start</Text>
+            <Text style={styles.acceptButtonText}>Looks good – Let's start</RNText>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

@@ -102,7 +102,7 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
             numberOfLines={2}
           >
             {goal.title}
-          </Text>
+          </RNText>
 
           {/* Stats Row */}
           <View style={styles.statsRow}>
@@ -110,13 +110,13 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
                 CONSISTENCY
-              </Text>
+              </RNText>
               <View style={styles.consistencyContainer}>
                 {isNewGoal ? (
                   <View style={[styles.newBadge, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
                     <Text style={[styles.newBadgeText, { color: '#8b5cf6' }]}>
                       NEW
-                    </Text>
+                    </RNText>
                   </View>
                 ) : (
                   <>
@@ -124,10 +124,10 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
                       style={[styles.consistencyValue, { fontSize: 32, fontWeight: 'bold', color: '#FFFFFF' }]}
                     >
                       {Math.round(goal.consistency_7d!)}
-                    </Text>
+                    </RNText>
                     <Text style={{ fontSize: 18, color: '#D4D4DC' }}>
                       %
-                    </Text>
+                    </RNText>
                   </>
                 )}
               </View>
@@ -151,11 +151,11 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
                 ACTIVE BINDS
-              </Text>
+              </RNText>
               <View style={styles.bindsContainer}>
                 <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFFFFF' }}>
                   {goal.active_binds_count}
-                </Text>
+                </RNText>
               </View>
             </View>
           </View>

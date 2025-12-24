@@ -150,7 +150,7 @@ export default function AuthenticationScreen() {
             }}
           >
             Get Started
-          </Text>
+          </RNText>
 
           <Text
             className="text-base text-center text-neutral-600 mb-6"
@@ -163,7 +163,7 @@ export default function AuthenticationScreen() {
             }}
           >
             Create your account to begin your transformation journey
-          </Text>
+          </RNText>
 
           <View className="items-center" style={{ alignItems: 'center' }}>
             <View
@@ -180,7 +180,7 @@ export default function AuthenticationScreen() {
                 style={{ color: '#10b981', fontWeight: '600', fontSize: 15 }}
               >
                 ✨ 7-day free trial. No commitment.
-              </Text>
+              </RNText>
             </View>
           </View>
         </View>
@@ -210,15 +210,15 @@ export default function AuthenticationScreen() {
                   }}
                 >
                   ✅ You're Already Signed In
-                </Text>
+                </RNText>
                 <Text
                   style={{
                     fontSize: 16,
                     color: '#6b7280',
                   }}
                 >
-                  Signed in as <Text style={{ fontWeight: '600' }}>{user.email}</Text>
-                </Text>
+                  Signed in as <Text style={{ fontWeight: '600' }}>{user.email}</RNText>
+                </RNText>
                 <Text
                   style={{
                     fontSize: 14,
@@ -227,7 +227,7 @@ export default function AuthenticationScreen() {
                   }}
                 >
                   You can continue to the next step or sign out to use a different account.
-                </Text>
+                </RNText>
               </View>
 
               <View style={{ gap: 12 }}>
@@ -245,7 +245,7 @@ export default function AuthenticationScreen() {
                 >
                   <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                     Continue to Next Step
-                  </Text>
+                  </RNText>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -267,7 +267,7 @@ export default function AuthenticationScreen() {
                   ) : (
                     <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Sign Out
-                    </Text>
+                    </RNText>
                   )}
                 </TouchableOpacity>
               </View>
@@ -301,10 +301,10 @@ export default function AuthenticationScreen() {
                   <ActivityIndicator color="#ffffff" />
                 ) : (
                   <>
-                    <Text style={{ fontSize: 20 }}>G</Text>
+                    <Text style={{ fontSize: 20 }}>G</RNText>
                     <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Continue with Google
-                    </Text>
+                    </RNText>
                   </>
                 )}
               </TouchableOpacity>
@@ -332,10 +332,10 @@ export default function AuthenticationScreen() {
                   <ActivityIndicator color="#ffffff" />
                 ) : (
                   <>
-                    <Text style={{ fontSize: 20 }}></Text>
+                    <Text style={{ fontSize: 20 }}></RNText>
                     <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Sign in with Apple
-                    </Text>
+                    </RNText>
                   </>
                 )}
               </TouchableOpacity>
@@ -354,7 +354,7 @@ export default function AuthenticationScreen() {
                 style={{ marginHorizontal: 16, fontSize: 14, color: '#9ca3af', fontWeight: '500' }}
               >
                 or
-              </Text>
+              </RNText>
               <View
                 className="flex-1 h-px bg-neutral-200"
                 style={{ flex: 1, height: 1, backgroundColor: '#e5e7eb' }}
@@ -379,10 +379,10 @@ export default function AuthenticationScreen() {
                 onPress={handleEmailSignIn}
                 disabled={loading}
               >
-                <Text style={{ fontSize: 20 }}>✉️</Text>
+                <Text style={{ fontSize: 20 }}>✉️</RNText>
                 <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                   Sign in with Email
-                </Text>
+                </RNText>
               </TouchableOpacity>
             </View>
           </View>
@@ -395,7 +395,7 @@ export default function AuthenticationScreen() {
               style={{ color: '#ef4444', fontSize: 14, textAlign: 'center', lineHeight: 20 }}
             >
               {error}
-            </Text>
+            </RNText>
           </View>
         )}
 
@@ -417,7 +417,7 @@ export default function AuthenticationScreen() {
           >
             <Text style={{ color: '#9ca3af', fontSize: 15, fontWeight: '500' }}>
               Back
-            </Text>
+            </RNText>
           </TouchableOpacity>
 
           {/* Development Bypass Button - Only in DEV mode and not signed in */}
@@ -458,7 +458,7 @@ export default function AuthenticationScreen() {
               >
                 <Text style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
                   🔧 Skip Auth (Dev Only)
-                </Text>
+                </RNText>
               </TouchableOpacity>
               <Text
                 style={{
@@ -469,7 +469,7 @@ export default function AuthenticationScreen() {
                 }}
               >
                 Development mode only - bypasses authentication
-              </Text>
+              </RNText>
             </View>
           )}
         </View>

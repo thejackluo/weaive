@@ -125,7 +125,7 @@ function PainpointCardComponent({ painpoint, isSelected, onPress, style }: Painp
           }}
         >
           {painpoint.title}
-        </Text>
+        </RNText>
 
         {/* Description */}
         <Text
@@ -135,7 +135,7 @@ function PainpointCardComponent({ painpoint, isSelected, onPress, style }: Painp
           }}
         >
           {painpoint.description}
-        </Text>
+        </RNText>
 
         {/* Check Icon Overlay */}
         {isSelected && (

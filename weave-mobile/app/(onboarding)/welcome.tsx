@@ -102,7 +102,7 @@ export default function WelcomeScreen() {
           }}
         >
           Weave
-        </Text>
+        </RNText>
 
         {/* Value Proposition - AC1 */}
         <Text
@@ -117,7 +117,7 @@ export default function WelcomeScreen() {
           }}
         >
           See your transformation as you create it
-        </Text>
+        </RNText>
 
         {/* CTA Button - AC1, AC3, AC5 */}
         <Pressable
@@ -139,7 +139,7 @@ export default function WelcomeScreen() {
             style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
           >
             Get Started
-          </Text>
+          </RNText>
         </Pressable>
 
         {/* Design System Preview Button - TEMPORARILY DISABLED (showcase has undefined components) */}
@@ -159,7 +159,7 @@ export default function WelcomeScreen() {
             style={{ color: '#262626', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
           >
             🎨 View Design System
-          </Text>
+          </RNText>
         </Pressable>
 
         {/* Voice Demo Button - Dev Testing Tool (Story 0.11) */}
@@ -187,7 +187,7 @@ export default function WelcomeScreen() {
             style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
           >
             🎤 Voice Demo (Story 0.11)
-          </Text>
+          </RNText>
         </Pressable>
 
         {/* Skip to Main App Button - Dev Testing Tool (Story 4.1) 
@@ -214,7 +214,7 @@ export default function WelcomeScreen() {
             style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
           >
             Skip to Main App (Dev)
-          </Text>
+          </RNText>
         </Pressable> */}
 
         {/* Component Testing Button - Dev Tool */}
@@ -236,7 +236,7 @@ export default function WelcomeScreen() {
             style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
           >
             🧪 Component Testing
-          </Text>
+          </RNText>
         </Pressable>
       </View>
     </SafeAreaView>

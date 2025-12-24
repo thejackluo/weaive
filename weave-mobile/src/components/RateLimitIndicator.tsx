@@ -179,7 +179,7 @@ export function RateLimitIndicator({
         />
         <Text style={{ fontSize: 12, color: getStatusColor(overallStatus), marginLeft: 8 }}>
           {Math.max(requestPercentage, durationPercentage).toFixed(0)}%
-        </Text>
+        </RNText>
       </View>
     );
   }
@@ -204,13 +204,13 @@ export function RateLimitIndicator({
               }}
             >
               Daily Usage
-            </Text>
+            </RNText>
           </View>
 
           {overallStatus !== 'normal' && (
             <Text style={{ fontSize: 12, color: '#a1a1aa' }}>
               Resets in {getTimeUntilReset()}
-            </Text>
+            </RNText>
           )}
         </View>
 
@@ -219,7 +219,7 @@ export function RateLimitIndicator({
           <View style={[styles.labelRow, { marginBottom: 8 }]}>
             <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               Transcriptions
-            </Text>
+            </RNText>
             <Text
               style={{
                 fontSize: 14,
@@ -228,7 +228,7 @@ export function RateLimitIndicator({
               }}
             >
               {requestCount}/{maxRequests}
-            </Text>
+            </RNText>
           </View>
           {renderProgressBar(requestPercentage, requestStatus)}
         </View>
@@ -238,7 +238,7 @@ export function RateLimitIndicator({
           <View style={[styles.labelRow, { marginBottom: 8 }]}>
             <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               Audio duration
-            </Text>
+            </RNText>
             <Text
               style={{
                 fontSize: 14,
@@ -247,7 +247,7 @@ export function RateLimitIndicator({
               }}
             >
               {durationMinutes.toFixed(0)}/{maxMinutes} min
-            </Text>
+            </RNText>
           </View>
           {renderProgressBar(durationPercentage, durationStatus)}
         </View>
@@ -257,7 +257,7 @@ export function RateLimitIndicator({
           <View style={[styles.warningContainer, { marginTop: 12 }]}>
             <Text style={{ fontSize: 12, color: '#ef4444', textAlign: 'center' }}>
               Daily limit reached. Limit resets at midnight.
-            </Text>
+            </RNText>
           </View>
         )}
       </View>

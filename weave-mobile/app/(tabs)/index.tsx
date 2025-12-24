@@ -171,7 +171,7 @@ export default function HomeScreen() {
               }}
             >
               🎤 Voice Demo (Story 0.11)
-            </Text>
+            </RNText>
           </Pressable>
 
           <Pressable

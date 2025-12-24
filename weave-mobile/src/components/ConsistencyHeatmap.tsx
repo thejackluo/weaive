@@ -114,7 +114,7 @@ export function ConsistencyHeatmap({
       <View style={[styles.card, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
         <Text style={{ fontSize: 14, color: '#ef4444' }}>
           Error loading consistency data: {error?.message}
-        </Text>
+        </RNText>
       </View>
     );
   }
@@ -272,7 +272,7 @@ export function ConsistencyHeatmap({
       <View style={styles.titleAndDropdownRow}>
         <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
           {getHeaderTitle()}
-        </Text>
+        </RNText>
         {/* Timeframe Dropdown */}
         <View>
           <Pressable
@@ -284,7 +284,7 @@ export function ConsistencyHeatmap({
           >
             <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
               {timeframe}
-            </Text>
+            </RNText>
             <Ionicons
               name={showTimeframeDropdown ? 'chevron-up' : 'chevron-down'}
               size={14}
@@ -316,7 +316,7 @@ export function ConsistencyHeatmap({
                     }}
                   >
                     {option}
-                  </Text>
+                  </RNText>
                 </Pressable>
               ))}
             </View>
@@ -326,7 +326,7 @@ export function ConsistencyHeatmap({
       <View style={styles.percentageRow}>
         <Text style={[styles.percentageText, { fontSize: 64, fontWeight: 'bold', color: '#ffffff' }]}>
           {consistencyPercentage}%
-        </Text>
+        </RNText>
         <View
           style={[
             styles.trendBadge,
@@ -345,7 +345,7 @@ export function ConsistencyHeatmap({
           >
             {trendPercentage >= 0 ? '+' : ''}
             {trendPercentage}%
-          </Text>
+          </RNText>
         </View>
       </View>
     </View>
@@ -401,12 +401,12 @@ export function ConsistencyHeatmap({
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 15, fontWeight: '600', color: '#ffffff' }} numberOfLines={2}>
                     {needle.title}
-                  </Text>
+                  </RNText>
                   <Text
                     style={{ fontSize: 14, color: '#71717a', marginTop: 4, fontStyle: 'italic' }}
                   >
                     {needle.description}
-                  </Text>
+                  </RNText>
                 </View>
               </View>
 
@@ -484,7 +484,7 @@ export function ConsistencyHeatmap({
                 }}
               >
                 {bind.bindName}
-              </Text>
+              </RNText>
             </Pressable>
           ))}
         </ScrollView>
@@ -531,7 +531,7 @@ export function ConsistencyHeatmap({
             }}
           >
             {filter.charAt(0).toUpperCase() + filter.slice(1)}
-          </Text>
+          </RNText>
         </Pressable>
       ))}
     </View>
@@ -558,7 +558,7 @@ export function ConsistencyHeatmap({
         <Ionicons name="fitness" size={24} color={'#3b82f6'} />
         <Text style={{ flex: 1, fontStyle: 'italic', marginLeft: 12, fontSize: 15, color: '#ffffff' }}>
           {getInsightMessage()}
-        </Text>
+        </RNText>
         <Ionicons name="arrow-forward" size={20} color={'#71717a'} />
       </View>
     </View>
@@ -603,10 +603,10 @@ export function ConsistencyHeatmap({
             <View key={day.fullDate} style={styles.dayCell}>
               <Text style={{ fontSize: 12, color: '#71717a' }}>
                 {day.dayOfWeek}
-              </Text>
+              </RNText>
               <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff', marginTop: 2 }}>
                 {day.dayOfMonth}
-              </Text>
+              </RNText>
             </View>
           ))}
         </View>
@@ -618,7 +618,7 @@ export function ConsistencyHeatmap({
             <View style={styles.bindNameCell}>
               <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                 {bind.bindName}
-              </Text>
+              </RNText>
             </View>
 
             {/* Completion cells */}
@@ -671,15 +671,15 @@ export function ConsistencyHeatmap({
                       day: 'numeric',
                       year: 'numeric',
                     })}
-                  </Text>
+                  </RNText>
 
                   <View style={styles.modalSection}>
                     <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                       Completion Rate
-                    </Text>
+                    </RNText>
                     <Text style={[styles.modalPercentage, { fontSize: 28, fontWeight: 'bold', color: '#ffffff' }]}>
                       {selectedDayData.completionRate}%
-                    </Text>
+                    </RNText>
                   </View>
 
                   <TouchableOpacity
@@ -688,7 +688,7 @@ export function ConsistencyHeatmap({
                   >
                     <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
                       View Day&apos;s Entries →
-                    </Text>
+                    </RNText>
                   </TouchableOpacity>
 
                   <Pressable
@@ -697,7 +697,7 @@ export function ConsistencyHeatmap({
                   >
                     <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                       Close
-                    </Text>
+                    </RNText>
                   </Pressable>
                 </>
               )}
@@ -720,7 +720,7 @@ export function ConsistencyHeatmap({
               <View style={styles.searchModalHeader}>
                 <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
                   Search Binds
-                </Text>
+                </RNText>
                 <Pressable onPress={() => setShowSearchModal(false)}>
                   <Ionicons name="close" size={24} color={'#a1a1aa'} />
                 </Pressable>
@@ -758,7 +758,7 @@ export function ConsistencyHeatmap({
                         setBindSearchQuery('');
                       }}
                     >
-                      <Text style={{ fontSize: 15, color: '#ffffff' }}>{bind.bindName}</Text>
+                      <Text style={{ fontSize: 15, color: '#ffffff' }}>{bind.bindName}</RNText>
                       <Ionicons name="chevron-forward" size={20} color={'#71717a'} />
                     </Pressable>
                   ))}
@@ -800,7 +800,7 @@ export function ConsistencyHeatmap({
               >
                 <Text style={{ fontSize: 12, fontWeight: '500', color: 'white' }}>
                   {dayOfMonth}
-                </Text>
+                </RNText>
               </View>
             </Pressable>
           );
@@ -813,19 +813,19 @@ export function ConsistencyHeatmap({
           <View style={[styles.legendColor, { backgroundColor: '#10b981' }]} />
           <Text variant="textXs" style={{ color: '#71717a' }}>
             80%+
-          </Text>
+          </RNText>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendColor, { backgroundColor: '#f59e0b' }]} />
           <Text variant="textXs" style={{ color: '#71717a' }}>
             50-79%
-          </Text>
+          </RNText>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendColor, { backgroundColor: '#ef4444' }]} />
           <Text variant="textXs" style={{ color: '#71717a' }}>
             {'<'}50%
-          </Text>
+          </RNText>
         </View>
       </View>
 
@@ -851,15 +851,15 @@ export function ConsistencyHeatmap({
                     day: 'numeric',
                     year: 'numeric',
                   })}
-                </Text>
+                </RNText>
 
                 <View style={styles.modalSection}>
                   <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                     Completion Rate
-                  </Text>
+                  </RNText>
                   <Text style={[styles.modalPercentage, { fontSize: 28, fontWeight: 'bold', color: '#ffffff' }]}>
                     {selectedDayData.completionRate}%
-                  </Text>
+                  </RNText>
                 </View>
 
                 <TouchableOpacity
@@ -868,7 +868,7 @@ export function ConsistencyHeatmap({
                 >
                   <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
                     View Day&apos;s Entries →
-                  </Text>
+                  </RNText>
                 </TouchableOpacity>
 
                 <Pressable
@@ -877,7 +877,7 @@ export function ConsistencyHeatmap({
                 >
                   <Text style={{ fontSize: 15, color: '#a1a1aa' }}>
                     Close
-                  </Text>
+                  </RNText>
                 </Pressable>
               </>
             )}
@@ -900,7 +900,7 @@ export function ConsistencyHeatmap({
             <View style={styles.searchModalHeader}>
               <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff' }}>
                 Search Binds
-              </Text>
+              </RNText>
               <Pressable onPress={() => setShowSearchModal(false)}>
                 <Ionicons name="close" size={24} color={'#a1a1aa'} />
               </Pressable>
@@ -938,7 +938,7 @@ export function ConsistencyHeatmap({
                       setBindSearchQuery('');
                     }}
                   >
-                    <Text style={{ fontSize: 15, color: '#ffffff' }}>{bind.bindName}</Text>
+                    <Text style={{ fontSize: 15, color: '#ffffff' }}>{bind.bindName}</RNText>
                     <Ionicons name="chevron-forward" size={20} color={'#71717a'} />
                   </Pressable>
                 ))}

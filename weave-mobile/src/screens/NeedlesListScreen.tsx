@@ -52,10 +52,10 @@ export function NeedlesListScreen() {
         <View style={styles.header}>
           <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
             Your Needles
-          </Text>
+          </RNText>
           <Text style={[styles.subtitle, { fontSize: 16, color: '#a1a1aa' }]}>
             Focus on what matters most
-          </Text>
+          </RNText>
         </View>
 
         <View style={styles.listContainer} testID="goals-skeleton-loader">
@@ -74,27 +74,27 @@ export function NeedlesListScreen() {
         <View style={styles.header}>
           <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
             Your Needles
-          </Text>
+          </RNText>
         </View>
 
         <View style={[styles.centerContent, styles.errorState]} testID="error-state">
           <Text style={[styles.errorTitle, { fontSize: 24, fontWeight: '600', color: '#ef4444' }]}>
             Couldn't load your goals
-          </Text>
+          </RNText>
           <Text style={[styles.errorMessage, { fontSize: 16, color: '#a1a1aa' }]}>
             Check your connection and try again
-          </Text>
+          </RNText>
           {error && (
             <Text style={[styles.errorDetail, { fontSize: 14, color: '#71717a' }]}>
               {error.message}
-            </Text>
+            </RNText>
           )}
           <TouchableOpacity
             onPress={() => refetch()}
             testID="retry-button"
             style={[styles.retryButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}
           >
-            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Retry</Text>
+            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Retry</RNText>
           </TouchableOpacity>
         </View>
       </View>
@@ -108,16 +108,16 @@ export function NeedlesListScreen() {
         <View style={styles.header}>
           <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
             Your Needles
-          </Text>
+          </RNText>
         </View>
 
         <View style={[styles.centerContent, styles.emptyState]} testID="empty-state">
           <Text style={[styles.emptyTitle, { fontSize: 24, fontWeight: '600', color: '#ffffff' }]}>
             You haven't set any goals yet
-          </Text>
+          </RNText>
           <Text style={[styles.emptyMessage, { fontSize: 16, color: '#a1a1aa' }]}>
             What do you want to achieve?
-          </Text>
+          </RNText>
           <TouchableOpacity
             onPress={handleAddGoal}
             testID="create-first-goal-button"
@@ -125,7 +125,7 @@ export function NeedlesListScreen() {
           >
             <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
               Create Your First Goal
-            </Text>
+            </RNText>
           </TouchableOpacity>
         </View>
       </View>
@@ -138,10 +138,10 @@ export function NeedlesListScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
           Your Needles
-        </Text>
+        </RNText>
         <Text style={[styles.subtitle, { fontSize: 16, color: '#a1a1aa' }]}>
           {total} of {activeGoalLimit} active {total === 1 ? 'goal' : 'goals'}
-        </Text>
+        </RNText>
       </View>
 
       <FlatList
@@ -174,12 +174,12 @@ export function NeedlesListScreen() {
             >
               <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
                 {isAtLimit ? 'Goal Limit Reached (3/3)' : 'Add New Goal'}
-              </Text>
+              </RNText>
             </TouchableOpacity>
             {isAtLimit && (
               <Text style={[styles.limitHint, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
                 Archive a goal to add a new one
-              </Text>
+              </RNText>
             )}
           </View>
         }

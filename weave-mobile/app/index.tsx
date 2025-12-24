@@ -36,7 +36,7 @@ export default function Index() {
           <View style={{ backgroundColor: '#FF6B00', padding: 8 }}>
             <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
               🧪 DEV MODE: Auth Bypassed
-            </Text>
+            </RNText>
           </View>
         </View>
       </>
@@ -51,7 +51,7 @@ export default function Index() {
           <ActivityIndicator size="large" color="#3B72F6" />
           <Text style={{ color: '#888888', marginTop: 16, textAlign: 'center' }}>
             Loading...
-          </Text>
+          </RNText>
         </View>
       </View>
     );

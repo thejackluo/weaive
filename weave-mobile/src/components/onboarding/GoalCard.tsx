@@ -66,7 +66,7 @@ export const GoalCard: React.FC<GoalCardProps> = ({
       >
         <Text style={[styles.text, selected ? styles.textSelected : styles.textUnselected]}>
           {text}
-        </Text>
+        </RNText>
       </TouchableOpacity>
     </Animated.View>
   );

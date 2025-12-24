@@ -139,7 +139,7 @@ export function NeedleDetailScreen() {
           </Pressable>
           <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
             Loading...
-          </Text>
+          </RNText>
         </View>
       </View>
     );
@@ -155,14 +155,14 @@ export function NeedleDetailScreen() {
           </Pressable>
           <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
             Error
-          </Text>
+          </RNText>
         </View>
         <View style={styles.errorContainer}>
           <Text style={{ fontSize: 15, color: '#ef4444' }}>
             {error?.message || 'Goal not found'}
-          </Text>
+          </RNText>
           <TouchableOpacity onPress={handleBack} style={[styles.backToListButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}>
-            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Back to Dashboard</Text>
+            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Back to Dashboard</RNText>
           </TouchableOpacity>
         </View>
       </View>
@@ -210,7 +210,7 @@ export function NeedleDetailScreen() {
             style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}
           >
             {editedTitle}
-          </Text>
+          </RNText>
         )}
 
         <Pressable
@@ -223,7 +223,7 @@ export function NeedleDetailScreen() {
           ) : (
             <Text style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
               {isEditMode ? 'Done' : 'Edit'}
-            </Text>
+            </RNText>
           )}
         </Pressable>
       </View>
@@ -241,7 +241,7 @@ export function NeedleDetailScreen() {
               style={[styles.needleTitle, { fontSize: 28, fontWeight: 'bold', color: '#ffffff' }]}
             >
               {editedTitle}
-            </Text>
+            </RNText>
           </View>
         )}
 
@@ -249,7 +249,7 @@ export function NeedleDetailScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
             Why this matters
-          </Text>
+          </RNText>
           {isEditMode ? (
             <TextInput
               value={editedWhy}
@@ -269,7 +269,7 @@ export function NeedleDetailScreen() {
           ) : (
             <Text style={[styles.whyText, { fontSize: 15, color: '#a1a1aa' }]}>
               {editedWhy || 'No description provided'}
-            </Text>
+            </RNText>
           )}
         </View>
 
@@ -278,28 +278,28 @@ export function NeedleDetailScreen() {
           <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
             <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               7-day consistency
-            </Text>
+            </RNText>
             <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.consistency_7d}%
-            </Text>
+            </RNText>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
             <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               Total completions
-            </Text>
+            </RNText>
             <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.total_completions}
-            </Text>
+            </RNText>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
             <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               Current streak
-            </Text>
+            </RNText>
             <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.current_streak}
-            </Text>
+            </RNText>
           </View>
         </View>
 
@@ -307,16 +307,16 @@ export function NeedleDetailScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Milestones
-          </Text>
+          </RNText>
           {milestones.map((milestone) => (
             <View key={milestone.id} style={[styles.milestoneCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
               <View style={styles.milestoneHeader}>
                 <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                   {milestone.title}
-                </Text>
+                </RNText>
                 <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                   {milestone.progress}%
-                </Text>
+                </RNText>
               </View>
               <View style={styles.progressBarContainer}>
                 <View
@@ -331,7 +331,7 @@ export function NeedleDetailScreen() {
               </View>
               <Text style={[styles.milestoneValues, { fontSize: 14, color: '#a1a1aa' }]}>
                 {milestone.current} / {milestone.target}
-              </Text>
+              </RNText>
             </View>
           ))}
         </View>
@@ -340,17 +340,17 @@ export function NeedleDetailScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Your Binds
-          </Text>
+          </RNText>
           {binds.map((bind) => (
             <View key={bind.id} style={[styles.bindCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
               <View style={styles.bindContent}>
                 <View style={styles.bindInfo}>
                   <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                     {bind.title}
-                  </Text>
+                  </RNText>
                   <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
                     {bind.frequency}
-                  </Text>
+                  </RNText>
                 </View>
                 <View style={styles.bindStatus}>
                   {bind.completedToday ? (
@@ -377,7 +377,7 @@ export function NeedleDetailScreen() {
               ) : (
                 <Text style={{ fontSize: 15, fontWeight: '500', color: '#ef4444', textAlign: 'center' }}>
                   Archive Needle
-                </Text>
+                </RNText>
               )}
             </TouchableOpacity>
           </View>

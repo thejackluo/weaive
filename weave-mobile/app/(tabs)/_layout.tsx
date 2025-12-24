@@ -189,7 +189,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                     <SymbolView name="sparkles" size={26} tintColor="#a78bfa" />
                     <Text style={styles.chatHeaderTitle}>
                       Weave Chat
-                    </Text>
+                    </RNText>
                   </View>
                   <TouchableOpacity onPress={onClose} style={styles.chatCloseButton}>
                     <SymbolView
@@ -214,19 +214,19 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                       </View>
                       <Text style={styles.welcomeTitle}>
                         Your AI Coach
-                      </Text>
+                      </RNText>
                       <Text style={styles.welcomeSubtitle}>
                         Epic 6: AI Coaching
-                      </Text>
+                      </RNText>
                       <View style={styles.comingSoonBadge}>
                         <Text style={styles.comingSoonText}>
                           Coming Soon
-                        </Text>
+                        </RNText>
                       </View>
 
                       <Text style={styles.examplesTitle}>
                         Try asking:
-                      </Text>
+                      </RNText>
 
                       {exampleMessages.map((message, index) => (
                         <TouchableOpacity
@@ -237,7 +237,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                           <SymbolView name="bubble.left.fill" size={18} tintColor="#a78bfa" />
                           <Text style={styles.exampleText}>
                             {message}
-                          </Text>
+                          </RNText>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -254,7 +254,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                         >
                           <Text style={styles.messageText}>
                             {msg.text}
-                          </Text>
+                          </RNText>
                         </View>
                       ))}
                     </View>

@@ -222,7 +222,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
             <View style={[styles.stepContainer, { padding: 24 }]}>
               <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
                 Record Voice Note
-              </Text>
+              </RNText>
 
               <VoiceRecorder
                 onRecordingComplete={handleRecordingComplete}
@@ -239,7 +239,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
                 }}
               >
                 Tap to start recording
-              </Text>
+              </RNText>
             </View>
           );
 
@@ -248,7 +248,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
             <View style={[styles.stepContainer, { padding: 24 }]}>
               <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
                 Transcribing...
-              </Text>
+              </RNText>
 
               {recordingResult && (
                 <AudioWaveform
@@ -268,7 +268,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
                 }}
               >
                 Processing audio...
-              </Text>
+              </RNText>
             </View>
           );
 
@@ -280,7 +280,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
             >
               <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 24 }}>
                 Review Transcript
-              </Text>
+              </RNText>
 
               {transcriptionResult && (
                 <TranscriptPreview
@@ -304,7 +304,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
                 >
                   <Text style={{ fontSize: 16, color: '#fafafa', fontWeight: '600' }}>
                     Cancel
-                  </Text>
+                  </RNText>
                 </Pressable>
                 <Pressable
                   onPress={handleFinalSave}
@@ -312,7 +312,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
                 >
                   <Text style={{ fontSize: 16, color: '#ffffff', fontWeight: '600' }}>
                     Save
-                  </Text>
+                  </RNText>
                 </Pressable>
               </View>
             </ScrollView>
@@ -323,7 +323,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
             <View style={[styles.stepContainer, { padding: 24 }]}>
               <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center' }}>
                 Saved!
-              </Text>
+              </RNText>
             </View>
           );
 

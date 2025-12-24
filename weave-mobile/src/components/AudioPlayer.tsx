@@ -278,7 +278,7 @@ export function AudioPlayer({
           <MaterialIcons name="error" size={48} color="#ef4444" />
           <Text style={{ fontSize: 18, color: '#ef4444', marginTop: 16, textAlign: 'center' }}>
             {error}
-          </Text>
+          </RNText>
         </View>
       </View>
     );
@@ -291,10 +291,10 @@ export function AudioPlayer({
         <View style={[styles.timeRow, { marginBottom: 16 }]}>
           <Text style={{ fontSize: 18, color: '#fafafa', fontWeight: '600' }}>
             {formatTime(position)}
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 16, color: '#a1a1aa' }}>
             {formatTime(duration)}
-          </Text>
+          </RNText>
         </View>
 
         {/* Progress bar - Full width with visual fill */}
@@ -399,7 +399,7 @@ export function AudioPlayer({
           <View style={styles.speedRow}>
             <Text style={{ fontSize: 14, color: '#a1a1aa', marginRight: 12 }}>
               Speed:
-            </Text>
+            </RNText>
             <View style={styles.speedContainer}>
               {([0.5, 1.0, 1.5, 2.0] as PlaybackSpeed[]).map((speed) => (
                 <Pressable
@@ -424,7 +424,7 @@ export function AudioPlayer({
                     }}
                   >
                     {speed}x
-                  </Text>
+                  </RNText>
                 </Pressable>
               ))}
             </View>

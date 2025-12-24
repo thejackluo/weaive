@@ -114,10 +114,10 @@ export default function EmotionalStateScreen() {
         <View className="items-center mb-6">
           <Text className="text-center text-[28px] font-semibold text-neutral-800 mb-2 tracking-tight">
             What's holding you back?
-          </Text>
+          </RNText>
           <Text className="text-center text-base text-neutral-600">
             Pick 1-2 that you're struggling with most right now
-          </Text>
+          </RNText>
         </View>
 
         {/* Painpoint Grid */}
@@ -137,7 +137,7 @@ export default function EmotionalStateScreen() {
           <View className="items-center mt-6">
             <Text className="text-center text-sm text-neutral-600 mb-3">
               You can optionally add one more
-            </Text>
+            </RNText>
           </View>
         )}
 
@@ -159,7 +159,7 @@ export default function EmotionalStateScreen() {
               }`}
             >
               Continue
-            </Text>
+            </RNText>
           </Pressable>
         </View>
       </ScrollView>

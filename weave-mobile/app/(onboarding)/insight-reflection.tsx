@@ -95,7 +95,7 @@ function SymptomCard({ content, index, reduceMotion }: SymptomCardProps) {
           accessibilityRole="header"
         >
           {content.title}
-        </Text>
+        </RNText>
         <Text
           style={{
             fontSize: 16,
@@ -105,7 +105,7 @@ function SymptomCard({ content, index, reduceMotion }: SymptomCardProps) {
           }}
         >
           {content.text}
-        </Text>
+        </RNText>
       </View>
     </Animated.View>
   );
@@ -139,7 +139,7 @@ function CTAButton({ onPress, reduceMotion, delayMs }: CTAButtonProps) {
         accessibilityLabel="Continue to next step"
         accessibilityRole="button"
       >
-        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Next →</Text>
+        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Next →</RNText>
       </Pressable>
     </Animated.View>
   );
@@ -228,7 +228,7 @@ export default function InsightReflectionScreen() {
             accessibilityRole="header"
           >
             Why this feels so hard
-          </Text>
+          </RNText>
         </View>
 
         {/* Symptom Cards */}

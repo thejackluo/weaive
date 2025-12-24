@@ -194,7 +194,7 @@ export const GoalBreakdownCard: React.FC<GoalBreakdownCardProps> = ({
       <View style={styles.header}>
         {hasBeenEdited && !isEditMode && (
           <View style={styles.editedBadge}>
-            <Text style={styles.editedBadgeText}>Edited</Text>
+            <Text style={styles.editedBadgeText}>Edited</RNText>
           </View>
         )}
         {!isEditMode && (
@@ -205,7 +205,7 @@ export const GoalBreakdownCard: React.FC<GoalBreakdownCardProps> = ({
             accessibilityLabel="Edit goal"
             accessibilityHint="Opens edit mode for goal title and summary"
           >
-            <Text style={styles.editButtonText}>Edit</Text>
+            <Text style={styles.editButtonText}>Edit</RNText>
           </TouchableOpacity>
         )}
       </View>
@@ -213,8 +213,8 @@ export const GoalBreakdownCard: React.FC<GoalBreakdownCardProps> = ({
       {/* View Mode */}
       {!isEditMode ? (
         <>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.summary}>{summary}</Text>
+          <Text style={styles.title}>{title}</RNText>
+          <Text style={styles.summary}>{summary}</RNText>
         </>
       ) : (
         /* Edit Mode */
@@ -249,7 +249,7 @@ export const GoalBreakdownCard: React.FC<GoalBreakdownCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Cancel editing"
             >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>Cancel</RNText>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSave}
@@ -257,7 +257,7 @@ export const GoalBreakdownCard: React.FC<GoalBreakdownCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Save changes"
             >
-              <Text style={styles.saveButtonText}>Save</Text>
+              <Text style={styles.saveButtonText}>Save</RNText>
             </TouchableOpacity>
           </View>
         </>

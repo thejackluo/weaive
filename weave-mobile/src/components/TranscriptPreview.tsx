@@ -173,7 +173,7 @@ export function TranscriptPreview({
             />
             <Text style={{ fontSize: 14, color: getConfidenceColor(), marginLeft: 8 }}>
               {getConfidenceLabel()} confidence
-            </Text>
+            </RNText>
           </View>
 
           {/* Provider badge */}
@@ -191,7 +191,7 @@ export function TranscriptPreview({
           >
             <Text style={{ fontSize: 12, color: '#a1a1aa' }}>
               {getProviderName()}
-            </Text>
+            </RNText>
           </View>
         </View>
 
@@ -203,7 +203,7 @@ export function TranscriptPreview({
           }}
         >
           {editedText.length}/{maxLength}
-        </Text>
+        </RNText>
       </View>
 
       {/* Transcript text */}
@@ -212,7 +212,7 @@ export function TranscriptPreview({
           <ActivityIndicator size="large" color="#3b82f6" />
           <Text style={{ fontSize: 16, color: '#a1a1aa', marginTop: 16 }}>
             Transcribing audio...
-          </Text>
+          </RNText>
         </View>
       ) : (
         <TextInput
@@ -245,7 +245,7 @@ export function TranscriptPreview({
           >
             <Text style={{ fontSize: 14, color: '#fafafa', fontWeight: '600' }}>
               Cancel
-            </Text>
+            </RNText>
           </Pressable>
           <Pressable
             onPress={handleSave}
@@ -253,7 +253,7 @@ export function TranscriptPreview({
           >
             <Text style={{ fontSize: 14, color: '#ffffff', fontWeight: '600' }}>
               Save
-            </Text>
+            </RNText>
           </Pressable>
         </View>
       )}

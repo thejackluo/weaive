@@ -133,7 +133,7 @@ export function ImageDetailView({
     if (!capture.ai_analysis) {
       return (
         <View className="bg-neutral-800 rounded-lg p-4">
-          <Text className="text-neutral-400 text-center">AI analysis unavailable</Text>
+          <Text className="text-neutral-400 text-center">AI analysis unavailable</RNText>
         </View>
       );
     }
@@ -145,31 +145,31 @@ export function ImageDetailView({
         {/* Validation Score */}
         <View className="bg-neutral-800 rounded-lg p-4">
           <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-white font-semibold">AI Verification</Text>
+            <Text className="text-white font-semibold">AI Verification</RNText>
             {capture.ai_verified && (
               <View className="flex-row items-center gap-1">
                 <MaterialIcons name="verified" size={20} color="#10b981" />
-                <Text className="text-green-500 font-semibold">Verified</Text>
+                <Text className="text-green-500 font-semibold">Verified</RNText>
               </View>
             )}
           </View>
           <Text className="text-neutral-400 text-sm">
             Match Score: {analysis.validation_score}/100
-          </Text>
+          </RNText>
         </View>
 
         {/* AI Summary */}
         {analysis.summary && (
           <View className="bg-neutral-800 rounded-lg p-4">
-            <Text className="text-white font-semibold mb-2">Summary</Text>
-            <Text className="text-neutral-300 text-sm">{analysis.summary}</Text>
+            <Text className="text-white font-semibold mb-2">Summary</RNText>
+            <Text className="text-neutral-300 text-sm">{analysis.summary}</RNText>
           </View>
         )}
 
         {/* Quality Score */}
         {capture.ai_quality_score && (
           <View className="bg-neutral-800 rounded-lg p-4">
-            <Text className="text-white font-semibold mb-2">Image Quality</Text>
+            <Text className="text-white font-semibold mb-2">Image Quality</RNText>
             <View className="flex-row">
               {Array.from({ length: 5 }).map((_, i) => (
                 <MaterialIcons
@@ -186,22 +186,22 @@ export function ImageDetailView({
         {/* OCR Text */}
         {analysis.ocr_text && (
           <View className="bg-neutral-800 rounded-lg p-4">
-            <Text className="text-white font-semibold mb-2">Extracted Text</Text>
-            <Text className="text-neutral-300 text-sm">{analysis.ocr_text}</Text>
+            <Text className="text-white font-semibold mb-2">Extracted Text</RNText>
+            <Text className="text-neutral-300 text-sm">{analysis.ocr_text}</RNText>
           </View>
         )}
 
         {/* Categories */}
         {analysis.categories && analysis.categories.length > 0 && (
           <View className="bg-neutral-800 rounded-lg p-4">
-            <Text className="text-white font-semibold mb-3">Categories</Text>
+            <Text className="text-white font-semibold mb-3">Categories</RNText>
             {analysis.categories.slice(0, 2).map((cat: AIVisionCategory, index: number) => (
               <View key={index} className="mb-2">
                 <View className="flex-row justify-between mb-1">
-                  <Text className="text-neutral-300 text-sm capitalize">{cat.label}</Text>
+                  <Text className="text-neutral-300 text-sm capitalize">{cat.label}</RNText>
                   <Text className="text-neutral-400 text-sm">
                     {Math.round(cat.confidence * 100)}%
-                  </Text>
+                  </RNText>
                 </View>
                 <View className="h-2 bg-neutral-700 rounded-full overflow-hidden">
                   <View
@@ -253,7 +253,7 @@ export function ImageDetailView({
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ color: 'white', fontWeight: '500', fontSize: 16 }}>
             {new Date(capture.local_date).toLocaleDateString()}
-          </Text>
+          </RNText>
         </View>
 
         {/* Right: Delete Button */}
@@ -301,7 +301,7 @@ export function ImageDetailView({
                   {savingTitle ? (
                     <ActivityIndicator size="small" color="white" />
                   ) : (
-                    <Text className="text-white font-semibold">Save</Text>
+                    <Text className="text-white font-semibold">Save</RNText>
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -309,7 +309,7 @@ export function ImageDetailView({
                   disabled={savingTitle}
                   className="flex-1 bg-neutral-700 rounded-lg px-4 py-3 items-center"
                 >
-                  <Text className="text-white font-semibold">Cancel</Text>
+                  <Text className="text-white font-semibold">Cancel</RNText>
                 </TouchableOpacity>
               </View>
             </View>
@@ -322,11 +322,11 @@ export function ImageDetailView({
               {capture.content_text ? (
                 <Text className="text-white flex-1" style={{ fontSize: 32, fontWeight: 'bold' }}>
                   {capture.content_text}
-                </Text>
+                </RNText>
               ) : (
                 <Text className="text-neutral-500 text-2xl font-semibold flex-1">
                   Tap to add title...
-                </Text>
+                </RNText>
               )}
               <MaterialIcons name="edit" size={20} color="#737373" />
             </TouchableOpacity>
@@ -349,7 +349,7 @@ export function ImageDetailView({
 
         <Text className="text-neutral-500 text-xs text-center mb-4">
           Double-tap image to zoom in/out
-        </Text>
+        </RNText>
 
         {/* AI Insights */}
         {renderAIInsights()}
@@ -357,8 +357,8 @@ export function ImageDetailView({
         {/* Note/Caption */}
         {capture.content_text && (
           <View className="bg-neutral-800 rounded-lg p-4 mt-4">
-            <Text className="text-white font-semibold mb-2">Note</Text>
-            <Text className="text-neutral-300">{capture.content_text}</Text>
+            <Text className="text-white font-semibold mb-2">Note</RNText>
+            <Text className="text-neutral-300">{capture.content_text}</RNText>
           </View>
         )}
       </ScrollView>

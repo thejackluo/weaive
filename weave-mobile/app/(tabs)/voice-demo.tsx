@@ -96,10 +96,10 @@ export default function VoiceDemoScreen() {
         {/* Header */}
         <Text style={{ fontSize: 24, fontWeight: '700', color: '#ffffff', marginBottom: 8 }}>
           Voice/STT Demo
-        </Text>
+        </RNText>
         <Text style={{ fontSize: 16, color: '#a1a1aa', marginBottom: 32 }}>
           Test all Story 0.11 voice components
-        </Text>
+        </RNText>
 
         {/* Test 1: VoiceRecordModal - Complete Workflow */}
         <View
@@ -114,11 +114,11 @@ export default function VoiceDemoScreen() {
         >
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 1: Complete Workflow
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Test full recording workflow: Record → Transcribe → Preview → Save
             {'\n\n'}✅ Using React Native Modal (no bottom-sheet dependency)
-          </Text>
+          </RNText>
           <TouchableOpacity
             style={{
               backgroundColor: '#3b82f6',
@@ -131,7 +131,7 @@ export default function VoiceDemoScreen() {
           >
             <Text style={{ fontSize: 16, fontWeight: '600', color: '#ffffff' }}>
               Open Voice Recording Modal
-            </Text>
+            </RNText>
           </TouchableOpacity>
         </View>
 
@@ -148,10 +148,10 @@ export default function VoiceDemoScreen() {
         >
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 2: Standalone Recording
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Test VoiceRecorder component in isolation (no transcription)
-          </Text>
+          </RNText>
           <View style={styles.centerContent}>
             <VoiceRecorder
               onRecordingComplete={handleStandaloneRecording}
@@ -163,7 +163,7 @@ export default function VoiceDemoScreen() {
             <Text style={{ fontSize: 12, color: '#a1a1aa', marginTop: 12 }}>
               ✅ Last recording: {(recordingResult.durationMillis / 1000).toFixed(1)}s /{' '}
               {(recordingResult.size / 1024).toFixed(1)}KB
-            </Text>
+            </RNText>
           )}
         </View>
 
@@ -180,10 +180,10 @@ export default function VoiceDemoScreen() {
         >
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 3: Waveform Visualization
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Static waveform (displays recording metering data)
-          </Text>
+          </RNText>
           {recordingResult ? (
             <AudioWaveform
               meteringData={recordingResult.meteringData}
@@ -194,7 +194,7 @@ export default function VoiceDemoScreen() {
           ) : (
             <Text style={{ fontSize: 12, color: '#a1a1aa', textAlign: 'center' }}>
               Record audio above to see waveform
-            </Text>
+            </RNText>
           )}
         </View>
 
@@ -211,10 +211,10 @@ export default function VoiceDemoScreen() {
         >
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 4: Transcript Editing
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Edit transcript, see confidence scoring
-          </Text>
+          </RNText>
           <TranscriptPreview
             transcript={transcript}
             confidence={0.92}
@@ -236,16 +236,16 @@ export default function VoiceDemoScreen() {
         >
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 5: Audio Playback
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Play/pause, seek, speed controls
-          </Text>
+          </RNText>
           {audioUri ? (
             <AudioPlayer audioUri={audioUri} onPlaybackComplete={handlePlaybackComplete} />
           ) : (
             <Text style={{ fontSize: 12, color: '#a1a1aa', textAlign: 'center' }}>
               Record audio above to enable playback
-            </Text>
+            </RNText>
           )}
         </View>
 
@@ -262,10 +262,10 @@ export default function VoiceDemoScreen() {
         >
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 6: Rate Limit Display
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Visual progress bars for daily limits
-          </Text>
+          </RNText>
           <RateLimitIndicator requestCount={requestCount} durationMinutes={durationMinutes} />
         </View>
 
@@ -282,10 +282,10 @@ export default function VoiceDemoScreen() {
         >
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 7: Rate Limit (Compact)
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             Minimal display for toolbars/headers
-          </Text>
+          </RNText>
           <RateLimitIndicator
             requestCount={requestCount}
             durationMinutes={durationMinutes}
@@ -306,10 +306,10 @@ export default function VoiceDemoScreen() {
         >
           <Text style={{ fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 }}>
             Test 8: Recording History
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 16 }}>
             View all past audio recordings with transcripts and playback
-          </Text>
+          </RNText>
           <RecordingHistory maxPreviewLength={80} scrollEnabled={false} />
         </View>
 
@@ -328,7 +328,7 @@ export default function VoiceDemoScreen() {
             style={{ fontSize: 16, fontWeight: '600', marginBottom: 12, color: '#ffffff' }}
           >
             📋 Testing Checklist
-          </Text>
+          </RNText>
           <Text style={{ fontSize: 14, color: '#ffffff', lineHeight: 20 }}>
             1. Check microphone permissions (Settings → Expo Go → Microphone){'\n'}
             2. Test on real device (simulator has no mic){'\n'}
@@ -339,7 +339,7 @@ export default function VoiceDemoScreen() {
             7. Test all playback speeds (0.5x - 2.0x){'\n'}
             8. Edit transcript and check character limit{'\n'}
             9. Check recording history updates after new recordings
-          </Text>
+          </RNText>
         </View>
       </ScrollView>
 

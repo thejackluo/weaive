@@ -177,10 +177,10 @@ export default function TermsOfServiceScreen() {
           </RNText>
           <View style={styles.bulletList}>
             <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
-              • <Text weight="semibold">Call 988</Text> (Suicide & Crisis Lifeline) in the US
+              • <Text weight="semibold">Call 988</RNText> (Suicide & Crisis Lifeline) in the US
             </RNText>
             <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
-              • <Text weight="semibold">Call 911</Text> for immediate emergency assistance
+              • <Text weight="semibold">Call 911</RNText> for immediate emergency assistance
             </RNText>
             <RNText style={[styles.bullet, { fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }]}>
               • Contact a licensed mental health professional or go to your nearest emergency room

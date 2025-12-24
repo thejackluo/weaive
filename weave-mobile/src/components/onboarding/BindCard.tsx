@@ -186,11 +186,11 @@ export const BindCard: React.FC<BindCardProps> = ({
       {/* Header with Checkmark and Edit Button */}
       <View style={styles.header}>
         <View style={styles.checkmarkBadge}>
-          <Text style={styles.checkmarkText}>✓</Text>
+          <Text style={styles.checkmarkText}>✓</RNText>
         </View>
         {hasBeenEdited && !isEditMode && (
           <View style={styles.editedBadge}>
-            <Text style={styles.editedBadgeText}>Edited</Text>
+            <Text style={styles.editedBadgeText}>Edited</RNText>
           </View>
         )}
         {!isEditMode && (
@@ -200,7 +200,7 @@ export const BindCard: React.FC<BindCardProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Edit bind"
           >
-            <Text style={styles.editButtonText}>Edit</Text>
+            <Text style={styles.editButtonText}>Edit</RNText>
           </TouchableOpacity>
         )}
       </View>
@@ -208,11 +208,11 @@ export const BindCard: React.FC<BindCardProps> = ({
       {/* View Mode */}
       {!isEditMode ? (
         <>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.description}>{description}</Text>
+          <Text style={styles.name}>{name}</RNText>
+          <Text style={styles.description}>{description}</RNText>
           {frequency && (
             <View style={styles.frequencyBadge}>
-              <Text style={styles.frequencyText}>{frequency}</Text>
+              <Text style={styles.frequencyText}>{frequency}</RNText>
             </View>
           )}
         </>
@@ -256,7 +256,7 @@ export const BindCard: React.FC<BindCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Cancel editing"
             >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>Cancel</RNText>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSave}
@@ -264,7 +264,7 @@ export const BindCard: React.FC<BindCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Save changes"
             >
-              <Text style={styles.saveButtonText}>Save</Text>
+              <Text style={styles.saveButtonText}>Save</RNText>
             </TouchableOpacity>
           </View>
         </>

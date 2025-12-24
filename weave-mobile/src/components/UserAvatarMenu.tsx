@@ -81,7 +81,7 @@ export function UserAvatarMenu() {
       >
         <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>
           {user.email?.charAt(0).toUpperCase() || 'U'}
-        </Text>
+        </RNText>
       </Pressable>
 
       {/* User Menu Dropdown */}
@@ -106,15 +106,15 @@ export function UserAvatarMenu() {
               borderBottomColor: '#27272A',
             }}
           >
-            <Text style={{ color: '#71717A', fontSize: 12 }}>Signed in as</Text>
+            <Text style={{ color: '#71717A', fontSize: 12 }}>Signed in as</RNText>
             <Text style={{ color: '#FAFAFA', fontSize: 14, fontWeight: '500', marginTop: 4 }}>
               {user.email}
-            </Text>
+            </RNText>
           </View>
           <Pressable onPress={handleLogout} disabled={isLoggingOut} style={{ padding: 12 }}>
             <Text style={{ color: '#EF4444', fontWeight: '500' }}>
               {isLoggingOut ? 'Signing out...' : 'Sign Out'}
-            </Text>
+            </RNText>
           </Pressable>
         </View>
       )}
