@@ -147,6 +147,19 @@ Before any user-facing features can be built, the development team must have a f
 
 ### US-0.8: Error Handling Framework
 
+**Status:** ✅ **COMPLETED** within Story 1.5.2 (Backend API/Model Standardization)
+
+**Implementation Notes:**
+- Backend error handling delivered in Story 1.5.2 with enhanced scope:
+  - 17 error codes (vs 5 required)
+  - 7 custom exception classes
+  - Comprehensive error utilities (app/core/errors.py, 492 lines)
+  - Standard error response format with retryable flag
+  - retryAfter field for rate limiting (added in Story 1.5.2 expansion)
+  - Complete API error codes documentation (docs/api-error-codes.md)
+- Mobile error handling hooks deferred to Epic 1 UI stories (frontend work)
+- See Story 1.5.2 for complete implementation details
+
 **Priority:** M (Must Have)
 
 **As a** developer
@@ -354,7 +367,7 @@ Before any user-facing features can be built, the development team must have a f
 | US-0.5 | CI/CD Pipeline | M | 3 pts |
 | US-0.6 | AI Service Abstraction | M | 3 pts |
 | US-0.7 | Test Infrastructure | M | 3 pts |
-| US-0.8 | Error Handling Framework | M | 3 pts |
+| US-0.8 | Error Handling Framework | M | 3 pts ✅ Completed via Story 1.5.2 |
 | US-0.9 | AI-Powered Image Service | M | 8 pts |
 | US-0.10 | Memory System Architecture | M | 2 pts |
 | US-0.11 | Voice/STT Infrastructure | M | 5 pts |
