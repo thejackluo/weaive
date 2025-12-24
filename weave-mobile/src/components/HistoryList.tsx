@@ -60,7 +60,12 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
 
   const historyItems = data?.data || [];
 
-  if (historyItems.length === 0) {
+  // Filter out goal lifecycle events (only show threads, binds, weave_chats)
+  const filteredItems = historyItems.filter(
+    (item) => item.type === 'journal' || item.type === 'completion' || item.type === 'weave_chat'
+  );
+
+  if (filteredItems.length === 0) {
     return (
       <View className="py-8 items-center">
         <Text variant="textSm" style={{ color: colors.text.secondary }}>
@@ -71,7 +76,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
   }
 
   // Group items by date
-  const groupedItems = historyItems.reduce(
+  const groupedItems = filteredItems.reduce(
     (acc, item) => {
       const date = new Date(item.timestamp);
       const dateKey = date.toLocaleDateString('en-US', {
@@ -91,14 +96,24 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
 
   const renderHistoryItem = ({ item }: { item: HistoryItem }) => {
     // Get type label and badge color
+    // Color scheme:
+    // - Thread (journals/reflections): Violet (#9D71E8)
+    // - Bind (completions): Emerald (#10D87E)
+    // - Weave Chat (AI conversations): Blue (#5B8DEF)
     const getTypeConfig = (type: string) => {
       switch (type) {
         case 'journal':
-          return { label: 'Thread', color: colors.violet[500] };
+          return { label: 'Thread', color: colors.violet[500], icon: 'book' as const };
         case 'completion':
-          return { label: 'Bind', color: colors.emerald[500] };
+          return { label: 'Bind', color: colors.emerald[500], icon: 'checkmark-circle' as const };
+        case 'weave_chat':
+          return { label: 'Weave', color: colors.accent[500], icon: 'chatbubbles' as const };
         default:
-          return { label: 'Activity', color: colors.text.secondary };
+          return {
+            label: 'Activity',
+            color: colors.text.secondary,
+            icon: 'ellipse' as const,
+          };
       }
     };
 
@@ -135,6 +150,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
           {/* Header row: Type badge and timestamp */}
           <View style={styles.headerRow}>
             <View style={[styles.typeBadge, { backgroundColor: config.color + '30' }]}>
+              <Ionicons name={config.icon} size={14} color={config.color} />
               <Text variant="textSm" weight="medium" style={{ color: config.color }}>
                 {config.label}
               </Text>
@@ -215,6 +231,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   typeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,

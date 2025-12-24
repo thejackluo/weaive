@@ -26,7 +26,9 @@ class CompleteBindRequest(BaseModel):
 
     timer_duration: int | None = Field(None, description="Timer duration in minutes")
     photo_used: bool | None = Field(None, description="Whether photo accountability was used")
-    notes: str | None = Field(None, max_length=500, description="Optional completion notes (e.g., 'Ran 5k in 30min')")
+    notes: str | None = Field(
+        None, max_length=500, description="Optional completion notes (e.g., 'Ran 5k in 30min')"
+    )
 
 
 class UpdateBindRequest(BaseModel):
@@ -111,16 +113,24 @@ async def get_today_binds(
             logger.info(f"[BINDS_API] Found user_profile.id: {user_id}")
         except Exception:
             # User profile doesn't exist yet - auto-create it
-            logger.warning(f"⚠️  No user profile found for auth_user_id: {auth_user_id}, creating one...")
+            logger.warning(
+                f"⚠️  No user profile found for auth_user_id: {auth_user_id}, creating one..."
+            )
 
             try:
                 # Create user_profile with default values
-                new_profile = supabase.table("user_profiles").insert({
-                    "auth_user_id": auth_user_id,
-                    "display_name": "User",
-                    "timezone": "America/Los_Angeles",
-                    "locale": "en-US"
-                }).execute()
+                new_profile = (
+                    supabase.table("user_profiles")
+                    .insert(
+                        {
+                            "auth_user_id": auth_user_id,
+                            "display_name": "User",
+                            "timezone": "America/Los_Angeles",
+                            "locale": "en-US",
+                        }
+                    )
+                    .execute()
+                )
 
                 user_id = new_profile.data[0]["id"]
                 logger.info(f"✅ Auto-created user_profile.id: {user_id}")
@@ -244,7 +254,11 @@ async def get_today_binds(
             bind_title = instance.get("title_override") or template.get("title", "Untitled Task")
 
             # Build subtitle with frequency context
-            subtitle = f"{frequency}. Today's one of them." if frequency != "One-time" else "One-time task."
+            subtitle = (
+                f"{frequency}. Today's one of them."
+                if frequency != "One-time"
+                else "One-time task."
+            )
 
             # Construct bind object
             bind = {
@@ -265,7 +279,9 @@ async def get_today_binds(
                     "completed_at": completion_details.get("completed_at"),
                     "duration_minutes": completion_details.get("duration_minutes"),
                     "notes": completion_details.get("notes"),
-                } if completion_details else None,
+                }
+                if completion_details
+                else None,
             }
 
             binds.append(bind)
@@ -415,7 +431,9 @@ async def complete_bind(
             "notes": request.notes[:500] if request.notes else None,  # Enforce 500 char limit
         }
 
-        completion_response = supabase.table("subtask_completions").insert(completion_data).execute()
+        completion_response = (
+            supabase.table("subtask_completions").insert(completion_data).execute()
+        )
 
         if not completion_response.data:
             logger.error(f"❌ Failed to create completion for bind {bind_id}")
@@ -443,12 +461,53 @@ async def complete_bind(
                 capture_response = supabase.table("captures").insert(capture_data).execute()
 
                 if capture_response.data:
-                    logger.info(f"✅ Created capture record for bind {bind_id} (photo accountability)")
+                    logger.info(
+                        f"✅ Created capture record for bind {bind_id} (photo accountability)"
+                    )
                 else:
                     logger.warning(f"⚠️ Failed to create capture record for bind {bind_id}")
             except Exception as capture_error:
                 # Don't fail the entire completion if capture creation fails
                 logger.error(f"❌ Error creating capture record: {str(capture_error)}")
+
+        # Update daily_aggregates (CRITICAL: Dashboard data source)
+        try:
+            local_date = date.today().isoformat()
+
+            # Fetch current daily_aggregates for this date
+            current_agg_response = (
+                supabase.table("daily_aggregates")
+                .select("completed_count, has_journal, has_proof")
+                .eq("user_id", user_id)
+                .eq("local_date", local_date)
+                .single()
+                .execute()
+            )
+
+            # Calculate new values
+            current_completed = current_agg_response.data.get("completed_count", 0) if current_agg_response.data else 0
+            current_has_journal = current_agg_response.data.get("has_journal", False) if current_agg_response.data else False
+            current_has_proof = current_agg_response.data.get("has_proof", False) if current_agg_response.data else False
+
+            new_completed_count = current_completed + 1
+            new_has_proof = current_has_proof or request.photo_used or False
+
+            # North star metric: active_day_with_proof = ≥1 completion + (has_proof OR has_journal)
+            active_day_with_proof = new_completed_count >= 1 and (new_has_proof or current_has_journal)
+
+            # Upsert daily_aggregates
+            supabase.table("daily_aggregates").upsert({
+                "user_id": user_id,
+                "local_date": local_date,
+                "completed_count": new_completed_count,
+                "has_proof": new_has_proof,
+                "active_day_with_proof": active_day_with_proof,
+            }, on_conflict="user_id,local_date").execute()
+
+            logger.info(f"✅ Updated daily_aggregates: completed_count={new_completed_count}, has_proof={new_has_proof}, active_day_with_proof={active_day_with_proof}")
+        except Exception as agg_error:
+            # Log error but don't fail the completion
+            logger.error(f"❌ Error updating daily_aggregates: {str(agg_error)}")
 
         # Calculate level and progress
         # Simple level system: 10 completions per level
@@ -465,7 +524,9 @@ async def complete_bind(
             completions_in_level = total_completions % 10
             level_progress = (completions_in_level / 10) * 100  # Percentage to next level
 
-            logger.info(f"[BINDS_API] Level calculation: total={total_completions}, level={level}, progress={level_progress}")
+            logger.info(
+                f"[BINDS_API] Level calculation: total={total_completions}, level={level}, progress={level_progress}"
+            )
         except Exception as level_error:
             logger.error(f"❌ Error calculating level: {str(level_error)}")
             # Default to level 1 if calculation fails

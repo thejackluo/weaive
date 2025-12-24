@@ -8,4 +8,4 @@ cmds = ["uv sync --frozen"]
 cmds = ["echo 'No build step needed for FastAPI'"]
 
 [start]
-cmd = "uvicorn app.main:app --host 0.0.0.0 --port $PORT --log-level info"
+cmd = "uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT --log-level info"
