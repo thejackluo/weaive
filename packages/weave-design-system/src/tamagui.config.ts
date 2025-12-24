@@ -17,7 +17,7 @@
 import { createTamagui, createTokens } from '@tamagui/core';
 import { shorthands } from '@tamagui/shorthands';
 import { themes as defaultThemes, tokens as defaultTokens } from '@tamagui/themes';
-import { createAnimations } from '@tamagui/animations-reanimated';
+import { createAnimations } from '@tamagui/animations-moti';
 
 // Import Weave tokens
 import { colors, spacing, typography, borders, animations } from './tokens';

@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@react-native-community/blur": "^4.4.1",
-    "@tamagui/animations-reanimated": "^1.122.6",
+    "@tamagui/animations-moti": "^1.141.5",
     "@tamagui/babel-plugin": "^1.141.5",
     "@tamagui/core": "^1.141.5",
     "@tamagui/themes": "^1.141.5",
