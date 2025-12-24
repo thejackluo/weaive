@@ -98,6 +98,21 @@ def client(supabase_client):
 
 
 @pytest.fixture(scope="function")
+async def async_client(supabase_client):
+    """Create an async test client for the FastAPI app with real database.
+
+    Args:
+        supabase_client: Supabase client fixture (ensures database is available)
+
+    Returns:
+        AsyncClient configured for async integration testing
+    """
+    from httpx import AsyncClient
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest.fixture(scope="function")
 def cleanup_test_data(supabase_client):
     """Clean up test data after each test function.
 

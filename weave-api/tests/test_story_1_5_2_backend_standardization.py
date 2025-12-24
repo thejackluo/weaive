@@ -48,9 +48,9 @@ def test_format_error_response():
         retryable=True
     )
 
-    assert response["error"] == "TEST_ERROR"
-    assert response["message"] == "Test error message"
-    assert response["retryable"] is True
+    assert response["error"]["code"] == "TEST_ERROR"
+    assert response["error"]["message"] == "Test error message"
+    assert response["error"]["retryable"] is True
 
 
 def test_format_error_response_with_retry_after():
@@ -62,10 +62,10 @@ def test_format_error_response_with_retry_after():
         retry_after=3600  # 1 hour
     )
 
-    assert response["error"] == ErrorCode.RATE_LIMIT_EXCEEDED
-    assert response["message"] == "Too many requests"
-    assert response["retryable"] is True
-    assert response["retryAfter"] == 3600
+    assert response["error"]["code"] == ErrorCode.RATE_LIMIT_EXCEEDED
+    assert response["error"]["message"] == "Too many requests"
+    assert response["error"]["retryable"] is True
+    assert response["error"]["retryAfter"] == 3600
 
     # Test that retryAfter is omitted when None
     response_no_retry = format_error_response(
@@ -75,7 +75,7 @@ def test_format_error_response_with_retry_after():
         retry_after=None
     )
 
-    assert "retryAfter" not in response_no_retry
+    assert "retryAfter" not in response_no_retry["error"]
 
 
 def test_app_exception():
