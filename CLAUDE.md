@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Quick Navigation
+🎯 [Critical Guardrails](#critical-guardrails) |
+🔒 [Security Patterns](#security-patterns) |
+🚨 [Development Standards](#development-standards-mandatory-for-all-agents) |
+🔧 [Commands](#common-development-commands) |
+📖 [Documentation Hub](#documentation-navigation) |
+🏗️ [Architecture](#architecture-principles) |
+🚀 [Quick Reference](#quick-reference)
+
+---
+
 ## Project Overview
 
 **Weave** - Turn vague goals into daily wins, proof, and a stronger identity in 10 days.
@@ -19,6 +30,107 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Push Notifications:** Expo Push (iOS APNs)
 - **State Management:** TanStack Query (server state), Zustand (UI state), useState (local)
 - **Styling:** NativeWind (Tailwind CSS for React Native)
+
+---
+
+## ⚠️ Critical Guardrails (READ FIRST)
+
+### Data Integrity
+
+**NEVER UPDATE or DELETE from these tables** - they are append-only event logs:
+- `subtask_completions` (canonical completion events)
+- `captures` (proof photos, notes, audio)
+- `journal_entries` (daily reflections)
+
+**Why:** These are canonical truth. Stats and views are recomputed from these events. Editing them corrupts historical data.
+
+**Alternative:** If a completion was logged incorrectly, add a new row with `is_correction: true` that references the original. Never delete the original event.
+
+### Common Pitfalls (From `docs/bugs/`)
+
+1. **Metro cache issues** - If imports fail after moving files, run `npm run start:clean`
+2. **NativeWind styles not applying** - Check that component is inside the ThemeProvider
+3. **Path aliases not resolving** - Use `@/design-system` not `~/design-system`
+4. **React Native module errors** - Don't use Node.js-only modules (fs, path) in React Native code
+5. **Babel plugin validation errors** - Check `babel.config.js` plugin order (nativewind must be last)
+
+**If you encounter a bug:** Check `docs/bugs/` first - it likely has a solution.
+
+### NPM Dependency Management
+
+**🚨 CRITICAL: NEVER use `--legacy-peer-deps` or `--force` flags with npm install**
+
+**Why:** These flags are extremely dangerous and can cause:
+- Silent dependency conflicts that break production
+- Security vulnerabilities from mismatched package versions
+- Difficult-to-debug issues that only appear in specific environments
+- Package corruption that requires full `node_modules` cleanup
+
+**Correct Approach for Peer Dependency Conflicts:**
+
+```bash
+# ❌ NEVER DO THIS
+npm install --legacy-peer-deps
+npm install --force
+
+# ✅ INSTEAD, FIX THE ROOT CAUSE
+1. Identify the conflicting packages (npm will tell you)
+2. Pin exact versions to match peer dependencies
+3. Update/downgrade packages to compatible versions
+4. Run clean install: rm -rf node_modules package-lock.json && npm install
+```
+
+**Example: Fixing React Version Conflicts**
+```json
+// ❌ BAD - Allows version upgrades that break peer deps
+"react-test-renderer": "^19.1.0"
+
+// ✅ GOOD - Pins exact version to match React 19.1.0
+"react-test-renderer": "19.1.0"
+```
+
+**If npm install fails with peer dependency errors:**
+1. Read the error message carefully - it tells you exactly what's incompatible
+2. Check which package versions are required
+3. Pin exact versions in `package.json` to match
+4. Never use `--legacy-peer-deps` as a shortcut
+
+**Backend (Python/uv):** Similar principle applies - never use `--no-deps` or skip dependency resolution. Always fix conflicts at the root cause.
+
+### Design System Usage
+
+**Always use the design system components - never hardcode styles:**
+
+```tsx
+// ✅ GOOD
+import { Button, Card, Text } from '@/design-system';
+<Card variant="glass">
+  <Text variant="displayLg">Welcome</Text>
+  <Button onPress={handlePress}>Get Started</Button>
+</Card>
+
+// ❌ BAD - Don't hardcode colors or spacing
+<View style={{ backgroundColor: '#1a1a1a', padding: 16 }}>
+  <Text style={{ fontSize: 32, color: '#fff' }}>Welcome</Text>
+  <TouchableOpacity style={{ backgroundColor: '#3b82f6' }}>
+    <Text>Get Started</Text>
+  </TouchableOpacity>
+</View>
+```
+
+**📖 Full guide:** `docs/dev/design-system-guide.md`
+
+### State Management
+
+**Use the right tool for the right state:**
+
+| State Type | Tool | Example |
+|------------|------|---------|
+| **Server data** | TanStack Query | Goals, completions, user profile |
+| **Cross-component UI** | Zustand | Active filters, modal state, theme |
+| **Local component** | useState | Form inputs, toggles, counters |
+
+**Don't use Zustand for server data** - use TanStack Query with proper cache invalidation.
 
 ---
 
@@ -58,66 +170,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Story 1.5.2: Backend/API Patterns
 
-**Use when:** Creating API endpoints, database models, or backend services
+**Use when:** Creating API endpoints, database models, backend services
 
-**Standards Include:**
-- ✅ **JWT Authentication** - ALL protected endpoints MUST use `Depends(get_current_user)` (Story 0.3)
-- ✅ API endpoint naming (`GET /api/goals`, `POST /api/completions`)
-- ✅ Pydantic request/response models (`{Resource}Create`, `{Resource}Response`)
-- ✅ Database model conventions (`snake_case`, plural tables, soft delete)
-- ✅ Error handling patterns (standard error codes, HTTP status codes)
-- ✅ Testing patterns (pytest fixtures, integration tests)
-- ✅ Service layer decision tree (when to create services vs inline logic)
+**🚨 CRITICAL: JWT Authentication (Story 0.3)**
+
+ALL protected endpoints MUST use:
+```python
+user: dict = Depends(get_current_user)
+auth_user_id = user["sub"]
+```
+❌ NEVER use placeholder auth - this is a **CRITICAL SECURITY VULNERABILITY**
+
+**See also:** [Security Patterns section](#security-patterns) for JWT + RLS details
+
+**Standards:** API naming, Pydantic models, DB conventions, error handling (17 codes), testing patterns
 
 **Quick Checklist:**
-- [ ] **USE `user: dict = Depends(get_current_user)` for ALL protected endpoints**
+- [ ] Use `Depends(get_current_user)` for protected endpoints
 - [ ] Extract user ID: `auth_user_id = user["sub"]`
-- [ ] Use `snake_case` for all API params and DB columns
+- [ ] Use `snake_case` for DB, `{Resource}Create/Response` for Pydantic
 - [ ] Follow REST naming: `GET /api/{resources}`, `POST /api/{resources}`
-- [ ] Use `{data, meta}` response wrapper format
-- [ ] Create Pydantic models: `{Resource}Create`, `{Resource}Response`
-- [ ] Add error handling with standard codes (`VALIDATION_ERROR`, `NOT_FOUND`, etc.)
+- [ ] Use `{data, meta}` response format
+- [ ] Add error handling with standard codes (see `docs/api-error-codes.md`)
 - [ ] Write pytest tests in `tests/test_{resource}_api.py`
-
-**❌ NEVER use placeholder auth:** `auth_user_id = "placeholder_auth_user_id"` is a **CRITICAL SECURITY VULNERABILITY**
-
-**Templates Available** (`scripts/templates/`):
-- `api_router_template.py` - FastAPI router with all CRUD operations, auth, error handling
-- `pydantic_schema_template.py` - Request/response models with validation patterns
-- `service_template.py` - Service layer with decision tree guidance
-- `test_template.py` - Pytest fixtures and test patterns
-- `database_table_template.sql` - PostgreSQL table with RLS policies
 
 **Scaffolding Tool:**
 ```bash
-python scripts/generate_api.py <resource>     # Auto-generates router, schemas, tests
-python scripts/generate_api.py goal           # Example: creates goals router
+python scripts/generate_api.py <resource>  # Auto-generates router, schemas, tests
+python scripts/generate_api.py goal        # Example: creates Goals API scaffold
 ```
 
-**Quick Start: Creating Your First API**
+Creates 5 CRUD endpoints (501 stubs), Pydantic models, pytest tests.
+**First API walkthrough:** `docs/dev/backend-quick-start.md`
 
-New to backend development on this project? Start here:
-1. 📖 Read `docs/dev/backend-quick-start.md` (30-minute walkthrough)
-2. 🚀 Run `python scripts/generate_api.py <resource>` to scaffold
-3. ✏️ Follow step-by-step guide to implement your first endpoint
-
-Example: `python scripts/generate_api.py goal` creates Goals API scaffold with:
-- `app/api/goals/router.py` (5 CRUD endpoints with 501 stubs)
-- `app/schemas/goal.py` (GoalCreate, GoalUpdate, GoalResponse)
-- `tests/test_goals_api.py` (5 integration tests)
-
-**Developer Guides:**
-- `docs/dev/backend-patterns-guide.md` - Comprehensive patterns reference
-- `docs/dev/backend-api-integration.md` - 28 API endpoint registry
-- `docs/dev/backend-quick-start.md` - Step-by-step first API walkthrough ✅
-- `docs/api-error-codes.md` - Complete error code catalog (17 codes) ✅
-
-**Error Handling (Story 0.8 Complete):**
-- ✅ 17 standard error codes (VALIDATION_ERROR, NOT_FOUND, RATE_LIMIT_EXCEEDED, etc.)
-- ✅ Error response format: `{error, message, retryable, retryAfter?}`
-- ✅ Exception handlers registered in `app/main.py`
-- ✅ Comprehensive utilities in `app/core/errors.py`
-- 📖 See `docs/api-error-codes.md` for complete catalog
+**Developer Resources:**
+- Backend patterns: `docs/dev/backend-patterns-guide.md`
+- API integration: `docs/dev/backend-api-integration.md` (28 endpoints)
+- Error codes: `docs/api-error-codes.md` (17 codes)
 
 **Full Spec:** `docs/stories/1-5-2-backend-standardization.md`
 
@@ -127,41 +216,34 @@ Example: `python scripts/generate_api.py goal` creates Goals API scaffold with:
 
 **Use when:** Implementing AI features (goal breakdown, triad planning, AI chat, insights)
 
-**Architecture:** Creates **AI Module Orchestration Layer** on top of existing provider infrastructure (Stories 0.6, 0.9)
-
+**Architecture Layers:**
 ```
-Request → AIOrchestrator (NEW - which product module?)
-       → AIModule (NEW - what context to build?)
-       → AIService (EXISTS - which AI provider?)
-       → AIProvider (EXISTS - API call implementation)
+Request → AIOrchestrator (routes to module)
+       → AIModule (builds context)
+       → AIService (cost tracking, rate limiting, fallback)
+       → AIProvider (API calls)
 ```
-
-**Standards Include:**
-- ✅ AI Module abstraction (5 product modules: Onboarding Coach, Triad Planner, Daily Recap, Dream Self Advisor, AI Insights Engine)
-- ✅ AIOrchestrator for request routing (maps operation types to modules)
-- ✅ ContextBuilder for user state assembly (identity, goals, history, patterns)
-- ✅ Module Registry pattern (operation → module mapping)
-- ✅ React Native hooks: `useAIChat()`, `useImageAnalysis()`, `useVoiceTranscription()`
-- ✅ Integration with existing AIService (cost tracking, rate limiting, fallback chains)
 
 **Quick Checklist:**
 - [ ] Use `AIOrchestrator.execute_ai_operation()` for all AI requests
 - [ ] Specify operation_type (e.g., 'generate_goal_breakdown', 'chat_response')
 - [ ] Let module build context automatically (don't manually assemble)
-- [ ] Use standard React hooks for frontend
+- [ ] Use React hooks: `useAIChat()`, `useImageAnalysis()`, `useVoiceTranscription()`
 - [ ] DO NOT bypass orchestrator to call AIService directly
 
 **Module → Operation Mapping:**
-| Operation Type | Module | Epic/Story Usage |
-|----------------|--------|------------------|
+| Operation Type | Module | Used In |
+|----------------|--------|---------|
 | `generate_goal_breakdown` | Onboarding Coach | Stories 1.8, 2.3 |
 | `generate_triad` | Triad Planner | Story 4.3 |
 | `generate_recap` | Daily Recap | Story 4.3 |
 | `chat_response` | Dream Self Advisor | Stories 6.1, 6.2 |
 | `generate_weekly_insights` | AI Insights Engine | Story 6.4 |
 
+**Integration:** AIOrchestrator uses existing AIService (Story 0.6, 0.9) for cost tracking, rate limiting, fallback chains.
+
 **Full Spec:** `docs/stories/1-5-3-ai-module-orchestration.md`
-**Developer Guide:** `docs/dev/ai-services-guide.md` (sections 8-11 for module orchestration)
+**Developer Guide:** `docs/dev/ai-services-guide.md` (sections 8-11)
 
 ---
 
@@ -208,13 +290,59 @@ Request → AIOrchestrator (NEW - which product module?)
 
 ---
 
-### 📚 Quick Links
+## 🔒 Security Patterns (MANDATORY FOR ALL AGENTS)
 
-- **Navigation Patterns:** `docs/stories/1-5-1-navigation-architecture.md`
-- **Backend Patterns:** `docs/stories/1-5-2-backend-standardization.md` + `docs/dev/backend-patterns-guide.md`
-- **API Endpoint Registry:** `docs/dev/backend-api-integration.md` ⚡ NEW (28 endpoints mapped)
-- **AI Module Orchestration:** `docs/stories/1-5-3-ai-module-orchestration.md` + `docs/dev/ai-services-guide.md`
-- **Architecture Rules:** `docs/architecture/implementation-patterns-consistency-rules.md`
+### JWT Authentication (Story 0.3)
+
+**ALL protected endpoints MUST use:**
+
+```python
+user: dict = Depends(get_current_user)
+auth_user_id = user["sub"]
+```
+
+**❌ NEVER use placeholder auth:**
+`auth_user_id = "placeholder_auth_user_id"` is a **CRITICAL SECURITY VULNERABILITY**
+
+### Row Level Security (Story 0.4)
+
+**Standard RLS policy pattern:**
+
+```sql
+CREATE POLICY "users_manage_own_data" ON table_name
+    FOR ALL
+    USING (user_id IN (
+        SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text
+    ));
+```
+
+**⚠️ CRITICAL:** Must cast `auth.uid()::text` (UUID → TEXT) to match `auth_user_id` column type.
+
+**12 RLS-Enabled Tables:**
+user_profiles, identity_docs, goals, subtask_templates, subtask_instances, subtask_completions (immutable), captures, journal_entries, daily_aggregates, triad_tasks, ai_runs, ai_artifacts
+
+### Immutable Tables (Append-Only Event Logs)
+
+**Tables:** subtask_completions, captures, journal_entries
+**Pattern:** SELECT + INSERT policies only (NO UPDATE/DELETE)
+**Rationale:** Canonical truth - stats recomputed from events
+
+**Example:**
+```sql
+-- SELECT policy (users can view own completions)
+CREATE POLICY "users_select_own_completions" ON subtask_completions
+    FOR SELECT
+    USING (user_id IN (SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text));
+
+-- INSERT policy (users can create own completions)
+CREATE POLICY "users_insert_own_completions" ON subtask_completions
+    FOR INSERT
+    WITH CHECK (user_id IN (SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text));
+
+-- NO UPDATE OR DELETE POLICIES = Immutable
+```
+
+**Full security spec:** `docs/security-architecture.md`
 
 ---
 
@@ -354,393 +482,172 @@ gh cache list | awk '{print $1}' | xargs -I {} gh cache delete {}
 
 ## Development Workflow
 
-### Story-Based Development
+### Current Approach: Page-Based Implementation
 
-This project uses **story-based development** with BMAD methodology:
+**Status:** 🚀 ACTIVE - Building complete vertical slices
+**Model:** 3-tab navigation (Thread, Dashboard, Weave AI) + Profile & Settings
+**Details:** `docs/implementation-strategy.md`
 
-1. **Stories are in:** `docs/stories/` (e.g., `0-1-project-scaffolding.md`, `1-1-welcome-vision-hook.md`)
-2. **Git branches:** `story/X.Y` format (e.g., `story/0.1`, `story/1.1`)
-3. **Sprint artifacts:** Implementation summaries in `docs/sprint-artifacts/`
-4. **Main branch:** `main` (use for PRs)
+**Implementation Pages:**
+1. **Thread Page** (Epic 3+4) - ✅ COMPLETED in `thread-flow` branch
+2. **Dashboard Page** (Epic 2+5) - Planned
+3. **Weave AI Page** (Epic 6) - Planned
+4. **Profile & Settings** (Epic 7+8) - Planned
 
-**Typical workflow:**
+**Workflow Pattern:**
+1. User provides wireframe/screenshot for a page
+2. User explains interactions: "When user taps X, navigate to Y"
+3. Agent references page doc (`docs/pages/[page-name].md`) for functional requirements
+4. Agent implements using wireframe (UX/layout) + page doc (acceptance criteria)
+5. Build → Test → Iterate on complete vertical slice
+
+### Story-Based Development Pattern
+
+**Branch Convention:** `story/X.Y` format (e.g., `story/0.3`, `story/1.1`)
+**Story Specs:** `docs/stories/[story-name].md` (detailed with acceptance criteria)
+**Sprint Artifacts:** `docs/sprint-artifacts/story-[X.X]-*.md` (implementation notes)
+**Main Branch:** `main` (use for PRs)
+
+**Typical Workflow:**
 ```bash
-# 1. Check current story
-git branch  # You're likely on story/X.Y
-
-# 2. Read the story file
-# Example: docs/stories/0-3-authentication-flow.md
-
-# 3. Implement the story
-cd weave-mobile  # or weave-api
-# Make changes...
-
-# 4. Test locally
-npm start  # or uv run uvicorn...
-
-# 5. Commit and push
-git add .
-git commit -m "feat: implement authentication flow"
-git push origin story/0.3
-
-# 6. Create PR to main when done
-gh pr create --base main
+git branch                          # Check current story (story/X.Y)
+cat docs/stories/0-3-*.md           # Read story specification
+cd weave-mobile && npm start        # Test locally
+git add . && git commit -m "feat: ..."  # Commit changes
+gh pr create --base main            # Create PR when complete
 ```
 
-### When Working on a Story
+### Before Implementing ANY Story
 
-1. **Read the story file first** - Stories are detailed specs with acceptance criteria
-2. **Check sprint artifacts** - See `docs/sprint-artifacts/` for implementation notes from previous sessions
-3. **Follow the acceptance criteria** - Don't add scope beyond what's specified
-4. **Update sprint artifacts** - Document significant decisions or blockers
-5. **Test before committing** - Mobile: test on simulator; Backend: run pytest
-
-### Page-Based Implementation (Current Primary Mode)
-
-**Status:** 🚀 **ACTIVE** - Page-based approach for cohesive, vertical-slice development
-
-**Key Insight:** Instead of implementing epics sequentially, organize implementation by **user-facing pages** that group related epics into complete, cohesive units.
-
-**Navigation Model:** Bottom tab navigation (3 main tabs) + profile/settings
-
-**Four Main Pages:**
-1. **Thread Page** (Epic 3 + 4) - Daily action loop
-2. **Dashboard Page** (Epic 2 + 5) - Goal management + progress visualization
-3. **Weave AI Page** (Epic 6) - AI coaching chat
-4. **Profile & Settings** (Epic 7 + 8) - Notifications + account management
-
-**Workflow:**
-1. **User provides:** Wireframe/screenshot for a page (e.g., Thread, Dashboard)
-2. **User explains:** "This screen shows X, when user taps Y, navigate to Z"
-3. **Claude references:** The page document (`docs/pages/[page-name].md`) for functional requirements
-4. **Claude implements:** Using wireframe for UX/layout + page doc for acceptance criteria
-5. **Build → Test → Iterate:** Complete vertical slices end-to-end
-
-**Example session:**
-```
-User: [Shows wireframe] "This is the Dashboard page.
-      Shows active needles as cards, has a FAB to add new goal, plus heat map and fulfillment chart below.
-      This covers Epic 2 (Goal Management) and Epic 5 (Progress Visualization)."
-
-Claude: "Got it. I see:
-        - Wireframe: Card-based needle list, FAB bottom-right, heat map + chart below
-        - Page doc: docs/pages/dashboard-page.md covers all Epic 2 + 5 stories
-        Questions: Should the heat map be collapsed by default? Timeframe filter placement?"
-
-User: [Answers]
-
-Claude: [Implements using design system, following both wireframe AND page doc criteria]
-```
-
-**What matters from wireframes:**
-- ✅ Visual layout and component hierarchy
-- ✅ Navigation patterns (tabs, modals, screens)
-- ✅ Primary user interactions (taps, swipes, forms)
-- ✅ Screen organization and information architecture
-
-**What matters from page documents:**
-- ✅ Functional requirements and acceptance criteria (from epics/stories)
-- ✅ Data model and API contracts
-- ✅ Business logic and validation rules
-- ✅ Edge cases and error handling
-- ✅ Page completion criteria
-
-**What Claude maintains:**
-- ✅ Consistency with existing architecture (three-layer data model, RLS patterns, API format)
-- ✅ Reuse of design system components and tokens
-- ✅ Following established patterns (state management, naming conventions)
-- ✅ Checking both wireframe AND page doc acceptance criteria
-
-**Benefits:**
-- ✅ Complete vertical slices (fully functional pages)
-- ✅ Natural cohesion (features grouped by user intent)
-- ✅ Parallel development possible (teams can work on different pages)
-- ✅ Testable units (clear page completion criteria)
-
-**Priority:** Ship complete pages that match wireframes AND meet all acceptance criteria
-
-**Page Documentation:** See `docs/pages/` for detailed page specs and `docs/implementation-strategy.md` for comprehensive guide
+1. Read the story file (`docs/stories/[story-name].md`)
+2. Check sprint artifacts (`docs/sprint-artifacts/`) for context
+3. Follow acceptance criteria exactly (don't add scope)
+4. Update sprint artifacts with significant decisions
+5. Test locally before committing (run app, check for errors)
 
 ---
 
 ### ✅ Thread Page Implementation (Epic 3 + 4)
 
-**Status:** ✅ **COMPLETED** in `thread-flow` branch (ready for merge to main)
-
-**What Was Implemented:**
-
-#### Backend (weave-api/)
-- ✅ **Binds API Router** (`app/api/binds/router.py`)
-  - `GET /api/binds/today` - Fetch today's binds with needle context and completion status
-  - `POST /api/binds/{bind_id}/complete` - Mark bind as complete with optional notes/timer
-  - Auto-creates user profiles if missing (handles OAuth edge case)
-  - Follows RLS security pattern (auth.uid() → user_profiles → subtask_instances)
-
-- ✅ **Enhanced Journal API** (`app/api/journal_router.py`)
-  - Better error handling for missing user profiles
-  - Improved reflection submission flow
-
-- ✅ **Database Migrations**
-  - `20251222180000_add_notes_to_completions.sql` - Added optional notes field to completions
-  - RLS policies validated and tested
-
-- ✅ **Test User Setup Script** (`scripts/setup_test_user.py`)
-  - Reusable script to mark test users as onboarding_completed
-
-#### Frontend (weave-mobile/)
-- ✅ **Thread Home Screen** (`src/screens/ThreadHomeScreen.tsx`)
-  - Shows today's binds grouped by needle (goal)
-  - Displays completion status, timer badges, proof indicators
-  - Quick journal reflection prompt at bottom
-  - Uses mock data for development (API integration ready)
-
-- ✅ **Bind Completion Flow** (`src/screens/BindScreen.tsx`)
-  - Full bind detail screen with timer, photo capture, notes
-  - **Pomodoro Timer** (`src/components/thread/PomodoroTimer.tsx`) - 25/15/5 min presets
-  - **Completion Celebration** (`src/components/thread/CompletionCelebration.tsx`) - Animated success screen
-  - Navigation back to Thread home after completion
-
-- ✅ **Thread-Specific Components**
-  - `src/components/thread/BindItem.tsx` - Individual bind card
-  - `src/components/thread/NeedleCard.tsx` - Goal header card with emoji + title
-  - Mock data in `src/data/mockThreadData.ts` for testing
-
-- ✅ **API Integration**
-  - `src/services/binds.ts` - Binds API client
-  - `src/hooks/useTodayBinds.ts` - TanStack Query hook for fetching binds
-  - `src/hooks/useCompleteBind.ts` - Mutation hook for completing binds
-  - Follows standard patterns (same structure as goals.ts)
-
-- ✅ **Routing Updates**
-  - `app/(tabs)/index.tsx` now redirects to ThreadHomeScreen
-  - New routes: `app/(tabs)/binds/[id].tsx` for bind detail screen
-  - Settings dev tools added (`app/(tabs)/settings/dev-tools.tsx`)
-
-**Testing Status:**
-- ✅ Backend tests: All passing (pytest)
-- ✅ Backend linting: Clean (ruff)
-- ⚠️ Mobile tests: 68 passing, 13 failing (VoiceRecorder - pre-existing, unrelated to thread-flow)
-- ✅ Mobile linting: Clean (eslint + prettier)
-
-**Key Features:**
-- Daily action loop: "What should I do today?" answered in Thread tab
-- Bind completion with optional timer, photo proof, notes
-- Celebration animation on completion
-- Journal reflection prompt integration
-- Mock data for independent frontend development
+**Status:** ✅ COMPLETED in `thread-flow` branch (ready for merge)
+**Scope:** Daily action loop (binds) + journal reflection
+**Key Features:** Today's binds with completion tracking, Pomodoro timer, photo proof, celebration animation, journal prompt
 
 **API Endpoints:**
-```typescript
-GET  /api/binds/today          // Today's binds (Epic 3.1)
-POST /api/binds/{id}/complete  // Complete bind (Epic 3.2)
-GET  /api/journal/today         // Journal reflection (Epic 4.1)
-POST /api/journal/submit        // Submit reflection (Epic 4.2)
-```
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/binds/today` | Fetch today's binds with needle context |
+| POST | `/api/binds/{id}/complete` | Mark bind complete (notes/timer/proof) |
+| GET | `/api/journal/today` | Get reflection prompt |
+| POST | `/api/journal/submit` | Submit reflection with fulfillment score |
 
-**Next Steps After Merge:**
-1. Replace mock data with live API calls (already wired up, just toggle in ThreadHomeScreen)
-2. Add tests for new components (BindScreen, ThreadHomeScreen)
-3. Implement proof photo validation (Epic 3.3 - optional)
-4. Add push notifications for reflection time (Epic 4.3)
+**Testing:** ✅ Backend passing (pytest) | ⚠️ Mobile (68/81 passing, VoiceRecorder failures unrelated)
+**Implementation Details:** `docs/sprint-artifacts/thread-flow-implementation.md`
+**Next Steps:** Replace mock data with live API calls, add component tests
 
 ---
 
-## Project Structure (Current Reality)
+## Project Structure (High-Level Overview)
 
 ```
 weavelight/
-├── weave-mobile/                # ✅ Expo React Native app (ACTIVE)
-│   ├── app/                     # Expo Router (file-based routing)
-│   │   ├── (auth)/              # Auth screens (login, signup)
-│   │   ├── (onboarding)/        # Onboarding flow
-│   │   ├── (tabs)/              # Main app tabs
-│   │   ├── _layout.tsx          # Root layout
-│   │   └── index.tsx            # Entry point
-│   ├── src/
-│   │   ├── components/          # Reusable components
-│   │   ├── constants/           # App constants
-│   │   ├── contexts/            # React contexts
-│   │   ├── design-system/       # Design system components
-│   │   ├── hooks/               # Custom hooks
-│   │   ├── services/            # API/Supabase services
-│   │   ├── stores/              # Zustand stores
-│   │   └── types/               # TypeScript types
-│   ├── package.json             # Dependencies and scripts
-│   └── ...
+├── weave-mobile/        # React Native app (Expo SDK 53, React 19)
+│   ├── app/             # File-based routing (Expo Router)
+│   │   ├── (auth)/      # Login, signup screens
+│   │   ├── (onboarding)/  # Onboarding flow
+│   │   └── (tabs)/      # Main app (Thread, Dashboard, Weave AI, Profile)
+│   └── src/             # Components, hooks, services, design-system
 │
-├── weave-api/                   # ✅ FastAPI backend (ACTIVE)
-│   ├── app/
-│   │   ├── api/                 # API routes
-│   │   ├── core/                # Core config
-│   │   ├── models/              # Database models
-│   │   ├── services/            # Business logic
-│   │   └── main.py              # FastAPI app entry
-│   ├── tests/                   # Pytest tests
-│   ├── pyproject.toml           # Python dependencies (uv)
-│   └── ...
-│
-├── src/
-│   └── design-system/           # Root-level design system (reference)
-│       ├── components/          # Button, Card, Input, Text, etc.
-│       ├── tokens/              # Colors, typography, spacing
-│       └── theme/               # ThemeContext and hooks
+├── weave-api/           # FastAPI backend (Python 3.11+, uv)
+│   ├── app/api/         # API routers (goals, binds, journal, triad)
+│   ├── app/services/    # Business logic (AI, completions, stats)
+│   ├── app/core/        # Config, errors, security
+│   └── tests/           # Pytest integration tests
 │
 ├── docs/
-│   ├── production/              # 📁 Production deployment, compliance, legal (NEW)
-│   │   ├── README.md            # Production docs overview
-│   │   ├── PRODUCTION_DEPLOYMENT_MANUAL.md  # Step-by-step deployment guide
-│   │   ├── CODE_REVIEW_FIXES_SUMMARY.md     # Code review fixes log (Story 9.1)
-│   │   ├── production-readiness-checklist.md # Pre-launch checklist
-│   │   ├── test-validation-guide.md          # How to verify all tests pass
-│   │   ├── compliance-legal-checklist.md     # Compliance and legal requirements
-│   │   ├── pre-deployment-verification.md    # Automated verification guide
-│   │   └── scripts/             # Automated verification scripts
-│   │       ├── pre-deployment-verification.sh
-│   │       └── run-all-tests.sh
-│   │
-│   ├── pages/                   # 📁 Page-based implementation guides
-│   │   ├── thread-page.md       # Epic 3 + 4 (Daily actions + reflection)
-│   │   ├── dashboard-page.md    # Epic 2 + 5 (Goals + progress viz)
-│   │   ├── weave-ai-page.md     # Epic 6 (AI coaching)
-│   │   └── profile-settings.md  # Epic 7 + 8 (Notifications + settings)
-│   │
-│   ├── architecture/            # 📁 Sharded architecture docs
-│   │   ├── index.md             # Table of contents
-│   │   ├── core-architectural-decisions.md
-│   │   ├── implementation-patterns-consistency-rules.md
-│   │   └── ...                  # 8 more section files
-│   │
-│   ├── prd/                     # 📁 Sharded PRD docs
-│   │   ├── index.md             # Table of contents
-│   │   ├── implementation-pages.md  # Page → Epic mapping (NEW)
-│   │   ├── product-vision.md
-│   │   ├── epic-0-foundation.md
-│   │   ├── epic-1-onboarding-optimized-hybrid-flow.md
-│   │   └── ...                  # 26+ total section files
-│   │
-│   ├── stories/                 # 📁 Story specifications
-│   │   ├── 0-1-project-scaffolding.md
-│   │   ├── 0-2a-database-schema-core.md
-│   │   ├── 0-3-authentication-flow.md
-│   │   ├── 1-1-welcome-vision-hook.md
-│   │   ├── ...                  # 15+ story files
-│   │   └── validation-reports/  # Post-implementation validation
-│   │       ├── validation-report-story-0.4-20251219.md
-│   │       └── ...              # 4 validation reports
-│   │
-│   ├── testing/                 # 📁 Testing documentation
-│   │   ├── README.md            # Testing structure guide
-│   │   ├── test-design.md       # Overall testing strategy
-│   │   ├── atdd/                # Story-level ATDD checklists
-│   │   │   ├── atdd-checklist-story-1.6.md
-│   │   │   └── ...              # 4 ATDD checklists
-│   │   └── epic/                # Epic-level test design
-│   │       ├── test-design-epic-0.md
-│   │       └── ...              # 3 epic test designs
-│   │
-│   ├── sprint-artifacts/        # 📁 Implementation summaries & change proposals
-│   │   ├── README.md            # Sprint workflow guide
-│   │   ├── sprint-change-proposals/  # Scope changes during sprint
-│   │   │   ├── sprint-change-proposal-story-1.7-2025-12-18.md
-│   │   │   └── ...              # 5 change proposals
-│   │   ├── epic-retrospectives/ # Post-epic learnings
-│   │   │   └── epic-0-retrospective-2025-12-20.md
-│   │   ├── design-system-old/   # Archived design system docs
-│   │   │   └── ...              # 3 archived files
-│   │   ├── story-0.3-implementation-summary.md  # Active story artifacts
-│   │   └── ...                  # 14 story files at root
-│   │
-│   ├── meta/                    # 📁 Documentation about documentation
-│   │   ├── README.md            # Meta-documentation guide
-│   │   └── documentation-reorganization-2025-12-21.md
-│   │
-│   ├── idea/                    # Original deep specs (1000+ lines each)
-│   │   ├── mvp.md               # Complete product MVP spec
-│   │   ├── backend.md           # Backend architecture + DB schema
-│   │   ├── ai.md                # AI system design
-│   │   └── ux.md                # UX design system
-│   │
-│   ├── dev/                     # Developer guides
-│   │   ├── ai-service-integration-guide.md  # Integrating AI services (Story 0.11)
-│   │   ├── design-system-guide.md
-│   │   ├── docs-viewer-guide.md
-│   │   ├── git-workflow-guide.md
-│   │   ├── bmad-implementation-guide.md
-│   │   └── mcp-quick-reference.md
-│   │
-│   ├── bugs/                    # Bug reports and solutions
-│   │   ├── metro-path-alias-cache-issue-2025-12-18.md
-│   │   ├── nativewind-styling-issue-2025-12-17.md
-│   │   └── ...
-│   │
-│   ├── archive/                 # Archived single-file docs
-│   │   ├── architecture.md      # Original before sharding
-│   │   └── prd.md               # Original before sharding
-│   │
-│   ├── bmm-workflow-status.yaml # BMAD workflow progress
-│   ├── implementation-strategy.md # Page-based implementation guide (NEW)
-│   ├── epics.md                 # Implementation epics
-│   ├── test-design.md           # Testing strategy
-│   └── ...
+│   ├── stories/         # Story specifications (0-1, 1-1, 1-5, etc.)
+│   ├── pages/           # Page-based implementation guides
+│   ├── prd/             # Sharded PRD (26+ sections)
+│   ├── architecture/    # Sharded architecture (10 sections)
+│   ├── production/      # Deployment, compliance, legal
+│   ├── testing/         # ATDD checklists, epic test designs
+│   ├── dev/             # Developer guides
+│   └── sprint-artifacts/  # Implementation summaries
 │
-├── dev/
-│   └── docs-viewer/             # Documentation viewer tool
-│       ├── index.html           # Beautiful UI
-│       └── scripts/             # Server scripts
-│
-├── .bmad/                       # BMAD methodology system
-│   ├── core/                    # Core workflows and agents
-│   ├── bmm/                     # BMM (methodology module)
-│   └── _cfg/                    # Configuration
-│
-├── .claude/                     # Claude Code configuration
-│   ├── hooks/                   # Event hooks
-│   ├── personalities/           # Claude personalities
-│   └── settings.json            # Settings
-│
-└── scripts/                     # Utility scripts
-    └── verify-mcp-setup.sh
+└── scripts/             # Utility scripts (generate_api.py, etc.)
 ```
 
-## Documentation Navigation
+**Essential Directories for Agents:**
+- **weave-mobile/src/design-system/** - Design system components
+- **weave-api/app/api/** - API routers (add new endpoints here)
+- **docs/stories/** - Current story specifications
+- **docs/dev/** - Developer guides (backend-patterns, ai-services, etc.)
+
+## 📖 Documentation Hub
 
 **Documentation is now SHARDED** - no more single 1000+ line files!
 
-### When to Read What
+### When to Read What (Master Navigation Table)
 
-| Task | Read This | Why |
-|------|-----------|-----|
-| **Tracking MVP progress** | `docs/project-management/mvp-progress-tracker.md` | **Simple checklist-based progress tracker (no Kanban needed)** |
-| **Understanding MVP priorities** | `docs/project-management/mvp-prioritization-guide.md` | What to ship for MVP vs. post-launch |
-| **Implementing a page** | `docs/pages/[page-name].md` | **Complete page spec with all stories, wireframe requirements, and completion criteria** |
-| Understanding page-based strategy | `docs/implementation-strategy.md` | Comprehensive guide to page-based implementation |
-| Implementing a story | `docs/stories/[story-name].md` | Detailed spec with acceptance criteria |
-| Understanding product vision | `docs/prd/product-vision.md` | High-level goals and user personas |
-| Understanding an epic | `docs/prd/epic-[N]-[name].md` | Epic breakdown and requirements |
-| Page → Epic mapping | `docs/prd/implementation-pages.md` | How pages group epics together |
-| Architecture decisions | `docs/architecture/core-architectural-decisions.md` | Tech stack, patterns, rationale |
-| Database schema | `docs/idea/backend.md` (lines 200-800) | Complete schema with relationships |
-| API patterns | `docs/architecture/implementation-patterns-consistency-rules.md` | Code conventions and guardrails |
-| **Production deployment** | `docs/production/PRODUCTION_DEPLOYMENT_MANUAL.md` | Step-by-step Railway deployment guide (Story 9.1) |
-| **Production readiness check** | `docs/production/production-readiness-checklist.md` | Complete pre-launch checklist (code, security, compliance, legal) |
-| **Verifying all tests pass** | `docs/production/test-validation-guide.md` | How to run and verify backend + mobile + RLS tests |
-| **Compliance & legal** | `docs/production/compliance-legal-checklist.md` | Privacy policy, ToS, GDPR, CCPA, App Store compliance |
-| **Pre-deployment verification** | `docs/production/scripts/pre-deployment-verification.sh` | Automated script to verify production readiness |
-| **Integrating AI services** | `docs/dev/ai-service-integration-guide.md` | Environment config, provider abstraction, fallback chains |
-| Design system usage | `docs/dev/design-system-guide.md` | Components, tokens, examples |
-| Git workflow | `docs/dev/git-workflow-guide.md` | Branching, commits, PRs |
-| **ATDD checklist for a story** | `docs/testing/atdd/atdd-checklist-story-[X.X].md` | Acceptance criteria and test scenarios |
-| **Epic-level test design** | `docs/testing/epic/test-design-epic-[X].md` | Strategic test plans spanning multiple stories |
-| **Overall testing strategy** | `docs/testing/test-design.md` | Testing methodology and standards |
-| **Story implementation notes** | `docs/sprint-artifacts/story-[X.X]-*.md` | Implementation decisions and outcomes |
-| **Sprint scope changes** | `docs/sprint-artifacts/sprint-change-proposals/` | Mid-sprint scope adjustments |
-| **Epic retrospective** | `docs/sprint-artifacts/epic-retrospectives/` | Post-epic learnings and insights |
-| **Story validation results** | `docs/stories/validation-reports/` | Post-implementation validation |
-| **Documentation organization** | `docs/meta/` | How docs are structured and why |
-| Debugging common issues | `docs/bugs/[issue-name].md` | Known bugs and solutions |
-| Deep product context | `docs/idea/mvp.md` | 1600-line comprehensive spec (only if needed) |
+| Category | Task | Read This | Why |
+|----------|------|-----------|-----|
+| **Project Management** | Track MVP progress | `docs/project-management/mvp-progress-tracker.md` | Checklist-based tracker |
+| **Project Management** | Understand MVP priorities | `docs/project-management/mvp-prioritization-guide.md` | MVP vs. post-launch scope |
+| **Implementation** | Implement a page | `docs/pages/[page-name].md` | Complete page spec with stories |
+| **Implementation** | Implement a story | `docs/stories/[story-name].md` | Detailed acceptance criteria |
+| **Implementation** | Page-based strategy | `docs/implementation-strategy.md` | Page-based guide |
+| **Architecture** | Architecture decisions | `docs/architecture/core-architectural-decisions.md` | Tech stack, patterns |
+| **Architecture** | Database schema | `docs/idea/backend.md` (lines 200-800) | Complete schema |
+| **Architecture** | API patterns | `docs/architecture/implementation-patterns-consistency-rules.md` | Code conventions |
+| **Backend** | API patterns | `docs/dev/backend-patterns-guide.md` | Backend patterns guide |
+| **Backend** | API integration | `docs/dev/backend-api-integration.md` | 28 endpoint registry |
+| **Backend** | First API walkthrough | `docs/dev/backend-quick-start.md` | Step-by-step guide |
+| **Backend** | Error codes | `docs/api-error-codes.md` | 17 standard codes |
+| **Backend** | AI services | `docs/dev/ai-service-integration-guide.md` | AI integration guide |
+| **Security** | Security patterns | [Security Patterns section](#security-patterns) | JWT, RLS, immutable tables |
+| **Security** | Full security spec | `docs/security-architecture.md` | Complete security docs |
+| **Testing** | ATDD checklist | `docs/testing/atdd/atdd-checklist-story-[X.X].md` | Story test scenarios |
+| **Testing** | Epic test design | `docs/testing/epic/test-design-epic-[X].md` | Strategic test plans |
+| **Testing** | Overall strategy | `docs/testing/test-design.md` | Testing methodology |
+| **Production** | Deploy to production | `docs/production/PRODUCTION_DEPLOYMENT_MANUAL.md` | Railway deployment |
+| **Production** | Production readiness | `docs/production/production-readiness-checklist.md` | Pre-launch checklist |
+| **Production** | Verify tests | `docs/production/test-validation-guide.md` | Test verification |
+| **Production** | Compliance & legal | `docs/production/compliance-legal-checklist.md` | GDPR, CCPA, ToS |
+| **Product** | Product vision | `docs/prd/product-vision.md` | Goals and personas |
+| **Product** | Epic details | `docs/prd/epic-[N]-[name].md` | Epic breakdown |
+| **Product** | Page → Epic mapping | `docs/prd/implementation-pages.md` | Page organization |
+| **Sprint** | Implementation notes | `docs/sprint-artifacts/story-[X.X]-*.md` | Implementation decisions |
+| **Sprint** | Scope changes | `docs/sprint-artifacts/sprint-change-proposals/` | Mid-sprint adjustments |
+| **Sprint** | Retrospectives | `docs/sprint-artifacts/epic-retrospectives/` | Post-epic learnings |
+| **Debugging** | Known bugs | `docs/bugs/[issue-name].md` | Bug solutions |
 
-**Tip:** Use `docs/architecture/index.md`, `docs/prd/index.md`, or `docs/pages/` as navigation starting points.
+### Essential Files for Agents (Quick Reference)
+
+**Current Work:**
+- Active story: Check `git branch` → read `docs/stories/[story-name].md`
+- Sprint context: `docs/sprint-artifacts/story-[X.X]-*.md`
+
+**Patterns & Standards:**
+- Backend patterns: `docs/dev/backend-patterns-guide.md`
+- API integration: `docs/dev/backend-api-integration.md`
+- Error codes: `docs/api-error-codes.md`
+- Design system: `docs/dev/design-system-guide.md`
+
+**Architecture & Specs:**
+- Architecture index: `docs/architecture/index.md`
+- PRD index: `docs/prd/index.md`
+- Page specs: `docs/pages/[page-name].md`
+
+**Debugging:**
+- Known bugs: `docs/bugs/[issue-name].md`
+- Security spec: `docs/security-architecture.md`
+
+**Quick Links by Topic:**
+- **Development Standards:** [Story 1.5.1](#story-151), [Story 1.5.2](#story-152), [Story 1.5.3](#story-153)
+- **Architecture:** `docs/architecture/` (10 section files)
+- **Product Specs:** `docs/prd/` (26+ section files)
+- **Testing:** `docs/testing/` (ATDD checklists, epic test designs)
+- **Production:** `docs/production/` (deployment, compliance, legal)
 
 ## Naming Conventions
 
@@ -765,105 +672,6 @@ weavelight/
 - Files: `snake_case` (e.g., `goal_router.py`, `journal_service.py`)
 - Functions/variables: `snake_case` (e.g., `def get_user_goals():`)
 - Classes: `PascalCase` (e.g., `class GoalCreate(BaseModel):`)
-
-## Critical Guardrails
-
-### Data Integrity
-
-**NEVER UPDATE or DELETE from these tables** - they are append-only event logs:
-- `subtask_completions` (canonical completion events)
-- `captures` (proof photos, notes, audio)
-- `journal_entries` (daily reflections)
-
-**Why:** These are canonical truth. Stats and views are recomputed from these events. Editing them corrupts historical data.
-
-**Alternative:** If a completion was logged incorrectly, add a new row with `is_correction: true` that references the original. Never delete the original event.
-
-### Common Pitfalls (From `docs/bugs/`)
-
-1. **Metro cache issues** - If imports fail after moving files, run `npm run start:clean`
-2. **NativeWind styles not applying** - Check that component is inside the ThemeProvider
-3. **Path aliases not resolving** - Use `@/design-system` not `~/design-system`
-4. **React Native module errors** - Don't use Node.js-only modules (fs, path) in React Native code
-5. **Babel plugin validation errors** - Check `babel.config.js` plugin order (nativewind must be last)
-
-**If you encounter a bug:** Check `docs/bugs/` first - it likely has a solution.
-
-### NPM Dependency Management
-
-**🚨 CRITICAL: NEVER use `--legacy-peer-deps` or `--force` flags with npm install**
-
-**Why:** These flags are extremely dangerous and can cause:
-- Silent dependency conflicts that break production
-- Security vulnerabilities from mismatched package versions
-- Difficult-to-debug issues that only appear in specific environments
-- Package corruption that requires full `node_modules` cleanup
-
-**Correct Approach for Peer Dependency Conflicts:**
-
-```bash
-# ❌ NEVER DO THIS
-npm install --legacy-peer-deps
-npm install --force
-
-# ✅ INSTEAD, FIX THE ROOT CAUSE
-1. Identify the conflicting packages (npm will tell you)
-2. Pin exact versions to match peer dependencies
-3. Update/downgrade packages to compatible versions
-4. Run clean install: rm -rf node_modules package-lock.json && npm install
-```
-
-**Example: Fixing React Version Conflicts**
-```json
-// ❌ BAD - Allows version upgrades that break peer deps
-"react-test-renderer": "^19.1.0"
-
-// ✅ GOOD - Pins exact version to match React 19.1.0
-"react-test-renderer": "19.1.0"
-```
-
-**If npm install fails with peer dependency errors:**
-1. Read the error message carefully - it tells you exactly what's incompatible
-2. Check which package versions are required
-3. Pin exact versions in `package.json` to match
-4. Never use `--legacy-peer-deps` as a shortcut
-
-**Backend (Python/uv):** Similar principle applies - never use `--no-deps` or skip dependency resolution. Always fix conflicts at the root cause.
-
-### Design System Usage
-
-**Always use the design system components - never hardcode styles:**
-
-```tsx
-// ✅ GOOD
-import { Button, Card, Text } from '@/design-system';
-<Card variant="glass">
-  <Text variant="displayLg">Welcome</Text>
-  <Button onPress={handlePress}>Get Started</Button>
-</Card>
-
-// ❌ BAD - Don't hardcode colors or spacing
-<View style={{ backgroundColor: '#1a1a1a', padding: 16 }}>
-  <Text style={{ fontSize: 32, color: '#fff' }}>Welcome</Text>
-  <TouchableOpacity style={{ backgroundColor: '#3b82f6' }}>
-    <Text>Get Started</Text>
-  </TouchableOpacity>
-</View>
-```
-
-**📖 Full guide:** `docs/dev/design-system-guide.md`
-
-### State Management
-
-**Use the right tool for the right state:**
-
-| State Type | Tool | Example |
-|------------|------|---------|
-| **Server data** | TanStack Query | Goals, completions, user profile |
-| **Cross-component UI** | Zustand | Active filters, modal state, theme |
-| **Local component** | useState | Form inputs, toggles, counters |
-
-**Don't use Zustand for server data** - use TanStack Query with proper cache invalidation.
 
 ## Architecture Principles
 
@@ -1082,34 +890,18 @@ This project uses **BMAD (Better Methodology for AI Development)** - structured 
 
 **BMAD directory:** `.bmad/` (core workflows and agents)
 
-## Changelog
-
-**Location:** `.cursor/.cursor-changes` (NOT a .md file)
-
-**When to update:**
-- Complete a major feature or story
-- Fix significant bugs
-- Make architectural decisions
-- Update documentation structure
-- Change tooling or configuration
-
-**Don't create duplicate changelogs** - `.cursor/.cursor-changes` is the single source of truth.
-
 ## Quick Reference
 
 ### Most Common Tasks
 
-| Task | Command |
-|------|---------|
-| **Wireframe-guided implementation** | Share wireframe + reference epic/story |
-| Start mobile dev | `cd weave-mobile && npm start` |
-| Start backend dev | `cd weave-api && uv run uvicorn app.main:app --reload` |
-| View docs | `./dev/docs-viewer/scripts/serve.sh` |
-| Clear mobile cache | `cd weave-mobile && npm run start:clean` |
-| Run mobile linting | `cd weave-mobile && npm run lint` |
-| Run backend tests | `cd weave-api && uv run pytest` |
+| Task | Reference |
+|------|-----------|
+| **Start mobile/backend dev** | See [Common Development Commands](#common-development-commands) |
+| **Run tests/linting** | See [Common Development Commands](#common-development-commands) |
 | Check current story | `git branch` (look for story/X.Y) |
 | Read a story spec | Open `docs/stories/[story-name].md` |
+| View documentation | `./dev/docs-viewer/scripts/serve.sh` then http://localhost:3030 |
+| Debug common issues | Check `docs/bugs/[issue-name].md` first |
 
 ### Key Files to Know
 
