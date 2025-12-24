@@ -110,22 +110,20 @@ export function ConsistencyHeatmap({
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
 
   // Fetch journal entries for Thread consistency view (7d timeframe)
-  const today = new Date();
-  const sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(today.getDate() - 6); // Last 7 days including today
-
-  const startDate = sevenDaysAgo.toISOString().split('T')[0];
-  const endDate = today.toISOString().split('T')[0];
+  // CRITICAL: Use the SAME date range as binds-grid API to ensure alignment
+  // bindsGridData.meta contains start_date and end_date calculated by the API
+  const journalStartDate = bindsGridData?.meta?.start_date || '';
+  const journalEndDate = bindsGridData?.meta?.end_date || '';
 
   const { data: journalData, isLoading: journalLoading } = useGetJournalsByDateRange(
-    startDate,
-    endDate
+    journalStartDate,
+    journalEndDate
   );
 
   // Debug journal data
   console.log('[CONSISTENCY_HEATMAP] Journal data debug:', {
-    startDate,
-    endDate,
+    journalStartDate,
+    journalEndDate,
     journalLoading,
     journalDataLength: journalData?.length || 0,
     journalData: journalData?.map((j) => ({ date: j.local_date, score: j.fulfillment_score })),
@@ -152,8 +150,9 @@ export function ConsistencyHeatmap({
   const timeframeOptions: ('7d' | '2w' | '1m')[] = ['7d', '2w', '1m'];
 
   // For 7d grid view, we need binds grid data (not daily aggregates)
+  // Only show loading on INITIAL load (no data yet), not on filter switches (data cached)
   if (timeframe === '7d') {
-    if (isBindsGridLoading) {
+    if (isBindsGridLoading && !bindsGridData) {
       return (
         <Card variant="glass" style={styles.card}>
           <ActivityIndicator size="large" color={colors.accent[500]} />
@@ -172,7 +171,8 @@ export function ConsistencyHeatmap({
     }
   } else {
     // For heat map views (2w/1m), use daily aggregates
-    if (isLoading) {
+    // Only show loading on INITIAL load (no data yet), not on filter switches (data cached)
+    if (isLoading && !data) {
       return (
         <Card variant="glass" style={styles.card}>
           <ActivityIndicator size="large" color={colors.accent[500]} />
@@ -256,15 +256,30 @@ export function ConsistencyHeatmap({
       }))
     : [];
   // Process journal data for thread consistency view
-  // Convert journal entries to completion boolean array for last 7 days
+  // Convert journal entries to completion boolean array matching the binds grid date range
   const getJournalCompletionData = (): BindCompletionData[] => {
-    if (!journalData || journalData.length === 0) {
-      console.log('[CONSISTENCY_HEATMAP] No journal data - returning empty completions');
-      // Return empty array with no completions
+    // If no date range from binds grid yet, return empty
+    if (!journalStartDate || !journalEndDate) {
       return [
         {
           bindName: 'Daily Check-in',
-          completions: [false, false, false, false, false, false, false],
+          completions: [], // Empty until we have date range
+        },
+      ];
+    }
+
+    if (!journalData || journalData.length === 0) {
+      console.log('[CONSISTENCY_HEATMAP] No journal data - returning empty completions');
+      // Return array with false for each day in range
+      const numDays =
+        Math.ceil(
+          (new Date(journalEndDate).getTime() - new Date(journalStartDate).getTime()) /
+            (1000 * 60 * 60 * 24)
+        ) + 1;
+      return [
+        {
+          bindName: 'Daily Check-in',
+          completions: Array(numDays).fill(false),
         },
       ];
     }
@@ -273,16 +288,20 @@ export function ConsistencyHeatmap({
     const journalMap = new Map(journalData.map((j) => [j.local_date, j]));
     console.log('[CONSISTENCY_HEATMAP] Journal map:', Array.from(journalMap.keys()));
 
-    // Generate completion array for last 7 days
+    // Generate completion array matching binds grid date range
     const completions: boolean[] = [];
     const dateChecks: { date: string; hasEntry: boolean }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const checkDate = new Date(today);
-      checkDate.setDate(today.getDate() - i);
-      const dateStr = checkDate.toISOString().split('T')[0];
+
+    const startDate = new Date(journalStartDate);
+    const endDate = new Date(journalEndDate);
+    let currentDate = new Date(startDate);
+
+    while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().split('T')[0];
       const hasEntry = journalMap.has(dateStr);
       completions.push(hasEntry);
       dateChecks.push({ date: dateStr, hasEntry });
+      currentDate.setDate(currentDate.getDate() + 1);
     }
 
     console.log('[CONSISTENCY_HEATMAP] Date checks:', dateChecks);
@@ -330,8 +349,8 @@ export function ConsistencyHeatmap({
         return dailyCheckInData;
       case 'overall':
       default:
-        // For now, only show Daily Check-in until bind completion history API is added
-        return dailyCheckInData;
+        // Show all binds from all needles + daily check-in
+        return [...allBinds, ...dailyCheckInData];
     }
   };
 
@@ -696,49 +715,14 @@ export function ConsistencyHeatmap({
 
   // 7d: Show grid view with bind completion data
   if (timeframe === '7d') {
+    // Only show loading on INITIAL journal load (no data yet), not on refetch
     const showLoadingState =
-      (filterType === 'thread' && journalLoading) || (filterType === 'overall' && journalLoading);
+      (filterType === 'thread' || filterType === 'overall') && journalLoading && !journalData;
 
     if (showLoadingState) {
       return (
         <Card variant="glass" style={styles.card}>
           <ActivityIndicator size="large" color={colors.accent[500]} />
-        </Card>
-      );
-    }
-
-    // Show empty state for Needle and Bind views (no data available yet)
-    if (filterType === 'needle' || filterType === 'bind') {
-      return (
-        <Card variant="glass" style={styles.sevenDayCard}>
-          {renderHeader()}
-
-          {/* Separator line */}
-          <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
-
-          {renderFilterTabs()}
-
-          {/* Empty state message */}
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={64} color={colors.text.muted} />
-            <Text
-              variant="textBase"
-              style={{ color: colors.text.secondary, marginTop: 16, textAlign: 'center' }}
-            >
-              {filterType === 'needle'
-                ? 'Needle-specific breakdown coming soon! Switch to Overall or Thread to see your consistency.'
-                : 'Bind-specific breakdown coming soon! Switch to Overall or Thread to see your consistency.'}
-            </Text>
-          </View>
-
-          {renderInsightBanner()}
-
-          {/* Day Details Modal */}
-          <DayDetailsModal
-            visible={showDayDetailsModal}
-            date={selectedDate}
-            onClose={() => setShowDayDetailsModal(false)}
-          />
         </Card>
       );
     }
@@ -752,101 +736,92 @@ export function ConsistencyHeatmap({
 
         {renderFilterTabs()}
 
-        {/* Day headers with navigation arrows */}
-        <View style={styles.dayHeaderRow}>
-          {/* Empty corner cell for bind names column */}
-          <View style={styles.bindNameColumn} />
+        {/* Needle card (for needle view) */}
+        {filterType === 'needle' && needles.length > 0 && _renderNeedleCard()}
 
-          {/* Left arrow */}
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              const currentDate = bindsGridData?.meta.start_date
-                ? new Date(bindsGridData.meta.start_date)
-                : new Date();
-              currentDate.setDate(currentDate.getDate() - 1);
-              setCurrentStartDate(currentDate.toISOString().split('T')[0]);
-            }}
-            style={styles.arrowButton}
-          >
-            <Ionicons name="chevron-back" size={16} color={colors.text.secondary} />
-          </Pressable>
+        {/* Bind selector (for bind view) */}
+        {filterType === 'bind' && allBinds.length > 0 && _renderBindSelector()}
 
-          {/* Day header cells */}
-          {dayHeaders.map((day: DayHeader) => (
-            <View key={day.fullDate} style={styles.dayHeaderCell}>
-              <Text variant="textXs" style={{ color: colors.text.muted }}>
-                {day.dayOfWeek}
-              </Text>
-              <Text variant="textSm" weight="medium" style={{ marginTop: 2 }}>
-                {day.dayOfMonth}
-              </Text>
-            </View>
-          ))}
-
-          {/* Right arrow */}
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              const currentDate = bindsGridData?.meta.start_date
-                ? new Date(bindsGridData.meta.start_date)
-                : new Date();
-              currentDate.setDate(currentDate.getDate() + 1);
-              setCurrentStartDate(currentDate.toISOString().split('T')[0]);
-            }}
-            style={styles.arrowButton}
-          >
-            <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
-          </Pressable>
-        </View>
-
-        {/* Bind completion rows */}
-        {displayBinds.map((bind, bindIndex) => (
-          <View key={bindIndex} style={styles.bindRow}>
-            {/* Bind name */}
-            <View style={styles.bindNameColumn}>
-              <Text variant="textXs" style={{ color: colors.text.secondary }} numberOfLines={2}>
-                {bind.bindName}
-              </Text>
-            </View>
-
-            {/* Left arrow spacer */}
-            <View style={styles.arrowButton} />
-
-            {/* Completion cells */}
-            {bind.completions.map((completed, dayIndex) => {
-              const dayDate = dayHeaders[dayIndex].fullDate;
-              const completionRate = completed ? 100 : 0;
-              return (
-                <Pressable
-                  key={dayIndex}
-                  onPress={() => handleDayPress(dayDate, completionRate)}
-                  style={styles.dayHeaderCell}
-                >
-                  <View
-                    style={[
-                      styles.completionSquare,
-                      {
-                        backgroundColor: completed
-                          ? colors.emerald[600]
-                          : colors.background.elevated,
-                        borderWidth: 1,
-                        borderColor: completed ? colors.emerald[700] : colors.border.muted,
-                      },
-                    ]}
-                  >
-                    {completed && (
-                      <Ionicons name="checkmark" size={16} color={colors.text.primary} />
-                    )}
-                  </View>
-                </Pressable>
-              );
-            })}
-
-            {/* Right arrow spacer */}
-            <View style={styles.arrowButton} />
+        {/* Empty state for Needle/Bind when no data */}
+        {((filterType === 'needle' && needles.length === 0) ||
+          (filterType === 'bind' && allBinds.length === 0)) && (
+          <View style={styles.emptyState}>
+            <Ionicons name="calendar-outline" size={64} color={colors.text.muted} />
+            <Text
+              variant="textBase"
+              style={{ color: colors.text.secondary, marginTop: 16, textAlign: 'center' }}
+            >
+              {filterType === 'needle'
+                ? 'No needles yet. Create a needle with binds to see consistency breakdown.'
+                : 'No binds yet. Create a needle with binds to see consistency breakdown.'}
+            </Text>
           </View>
-        ))}
+        )}
+
+        {/* Grid view (only show if there are binds to display) */}
+        {displayBinds.length > 0 && (
+          <>
+            {/* Day headers */}
+            <View style={styles.dayHeaderRow}>
+              {/* Empty corner cell for bind names column */}
+              <View style={styles.bindNameColumn} />
+
+              {/* Day header cells */}
+              {dayHeaders.map((day: DayHeader) => (
+                <View key={day.fullDate} style={styles.dayHeaderCell}>
+                  <Text variant="textXs" style={{ color: colors.text.muted }}>
+                    {day.dayOfWeek}
+                  </Text>
+                  <Text variant="textSm" weight="medium" style={{ marginTop: 2 }}>
+                    {day.dayOfMonth}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Bind completion rows */}
+            {displayBinds.map((bind, bindIndex) => (
+              <View key={bindIndex} style={styles.bindRow}>
+                {/* Bind name */}
+                <View style={styles.bindNameColumn}>
+                  <Text variant="textXs" style={{ color: colors.text.secondary }} numberOfLines={2}>
+                    {bind.bindName}
+                  </Text>
+                </View>
+
+                {/* Completion cells */}
+                {bind.completions.map((completed, dayIndex) => {
+                  const dayDate = dayHeaders[dayIndex].fullDate;
+                  const completionRate = completed ? 100 : 0;
+                  return (
+                    <Pressable
+                      key={dayIndex}
+                      onPress={() => handleDayPress(dayDate, completionRate)}
+                      style={styles.dayHeaderCell}
+                    >
+                      <View
+                        style={[
+                          styles.completionSquare,
+                          {
+                            backgroundColor: completed
+                              ? colors.emerald[600]
+                              : colors.background.elevated,
+                            borderWidth: 1,
+                            borderColor: completed ? colors.emerald[700] : colors.border.muted,
+                          },
+                        ]}
+                      >
+                        {completed && (
+                          <Ionicons name="checkmark" size={16} color={colors.text.primary} />
+                        )}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
+          </>
+        )}
 
         {renderInsightBanner()}
 

@@ -537,6 +537,35 @@ export function CreateNeedleScreen() {
               </Card>
             );
           })}
+          {/* Add Bind Button */}
+          {suggestedBinds.length < 3 && (
+            <Pressable
+              onPress={() => {
+                Haptics.selectionAsync();
+                const newBind: BindCreate = {
+                  title: '',
+                  frequency_type: 'daily',
+                  frequency_value: 1,
+                };
+                setSuggestedBinds([...suggestedBinds, newBind]);
+                setEditingBindIndex(suggestedBinds.length);
+                setEditingBindTitle('');
+                setEditingBindFrequency('daily');
+              }}
+            >
+              <Card
+                variant="glass"
+                style={[styles.addBindCard, { borderColor: colors.border.muted }]}
+              >
+                <View style={styles.addBindContent}>
+                  <Ionicons name="add-circle-outline" size={24} color={colors.accent[500]} />
+                  <Text variant="textBase" weight="medium" style={{ color: colors.accent[500] }}>
+                    Add Bind
+                  </Text>
+                </View>
+              </Card>
+            </Pressable>
+          )}
           {suggestedBinds.length === 0 && (
             <Card variant="glass" style={styles.emptyCard}>
               <Text variant="textSm" color="secondary" style={{ textAlign: 'center' }}>
@@ -757,5 +786,17 @@ const styles = StyleSheet.create({
   },
   bindEditButton: {
     flex: 1,
+  },
+  addBindCard: {
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+  },
+  addBindContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
 });

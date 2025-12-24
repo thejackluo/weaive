@@ -82,6 +82,5 @@ export function useBindsGrid(startDate?: string) {
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
-    placeholderData: (previousData) => previousData, // Keep previous data while fetching
   });
 }

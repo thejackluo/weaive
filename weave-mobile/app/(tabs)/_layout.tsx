@@ -324,7 +324,6 @@ export default function TabLayout() {
         <Tabs.Screen name="settings/subscription" options={{ href: null }} />
         <Tabs.Screen name="settings/reflection" options={{ href: null }} />
         <Tabs.Screen name="settings/dev-tools" options={{ href: null }} />
-        <Tabs.Screen name="settings/account" options={{ href: null }} />
       </Tabs>
 
       {/* Center AI Button (elevated above tab bar) */}

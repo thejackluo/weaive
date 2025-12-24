@@ -150,18 +150,14 @@ export function useCreateGoal() {
 
       return createGoal(goalData, session.access_token);
     },
-    onSuccess: () => {
-      // Invalidate active goals query to refetch the list
-      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
-
-      // Invalidate Thread page (today's binds) - shows new goal's binds
-      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
-
-      // Invalidate Consistency page - includes new goal in consistency calculation
-      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
-
-      // Also invalidate binds grid (7d view)
-      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
+    onSuccess: async () => {
+      // Refetch all related queries immediately to show new data
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
+        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: ['bindsGrid'] }),
+      ]);
     },
   });
 }
@@ -196,19 +192,15 @@ export function useUpdateGoal() {
 
       return updateGoal(goalId, data, session.access_token);
     },
-    onSuccess: (data, variables) => {
-      // Invalidate both the list and the specific goal query
-      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
-      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) });
-
-      // Invalidate Thread page (today's binds) - reflects updated binds
-      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
-
-      // Invalidate Consistency page - recalculates with updated data
-      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
-
-      // Also invalidate binds grid (7d view)
-      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
+    onSuccess: async (data, variables) => {
+      // Refetch all related queries immediately to show updated data
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
+        queryClient.refetchQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) }),
+        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: ['bindsGrid'] }),
+      ]);
     },
   });
 }
@@ -241,18 +233,16 @@ export function useArchiveGoal() {
       return archiveGoal(goalId, session.access_token);
     },
     onSuccess: async (data, goalId) => {
-      // Refetch goals list and invalidate the specific goal
-      await queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() });
+      // Refetch all related queries immediately to show updated data
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
+        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: ['bindsGrid'] }),
+      ]);
+
+      // Invalidate the specific goal (no longer needed in active queries)
       queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(goalId) });
-
-      // Invalidate Thread page (today's binds) - removes archived goal's binds
-      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
-
-      // Invalidate Consistency page - recalculates without archived goal's completions
-      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
-
-      // Also invalidate binds grid (7d view)
-      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
     },
   });
 }
