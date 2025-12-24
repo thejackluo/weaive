@@ -75,6 +75,7 @@ export function useGetJournalsByDateRange(startDate: string, endDate: string) {
   return useQuery({
     queryKey: [...journalKeys.all, 'range', startDate, endDate],
     queryFn: () => journalApi.getJournalEntriesByDateRange(startDate, endDate),
+    enabled: !!startDate && !!endDate, // Only run query when we have valid dates
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

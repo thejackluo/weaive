@@ -113,23 +113,44 @@ async def get_consistency_data(
             .execute()
         )
 
-        # Calculate date range: Use provided start_date, or default to first completion
+        # Find user's first journal entry date (rolling consistency includes journals)
+        first_journal_response = (
+            supabase.table("journal_entries")
+            .select("local_date")
+            .eq("user_id", user_id)
+            .order("local_date", desc=False)
+            .limit(1)
+            .execute()
+        )
+
+        # Calculate date range: Use provided start_date, or default to first activity (completion OR journal)
         first_completion_date = None
+        first_journal_date = None
+
         if start_date:
             # Use provided start date (for dynamic navigation)
             start_date_obj = date.fromisoformat(start_date)
-        elif first_completion_response.data and len(first_completion_response.data) > 0:
-            instance = first_completion_response.data[0].get("subtask_instances")
-            if instance and instance.get("scheduled_for_date"):
-                first_completion_date = date.fromisoformat(instance["scheduled_for_date"])
-                # Start from first completion
-                start_date_obj = first_completion_date
-            else:
-                # No valid instance - use default timeframe
-                start_date_obj = date.today() - timedelta(days=days - 1)
         else:
-            # No completions yet - use default timeframe (today - N days)
-            start_date_obj = date.today() - timedelta(days=days - 1)
+            # Get first completion date
+            if first_completion_response.data and len(first_completion_response.data) > 0:
+                instance = first_completion_response.data[0].get("subtask_instances")
+                if instance and instance.get("scheduled_for_date"):
+                    first_completion_date = date.fromisoformat(instance["scheduled_for_date"])
+
+            # Get first journal date
+            if first_journal_response.data and len(first_journal_response.data) > 0:
+                first_journal_date = date.fromisoformat(first_journal_response.data[0]["local_date"])
+
+            # Use the EARLIER of first completion or first journal (rolling from first activity)
+            if first_completion_date and first_journal_date:
+                start_date_obj = min(first_completion_date, first_journal_date)
+            elif first_completion_date:
+                start_date_obj = first_completion_date
+            elif first_journal_date:
+                start_date_obj = first_journal_date
+            else:
+                # No activity yet - use default timeframe (today - N days)
+                start_date_obj = date.today() - timedelta(days=days - 1)
 
         start_date = start_date_obj.isoformat()
         # End date: N-1 days after start (to show N total days)
@@ -178,16 +199,32 @@ async def get_consistency_data(
 
         print(f"📊 [CONSISTENCY] Found {len(instances)} scheduled instances")
 
+        # Step 3: Fetch journal entries in date range (daily reflection counts as a bind)
+        journal_response = (
+            supabase.table("journal_entries")
+            .select("id, local_date")
+            .eq("user_id", user_id)
+            .gte("local_date", start_date)
+            .lte("local_date", end_date_obj.isoformat())
+            .execute()
+        )
+
+        journal_entries = journal_response.data or []
+
+        print(f"📊 [CONSISTENCY] Found {len(journal_entries)} journal reflections")
+
         # Group scheduled and completed tasks by date
         from collections import defaultdict
         scheduled_by_date = defaultdict(int)
         completed_by_date = defaultdict(int)
 
-        # Count scheduled tasks
+        # Count scheduled tasks (binds only - reflections added separately)
         for instance in instances:
             scheduled_date = instance.get("scheduled_for_date")
             if scheduled_date:
                 scheduled_by_date[scheduled_date] += 1
+
+        print(f"📊 [CONSISTENCY] Scheduled binds by date (past only): {dict(scheduled_by_date)}")
 
         # Count completed tasks (using scheduled_for_date from the instance, not completed_at)
         for completion in completions:
@@ -201,8 +238,26 @@ async def get_consistency_data(
                 if scheduled_by_date[scheduled_date] == 0:
                     scheduled_by_date[scheduled_date] = completed_by_date[scheduled_date]
 
-        print(f"📊 [CONSISTENCY] Scheduled by date: {dict(scheduled_by_date)}")
-        print(f"📊 [CONSISTENCY] Completed by date: {dict(completed_by_date)}")
+        # Step 4: Add journal reflections to consistency calculation
+        # IMPORTANT: Only schedule reflections for days UP TO TODAY (not future days)
+        # Each day that has occurred has 1 scheduled "daily reflection" task
+        # Each day with a journal entry counts as 1 completed task
+        current_date = start_date_obj
+        today = date.today()
+        while current_date <= min(end_date_obj, today):  # Only up to today
+            date_str = current_date.isoformat()
+            # Add 1 scheduled reflection for each day that has occurred
+            scheduled_by_date[date_str] += 1
+            current_date += timedelta(days=1)
+
+        # Add journal entries as completions
+        for journal_entry in journal_entries:
+            local_date = journal_entry.get("local_date")
+            if local_date:
+                completed_by_date[local_date] += 1
+
+        print(f"📊 [CONSISTENCY] Scheduled by date (with reflections): {dict(scheduled_by_date)}")
+        print(f"📊 [CONSISTENCY] Completed by date (with reflections): {dict(completed_by_date)}")
         print(f"{'='*80}\n")
 
         # Build consistency data for all days in range
@@ -210,6 +265,10 @@ async def get_consistency_data(
         current_date = start_date_obj
         end_date = end_date_obj
         today_str = date.today().isoformat()
+
+        # Check if user has completed ANY tasks today (binds OR reflection)
+        today_has_completions = completed_by_date.get(today_str, 0) > 0
+        print(f"📊 [CONSISTENCY] Today has completions: {today_has_completions}")
 
         total_scheduled = 0
         total_completed = 0
@@ -231,15 +290,30 @@ async def get_consistency_data(
                 }
             )
 
-            # Exclude today from overall calculation
-            if date_str != today_str:
+            # Include this day in overall calculation if:
+            # 1. It's a past day (< today), OR
+            # 2. It's today AND user has completed at least one task today
+            # This ensures:
+            # - Day 1 shows 100% if tasks complete
+            # - Day 2+ doesn't drop at midnight (stays at yesterday's %)
+            # - Updates in real-time as you complete today's tasks
+            include_day = date_str < today_str or (date_str == today_str and today_has_completions)
+
+            if include_day:
                 total_scheduled += scheduled_count
                 total_completed += completed_count
+                print(f"   ✓ Including {date_str}: {completed_count}/{scheduled_count}")
+            else:
+                print(f"   ✗ Excluding {date_str}: {completed_count}/{scheduled_count} (today, no completions yet)")
 
             current_date += timedelta(days=1)
 
-        # Calculate overall consistency percentage (TASK-BASED, EXCLUDE TODAY)
+        # Calculate overall consistency percentage
         # Formula: (total completed tasks / total scheduled tasks) × 100
+        # "Count Today If You've Started" strategy:
+        # - Includes past days (always)
+        # - Includes today IF user has completed at least one task today
+        # - Excludes today IF user hasn't completed anything yet (prevents midnight drop)
         overall_consistency = (
             round((total_completed / total_scheduled) * 100, 1)
             if total_scheduled > 0
@@ -248,10 +322,12 @@ async def get_consistency_data(
 
         print(f"📊 [CONSISTENCY] Today: {today_str}")
         print(f"📊 [CONSISTENCY] First completion: {first_completion_date.isoformat() if first_completion_date else 'None'}")
-        print(f"📊 [CONSISTENCY] Date range: {start_date} to {end_date.isoformat()}")
+        print(f"📊 [CONSISTENCY] First journal: {first_journal_date.isoformat() if first_journal_date else 'None'}")
+        print(f"📊 [CONSISTENCY] Rolling start date: {start_date} (earlier of first activity)")
+        print(f"📊 [CONSISTENCY] Date range: {start_date} to {end_date_obj.isoformat()}")
         print(f"📊 [CONSISTENCY] Total consistency_data items: {len(consistency_data)}")
-        print(f"📊 [CONSISTENCY] Total scheduled (excluding today): {total_scheduled}")
-        print(f"📊 [CONSISTENCY] Total completed (excluding today): {total_completed}")
+        print(f"📊 [CONSISTENCY] Total scheduled: {total_scheduled} (past days + today if started)")
+        print(f"📊 [CONSISTENCY] Total completed: {total_completed} (past days + today if started)")
         print(f"📊 [CONSISTENCY] Overall consistency: {overall_consistency}%")
 
         logger.info("📊 Consistency calculation details:")
@@ -259,9 +335,11 @@ async def get_consistency_data(
         logger.info(f"  - Start date: {start_date}")
         logger.info(f"  - End date: {end_date_obj.isoformat()}")
         logger.info(f"  - First completion: {first_completion_date.isoformat() if first_completion_date else 'None'}")
-        logger.info(f"  - Total days in response: {len(consistency_data)} (includes today)")
-        logger.info(f"  - Total scheduled tasks (excluding today): {total_scheduled}")
-        logger.info(f"  - Total completed tasks (excluding today): {total_completed}")
+        logger.info(f"  - First journal: {first_journal_date.isoformat() if first_journal_date else 'None'}")
+        logger.info(f"  - Total days in response: {len(consistency_data)} (includes today + future)")
+        logger.info(f"  - Today has completions: {today_has_completions}")
+        logger.info(f"  - Total scheduled tasks: {total_scheduled} (past + today if started)")
+        logger.info(f"  - Total completed tasks: {total_completed} (past + today if started)")
         logger.info(f"  - Overall consistency: {overall_consistency}%")
 
         # Calculate consistency delta (percentage point difference)
@@ -317,9 +395,22 @@ async def get_consistency_data(
             previous_completions = previous_completions_response.data or []
             previous_completed_ids = {c["subtask_instance_id"] for c in previous_completions}
 
+            # Fetch journal entries for previous period
+            previous_journal_response = (
+                supabase.table("journal_entries")
+                .select("id, local_date")
+                .eq("user_id", user_id)
+                .gte("local_date", previous_start_date.isoformat())
+                .lte("local_date", previous_end_date.isoformat())
+                .execute()
+            )
+
+            previous_journal_entries = previous_journal_response.data or []
+
             # Count scheduled and completed tasks in previous period
-            previous_scheduled = len(previous_active_instances)
-            previous_completed = sum(1 for inst in previous_active_instances if inst["id"] in previous_completed_ids)
+            # Include daily reflection as scheduled (1 per day)
+            previous_scheduled = len(previous_active_instances) + days  # binds + daily reflections
+            previous_completed = sum(1 for inst in previous_active_instances if inst["id"] in previous_completed_ids) + len(previous_journal_entries)  # bind completions + journal reflections
 
             previous_consistency = (
                 round((previous_completed / previous_scheduled) * 100, 1)
@@ -339,16 +430,16 @@ async def get_consistency_data(
         historical_days_count = len([d for d in consistency_data if d["date"] != today_str])
 
         return {
-            "data": consistency_data,  # Includes today for heatmap visualization
+            "data": consistency_data,  # Includes today + future for heatmap visualization
             "meta": {
                 "timeframe": timeframe,
                 "filter_type": filter_type,
-                "consistency_percentage": overall_consistency,  # Task-based: (completed/scheduled) × 100, excludes today
+                "consistency_percentage": overall_consistency,  # (completed/scheduled) × 100, includes today if started
                 "consistency_delta": consistency_delta,  # Percentage point difference vs previous period
-                "total_days": len(consistency_data),  # Includes today
-                "historical_days": historical_days_count,  # Excludes today
-                "total_scheduled": total_scheduled,  # Total tasks scheduled (excluding today)
-                "total_completed": total_completed,  # Total tasks completed (excluding today)
+                "total_days": len(consistency_data),  # Includes today + future
+                "historical_days": historical_days_count,  # Past days only
+                "total_scheduled": total_scheduled,  # Past + today if started
+                "total_completed": total_completed,  # Past + today if started
             },
         }
 
