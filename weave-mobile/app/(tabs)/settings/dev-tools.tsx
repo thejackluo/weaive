@@ -69,7 +69,7 @@ export default function DevToolsScreen() {
       // Query user_profiles to get the internal ID
       const response = await fetch(`http://192.168.1.112:8000/api/user/me`, {
         headers: {
-          'Authorization': `Bearer ${await apiClient['getAuthToken']()}`,
+          'Authorization': `Bearer ${await apiClient.getAuthToken()}`,
         },
       });
 
