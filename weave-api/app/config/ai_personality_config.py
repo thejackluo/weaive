@@ -18,7 +18,18 @@ Environment variables:
 import os
 from typing import Dict, Literal
 
-PersonalityPreset = Literal['gen_z_default', 'supportive_coach', 'concise_mentor', 'custom']
+from app.config.extended_personalities import EXTENDED_PRESETS
+
+# All available personality presets (3 core + 23 extended)
+PersonalityPreset = Literal[
+    # Core presets (Story 6.1)
+    'gen_z_default', 'supportive_coach', 'concise_mentor', 'custom',
+    # Extended presets (integrated from Claude Code personalities)
+    'abg', 'angry', 'anime-girl', 'annoying', 'chinese-infj', 'crass',
+    'dramatic', 'dry-humor', 'flirty', 'funny', 'grandpa', 'millennial',
+    'moody', 'normal', 'pirate', 'poetic', 'professional', 'rapper',
+    'robot', 'sarcastic', 'sassy', 'surfer-dude', 'zen'
+]
 
 
 class AIPersonalityConfig:
@@ -126,6 +137,9 @@ class AIPersonalityConfig:
             'style_tags': ['custom', 'identity_driven'],
         },
     }
+
+    # Merge extended personalities (23 additional presets from Claude Code personalities)
+    PRESETS.update(EXTENDED_PRESETS)
 
     # ========================================
     # Helper Methods
