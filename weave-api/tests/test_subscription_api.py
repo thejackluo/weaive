@@ -5,14 +5,13 @@ Story 9.4: App Store Readiness - AC 1 (Phase 1: Manual IAP)
 Tests receipt verification, subscription status, and tier updates.
 """
 
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
+
+import pytest
 from fastapi import HTTPException
 
 from app.api.subscription_router import (
-    verify_receipt,
-    get_subscription_status,
     VerifyReceiptRequest,
 )
 from app.config.subscription_config import SubscriptionConfig
@@ -23,15 +22,9 @@ class TestSubscriptionConfig:
 
     def test_valid_product_ids(self):
         """Test valid product ID validation."""
-        assert SubscriptionConfig.is_valid_product_id(
-            "com.weavelight.app.pro.monthly"
-        )
-        assert SubscriptionConfig.is_valid_product_id(
-            "com.weavelight.app.pro.annual"
-        )
-        assert SubscriptionConfig.is_valid_product_id(
-            "com.weavelight.app.trial.10day"
-        )
+        assert SubscriptionConfig.is_valid_product_id("com.weavelight.app.pro.monthly")
+        assert SubscriptionConfig.is_valid_product_id("com.weavelight.app.pro.annual")
+        assert SubscriptionConfig.is_valid_product_id("com.weavelight.app.trial.10day")
         assert not SubscriptionConfig.is_valid_product_id("invalid.product.id")
 
     def test_tier_monthly_limits(self):
@@ -90,11 +83,9 @@ class TestVerifyReceipt:
 
     def test_invalid_product_id(self, mock_user, mock_db):
         """Test rejection of invalid product ID."""
-        request = VerifyReceiptRequest(
-            receipt="receipt_data", product_id="invalid.product.id"
-        )
+        request = VerifyReceiptRequest(receipt="receipt_data", product_id="invalid.product.id")
 
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(HTTPException):
             # Note: This is async so would need to be run with asyncio in real test
             # For now, just testing the validation logic
             assert not SubscriptionConfig.is_valid_product_id(request.product_id)
@@ -138,9 +129,7 @@ class TestVerifyReceipt:
         # Verify error status code
         assert mock_apple_response.json()["status"] != 0
 
-    def test_receipt_verification_timeout(
-        self, valid_receipt_request, mock_user, mock_db
-    ):
+    def test_receipt_verification_timeout(self, valid_receipt_request, mock_user, mock_db):
         """Test handling of Apple API timeout."""
         with patch("app.api.subscription_router.requests.post") as mock_requests:
             mock_requests.side_effect = Exception("Connection timeout")
@@ -175,9 +164,7 @@ class TestSubscriptionStatus:
         user_profile_select.single = Mock(return_value=user_profile_select)
         user_profile_select.execute = Mock(return_value=user_profile_result)
 
-        db.table = Mock(
-            return_value=Mock(select=Mock(return_value=user_profile_select))
-        )
+        db.table = Mock(return_value=Mock(select=Mock(return_value=user_profile_select)))
 
         return db
 
@@ -199,9 +186,7 @@ class TestSubscriptionStatus:
         user_profile_select.single = Mock(return_value=user_profile_select)
         user_profile_select.execute = Mock(return_value=user_profile_result)
 
-        db.table = Mock(
-            return_value=Mock(select=Mock(return_value=user_profile_select))
-        )
+        db.table = Mock(return_value=Mock(select=Mock(return_value=user_profile_select)))
 
         return db
 
@@ -212,10 +197,7 @@ class TestSubscriptionStatus:
 
         assert profile_data["subscription_tier"] == "free"
         assert profile_data["subscription_expires_at"] is None
-        assert (
-            SubscriptionConfig.get_tier_monthly_limit(profile_data["subscription_tier"])
-            == 500
-        )
+        assert SubscriptionConfig.get_tier_monthly_limit(profile_data["subscription_tier"]) == 500
 
     def test_pro_tier_status(self, mock_user, mock_db_pro_tier):
         """Test subscription status for pro tier user."""
@@ -224,10 +206,7 @@ class TestSubscriptionStatus:
 
         assert profile_data["subscription_tier"] == "pro"
         assert profile_data["subscription_expires_at"] is not None
-        assert (
-            SubscriptionConfig.get_tier_monthly_limit(profile_data["subscription_tier"])
-            == 5000
-        )
+        assert SubscriptionConfig.get_tier_monthly_limit(profile_data["subscription_tier"]) == 5000
 
 
 class TestSubscriptionIntegration:
