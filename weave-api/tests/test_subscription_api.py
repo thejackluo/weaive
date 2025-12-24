@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pytest
-from fastapi import HTTPException
 
 from app.api.subscription_router import (
     VerifyReceiptRequest,
