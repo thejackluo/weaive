@@ -87,7 +87,7 @@ def create_test_journal_entry(user_id: str = "test-user-123", **kwargs: Any) -> 
         "fulfillment_score": 8,
         "default_responses": {
             "today_reflection": "Today was productive. Completed 3 tasks and made progress on my goals.",
-            "tomorrow_focus": "Tomorrow I will focus on finishing the presentation."
+            "tomorrow_focus": "Tomorrow I will focus on finishing the presentation.",
         },
         "custom_responses": {},
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -114,17 +114,11 @@ def create_test_journal_entry_with_custom_questions(
         "fulfillment_score": 7,
         "default_responses": {
             "today_reflection": "Great day overall!",
-            "tomorrow_focus": "Continue the momentum."
+            "tomorrow_focus": "Continue the momentum.",
         },
         "custom_responses": {
-            "uuid-diet": {
-                "question_text": "Did I stick to my diet?",
-                "response": "Yes"
-            },
-            "uuid-energy": {
-                "question_text": "Rate my energy level (1-10)",
-                "response": 9
-            }
+            "uuid-diet": {"question_text": "Did I stick to my diet?", "response": "Yes"},
+            "uuid-energy": {"question_text": "Rate my energy level (1-10)", "response": 9},
         },
         "created_at": datetime.now(timezone.utc).isoformat(),
     }

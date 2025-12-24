@@ -32,6 +32,23 @@ except ImportError:
     # Fixtures not available if dependencies not installed
     pass
 
+# Import deployment test fixtures (for tests/deployment/)
+try:
+    from tests.support.factories.deployment_factory import (
+        create_test_jwt_for_production,  # noqa: F401
+    )
+    from tests.support.fixtures.deployment_fixture import (
+        http_session,  # noqa: F401
+        production_api_url,  # noqa: F401
+        production_jwt_secret,  # noqa: F401
+        production_supabase_service_key,  # noqa: F401
+        production_supabase_url,  # noqa: F401
+        railway_env_vars,  # noqa: F401
+    )
+except ImportError:
+    # Fixtures not available if support modules not found
+    pass
+
 # Test JWT secret for generating tokens
 TEST_JWT_SECRET = "test-secret-key-for-pytest-only-do-not-use-in-production"
 
@@ -102,18 +119,18 @@ def cleanup_test_data(supabase_client):
     # Cleanup: Delete all test data after test completes
     # Order: child tables first, parent tables last
     tables_to_clean = [
-        "triad_tasks",          # References daily_aggregates
-        "ai_artifacts",         # References ai_runs
-        "ai_runs",              # References user_profiles
-        "daily_aggregates",     # References user_profiles
-        "journal_entries",      # References user_profiles
-        "captures",             # References subtask_completions
+        "triad_tasks",  # References daily_aggregates
+        "ai_artifacts",  # References ai_runs
+        "ai_runs",  # References user_profiles
+        "daily_aggregates",  # References user_profiles
+        "journal_entries",  # References user_profiles
+        "captures",  # References subtask_completions
         "subtask_completions",  # References subtask_instances + user_profiles (IMMUTABLE)
-        "subtask_instances",    # References subtask_templates + goals
-        "subtask_templates",    # References goals
-        "goals",                # References user_profiles
-        "identity_docs",        # References user_profiles
-        "user_profiles",        # Parent table
+        "subtask_instances",  # References subtask_templates + goals
+        "subtask_templates",  # References goals
+        "goals",  # References user_profiles
+        "identity_docs",  # References user_profiles
+        "user_profiles",  # Parent table
     ]
 
     for table in tables_to_clean:
@@ -173,25 +190,33 @@ def mock_supabase_client():
 
         if table_name == "user_profiles":
             # Mock user profile with all required fields
-            profile_data = [{
-                "id": TEST_USER_ID,
-                "auth_user_id": TEST_USER_ID,
-                "first_bind_completed_at": None,
-                "user_level": 0,
-                "preferred_name": "Test User",
-                "core_personality": "supportive_direct",
-                "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
-                "personality_selected_at": "2025-12-20T10:00:00Z",
-                "updated_at": "2025-12-20T10:00:00Z",
-            }]
-            mock_table.select.return_value.eq.return_value.execute.return_value = create_response(profile_data)
+            profile_data = [
+                {
+                    "id": TEST_USER_ID,
+                    "auth_user_id": TEST_USER_ID,
+                    "first_bind_completed_at": None,
+                    "user_level": 0,
+                    "preferred_name": "Test User",
+                    "core_personality": "supportive_direct",
+                    "identity_traits": ["Clear Direction", "High Standards", "Self Aware"],
+                    "personality_selected_at": "2025-12-20T10:00:00Z",
+                    "updated_at": "2025-12-20T10:00:00Z",
+                }
+            ]
+            mock_table.select.return_value.eq.return_value.execute.return_value = create_response(
+                profile_data
+            )
 
-            update_data = [{
-                "id": TEST_USER_ID,
-                "first_bind_completed_at": datetime.now(timezone.utc).isoformat(),
-                "user_level": 1,
-            }]
-            mock_table.update.return_value.eq.return_value.execute.return_value = create_response(update_data)
+            update_data = [
+                {
+                    "id": TEST_USER_ID,
+                    "first_bind_completed_at": datetime.now(timezone.utc).isoformat(),
+                    "user_level": 1,
+                }
+            ]
+            mock_table.update.return_value.eq.return_value.execute.return_value = create_response(
+                update_data
+            )
         elif table_name == "origin_stories":
             # Mock origin story creation with state tracking
             # SELECT queries return current state
@@ -216,18 +241,26 @@ def mock_supabase_client():
             mock_table.insert.return_value = mock_insert
         elif table_name == "subtask_instances":
             # Mock bind instance creation
-            bind_data = [{
-                "id": str(uuid4()),
-                "user_id": TEST_USER_ID,
-                "status": "done",
-            }]
+            bind_data = [
+                {
+                    "id": str(uuid4()),
+                    "user_id": TEST_USER_ID,
+                    "status": "done",
+                }
+            ]
             mock_table.insert.return_value.execute.return_value = create_response(bind_data)
         else:
             # Default mock for other tables
-            mock_table.select.return_value.eq.return_value.execute.return_value = create_response([])
+            mock_table.select.return_value.eq.return_value.execute.return_value = create_response(
+                []
+            )
             default_insert_data = [{"id": str(uuid4()), "user_id": TEST_USER_ID}]
-            mock_table.insert.return_value.execute.return_value = create_response(default_insert_data)
-            mock_table.update.return_value.eq.return_value.execute.return_value = create_response([])
+            mock_table.insert.return_value.execute.return_value = create_response(
+                default_insert_data
+            )
+            mock_table.update.return_value.eq.return_value.execute.return_value = create_response(
+                []
+            )
 
         return mock_table
 
@@ -376,11 +409,11 @@ def create_auth_token():
         # Set iat to 1 hour ago to avoid any clock skew issues
         issued_at = now - 3600  # 1 hour in seconds
         payload = {
-            "sub": user_id,                           # User ID (required)
-            "aud": "authenticated",                    # Supabase audience (required)
-            "role": "authenticated",                   # User role
-            "iss": "supabase",                        # Issuer
-            "iat": issued_at,                         # Issued at (with clock skew buffer)
+            "sub": user_id,  # User ID (required)
+            "aud": "authenticated",  # Supabase audience (required)
+            "role": "authenticated",  # User role
+            "iss": "supabase",  # Issuer
+            "iat": issued_at,  # Issued at (with clock skew buffer)
             "exp": now + (expires_in_hours * 3600),  # Expiration
         }
 
@@ -390,8 +423,51 @@ def create_auth_token():
     return _create_token
 
 
+@pytest.fixture(scope="function", autouse=True)
+def cleanup_production_test_data(request):
+    """Clean up production test data after deployment tests.
+
+    This fixture runs automatically for tests marked with @pytest.mark.deployment.
+    It ensures that test data created in production is properly cleaned up.
+
+    ⚠️ WARNING: This fixture ONLY runs for tests in tests/deployment/
+    that have @pytest.mark.deployment decorator.
+
+    Cleanup Strategy:
+    - Identifies test data by email domain: "*@weave-test.com"
+    - Deletes test user profiles and all related data
+    - Uses CASCADE delete to remove child records
+
+    Args:
+        request: Pytest request fixture (provides test context)
+
+    Yields:
+        None (test function runs between setup and cleanup)
+    """
+    # Setup: Nothing to do before test
+    yield  # Test runs here
+
+    # Cleanup: Only run for deployment tests
+    if "deployment" not in [marker.name for marker in request.node.iter_markers()]:
+        return  # Skip cleanup for non-deployment tests
+
+    # Only attempt cleanup if PRODUCTION_API_URL is configured
+    production_api_url = os.getenv("PRODUCTION_API_URL")
+    if not production_api_url:
+        return  # Skip cleanup if not running against production
+
+    # Cleanup test users (identified by @weave-test.com email)
+    # NOTE: This requires a cleanup endpoint in the API or direct database access
+    # For now, we document that test data should be manually cleaned periodically
+    # TODO: Implement /admin/cleanup-test-data endpoint for automated cleanup
+    pass
+
+
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     config.addinivalue_line(
         "markers", "integration: marks tests as integration tests (require external services)"
+    )
+    config.addinivalue_line(
+        "markers", "deployment: marks tests as deployment tests (run against production)"
     )

@@ -5,12 +5,18 @@ Defines abstract base class for all Speech-to-Text providers.
 All providers must implement: transcribe(), get_cost(), is_available()
 
 Story: 0.11 - Voice/Speech-to-Text Infrastructure
+Story: 1.5.3 - Unified AI Services Standardization
 Pattern: Follows app/services/ai/base.py structure for consistency
+
+Story 1.5.3: STTProvider now inherits from AIProviderBase for unified
+cost tracking and rate limiting across text/image/audio modalities.
 """
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
+
+from app.services.ai_provider_base import AIProviderBase as _AIProviderBase
 
 
 @dataclass
@@ -28,6 +34,7 @@ class TranscriptionResult:
         audio_url: Optional signed URL to the audio file
         run_id: Database ID of the ai_runs record (if persisted)
     """
+
     transcript: str
     confidence: float
     duration_sec: int
@@ -49,13 +56,14 @@ class STTProviderError(Exception):
         error_code: Standardized error code for client handling
         original_error: Original exception that caused this error
     """
+
     def __init__(
         self,
         message: str,
         provider: str,
         retryable: bool = True,
         error_code: str = "STT_ERROR",
-        original_error: Optional[Exception] = None
+        original_error: Optional[Exception] = None,
     ):
         self.message = message
         self.provider = provider
@@ -65,22 +73,28 @@ class STTProviderError(Exception):
         super().__init__(self.message)
 
 
-class STTProvider(ABC):
+class STTProvider(_AIProviderBase, ABC):
     """
     Abstract base class for Speech-to-Text providers.
+
+    Story 1.5.3: Now inherits from AIProviderBase for unified cost tracking
+    and rate limiting across all AI modalities (text/image/audio).
 
     All providers (AssemblyAI, Whisper) must implement these methods
     to ensure consistent interface for the orchestrator.
 
     Fallback chain: AssemblyAI → Whisper → Store audio only (manual)
+
+    Inherited from AIProviderBase:
+    - log_to_ai_runs() - Cost tracking
+    - check_rate_limit() - Rate limiting
+    - get_provider_name() - Provider identification (must implement)
+    - is_available() - Availability check (must implement)
     """
 
     @abstractmethod
     async def transcribe(
-        self,
-        audio_file: bytes,
-        language: str = 'en',
-        **kwargs
+        self, audio_file: bytes, language: str = "en", **kwargs
     ) -> TranscriptionResult:
         """
         Transcribe audio file to text.

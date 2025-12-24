@@ -33,9 +33,7 @@ class STTService:
     """
 
     def __init__(
-        self,
-        assemblyai_api_key: Optional[str] = None,
-        openai_api_key: Optional[str] = None
+        self, assemblyai_api_key: Optional[str] = None, openai_api_key: Optional[str] = None
     ):
         """
         Initialize STT service with providers.
@@ -45,6 +43,7 @@ class STTService:
             openai_api_key: OpenAI API key (from env if None)
         """
         import logging
+
         logger = logging.getLogger(__name__)
 
         # Initialize providers
@@ -81,11 +80,7 @@ class STTService:
             logger.error("❌ No STT providers available! Check API keys.")
 
     async def transcribe(
-        self,
-        audio_file: bytes,
-        language: str = 'en',
-        max_retries: int = 3,
-        **kwargs
+        self, audio_file: bytes, language: str = "en", max_retries: int = 3, **kwargs
     ) -> Optional[TranscriptionResult]:
         """
         Transcribe audio with fallback chain and retry logic.
@@ -111,6 +106,7 @@ class STTService:
         last_error = None
 
         import logging
+
         logger = logging.getLogger(__name__)
 
         # Try each provider in chain
@@ -124,7 +120,7 @@ class STTService:
                     audio_file=audio_file,
                     language=language,
                     max_retries=max_retries,
-                    **kwargs
+                    **kwargs,
                 )
                 logger.info(f"✅ Transcription successful with {provider_name}")
                 return result
@@ -142,12 +138,7 @@ class STTService:
         return None
 
     async def _transcribe_with_retry(
-        self,
-        provider: STTProvider,
-        audio_file: bytes,
-        language: str,
-        max_retries: int,
-        **kwargs
+        self, provider: STTProvider, audio_file: bytes, language: str, max_retries: int, **kwargs
     ) -> TranscriptionResult:
         """
         Transcribe with exponential backoff retry logic.
@@ -172,9 +163,7 @@ class STTService:
         for attempt in range(max_retries):
             try:
                 result = await provider.transcribe(
-                    audio_file=audio_file,
-                    language=language,
-                    **kwargs
+                    audio_file=audio_file, language=language, **kwargs
                 )
                 return result
 
@@ -190,7 +179,7 @@ class STTService:
                     raise
 
                 # Exponential backoff: 1s, 2s, 4s
-                delay = 2 ** attempt
+                delay = 2**attempt
                 await asyncio.sleep(delay)
 
         # Should never reach here, but raise last error if we do
@@ -201,7 +190,7 @@ class STTService:
             message="Transcription failed after all retries",
             provider=provider.__class__.__name__,
             retryable=False,
-            error_code="STT_ALL_PROVIDERS_FAILED"
+            error_code="STT_ALL_PROVIDERS_FAILED",
         )
 
     def get_provider_status(self) -> dict:

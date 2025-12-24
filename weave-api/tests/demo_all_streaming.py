@@ -31,10 +31,10 @@ PROMPT = "Write a short haiku about real-time AI streaming."
 
 def stream_test(provider_name, provider, prompt, model):
     """Test streaming for a single provider."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"🤖 {provider_name.upper()} - {model}")
-    print(f"{'='*70}\n")
-    print("Streaming: ", end='', flush=True)
+    print(f"{'=' * 70}\n")
+    print("Streaming: ", end="", flush=True)
 
     start = time.time()
     chunks = []
@@ -42,19 +42,19 @@ def stream_test(provider_name, provider, prompt, model):
 
     try:
         for chunk in provider.stream(prompt=prompt, model=model, temperature=0.7):
-            if chunk['type'] == 'chunk':
-                print(chunk['content'], end='', flush=True)
-                full_text.append(chunk['content'])
+            if chunk["type"] == "chunk":
+                print(chunk["content"], end="", flush=True)
+                full_text.append(chunk["content"])
                 chunks.append(chunk)
-            elif chunk['type'] == 'done':
+            elif chunk["type"] == "done":
                 elapsed = time.time() - start
                 print("\n\n✅ Complete!")
                 print(f"   • Time: {elapsed:.2f}s")
                 print(f"   • Tokens: {chunk['input_tokens']} in + {chunk['output_tokens']} out")
                 print(f"   • Cost: ${chunk['cost_usd']:.6f}")
                 print(f"   • Chunks: {len(chunks)}")
-                print(f"   • Speed: {len(chunks)/elapsed:.1f} chunks/sec")
-                return True, elapsed, len(chunks), chunk['cost_usd']
+                print(f"   • Speed: {len(chunks) / elapsed:.1f} chunks/sec")
+                return True, elapsed, len(chunks), chunk["cost_usd"]
 
     except Exception as e:
         print(f"\n\n❌ Error: {e}")
@@ -63,17 +63,17 @@ def stream_test(provider_name, provider, prompt, model):
 
 def main():
     """Run streaming demo for all providers."""
-    print("\n" + "🌟"*35)
+    print("\n" + "🌟" * 35)
     print("  REAL-TIME STREAMING COMPARISON")
     print("  Testing OpenAI, Bedrock & Anthropic")
-    print("🌟"*35)
+    print("🌟" * 35)
 
     results = []
 
     # Test OpenAI
-    if os.getenv('OPENAI_API_KEY'):
+    if os.getenv("OPENAI_API_KEY"):
         try:
-            provider = OpenAIProvider(api_key=os.getenv('OPENAI_API_KEY'))
+            provider = OpenAIProvider(api_key=os.getenv("OPENAI_API_KEY"))
             success, time_taken, chunks, cost = stream_test(
                 "OpenAI", provider, PROMPT, "gpt-4o-mini"
             )
@@ -85,9 +85,9 @@ def main():
         print("\n⏭️  Skipping OpenAI (no API key)")
 
     # Test Bedrock
-    if os.getenv('AWS_ACCESS_KEY_ID') or os.getenv('AWS_PROFILE'):
+    if os.getenv("AWS_ACCESS_KEY_ID") or os.getenv("AWS_PROFILE"):
         try:
-            provider = BedrockProvider(region='us-east-1')
+            provider = BedrockProvider(region="us-east-1")
             success, time_taken, chunks, cost = stream_test(
                 "Bedrock", provider, PROMPT, "claude-3-5-haiku"
             )
@@ -99,27 +99,27 @@ def main():
         print("\n⏭️  Skipping Bedrock (no AWS credentials)")
 
     # Test Anthropic
-    if os.getenv('ANTHROPIC_API_KEY'):
+    if os.getenv("ANTHROPIC_API_KEY"):
         try:
-            provider = AnthropicProvider(api_key=os.getenv('ANTHROPIC_API_KEY'))
+            provider = AnthropicProvider(api_key=os.getenv("ANTHROPIC_API_KEY"))
             client = provider.client
 
-            print(f"\n{'='*70}")
+            print(f"\n{'=' * 70}")
             print("🧠 ANTHROPIC - Claude 3.5 Haiku")
-            print(f"{'='*70}\n")
-            print("Streaming: ", end='', flush=True)
+            print(f"{'=' * 70}\n")
+            print("Streaming: ", end="", flush=True)
 
             start = time.time()
             chunks = []
 
             with client.messages.stream(
-                model='claude-3-5-haiku-20241022',
+                model="claude-3-5-haiku-20241022",
                 max_tokens=200,
                 temperature=0.7,
-                messages=[{'role': 'user', 'content': PROMPT}]
+                messages=[{"role": "user", "content": PROMPT}],
             ) as stream:
                 for text in stream.text_stream:
-                    print(text, end='', flush=True)
+                    print(text, end="", flush=True)
                     chunks.append(text)
 
                 final_message = stream.get_final_message()
@@ -127,14 +127,14 @@ def main():
                 output_tokens = final_message.usage.output_tokens
 
             elapsed = time.time() - start
-            cost = provider.estimate_cost(input_tokens, output_tokens, 'claude-3-5-haiku-20241022')
+            cost = provider.estimate_cost(input_tokens, output_tokens, "claude-3-5-haiku-20241022")
 
             print("\n\n✅ Complete!")
             print(f"   • Time: {elapsed:.2f}s")
             print(f"   • Tokens: {input_tokens} in + {output_tokens} out")
             print(f"   • Cost: ${cost:.6f}")
             print(f"   • Chunks: {len(chunks)}")
-            print(f"   • Speed: {len(chunks)/elapsed:.1f} chunks/sec")
+            print(f"   • Speed: {len(chunks) / elapsed:.1f} chunks/sec")
 
             results.append(("Anthropic (Claude 3.5 Haiku)", True, elapsed, len(chunks), cost))
 
@@ -145,11 +145,11 @@ def main():
         print("\n⏭️  Skipping Anthropic (no API key)")
 
     # Summary Table
-    print(f"\n\n{'='*70}")
+    print(f"\n\n{'=' * 70}")
     print("📊 COMPARISON SUMMARY")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"\n{'Provider':<30} {'Status':<10} {'Time':<10} {'Chunks':<10} {'Cost'}")
-    print("-"*70)
+    print("-" * 70)
 
     for name, success, time_taken, chunks, cost in results:
         status = "✅ PASS" if success else "❌ FAIL"

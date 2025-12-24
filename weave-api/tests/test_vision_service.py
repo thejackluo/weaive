@@ -19,10 +19,11 @@ from app.services.images import (
 # FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def mock_image_bytes():
     """Mock image bytes (fake JPEG data)"""
-    return b'\xff\xd8\xff\xe0\x00\x10JFIF' + b'\x00' * 1000  # Fake JPEG header + data
+    return b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"\x00" * 1000  # Fake JPEG header + data
 
 
 @pytest.fixture
@@ -86,6 +87,7 @@ class MockVisionProvider(VisionProvider):
 # VISION ANALYSIS RESULT TESTS
 # ============================================================================
 
+
 def test_vision_analysis_result_to_dict(mock_vision_result):
     """Test converting result to JSONB-compatible dict"""
     result_dict = mock_vision_result.to_dict()
@@ -120,6 +122,7 @@ def test_vision_analysis_result_to_ai_run_log(mock_vision_result):
 # ============================================================================
 # VISION SERVICE TESTS
 # ============================================================================
+
 
 @pytest.mark.asyncio
 async def test_vision_service_primary_provider_success(mock_image_bytes):
@@ -202,6 +205,7 @@ async def test_vision_service_skip_unavailable_providers(mock_image_bytes):
 # COST CALCULATION TESTS
 # ============================================================================
 
+
 def test_calculate_cost_gemini():
     """Test cost calculation for Gemini 3.0 Flash"""
     input_tokens = 560
@@ -233,6 +237,7 @@ def test_calculate_cost_unknown_provider():
 # ============================================================================
 # VISION PROVIDER ERROR TESTS
 # ============================================================================
+
 
 def test_vision_provider_error_creation():
     """Test VisionProviderError creation"""

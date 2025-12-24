@@ -195,7 +195,9 @@ async def upload_image(
         filename = f"{user_id}/proof_{unique_id}.jpg"
 
         # Upload to Supabase Storage
-        logger.info(f"📤 [UPLOAD START] filename={filename}, size={file_size_bytes}bytes, content_type={file.content_type}")
+        logger.info(
+            f"📤 [UPLOAD START] filename={filename}, size={file_size_bytes}bytes, content_type={file.content_type}"
+        )
 
         try:
             # Supabase Python SDK expects raw bytes, NOT base64 string
@@ -409,10 +411,12 @@ async def list_images(
                 expires_in=3600,
             )["signedURL"]
 
-            images.append({
-                **capture,
-                "signed_url": signed_url,
-            })
+            images.append(
+                {
+                    **capture,
+                    "signed_url": signed_url,
+                }
+            )
 
         total = response.count if response.count is not None else len(images)
         has_next = (page * per_page) < total
