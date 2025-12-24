@@ -18,6 +18,8 @@ class ChatMessageCreate(BaseModel):
     """Request body for sending a chat message."""
     message: str = Field(..., min_length=1, max_length=500, description="User message content (max 500 chars)")
     conversation_id: Optional[UUID] = Field(None, description="Existing conversation ID (omit to start new conversation)")
+    include_context: bool = Field(True, description="Include user context (goals, recent activity, identity) - Story 6.2")
+    enable_tools: bool = Field(False, description="Allow AI to invoke tools (e.g., switch personality) - Story 6.2")
 
     @field_validator('message')
     @classmethod
@@ -53,6 +55,10 @@ class ChatMessageResponse(BaseModel):
     response_id: UUID = Field(..., description="ID of assistant's response message")
     conversation_id: UUID = Field(..., description="Conversation thread ID")
     tokens_used: int = Field(..., description="Total tokens used for this interaction")
+    # Story 6.2 metadata
+    context_used: bool = Field(False, description="Whether user context was included")
+    personality_type: str = Field("weave_ai", description="Active AI personality (dream_self or weave_ai)")
+    tools_invoked: List[str] = Field(default_factory=list, description="Tools the AI invoked during generation")
 
 
 class ConversationSummary(BaseModel):
