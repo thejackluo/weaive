@@ -108,7 +108,7 @@ epic-1.5-status: planned
 epic-1.5-stories:
   1-5-1-navigation-architecture: planned        # 8-10 pts - Core navigation scaffolding (3-tab structure, glassmorphism AI chat, 15+ placeholder screens)
   1-5-2-backend-standardization: planned        # 7-9 pts ⚡ EXPANDED (2025-12-22) - API/model templates + 28 API endpoint stubs, backend-patterns-guide.md + backend-api-integration.md
-  1-5-3-ai-module-orchestration: planned        # 4-5 pts ⚡ REWRITTEN (2025-12-22) - AI Module Orchestration Layer (5 modules + orchestrator + context builder), integrates with existing AIService, validation removed duplicate work
+  1-5-3-ai-services-standardization: in-progress      # 4-5 pts ⚡ NEW (2025-12-21) - AIProviderBase abstraction, text/image/audio patterns, cost tracking, rate limiting, ai-services-guide.md (ACTIVE in PR #82)
 
 # Epic 0.5: Post-Development Observability (6 pts)
 epic-0.5-status: planned
@@ -337,16 +337,17 @@ sprint-6-activities:
 # Goal: Deploy to production, complete App Store submission, launch publicly
 # Points: 45 (Epic 9) + infrastructure setup
 # Note: Start Week 19 (parallel with Sprint 5) for infrastructure work
+# Status: Story 9.1 in review (infrastructure complete, pending manual deployment - 2025-12-23)
 
-phase-6-status: planned
-phase-6-start-date: null
+phase-6-status: in-progress
+phase-6-start-date: "2025-12-23"
 phase-6-end-date: null
 
 phase-6-stories:
   # Epic 9: Production Launch & App Store Publishing (45 pts)
-  epic-9: backlog
+  epic-9: in-progress
   # Week 23: Production Infrastructure (18 pts)
-  9-1-production-backend-deployment: backlog    # 5 pts - Railway setup, env vars, health checks
+  9-1-production-backend-deployment: review     # 5 pts - Railway setup, env vars, health checks ✅ Infrastructure complete, pending manual deployment (2025-12-23)
   9-2-production-database-setup: backlog        # 5 pts - Supabase Pro, migrations, RLS audit, backups
   9-7-production-monitoring-setup: backlog      # 3 pts - Sentry, LogRocket, UptimeRobot integration
   9-5-production-security-hardening: backlog    # 5 pts - Rate limiting, OWASP scan, penetration testing
@@ -393,7 +394,7 @@ epic-completion:
   epic-6-ai-coaching: 0/29             # Sprint 4: 0% complete
   epic-7-notifications: 0/28           # Sprint 3, 5: 0% complete
   epic-8-settings: 0/23                # Sprint 3, 5: 0% complete
-  epic-9-production-launch: 0/45       # Phase 6 (Weeks 23-26): 0% complete ⚡ NEW (2025-12-22) - Production deployment, App Store compliance, subscriptions, security, testing, launch
+  epic-9-production-launch: 0/45       # Phase 6 (Weeks 23-26): 0% complete ⚡ NEW (2025-12-22) - Story 9.1 in review (2025-12-23)
 
 total-completion: 27/375 (7%)
 # Note: Total increased from 330 to 375 pts (+45 pts from Epic 9: Production Launch & App Store Publishing)

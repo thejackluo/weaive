@@ -12,10 +12,10 @@ from .stt_service import STTService
 from .whisper_provider import WhisperProvider
 
 __all__ = [
-    'STTProvider',
-    'TranscriptionResult',
-    'STTProviderError',
-    'AssemblyAIProvider',
-    'WhisperProvider',
-    'STTService',
+    "STTProvider",
+    "TranscriptionResult",
+    "STTProviderError",
+    "AssemblyAIProvider",
+    "WhisperProvider",
+    "STTService",
 ]

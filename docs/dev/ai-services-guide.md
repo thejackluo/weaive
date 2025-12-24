@@ -1,871 +1,1024 @@
-# AI Services Guide
+# AI Service Integration Guide
 
-**Purpose:** Comprehensive guide for implementing AI features across text, image, audio, and AI module orchestration.
+**Status:** ✅ Complete - Lessons learned from Story 0.11 (Voice/STT)
 
-**Created:** 2025-12-22 (Story 1.5.3)
+**Purpose:** Standardized patterns for integrating third-party AI services (OpenAI, Anthropic, AssemblyAI, etc.) into the Weave backend, with proper environment configuration, fallback chains, and error handling.
 
 ---
 
 ## Table of Contents
 
-1. [Provider Abstraction](#provider-abstraction)
-2. [Text AI Patterns](#text-ai-patterns)
-3. [Image AI Patterns](#image-ai-patterns)
-4. [Audio AI Patterns](#audio-ai-patterns)
-5. [Cost Tracking](#cost-tracking)
-6. [Rate Limiting](#rate-limiting)
-7. [Frontend Hooks](#frontend-hooks)
-8. [AI Module Abstraction](#ai-module-abstraction)
-9. [AI Orchestrator](#ai-orchestrator)
-10. [Context Builder](#context-builder)
-11. [Implementing New AI Modules](#implementing-new-ai-modules)
+1. [Overview](#overview)
+2. [Real-World Case Study: Transcription Service](#real-world-case-study-transcription-service)
+3. [The Five Critical Requirements](#the-five-critical-requirements)
+4. [Environment Variable Loading Pattern](#environment-variable-loading-pattern)
+5. [Provider Abstraction Pattern](#provider-abstraction-pattern)
+6. [Database Type Conversions](#database-type-conversions)
+7. [Integration Checklist](#integration-checklist)
+8. [Common Pitfalls](#common-pitfalls)
 
 ---
 
-## Provider Abstraction
+## Overview
 
-### AIProviderBase Abstract Class
+When integrating AI services into Weave, we need to balance:
+- **Reliability:** Fallback chains when primary services fail
+- **Cost:** Cheaper primary providers with expensive fallbacks
+- **Type safety:** Python type hints + Pydantic validation
+- **Configuration:** Environment variables properly loaded
+- **Error handling:** Graceful degradation when services unavailable
 
-All AI providers inherit from `AIProviderBase` to ensure consistent patterns:
+**Key Insight:** Most integration bugs come from environment configuration issues, not the AI service logic itself.
 
+---
+
+## Real-World Case Study: Transcription Service
+
+### What We Built (Story 0.11)
+
+Speech-to-text transcription with dual-provider fallback:
+- **Primary:** AssemblyAI ($0.15/hour) - 58% cheaper
+- **Fallback:** OpenAI Whisper ($0.006/min) - More expensive but reliable
+- **Last resort:** Save audio without transcript (graceful degradation)
+
+### What Went Wrong (And How We Fixed It)
+
+#### Problem 1: "No STT providers available!"
+**Symptom:** Backend logs showed both AssemblyAI and Whisper unavailable despite API keys in `.env`
+
+**Root Cause:**
 ```python
-# weave-api/app/services/ai_provider_base.py
+# In assemblyai_provider.py
+self.api_key = api_key or os.getenv('ASSEMBLYAI_API_KEY')  # ❌ Returns None
+
+# Why?
+# Pydantic Settings loads .env into Settings object, but NOT into os.environ
+# os.getenv() reads from process environment, not from Settings
+```
+
+**Solution:**
+```python
+# In app/core/config.py
+from dotenv import load_dotenv
+
+# Load .env file explicitly into os.environ BEFORE anything else runs
+env_path = Path(__file__).parent.parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path)  # ✅ Now os.getenv() works everywhere
+```
+
+**Lesson:** Always use `python-dotenv` to load `.env` into `os.environ` when code uses `os.getenv()` directly.
+
+---
+
+#### Problem 2: "Object of type UUID is not JSON serializable"
+**Symptom:** Backend crashed when saving capture record after transcription
+
+**Root Cause:**
+```python
+# get_user_profile() returns UUID for type safety
+user_id, timezone = get_user_profile(user, supabase)
+
+# But Supabase client serializes to JSON before API call
+capture_data = {
+    'user_id': user_id,  # ❌ UUID object can't be JSON serialized
+}
+```
+
+**Solution:**
+```python
+# Convert UUID to string at database boundaries
+capture_data = {
+    'user_id': str(user_id),  # ✅ JSON-safe
+    'type': 'audio',
+    'storage_key': storage_key,
+}
+```
+
+**Lesson:** Keep UUIDs as objects for internal type safety, convert to strings at database/API boundaries.
+
+---
+
+#### Problem 3: "UploadResponse has no attribute 'status_code'"
+**Symptom:** Backend crashed checking Supabase Storage upload result
+
+**Root Cause:**
+```python
+upload_result = supabase.storage.from_('captures').upload(...)
+if upload_result.status_code not in [200, 201]:  # ❌ Attribute doesn't exist
+```
+
+**Why:** Supabase Storage SDK raises exceptions on failure instead of returning status codes.
+
+**Solution:**
+```python
+try:
+    upload_result = supabase.storage.from_('captures').upload(...)
+    # Success - no need to check status
+except Exception as upload_error:
+    # Failure - handle error
+    raise HTTPException(...)
+```
+
+**Lesson:** Check SDK documentation for error handling patterns - don't assume HTTP-style responses.
+
+---
+
+#### Problem 4: Missing Settings Configuration
+**Symptom:** New environment variable not recognized by Pydantic Settings
+
+**Root Cause:**
+```python
+# .env file
+ASSEMBLYAI_API_KEY=9c7cbcdcbf54475880b59d6a6286d817
+
+# But Settings class didn't declare it
+class Settings(BaseSettings):
+    OPENAI_API_KEY: str = Field(default="")
+    ANTHROPIC_API_KEY: str = Field(default="")
+    # ❌ ASSEMBLYAI_API_KEY missing
+```
+
+**Solution:**
+```python
+class Settings(BaseSettings):
+    OPENAI_API_KEY: str = Field(default="")
+    ANTHROPIC_API_KEY: str = Field(default="")
+    ASSEMBLYAI_API_KEY: str = Field(default="", description="AssemblyAI API key (Story 0.11)")  # ✅ Added
+
+    @field_validator("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ASSEMBLYAI_API_KEY", mode="after")
+    @classmethod
+    def validate_ai_credentials(cls, v: str, info) -> str:
+        """Warn if missing in dev, error in prod."""
+        # Validation logic...
+```
+
+**Lesson:** Every new environment variable must be declared in Settings class with Field() annotation.
+
+---
+
+## The Five Critical Requirements
+
+### 1. Environment Variable Loading
+
+**✅ CORRECT PATTERN:**
+```python
+# app/core/config.py (FIRST import in main.py)
+from pathlib import Path
+from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
+
+# Load .env into os.environ BEFORE anything else
+env_path = Path(__file__).parent.parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # Declare ALL environment variables
+    OPENAI_API_KEY: str = Field(default="")
+    ANTHROPIC_API_KEY: str = Field(default="")
+    ASSEMBLYAI_API_KEY: str = Field(default="")
+
+settings = Settings()
+```
+
+**Why both `load_dotenv()` AND `env_file=".env"`?**
+- `load_dotenv()`: Populates `os.environ` for direct `os.getenv()` calls
+- `env_file=".env"`: Populates Settings object attributes for `settings.OPENAI_API_KEY`
+
+---
+
+### 2. Provider Abstraction
+
+**Directory Structure:**
+```
+app/services/
+├── stt/                          # Service-specific directory
+│   ├── __init__.py               # Exports public API
+│   ├── base.py                   # Abstract base + shared types
+│   ├── assemblyai_provider.py    # Concrete implementation
+│   ├── whisper_provider.py       # Concrete implementation
+│   └── stt_service.py            # Orchestrator with fallback chain
+```
+
+**Base Interface (`base.py`):**
+```python
 from abc import ABC, abstractmethod
-from typing import Dict, Any
-from datetime import datetime
-
-class AIProviderBase(ABC):
-    """Base class for all AI providers (OpenAI, Anthropic, Gemini, AssemblyAI)"""
-
-    @abstractmethod
-    async def call_ai(self, input: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute AI call with input and context"""
-        pass
-
-    @abstractmethod
-    def estimate_cost(self, input: Dict[str, Any]) -> float:
-        """Estimate cost in USD before calling"""
-        pass
-
-    @abstractmethod
-    def get_provider_name(self) -> str:
-        """Return provider identifier (e.g., 'openai-gpt4o-mini')"""
-        pass
-
-    async def log_to_ai_runs(
-        self,
-        user_id: str,
-        operation_type: str,
-        input_tokens: int,
-        output_tokens: int,
-        cost_usd: float,
-        duration_ms: int
-    ):
-        """Log AI call to ai_runs table for cost tracking"""
-        # Insert into ai_runs table
-        pass
-
-    async def check_rate_limit(self, user_id: str, operation_type: str) -> bool:
-        """Check if user has exceeded rate limit"""
-        # Query daily_aggregates table
-        pass
-```
-
-### Fallback Chain Pattern
-
-All AI operations use primary → secondary → graceful degradation:
-
-```python
-async def execute_with_fallback(operation):
-    try:
-        # Try primary provider
-        return await primary_provider.call_ai(...)
-    except ProviderError as e:
-        logger.warning(f"Primary provider failed: {e}")
-        try:
-            # Try secondary provider
-            return await secondary_provider.call_ai(...)
-        except ProviderError as e:
-            logger.error(f"Secondary provider failed: {e}")
-            # Graceful degradation
-            return get_cached_or_default_response()
-```
-
----
-
-## Text AI Patterns
-
-### Provider Selection
-
-| Use Case | Primary Provider | Fallback | Cost |
-|----------|------------------|----------|------|
-| **Routine Generation** (Triad, Journal recap) | GPT-4o-mini | Claude 3.7 Sonnet | $0.15/$0.60 per MTok |
-| **Complex Reasoning** (Onboarding, Dream Self) | Claude 3.7 Sonnet | GPT-4o | $3.00/$15.00 per MTok |
-
-### Text AI Request Format
-
-```python
-# Standard text AI request
-request = {
-    "messages": [
-        {"role": "system", "content": "You are a coaching AI..."},
-        {"role": "user", "content": "Help me plan my day"}
-    ],
-    "context": {
-        "user_id": "uuid",
-        "operation_type": "generate_triad",
-        "identity": {...},
-        "goals": [...],
-        "history": [...]
-    }
-}
-```
-
-### Text AI Response Format
-
-```python
-{
-    "text": "Here are your 3 tasks for tomorrow...",
-    "provider": "gpt-4o-mini",
-    "tokens_used": {
-        "input": 1200,
-        "output": 350
-    },
-    "cost_usd": 0.0035,
-    "duration_ms": 1850
-}
-```
-
----
-
-## Image AI Patterns
-
-### Provider Selection
-
-| Use Case | Primary Provider | Fallback | Cost |
-|----------|------------------|----------|------|
-| **Proof Validation** | Gemini 3.0 Flash | GPT-4o Vision | ~$0.0005-$0.02 per image |
-| **OCR** | Gemini 3.0 Flash | GPT-4o Vision | ~$0.0005-$0.02 per image |
-| **Image Classification** | Gemini 3.0 Flash | GPT-4o Vision | ~$0.0005-$0.02 per image |
-
-### Image AI Request Format
-
-```python
-{
-    "image_url": "https://storage.supabase.co/...",
-    "prompt": "Validate this as proof of gym workout completion",
-    "operations": ["proof_validation", "ocr", "classification"]
-}
-```
-
-### Image AI Response Format
-
-```python
-{
-    "proof_validated": True,
-    "extracted_text": "Gold's Gym - Check-in 8:30am",
-    "categories": ["gym", "fitness", "indoor"],
-    "quality_score": 8,
-    "provider": "gemini-3-flash",
-    "cost_usd": 0.0005
-}
-```
-
----
-
-## Audio AI Patterns
-
-### Provider Selection
-
-| Use Case | Primary Provider | Fallback | Cost |
-|----------|------------------|----------|------|
-| **Voice Transcription** | AssemblyAI | OpenAI Whisper | $0.15/hr vs $0.36/hr |
-
-### Audio AI Request Format
-
-```python
-{
-    "audio_file": bytes,
-    "format": "m4a",
-    "language": "en",
-    "duration_sec": 45.2
-}
-```
-
-### Audio AI Response Format
-
-```python
-{
-    "transcript": "Today I completed my workout...",
-    "confidence": 0.94,
-    "duration_sec": 45.2,
-    "provider": "assemblyai",
-    "cost_usd": 0.0019
-}
-```
-
----
-
-## Cost Tracking
-
-### Unified Cost Logging
-
-**ALL AI calls must log to `ai_runs` table:**
-
-```python
-# After any AI call
-await provider.log_to_ai_runs(
-    user_id=user_id,
-    operation_type="text_generation",  # or "image_analysis", "transcription"
-    input_tokens=1200,
-    output_tokens=350,
-    model="gpt-4o-mini",
-    cost_usd=0.0035,
-    duration_ms=1850
-)
-```
-
-### Cost Calculation
-
-```python
-# Per-provider pricing
-PROVIDER_COSTS = {
-    "gpt-4o-mini": {"input": 0.15, "output": 0.60},  # per MTok
-    "claude-3-7-sonnet": {"input": 3.00, "output": 15.00},  # per MTok
-    "gemini-3-flash": {"image": 0.0005},  # per image
-    "assemblyai": {"audio": 0.15}  # per hour
-}
-
-def calculate_cost(provider: str, input: int, output: int) -> float:
-    """Calculate cost in USD"""
-    costs = PROVIDER_COSTS[provider]
-    return (input * costs["input"] + output * costs["output"]) / 1_000_000
-```
-
----
-
-## Rate Limiting
-
-### Rate Limit Configuration
-
-| Operation Type | Limit | Window | Storage |
-|----------------|-------|--------|---------|
-| **Text AI** | 10 calls | 1 hour | `daily_aggregates.ai_text_count` |
-| **Image AI** | 5 analyses | 24 hours | `daily_aggregates.ai_vision_count` |
-| **Audio AI** | 50 transcriptions | 24 hours | `daily_aggregates.transcription_count` |
-
-### Rate Limit Check
-
-```python
-async def check_rate_limit(user_id: str, operation_type: str):
-    """Check if user has exceeded rate limit"""
-
-    # Query today's aggregates
-    aggregate = await db.execute(
-        select(DailyAggregate)
-        .where(DailyAggregate.user_id == user_id)
-        .where(DailyAggregate.local_date == today)
-    )
-
-    # Check limits
-    if operation_type == "text_generation" and aggregate.ai_text_count >= 10:
-        raise HTTPException(
-            status_code=429,
-            detail={
-                "error": "RATE_LIMIT_EXCEEDED",
-                "message": "Hourly AI chat limit reached (10/10)",
-                "retryAfter": seconds_until_next_hour
-            }
-        )
-```
-
----
-
-## Frontend Hooks
-
-### useAIChat (Text Generation)
-
-```typescript
-// weave-mobile/src/hooks/useAIChat.ts
-import { useState } from 'react';
-import { apiClient } from '@/services/apiClient';
-
-export function useAIChat() {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const generate = async (params: {
-    prompt: string;
-    context?: Record<string, any>;
-  }) => {
-    setIsGenerating(true);
-    setError(null);
-
-    try {
-      const response = await apiClient.post('/api/ai/chat', {
-        message: params.prompt,
-        context: params.context
-      });
-
-      return response.data;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  return { generate, isGenerating, error };
-}
-```
-
-**Usage:**
-
-```tsx
-const { generate, isGenerating, error } = useAIChat();
-
-const handleSubmit = async () => {
-  const result = await generate({
-    prompt: "Help me plan my day",
-    context: { goals: userGoals }
-  });
-  console.log(result.response);
-};
-```
-
----
-
-## AI Module Abstraction
-
-### AIModuleBase Abstract Class
-
-**Purpose:** Base class for all AI product features (Onboarding Coach, Triad Planner, etc.)
-
-**Distinction:**
-- **AIProviderBase:** HOW to call AI APIs (OpenAI, Anthropic, Gemini)
-- **AIModuleBase:** WHAT product features to build (Onboarding, Triad, Chat)
-
-```python
-# weave-api/app/services/ai/ai_module_base.py
-from abc import ABC, abstractmethod
-from typing import Dict, Any
-from app.services.ai_provider_base import AIProviderBase
-
-class AIModuleBase(ABC):
-    """
-    Base class for all AI product modules.
-
-    Modules represent product features (Onboarding, Triad, Recap, Dream Self, Insights)
-    that use AI providers to generate outputs.
-    """
-
-    def __init__(self, provider: AIProviderBase, context_builder):
+from dataclasses import dataclass
+
+@dataclass
+class TranscriptionResult:
+    """Standard result format across all providers."""
+    transcript: str
+    confidence: float  # 0.0-1.0
+    duration_sec: int
+    language: str
+    provider: str
+    cost_usd: float
+
+class STTProviderError(Exception):
+    """Provider-specific error with retry metadata."""
+    def __init__(self, message: str, provider: str, retryable: bool, error_code: str):
+        self.message = message
         self.provider = provider
-        self.context_builder = context_builder
+        self.retryable = retryable  # Should we try next provider?
+        self.error_code = error_code
+        super().__init__(message)
+
+class STTProvider(ABC):
+    """Abstract base for all STT providers."""
 
     @abstractmethod
-    def get_module_name(self) -> str:
-        """Return module identifier (e.g., 'onboarding_coach', 'triad_planner')"""
+    async def transcribe(self, audio_file: bytes, language: str, **kwargs) -> TranscriptionResult:
+        """Transcribe audio bytes to text."""
         pass
 
     @abstractmethod
-    async def execute(
-        self,
-        user_id: str,
-        operation_type: str,
-        params: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Execute AI module operation.
-
-        Args:
-            user_id: User identifier
-            operation_type: Specific operation (e.g., 'generate_goal_breakdown')
-            params: Operation-specific parameters
-
-        Returns:
-            Structured AI output (validated by module-specific schema)
-        """
+    def get_cost(self, duration_seconds: int) -> float:
+        """Calculate USD cost for given duration."""
         pass
 
-    async def build_context(self, user_id: str, operation_type: str) -> Dict[str, Any]:
-        """Build user context for AI call using Context Builder"""
-        return await self.context_builder.get_context(user_id, operation_type)
-
-    async def validate_output(self, output: Dict[str, Any]) -> bool:
-        """Validate AI output against module-specific schema"""
+    @abstractmethod
+    def is_available(self) -> bool:
+        """Check if provider is configured (has API key)."""
         pass
 ```
 
----
-
-## AI Orchestrator
-
-### Central Request Router
-
-**Purpose:** Routes AI requests to the correct module and coordinates all AI operations
-
+**Concrete Provider (`assemblyai_provider.py`):**
 ```python
-# weave-api/app/services/ai/ai_orchestrator.py
-from app.services.ai.module_registry import AIModuleRegistry
-from app.services.ai.context_builder import ContextBuilder
-from app.services.ai_provider_base import AIProviderBase
+import os
+from .base import STTProvider, TranscriptionResult, STTProviderError
 
-class AIOrchestrator:
-    """
-    Central AI orchestrator that:
-    1. Routes requests to correct AI module
-    2. Coordinates Context Builder
-    3. Enforces rate limiting
-    4. Logs all AI calls to ai_runs table
-    5. Handles fallback chains
-    """
+class AssemblyAIProvider(STTProvider):
+    def __init__(self, api_key: Optional[str] = None):
+        # Read from settings OR os.environ
+        self.api_key = api_key or os.getenv('ASSEMBLYAI_API_KEY')
+        if not self.api_key:
+            raise STTProviderError(
+                message="ASSEMBLYAI_API_KEY not configured",
+                provider="assemblyai",
+                retryable=False,
+                error_code="ASSEMBLYAI_API_KEY_MISSING"
+            )
 
-    def __init__(
-        self,
-        module_registry: AIModuleRegistry,
-        context_builder: ContextBuilder,
-        text_provider: AIProviderBase,
-        image_provider: AIProviderBase,
-        audio_provider: AIProviderBase
-    ):
-        self.module_registry = module_registry
-        self.context_builder = context_builder
-        self.text_provider = text_provider
-        self.image_provider = image_provider
-        self.audio_provider = audio_provider
+    async def transcribe(self, audio_file: bytes, language: str, **kwargs) -> TranscriptionResult:
+        try:
+            # Provider-specific logic
+            result = await aai.transcribe(audio_file)
+            return TranscriptionResult(
+                transcript=result.text,
+                confidence=result.confidence,
+                duration_sec=result.duration,
+                language=language,
+                provider="assemblyai",
+                cost_usd=self.get_cost(result.duration)
+            )
+        except Exception as e:
+            raise STTProviderError(
+                message=f"AssemblyAI API error: {str(e)}",
+                provider="assemblyai",
+                retryable="timeout" in str(e).lower(),
+                error_code="STT_PRIMARY_UNAVAILABLE"
+            )
 
-    async def execute_ai_operation(
-        self,
-        user_id: str,
-        operation_type: str,
-        params: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Execute AI operation.
+    def get_cost(self, duration_seconds: int) -> float:
+        return round(duration_seconds * 0.00004167, 4)  # $0.15/hour
 
-        Flow:
-        1. Check rate limits
-        2. Get appropriate module
-        3. Build user context
-        4. Execute module operation
-        5. Log to ai_runs
-        6. Return result
-        """
-
-        # 1. Check rate limits
-        await self._check_rate_limit(user_id, operation_type)
-
-        # 2. Get module
-        module = self.module_registry.get_module(operation_type)
-        if not module:
-            raise ValueError(f"No module registered for operation: {operation_type}")
-
-        # 3. Execute module
-        result = await module.execute(user_id, operation_type, params)
-
-        # 4. Log to ai_runs (cost tracking)
-        await self._log_ai_run(user_id, operation_type, module, result)
-
-        return result
-
-    async def _check_rate_limit(self, user_id: str, operation_type: str):
-        """Check daily_aggregates for rate limit compliance"""
-        # Query daily_aggregates.ai_text_count, ai_vision_count, etc.
-        pass
-
-    async def _log_ai_run(self, user_id: str, operation_type: str, module, result):
-        """Log to ai_runs table with tokens, cost, duration"""
-        pass
+    def is_available(self) -> bool:
+        return bool(self.api_key)
 ```
 
-### Module Registry
-
-**Purpose:** Maps operation types to module instances
-
+**Orchestrator with Fallback (`stt_service.py`):**
 ```python
-# weave-api/app/services/ai/module_registry.py
-from typing import Dict
-from app.services.ai.ai_module_base import AIModuleBase
+import logging
+from .base import STTProvider, TranscriptionResult, STTProviderError
+from .assemblyai_provider import AssemblyAIProvider
+from .whisper_provider import WhisperProvider
 
-class AIModuleRegistry:
-    """
-    Registry for all AI modules.
-    Maps operation types to module instances.
-    """
+logger = logging.getLogger(__name__)
+
+class STTService:
+    """Orchestrates provider fallback chain."""
 
     def __init__(self):
-        self._modules: Dict[str, AIModuleBase] = {}
+        self.providers = []
 
-    def register_module(self, module: AIModuleBase):
-        """Register an AI module"""
-        module_name = module.get_module_name()
-        self._modules[module_name] = module
+        # Try to initialize each provider
+        try:
+            assemblyai = AssemblyAIProvider()
+            if assemblyai.is_available():
+                self.providers.append(assemblyai)
+                logger.info("✅ AssemblyAI provider added to chain")
+        except STTProviderError as e:
+            logger.warning(f"⚠️  AssemblyAI unavailable: {e.message}")
 
-    def get_module(self, operation_type: str) -> AIModuleBase:
-        """Get module for operation type"""
-        operation_module_map = {
-            # Onboarding Coach
-            'generate_goal_breakdown': 'onboarding_coach',
-            'create_identity_doc_v1': 'onboarding_coach',
+        try:
+            whisper = WhisperProvider()
+            if whisper.is_available():
+                self.providers.append(whisper)
+                logger.info("✅ Whisper provider added to chain")
+        except STTProviderError as e:
+            logger.warning(f"⚠️  Whisper unavailable: {e.message}")
 
-            # Triad Planner
-            'generate_triad': 'triad_planner',
+        if not self.providers:
+            logger.error("❌ No STT providers available! Check API keys.")
 
-            # Daily Recap
-            'generate_recap': 'daily_recap',
+    async def transcribe(self, audio_file: bytes, language: str = 'en') -> Optional[TranscriptionResult]:
+        """Try each provider in order until one succeeds."""
+        for provider in self.providers:
+            provider_name = provider.__class__.__name__
+            try:
+                logger.info(f"Attempting transcription with {provider_name}")
+                result = await provider.transcribe(audio_file, language)
+                logger.info(f"✅ Success with {provider_name}")
+                return result
+            except STTProviderError as e:
+                logger.error(f"❌ {provider_name} failed: {e.message}")
+                if not e.retryable:
+                    continue  # Try next provider
 
-            # Dream Self Advisor
-            'chat_response': 'dream_self_advisor',
-
-            # AI Insights Engine
-            'generate_weekly_insights': 'ai_insights'
-        }
-        module_name = operation_module_map.get(operation_type)
-        return self._modules.get(module_name)
+        # All providers failed
+        logger.error("❌ All providers failed")
+        return None  # Graceful degradation
 ```
 
 ---
 
-## Context Builder
+### 3. Database Type Conversions
 
-### Purpose
+**The Pattern:**
+```python
+# Internal logic: Use typed objects (UUID, datetime, Enum)
+user_id: UUID = get_user_profile(user, supabase)
+created_at: datetime = datetime.now()
+status: GoalStatus = GoalStatus.ACTIVE
 
-Assembles canonical user context for AI calls. Different AI operations need different context:
+# Database boundary: Convert to JSON-safe types
+record = {
+    'user_id': str(user_id),              # UUID → string
+    'created_at': created_at.isoformat(), # datetime → ISO 8601 string
+    'status': status.value,               # Enum → string
+}
+supabase.table('goals').insert(record).execute()
+```
 
-| Operation | Context Needed |
-|-----------|----------------|
-| **Onboarding** | Minimal (just user input) |
-| **Triad Generation** | Goals + history + journal |
-| **Daily Recap** | Today's completions + captures + journal |
-| **AI Chat** | Full context (identity + goals + history + patterns) |
-| **Weekly Insights** | 30-day history + patterns |
+**Type Conversion Table:**
 
-### Implementation
+| Internal Type | Database Type | Conversion |
+|--------------|---------------|------------|
+| `UUID` | `TEXT` | `str(uuid_obj)` |
+| `datetime` | `TIMESTAMP` | `dt.isoformat()` |
+| `Enum` | `TEXT` | `enum_obj.value` |
+| `dict` | `JSONB` | Already JSON-safe |
+| `list` | `JSONB` | Already JSON-safe |
+| `None` | `NULL` | Pass as `None` |
+
+**Why This Matters:**
+- Supabase Python SDK uses `httpx` which serializes with `json.dumps()`
+- `json.dumps()` doesn't support UUID, datetime, or custom objects
+- **Always convert at the boundary**, keep rich types internally
+
+---
+
+### 4. Error Handling and Graceful Degradation
+
+**Three-Tier Error Strategy:**
+
+**Tier 1: Provider Retry Logic**
+```python
+async def _transcribe_with_retry(self, provider: STTProvider, audio_file: bytes, max_retries: int = 3):
+    for attempt in range(max_retries):
+        try:
+            return await provider.transcribe(audio_file)
+        except STTProviderError as e:
+            if not e.retryable:
+                raise  # Don't retry client errors (4xx)
+            if attempt == max_retries - 1:
+                raise  # Last attempt, give up
+            await asyncio.sleep(2 ** attempt)  # Exponential backoff: 1s, 2s, 4s
+```
+
+**Tier 2: Provider Fallback Chain**
+```python
+async def transcribe(self, audio_file: bytes) -> Optional[TranscriptionResult]:
+    for provider in [self.assemblyai, self.whisper]:
+        try:
+            return await self._transcribe_with_retry(provider, audio_file)
+        except STTProviderError:
+            continue  # Try next provider
+    return None  # All providers failed
+```
+
+**Tier 3: Application-Level Graceful Degradation**
+```python
+# In API endpoint
+transcription_result = await stt_service.transcribe(audio_bytes)
+
+if transcription_result:
+    # Happy path: Save transcript
+    capture_data['content_text'] = transcription_result.transcript
+    capture_data['duration_sec'] = transcription_result.duration_sec
+else:
+    # Degraded path: Save audio without transcript
+    capture_data['content_text'] = None
+    capture_data['duration_sec'] = None
+
+# Always save the capture (even without transcript)
+supabase.table('captures').insert(capture_data).execute()
+
+# Return to client with provider="manual" indicator
+return {
+    "transcript": transcription_result.transcript if transcription_result else "",
+    "provider": transcription_result.provider if transcription_result else "manual",
+    "audio_url": signed_url  # Audio playback still works
+}
+```
+
+**User Experience:**
+- ✅ Audio always saves (can play back)
+- ✅ Transcript appears if any provider works
+- ✅ Empty transcript + "manual" provider = user knows to retry
+- ✅ No data loss even when all AI services down
+
+---
+
+### 5. Diagnostic Endpoints
+
+**Always add a status endpoint for debugging:**
 
 ```python
-# weave-api/app/services/ai/context_builder.py
-from typing import Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-
-class ContextBuilder:
+@router.get("/transcribe/status", status_code=status.HTTP_200_OK)
+async def get_transcription_status():
     """
-    Assembles canonical user context for AI calls.
+    Diagnostic endpoint - check provider availability without making API calls.
 
-    Context includes:
-    - Identity document (archetype, dream self, motivations)
-    - Active goals and Q-goals
-    - Recent completions (last 7 days)
-    - Journal entries with fulfillment scores
-    - Computed metrics (streak, consistency %)
-    - User preferences (timezone, coaching strictness)
+    Useful for:
+    - Debugging "No providers available" errors
+    - Verifying environment variable loading
+    - Checking which providers are configured
     """
+    provider_status = stt_service.get_provider_status()
 
-    def __init__(self, db: AsyncSession):
-        self.db = db
+    return {
+        "providers": provider_status,  # {"assemblyai": true, "whisper": false}
+        "any_available": any(provider_status.values()),
+        "message": "At least one provider required" if not any(provider_status.values()) else "Ready"
+    }
 
-    async def get_context(
-        self,
-        user_id: str,
-        operation_type: str
-    ) -> Dict[str, Any]:
-        """
-        Build context based on operation type.
-        """
-
-        # Base context (all operations)
-        context = {
-            "user_id": user_id,
-            "operation_type": operation_type
-        }
-
-        # Operation-specific context
-        if operation_type == "generate_triad":
-            context.update(await self._get_triad_context(user_id))
-        elif operation_type == "generate_recap":
-            context.update(await self._get_recap_context(user_id))
-        elif operation_type == "chat_response":
-            context.update(await self._get_full_context(user_id))
-        elif operation_type == "generate_weekly_insights":
-            context.update(await self._get_insights_context(user_id))
-
-        return context
-
-    async def _get_triad_context(self, user_id: str) -> Dict[str, Any]:
-        """Context for Triad generation: goals + history + today's journal"""
-        # Query goals, subtask_completions (last 7 days), journal_entries (today)
-        pass
-
-    async def _get_recap_context(self, user_id: str) -> Dict[str, Any]:
-        """Context for Daily Recap: today's completions + captures + journal"""
-        pass
-
-    async def _get_full_context(self, user_id: str) -> Dict[str, Any]:
-        """Full context for AI Chat: identity + goals + history + patterns"""
-        pass
-
-    async def _get_insights_context(self, user_id: str) -> Dict[str, Any]:
-        """Context for Weekly Insights: 30-day history + patterns"""
-        pass
+# Usage:
+# curl http://localhost:8003/api/transcribe/status
+# {
+#   "providers": {"assemblyai": true, "whisper": true},
+#   "any_available": true,
+#   "message": "Ready"
+# }
 ```
 
 ---
 
-## Implementing New AI Modules
+## Integration Checklist
 
-### The 5 Core AI Modules
+Use this checklist when adding a new AI service:
 
-**1. Onboarding Coach Module**
+### Phase 1: Environment Setup
+- [ ] Add API key to `.env` file
+- [ ] Add API key field to `app/core/config.py` Settings class
+- [ ] Add API key to `.env.example` with description
+- [ ] Verify `load_dotenv()` is called in `config.py`
+- [ ] Add field validator for API key (warn in dev, error in prod)
+
+### Phase 2: Provider Implementation
+- [ ] Create service directory: `app/services/{service_name}/`
+- [ ] Create base interface: `base.py` with abstract class + shared types
+- [ ] Create provider implementations: `{provider_name}_provider.py`
+- [ ] Create orchestrator: `{service_name}_service.py` with fallback chain
+- [ ] Export public API in `__init__.py`
+
+### Phase 3: Error Handling
+- [ ] Define custom exception with `retryable` flag
+- [ ] Implement retry logic with exponential backoff
+- [ ] Implement provider fallback chain
+- [ ] Implement graceful degradation (store partial results)
+- [ ] Add comprehensive logging (info, warning, error levels)
+
+### Phase 4: API Integration
+- [ ] Convert UUID/datetime to strings at database boundary
+- [ ] Handle None/null cases gracefully
+- [ ] Wrap storage operations in try-except (don't assume status codes)
+- [ ] Return standard API response format: `{"data": {...}, "meta": {...}}`
+- [ ] Add diagnostic status endpoint
+
+### Phase 5: Testing & Validation
+- [ ] Test with no API keys (should log warnings, not crash)
+- [ ] Test with only one provider configured (should use fallback)
+- [ ] Test with invalid API keys (should fail gracefully)
+- [ ] Test provider fallback chain (simulate primary failure)
+- [ ] Test graceful degradation (all providers down)
+- [ ] Add startup logs showing provider availability
+
+---
+
+## Common Pitfalls
+
+### ❌ Pitfall 1: Assuming Environment Variables Are Loaded
+
+**Wrong:**
+```python
+# Assuming .env is automatically loaded
+api_key = os.getenv('NEW_SERVICE_API_KEY')  # Returns None!
+```
+
+**Right:**
+```python
+# 1. Add to config.py Settings class
+class Settings(BaseSettings):
+    NEW_SERVICE_API_KEY: str = Field(default="")
+
+# 2. Load with dotenv at startup
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
+
+# 3. Now os.getenv() works
+api_key = os.getenv('NEW_SERVICE_API_KEY')
+```
+
+---
+
+### ❌ Pitfall 2: Forgetting UUID → String Conversion
+
+**Wrong:**
+```python
+user_id: UUID = get_user_profile(user, supabase)
+supabase.table('captures').insert({'user_id': user_id}).execute()
+# TypeError: Object of type UUID is not JSON serializable
+```
+
+**Right:**
+```python
+user_id: UUID = get_user_profile(user, supabase)
+supabase.table('captures').insert({'user_id': str(user_id)}).execute()
+```
+
+---
+
+### ❌ Pitfall 3: Not Checking Provider Availability
+
+**Wrong:**
+```python
+# Assumes provider is always available
+result = await provider.transcribe(audio)
+```
+
+**Right:**
+```python
+if not provider.is_available():
+    logger.warning("Provider not configured")
+    return None
+
+result = await provider.transcribe(audio)
+```
+
+---
+
+### ❌ Pitfall 4: Missing Graceful Degradation
+
+**Wrong:**
+```python
+transcription = await stt_service.transcribe(audio)
+# Crashes if transcription is None
+return {"transcript": transcription.transcript}
+```
+
+**Right:**
+```python
+transcription = await stt_service.transcribe(audio)
+return {
+    "transcript": transcription.transcript if transcription else "",
+    "provider": transcription.provider if transcription else "manual"
+}
+```
+
+---
+
+### ❌ Pitfall 5: Assuming HTTP-Style Responses
+
+**Wrong:**
+```python
+result = supabase.storage.upload(file)
+if result.status_code != 200:  # AttributeError!
+```
+
+**Right:**
+```python
+try:
+    result = supabase.storage.upload(file)
+    # Success - no status code to check
+except Exception as e:
+    # Failure - SDK raises exception
+```
+
+---
+
+## Quick Reference: Environment Variable Troubleshooting
+
+**Symptom: "API key not configured" despite being in `.env`**
+
+1. **Check Settings class has field:**
+   ```python
+   # app/core/config.py
+   class Settings(BaseSettings):
+       YOUR_API_KEY: str = Field(default="")  # Must be declared
+   ```
+
+2. **Check dotenv is loading:**
+   ```python
+   # app/core/config.py (top of file)
+   from dotenv import load_dotenv
+   env_path = Path(__file__).parent.parent.parent / ".env"
+   load_dotenv(env_path)  # Must be called
+   ```
+
+3. **Check .env file path:**
+   ```bash
+   # From weave-api/ directory
+   ls -la .env  # Should exist
+   cat .env | grep YOUR_API_KEY  # Should show value
+   ```
+
+4. **Check no typos:**
+   ```bash
+   # .env file (must match exactly)
+   YOUR_API_KEY=value123
+
+   # Settings class (must match exactly)
+   YOUR_API_KEY: str = Field(...)
+
+   # Provider code (must match exactly)
+   os.getenv('YOUR_API_KEY')
+   ```
+
+5. **Restart backend:**
+   ```bash
+   # Environment only loads on startup
+   # Ctrl+C to stop, then:
+   uv run uvicorn app.main:app --reload
+   ```
+
+---
+
+## Summary: The Golden Rules
+
+1. **Environment Variables:**
+   - Declare in Settings class
+   - Load with dotenv
+   - Restart backend after changes
+
+2. **Provider Abstraction:**
+   - Base interface + concrete implementations
+   - Fallback chain with retry logic
+   - Graceful degradation on total failure
+
+3. **Type Conversions:**
+   - Keep rich types internally (UUID, datetime)
+   - Convert to JSON-safe at database boundary
+   - Test with real data
+
+4. **Error Handling:**
+   - Provider-level retries
+   - Service-level fallbacks
+   - Application-level degradation
+
+5. **Debugging:**
+   - Add diagnostic endpoints
+   - Log provider initialization
+   - Log each fallback attempt
+
+---
+
+## Related Documentation
+
+- **Environment Configuration:** `docs/dev/environment-setup.md`
+- **Database Patterns:** `docs/architecture/implementation-patterns-consistency-rules.md`
+- **Error Handling:** `docs/architecture/error-handling-patterns.md`
+- **STT Implementation:** `docs/stories/0-11-voice-stt-infrastructure.md`
+
+---
+
+## Story 1.5.3 Updates: Unified AI Services Architecture
+
+### Overview
+
+Story 1.5.3 introduced unified patterns across all AI modalities (text/image/audio) with:
+- **AIProviderBase:** Single abstract class for all AI providers
+- **Cost Calculator:** Unified pricing utility with environment variable overrides
+- **React Native Hooks:** Standardized hooks for all three modalities
+- **Consistent Patterns:** Polymorphism, fallback chains, cost tracking
+
+### Unified AIProviderBase
+
+All AI providers now inherit from `app/services/ai_provider_base.py`:
 
 ```python
-# weave-api/app/services/ai/modules/onboarding_coach.py
-from app.services.ai.ai_module_base import AIModuleBase
+from app.services.ai_provider_base import AIProviderBase
 
-class OnboardingCoachModule(AIModuleBase):
-    """
-    Epic 1, Story 1.8: Generate goal breakdown from vague input
-    Epic 2, Story 2.3: Reused for creating new goals
-
-    Operations:
-    - generate_goal_breakdown: Parse goal → Q-goals + binds
-    - create_identity_doc_v1: Generate initial identity document
-    """
-
-    def get_module_name(self) -> str:
-        return "onboarding_coach"
-
-    async def execute(self, user_id: str, operation_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        if operation_type == "generate_goal_breakdown":
-            return await self._generate_goal_breakdown(user_id, params)
-        elif operation_type == "create_identity_doc_v1":
-            return await self._create_identity_doc(user_id, params)
-
-    async def _generate_goal_breakdown(self, user_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        # Build context
-        context = await self.build_context(user_id, "generate_goal_breakdown")
-
-        # Call AI provider
-        prompt = f"""
-        Parse the following goal into Q-goals and consistent actions:
-
-        Goal: {params['title']}
-        Description: {params['description']}
-        Motivation: {params['motivation']}
-
-        Generate 2-4 measurable Q-goals and 3-5 daily/weekly actions.
-        """
-
-        result = await self.provider.call_ai(
-            input={"messages": [{"role": "user", "content": prompt}]},
-            context=context
+class MyAIProvider(AIProviderBase):
+    def __init__(self, api_key: str, db=None):
+        super().__init__(db)  # Initialize base (enables cost tracking)
+        self.api_key = api_key
+    
+    def get_provider_name(self) -> str:
+        return "my-provider-name"
+    
+    def is_available(self) -> bool:
+        return self.api_key is not None
+    
+    # Modality-specific method (complete/analyze_image/transcribe)
+    async def complete(self, prompt: str) -> dict:
+        # Call AI API
+        result = await self.api_client.generate(prompt)
+        
+        # Log to ai_runs table for cost tracking
+        self.log_to_ai_runs(
+            user_id=user_id,
+            operation_type='text_generation',
+            input_tokens=result.input_tokens,
+            output_tokens=result.output_tokens,
+            cost_usd=result.cost,
+            duration_ms=result.duration
         )
+        
+        return result
+```
 
-        # Validate and return structured output
-        return {
-            "qgoals": result["qgoals"],
-            "binds": result["binds"]
+**Inherited Methods:**
+- `log_to_ai_runs()` - Logs all AI calls to `ai_runs` table
+- `check_rate_limit()` - Checks user's tier limits (admin users bypass)
+
+### Cost Calculator Utility
+
+**Location:** `app/utils/cost_calculator.py`
+
+Provides model-specific pricing with environment variable overrides:
+
+```python
+from app.utils.cost_calculator import (
+    calculate_text_cost,
+    calculate_image_cost,
+    calculate_audio_cost,
+    get_pricing_table
+)
+
+# Text AI
+cost = calculate_text_cost('gpt-4o-mini', input_tokens=1000, output_tokens=500)
+# Returns: 0.000450 (= 0.15 * 1000/1M + 0.60 * 500/1M)
+
+# Image AI
+cost = calculate_image_cost('gemini-3-flash', image_count=1)
+# Returns: 0.0005
+
+# Audio AI
+cost = calculate_audio_cost('assemblyai', duration_seconds=60)
+# Returns: 0.0025 (= 60 * 0.00004167)
+```
+
+**Pricing Configuration (Environment Variables):**
+
+```bash
+# Text AI (per million tokens)
+GPT4O_MINI_INPUT_COST=0.15
+GPT4O_MINI_OUTPUT_COST=0.60
+CLAUDE_SONNET_INPUT_COST=3.00
+CLAUDE_SONNET_OUTPUT_COST=15.00
+
+# Image AI (per image)
+GEMINI_FLASH_IMAGE_COST=0.0005
+GPT4O_VISION_IMAGE_COST=0.02
+
+# Audio AI
+ASSEMBLYAI_COST_PER_HOUR=0.15
+WHISPER_COST_PER_MINUTE=0.006
+```
+
+**View pricing table:**
+```bash
+cd weave-api
+uv run python -m app.utils.cost_calculator
+```
+
+### Provider Decision Tree
+
+| Use Case | Primary Provider | Fallback | Cost (Input/Output per MTok) |
+|----------|------------------|----------|------------------------------|
+| **Text Generation** (Triad, Journal) | GPT-4o-mini | Claude 3.7 Sonnet | $0.15/$0.60 → $3.00/$15.00 |
+| **Complex Reasoning** (Onboarding) | Claude 3.7 Sonnet | GPT-4o | $3.00/$15.00 → $2.50/$10.00 |
+| **Image Analysis** (Proof validation) | Gemini 3.0 Flash | GPT-4o Vision | $0.0005 → $0.02 per image |
+| **Voice Transcription** (STT) | AssemblyAI | Whisper | $0.15/hr → $0.006/min |
+
+### React Native Hooks (Story 1.5.3)
+
+#### useAIChat Hook (Text AI)
+
+**Location:** `weave-mobile/src/hooks/useAIChat.ts`
+
+```tsx
+import { useAIChat } from '@/hooks/useAIChat';
+
+function TriadScreen() {
+  const { generate, isGenerating, error, data } = useAIChat();
+  
+  const handleGenerate = async () => {
+    try {
+      const result = await generate({
+        prompt: "Generate 3 tasks for my fitness goal today",
+        context: {
+          user_id: userId,
+          operation_type: 'triad_generation',
+          max_tokens: 500
         }
+      });
+      
+      console.log(result.text);           // AI-generated text
+      console.log(result.provider);       // 'gpt-4o-mini' or 'claude-sonnet'
+      console.log(result.cost_usd);       // Cost tracking
+      console.log(result.tokens_used);    // {input: 120, output: 300}
+      
+    } catch (err) {
+      if (err.name === 'RateLimitException') {
+        alert(`Rate limit reached. Retry in ${err.retryAfter} seconds`);
+      }
+    }
+  };
+  
+  return (
+    <Button onPress={handleGenerate} disabled={isGenerating}>
+      {isGenerating ? "Generating..." : "Generate Triad"}
+    </Button>
+  );
+}
 ```
 
-**2. Triad Planner Module**
+**Features:**
+- ✅ 5-minute TanStack Query cache (stale-while-revalidate)
+- ✅ Automatic retry (3 attempts: 1s, 2s, 4s backoff)
+- ✅ Rate limit handling (HTTP 429 with `retryAfter`)
+- ✅ Abort signal support (`signal: abortController.signal`)
 
-```python
-class TriadPlannerModule(AIModuleBase):
-    """
-    Epic 4, Story 4.3: Generate tomorrow's 3-task plan after journal
+#### useImageAnalysis Hook (Image AI)
 
-    Operations:
-    - generate_triad: Create 3 tasks for next day
-    """
+**Location:** `weave-mobile/src/hooks/useImageAnalysis.ts`
 
-    def get_module_name(self) -> str:
-        return "triad_planner"
+```tsx
+import { useImageAnalysis } from '@/hooks/useImageAnalysis';
 
-    async def execute(self, user_id: str, operation_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        # Build context: goals + history + today's journal
-        context = await self.build_context(user_id, "generate_triad")
-
-        # Generate triad
-        prompt = f"""
-        Based on user's goals and today's reflection, generate 3 tasks for tomorrow.
-
-        Goals: {context['goals']}
-        Today's Progress: {context['today_completions']}
-        Journal: {context['journal_entry']}
-
-        Generate 3 specific, actionable tasks.
-        """
-
-        result = await self.provider.call_ai(...)
-        return {"triad_tasks": result["tasks"]}
+function ProofCaptureScreen() {
+  const { analyze, isAnalyzing, error, data } = useImageAnalysis();
+  
+  const handleAnalyze = async (imageUri: string) => {
+    const result = await analyze({
+      imageUri,
+      operations: ['proof_validation', 'ocr'],
+      bindDescription: 'Workout at gym with weights'
+    });
+    
+    console.log(result.proof_validated);  // true/false
+    console.log(result.quality_score);    // 1-5
+    console.log(result.extracted_text);   // OCR text or null
+    console.log(result.categories);       // [{label: 'gym', confidence: 0.9}]
+    console.log(result.provider);         // 'gemini-3-flash' or 'gpt-4o-vision'
+  };
+  
+  return (
+    <Button onPress={() => handleAnalyze(imageUri)}>
+      {isAnalyzing ? "Analyzing..." : "Validate Proof"}
+    </Button>
+  );
+}
 ```
 
-**3. Daily Recap Module**
+**Features:**
+- ✅ NO caching (each image is unique)
+- ✅ Automatic retry (3 attempts)
+- ✅ Rate limit: 5 images/day (free tier)
 
-```python
-class DailyRecapModule(AIModuleBase):
-    """
-    Epic 4, Story 4.3: Generate AI feedback after reflection
+#### useVoiceTranscription Hook (Audio AI)
 
-    Operations:
-    - generate_recap: Create affirming insight + blocker insight + suggestions
-    """
-    pass
+**Location:** `weave-mobile/src/hooks/useVoiceTranscription.ts`
+
+```tsx
+import { useVoiceTranscription } from '@/hooks/useVoiceTranscription';
+
+function VoiceRecordScreen() {
+  const { transcribe, isTranscribing, error, data } = useVoiceTranscription();
+  
+  const handleTranscribe = async (audioUri: string) => {
+    const result = await transcribe({
+      audioUri,
+      language: 'en',
+      maxDuration: 300
+    });
+    
+    console.log(result.transcript);    // Transcribed text
+    console.log(result.confidence);    // 0.0-1.0 accuracy score
+    console.log(result.duration_sec);  // Audio duration
+    console.log(result.provider);      // 'assemblyai' or 'whisper'
+  };
+  
+  return (
+    <Button onPress={() => handleTranscribe(audioUri)}>
+      {isTranscribing ? "Transcribing..." : "Transcribe Audio"}
+    </Button>
+  );
+}
 ```
 
-**4. Dream Self Advisor Module**
+**Features:**
+- ✅ NO caching (each recording is unique)
+- ✅ Automatic retry (3 attempts)
+- ✅ Rate limit: 50 transcriptions/day (free tier)
 
-```python
-class DreamSelfAdvisorModule(AIModuleBase):
-    """
-    Epic 6, Story 6.1, 6.2: Conversational AI coaching
+### Common Patterns Across All Hooks
 
-    Operations:
-    - chat_response: Context-aware coaching conversation
-    """
-    pass
+**1. Loading States:**
+```tsx
+{isGenerating && <Text>Generating...</Text>}
+{isAnalyzing && <Text>Analyzing image...</Text>}
+{isTranscribing && <Text>Transcribing...</Text>}
 ```
 
-**5. AI Insights Engine Module**
-
-```python
-class AIInsightsModule(AIModuleBase):
-    """
-    Epic 6, Story 6.4: Weekly pattern analysis
-
-    Operations:
-    - generate_weekly_insights: Pattern detection, trajectory analysis
-    """
-    pass
+**2. Error Handling:**
+```tsx
+if (error) {
+  if (error.name === 'RateLimitException') {
+    return <Text>Rate limit reached. Retry in {error.retryAfter}s</Text>;
+  }
+  return <Text>Error: {error.message}</Text>;
+}
 ```
+
+**3. Abort Requests:**
+```tsx
+const abortController = new AbortController();
+
+const result = await generate(request, { signal: abortController.signal });
+
+// Cancel if user navigates away
+return () => abortController.abort();
+```
+
+### Integration Checklist (Updated for Story 1.5.3)
+
+When integrating a new AI service:
+
+- [ ] **1. Provider Class**
+  - [ ] Inherit from `AIProviderBase`
+  - [ ] Implement `get_provider_name()` and `is_available()`
+  - [ ] Accept optional `db` parameter in `__init__`
+  - [ ] Call `super().__init__(db)`
+  - [ ] Implement modality-specific method (`complete`/`analyze_image`/`transcribe`)
+  - [ ] Call `self.log_to_ai_runs()` after successful API call
+
+- [ ] **2. Cost Tracking**
+  - [ ] Add pricing to `app/utils/cost_calculator.py`
+  - [ ] Add environment variables for pricing overrides
+  - [ ] Test cost calculation with example inputs
+
+- [ ] **3. React Native Hook**
+  - [ ] Use TanStack Query `useMutation` pattern
+  - [ ] Implement retry with exponential backoff (3 attempts)
+  - [ ] Handle HTTP 429 rate limit errors
+  - [ ] Support abort signal
+  - [ ] Add loading/error states
+  - [ ] Write unit tests in `src/hooks/__tests__/`
+
+- [ ] **4. Documentation**
+  - [ ] Add to this guide with examples
+  - [ ] Update provider decision tree
+  - [ ] Document pricing and rate limits
+
+- [ ] **5. Testing**
+  - [ ] Unit tests for provider class
+  - [ ] Integration tests for fallback chain
+  - [ ] React Native hook tests
+  - [ ] Cost tracking validation
+
+### Architecture Benefits
+
+**Polymorphism:**
+- All providers share common interface (`get_provider_name`, `is_available`, `log_to_ai_runs`)
+- Enables generic fallback chain logic
+
+**DRY Principle:**
+- Cost tracking written once in `AIProviderBase`
+- Rate limiting logic unified across modalities
+- Consistent error handling patterns
+
+**Maintainability:**
+- Adding new provider = implement 3 methods + add pricing
+- Pricing updates via environment variables (no code changes)
+- Centralized cost tracking for budget enforcement
 
 ---
 
-## Integration with API Endpoints
-
-### Example: Using AI Orchestrator in API Route
-
-```python
-# weave-api/app/api/routers/goals.py
-from app.services.ai.ai_orchestrator import get_orchestrator
-
-@router.post("/")
-async def create_goal(
-    goal_data: GoalCreate,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Epic 2, Story 2.3: Create New Goal (AI-Assisted)
-    """
-
-    # Get AI orchestrator
-    orchestrator = get_orchestrator()
-
-    # Call AI to generate goal breakdown
-    ai_result = await orchestrator.execute_ai_operation(
-        user_id=str(user.id),
-        operation_type="generate_goal_breakdown",
-        params={
-            "title": goal_data.title,
-            "description": goal_data.description,
-            "motivation": goal_data.motivation
-        }
-    )
-
-    # Create goal with AI-generated Q-goals
-    goal = Goal(
-        user_id=user.id,
-        title=goal_data.title,
-        description=goal_data.description,
-        status="active"
-    )
-    db.add(goal)
-    await db.flush()
-
-    # Create Q-goals from AI output
-    for qgoal_data in ai_result["qgoals"]:
-        qgoal = QGoal(
-            goal_id=goal.id,
-            title=qgoal_data["title"],
-            metric=qgoal_data["metric"]
-        )
-        db.add(qgoal)
-
-    await db.commit()
-    return {"data": goal.to_dict(), "meta": {...}}
-```
-
----
-
-## AI Module → Story Mapping
-
-| AI Module | Operation Type | Used In Story | Epic |
-|-----------|----------------|---------------|------|
-| **Onboarding Coach** | `generate_goal_breakdown` | 1.8, 2.3 | 1, 2 |
-| | `create_identity_doc_v1` | 1.6, 1.7 | 1 |
-| **Triad Planner** | `generate_triad` | 4.3 | 4 |
-| **Daily Recap** | `generate_recap` | 4.3 | 4 |
-| **Dream Self Advisor** | `chat_response` | 6.1, 6.2 | 6 |
-| **AI Insights Engine** | `generate_weekly_insights` | 6.4 | 6 |
-
----
-
-## Provider Decision Tree
-
-### When to Use Which Provider
-
-```
-Text Generation?
-├─ Routine/High Volume (Triad, Recap)? → GPT-4o-mini (primary), Claude (fallback)
-└─ Complex Reasoning (Onboarding, Chat)? → Claude 3.7 Sonnet (primary), GPT-4o (fallback)
-
-Image Analysis?
-└─ All cases → Gemini 3.0 Flash (primary), GPT-4o Vision (fallback)
-
-Audio Transcription?
-└─ All cases → AssemblyAI (primary), Whisper (fallback)
-```
-
-### Cost Optimization Strategy
-
-1. **Use cheapest provider first:** GPT-4o-mini for 90% of text ops
-2. **Cache aggressively:** Store results with `input_hash` (8-hour TTL)
-3. **Batch operations:** Journal submission triggers both Recap + Triad (1 context fetch)
-4. **Rate limit strictly:** Prevent runaway costs
-5. **Monitor daily:** Check `ai_runs` table for cost anomalies
-
-**Budget:** $2,500/month at 10K users = $0.25/user/month
-
----
-
-## Next Steps
-
-1. **When implementing AI features:**
-   - Use AI Orchestrator (don't call providers directly)
-   - Reference this guide for module selection
-   - Follow cost tracking and rate limiting patterns
-
-2. **When adding new AI modules:**
-   - Inherit from `AIModuleBase`
-   - Register in `ModuleRegistry`
-   - Update operation mapping
-   - Add to this guide
-
-3. **Documentation updates:**
-   - Keep this file in sync with `docs/dev/backend-api-integration.md`
-   - Update `CLAUDE.md` when new patterns emerge
-
----
-
-## References
-
-- **Backend API Integration:** `docs/dev/backend-api-integration.md` (API endpoints)
-- **Backend Patterns Guide:** `docs/dev/backend-patterns-guide.md` (FastAPI patterns)
-- **Architecture:** `docs/architecture/core-architectural-decisions.md`
-- **AI Architecture:** `docs/idea/ai.md` (lines 79-269 - AI modules detailed spec)
-
-**Created:** 2025-12-22
-**Story:** 1.5.3 (AI Services Standardization + AI Orchestration)
-**Maintainer:** Development Team
+**Last Updated:** 2025-12-23 (Story 1.5.3 completion - Unified AI Services)
+**Next Review:** When adding new AI provider or modality

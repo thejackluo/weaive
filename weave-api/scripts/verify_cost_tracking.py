@@ -26,8 +26,8 @@ from supabase import create_client
 # Load environment variables
 load_dotenv()
 
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_KEY')  # Use service key for admin access
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")  # Use service key for admin access
 
 # Budget constants
 DAILY_BUDGET_USD = 83.33
@@ -38,16 +38,16 @@ ALERT_THRESHOLD = 0.80
 
 def print_header(title):
     """Print formatted header."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print(f"  {title}")
-    print("="*70)
+    print("=" * 70)
 
 
 def print_section(title):
     """Print formatted section."""
-    print("\n" + "-"*70)
+    print("\n" + "-" * 70)
     print(f"  {title}")
-    print("-"*70)
+    print("-" * 70)
 
 
 def check_database_connection():
@@ -63,7 +63,7 @@ def check_database_connection():
         client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
         # Test query
-        _ = client.table('ai_runs').select('id').limit(1).execute()
+        _ = client.table("ai_runs").select("id").limit(1).execute()
 
         print("\n✅ Connected to Supabase")
         print(f"   URL: {SUPABASE_URL}")
@@ -82,9 +82,15 @@ def check_recent_ai_runs(client):
     try:
         five_min_ago = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
 
-        result = client.table('ai_runs').select(
-            'id, provider, model, input_tokens, output_tokens, cost_estimate, status, created_at'
-        ).gte('created_at', five_min_ago).order('created_at', desc=True).execute()
+        result = (
+            client.table("ai_runs")
+            .select(
+                "id, provider, model, input_tokens, output_tokens, cost_estimate, status, created_at"
+            )
+            .gte("created_at", five_min_ago)
+            .order("created_at", desc=True)
+            .execute()
+        )
 
         runs = result.data
 
@@ -95,22 +101,24 @@ def check_recent_ai_runs(client):
 
         print(f"\n✅ Found {len(runs)} AI run(s) in last 5 minutes:\n")
 
-        total_cost = Decimal('0')
+        total_cost = Decimal("0")
 
         for run in runs:
-            provider = run['provider']
-            model = run['model']
-            input_tokens = run['input_tokens'] or 0
-            output_tokens = run['output_tokens'] or 0
-            cost = Decimal(str(run['cost_estimate'] or 0))
-            status = run['status']
-            created_at = run['created_at']
+            provider = run["provider"]
+            model = run["model"]
+            input_tokens = run["input_tokens"] or 0
+            output_tokens = run["output_tokens"] or 0
+            cost = Decimal(str(run["cost_estimate"] or 0))
+            status = run["status"]
+            created_at = run["created_at"]
 
             total_cost += cost
 
-            status_emoji = "✅" if status == 'success' else "❌"
+            status_emoji = "✅" if status == "success" else "❌"
 
-            print(f"{status_emoji} {provider:12} | {model:25} | {input_tokens:4} in + {output_tokens:4} out | ${cost:.6f} | {created_at[:19]}")
+            print(
+                f"{status_emoji} {provider:12} | {model:25} | {input_tokens:4} in + {output_tokens:4} out | ${cost:.6f} | {created_at[:19]}"
+            )
 
         print(f"\n💵 Total cost (last 5 min): ${total_cost:.6f}")
 
@@ -129,30 +137,31 @@ def check_daily_cost(client):
         # Get all runs for today
         today = datetime.utcnow().date().isoformat()
 
-        result = client.rpc('get_daily_cost_by_provider', {
-            'target_date': today
-        }).execute()
+        result = client.rpc("get_daily_cost_by_provider", {"target_date": today}).execute()
 
         # If RPC doesn't exist, fall back to direct query
         if not result.data:
-            result = client.table('ai_runs').select(
-                'provider, model, cost_estimate'
-            ).gte('created_at', f'{today}T00:00:00').execute()
+            result = (
+                client.table("ai_runs")
+                .select("provider, model, cost_estimate")
+                .gte("created_at", f"{today}T00:00:00")
+                .execute()
+            )
 
             # Manual aggregation
             provider_costs = {}
-            total_cost = Decimal('0')
+            total_cost = Decimal("0")
             total_calls = 0
 
             for run in result.data:
-                provider = run['provider']
-                cost = Decimal(str(run['cost_estimate'] or 0))
+                provider = run["provider"]
+                cost = Decimal(str(run["cost_estimate"] or 0))
 
                 if provider not in provider_costs:
-                    provider_costs[provider] = {'cost': Decimal('0'), 'count': 0}
+                    provider_costs[provider] = {"cost": Decimal("0"), "count": 0}
 
-                provider_costs[provider]['cost'] += cost
-                provider_costs[provider]['count'] += 1
+                provider_costs[provider]["cost"] += cost
+                provider_costs[provider]["count"] += 1
                 total_cost += cost
                 total_calls += 1
 
@@ -169,11 +178,17 @@ def check_daily_cost(client):
             budget_pct = float(total_cost / Decimal(str(DAILY_BUDGET_USD)) * 100)
 
             if total_cost >= Decimal(str(DAILY_BUDGET_USD)):
-                print(f"\n🚨 BUDGET EXCEEDED: ${total_cost:.2f} / ${DAILY_BUDGET_USD:.2f} ({budget_pct:.1f}%)")
+                print(
+                    f"\n🚨 BUDGET EXCEEDED: ${total_cost:.2f} / ${DAILY_BUDGET_USD:.2f} ({budget_pct:.1f}%)"
+                )
             elif total_cost >= Decimal(str(DAILY_BUDGET_USD * ALERT_THRESHOLD)):
-                print(f"\n⚠️  BUDGET ALERT (80%): ${total_cost:.2f} / ${DAILY_BUDGET_USD:.2f} ({budget_pct:.1f}%)")
+                print(
+                    f"\n⚠️  BUDGET ALERT (80%): ${total_cost:.2f} / ${DAILY_BUDGET_USD:.2f} ({budget_pct:.1f}%)"
+                )
             else:
-                print(f"\n✅ Budget healthy: ${total_cost:.2f} / ${DAILY_BUDGET_USD:.2f} ({budget_pct:.1f}%)")
+                print(
+                    f"\n✅ Budget healthy: ${total_cost:.2f} / ${DAILY_BUDGET_USD:.2f} ({budget_pct:.1f}%)"
+                )
 
         return True
 
@@ -189,22 +204,25 @@ def check_user_costs(client):
     try:
         today = datetime.utcnow().date().isoformat()
 
-        result = client.table('ai_runs').select(
-            'user_id, cost_estimate'
-        ).gte('created_at', f'{today}T00:00:00').execute()
+        result = (
+            client.table("ai_runs")
+            .select("user_id, cost_estimate")
+            .gte("created_at", f"{today}T00:00:00")
+            .execute()
+        )
 
         # Aggregate by user
         user_costs = {}
 
         for run in result.data:
-            user_id = run['user_id']
-            cost = Decimal(str(run['cost_estimate'] or 0))
+            user_id = run["user_id"]
+            cost = Decimal(str(run["cost_estimate"] or 0))
 
             if user_id not in user_costs:
-                user_costs[user_id] = {'cost': Decimal('0'), 'count': 0}
+                user_costs[user_id] = {"cost": Decimal("0"), "count": 0}
 
-            user_costs[user_id]['cost'] += cost
-            user_costs[user_id]['count'] += 1
+            user_costs[user_id]["cost"] += cost
+            user_costs[user_id]["count"] += 1
 
         if not user_costs:
             print("\n⚠️  No user costs found for today")
@@ -214,11 +232,11 @@ def check_user_costs(client):
         print(f"👥 Total users: {len(user_costs)}\n")
 
         # Sort by cost descending
-        sorted_users = sorted(user_costs.items(), key=lambda x: x[1]['cost'], reverse=True)
+        sorted_users = sorted(user_costs.items(), key=lambda x: x[1]["cost"], reverse=True)
 
         for user_id, data in sorted_users[:10]:  # Show top 10
-            cost = data['cost']
-            count = data['count']
+            cost = data["cost"]
+            count = data["count"]
 
             # Check against free/paid budgets (assume free for now)
             free_pct = float(cost / Decimal(str(FREE_USER_DAILY_BUDGET_USD)) * 100)
@@ -252,9 +270,14 @@ def check_cost_accuracy(client):
 
     try:
         # Get recent runs with known pricing
-        result = client.table('ai_runs').select(
-            'provider, model, input_tokens, output_tokens, cost_estimate'
-        ).eq('status', 'success').not_.is_('input_tokens', 'null').limit(5).execute()
+        result = (
+            client.table("ai_runs")
+            .select("provider, model, input_tokens, output_tokens, cost_estimate")
+            .eq("status", "success")
+            .not_.is_("input_tokens", "null")
+            .limit(5)
+            .execute()
+        )
 
         runs = result.data
 
@@ -266,42 +289,51 @@ def check_cost_accuracy(client):
 
         # Known pricing (as of 2025-12-19)
         pricing = {
-            'openai': {
-                'gpt-4o-mini': {'input': 0.15 / 1_000_000, 'output': 0.60 / 1_000_000},
-                'gpt-4o': {'input': 2.50 / 1_000_000, 'output': 10.00 / 1_000_000},
+            "openai": {
+                "gpt-4o-mini": {"input": 0.15 / 1_000_000, "output": 0.60 / 1_000_000},
+                "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
             },
-            'anthropic': {
-                'claude-3-7-sonnet-20250219': {'input': 3.00 / 1_000_000, 'output': 15.00 / 1_000_000},
-                'claude-4-5-haiku-20250514': {'input': 1.00 / 1_000_000, 'output': 5.00 / 1_000_000},
+            "anthropic": {
+                "claude-3-7-sonnet-20250219": {
+                    "input": 3.00 / 1_000_000,
+                    "output": 15.00 / 1_000_000,
+                },
+                "claude-4-5-haiku-20250514": {
+                    "input": 1.00 / 1_000_000,
+                    "output": 5.00 / 1_000_000,
+                },
             },
-            'bedrock': {
-                'us.anthropic.claude-3-5-haiku-20241022-v1:0': {'input': 0.25 / 1_000_000, 'output': 1.25 / 1_000_000},
-                'claude-3-5-haiku': {'input': 0.25 / 1_000_000, 'output': 1.25 / 1_000_000},
+            "bedrock": {
+                "us.anthropic.claude-3-5-haiku-20241022-v1:0": {
+                    "input": 0.25 / 1_000_000,
+                    "output": 1.25 / 1_000_000,
+                },
+                "claude-3-5-haiku": {"input": 0.25 / 1_000_000, "output": 1.25 / 1_000_000},
             },
         }
 
         all_accurate = True
 
         for run in runs:
-            provider = run['provider']
-            model = run['model']
-            input_tokens = run['input_tokens']
-            output_tokens = run['output_tokens']
-            actual_cost = Decimal(str(run['cost_estimate']))
+            provider = run["provider"]
+            model = run["model"]
+            input_tokens = run["input_tokens"]
+            output_tokens = run["output_tokens"]
+            actual_cost = Decimal(str(run["cost_estimate"]))
 
             # Calculate expected cost
             if provider in pricing and model in pricing[provider]:
                 prices = pricing[provider][model]
-                expected_cost = Decimal(str(
-                    (input_tokens * prices['input']) + (output_tokens * prices['output'])
-                ))
+                expected_cost = Decimal(
+                    str((input_tokens * prices["input"]) + (output_tokens * prices["output"]))
+                )
 
                 diff = abs(actual_cost - expected_cost)
 
                 # Allow 0.1% tolerance for rounding
-                tolerance = expected_cost * Decimal('0.001')
+                tolerance = expected_cost * Decimal("0.001")
 
-                if diff <= tolerance or diff <= Decimal('0.000001'):
+                if diff <= tolerance or diff <= Decimal("0.000001"):
                     status = "✅"
                     accuracy = "ACCURATE"
                 else:
@@ -309,9 +341,13 @@ def check_cost_accuracy(client):
                     accuracy = f"MISMATCH (diff: ${diff:.9f})"
                     all_accurate = False
 
-                print(f"{status} {provider:10} | {model:25} | {input_tokens:4}+{output_tokens:4} tok | ${actual_cost:.6f} vs ${expected_cost:.6f} | {accuracy}")
+                print(
+                    f"{status} {provider:10} | {model:25} | {input_tokens:4}+{output_tokens:4} tok | ${actual_cost:.6f} vs ${expected_cost:.6f} | {accuracy}"
+                )
             else:
-                print(f"⚪ {provider:10} | {model:25} | {input_tokens:4}+{output_tokens:4} tok | ${actual_cost:.6f} | UNKNOWN PRICING")
+                print(
+                    f"⚪ {provider:10} | {model:25} | {input_tokens:4}+{output_tokens:4} tok | ${actual_cost:.6f} | UNKNOWN PRICING"
+                )
 
         if all_accurate:
             print("\n✅ All cost calculations are accurate!")
@@ -327,9 +363,9 @@ def check_cost_accuracy(client):
 
 def main():
     """Run all cost tracking verification checks."""
-    print("\n" + "🚀 "*20)
+    print("\n" + "🚀 " * 20)
     print("AI COST TRACKING VERIFICATION")
-    print("🚀 "*20)
+    print("🚀 " * 20)
 
     # Connect to database
     client = check_database_connection()
@@ -340,10 +376,10 @@ def main():
 
     # Run checks
     results = {
-        'recent_runs': check_recent_ai_runs(client),
-        'daily_cost': check_daily_cost(client),
-        'user_costs': check_user_costs(client),
-        'cost_accuracy': check_cost_accuracy(client),
+        "recent_runs": check_recent_ai_runs(client),
+        "daily_cost": check_daily_cost(client),
+        "user_costs": check_user_costs(client),
+        "cost_accuracy": check_cost_accuracy(client),
     }
 
     # Summary
@@ -356,9 +392,9 @@ def main():
         status = "✅" if result else "❌"
         print(f"\n{status} {check.replace('_', ' ').title()}: {'PASSED' if result else 'FAILED'}")
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"💵 Overall: {passed}/{total} checks passed")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     if passed == total:
         print("\n✅ Cost tracking is working correctly!")
@@ -369,8 +405,8 @@ def main():
     print("   1. Check Supabase dashboard for ai_runs table")
     print("   2. Run SQL queries in docs/testing/ai-service-real-api-testing.md")
     print("   3. Monitor daily costs to ensure budget compliance")
-    print(f"\n{'='*70}\n")
+    print(f"\n{'=' * 70}\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

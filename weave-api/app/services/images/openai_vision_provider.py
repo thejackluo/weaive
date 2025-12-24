@@ -67,13 +67,15 @@ RULES:
 - IMPORTANT: All text must be properly escaped for JSON (newlines as \\n, quotes as \\", etc.)
 """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, db=None):
         """
         Initialize OpenAI provider
 
         Args:
             api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
         """
+        super().__init__(db)  # Initialize AIProviderBase
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
 
         if not self.api_key:

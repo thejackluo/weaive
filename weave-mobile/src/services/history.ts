@@ -11,7 +11,7 @@ import { getApiBaseUrl } from '@/utils/api';
  */
 export interface HistoryItem {
   id: string;
-  type: 'completion' | 'journal' | 'goal_created' | 'goal_archived';
+  type: 'completion' | 'journal' | 'goal_created' | 'goal_archived' | 'weave_chat';
   timestamp: string;
   description: string;
   related_goal_id?: string | null;

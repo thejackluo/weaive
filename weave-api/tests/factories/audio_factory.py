@@ -128,7 +128,7 @@ def create_test_audio_file_multipart(
         >>> files = {'file': create_test_audio_file_multipart()}
         >>> response = client.post('/api/transcribe', files=files)
     """
-    format = filename.split('.')[-1]  # Extract format from filename
+    format = filename.split(".")[-1]  # Extract format from filename
     audio_bytes = create_test_audio_bytes(duration_sec=duration_sec, format=format)
     return (filename, audio_bytes, mime_type)
 

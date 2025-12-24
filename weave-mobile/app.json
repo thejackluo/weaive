@@ -16,11 +16,15 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.weavelight.app",
-      "associatedDomains": ["applinks:weavelight.app"],
+      "associatedDomains": [
+        "applinks:weavelight.app"
+      ],
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["weavelight"]
+            "CFBundleURLSchemes": [
+              "weavelight"
+            ]
           }
         ]
       }
@@ -40,7 +44,10 @@
               "scheme": "weavelight"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "edgeToEdgeEnabled": true,
@@ -50,7 +57,18 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": ["expo-router", "expo-web-browser"],
+    "plugins": [
+      "expo-router",
+      "expo-web-browser",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "weavelight",
+          "organization": "jackluo"
+        }
+      ]
+    ],
     "extra": {
       "router": {},
       "eas": {

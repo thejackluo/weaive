@@ -23,7 +23,9 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 @router.post("/check-cost-threshold")
 async def check_cost_threshold(
-    target_date: Optional[str] = Query(None, description="Date to check (YYYY-MM-DD), defaults to today"),
+    target_date: Optional[str] = Query(
+        None, description="Date to check (YYYY-MM-DD), defaults to today"
+    ),
     supabase: Client = Depends(get_supabase_client),
 ):
     """
@@ -60,7 +62,9 @@ async def check_cost_threshold(
 
 @router.get("/daily-cost")
 async def get_daily_cost(
-    target_date: Optional[str] = Query(None, description="Date to check (YYYY-MM-DD), defaults to today"),
+    target_date: Optional[str] = Query(
+        None, description="Date to check (YYYY-MM-DD), defaults to today"
+    ),
     supabase: Client = Depends(get_supabase_client),
 ):
     """
