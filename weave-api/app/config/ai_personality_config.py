@@ -5,20 +5,20 @@ Centralized personality system for AI coaching responses.
 Eventually will integrate with user's identity_docs for personalized coaching style.
 
 Personality Presets:
-- gen_c_default: Short, warm, friendly, gentle slay vibes
+- gen_z_default: Short, warm, friendly, gentle slay vibes
 - supportive_coach: Longer, encouraging, accountability-focused
 - concise_mentor: Ultra-brief, action-oriented
 - custom: Load from identity_docs.json (future)
 
 Environment variables:
-- AI_PERSONALITY: Personality preset name (default: gen_c_default)
-- AI_MESSAGE_MAX_LENGTH: Max words per message (default: 50 for gen_c)
+- AI_PERSONALITY: Personality preset name (default: gen_z_default)
+- AI_MESSAGE_MAX_LENGTH: Max words per message (default: 50 for gen_z)
 """
 
 import os
 from typing import Dict, Literal
 
-PersonalityPreset = Literal['gen_c_default', 'supportive_coach', 'concise_mentor', 'custom']
+PersonalityPreset = Literal['gen_z_default', 'supportive_coach', 'concise_mentor', 'custom']
 
 
 class AIPersonalityConfig:
@@ -26,7 +26,7 @@ class AIPersonalityConfig:
     AI personality configuration for coaching responses.
 
     Design Philosophy:
-    - Gen C vibes: short, thoughtful, warm, friendly
+    - Gen Z vibes: short, thoughtful, warm, friendly
     - Gentle slay energy: supportive but real
     - NOT corporate AI: no "stay motivated" generic advice
     - Evidence-based: reference user's actual data
@@ -36,8 +36,8 @@ class AIPersonalityConfig:
     # Current Personality
     # ========================================
 
-    PERSONALITY: PersonalityPreset = os.getenv('AI_PERSONALITY', 'gen_c_default')
-    """Active personality preset (default: gen_c_default)"""
+    PERSONALITY: PersonalityPreset = os.getenv('AI_PERSONALITY', 'gen_z_default')
+    """Active personality preset (default: gen_z_default)"""
 
     # ========================================
     # Message Length Constraints
@@ -82,7 +82,7 @@ class AIPersonalityConfig:
                 "not the vibe rn but you showed up - that's what counts",
             ],
             'max_words': 50,
-            'style_tags': ['warm', 'concise', 'gen_c', 'gentle_slay'],
+            'style_tags': ['warm', 'concise', 'gen_z', 'gentle_slay'],
         },
 
         'supportive_coach': {
@@ -197,8 +197,8 @@ class AIPersonalityConfig:
         """Validate configuration on startup."""
         # Ensure personality exists
         if cls.PERSONALITY not in cls.PRESETS:
-            print(f"⚠️  AI_PERSONALITY='{cls.PERSONALITY}' not found, defaulting to 'gen_c_default'")
-            cls.PERSONALITY = 'gen_c_default'
+            print(f"⚠️  AI_PERSONALITY='{cls.PERSONALITY}' not found, defaulting to 'gen_z_default'")
+            cls.PERSONALITY = 'gen_z_default'
 
         # Ensure max words is reasonable
         if cls.MESSAGE_MAX_WORDS < 10 or cls.MESSAGE_MAX_WORDS > 500:
