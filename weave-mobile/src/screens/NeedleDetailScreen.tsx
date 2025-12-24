@@ -137,7 +137,7 @@ export function NeedleDetailScreen() {
           <Pressable onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color="#ffffff" />
           </Pressable>
-          <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
+          <RNText style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
             Loading...
           </RNText>
         </View>
@@ -153,16 +153,16 @@ export function NeedleDetailScreen() {
           <Pressable onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color="#ffffff" />
           </Pressable>
-          <Text style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
+          <RNText style={[styles.headerTitle, { fontSize: 18, fontWeight: '600', color: '#ffffff' }]}>
             Error
           </RNText>
         </View>
         <View style={styles.errorContainer}>
-          <Text style={{ fontSize: 15, color: '#ef4444' }}>
+          <RNText style={{ fontSize: 15, color: '#ef4444' }}>
             {error?.message || 'Goal not found'}
           </RNText>
           <TouchableOpacity onPress={handleBack} style={[styles.backToListButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}>
-            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Back to Dashboard</RNText>
+            <RNText style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Back to Dashboard</RNText>
           </TouchableOpacity>
         </View>
       </View>
@@ -221,7 +221,7 @@ export function NeedleDetailScreen() {
           {updateGoalMutation.isPending ? (
             <ActivityIndicator size="small" color="#3b82f6" />
           ) : (
-            <Text style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
+            <RNText style={{ fontSize: 14, fontWeight: '600', color: '#3b82f6' }}>
               {isEditMode ? 'Done' : 'Edit'}
             </RNText>
           )}
@@ -247,7 +247,7 @@ export function NeedleDetailScreen() {
 
         {/* Why Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
+          <RNText style={[styles.sectionLabel, { fontSize: 14, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: 0.5 }]}>
             Why this matters
           </RNText>
           {isEditMode ? (
@@ -267,7 +267,7 @@ export function NeedleDetailScreen() {
               placeholderTextColor="#71717a"
             />
           ) : (
-            <Text style={[styles.whyText, { fontSize: 15, color: '#a1a1aa' }]}>
+            <RNText style={[styles.whyText, { fontSize: 15, color: '#a1a1aa' }]}>
               {editedWhy || 'No description provided'}
             </RNText>
           )}
@@ -276,28 +276,28 @@ export function NeedleDetailScreen() {
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
-            <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
+            <RNText style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               7-day consistency
             </RNText>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
+            <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.consistency_7d}%
             </RNText>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
-            <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
+            <RNText style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               Total completions
             </RNText>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
+            <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.total_completions}
             </RNText>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
-            <Text style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
+            <RNText style={[styles.statLabel, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
               Current streak
             </RNText>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
+            <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
               {stats.current_streak}
             </RNText>
           </View>
@@ -305,16 +305,16 @@ export function NeedleDetailScreen() {
 
         {/* Milestones Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
+          <RNText style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Milestones
           </RNText>
           {milestones.map((milestone) => (
             <View key={milestone.id} style={[styles.milestoneCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
               <View style={styles.milestoneHeader}>
-                <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
+                <RNText style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                   {milestone.title}
                 </RNText>
-                <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
+                <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
                   {milestone.progress}%
                 </RNText>
               </View>
@@ -329,7 +329,7 @@ export function NeedleDetailScreen() {
                   ]}
                 />
               </View>
-              <Text style={[styles.milestoneValues, { fontSize: 14, color: '#a1a1aa' }]}>
+              <RNText style={[styles.milestoneValues, { fontSize: 14, color: '#a1a1aa' }]}>
                 {milestone.current} / {milestone.target}
               </RNText>
             </View>
@@ -338,17 +338,17 @@ export function NeedleDetailScreen() {
 
         {/* Binds Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
+          <RNText style={[styles.sectionTitle, { fontSize: 15, fontWeight: '600', color: '#ffffff' }]}>
             Your Binds
           </RNText>
           {binds.map((bind) => (
             <View key={bind.id} style={[styles.bindCard, { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
               <View style={styles.bindContent}>
                 <View style={styles.bindInfo}>
-                  <Text style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
+                  <RNText style={{ fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
                     {bind.title}
                   </RNText>
-                  <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
+                  <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
                     {bind.frequency}
                   </RNText>
                 </View>
@@ -375,7 +375,7 @@ export function NeedleDetailScreen() {
               {archiveGoalMutation.isPending ? (
                 <ActivityIndicator size="small" color="#ef4444" />
               ) : (
-                <Text style={{ fontSize: 15, fontWeight: '500', color: '#ef4444', textAlign: 'center' }}>
+                <RNText style={{ fontSize: 15, fontWeight: '500', color: '#ef4444', textAlign: 'center' }}>
                   Archive Needle
                 </RNText>
               )}

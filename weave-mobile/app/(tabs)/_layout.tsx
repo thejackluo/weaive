@@ -187,7 +187,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                 <View style={styles.chatHeader}>
                   <View style={styles.chatHeaderLeft}>
                     <SymbolView name="sparkles" size={26} tintColor="#a78bfa" />
-                    <Text style={styles.chatHeaderTitle}>
+                    <RNText style={styles.chatHeaderTitle}>
                       Weave Chat
                     </RNText>
                   </View>
@@ -212,19 +212,19 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                       <View style={styles.welcomeIcon}>
                         <SymbolView name="sparkles" size={36} tintColor="#a78bfa" />
                       </View>
-                      <Text style={styles.welcomeTitle}>
+                      <RNText style={styles.welcomeTitle}>
                         Your AI Coach
                       </RNText>
-                      <Text style={styles.welcomeSubtitle}>
+                      <RNText style={styles.welcomeSubtitle}>
                         Epic 6: AI Coaching
                       </RNText>
                       <View style={styles.comingSoonBadge}>
-                        <Text style={styles.comingSoonText}>
+                        <RNText style={styles.comingSoonText}>
                           Coming Soon
                         </RNText>
                       </View>
 
-                      <Text style={styles.examplesTitle}>
+                      <RNText style={styles.examplesTitle}>
                         Try asking:
                       </RNText>
 
@@ -235,7 +235,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                           style={styles.exampleCard}
                         >
                           <SymbolView name="bubble.left.fill" size={18} tintColor="#a78bfa" />
-                          <Text style={styles.exampleText}>
+                          <RNText style={styles.exampleText}>
                             {message}
                           </RNText>
                         </TouchableOpacity>
@@ -252,7 +252,7 @@ function AIChatOverlay({ visible, onClose }: { visible: boolean; onClose: () => 
                             msg.isUser ? styles.userMessage : styles.aiMessage,
                           ]}
                         >
-                          <Text style={styles.messageText}>
+                          <RNText style={styles.messageText}>
                             {msg.text}
                           </RNText>
                         </View>

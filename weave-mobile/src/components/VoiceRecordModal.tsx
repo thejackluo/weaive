@@ -233,7 +233,7 @@ export function VoiceRecordModal({
                 {isComplete ? (
                   <MaterialIcons name="check" size={16} color="#ffffff" />
                 ) : (
-                  <Text style={{ fontSize: 14, color: '#ffffff' }}>
+                  <RNText style={{ fontSize: 14, color: '#ffffff' }}>
                     {index + 1}
                   </RNText>
                 )}
@@ -262,7 +262,7 @@ export function VoiceRecordModal({
       case 'record':
         return (
           <View style={styles.stepContent}>
-            <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 24, textAlign: 'center' }}>
+            <RNText style={{ fontSize: 28, fontWeight: '600', marginBottom: 24, textAlign: 'center' }}>
               Record Audio
             </RNText>
             <Text
@@ -288,7 +288,7 @@ export function VoiceRecordModal({
       case 'transcribing':
         return (
           <View style={styles.stepContent}>
-            <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 24, textAlign: 'center' }}>
+            <RNText style={{ fontSize: 28, fontWeight: '600', marginBottom: 24, textAlign: 'center' }}>
               {transcriptionProgress < 100 ? 'Uploading...' : 'Transcribing...'}
             </RNText>
             <Text
@@ -336,7 +336,7 @@ export function VoiceRecordModal({
       case 'preview':
         return (
           <View style={styles.stepContent}>
-            <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 24, textAlign: 'center' }}>
+            <RNText style={{ fontSize: 28, fontWeight: '600', marginBottom: 24, textAlign: 'center' }}>
               Review Transcript
             </RNText>
             <Text
@@ -363,7 +363,7 @@ export function VoiceRecordModal({
                     onPress={handleRetryTranscription}
                     style={[styles.button, { marginTop: 16, backgroundColor: '#27272a' }]}
                   >
-                    <Text style={{ fontSize: 14, color: '#fafafa', fontWeight: '600' }}>
+                    <RNText style={{ fontSize: 14, color: '#fafafa', fontWeight: '600' }}>
                       Retry Transcription
                     </RNText>
                   </Pressable>
@@ -385,7 +385,7 @@ export function VoiceRecordModal({
                     onPress={() => handleSaveTranscript(transcript)}
                     style={[styles.button, { marginTop: 16, backgroundColor: '#3b82f6' }]}
                   >
-                    <Text style={{ fontSize: 16, color: '#ffffff', fontWeight: '600' }}>
+                    <RNText style={{ fontSize: 16, color: '#ffffff', fontWeight: '600' }}>
                       Continue
                     </RNText>
                   </Pressable>
@@ -427,7 +427,7 @@ export function VoiceRecordModal({
               >
                 <MaterialIcons name="check" size={64} color="#ffffff" />
               </View>
-              <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 16, textAlign: 'center' }}>
+              <RNText style={{ fontSize: 28, fontWeight: '600', marginBottom: 16, textAlign: 'center' }}>
                 Saved!
               </RNText>
               <Text
@@ -461,7 +461,7 @@ export function VoiceRecordModal({
             },
           ]}
         >
-          <Text style={{ fontSize: 18, fontWeight: '600', color: '#fafafa' }}>
+          <RNText style={{ fontSize: 18, fontWeight: '600', color: '#fafafa' }}>
             Voice Recording
           </RNText>
           <Pressable onPress={handleClose} style={{ padding: 4 }}>

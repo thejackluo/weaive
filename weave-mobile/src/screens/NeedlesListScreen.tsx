@@ -50,10 +50,10 @@ export function NeedlesListScreen() {
     return (
       <View style={[styles.container, { backgroundColor: '#000000' }]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
+          <RNText style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
             Your Needles
           </RNText>
-          <Text style={[styles.subtitle, { fontSize: 16, color: '#a1a1aa' }]}>
+          <RNText style={[styles.subtitle, { fontSize: 16, color: '#a1a1aa' }]}>
             Focus on what matters most
           </RNText>
         </View>
@@ -72,20 +72,20 @@ export function NeedlesListScreen() {
     return (
       <View style={[styles.container, { backgroundColor: '#000000' }]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
+          <RNText style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
             Your Needles
           </RNText>
         </View>
 
         <View style={[styles.centerContent, styles.errorState]} testID="error-state">
-          <Text style={[styles.errorTitle, { fontSize: 24, fontWeight: '600', color: '#ef4444' }]}>
+          <RNText style={[styles.errorTitle, { fontSize: 24, fontWeight: '600', color: '#ef4444' }]}>
             Couldn't load your goals
           </RNText>
-          <Text style={[styles.errorMessage, { fontSize: 16, color: '#a1a1aa' }]}>
+          <RNText style={[styles.errorMessage, { fontSize: 16, color: '#a1a1aa' }]}>
             Check your connection and try again
           </RNText>
           {error && (
-            <Text style={[styles.errorDetail, { fontSize: 14, color: '#71717a' }]}>
+            <RNText style={[styles.errorDetail, { fontSize: 14, color: '#71717a' }]}>
               {error.message}
             </RNText>
           )}
@@ -94,7 +94,7 @@ export function NeedlesListScreen() {
             testID="retry-button"
             style={[styles.retryButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}
           >
-            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Retry</RNText>
+            <RNText style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>Retry</RNText>
           </TouchableOpacity>
         </View>
       </View>
@@ -106,16 +106,16 @@ export function NeedlesListScreen() {
     return (
       <View style={[styles.container, { backgroundColor: '#000000' }]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
+          <RNText style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
             Your Needles
           </RNText>
         </View>
 
         <View style={[styles.centerContent, styles.emptyState]} testID="empty-state">
-          <Text style={[styles.emptyTitle, { fontSize: 24, fontWeight: '600', color: '#ffffff' }]}>
+          <RNText style={[styles.emptyTitle, { fontSize: 24, fontWeight: '600', color: '#ffffff' }]}>
             You haven't set any goals yet
           </RNText>
-          <Text style={[styles.emptyMessage, { fontSize: 16, color: '#a1a1aa' }]}>
+          <RNText style={[styles.emptyMessage, { fontSize: 16, color: '#a1a1aa' }]}>
             What do you want to achieve?
           </RNText>
           <TouchableOpacity
@@ -123,7 +123,7 @@ export function NeedlesListScreen() {
             testID="create-first-goal-button"
             style={[styles.createButton, { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8 }]}
           >
-            <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
+            <RNText style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
               Create Your First Goal
             </RNText>
           </TouchableOpacity>
@@ -136,10 +136,10 @@ export function NeedlesListScreen() {
   return (
     <View style={[styles.container, { backgroundColor: '#000000' }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
+        <RNText style={[styles.title, { fontSize: 32, fontWeight: 'bold', color: '#ffffff' }]}>
           Your Needles
         </RNText>
-        <Text style={[styles.subtitle, { fontSize: 16, color: '#a1a1aa' }]}>
+        <RNText style={[styles.subtitle, { fontSize: 16, color: '#a1a1aa' }]}>
           {total} of {activeGoalLimit} active {total === 1 ? 'goal' : 'goals'}
         </RNText>
       </View>
@@ -172,12 +172,12 @@ export function NeedlesListScreen() {
                 },
               ]}
             >
-              <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
+              <RNText style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600' }}>
                 {isAtLimit ? 'Goal Limit Reached (3/3)' : 'Add New Goal'}
               </RNText>
             </TouchableOpacity>
             {isAtLimit && (
-              <Text style={[styles.limitHint, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
+              <RNText style={[styles.limitHint, { fontSize: 14, color: '#a1a1aa', textAlign: 'center' }]}>
                 Archive a goal to add a new one
               </RNText>
             )}

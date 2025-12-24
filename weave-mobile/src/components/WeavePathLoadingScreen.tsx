@@ -208,16 +208,16 @@ export const WeavePathLoadingScreen: React.FC<WeavePathLoadingScreenProps> = ({
         </View>
 
         {/* Loading Text */}
-        <Text style={styles.loadingText}>Shaping your path...</RNText>
+        <RNText style={styles.loadingText}>Shaping your path...</RNText>
 
         {/* Timeout Warning */}
         {showTimeoutWarning && !showTimeoutError && (
-          <Text style={styles.warningText}>Taking longer than usual...</RNText>
+          <RNText style={styles.warningText}>Taking longer than usual...</RNText>
         )}
 
         {/* Timeout Error */}
         {showTimeoutError && (
-          <Text style={styles.errorText}>
+          <RNText style={styles.errorText}>
             This is taking longer than expected. Please try again.
           </RNText>
         )}

@@ -111,7 +111,7 @@ export default function SettingsScreen() {
                 Answer questions and track your progress
               </RNText>
             </View>
-            <Text style={{ color: '#71717A', fontSize: 18 }}>›</RNText>
+            <RNText style={{ color: '#71717A', fontSize: 18 }}>›</RNText>
           </Pressable>
         </View>
 

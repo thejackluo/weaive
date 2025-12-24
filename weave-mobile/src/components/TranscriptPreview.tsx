@@ -171,7 +171,7 @@ export function TranscriptPreview({
               size={16}
               color={getConfidenceColor()}
             />
-            <Text style={{ fontSize: 14, color: getConfidenceColor(), marginLeft: 8 }}>
+            <RNText style={{ fontSize: 14, color: getConfidenceColor(), marginLeft: 8 }}>
               {getConfidenceLabel()} confidence
             </RNText>
           </View>
@@ -189,7 +189,7 @@ export function TranscriptPreview({
               },
             ]}
           >
-            <Text style={{ fontSize: 12, color: '#a1a1aa' }}>
+            <RNText style={{ fontSize: 12, color: '#a1a1aa' }}>
               {getProviderName()}
             </RNText>
           </View>
@@ -210,7 +210,7 @@ export function TranscriptPreview({
       {isLoading ? (
         <View style={[styles.loadingContainer, { paddingVertical: 32 }]}>
           <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={{ fontSize: 16, color: '#a1a1aa', marginTop: 16 }}>
+          <RNText style={{ fontSize: 16, color: '#a1a1aa', marginTop: 16 }}>
             Transcribing audio...
           </RNText>
         </View>
@@ -243,7 +243,7 @@ export function TranscriptPreview({
             onPress={handleCancel}
             style={[styles.button, { flex: 1, backgroundColor: '#27272a' }]}
           >
-            <Text style={{ fontSize: 14, color: '#fafafa', fontWeight: '600' }}>
+            <RNText style={{ fontSize: 14, color: '#fafafa', fontWeight: '600' }}>
               Cancel
             </RNText>
           </Pressable>
@@ -251,7 +251,7 @@ export function TranscriptPreview({
             onPress={handleSave}
             style={[styles.button, { flex: 1, backgroundColor: '#3b82f6' }]}
           >
-            <Text style={{ fontSize: 14, color: '#ffffff', fontWeight: '600' }}>
+            <RNText style={{ fontSize: 14, color: '#ffffff', fontWeight: '600' }}>
               Save
             </RNText>
           </Pressable>

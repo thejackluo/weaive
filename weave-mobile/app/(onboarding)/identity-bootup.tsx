@@ -474,7 +474,7 @@ export default function IdentityBootupScreen() {
 
       {/* Input Field */}
       <View style={{ marginBottom: 24 }}>
-        <Text style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
+        <RNText style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
           What should we call you?
         </RNText>
         <TextInput
@@ -499,7 +499,7 @@ export default function IdentityBootupScreen() {
           onSubmitEditing={handleStep1Continue}
         />
         {nameError && (
-          <Text style={{ color: '#EF4444', fontSize: 14, marginTop: 8 }}>{nameError}</RNText>
+          <RNText style={{ color: '#EF4444', fontSize: 14, marginTop: 8 }}>{nameError}</RNText>
         )}
       </View>
 
@@ -521,7 +521,7 @@ export default function IdentityBootupScreen() {
         accessibilityHint="Proceeds to step 2 where you'll choose your Weave's interaction style"
         accessibilityState={{ disabled: !nameValidation.valid }}
       >
-        <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</RNText>
+        <RNText style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</RNText>
       </TouchableOpacity>
 
       {/* Back Button */}
@@ -537,7 +537,7 @@ export default function IdentityBootupScreen() {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to the previous step"
         >
-          <Text style={{ color: '#666', fontSize: 16 }}>Back</RNText>
+          <RNText style={{ color: '#666', fontSize: 16 }}>Back</RNText>
         </TouchableOpacity>
       )}
     </View>
@@ -645,7 +645,7 @@ export default function IdentityBootupScreen() {
                         transform: [{ scale: iconPulseAnim }],
                       }}
                     >
-                      <Text style={{ fontSize: 24 }}>🧵</RNText>
+                      <RNText style={{ fontSize: 24 }}>🧵</RNText>
                     </Animated.View>
 
                     {/* Title */}
@@ -747,7 +747,7 @@ export default function IdentityBootupScreen() {
           accessibilityHint="Proceeds to step 3 where you'll choose traits you want to develop"
           accessibilityState={{ disabled: !canContinueStep2 }}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</RNText>
+          <RNText style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</RNText>
         </TouchableOpacity>
 
         {/* Back Button */}
@@ -762,7 +762,7 @@ export default function IdentityBootupScreen() {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to name entry"
         >
-          <Text style={{ color: '#666', fontSize: 16 }}>Back</RNText>
+          <RNText style={{ color: '#666', fontSize: 16 }}>Back</RNText>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -864,7 +864,7 @@ export default function IdentityBootupScreen() {
         {/* Max Traits Error */}
         {maxTraitsError && (
           <View style={{ marginBottom: 16, alignItems: 'center' }}>
-            <Text style={{ color: '#EF4444', fontSize: 14 }}>{maxTraitsError}</RNText>
+            <RNText style={{ color: '#EF4444', fontSize: 14 }}>{maxTraitsError}</RNText>
           </View>
         )}
 
@@ -903,7 +903,7 @@ export default function IdentityBootupScreen() {
           {isSubmitting && (
             <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
           )}
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
+          <RNText style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
             {isSubmitting ? 'Saving...' : 'Continue'}
           </RNText>
         </TouchableOpacity>
@@ -920,7 +920,7 @@ export default function IdentityBootupScreen() {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to personality selection"
         >
-          <Text style={{ color: '#666', fontSize: 16 }}>Back</RNText>
+          <RNText style={{ color: '#666', fontSize: 16 }}>Back</RNText>
         </TouchableOpacity>
       </ScrollView>
     </View>

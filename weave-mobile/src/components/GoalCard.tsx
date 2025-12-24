@@ -108,13 +108,13 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
           <View style={styles.statsRow}>
             {/* Consistency */}
             <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
+              <RNText style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
                 CONSISTENCY
               </RNText>
               <View style={styles.consistencyContainer}>
                 {isNewGoal ? (
                   <View style={[styles.newBadge, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
-                    <Text style={[styles.newBadgeText, { color: '#8b5cf6' }]}>
+                    <RNText style={[styles.newBadgeText, { color: '#8b5cf6' }]}>
                       NEW
                     </RNText>
                   </View>
@@ -125,7 +125,7 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
                     >
                       {Math.round(goal.consistency_7d!)}
                     </RNText>
-                    <Text style={{ fontSize: 18, color: '#D4D4DC' }}>
+                    <RNText style={{ fontSize: 18, color: '#D4D4DC' }}>
                       %
                     </RNText>
                   </>
@@ -149,11 +149,11 @@ export function GoalCard({ goal, testID }: GoalCardProps) {
 
             {/* Active Binds Count */}
             <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
+              <RNText style={[styles.statLabel, { fontSize: 14, color: '#A1A1AA' }]}>
                 ACTIVE BINDS
               </RNText>
               <View style={styles.bindsContainer}>
-                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFFFFF' }}>
+                <RNText style={{ fontSize: 24, fontWeight: 'bold', color: '#FFFFFF' }}>
                   {goal.active_binds_count}
                 </RNText>
               </View>

@@ -332,7 +332,7 @@ export function VoiceRecorder({
             },
           ]}
         >
-          <Text style={{ fontSize: 16, color: '#ef4444' }}>
+          <RNText style={{ fontSize: 16, color: '#ef4444' }}>
             {formatDuration(duration)}
           </RNText>
         </View>
@@ -341,7 +341,7 @@ export function VoiceRecorder({
       {/* Permission prompt */}
       {!hasPermission && !isRequestingPermission && (
         <View style={[styles.permissionPrompt, { marginTop: 16 }]}>
-          <Text style={{ fontSize: 14, color: '#fafafa', textAlign: 'center' }}>
+          <RNText style={{ fontSize: 14, color: '#fafafa', textAlign: 'center' }}>
             Microphone access required
           </RNText>
         </View>
@@ -350,7 +350,7 @@ export function VoiceRecorder({
       {/* Error display */}
       {error && (
         <View style={[styles.errorContainer, { marginTop: 16 }]}>
-          <Text style={{ fontSize: 14, color: '#ef4444', textAlign: 'center' }}>
+          <RNText style={{ fontSize: 14, color: '#ef4444', textAlign: 'center' }}>
             {error}
           </RNText>
         </View>

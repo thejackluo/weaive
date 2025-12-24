@@ -42,7 +42,7 @@ export default function PlaceholderScreen({
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <SymbolView name="chevron.left" size={20} tintColor="#ffffff" />
-            <Text style={styles.backText}>Back</RNText>
+            <RNText style={styles.backText}>Back</RNText>
           </Pressable>
         </View>
 
@@ -53,32 +53,32 @@ export default function PlaceholderScreen({
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>
+          <RNText style={styles.title}>
             {title}
           </RNText>
 
           {/* Epic */}
-          <Text style={styles.epic}>
+          <RNText style={styles.epic}>
             {epic}
           </RNText>
 
           {/* Story */}
-          <Text style={styles.story}>
+          <RNText style={styles.story}>
             {story}
           </RNText>
 
           {/* Status Badge */}
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>
+            <RNText style={styles.badgeText}>
               Coming Soon
             </RNText>
           </View>
 
           {/* Description */}
-          <Text style={styles.description}>
+          <RNText style={styles.description}>
             This page has not been developed
           </RNText>
-          <Text style={styles.subdescription}>
+          <RNText style={styles.subdescription}>
             Check back soon as we continue building Weave.
           </RNText>
 

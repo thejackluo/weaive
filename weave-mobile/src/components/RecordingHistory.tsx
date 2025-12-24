@@ -115,10 +115,10 @@ export function RecordingHistory({
       <View style={[styles.card, { padding: 24 }]}>
         <View style={styles.emptyState}>
           <MaterialIcons name="mic-none" size={64} color="#a1a1aa" />
-          <Text style={{ fontSize: 18, color: '#fafafa', marginTop: 16 }}>
+          <RNText style={{ fontSize: 18, color: '#fafafa', marginTop: 16 }}>
             No recordings yet
           </RNText>
-          <Text style={{ fontSize: 16, color: '#a1a1aa', marginTop: 8, textAlign: 'center' }}>
+          <RNText style={{ fontSize: 16, color: '#a1a1aa', marginTop: 8, textAlign: 'center' }}>
             Start recording to see your audio history here
           </RNText>
         </View>
@@ -134,10 +134,10 @@ export function RecordingHistory({
       <View style={[styles.card, { padding: 24 }]}>
         <View style={styles.emptyState}>
           <MaterialIcons name="error" size={64} color="#ef4444" />
-          <Text style={{ fontSize: 18, color: '#ef4444', marginTop: 16, textAlign: 'center' }}>
+          <RNText style={{ fontSize: 18, color: '#ef4444', marginTop: 16, textAlign: 'center' }}>
             Failed to load recordings
           </RNText>
-          <Text style={{ fontSize: 16, color: '#a1a1aa', marginTop: 8, textAlign: 'center' }}>
+          <RNText style={{ fontSize: 16, color: '#a1a1aa', marginTop: 8, textAlign: 'center' }}>
             {error instanceof Error ? error.message : 'Unknown error occurred'}
           </RNText>
         </View>
@@ -170,11 +170,11 @@ export function RecordingHistory({
           <View style={styles.recordingHeader}>
             <View style={styles.recordingHeaderLeft}>
               <MaterialIcons name="mic" size={20} color="#3b82f6" />
-              <Text style={{ fontSize: 14, color: '#a1a1aa', marginLeft: 8 }}>
+              <RNText style={{ fontSize: 14, color: '#a1a1aa', marginLeft: 8 }}>
                 {formatDate(item.created_at)} at {formatTime(item.created_at)}
               </RNText>
             </View>
-            <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
+            <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
               {formatDuration(item.duration_sec)}
             </RNText>
           </View>
@@ -227,7 +227,7 @@ export function RecordingHistory({
                   borderRadius: 8,
                 }}
               >
-                <Text style={{ fontSize: 14, color: '#a1a1aa', textAlign: 'center' }}>
+                <RNText style={{ fontSize: 14, color: '#a1a1aa', textAlign: 'center' }}>
                   Audio URL not available. Please refresh to reload.
                 </RNText>
               </View>
@@ -241,10 +241,10 @@ export function RecordingHistory({
   // Header component
   const listHeader = (
     <View style={{ marginBottom: 16 }}>
-      <Text style={{ fontSize: 18, fontWeight: '600', color: '#fafafa' }}>
+      <RNText style={{ fontSize: 18, fontWeight: '600', color: '#fafafa' }}>
         Recording History
       </RNText>
-      <Text style={{ fontSize: 14, color: '#a1a1aa', marginTop: 8 }}>
+      <RNText style={{ fontSize: 14, color: '#a1a1aa', marginTop: 8 }}>
         {recordings?.length || 0} recordings
       </RNText>
     </View>

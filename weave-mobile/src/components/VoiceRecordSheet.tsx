@@ -220,7 +220,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
         case 'record':
           return (
             <View style={[styles.stepContainer, { padding: 24 }]}>
-              <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
+              <RNText style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
                 Record Voice Note
               </RNText>
 
@@ -246,7 +246,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
         case 'transcribing':
           return (
             <View style={[styles.stepContainer, { padding: 24 }]}>
-              <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
+              <RNText style={{ fontSize: 28, fontWeight: '600', textAlign: 'center', marginBottom: 24 }}>
                 Transcribing...
               </RNText>
 
@@ -278,7 +278,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
               style={styles.scrollView}
               contentContainerStyle={[styles.stepContainer, { padding: 24 }]}
             >
-              <Text style={{ fontSize: 28, fontWeight: '600', marginBottom: 24 }}>
+              <RNText style={{ fontSize: 28, fontWeight: '600', marginBottom: 24 }}>
                 Review Transcript
               </RNText>
 
@@ -302,7 +302,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
                   onPress={handleCancel}
                   style={[styles.button, { flex: 1, backgroundColor: '#27272a' }]}
                 >
-                  <Text style={{ fontSize: 16, color: '#fafafa', fontWeight: '600' }}>
+                  <RNText style={{ fontSize: 16, color: '#fafafa', fontWeight: '600' }}>
                     Cancel
                   </RNText>
                 </Pressable>
@@ -310,7 +310,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
                   onPress={handleFinalSave}
                   style={[styles.button, { flex: 1, backgroundColor: '#3b82f6' }]}
                 >
-                  <Text style={{ fontSize: 16, color: '#ffffff', fontWeight: '600' }}>
+                  <RNText style={{ fontSize: 16, color: '#ffffff', fontWeight: '600' }}>
                     Save
                   </RNText>
                 </Pressable>
@@ -321,7 +321,7 @@ export const VoiceRecordSheet = forwardRef<BottomSheet, VoiceRecordSheetProps>(
         case 'complete':
           return (
             <View style={[styles.stepContainer, { padding: 24 }]}>
-              <Text style={{ fontSize: 28, fontWeight: '600', textAlign: 'center' }}>
+              <RNText style={{ fontSize: 28, fontWeight: '600', textAlign: 'center' }}>
                 Saved!
               </RNText>
             </View>

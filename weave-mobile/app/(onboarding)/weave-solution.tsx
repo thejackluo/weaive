@@ -123,7 +123,7 @@ function CTAButton({ onPress, reduceMotion, delayMs }: CTAButtonProps) {
         accessibilityLabel="Show me the app"
         accessibilityRole="button"
       >
-        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Show me →</RNText>
+        <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Show me →</RNText>
       </Pressable>
     </Animated.View>
   );

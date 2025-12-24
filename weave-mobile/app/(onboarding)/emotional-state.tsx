@@ -112,10 +112,10 @@ export default function EmotionalStateScreen() {
       <ScrollView className="py-6 px-4 pb-10" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="items-center mb-6">
-          <Text className="text-center text-[28px] font-semibold text-neutral-800 mb-2 tracking-tight">
+          <RNText className="text-center text-[28px] font-semibold text-neutral-800 mb-2 tracking-tight">
             What's holding you back?
           </RNText>
-          <Text className="text-center text-base text-neutral-600">
+          <RNText className="text-center text-base text-neutral-600">
             Pick 1-2 that you're struggling with most right now
           </RNText>
         </View>
@@ -135,7 +135,7 @@ export default function EmotionalStateScreen() {
         {/* Confirmation Message */}
         {showConfirmation && selectedPainpoints.length === 1 && (
           <View className="items-center mt-6">
-            <Text className="text-center text-sm text-neutral-600 mb-3">
+            <RNText className="text-center text-sm text-neutral-600 mb-3">
               You can optionally add one more
             </RNText>
           </View>

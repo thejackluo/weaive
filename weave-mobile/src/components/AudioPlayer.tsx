@@ -276,7 +276,7 @@ export function AudioPlayer({
       <View style={[styles.card, { padding: 24 }]}>
         <View style={styles.errorContainer}>
           <MaterialIcons name="error" size={48} color="#ef4444" />
-          <Text style={{ fontSize: 18, color: '#ef4444', marginTop: 16, textAlign: 'center' }}>
+          <RNText style={{ fontSize: 18, color: '#ef4444', marginTop: 16, textAlign: 'center' }}>
             {error}
           </RNText>
         </View>
@@ -289,10 +289,10 @@ export function AudioPlayer({
       <View style={styles.container}>
         {/* Time display - Large and prominent */}
         <View style={[styles.timeRow, { marginBottom: 16 }]}>
-          <Text style={{ fontSize: 18, color: '#fafafa', fontWeight: '600' }}>
+          <RNText style={{ fontSize: 18, color: '#fafafa', fontWeight: '600' }}>
             {formatTime(position)}
           </RNText>
-          <Text style={{ fontSize: 16, color: '#a1a1aa' }}>
+          <RNText style={{ fontSize: 16, color: '#a1a1aa' }}>
             {formatTime(duration)}
           </RNText>
         </View>
@@ -397,7 +397,7 @@ export function AudioPlayer({
         {/* Speed control - Bottom row */}
         {showSpeedControl && (
           <View style={styles.speedRow}>
-            <Text style={{ fontSize: 14, color: '#a1a1aa', marginRight: 12 }}>
+            <RNText style={{ fontSize: 14, color: '#a1a1aa', marginRight: 12 }}>
               Speed:
             </RNText>
             <View style={styles.speedContainer}>

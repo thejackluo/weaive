@@ -31,7 +31,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
     return (
       <View className="py-8 items-center">
         <ActivityIndicator size="large" color="#3b82f6" />
-        <Text className="mt-2" style={{ fontSize: 14, color: '#a1a1aa' }}>
+        <RNText className="mt-2" style={{ fontSize: 14, color: '#a1a1aa' }}>
           Loading history...
         </RNText>
       </View>
@@ -41,7 +41,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
   if (isError) {
     return (
       <View className="py-4">
-        <Text style={{ fontSize: 14, color: '#ef4444' }}>
+        <RNText style={{ fontSize: 14, color: '#ef4444' }}>
           {error?.message || 'Failed to load history'}
         </RNText>
         <Text
@@ -60,7 +60,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
   if (historyItems.length === 0) {
     return (
       <View className="py-8 items-center">
-        <Text style={{ fontSize: 14, color: '#a1a1aa' }}>
+        <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
           No activity yet. Start completing binds to build your history!
         </RNText>
       </View>
@@ -146,11 +146,11 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
           {/* Header row: Type badge and timestamp */}
           <View style={styles.headerRow}>
             <View style={[styles.typeBadge, { backgroundColor: config.color + '30' }]}>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: config.color }}>
+              <RNText style={{ fontSize: 14, fontWeight: '500', color: config.color }}>
                 {config.label}
               </RNText>
             </View>
-            <Text style={{ fontSize: 14, color: '#71717a' }}>
+            <RNText style={{ fontSize: 14, color: '#71717a' }}>
               {formatTime(item.timestamp)}
             </RNText>
           </View>

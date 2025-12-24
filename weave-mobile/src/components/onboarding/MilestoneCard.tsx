@@ -178,11 +178,11 @@ export const MilestoneCard: React.FC<MilestoneCardProps> = ({
       {/* Header with Number and Edit Button */}
       <View style={styles.header}>
         <View style={styles.numberBadge}>
-          <Text style={styles.numberText}>{number}</RNText>
+          <RNText style={styles.numberText}>{number}</RNText>
         </View>
         {hasBeenEdited && !isEditMode && (
           <View style={styles.editedBadge}>
-            <Text style={styles.editedBadgeText}>Edited</RNText>
+            <RNText style={styles.editedBadgeText}>Edited</RNText>
           </View>
         )}
         {!isEditMode && (
@@ -192,7 +192,7 @@ export const MilestoneCard: React.FC<MilestoneCardProps> = ({
             accessibilityRole="button"
             accessibilityLabel={`Edit milestone ${number}`}
           >
-            <Text style={styles.editButtonText}>Edit</RNText>
+            <RNText style={styles.editButtonText}>Edit</RNText>
           </TouchableOpacity>
         )}
       </View>
@@ -200,8 +200,8 @@ export const MilestoneCard: React.FC<MilestoneCardProps> = ({
       {/* View Mode */}
       {!isEditMode ? (
         <>
-          <Text style={[styles.title, description && { marginBottom: SPACING.sm }]}>{title}</RNText>
-          {description && <Text style={styles.description}>{description}</RNText>}
+          <RNText style={[styles.title, description && { marginBottom: SPACING.sm }]}>{title}</RNText>
+          {description && <RNText style={styles.description}>{description}</RNText>}
         </>
       ) : (
         /* Edit Mode */
@@ -234,7 +234,7 @@ export const MilestoneCard: React.FC<MilestoneCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Cancel editing"
             >
-              <Text style={styles.cancelButtonText}>Cancel</RNText>
+              <RNText style={styles.cancelButtonText}>Cancel</RNText>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSave}
@@ -242,7 +242,7 @@ export const MilestoneCard: React.FC<MilestoneCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Save changes"
             >
-              <Text style={styles.saveButtonText}>Save</RNText>
+              <RNText style={styles.saveButtonText}>Save</RNText>
             </TouchableOpacity>
           </View>
         </>
