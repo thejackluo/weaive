@@ -212,9 +212,7 @@ export async function updateWeaveAIPreset(
  *
  * For now, personality state is managed locally after switching.
  */
-export async function getCurrentPersonality(
-  accessToken: string
-): Promise<PersonalityDetails> {
+export async function getCurrentPersonality(accessToken: string): Promise<PersonalityDetails> {
   // TODO: Implement if backend adds GET /api/user/personality endpoint
   // For now, personality is returned after switching
   throw new Error('getCurrentPersonality not yet implemented');
