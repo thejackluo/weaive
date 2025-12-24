@@ -17,6 +17,7 @@ Features:
 
 import hashlib
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
@@ -24,7 +25,7 @@ from supabase import Client as SupabaseClient
 
 from .anthropic_provider import AnthropicProvider
 from .base import AIProviderError, AIResponse
-from .bedrock_provider import BedrockProvider
+# BedrockProvider imported conditionally in __init__ to avoid boto3 import in tests
 from .cost_tracker import CostTracker
 from .deterministic_provider import DeterministicProvider
 from .openai_provider import OpenAIProvider
@@ -77,12 +78,18 @@ class AIService:
         # Initialize providers (4-tier fallback chain)
         self.providers = []
 
-        # 1. Bedrock (PRIMARY)
-        try:
-            self.providers.append(("bedrock", BedrockProvider(region=bedrock_region)))
-            logger.info("✅ Bedrock provider initialized (PRIMARY)")
-        except Exception as e:
-            logger.warning(f"⚠️  Bedrock initialization failed: {e}")
+        # 1. Bedrock (PRIMARY) - Skip in test environment to avoid boto3 import hang
+        if os.getenv("ENV") != "test":
+            try:
+                # Import here to avoid loading boto3 in test environments
+                from .bedrock_provider import BedrockProvider
+
+                self.providers.append(("bedrock", BedrockProvider(region=bedrock_region)))
+                logger.info("✅ Bedrock provider initialized (PRIMARY)")
+            except Exception as e:
+                logger.warning(f"⚠️  Bedrock initialization failed: {e}")
+        else:
+            logger.info("⚡ Skipping Bedrock provider in test environment (avoids boto3 hang)")
 
         # 2. OpenAI (FALLBACK #1)
         if openai_key:

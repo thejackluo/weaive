@@ -97,11 +97,12 @@ def client(supabase_client):
     return TestClient(app)
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope="function")
 def cleanup_test_data(supabase_client):
     """Clean up test data after each test function.
 
-    This fixture runs automatically (autouse=True) after EVERY test.
+    NOTE: No longer autouse=True - tests must explicitly request this fixture
+    to enable cleanup. This prevents forced Supabase initialization for all tests.
     It deletes all data from user-owned tables to ensure test isolation.
 
     Cleanup order matters: delete child records before parent records
