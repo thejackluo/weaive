@@ -54,11 +54,7 @@ export function useSubscriptionProducts() {
       }
 
       // Fetch products
-      return fetchProducts([
-        PRODUCT_IDS.MONTHLY,
-        PRODUCT_IDS.ANNUAL,
-        PRODUCT_IDS.TRIAL,
-      ]);
+      return fetchProducts([PRODUCT_IDS.MONTHLY, PRODUCT_IDS.ANNUAL, PRODUCT_IDS.TRIAL]);
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 2,
@@ -72,9 +68,7 @@ export function useSubscriptionStatus() {
   return useQuery<SubscriptionStatus>({
     queryKey: ['user', 'subscription'],
     queryFn: async () => {
-      const response = await apiClient.get<SubscriptionStatus>(
-        '/api/subscription/status'
-      );
+      const response = await apiClient.get<SubscriptionStatus>('/api/subscription/status');
       return response.data;
     },
     staleTime: 1000 * 60, // 1 minute
@@ -183,7 +177,7 @@ export function useIAPConnection() {
  * Helper to format price for display
  */
 export function formatPrice(product: Product): string {
-  const { price, priceCurrencyCode } = product;
+  const { price } = product;
 
   // expo-in-app-purchases already provides formatted price string
   // But we can enhance it with currency symbol if needed
@@ -203,18 +197,14 @@ export function getProductById(
 /**
  * Helper to check if user is Pro subscriber
  */
-export function isProSubscriber(
-  subscriptionStatus: SubscriptionStatus | undefined
-): boolean {
+export function isProSubscriber(subscriptionStatus: SubscriptionStatus | undefined): boolean {
   return subscriptionStatus?.subscription_tier === 'pro';
 }
 
 /**
  * Helper to check if subscription is expired
  */
-export function isSubscriptionExpired(
-  subscriptionStatus: SubscriptionStatus | undefined
-): boolean {
+export function isSubscriptionExpired(subscriptionStatus: SubscriptionStatus | undefined): boolean {
   if (!subscriptionStatus?.subscription_expires_at) {
     return false;
   }

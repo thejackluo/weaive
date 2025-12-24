@@ -29,19 +29,17 @@ export default function AccountManagementScreen() {
           onPress: async () => {
             try {
               setIsExporting(true);
-              const response = await apiClient.get('/api/account/export-data');
+              await apiClient.get('/api/account/export-data');
 
               Alert.alert(
                 'Export Ready',
                 'Your data export is ready. In production, this will be a downloadable link.',
                 [{ text: 'OK' }]
               );
-            } catch (error) {
-              Alert.alert(
-                'Export Failed',
-                'Failed to export data. Please try again.',
-                [{ text: 'OK' }]
-              );
+            } catch {
+              Alert.alert('Export Failed', 'Failed to export data. Please try again.', [
+                { text: 'OK' },
+              ]);
             } finally {
               setIsExporting(false);
             }
@@ -95,7 +93,7 @@ export default function AccountManagementScreen() {
                           },
                         ]
                       );
-                    } catch (error) {
+                    } catch {
                       Alert.alert(
                         'Deletion Failed',
                         'Failed to delete account. Please try again or contact support.',
@@ -303,10 +301,9 @@ export default function AccountManagementScreen() {
             }}
           >
             ℹ️ Your Privacy Rights{'\n\n'}
-            Under GDPR (EU) and CCPA (California), you have the right to:{'\n'}
-            • Access your personal data (Export Data){'\n'}
-            • Request deletion of your data (Delete Account){'\n'}
-            • Opt-out of data processing (Settings → Privacy){'\n\n'}
+            Under GDPR (EU) and CCPA (California), you have the right to:{'\n'}• Access your
+            personal data (Export Data){'\n'}• Request deletion of your data (Delete Account){'\n'}•
+            Opt-out of data processing (Settings → Privacy){'\n\n'}
             For questions, contact: privacy@weavelight.app
           </Text>
         </View>
