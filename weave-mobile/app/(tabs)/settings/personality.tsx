@@ -351,11 +351,9 @@ export default function PersonalitySettingsScreen() {
                       disabled={loading}
                       style={{
                         padding: 16,
-                        borderBottomWidth:
-                          index < personalitiesInCategory.length - 1 ? 1 : 0,
+                        borderBottomWidth: index < personalitiesInCategory.length - 1 ? 1 : 0,
                         borderBottomColor: '#27272A',
-                        backgroundColor:
-                          weaveAIPreset === preset.id ? '#1E3A5F' : 'transparent',
+                        backgroundColor: weaveAIPreset === preset.id ? '#1E3A5F' : 'transparent',
                       }}
                     >
                       <View
@@ -410,8 +408,8 @@ export default function PersonalitySettingsScreen() {
           >
             <Text style={{ color: '#FAFAFA', fontWeight: '600' }}>Dream Self</Text> uses your
             identity document to create a fully personalized AI coach.{'\n\n'}
-            <Text style={{ color: '#FAFAFA', fontWeight: '600' }}>Weave AI</Text> is a general
-            coach with three coaching styles you can choose from.
+            <Text style={{ color: '#FAFAFA', fontWeight: '600' }}>Weave AI</Text> is a general coach
+            with three coaching styles you can choose from.
           </Text>
         </View>
       </ScrollView>
