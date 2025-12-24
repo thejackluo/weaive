@@ -6,8 +6,17 @@
  * Handles product fetching, purchase flow, and receipt restoration.
  */
 
-import * as InAppPurchases from 'expo-in-app-purchases';
 import { Platform } from 'react-native';
+
+// Conditionally import IAP module to prevent "Cannot find native module" errors in Expo Go
+let InAppPurchases: any = null;
+try {
+  InAppPurchases = require('expo-in-app-purchases');
+} catch (error) {
+  if (__DEV__) {
+    console.warn('⚠️ expo-in-app-purchases not available (requires development build)');
+  }
+}
 
 // Product IDs (must match App Store Connect configuration)
 export const PRODUCT_IDS = {
@@ -50,10 +59,22 @@ export async function initializeIAP(): Promise<boolean> {
       return false;
     }
 
+    // Check if native module is available
+    // expo-in-app-purchases requires a development build or production build
+    if (!InAppPurchases || typeof InAppPurchases.connectAsync !== 'function') {
+      console.warn('⚠️ IAP native module not available (likely running in Expo Go)');
+      return false;
+    }
+
     await InAppPurchases.connectAsync();
     console.log('✅ IAP connection established');
     return true;
   } catch (error) {
+    // Handle "Cannot find native module" error gracefully
+    if (error instanceof Error && error.message.includes('Cannot find native module')) {
+      console.warn('⚠️ IAP native module not available. This requires a development build or production build.');
+      return false;
+    }
     console.error('❌ IAP initialization failed:', error);
     return false;
   }
@@ -65,9 +86,18 @@ export async function initializeIAP(): Promise<boolean> {
  */
 export async function disconnectIAP(): Promise<void> {
   try {
+    // Check if native module is available
+    if (!InAppPurchases || typeof InAppPurchases.disconnectAsync !== 'function') {
+      return; // Silently return if module not available
+    }
+
     await InAppPurchases.disconnectAsync();
     console.log('✅ IAP connection closed');
   } catch (error) {
+    // Handle "Cannot find native module" error gracefully
+    if (error instanceof Error && error.message.includes('Cannot find native module')) {
+      return; // Silently return if module not available
+    }
     console.error('❌ IAP disconnect failed:', error);
   }
 }
