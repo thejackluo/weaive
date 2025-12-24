@@ -66,6 +66,7 @@
           "mode": "production"
         }
       ],
+      "expo-in-app-purchases",
       [
         "@sentry/react-native/expo",
         {
