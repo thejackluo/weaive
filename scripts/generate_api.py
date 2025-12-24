@@ -394,9 +394,9 @@ def main():
     print("\n📁 Generating files...\n")
 
     try:
-        router_path = generate_router(resource, resources, Resource)
-        schema_path = generate_schema(resource, resources, Resource)
-        test_path = generate_test(resource, resources, Resource)
+        generate_router(resource, resources, Resource)
+        generate_schema(resource, resources, Resource)
+        generate_test(resource, resources, Resource)
 
         print("\n✅ All files generated successfully!")
 
