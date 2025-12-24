@@ -19,7 +19,7 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, Optional
 
-import google.genai as genai
+from google import genai
 from google.api_core import exceptions as google_exceptions
 
 from .vision_service import (
@@ -81,22 +81,22 @@ RULES:
 
         if not self.api_key:
             logger.warning("GOOGLE_AI_API_KEY not configured")
-            self._model = None
+            self.client = None
             return
 
         try:
-            genai.configure(api_key=self.api_key)
-            self._model = genai.GenerativeModel(self.model_name)
+            # New unified SDK uses client-based architecture
+            self.client = genai.Client(api_key=self.api_key)
             logger.info(f"✅ Gemini provider initialized: {self.model_name}")
         except Exception as e:
             logger.error(f"❌ Failed to initialize Gemini: {e}")
-            self._model = None
+            self.client = None
 
     def get_provider_name(self) -> str:
         return self.model_name
 
     def is_available(self) -> bool:
-        return self._model is not None
+        return self.client is not None
 
     async def analyze_image(
         self,
@@ -141,15 +141,16 @@ RULES:
                 {"mime_type": "image/jpeg", "data": image_bytes},
             ]
 
-            # Call Gemini API
+            # Call Gemini API (using new unified SDK)
             logger.info("Calling Gemini 3.0 Flash for image analysis")
-            response = self._model.generate_content(
-                [prompt, image_parts[0]],
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.0,  # Deterministic for consistency
-                    max_output_tokens=2048,  # Increased for large OCR text
-                    response_mime_type="application/json",  # Force valid JSON output
-                ),
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=[prompt, image_parts[0]],
+                config={
+                    'temperature': 0.0,  # Deterministic for consistency
+                    'max_output_tokens': 2048,  # Increased for large OCR text
+                    'response_mime_type': 'application/json',  # Force valid JSON output
+                },
             )
 
             duration_ms = int((time.time() - start_time) * 1000)
