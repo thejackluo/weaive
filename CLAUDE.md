@@ -81,13 +81,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **❌ NEVER use placeholder auth:** `auth_user_id = "placeholder_auth_user_id"` is a **CRITICAL SECURITY VULNERABILITY**
 
-**Templates Available:**
-- API endpoint template (FastAPI router with auth, validation, error handling)
-- Database model template (BaseModel with timestamps, soft delete)
-- Pydantic schema template (request/response models)
+**Templates Available** (`scripts/templates/`):
+- `api_router_template.py` - FastAPI router with all CRUD operations, auth, error handling
+- `pydantic_schema_template.py` - Request/response models with validation patterns
+- `service_template.py` - Service layer with decision tree guidance
+- `test_template.py` - Pytest fixtures and test patterns
+- `database_table_template.sql` - PostgreSQL table with RLS policies
+
+**Scaffolding Tool:**
+```bash
+python scripts/generate_api.py <resource>     # Auto-generates router, schemas, tests
+python scripts/generate_api.py goal           # Example: creates goals router
+```
 
 **Full Spec:** `docs/stories/1-5-2-backend-standardization.md`
 **Developer Guide:** `docs/dev/backend-patterns-guide.md` (created by Story 1.5.2)
+**API Endpoint Registry:** `docs/dev/backend-api-integration.md` (28 endpoints mapped)
 
 ---
 
