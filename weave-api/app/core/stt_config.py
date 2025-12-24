@@ -13,8 +13,8 @@ from typing import Dict
 
 # Default rate limits (free tier)
 DEFAULT_RATE_LIMITS: Dict[str, int] = {
-    'max_requests': 50,       # Maximum transcription requests per day
-    'max_minutes': 300,       # Maximum audio duration (5 hours) per day
+    "max_requests": 50,  # Maximum transcription requests per day
+    "max_minutes": 300,  # Maximum audio duration (5 hours) per day
 }
 
 # Future: Add subscription tier limits
@@ -35,7 +35,7 @@ MAX_AUDIO_FILE_SIZE_BYTES = MAX_AUDIO_FILE_SIZE_MB * 1024 * 1024  # 25MB in byte
 # ═══════════════════════════════════════════════════════════════════════
 
 AUDIO_CONVERSION_TIMEOUT_SEC = 30  # ffmpeg timeout for audio conversion
-SIGNED_URL_EXPIRATION_SEC = 3600   # 1 hour expiration for audio playback URLs
+SIGNED_URL_EXPIRATION_SEC = 3600  # 1 hour expiration for audio playback URLs
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -51,15 +51,48 @@ MAX_RECORDING_HISTORY_LIMIT = 50  # Maximum recordings returned in history queri
 
 # AssemblyAI and Whisper support these languages
 SUPPORTED_LANGUAGES = {
-    'en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'pl', 'ru', 'ja', 'ko', 'zh',
-    'ar', 'hi', 'tr', 'vi', 'id', 'th', 'uk', 'ro', 'sv', 'cs', 'da', 'fi',
-    'no', 'el', 'hu', 'he', 'ms', 'fa', 'bn', 'ta', 'te', 'mr', 'gu'
+    "en",
+    "es",
+    "fr",
+    "de",
+    "it",
+    "pt",
+    "nl",
+    "pl",
+    "ru",
+    "ja",
+    "ko",
+    "zh",
+    "ar",
+    "hi",
+    "tr",
+    "vi",
+    "id",
+    "th",
+    "uk",
+    "ro",
+    "sv",
+    "cs",
+    "da",
+    "fi",
+    "no",
+    "el",
+    "hu",
+    "he",
+    "ms",
+    "fa",
+    "bn",
+    "ta",
+    "te",
+    "mr",
+    "gu",
 }
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def get_rate_limits_for_user(user_tier: str = "free") -> Dict[str, int]:
     """

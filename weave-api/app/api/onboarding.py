@@ -39,10 +39,7 @@ async def debug_current_user(
 
     # Check if user_profile exists
     profile_result = (
-        supabase.table("user_profiles")
-        .select("*")
-        .eq("auth_user_id", auth_user_id)
-        .execute()
+        supabase.table("user_profiles").select("*").eq("auth_user_id", auth_user_id).execute()
     )
 
     return {
@@ -311,9 +308,7 @@ async def create_origin_story(
         # Wrap response in standard {data, meta} format (Architecture compliance)
         return {
             "data": OriginStoryResponse(**result),
-            "meta": {
-                "timestamp": datetime.utcnow().isoformat() + "Z"
-            }
+            "meta": {"timestamp": datetime.utcnow().isoformat() + "Z"},
         }
 
     except ValueError as e:

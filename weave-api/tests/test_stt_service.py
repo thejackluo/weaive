@@ -38,6 +38,7 @@ def test_stt_provider_requires_transcribe_method():
     WHEN: transcribe() method is not implemented
     THEN: Cannot instantiate provider (abstract method error)
     """
+
     class IncompleteProvider(STTProvider):
         def get_cost(self, duration_seconds: int) -> float:
             return 0.0
@@ -55,14 +56,15 @@ def test_stt_provider_requires_all_abstract_methods():
     WHEN: All abstract methods are implemented
     THEN: Provider can be instantiated successfully
     """
+
     class CompleteProvider(STTProvider):
-        async def transcribe(self, audio_bytes: bytes, language: str = 'en') -> TranscriptionResult:
+        async def transcribe(self, audio_bytes: bytes, language: str = "en") -> TranscriptionResult:
             return TranscriptionResult(
                 transcript="Test",
                 confidence=1.0,
                 duration_sec=10,
-                language='en',
-                provider='test',
+                language="en",
+                provider="test",
                 cost_usd=0.001,
             )
 
@@ -96,28 +98,28 @@ async def test_assemblyai_provider_transcribe_success():
     """
     from app.services.stt.assemblyai_provider import AssemblyAIProvider
 
-    with patch('app.services.stt.assemblyai_provider.aai_client') as mock_client:
+    with patch("app.services.stt.assemblyai_provider.aai_client") as mock_client:
         # Mock AssemblyAI upload + poll response
         mock_transcriber = AsyncMock()
         mock_transcriber.transcribe.return_value = {
-            'text': 'I completed my workout today.',
-            'confidence': 0.92,
-            'audio_duration': 45,
+            "text": "I completed my workout today.",
+            "confidence": 0.92,
+            "audio_duration": 45,
         }
         mock_client.Transcriber.return_value = mock_transcriber
 
         provider = AssemblyAIProvider()
         audio_bytes = b"fake_audio_data"
 
-        result = await provider.transcribe(audio_bytes, language='en')
+        result = await provider.transcribe(audio_bytes, language="en")
 
         # Assertions
         assert isinstance(result, TranscriptionResult)
-        assert result.transcript == 'I completed my workout today.'
+        assert result.transcript == "I completed my workout today."
         assert result.confidence == 0.92
         assert result.duration_sec == 45
-        assert result.provider == 'assemblyai'
-        assert result.language == 'en'
+        assert result.provider == "assemblyai"
+        assert result.language == "en"
         assert result.cost_usd == pytest.approx(0.001875, rel=1e-6)  # 45s * $0.0025/min / 60
 
 
@@ -130,7 +132,7 @@ async def test_assemblyai_provider_handles_timeout():
     """
     from app.services.stt.assemblyai_provider import AssemblyAIProvider
 
-    with patch('app.services.stt.assemblyai_provider.aai_client') as mock_client:
+    with patch("app.services.stt.assemblyai_provider.aai_client") as mock_client:
         mock_transcriber = AsyncMock()
         mock_transcriber.transcribe.side_effect = TimeoutError("API timeout")
         mock_client.Transcriber.return_value = mock_transcriber
@@ -171,12 +173,12 @@ def test_assemblyai_provider_is_available_checks_api_key():
     from app.services.stt.assemblyai_provider import AssemblyAIProvider
 
     # Test with API key present
-    with patch.dict('os.environ', {'ASSEMBLYAI_API_KEY': 'fake_key'}):
+    with patch.dict("os.environ", {"ASSEMBLYAI_API_KEY": "fake_key"}):
         provider = AssemblyAIProvider()
         assert provider.is_available() is True
 
     # Test with API key missing
-    with patch.dict('os.environ', {}, clear=True):
+    with patch.dict("os.environ", {}, clear=True):
         provider = AssemblyAIProvider()
         assert provider.is_available() is False
 
@@ -199,28 +201,28 @@ async def test_whisper_provider_transcribe_success():
     """
     from app.services.stt.whisper_provider import WhisperProvider
 
-    with patch('app.services.stt.whisper_provider.openai_client') as mock_client:
+    with patch("app.services.stt.whisper_provider.openai_client") as mock_client:
         # Mock OpenAI Whisper response
         mock_audio = AsyncMock()
         mock_audio.transcriptions.create.return_value = {
-            'text': 'I completed my workout today.',
-            'language': 'en',
-            'duration': 45,
+            "text": "I completed my workout today.",
+            "language": "en",
+            "duration": 45,
         }
         mock_client.audio = mock_audio
 
         provider = WhisperProvider()
         audio_bytes = b"fake_audio_data"
 
-        result = await provider.transcribe(audio_bytes, language='en')
+        result = await provider.transcribe(audio_bytes, language="en")
 
         # Assertions
         assert isinstance(result, TranscriptionResult)
-        assert result.transcript == 'I completed my workout today.'
+        assert result.transcript == "I completed my workout today."
         assert result.confidence == 1.0  # Whisper doesn't provide confidence
         assert result.duration_sec == 45
-        assert result.provider == 'whisper'
-        assert result.language == 'en'
+        assert result.provider == "whisper"
+        assert result.language == "en"
         assert result.cost_usd == pytest.approx(0.0045, rel=1e-6)  # 45s * $0.006/min / 60
 
 
@@ -253,12 +255,12 @@ def test_whisper_provider_is_available_checks_api_key():
     from app.services.stt.whisper_provider import WhisperProvider
 
     # Test with API key present
-    with patch.dict('os.environ', {'OPENAI_API_KEY': 'fake_key'}):
+    with patch.dict("os.environ", {"OPENAI_API_KEY": "fake_key"}):
         provider = WhisperProvider()
         assert provider.is_available() is True
 
     # Test with API key missing
-    with patch.dict('os.environ', {}, clear=True):
+    with patch.dict("os.environ", {}, clear=True):
         provider = WhisperProvider()
         assert provider.is_available() is False
 
@@ -277,12 +279,16 @@ async def test_stt_service_uses_assemblyai_as_primary():
     """
     from app.services.stt.stt_service import STTService
 
-    with patch('app.services.stt.stt_service.AssemblyAIProvider') as mock_assemblyai:
+    with patch("app.services.stt.stt_service.AssemblyAIProvider") as mock_assemblyai:
         mock_provider = AsyncMock()
         mock_provider.is_available.return_value = True
         mock_provider.transcribe.return_value = TranscriptionResult(
-            transcript="Test", confidence=0.9, duration_sec=10, language='en',
-            provider='assemblyai', cost_usd=0.0004
+            transcript="Test",
+            confidence=0.9,
+            duration_sec=10,
+            language="en",
+            provider="assemblyai",
+            cost_usd=0.0004,
         )
         mock_assemblyai.return_value = mock_provider
 
@@ -292,7 +298,7 @@ async def test_stt_service_uses_assemblyai_as_primary():
         result = await service.transcribe(audio_bytes)
 
         # AssemblyAI should be called first
-        assert result.provider == 'assemblyai'
+        assert result.provider == "assemblyai"
         mock_provider.transcribe.assert_called_once()
 
 
@@ -307,9 +313,10 @@ async def test_stt_service_falls_back_to_whisper_on_assemblyai_failure():
     """
     from app.services.stt.stt_service import STTService
 
-    with patch('app.services.stt.stt_service.AssemblyAIProvider') as mock_assemblyai, \
-         patch('app.services.stt.stt_service.WhisperProvider') as mock_whisper:
-
+    with (
+        patch("app.services.stt.stt_service.AssemblyAIProvider") as mock_assemblyai,
+        patch("app.services.stt.stt_service.WhisperProvider") as mock_whisper,
+    ):
         # AssemblyAI fails
         mock_aai = AsyncMock()
         mock_aai.is_available.return_value = True
@@ -320,8 +327,12 @@ async def test_stt_service_falls_back_to_whisper_on_assemblyai_failure():
         mock_w = AsyncMock()
         mock_w.is_available.return_value = True
         mock_w.transcribe.return_value = TranscriptionResult(
-            transcript="Test", confidence=1.0, duration_sec=10, language='en',
-            provider='whisper', cost_usd=0.001
+            transcript="Test",
+            confidence=1.0,
+            duration_sec=10,
+            language="en",
+            provider="whisper",
+            cost_usd=0.001,
         )
         mock_whisper.return_value = mock_w
 
@@ -331,9 +342,9 @@ async def test_stt_service_falls_back_to_whisper_on_assemblyai_failure():
         result = await service.transcribe(audio_bytes)
 
         # Should fallback to Whisper
-        assert result.provider == 'whisper'
+        assert result.provider == "whisper"
         mock_aai.transcribe.assert_called_once()  # Tried AssemblyAI first
-        mock_w.transcribe.assert_called_once()    # Fell back to Whisper
+        mock_w.transcribe.assert_called_once()  # Fell back to Whisper
 
 
 @pytest.mark.asyncio
@@ -347,9 +358,10 @@ async def test_stt_service_stores_audio_only_when_all_providers_fail():
     """
     from app.services.stt.stt_service import STTService
 
-    with patch('app.services.stt.stt_service.AssemblyAIProvider') as mock_assemblyai, \
-         patch('app.services.stt.stt_service.WhisperProvider') as mock_whisper:
-
+    with (
+        patch("app.services.stt.stt_service.AssemblyAIProvider") as mock_assemblyai,
+        patch("app.services.stt.stt_service.WhisperProvider") as mock_whisper,
+    ):
         # Both providers fail
         mock_aai = AsyncMock()
         mock_aai.is_available.return_value = True
@@ -384,9 +396,10 @@ async def test_stt_service_retries_transient_failures_3_times():
     """
     from app.services.stt.stt_service import STTService
 
-    with patch('app.services.stt.stt_service.AssemblyAIProvider') as mock_assemblyai, \
-         patch('app.services.stt.stt_service.time.sleep') as mock_sleep:
-
+    with (
+        patch("app.services.stt.stt_service.AssemblyAIProvider") as mock_assemblyai,
+        patch("app.services.stt.stt_service.time.sleep") as mock_sleep,
+    ):
         # Mock AssemblyAI to fail 3 times
         mock_aai = AsyncMock()
         mock_aai.is_available.return_value = True
@@ -423,8 +436,7 @@ async def test_stt_service_does_not_retry_client_errors():
     """
     from app.services.stt.stt_service import STTService
 
-    with patch('app.services.stt.stt_service.AssemblyAIProvider') as mock_assemblyai:
-
+    with patch("app.services.stt.stt_service.AssemblyAIProvider") as mock_assemblyai:
         mock_aai = AsyncMock()
         mock_aai.is_available.return_value = True
         mock_aai.transcribe.side_effect = Exception("400 Bad Request: Invalid audio format")

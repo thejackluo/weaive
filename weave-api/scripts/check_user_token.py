@@ -42,7 +42,7 @@ def check_user_profile(auth_user_id: str):
     """Check if a user_profile exists for this auth_user_id."""
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
 
-    result = supabase.table('user_profiles').select('*').eq('auth_user_id', auth_user_id).execute()
+    result = supabase.table("user_profiles").select("*").eq("auth_user_id", auth_user_id).execute()
 
     if result.data:
         profile = result.data[0]
@@ -75,9 +75,9 @@ def check_user_profile(auth_user_id: str):
 
 def main():
     """Main diagnostic function."""
-    print("="*60)
+    print("=" * 60)
     print("🔍 User JWT Token Diagnostic Tool")
-    print("="*60)
+    print("=" * 60)
 
     if len(sys.argv) < 2:
         print("\n❌ Usage: python check_user_token.py <JWT_TOKEN>")
@@ -95,13 +95,13 @@ def main():
     print(f"📝 Token length: {len(token)} characters")
 
     # Decode JWT
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 1: Decode JWT Token")
-    print("="*60)
+    print("=" * 60)
     payload = decode_jwt(token)
 
     # Extract auth_user_id
-    auth_user_id = payload.get('sub')
+    auth_user_id = payload.get("sub")
     if not auth_user_id:
         print("❌ JWT does not contain 'sub' claim (auth_user_id)")
         sys.exit(1)
@@ -109,21 +109,23 @@ def main():
     print(f"\n✅ Extracted auth_user_id: {auth_user_id}")
 
     # Check user profile
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 2: Check User Profile in Database")
-    print("="*60)
+    print("=" * 60)
     profile_exists = check_user_profile(auth_user_id)
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 DIAGNOSIS SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     if profile_exists:
         print("✅ JWT is valid and user_profile exists")
         print("✅ Identity bootup endpoint SHOULD work")
         print("\n🔍 If you're still getting 404 errors:")
-        print("   1. Check mobile app is calling: http://localhost:8000/api/onboarding/identity-bootup")
+        print(
+            "   1. Check mobile app is calling: http://localhost:8000/api/onboarding/identity-bootup"
+        )
         print("   2. Check mobile app is sending: Authorization: Bearer <token>")
         print("   3. Check backend logs for the request")
     else:

@@ -67,7 +67,7 @@ RULES:
 - IMPORTANT: All text must be properly escaped for JSON (newlines as \\n, quotes as \\", etc.)
 """
 
-    def __init__(self, api_key: Optional[str] = None, model_name: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, model_name: Optional[str] = None, db=None):
         """
         Initialize Gemini provider
 
@@ -75,7 +75,9 @@ RULES:
             api_key: Google AI API key (defaults to GOOGLE_AI_API_KEY env var)
             model_name: Model name (defaults to gemini-3-flash-preview)
                        Can be overridden for fallback to gemini-2.5-flash-preview
+            db: Supabase client for cost tracking (optional, for AIProviderBase)
         """
+        super().__init__(db)  # Initialize AIProviderBase
         self.api_key = api_key or os.getenv("GOOGLE_AI_API_KEY")
         self.model_name = model_name or self.DEFAULT_MODEL
 
@@ -180,7 +182,13 @@ RULES:
 
             # Validate response structure
             # All fields must be present (even if null) to ensure prompt compliance
-            required_fields = ["validation_score", "summary", "ocr_text", "categories", "quality_score"]
+            required_fields = [
+                "validation_score",
+                "summary",
+                "ocr_text",
+                "categories",
+                "quality_score",
+            ]
             for field in required_fields:
                 if field not in analysis:
                     raise VisionProviderError(

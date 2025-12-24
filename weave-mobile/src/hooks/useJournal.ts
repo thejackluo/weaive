@@ -12,6 +12,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { journalApi, JournalEntryCreate, JournalEntryUpdate } from '@/services/journalApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fulfillmentQueryKeys } from './useFulfillmentData';
+import { userStatsQueryKeys } from './useUserStats';
+import { historyQueryKeys } from './useHistory';
+import { consistencyQueryKeys } from './useConsistencyData';
 
 const OFFLINE_QUEUE_KEY = '@weave_journal_offline_queue';
 
@@ -64,6 +68,19 @@ export function useGetTodayJournal() {
 }
 
 /**
+ * Fetch journal entries within a date range
+ * Returns empty array if no entries found
+ */
+export function useGetJournalsByDateRange(startDate: string, endDate: string) {
+  return useQuery({
+    queryKey: [...journalKeys.all, 'range', startDate, endDate],
+    queryFn: () => journalApi.getJournalEntriesByDateRange(startDate, endDate),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+/**
  * Submit new journal entry (CREATE mode)
  * Implements offline queueing and optimistic updates
  */
@@ -97,6 +114,20 @@ export function useSubmitJournal() {
 
     // Rollback on error
     onError: (err, newJournal, context) => {
+      console.error('[JOURNAL_HOOK] ❌ Submit mutation failed:', err);
+
+      // Handle 409 Conflict: Entry already exists, fetch it instead
+      if (err.message.includes('409') || err.message.includes('already exists')) {
+        console.log(
+          '[JOURNAL_HOOK] 🔄 409 Conflict - entry exists, invalidating cache to fetch real data'
+        );
+        // Clear the temp-id cache and refetch
+        queryClient.removeQueries({ queryKey: journalKeys.today() });
+        queryClient.invalidateQueries({ queryKey: journalKeys.today() });
+        return; // Don't rollback, just refetch
+      }
+
+      // For other errors, rollback optimistic update
       if (context?.previousJournal) {
         queryClient.setQueryData(journalKeys.today(), context.previousJournal);
       }
@@ -116,6 +147,12 @@ export function useSubmitJournal() {
 
       queryClient.invalidateQueries({ queryKey: journalKeys.all });
       queryClient.invalidateQueries({ queryKey: ['daily-aggregates'] });
+
+      // Invalidate dashboard stats (auto-refresh Dashboard after journal submission)
+      queryClient.invalidateQueries({ queryKey: fulfillmentQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: userStatsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: historyQueryKeys.all });
 
       // Track analytics event
       // TODO: Add analytics tracking
@@ -176,6 +213,12 @@ export function useUpdateJournal() {
 
       queryClient.invalidateQueries({ queryKey: journalKeys.all });
       queryClient.invalidateQueries({ queryKey: ['daily-aggregates'] });
+
+      // Invalidate dashboard stats (auto-refresh Dashboard after journal update)
+      queryClient.invalidateQueries({ queryKey: fulfillmentQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: userStatsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: historyQueryKeys.all });
 
       // Track analytics event
       // TODO: Add analytics tracking
