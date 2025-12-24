@@ -217,7 +217,7 @@ export default function AuthenticationScreen() {
                     color: '#6b7280',
                   }}
                 >
-                  Signed in as <Textstyle={{ fontWeight: '600' }}>{user.email}</Text>
+                  Signed in as <Text style={{ fontWeight: '600' }}>{user.email}</Text>
                 </Text>
                 <Text
                   style={{
@@ -243,7 +243,7 @@ export default function AuthenticationScreen() {
                   onPress={handleContinueOnboarding}
                   disabled={loading || isSigningOut}
                 >
-                  <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                  <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                     Continue to Next Step
                   </Text>
                 </TouchableOpacity>
@@ -265,7 +265,7 @@ export default function AuthenticationScreen() {
                   {isSigningOut ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
-                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Sign Out
                     </Text>
                   )}
@@ -301,8 +301,8 @@ export default function AuthenticationScreen() {
                   <ActivityIndicator color="#ffffff" />
                 ) : (
                   <>
-                    <Textstyle={{ fontSize: 20 }}>G</Text>
-                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Text style={{ fontSize: 20 }}>G</Text>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Continue with Google
                     </Text>
                   </>
@@ -332,8 +332,8 @@ export default function AuthenticationScreen() {
                   <ActivityIndicator color="#ffffff" />
                 ) : (
                   <>
-                    <Textstyle={{ fontSize: 20 }}></Text>
-                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Text style={{ fontSize: 20 }}></Text>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Sign in with Apple
                     </Text>
                   </>
@@ -379,8 +379,8 @@ export default function AuthenticationScreen() {
                 onPress={handleEmailSignIn}
                 disabled={loading}
               >
-                <Textstyle={{ fontSize: 20 }}>✉️</Text>
-                <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                <Text style={{ fontSize: 20 }}>✉️</Text>
+                <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                   Sign in with Email
                 </Text>
               </TouchableOpacity>
@@ -415,7 +415,7 @@ export default function AuthenticationScreen() {
             onPress={handleBack}
             disabled={loading || isSigningOut}
           >
-            <Textstyle={{ color: '#9ca3af', fontSize: 15, fontWeight: '500' }}>
+            <Text style={{ color: '#9ca3af', fontSize: 15, fontWeight: '500' }}>
               Back
             </Text>
           </TouchableOpacity>
@@ -456,7 +456,7 @@ export default function AuthenticationScreen() {
                 }}
                 disabled={loading}
               >
-                <Textstyle={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
+                <Text style={{ color: '#9ca3af', fontSize: 14, fontWeight: '500' }}>
                   🔧 Skip Auth (Dev Only)
                 </Text>
               </TouchableOpacity>

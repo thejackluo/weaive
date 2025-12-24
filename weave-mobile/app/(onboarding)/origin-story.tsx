@@ -442,7 +442,7 @@ export default function OriginStoryScreen() {
           accessibilityLabel="Take the first step"
           accessibilityRole="button"
         >
-          <Textstyle={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
             Take the first step →
           </Text>
         </TouchableOpacity>
@@ -499,14 +499,14 @@ export default function OriginStoryScreen() {
             }}
           >
             <View style={{ marginBottom: 12 }}>
-              <Textstyle={{ fontSize: 14, fontWeight: '700', color: '#666' }}>From:</Text>
-              <Textstyle={{ fontSize: 15, color: '#333', marginTop: 4 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#666' }}>From:</Text>
+              <Text style={{ fontSize: 15, color: '#333', marginTop: 4 }}>
                 {originData.fromText}
               </Text>
             </View>
             <View>
-              <Textstyle={{ fontSize: 14, fontWeight: '700', color: '#666' }}>To:</Text>
-              <Textstyle={{ fontSize: 15, color: '#333', marginTop: 4 }}>{originData.toText}</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#666' }}>To:</Text>
+              <Text style={{ fontSize: 15, color: '#333', marginTop: 4 }}>{originData.toText}</Text>
             </View>
           </View>
 
@@ -535,7 +535,7 @@ export default function OriginStoryScreen() {
               accessibilityHint="Opens camera to capture a photo representing where you are now"
               accessibilityRole="button"
             >
-              <Textstyle={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
                 📷 {originData.photo ? 'Retake Photo' : 'Take a Photo'}
               </Text>
             </TouchableOpacity>
@@ -549,7 +549,7 @@ export default function OriginStoryScreen() {
                   borderRadius: 8,
                 }}
               >
-                <Textstyle={{ color: '#2E7D32', fontWeight: '600' }}>✓ Photo captured</Text>
+                <Text style={{ color: '#2E7D32', fontWeight: '600' }}>✓ Photo captured</Text>
               </View>
             )}
           </View>
@@ -577,7 +577,7 @@ export default function OriginStoryScreen() {
                     borderRadius: 16,
                   }}
                 >
-                  <Textstyle={{ fontSize: 13, color: '#555' }}>{prompt}</Text>
+                  <Text style={{ fontSize: 13, color: '#555' }}>{prompt}</Text>
                 </View>
               ))}
             </View>
@@ -610,7 +610,7 @@ export default function OriginStoryScreen() {
                 accessibilityHint="Starts recording. Speak for up to 60 seconds about why this matters to you"
                 accessibilityRole="button"
               >
-                <Textstyle={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
                   🎤 Start Recording
                 </Text>
               </TouchableOpacity>
@@ -646,7 +646,7 @@ export default function OriginStoryScreen() {
                   >
                     {Math.max(0, 60 - recordingTime)}s
                   </Text>
-                  <Textstyle={{ fontSize: 14, color: '#666' }}>Recording...</Text>
+                  <Text style={{ fontSize: 14, color: '#666' }}>Recording...</Text>
                 </View>
                 <TouchableOpacity
                   onPress={stopRecording}
@@ -659,7 +659,7 @@ export default function OriginStoryScreen() {
                     minHeight: MIN_TOUCH_TARGET,
                   }}
                 >
-                  <Textstyle={{ color: '#FFF', fontSize: 16, fontWeight: '600' }}>Stop</Text>
+                  <Text style={{ color: '#FFF', fontSize: 16, fontWeight: '600' }}>Stop</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -692,7 +692,7 @@ export default function OriginStoryScreen() {
                       >
                         ✓ Commitment recorded
                       </Text>
-                      <Textstyle={{ fontSize: 14, color: '#555' }}>
+                      <Text style={{ fontSize: 14, color: '#555' }}>
                         {originData.audioDuration} seconds
                       </Text>
                     </View>
@@ -729,7 +729,7 @@ export default function OriginStoryScreen() {
                     alignItems: 'center',
                   }}
                 >
-                  <Textstyle={{ color: '#555', fontSize: 14 }}>🔄 Re-record</Text>
+                  <Text style={{ color: '#555', fontSize: 14 }}>🔄 Re-record</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -762,10 +762,10 @@ export default function OriginStoryScreen() {
               >
                 Your Origin Story
               </Text>
-              <Textstyle={{ fontSize: 14, color: '#666', marginBottom: 8 }}>
+              <Text style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>
                 From: {originData.fromText.substring(0, 60)}...
               </Text>
-              <Textstyle={{ fontSize: 14, color: '#666' }}>To: {originData.toText}</Text>
+              <Text style={{ fontSize: 14, color: '#666' }}>To: {originData.toText}</Text>
             </View>
           )}
         </ScrollView>
@@ -869,7 +869,7 @@ export default function OriginStoryScreen() {
             marginBottom: 24,
           }}
         >
-          <Textstyle={{ fontSize: 60 }}>🧵</Text>
+          <Text style={{ fontSize: 60 }}>🧵</Text>
         </View>
 
         {/* Level Progress Bar */}
@@ -933,18 +933,18 @@ export default function OriginStoryScreen() {
                 marginRight: 12,
               }}
             >
-              <Textstyle={{ fontSize: 24 }}>📷</Text>
+              <Text style={{ fontSize: 24 }}>📷</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Textstyle={{ fontSize: 14, color: '#666' }}>
+              <Text style={{ fontSize: 14, color: '#666' }}>
                 From: {originData.fromText.substring(0, 40)}...
               </Text>
-              <Textstyle={{ fontSize: 14, color: '#666', marginTop: 4 }}>
+              <Text style={{ fontSize: 14, color: '#666', marginTop: 4 }}>
                 To: {originData.toText.substring(0, 40)}...
               </Text>
             </View>
           </View>
-          <Textstyle={{ fontSize: 13, color: '#888', textAlign: 'center' }}>
+          <Text style={{ fontSize: 13, color: '#888', textAlign: 'center' }}>
             🎤 {originData.audioDuration}s commitment recorded
           </Text>
         </View>
@@ -971,7 +971,7 @@ export default function OriginStoryScreen() {
           accessibilityLabel="Continue"
           accessibilityRole="button"
         >
-          <Textstyle={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

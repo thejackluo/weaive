@@ -474,7 +474,7 @@ export default function IdentityBootupScreen() {
 
       {/* Input Field */}
       <View style={{ marginBottom: 24 }}>
-        <Textstyle={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
+        <Text style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
           What should we call you?
         </Text>
         <TextInput
@@ -499,7 +499,7 @@ export default function IdentityBootupScreen() {
           onSubmitEditing={handleStep1Continue}
         />
         {nameError && (
-          <Textstyle={{ color: '#EF4444', fontSize: 14, marginTop: 8 }}>{nameError}</Text>
+          <Text style={{ color: '#EF4444', fontSize: 14, marginTop: 8 }}>{nameError}</Text>
         )}
       </View>
 
@@ -521,7 +521,7 @@ export default function IdentityBootupScreen() {
         accessibilityHint="Proceeds to step 2 where you'll choose your Weave's interaction style"
         accessibilityState={{ disabled: !nameValidation.valid }}
       >
-        <Textstyle={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
+        <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
       </TouchableOpacity>
 
       {/* Back Button */}
@@ -537,7 +537,7 @@ export default function IdentityBootupScreen() {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to the previous step"
         >
-          <Textstyle={{ color: '#666', fontSize: 16 }}>Back</Text>
+          <Text style={{ color: '#666', fontSize: 16 }}>Back</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -645,7 +645,7 @@ export default function IdentityBootupScreen() {
                         transform: [{ scale: iconPulseAnim }],
                       }}
                     >
-                      <Textstyle={{ fontSize: 24 }}>🧵</Text>
+                      <Text style={{ fontSize: 24 }}>🧵</Text>
                     </Animated.View>
 
                     {/* Title */}
@@ -747,7 +747,7 @@ export default function IdentityBootupScreen() {
           accessibilityHint="Proceeds to step 3 where you'll choose traits you want to develop"
           accessibilityState={{ disabled: !canContinueStep2 }}
         >
-          <Textstyle={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
         </TouchableOpacity>
 
         {/* Back Button */}
@@ -762,7 +762,7 @@ export default function IdentityBootupScreen() {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to name entry"
         >
-          <Textstyle={{ color: '#666', fontSize: 16 }}>Back</Text>
+          <Text style={{ color: '#666', fontSize: 16 }}>Back</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -864,7 +864,7 @@ export default function IdentityBootupScreen() {
         {/* Max Traits Error */}
         {maxTraitsError && (
           <View style={{ marginBottom: 16, alignItems: 'center' }}>
-            <Textstyle={{ color: '#EF4444', fontSize: 14 }}>{maxTraitsError}</Text>
+            <Text style={{ color: '#EF4444', fontSize: 14 }}>{maxTraitsError}</Text>
           </View>
         )}
 
@@ -903,7 +903,7 @@ export default function IdentityBootupScreen() {
           {isSubmitting && (
             <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
           )}
-          <Textstyle={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
             {isSubmitting ? 'Saving...' : 'Continue'}
           </Text>
         </TouchableOpacity>
@@ -920,7 +920,7 @@ export default function IdentityBootupScreen() {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to personality selection"
         >
-          <Textstyle={{ color: '#666', fontSize: 16 }}>Back</Text>
+          <Text style={{ color: '#666', fontSize: 16 }}>Back</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

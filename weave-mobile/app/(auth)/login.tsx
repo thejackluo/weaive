@@ -285,10 +285,10 @@ export default function LoginScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Textstyle={{ color: '#ffffff', fontSize: 32, fontWeight: 'bold' }}>
+            <Text style={{ color: '#ffffff', fontSize: 32, fontWeight: 'bold' }}>
               {user ? 'Already Signed In' : 'Welcome Back'}
             </Text>
-            <Textstyle={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 18, marginTop: 8 }}>
+            <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 18, marginTop: 8 }}>
               {user ? 'You are currently signed in' : 'Sign in to continue your journey'}
             </Text>
           </View>
@@ -307,13 +307,13 @@ export default function LoginScreen() {
                 }}
               >
                 <View style={{ gap: 8 }}>
-                  <Textstyle={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }}>
                     ✅ You're Already Signed In
                   </Text>
-                  <Textstyle={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
-                    Signed in as <Textstyle={{ fontWeight: '600' }}>{user.email}</Text>
+                  <Text style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    Signed in as <Text style={{ fontWeight: '600' }}>{user.email}</Text>
                   </Text>
-                  <Textstyle={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.5)', marginTop: 4 }}>
+                  <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.5)', marginTop: 4 }}>
                     You can continue to your account or sign out to use a different account.
                   </Text>
                 </View>
@@ -331,7 +331,7 @@ export default function LoginScreen() {
                       opacity: isContinuing || isSigningOut ? 0.5 : 1,
                     }}
                   >
-                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       {isContinuing ? 'Loading...' : 'Continue to App'}
                     </Text>
                   </TouchableOpacity>
@@ -348,7 +348,7 @@ export default function LoginScreen() {
                       opacity: isContinuing || isSigningOut ? 0.5 : 1,
                     }}
                   >
-                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       {isSigningOut ? 'Signing Out...' : 'Sign Out'}
                     </Text>
                   </TouchableOpacity>
@@ -388,7 +388,7 @@ export default function LoginScreen() {
               <View style={styles.form}>
                 {/* Email Input */}
                 <View>
-                  <Textstyle={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 14, marginBottom: 8, fontWeight: '500' }}>Email</Text>
+                  <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 14, marginBottom: 8, fontWeight: '500' }}>Email</Text>
                   <TextInput
                     placeholder="your.email@example.com"
                     value={email}
@@ -412,12 +412,12 @@ export default function LoginScreen() {
                     }}
                     placeholderTextColor="rgba(255, 255, 255, 0.4)"
                   />
-                  {emailError ? <Textstyle={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{emailError}</Text> : null}
+                  {emailError ? <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{emailError}</Text> : null}
                 </View>
 
                 {/* Password Input */}
                 <View>
-                  <Textstyle={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 14, marginBottom: 8, fontWeight: '500' }}>Password</Text>
+                  <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 14, marginBottom: 8, fontWeight: '500' }}>Password</Text>
                   <View style={{ position: 'relative' }}>
                     <TextInput
                       placeholder="Enter your password"
@@ -449,12 +449,12 @@ export default function LoginScreen() {
                       accessibilityRole="button"
                       style={{ position: 'absolute', right: 16, top: 14 }}
                     >
-                      <Textstyle={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>
+                      <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>
                         {showPassword ? 'Hide' : 'Show'}
                       </Text>
                     </Pressable>
                   </View>
-                  {passwordError ? <Textstyle={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{passwordError}</Text> : null}
+                  {passwordError ? <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{passwordError}</Text> : null}
                 </View>
 
                 {/* Sign In Button */}
@@ -478,7 +478,7 @@ export default function LoginScreen() {
                   {isLoading ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
-                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Sign In
                     </Text>
                   )}
@@ -488,7 +488,7 @@ export default function LoginScreen() {
               {/* Divider */}
               <View style={styles.divider}>
                 <View style={[styles.dividerLine, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
-                <Textstyle={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)' }}>
+                <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)' }}>
                   or continue with
                 </Text>
                 <View style={[styles.dividerLine, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
@@ -516,7 +516,7 @@ export default function LoginScreen() {
                   {isOAuthLoading === 'google' ? (
                     <ActivityIndicator color="#3b82f6" />
                   ) : (
-                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Sign in with Google
                     </Text>
                   )}
@@ -542,11 +542,11 @@ export default function LoginScreen() {
                         },
                       ]}
                     >
-                      <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                         Sign in with Apple (Coming Soon)
                       </Text>
                     </TouchableOpacity>
-                    <Textstyle={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: 4 }}>
+                    <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: 4 }}>
                       Requires Apple Developer Program
                     </Text>
                   </View>
@@ -555,7 +555,7 @@ export default function LoginScreen() {
 
               {/* Sign Up Link */}
               <View style={styles.footer}>
-                <Textstyle={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
+                <Text style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
                   Don't have an account?{' '}
                 </Text>
                 <Pressable
@@ -565,7 +565,7 @@ export default function LoginScreen() {
                   accessibilityRole="button"
                   style={{ opacity: isLoading || isOAuthLoading !== null ? 0.5 : 1 }}
                 >
-                  <Textstyle={{ fontSize: 16, color: '#3b82f6', fontWeight: '600' }}>
+                  <Text style={{ fontSize: 16, color: '#3b82f6', fontWeight: '600' }}>
                     Sign Up
                   </Text>
                 </Pressable>
@@ -586,11 +586,11 @@ export default function LoginScreen() {
                       opacity: 0.6,
                     }}
                   >
-                    <Textstyle={{ color: '#ffffff', fontSize: 14 }}>
+                    <Text style={{ color: '#ffffff', fontSize: 14 }}>
                       🔧 Skip Auth (Dev Only)
                     </Text>
                   </TouchableOpacity>
-                  <Textstyle={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: 4 }}>
+                  <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: 4 }}>
                     Development mode only - bypasses authentication
                   </Text>
                 </View>

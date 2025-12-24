@@ -251,8 +251,8 @@ export default function ReflectionScreen() {
         {!loadingTimeout ? (
           <>
             <ActivityIndicator size="large" color="#6366f1" />
-            <Textstyle={styles.loadingText}>Loading your reflection...</Text>
-            <Textstyle={styles.loadingDebugText}>
+            <Text style={styles.loadingText}>Loading your reflection...</Text>
+            <Text style={styles.loadingDebugText}>
               Journal: {isLoadingJournal ? 'Loading...' : 'Done'}
               {'\n'}
               Questions: {isLoadingQuestions ? 'Loading...' : 'Done'}
@@ -260,15 +260,15 @@ export default function ReflectionScreen() {
           </>
         ) : (
           <>
-            <Textstyle={styles.errorText}>⚠️ Cannot load reflection</Text>
-            <Textstyle={styles.errorSubtext}>
+            <Text style={styles.errorText}>⚠️ Cannot load reflection</Text>
+            <Text style={styles.errorSubtext}>
               {journalError
                 ? `Journal error: ${journalError.message}`
                 : questionsError
                   ? `Questions error: ${questionsError.message}`
                   : 'Loading took too long. Check your connection and try again.'}
             </Text>
-            <Textstyle={styles.errorDebugText}>
+            <Text style={styles.errorDebugText}>
               Debug Info:{'\n'}• Journal:{' '}
               {isLoadingJournal ? 'Still loading' : journalError ? 'Error' : 'Done'}
               {'\n'}• Questions:{' '}
@@ -282,7 +282,7 @@ export default function ReflectionScreen() {
                 router.back();
               }}
             >
-              <Textstyle={styles.retryButtonText}>Go Back</Text>
+              <Text style={styles.retryButtonText}>Go Back</Text>
             </TouchableOpacity>
           </>
         )}
@@ -300,13 +300,13 @@ export default function ReflectionScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         {/* Header */}
         <View style={styles.header}>
-          <Textstyle={styles.headerTitle}>How did today go, {userName}?</Text>
-          <Textstyle={styles.headerSubtitle}>Take 60 seconds to reflect</Text>
+          <Text style={styles.headerTitle}>How did today go, {userName}?</Text>
+          <Text style={styles.headerSubtitle}>Take 60 seconds to reflect</Text>
         </View>
 
         {/* Question 1: Today's Reflection */}
         <View style={styles.questionContainer}>
-          <Textstyle={styles.questionLabel}>
+          <Text style={styles.questionLabel}>
             How do you feel about today? What worked well and what didn't?
           </Text>
           <TextInput
@@ -319,15 +319,15 @@ export default function ReflectionScreen() {
             placeholder="Today I felt... The highlight was... I struggled with..."
             placeholderTextColor="#999"
           />
-          <Textstyle={styles.characterCount}>{reflectionCount} / 500</Text>
+          <Text style={styles.characterCount}>{reflectionCount} / 500</Text>
           {reflectionCount < 50 && reflectionCount > 0 && (
-            <Textstyle={styles.hint}>Keep going! Aim for at least 50 characters.</Text>
+            <Text style={styles.hint}>Keep going! Aim for at least 50 characters.</Text>
           )}
         </View>
 
         {/* Question 2: Tomorrow's Focus */}
         <View style={styles.questionContainer}>
-          <Textstyle={styles.questionLabel}>
+          <Text style={styles.questionLabel}>
             What is the one thing you want to accomplish tomorrow?
           </Text>
           <TextInput
@@ -338,14 +338,14 @@ export default function ReflectionScreen() {
             placeholder="Tomorrow I will..."
             placeholderTextColor="#999"
           />
-          <Textstyle={styles.characterCount}>{focusCount} / 100</Text>
+          <Text style={styles.characterCount}>{focusCount} / 100</Text>
         </View>
 
         {/* Fulfillment Score Slider */}
         <View style={styles.questionContainer}>
-          <Textstyle={styles.questionLabel}>Overall, how fulfilled do you feel about today?</Text>
+          <Text style={styles.questionLabel}>Overall, how fulfilled do you feel about today?</Text>
           <View style={styles.sliderContainer}>
-            <Textstyle={styles.scoreDisplay}>{fulfillmentScore}</Text>
+            <Text style={styles.scoreDisplay}>{fulfillmentScore}</Text>
             <View style={styles.sliderTrack}>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                 <TouchableOpacity
@@ -353,16 +353,16 @@ export default function ReflectionScreen() {
                   style={[styles.sliderDot, num <= fulfillmentScore && styles.sliderDotActive]}
                   onPress={() => setFulfillmentScore(num)}
                 >
-                  <Textstyle={styles.sliderDotText}>{num}</Text>
+                  <Text style={styles.sliderDotText}>{num}</Text>
                 </TouchableOpacity>
               ))}
             </View>
             <View style={styles.sliderLabels}>
-              <Textstyle={styles.sliderLabel}>Low</Text>
-              <Textstyle={styles.sliderLabel}>High</Text>
+              <Text style={styles.sliderLabel}>Low</Text>
+              <Text style={styles.sliderLabel}>High</Text>
             </View>
           </View>
-          <Textstyle={styles.sliderFeedback}>
+          <Text style={styles.sliderFeedback}>
             {fulfillmentScore <= 3 && '🤔 Tomorrow is a fresh start'}
             {fulfillmentScore > 3 && fulfillmentScore <= 6 && '💭 Steady progress'}
             {fulfillmentScore > 6 && '✨ Great momentum!'}
@@ -373,9 +373,9 @@ export default function ReflectionScreen() {
         {customQuestions.length > 0 && (
           <View style={styles.customQuestionsSection}>
             <View style={styles.customQuestionsHeader}>
-              <Textstyle={styles.customQuestionsSectionTitle}>Your Custom Questions</Text>
+              <Text style={styles.customQuestionsSectionTitle}>Your Custom Questions</Text>
               <TouchableOpacity onPress={() => setShowManageQuestionsModal(true)}>
-                <Textstyle={styles.manageQuestionsLink}>Manage</Text>
+                <Text style={styles.manageQuestionsLink}>Manage</Text>
               </TouchableOpacity>
             </View>
             {customQuestions.map((question) => (
@@ -395,7 +395,7 @@ export default function ReflectionScreen() {
             style={styles.addCustomQuestionsButton}
             onPress={() => setShowManageQuestionsModal(true)}
           >
-            <Textstyle={styles.addCustomQuestionsText}>+ Add custom tracking questions</Text>
+            <Text style={styles.addCustomQuestionsText}>+ Add custom tracking questions</Text>
           </TouchableOpacity>
         )}
         {customQuestions.length > 0 && customQuestions.length < 5 && (
@@ -403,7 +403,7 @@ export default function ReflectionScreen() {
             style={styles.addMoreQuestionsButton}
             onPress={() => setShowManageQuestionsModal(true)}
           >
-            <Textstyle={styles.addMoreQuestionsText}>+ Add more questions</Text>
+            <Text style={styles.addMoreQuestionsText}>+ Add more questions</Text>
           </TouchableOpacity>
         )}
 
@@ -416,13 +416,13 @@ export default function ReflectionScreen() {
           {isLoading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Textstyle={styles.submitButtonText}>
+            <Text style={styles.submitButtonText}>
               {isEditMode ? 'Update Reflection' : 'Submit'}
             </Text>
           )}
         </TouchableOpacity>
         {isLoading && (
-          <Textstyle={styles.loadingText}>
+          <Text style={styles.loadingText}>
             {isEditMode ? 'Updating your reflection...' : 'Submitting your reflection...'}
           </Text>
         )}

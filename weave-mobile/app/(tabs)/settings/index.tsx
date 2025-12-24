@@ -111,7 +111,7 @@ export default function SettingsScreen() {
                 Answer questions and track your progress
               </Text>
             </View>
-            <Textstyle={{ color: '#71717A', fontSize: 18 }}>›</Text>
+            <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
           </Pressable>
         </View>
 

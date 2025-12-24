@@ -139,7 +139,7 @@ function CTAButton({ onPress, reduceMotion, delayMs }: CTAButtonProps) {
         accessibilityLabel="Continue to next step"
         accessibilityRole="button"
       >
-        <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Next →</Text>
+        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Next →</Text>
       </Pressable>
     </Animated.View>
   );
