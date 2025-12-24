@@ -182,10 +182,12 @@ def register_default_tools() -> None:
     available tools for AI use.
     """
     from app.services.tools.modify_personality_tool import ModifyPersonalityTool
+    from app.services.tools.modify_identity_document_tool import ModifyIdentityDocumentTool
 
     registry = get_tool_registry()
 
     # Register tools
     registry.register(ModifyPersonalityTool())
+    registry.register(ModifyIdentityDocumentTool())
 
     logger.info(f"✅ Registered {len(registry)} default tools")
