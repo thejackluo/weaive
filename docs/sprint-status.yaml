@@ -104,10 +104,10 @@ week-0-stories:
 # - Original: 8-10 pts (navigation only)
 # - Expanded: 21-27 pts (navigation + backend + AI standardization)
 # - Corrected: 19-24 pts (validation found duplicate work in Story 1.5.3, reduced from 6-8 pts to 4-5 pts)
-epic-1.5-status: planned
+epic-1.5-status: in-progress
 epic-1.5-stories:
   1-5-1-navigation-architecture: planned        # 8-10 pts - Core navigation scaffolding (3-tab structure, glassmorphism AI chat, 15+ placeholder screens)
-  1-5-2-backend-standardization: planned        # 7-9 pts ⚡ EXPANDED (2025-12-22) - API/model templates + 28 API endpoint stubs, backend-patterns-guide.md + backend-api-integration.md
+  1-5-2-backend-standardization: ready-for-dev  # 7-9 pts ⚡ VALIDATED 2025-12-23 - API/model templates + 28 API endpoint stubs, backend-patterns-guide.md + backend-api-integration.md (validation-report-story-1.5.2-20251223.md)
   1-5-3-ai-services-standardization: in-progress      # 4-5 pts ⚡ NEW (2025-12-21) - AIProviderBase abstraction, text/image/audio patterns, cost tracking, rate limiting, ai-services-guide.md (ACTIVE in PR #82)
 
 # Epic 0.5: Post-Development Observability (6 pts)
