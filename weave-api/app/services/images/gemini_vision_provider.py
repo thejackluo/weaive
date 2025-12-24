@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from typing import Dict, Optional
 
 from google import genai
-from google.api_core import exceptions as google_exceptions
+from google.genai import types
 
 from .vision_service import (
     VisionAnalysisResult,
@@ -228,35 +228,37 @@ RULES:
 
             return result
 
-        except google_exceptions.ResourceExhausted as e:
-            # Rate limit exceeded
-            raise VisionProviderError(
-                self.model_name,
-                f"Rate limit exceeded: {str(e)}",
-                retryable=False,
-            )
-
-        except google_exceptions.InvalidArgument as e:
-            # Invalid input (bad image format, etc.)
-            raise VisionProviderError(
-                self.model_name,
-                f"Invalid input: {str(e)}",
-                retryable=False,
-            )
-
-        except google_exceptions.GoogleAPIError as e:
-            # Other Google API errors
-            raise VisionProviderError(
-                self.model_name,
-                f"Google API error: {str(e)}",
-                retryable=True,
-            )
-
         except Exception as e:
-            # Unexpected errors
-            logger.error(f"Unexpected error in Gemini analysis: {e}", exc_info=True)
-            raise VisionProviderError(
-                self.model_name,
-                f"Unexpected error: {str(e)}",
-                retryable=True,
-            )
+            # Handle all API errors generically (new SDK uses different exception types)
+            error_str = str(e).lower()
+
+            # Check for specific error patterns
+            if 'rate limit' in error_str or 'quota' in error_str:
+                # Rate limit exceeded
+                raise VisionProviderError(
+                    self.model_name,
+                    f"Rate limit exceeded: {str(e)}",
+                    retryable=False,
+                )
+            elif 'invalid' in error_str or 'argument' in error_str:
+                # Invalid input (bad image format, etc.)
+                raise VisionProviderError(
+                    self.model_name,
+                    f"Invalid input: {str(e)}",
+                    retryable=False,
+                )
+            elif 'api' in error_str or 'error' in error_str:
+                # Other API errors are generally retryable
+                raise VisionProviderError(
+                    self.model_name,
+                    f"Google API error: {str(e)}",
+                    retryable=True,
+                )
+            else:
+                # Unexpected errors
+                logger.error(f"Unexpected error in Gemini analysis: {e}", exc_info=True)
+                raise VisionProviderError(
+                    self.model_name,
+                    f"Unexpected error: {str(e)}",
+                    retryable=True,
+                )
