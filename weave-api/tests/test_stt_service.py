@@ -58,6 +58,9 @@ def test_stt_provider_requires_all_abstract_methods():
     """
 
     class CompleteProvider(STTProvider):
+        def get_provider_name(self) -> str:
+            return "test"
+
         async def transcribe(self, audio_bytes: bytes, language: str = "en") -> TranscriptionResult:
             return TranscriptionResult(
                 transcript="Test",
@@ -98,15 +101,18 @@ async def test_assemblyai_provider_transcribe_success():
     """
     from app.services.stt.assemblyai_provider import AssemblyAIProvider
 
-    with patch("app.services.stt.assemblyai_provider.aai_client") as mock_client:
+    with patch("app.services.stt.assemblyai_provider.aai") as mock_aai:
         # Mock AssemblyAI upload + poll response
+        mock_transcript = AsyncMock()
+        mock_transcript.text = "I completed my workout today."
+        mock_transcript.audio_duration = 45000  # milliseconds
+        mock_transcript.status = "completed"
+        mock_transcript.words = [AsyncMock(confidence=0.92) for _ in range(5)]
+
         mock_transcriber = AsyncMock()
-        mock_transcriber.transcribe.return_value = {
-            "text": "I completed my workout today.",
-            "confidence": 0.92,
-            "audio_duration": 45,
-        }
-        mock_client.Transcriber.return_value = mock_transcriber
+        mock_transcriber.transcribe.return_value = mock_transcript
+        mock_aai.Transcriber.return_value = mock_transcriber
+        mock_aai.TranscriptStatus.error = "error"
 
         provider = AssemblyAIProvider()
         audio_bytes = b"fake_audio_data"
@@ -132,10 +138,10 @@ async def test_assemblyai_provider_handles_timeout():
     """
     from app.services.stt.assemblyai_provider import AssemblyAIProvider
 
-    with patch("app.services.stt.assemblyai_provider.aai_client") as mock_client:
+    with patch("app.services.stt.assemblyai_provider.aai") as mock_aai:
         mock_transcriber = AsyncMock()
         mock_transcriber.transcribe.side_effect = TimeoutError("API timeout")
-        mock_client.Transcriber.return_value = mock_transcriber
+        mock_aai.Transcriber.return_value = mock_transcriber
 
         provider = AssemblyAIProvider()
         audio_bytes = b"fake_audio_data"
@@ -201,15 +207,16 @@ async def test_whisper_provider_transcribe_success():
     """
     from app.services.stt.whisper_provider import WhisperProvider
 
-    with patch("app.services.stt.whisper_provider.openai_client") as mock_client:
+    with patch("app.services.stt.whisper_provider.AsyncOpenAI") as mock_openai_class:
         # Mock OpenAI Whisper response
-        mock_audio = AsyncMock()
-        mock_audio.transcriptions.create.return_value = {
-            "text": "I completed my workout today.",
-            "language": "en",
-            "duration": 45,
-        }
-        mock_client.audio = mock_audio
+        mock_response = AsyncMock()
+        mock_response.text = "I completed my workout today."
+        mock_response.language = "en"
+        mock_response.duration = 45
+
+        mock_client = AsyncMock()
+        mock_client.audio.transcriptions.create.return_value = mock_response
+        mock_openai_class.return_value = mock_client
 
         provider = WhisperProvider()
         audio_bytes = b"fake_audio_data"
@@ -398,7 +405,7 @@ async def test_stt_service_retries_transient_failures_3_times():
 
     with (
         patch("app.services.stt.stt_service.AssemblyAIProvider") as mock_assemblyai,
-        patch("app.services.stt.stt_service.time.sleep") as mock_sleep,
+        patch("asyncio.sleep") as mock_sleep,
     ):
         # Mock AssemblyAI to fail 3 times
         mock_aai = AsyncMock()
