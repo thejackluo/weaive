@@ -54,8 +54,45 @@ export interface BindsResponse {
  * API Error Response
  */
 export interface ApiErrorResponse {
-  error: {
+  error?: {
     code: string;
     message: string;
+  };
+  detail?: string; // FastAPI validation error format
+}
+
+/**
+ * Create Bind Request (POST /api/binds)
+ */
+export interface CreateBindRequest {
+  goal_id: string; // Goal ID this bind belongs to
+  title: string; // Bind title
+  description?: string; // Optional description
+  frequency_type: 'daily' | 'weekly'; // Frequency type
+  frequency_value?: number; // Days per week (1-7, only for weekly)
+}
+
+/**
+ * Bind Template (from subtask_templates table)
+ */
+export interface BindTemplate {
+  id: string;
+  goal_id: string;
+  title: string;
+  default_estimated_minutes: number;
+  recurrence_rule: string; // iCal RRULE format
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * API Response: Single Bind Operation (create, update, delete)
+ */
+export interface BindResponse {
+  success: boolean;
+  data: BindTemplate;
+  meta: {
+    timestamp: string;
   };
 }

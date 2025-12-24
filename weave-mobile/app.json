@@ -16,15 +16,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.weavelight.app",
-      "associatedDomains": [
-        "applinks:weavelight.app"
-      ],
+      "associatedDomains": ["applinks:weavelight.app"],
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": [
-              "weavelight"
-            ]
+            "CFBundleURLSchemes": ["weavelight"]
           }
         ]
       }
@@ -44,10 +40,7 @@
               "scheme": "weavelight"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
       "edgeToEdgeEnabled": true,

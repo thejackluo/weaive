@@ -206,12 +206,7 @@ describe('useAITextGeneration Hook', () => {
         expect(result.current.data).toBeDefined();
       });
 
-      const cachedData = queryClient.getQueryData([
-        'ai',
-        'chat',
-        'triad_generation',
-        'user-123',
-      ]);
+      const cachedData = queryClient.getQueryData(['ai', 'chat', 'triad_generation', 'user-123']);
 
       expect(cachedData).toBeDefined();
     });

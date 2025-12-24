@@ -37,6 +37,16 @@ class UpdateBindRequest(BaseModel):
     default_estimated_minutes: int | None = Field(None, ge=0, description="Default estimated time in minutes")
 
 
+class CreateBindRequest(BaseModel):
+    """Request body for creating a new bind"""
+
+    goal_id: str = Field(..., description="Goal ID this bind belongs to")
+    title: str = Field(..., min_length=1, max_length=200, description="Bind title")
+    description: str | None = Field(None, max_length=1000, description="Bind description")
+    frequency_type: str = Field(..., pattern="^(daily|weekly)$", description="Frequency type: daily or weekly")
+    frequency_value: int | None = Field(None, ge=1, le=7, description="Days per week (only for weekly)")
+
+
 @router.get("/today")
 async def get_today_binds(
     user: dict = Depends(get_current_user),
@@ -141,7 +151,7 @@ async def get_today_binds(
                 sort_order,
                 created_at,
                 goals!subtask_instances_goal_id_fkey(id, title, status),
-                subtask_templates!subtask_instances_template_id_fkey(title, recurrence_rule)
+                subtask_templates!subtask_instances_template_id_fkey(title, recurrence_rule, is_archived)
                 """
             )
 
@@ -179,6 +189,13 @@ async def get_today_binds(
                 logger.debug(f"[BINDS_API] Skipping bind {instance['id']} - goal is archived")
                 continue
 
+            # Skip binds from archived templates (deleted binds)
+            template = instance.get("subtask_templates") or {}
+            is_archived = template.get("is_archived", False)
+            if is_archived:
+                logger.debug(f"[BINDS_API] Skipping bind {instance['id']} - template is archived (deleted)")
+                continue
+
             # Check if completed (subtask_completions table)
             completion_response = (
                 supabase.table("subtask_completions")
@@ -211,8 +228,7 @@ async def get_today_binds(
             goal_id = goal.get("id") if goal else None
             goal_title = goal.get("title", "Untitled Goal") if goal else "Untitled Goal"
 
-            # Get template info for recurrence display
-            template = instance.get("subtask_templates") or {}
+            # Get template info for recurrence display (already fetched above)
             recurrence_rule = template.get("recurrence_rule", "")
 
             # Convert RRULE to human-readable frequency (simplified for now)
@@ -602,4 +618,273 @@ async def update_bind(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update bind: {str(e)}",
+        )
+
+
+@router.post("", status_code=status.HTTP_201_CREATED)
+async def create_bind(
+    request: CreateBindRequest,
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Create a new bind for a goal.
+
+    Request Body:
+    - goal_id: Goal ID this bind belongs to (required)
+    - title: Bind title (required)
+    - description: Bind description (optional)
+    - frequency_type: 'daily' or 'weekly' (required)
+    - frequency_value: Days per week (1-7, only for weekly)
+
+    Returns:
+    - data: Created bind object
+    - meta: Metadata with timestamp
+
+    Validation:
+    - Max 3 active binds per goal
+    - User must own the goal
+    """
+    if not supabase:
+        logger.error("❌ Supabase client not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not configured",
+        )
+
+    # Extract user ID from JWT
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field (user ID)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    logger.info(
+        f"[CREATE_BIND] Request from auth_user_id: {auth_user_id} for goal {request.goal_id}"
+    )
+
+    try:
+        # Get user_profile.id from auth_user_id (RLS pattern)
+        user_profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+
+        if not user_profile_response.data:
+            logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found",
+            )
+
+        user_id = user_profile_response.data["id"]
+        logger.info(f"[CREATE_BIND] Resolved user_id: {user_id}")
+
+        # Verify the goal exists and belongs to the user
+        goal_response = (
+            supabase.table("goals")
+            .select("id, status")
+            .eq("id", request.goal_id)
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
+
+        if not goal_response.data:
+            logger.warning(f"⚠️ Goal {request.goal_id} not found for user {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Goal not found",
+            )
+
+        # Check if goal is active (can't add binds to archived goals)
+        if goal_response.data["status"] != "active":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot add binds to archived goals",
+            )
+
+        # Check active binds count (max 3 per goal)
+        active_binds_response = (
+            supabase.table("subtask_templates")
+            .select("id", count="exact")
+            .eq("goal_id", request.goal_id)
+            .eq("is_archived", False)
+            .execute()
+        )
+
+        active_binds_count = active_binds_response.count or 0
+        if active_binds_count >= 3:
+            logger.warning(
+                f"⚠️ Goal {request.goal_id} already has {active_binds_count} active binds"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Maximum 3 binds allowed per goal",
+            )
+
+        # Convert frequency_type to recurrence_rule (iCal RRULE format)
+        if request.frequency_type == "daily":
+            recurrence_rule = "FREQ=DAILY;INTERVAL=1"
+        elif request.frequency_type == "weekly":
+            # For weekly, use frequency_value (default to 1 if not provided)
+            freq_value = request.frequency_value or 1
+            recurrence_rule = f"FREQ=WEEKLY;INTERVAL=1;COUNT={freq_value}"
+        else:
+            recurrence_rule = "FREQ=DAILY;INTERVAL=1"  # Default fallback
+
+        # Create the bind
+        bind_insert = {
+            "user_id": user_id,
+            "goal_id": request.goal_id,
+            "title": request.title,
+            "default_estimated_minutes": 30,  # Default to 30 minutes
+            "recurrence_rule": recurrence_rule,
+            "is_archived": False,
+        }
+
+        bind_response = supabase.table("subtask_templates").insert(bind_insert).execute()
+
+        if not bind_response.data:
+            logger.error("❌ Failed to create bind")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create bind",
+            )
+
+        created_bind = bind_response.data[0]
+        bind_id = created_bind["id"]
+        logger.info(f"✅ Created bind {bind_id}: {created_bind['title']}")
+
+        # Auto-create subtask instance for TODAY
+        today_date = date.today().isoformat()
+        instance_insert = {
+            "user_id": user_id,
+            "goal_id": request.goal_id,
+            "template_id": bind_id,
+            "scheduled_for_date": today_date,
+            "status": "planned",
+            "estimated_minutes": created_bind.get("default_estimated_minutes", 30),
+        }
+
+        try:
+            supabase.table("subtask_instances").insert(instance_insert).execute()
+            logger.info(f"✅ Created instance for bind {bind_id} on {today_date}")
+        except Exception as instance_error:
+            logger.error(f"❌ Error creating instance: {str(instance_error)}")
+            # Don't fail bind creation if instance generation fails
+
+        return {
+            "success": True,
+            "data": created_bind,
+            "meta": {
+                "timestamp": date.today().isoformat(),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error creating bind: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create bind: {str(e)}",
+        )
+
+
+@router.delete("/{bind_id}")
+async def delete_bind(
+    bind_id: str,
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Delete a bind (soft delete by setting is_archived=true).
+
+    Path Parameters:
+    - bind_id: UUID of the bind
+
+    Returns:
+    - data: Archived bind object
+    - meta: Metadata with timestamp
+
+    Note: This is a soft delete - sets is_archived to true
+    RLS: User can only delete their own binds
+    """
+    if not supabase:
+        logger.error("❌ Supabase client not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not configured",
+        )
+
+    # Extract user ID from JWT
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field (user ID)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    logger.info(f"[DELETE_BIND] Request from auth_user_id: {auth_user_id}")
+
+    try:
+        # Get user_profile.id from auth_user_id (RLS pattern)
+        user_profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+
+        if not user_profile_response.data:
+            logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found",
+            )
+
+        user_id = user_profile_response.data["id"]
+
+        # Archive the bind (set is_archived to true)
+        archive_response = (
+            supabase.table("subtask_templates")
+            .update({"is_archived": True})
+            .eq("id", bind_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        if not archive_response.data:
+            logger.warning(f"⚠️ Bind {bind_id} not found for user {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Bind not found",
+            )
+
+        archived_bind = archive_response.data[0]
+        logger.info(f"✅ Archived bind {bind_id}")
+
+        return {
+            "success": True,
+            "data": archived_bind,
+            "meta": {
+                "timestamp": date.today().isoformat(),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error deleting bind {bind_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete bind: {str(e)}",
         )

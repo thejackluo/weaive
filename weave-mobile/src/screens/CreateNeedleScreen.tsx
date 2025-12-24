@@ -44,6 +44,8 @@ export function CreateNeedleScreen() {
   const [suggestedBinds, setSuggestedBinds] = useState<Array<BindCreate>>([]);
   const [editingQGoalIndex, setEditingQGoalIndex] = useState<number | null>(null);
   const [editingBindIndex, setEditingBindIndex] = useState<number | null>(null);
+  const [editingBindTitle, setEditingBindTitle] = useState('');
+  const [editingBindFrequency, setEditingBindFrequency] = useState<'daily' | 'weekly'>('daily');
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -348,53 +350,196 @@ export function CreateNeedleScreen() {
 
         {/* Daily Habits (Binds) */}
         <View style={styles.section}>
-          <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
-            Daily Habits
-          </Text>
-          <Text variant="textSm" color="secondary" style={styles.sectionSubtitle}>
-            Consistent actions that will get you there
-          </Text>
-          {suggestedBinds.map((bind, index) => (
-            <Pressable
-              key={index}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setEditingBindIndex(index);
-              }}
-            >
-              <Card variant="glass" style={styles.listItemCard}>
-                <View style={styles.listItemContent}>
-                  <View style={styles.listItemInfo}>
-                    {editingBindIndex === index ? (
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
+                Daily Habits
+              </Text>
+              <Text variant="textSm" color="secondary" style={styles.sectionSubtitle}>
+                Consistent actions that will get you there (max 3)
+              </Text>
+            </View>
+            <Text variant="textSm" color="secondary">
+              {suggestedBinds.length}/3
+            </Text>
+          </View>
+          {suggestedBinds.map((bind, index) => {
+            const isEditing = editingBindIndex === index;
+            return (
+              <Card key={index} variant="glass" style={styles.listItemCard}>
+                {isEditing ? (
+                  // Edit mode - expanded view with title and frequency
+                  <View style={styles.bindEditContainer}>
+                    <View style={styles.bindEditField}>
+                      <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
+                        Name
+                      </Text>
                       <TextInput
-                        value={bind.title}
-                        onChangeText={(text) => {
-                          const updated = [...suggestedBinds];
-                          updated[index].title = text;
-                          setSuggestedBinds(updated);
-                        }}
-                        onBlur={() => setEditingBindIndex(null)}
-                        autoFocus
+                        value={editingBindTitle}
+                        onChangeText={setEditingBindTitle}
                         style={[
-                          styles.inlineInput,
-                          { color: colors.text.primary, borderColor: colors.border.focus },
+                          styles.bindEditInput,
+                          {
+                            color: colors.text.primary,
+                            backgroundColor: colors.background.primary,
+                            borderColor: colors.border.muted,
+                          },
                         ]}
+                        placeholder="Bind name"
+                        placeholderTextColor={colors.text.muted}
+                        maxLength={200}
+                        autoFocus
                       />
-                    ) : (
+                    </View>
+
+                    <View style={styles.bindEditField}>
+                      <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
+                        Frequency
+                      </Text>
+                      <View style={styles.frequencyButtons}>
+                        <Pressable
+                          style={[
+                            styles.frequencyButton,
+                            {
+                              backgroundColor:
+                                editingBindFrequency === 'daily'
+                                  ? colors.accent[500]
+                                  : colors.background.secondary,
+                              borderColor: colors.border.muted,
+                            },
+                          ]}
+                          onPress={() => setEditingBindFrequency('daily')}
+                        >
+                          <Text
+                            variant="textSm"
+                            weight="medium"
+                            style={{
+                              color:
+                                editingBindFrequency === 'daily'
+                                  ? colors.background.primary
+                                  : colors.text.secondary,
+                            }}
+                          >
+                            Daily
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          style={[
+                            styles.frequencyButton,
+                            {
+                              backgroundColor:
+                                editingBindFrequency === 'weekly'
+                                  ? colors.accent[500]
+                                  : colors.background.secondary,
+                              borderColor: colors.border.muted,
+                            },
+                          ]}
+                          onPress={() => setEditingBindFrequency('weekly')}
+                        >
+                          <Text
+                            variant="textSm"
+                            weight="medium"
+                            style={{
+                              color:
+                                editingBindFrequency === 'weekly'
+                                  ? colors.background.primary
+                                  : colors.text.secondary,
+                            }}
+                          >
+                            Weekly
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
+
+                    <View style={styles.bindEditActions}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onPress={() => setEditingBindIndex(null)}
+                        style={styles.bindEditButton}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onPress={() => {
+                          const trimmedTitle = editingBindTitle.trim();
+                          if (!trimmedTitle) {
+                            Alert.alert('Validation Error', 'Bind title cannot be empty.');
+                            return;
+                          }
+                          const updated = [...suggestedBinds];
+                          updated[index] = {
+                            title: trimmedTitle,
+                            frequency_type: editingBindFrequency,
+                            frequency_value: editingBindFrequency === 'weekly' ? 1 : undefined,
+                          };
+                          setSuggestedBinds(updated);
+                          setEditingBindIndex(null);
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        }}
+                        style={styles.bindEditButton}
+                      >
+                        Save
+                      </Button>
+                    </View>
+                  </View>
+                ) : (
+                  // View mode - collapsed view with edit/delete buttons
+                  <View style={styles.listItemContent}>
+                    <Pressable
+                      style={styles.listItemInfo}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setEditingBindIndex(index);
+                        setEditingBindTitle(bind.title);
+                        setEditingBindFrequency(bind.frequency_type);
+                      }}
+                    >
                       <Text variant="textBase" weight="medium">
                         {bind.title}
                       </Text>
-                    )}
-                    <Text variant="textSm" color="secondary">
-                      {bind.frequency_value}x per{' '}
-                      {bind.frequency_type === 'weekly' ? 'week' : 'day'}
-                    </Text>
+                      <Text variant="textSm" color="secondary">
+                        {bind.frequency_type === 'daily' ? 'Daily' : 'Weekly'}
+                      </Text>
+                    </Pressable>
+                    <View style={styles.listItemActions}>
+                      <Pressable
+                        onPress={() => {
+                          Haptics.selectionAsync();
+                          setEditingBindIndex(index);
+                          setEditingBindTitle(bind.title);
+                          setEditingBindFrequency(bind.frequency_type);
+                        }}
+                        style={styles.iconButton}
+                      >
+                        <Ionicons name="pencil" size={20} color={colors.text.secondary} />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          const updated = suggestedBinds.filter((_, i) => i !== index);
+                          setSuggestedBinds(updated);
+                        }}
+                        style={styles.iconButton}
+                      >
+                        <Ionicons name="trash-outline" size={20} color={colors.rose[500]} />
+                      </Pressable>
+                    </View>
                   </View>
-                  <Ionicons name="pencil" size={20} color={colors.text.secondary} />
-                </View>
+                )}
               </Card>
-            </Pressable>
-          ))}
+            );
+          })}
+          {suggestedBinds.length === 0 && (
+            <Card variant="glass" style={styles.emptyCard}>
+              <Text variant="textSm" color="secondary" style={{ textAlign: 'center' }}>
+                No habits yet. Add at least one to create your goal.
+              </Text>
+            </Card>
+          )}
         </View>
 
         {/* Info Card */}
@@ -414,7 +559,7 @@ export function CreateNeedleScreen() {
           variant="primary"
           size="lg"
           onPress={handleCreateGoal}
-          disabled={createGoalMutation.isPending}
+          disabled={createGoalMutation.isPending || suggestedBinds.length === 0}
         >
           {createGoalMutation.isPending ? (
             <ActivityIndicator size="small" color="white" />
@@ -529,6 +674,12 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     marginBottom: 12,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
   listItemCard: {
     padding: 16,
     marginBottom: 12,
@@ -537,10 +688,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
   },
   listItemInfo: {
     flex: 1,
     gap: 4,
+  },
+  listItemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
   },
   inlineInput: {
     fontSize: 16,
@@ -549,5 +713,45 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 4,
     marginBottom: 4,
+  },
+  emptyCard: {
+    padding: 24,
+  },
+  bindEditContainer: {
+    gap: 16,
+  },
+  bindEditField: {
+    gap: 8,
+  },
+  bindEditLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  bindEditInput: {
+    fontSize: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  frequencyButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  frequencyButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  bindEditActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  bindEditButton: {
+    flex: 1,
   },
 });
