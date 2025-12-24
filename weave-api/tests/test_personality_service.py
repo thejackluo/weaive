@@ -79,7 +79,7 @@ class TestPersonalityService:
         # Mock identity_docs response
         identity_response = MagicMock(
             data=[{
-                "content": {
+                "json": {
                     "dream_self_name": "Alex the Disciplined",
                     "personality_traits": ["analytical", "supportive", "growth-focused"],
                     "speaking_style": "Direct but encouraging"
@@ -133,8 +133,9 @@ class TestPersonalityService:
         service = PersonalityService(mock_supabase)
         personality = await service.get_active_personality("nonexistent_user")
 
-        # Should fallback to Weave AI
+        # Should fallback to Weave AI with gen_z_default preset
         assert personality["personality_type"] == "weave_ai"
+        assert personality["preset"] == "gen_z_default"
 
     @pytest.mark.asyncio
     async def test_get_active_personality_unknown_type(self, mock_supabase):
@@ -160,8 +161,9 @@ class TestPersonalityService:
         service = PersonalityService(mock_supabase)
         personality = await service.get_active_personality("user_123")
 
-        # Should fallback to Weave AI
+        # Should fallback to Weave AI with default preset
         assert personality["personality_type"] == "weave_ai"
+        assert personality["preset"] == "gen_z_default"
 
     @pytest.mark.asyncio
     async def test_switch_personality(self, mock_supabase):
@@ -171,12 +173,12 @@ class TestPersonalityService:
 
         # Mock get_active_personality after switch
         get_response = MagicMock(
-            data=[{"active_personality": "dream_self"}]
+            data=[{"active_personality": "dream_self", "weave_ai_preset": "gen_z_default"}]
         )
 
         identity_response = MagicMock(
             data=[{
-                "content": {
+                "json": {
                     "dream_self_name": "Alex",
                     "personality_traits": ["supportive"],
                     "speaking_style": "Encouraging"
@@ -228,7 +230,7 @@ class TestPersonalityService:
         # Mock identity_docs response
         identity_response = MagicMock(
             data=[{
-                "content": {
+                "json": {
                     "dream_self_name": "Alex the Disciplined",
                     "personality_traits": ["analytical", "supportive"],
                     "speaking_style": "Direct but encouraging"
@@ -236,7 +238,7 @@ class TestPersonalityService:
             }]
         )
 
-        mock_supabase.table().select().eq().eq().execute.return_value = identity_response
+        mock_supabase.table().select().eq().order().limit().execute.return_value = identity_response
 
         service = PersonalityService(mock_supabase)
         dream_self = await service._load_dream_self("user_123")
@@ -250,7 +252,7 @@ class TestPersonalityService:
     async def test_load_dream_self_not_found(self, mock_supabase):
         """Test loading Dream Self when document doesn't exist."""
         # Mock empty response
-        mock_supabase.table().select().eq().eq().execute.return_value = MagicMock(data=[])
+        mock_supabase.table().select().eq().order().limit().execute.return_value = MagicMock(data=[])
 
         service = PersonalityService(mock_supabase)
         dream_self = await service._load_dream_self("user_123")
@@ -261,19 +263,9 @@ class TestPersonalityService:
     async def test_load_dream_self_exception_handling(self, mock_supabase):
         """Test exception handling when loading Dream Self."""
         # Mock exception
-        mock_supabase.table().select().eq().eq().execute.side_effect = Exception("Database error")
+        mock_supabase.table().select().eq().order().limit().execute.side_effect = Exception("Database error")
 
         service = PersonalityService(mock_supabase)
         dream_self = await service._load_dream_self("user_123")
 
         assert dream_self is None
-
-    def test_default_weave_persona_structure(self):
-        """Test that default Weave persona has correct structure."""
-        persona = PersonalityService.DEFAULT_WEAVE_PERSONA
-
-        assert persona["personality_type"] == "weave_ai"
-        assert persona["name"] == "Weave"
-        assert isinstance(persona["traits"], list)
-        assert len(persona["traits"]) > 0
-        assert "speaking_style" in persona
