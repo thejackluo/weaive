@@ -14,9 +14,45 @@ import { getApiBaseUrl } from '@/utils/api';
 export type PersonalityType = 'dream_self' | 'weave_ai';
 
 /**
- * Weave AI preset types (Story 6.1)
+ * Weave AI preset types (Story 6.1 + Extended Personalities)
+ *
+ * Core presets (Story 6.1): gen_z_default, supportive_coach, concise_mentor
+ * Extended presets (23 from Claude Code personalities): abg, angry, anime-girl, etc.
  */
-export type WeaveAIPreset = 'gen_z_default' | 'supportive_coach' | 'concise_mentor';
+export type WeaveAIPreset =
+  // Core presets
+  | 'gen_z_default'
+  | 'supportive_coach'
+  | 'concise_mentor'
+  // Extended presets - Supportive
+  | 'abg'
+  | 'anime-girl'
+  | 'chinese-infj'
+  | 'flirty'
+  | 'funny'
+  // Extended presets - Professional
+  | 'normal'
+  | 'professional'
+  | 'robot'
+  // Extended presets - Humorous
+  | 'sarcastic'
+  | 'dry-humor'
+  | 'grandpa'
+  | 'surfer-dude'
+  // Extended presets - Edgy
+  | 'angry'
+  | 'annoying'
+  | 'crass'
+  | 'moody'
+  | 'sassy'
+  // Extended presets - Creative
+  | 'dramatic'
+  | 'poetic'
+  | 'rapper'
+  | 'zen'
+  // Extended presets - Themed
+  | 'millennial'
+  | 'pirate';
 
 /**
  * Personality details
