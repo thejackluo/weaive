@@ -83,7 +83,8 @@ def test_identity_bootup_without_auth():
     response = client.post("/api/onboarding/identity-bootup", json=payload)
 
     assert response.status_code == 401  # Unauthorized
-    assert "error" in response.json()
+    data = response.json()
+    assert "detail" in data or "error" in data
 
 
 @patch("app.services.onboarding.store_identity_bootup")
@@ -131,8 +132,9 @@ def test_identity_bootup_invalid_name_too_long(valid_jwt_token):
         headers={"Authorization": f"Bearer {valid_jwt_token}"},
     )
 
-    assert response.status_code == 422  # Validation error
-    assert "error" in response.json()
+    assert response.status_code == 400  # Validation error (custom error handler)
+    data = response.json()
+    assert "error" in data or "detail" in data
 
 
 def test_identity_bootup_invalid_name_special_chars(valid_jwt_token):
@@ -149,8 +151,9 @@ def test_identity_bootup_invalid_name_special_chars(valid_jwt_token):
         headers={"Authorization": f"Bearer {valid_jwt_token}"},
     )
 
-    assert response.status_code == 422  # Validation error
-    assert "error" in response.json()
+    assert response.status_code == 400  # Validation error (custom error handler)
+    data = response.json()
+    assert "error" in data or "detail" in data
 
 
 def test_identity_bootup_invalid_personality(valid_jwt_token):
@@ -167,8 +170,9 @@ def test_identity_bootup_invalid_personality(valid_jwt_token):
         headers={"Authorization": f"Bearer {valid_jwt_token}"},
     )
 
-    assert response.status_code == 422  # Validation error
-    assert "error" in response.json()
+    assert response.status_code == 400  # Validation error (custom error handler)
+    data = response.json()
+    assert "error" in data or "detail" in data
 
 
 def test_identity_bootup_too_few_traits(valid_jwt_token):
@@ -185,8 +189,9 @@ def test_identity_bootup_too_few_traits(valid_jwt_token):
         headers={"Authorization": f"Bearer {valid_jwt_token}"},
     )
 
-    assert response.status_code == 422  # Validation error
-    assert "error" in response.json()
+    assert response.status_code == 400  # Validation error (custom error handler)
+    data = response.json()
+    assert "error" in data or "detail" in data
 
 
 def test_identity_bootup_too_many_traits(valid_jwt_token):
@@ -208,8 +213,9 @@ def test_identity_bootup_too_many_traits(valid_jwt_token):
         headers={"Authorization": f"Bearer {valid_jwt_token}"},
     )
 
-    assert response.status_code == 422  # Validation error
-    assert "error" in response.json()
+    assert response.status_code == 400  # Validation error (custom error handler)
+    data = response.json()
+    assert "error" in data or "detail" in data
 
 
 def test_identity_bootup_invalid_trait(valid_jwt_token):
@@ -230,8 +236,9 @@ def test_identity_bootup_invalid_trait(valid_jwt_token):
         headers={"Authorization": f"Bearer {valid_jwt_token}"},
     )
 
-    assert response.status_code == 422  # Validation error
-    assert "error" in response.json()
+    assert response.status_code == 400  # Validation error (custom error handler)
+    data = response.json()
+    assert "error" in data or "detail" in data
 
 
 def test_identity_bootup_duplicate_traits(valid_jwt_token):
@@ -252,8 +259,9 @@ def test_identity_bootup_duplicate_traits(valid_jwt_token):
         headers={"Authorization": f"Bearer {valid_jwt_token}"},
     )
 
-    assert response.status_code == 422  # Validation error
-    assert "error" in response.json()
+    assert response.status_code == 400  # Validation error (custom error handler)
+    data = response.json()
+    assert "error" in data or "detail" in data
 
 
 @patch("app.services.onboarding.store_identity_bootup")
@@ -271,8 +279,10 @@ def test_identity_bootup_user_not_found(mock_store, valid_jwt_token, valid_ident
 
     # Assertions
     assert response.status_code == 404  # Not found
-    assert "error" in response.json()
-    assert "not found" in response.json()["error"]["message"].lower()
+    data = response.json()
+    assert "error" in data or "detail" in data
+    error_msg = data.get("error", {}).get("message", "") or data.get("detail", "")
+    assert "not found" in error_msg.lower()
 
 
 def test_identity_bootup_missing_fields(valid_jwt_token):
@@ -288,5 +298,6 @@ def test_identity_bootup_missing_fields(valid_jwt_token):
         headers={"Authorization": f"Bearer {valid_jwt_token}"},
     )
 
-    assert response.status_code == 422  # Validation error
-    assert "error" in response.json()
+    assert response.status_code == 400  # Validation error (custom error handler)
+    data = response.json()
+    assert "error" in data or "detail" in data

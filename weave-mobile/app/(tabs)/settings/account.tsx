@@ -68,7 +68,7 @@ export default function AccountManagementScreen() {
                 {
                   text: 'Delete Account',
                   style: 'destructive',
-                  onPress: async (confirmation) => {
+                  onPress: async (confirmation?: string) => {
                     if (confirmation !== 'DELETE') {
                       Alert.alert('Deletion Cancelled', 'You must type DELETE to confirm.');
                       return;

@@ -19,7 +19,7 @@ import {
   PurchaseResult,
   PRODUCT_IDS,
 } from '@/services/iap';
-import { apiClient } from '@/services/api';
+import apiClient from '@/services/apiClient';
 import { useEffect } from 'react';
 
 // Type for subscription verification request

@@ -29,6 +29,8 @@ import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useGoalById, useUpdateGoal, useArchiveGoal } from '@/hooks/useActiveGoals';
 import { useGoalMemories, useUploadMemory, useDeleteMemory } from '@/hooks/useGoalMemories';
 import { useUpdateBind } from '@/hooks/useUpdateBind';
+import { useCreateBind } from '@/hooks/useCreateBind';
+import { useDeleteBind } from '@/hooks/useDeleteBind';
 import { Ionicons } from '@expo/vector-icons';
 import type { Memory } from '@/types/goals';
 
@@ -48,6 +50,11 @@ export function NeedleDetailScreen() {
   const [editingBindTitle, setEditingBindTitle] = useState('');
   const [editingBindFrequency, setEditingBindFrequency] = useState('daily');
 
+  // State for creating new bind
+  const [isCreatingBind, setIsCreatingBind] = useState(false);
+  const [newBindTitle, setNewBindTitle] = useState('');
+  const [newBindFrequency, setNewBindFrequency] = useState<'daily' | 'weekly'>('daily');
+
   // Refs for tracking original values (for auto-save comparison)
   const originalTitleRef = useRef('');
   const originalMotivationRef = useRef('');
@@ -60,6 +67,8 @@ export function NeedleDetailScreen() {
   const uploadMemoryMutation = useUploadMemory();
   const deleteMemoryMutation = useDeleteMemory();
   const updateBindMutation = useUpdateBind();
+  const createBindMutation = useCreateBind();
+  const deleteBindMutation = useDeleteBind();
 
   const goal = data?.data || null;
   const memories = memoriesData?.data || [];
@@ -202,6 +211,74 @@ export function NeedleDetailScreen() {
     setEditingBindId(null);
     setEditingBindTitle('');
     setEditingBindFrequency('daily');
+  };
+
+  // Start creating a new bind
+  const handleStartCreateBind = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsCreatingBind(true);
+    setNewBindTitle('');
+    setNewBindFrequency('daily');
+  };
+
+  // Save new bind
+  const handleSaveNewBind = () => {
+    const trimmedTitle = newBindTitle.trim();
+    if (!trimmedTitle) {
+      Alert.alert('Validation Error', 'Bind title cannot be empty.');
+      return;
+    }
+
+    createBindMutation.mutate(
+      {
+        goal_id: id || '',
+        title: trimmedTitle,
+        frequency_type: newBindFrequency,
+        frequency_value: newBindFrequency === 'weekly' ? 1 : undefined,
+      },
+      {
+        onSuccess: () => {
+          setIsCreatingBind(false);
+          setNewBindTitle('');
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+        onError: (error) => {
+          Alert.alert('Error', error.message || 'Failed to create bind.');
+        },
+      }
+    );
+  };
+
+  // Cancel creating new bind
+  const handleCancelCreateBind = () => {
+    setIsCreatingBind(false);
+    setNewBindTitle('');
+    setNewBindFrequency('daily');
+  };
+
+  // Delete a bind
+  const handleDeleteBind = (bindId: string) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    Alert.alert('Delete Bind', 'Are you sure you want to delete this bind?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          deleteBindMutation.mutate(
+            { bindId, goalId: id || '' },
+            {
+              onSuccess: () => {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              },
+              onError: (error) => {
+                Alert.alert('Error', error.message || 'Failed to delete bind.');
+              },
+            }
+          );
+        },
+      },
+    ]);
   };
 
   const handleArchive = () => {
@@ -472,7 +549,7 @@ export function NeedleDetailScreen() {
           <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
             Your Binds
           </Text>
-          {binds.length === 0 ? (
+          {binds.length === 0 && !isCreatingBind ? (
             <Card variant="glass" style={styles.emptyCard}>
               <Text variant="textBase" color="secondary" style={styles.emptyText}>
                 No binds yet. Add consistent actions to work toward this goal.
@@ -589,23 +666,157 @@ export function NeedleDetailScreen() {
                     </View>
                   ) : (
                     // View mode
-                    <Pressable onPress={() => handleBindPress(bind)}>
-                      <View style={styles.bindContent}>
-                        <View style={styles.bindInfo}>
-                          <Text variant="textBase" weight="medium">
-                            {bind.title}
-                          </Text>
-                          <Text variant="textSm" color="muted" style={styles.bindFrequency}>
-                            {parseFrequency(bind.recurrence_rule) === 'daily' ? 'Daily' : 'Weekly'}
-                          </Text>
-                        </View>
-                        <Ionicons name="pencil" size={20} color={colors.text.muted} />
+                    <View style={styles.bindContent}>
+                      <Pressable style={styles.bindInfo} onPress={() => handleBindPress(bind)}>
+                        <Text variant="textBase" weight="medium">
+                          {bind.title}
+                        </Text>
+                        <Text variant="textSm" color="muted" style={styles.bindFrequency}>
+                          {parseFrequency(bind.recurrence_rule) === 'daily' ? 'Daily' : 'Weekly'}
+                        </Text>
+                      </Pressable>
+                      <View style={styles.bindActions}>
+                        <Pressable
+                          onPress={() => handleBindPress(bind)}
+                          style={styles.bindActionButton}
+                        >
+                          <Ionicons name="pencil" size={20} color={colors.text.muted} />
+                        </Pressable>
+                        <Pressable
+                          onPress={() => handleDeleteBind(bind.id)}
+                          style={styles.bindActionButton}
+                        >
+                          <Ionicons name="trash-outline" size={20} color={colors.rose[500]} />
+                        </Pressable>
                       </View>
-                    </Pressable>
+                    </View>
                   )}
                 </Card>
               );
             })
+          )}
+
+          {/* Create New Bind Form */}
+          {isCreatingBind && (
+            <Card variant="glass" style={styles.bindCard}>
+              <View style={styles.bindEditContainer}>
+                <View style={styles.bindEditField}>
+                  <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
+                    Name
+                  </Text>
+                  <TextInput
+                    value={newBindTitle}
+                    onChangeText={setNewBindTitle}
+                    style={[
+                      styles.bindEditInput,
+                      {
+                        color: colors.text.primary,
+                        backgroundColor: colors.background.primary,
+                        borderColor: colors.border.muted,
+                      },
+                    ]}
+                    placeholder="Track Calories"
+                    placeholderTextColor={colors.text.muted}
+                    maxLength={200}
+                    autoFocus
+                  />
+                </View>
+
+                <View style={styles.bindEditField}>
+                  <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
+                    Frequency
+                  </Text>
+                  <View style={styles.frequencyButtons}>
+                    <Pressable
+                      style={[
+                        styles.frequencyButton,
+                        {
+                          backgroundColor:
+                            newBindFrequency === 'daily'
+                              ? colors.accent[500]
+                              : colors.background.secondary,
+                          borderColor: colors.border.muted,
+                        },
+                      ]}
+                      onPress={() => setNewBindFrequency('daily')}
+                    >
+                      <Text
+                        variant="textSm"
+                        weight="medium"
+                        style={{
+                          color:
+                            newBindFrequency === 'daily'
+                              ? colors.background.primary
+                              : colors.text.secondary,
+                        }}
+                      >
+                        Daily
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[
+                        styles.frequencyButton,
+                        {
+                          backgroundColor:
+                            newBindFrequency === 'weekly'
+                              ? colors.accent[500]
+                              : colors.background.secondary,
+                          borderColor: colors.border.muted,
+                        },
+                      ]}
+                      onPress={() => setNewBindFrequency('weekly')}
+                    >
+                      <Text
+                        variant="textSm"
+                        weight="medium"
+                        style={{
+                          color:
+                            newBindFrequency === 'weekly'
+                              ? colors.background.primary
+                              : colors.text.secondary,
+                        }}
+                      >
+                        Weekly
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                <View style={styles.bindEditActions}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onPress={handleCancelCreateBind}
+                    style={styles.bindEditButton}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onPress={handleSaveNewBind}
+                    disabled={createBindMutation.isPending}
+                    style={styles.bindEditButton}
+                  >
+                    {createBindMutation.isPending ? 'Creating...' : 'Save'}
+                  </Button>
+                </View>
+              </View>
+            </Card>
+          )}
+
+          {/* Add Bind Button (only show when less than 3 binds and not creating) */}
+          {binds.length < 3 && !isCreatingBind && (
+            <Pressable onPress={handleStartCreateBind} style={styles.addBindButton}>
+              <Card variant="glass" style={styles.addBindCard}>
+                <View style={styles.addBindContent}>
+                  <Ionicons name="add-circle-outline" size={20} color={colors.accent[500]} />
+                  <Text variant="textBase" weight="medium" style={{ color: colors.accent[500] }}>
+                    Add Bind
+                  </Text>
+                </View>
+              </Card>
+            </Pressable>
           )}
         </View>
 
@@ -892,5 +1103,32 @@ const styles = StyleSheet.create({
   },
   bindEditButton: {
     flex: 1,
+  },
+  bindActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  bindActionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBindButton: {
+    width: '100%',
+    marginTop: 12,
+  },
+  addBindCard: {
+    padding: 0,
+    overflow: 'hidden',
+  },
+  addBindContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    gap: 8,
   },
 });

@@ -271,6 +271,42 @@ export function ThreadHomeScreen() {
           ))}
         </View>
 
+        {/* Today's Progress Metric */}
+        {(() => {
+          const totalBinds = data?.data?.length || 0;
+          const completedBinds = data?.data?.filter((bind) => bind.completed).length || 0;
+          const totalTasks = totalBinds + 1; // +1 for daily reflection
+          const completedTasks = completedBinds + (hasCompletedReflection ? 1 : 0);
+          const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+          const badgeColor =
+            percentage === 100
+              ? colors.emerald[700]
+              : percentage >= 50
+                ? colors.emerald[500]
+                : colors.background.secondary;
+
+          return (
+            <Card variant="default" style={{ marginBottom: spacing[5], padding: spacing[4] }}>
+              <View style={styles.todayProgressContainer}>
+                <View>
+                  <Caption style={{ color: colors.text.muted, marginBottom: spacing[1] }}>
+                    Today's Progress
+                  </Caption>
+                  <Heading variant="displayLg" style={{ color: colors.text.primary }}>
+                    {completedTasks}/{totalTasks}
+                  </Heading>
+                </View>
+                <View style={[styles.todayProgressBadge, { backgroundColor: badgeColor }]}>
+                  <Body weight="bold" style={{ color: 'white' }}>
+                    {percentage}%
+                  </Body>
+                </View>
+              </View>
+            </Card>
+          );
+        })()}
+
         {/* AI Insight Card */}
         <Card
           variant="ai"
@@ -463,5 +499,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
+  },
+  todayProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  todayProgressBadge: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

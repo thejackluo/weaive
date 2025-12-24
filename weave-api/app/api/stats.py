@@ -30,6 +30,7 @@ async def get_consistency_data(
         "overall", description="Filter type"
     ),
     filter_id: Optional[str] = Query(None, description="Specific needle/bind ID if filtered"),
+    start_date: Optional[str] = Query(None, description="Optional start date (YYYY-MM-DD) for dynamic navigation"),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
@@ -40,6 +41,7 @@ async def get_consistency_data(
     - timeframe: 7d, 2w, 1m, 90d (default: 7d)
     - filter_type: overall, needle, bind, thread
     - filter_id: Goal/bind ID if filter_type is needle or bind
+    - start_date: Optional start date (YYYY-MM-DD) for dynamic navigation
 
     Returns:
     - data: Array of daily consistency objects
@@ -93,57 +95,260 @@ async def get_consistency_data(
         # Calculate date range
         timeframe_days = {"7d": 7, "2w": 14, "1m": 30, "90d": 90}
         days = timeframe_days.get(timeframe, 7)
-        start_date = (date.today() - timedelta(days=days - 1)).isoformat()
 
-        # Fetch daily_aggregates for the timeframe
-        aggregates_response = (
-            supabase.table("daily_aggregates")
-            .select("local_date, completed_count, active_day_with_proof")
+        # Find user's first completion date (using scheduled_for_date, not completed_at)
+        # This ensures consistency between date range and completions grouping
+        first_completion_response = (
+            supabase.table("subtask_completions")
+            .select(
+                """
+                subtask_instances!subtask_completions_subtask_instance_id_fkey(
+                    scheduled_for_date
+                )
+                """
+            )
             .eq("user_id", user_id)
-            .gte("local_date", start_date)
-            .order("local_date", desc=False)
+            .order("completed_at", desc=False)
+            .limit(1)
             .execute()
         )
 
-        aggregates = aggregates_response.data or []
-        logger.info(f"📊 Found {len(aggregates)} days of data for consistency")
+        # Calculate date range: Use provided start_date, or default to first completion
+        first_completion_date = None
+        if start_date:
+            # Use provided start date (for dynamic navigation)
+            start_date_obj = date.fromisoformat(start_date)
+        elif first_completion_response.data and len(first_completion_response.data) > 0:
+            instance = first_completion_response.data[0].get("subtask_instances")
+            if instance and instance.get("scheduled_for_date"):
+                first_completion_date = date.fromisoformat(instance["scheduled_for_date"])
+                # Start from first completion
+                start_date_obj = first_completion_date
+            else:
+                # No valid instance - use default timeframe
+                start_date_obj = date.today() - timedelta(days=days - 1)
+        else:
+            # No completions yet - use default timeframe (today - N days)
+            start_date_obj = date.today() - timedelta(days=days - 1)
 
-        # Calculate consistency data
-        # Use binary metric: active_day_with_proof = 100%, otherwise = 0%
+        start_date = start_date_obj.isoformat()
+        # End date: N-1 days after start (to show N total days)
+        end_date_obj = start_date_obj + timedelta(days=days - 1)
+
+        # TASK-BASED CONSISTENCY: Count scheduled tasks vs completed tasks
+        # Use subtask_completions as source of truth (append-only, never loses historical data)
+
+        print(f"\n{'='*80}")
+
+        # Step 1: Fetch all completions in date range with instance details
+        completions_response = (
+            supabase.table("subtask_completions")
+            .select(
+                """
+                id,
+                subtask_instance_id,
+                completed_at,
+                subtask_instances!subtask_completions_subtask_instance_id_fkey(
+                    id,
+                    scheduled_for_date
+                )
+                """
+            )
+            .eq("user_id", user_id)
+            .gte("completed_at", start_date)
+            .lte("completed_at", end_date_obj.isoformat() + "T23:59:59")
+            .execute()
+        )
+
+        completions = completions_response.data or []
+
+        print(f"📊 [CONSISTENCY] Found {len(completions)} completions in range")
+
+        # Step 2: Fetch all instances in date range (these are the scheduled tasks)
+        instances_response = (
+            supabase.table("subtask_instances")
+            .select("id, scheduled_for_date")
+            .eq("user_id", user_id)
+            .gte("scheduled_for_date", start_date)
+            .lte("scheduled_for_date", end_date_obj.isoformat())
+            .execute()
+        )
+
+        instances = instances_response.data or []
+
+        print(f"📊 [CONSISTENCY] Found {len(instances)} scheduled instances")
+
+        # Group scheduled and completed tasks by date
+        from collections import defaultdict
+        scheduled_by_date = defaultdict(int)
+        completed_by_date = defaultdict(int)
+
+        # Count scheduled tasks
+        for instance in instances:
+            scheduled_date = instance.get("scheduled_for_date")
+            if scheduled_date:
+                scheduled_by_date[scheduled_date] += 1
+
+        # Count completed tasks (using scheduled_for_date from the instance, not completed_at)
+        for completion in completions:
+            instance = completion.get("subtask_instances")
+            if instance and instance.get("scheduled_for_date"):
+                scheduled_date = instance["scheduled_for_date"]
+                completed_by_date[scheduled_date] += 1
+                # Also ensure this date is counted as scheduled (in case instance was deleted)
+                if scheduled_date not in scheduled_by_date:
+                    scheduled_by_date[scheduled_date] = 0
+                if scheduled_by_date[scheduled_date] == 0:
+                    scheduled_by_date[scheduled_date] = completed_by_date[scheduled_date]
+
+        print(f"📊 [CONSISTENCY] Scheduled by date: {dict(scheduled_by_date)}")
+        print(f"📊 [CONSISTENCY] Completed by date: {dict(completed_by_date)}")
+        print(f"{'='*80}\n")
+
+        # Build consistency data for all days in range
         consistency_data = []
-        active_days_count = 0
+        current_date = start_date_obj
+        end_date = end_date_obj
+        today_str = date.today().isoformat()
 
-        for agg in aggregates:
-            completed = agg.get("completed_count", 0)
-            is_active = agg.get("active_day_with_proof", False)
+        total_scheduled = 0
+        total_completed = 0
 
-            # Consistency: 100% if active day with proof, 0% otherwise
-            percentage = 100.0 if is_active else 0.0
+        while current_date <= end_date:
+            date_str = current_date.isoformat()
+            scheduled_count = scheduled_by_date.get(date_str, 0)
+            completed_count = completed_by_date.get(date_str, 0)
+
+            # Calculate percentage for this day
+            percentage = round((completed_count / scheduled_count) * 100, 1) if scheduled_count > 0 else 0.0
 
             consistency_data.append(
                 {
-                    "date": agg["local_date"],
+                    "date": date_str,
                     "completion_percentage": percentage,
-                    "completed_count": completed,
-                    "total_count": 1,  # Binary metric
+                    "completed_count": completed_count,
+                    "total_count": scheduled_count,
                 }
             )
 
-            if is_active:
-                active_days_count += 1
+            # Exclude today from overall calculation
+            if date_str != today_str:
+                total_scheduled += scheduled_count
+                total_completed += completed_count
 
-        # Calculate overall consistency percentage
+            current_date += timedelta(days=1)
+
+        # Calculate overall consistency percentage (TASK-BASED, EXCLUDE TODAY)
+        # Formula: (total completed tasks / total scheduled tasks) × 100
         overall_consistency = (
-            round((active_days_count / len(aggregates)) * 100, 1) if aggregates else 0
+            round((total_completed / total_scheduled) * 100, 1)
+            if total_scheduled > 0
+            else 0.0
         )
 
+        print(f"📊 [CONSISTENCY] Today: {today_str}")
+        print(f"📊 [CONSISTENCY] First completion: {first_completion_date.isoformat() if first_completion_date else 'None'}")
+        print(f"📊 [CONSISTENCY] Date range: {start_date} to {end_date.isoformat()}")
+        print(f"📊 [CONSISTENCY] Total consistency_data items: {len(consistency_data)}")
+        print(f"📊 [CONSISTENCY] Total scheduled (excluding today): {total_scheduled}")
+        print(f"📊 [CONSISTENCY] Total completed (excluding today): {total_completed}")
+        print(f"📊 [CONSISTENCY] Overall consistency: {overall_consistency}%")
+
+        logger.info("📊 Consistency calculation details:")
+        logger.info(f"  - Timeframe: {timeframe} (requested {days} days)")
+        logger.info(f"  - Start date: {start_date}")
+        logger.info(f"  - End date: {end_date_obj.isoformat()}")
+        logger.info(f"  - First completion: {first_completion_date.isoformat() if first_completion_date else 'None'}")
+        logger.info(f"  - Total days in response: {len(consistency_data)} (includes today)")
+        logger.info(f"  - Total scheduled tasks (excluding today): {total_scheduled}")
+        logger.info(f"  - Total completed tasks (excluding today): {total_completed}")
+        logger.info(f"  - Overall consistency: {overall_consistency}%")
+
+        # Calculate consistency delta (percentage point difference)
+        # Compare current period vs previous period (both task-based, both excluding most recent day)
+        # Example for 7d: Current = Dec 21-27, Previous = Dec 14-20
+
+        # Skip delta calculation if user doesn't have enough data
+        can_calculate_delta = total_scheduled > 0 and len(consistency_data) >= days
+
+        if not can_calculate_delta:
+            # Not enough data for meaningful delta comparison
+            consistency_delta = 0.0
+            logger.info("  - Skipping delta calculation (insufficient data)")
+        else:
+            # Previous period: Same number of days, shifted back
+            previous_start_date = start_date_obj - timedelta(days=days)
+            previous_end_date = start_date_obj - timedelta(days=1)
+
+            # Fetch scheduled instances for previous period
+            previous_instances_response = (
+                supabase.table("subtask_instances")
+                .select(
+                    """
+                    id,
+                    scheduled_for_date,
+                    goals!subtask_instances_goal_id_fkey(id, status),
+                    subtask_templates!subtask_instances_template_id_fkey(id, is_archived)
+                    """
+                )
+                .eq("user_id", user_id)
+                .gte("scheduled_for_date", previous_start_date.isoformat())
+                .lte("scheduled_for_date", previous_end_date.isoformat())
+                .execute()
+            )
+
+            previous_instances = previous_instances_response.data or []
+            # Count all instances (even archived) for historical accuracy
+            previous_active_instances = [
+                inst for inst in previous_instances
+                if inst.get("goals") and inst.get("subtask_templates")
+            ]
+
+            # Fetch completions for previous period
+            previous_completions_response = (
+                supabase.table("subtask_completions")
+                .select("id, subtask_instance_id, completed_at")
+                .eq("user_id", user_id)
+                .gte("completed_at", previous_start_date.isoformat())
+                .lte("completed_at", previous_end_date.isoformat() + "T23:59:59")
+                .execute()
+            )
+
+            previous_completions = previous_completions_response.data or []
+            previous_completed_ids = {c["subtask_instance_id"] for c in previous_completions}
+
+            # Count scheduled and completed tasks in previous period
+            previous_scheduled = len(previous_active_instances)
+            previous_completed = sum(1 for inst in previous_active_instances if inst["id"] in previous_completed_ids)
+
+            previous_consistency = (
+                round((previous_completed / previous_scheduled) * 100, 1)
+                if previous_scheduled > 0
+                else 0
+            )
+
+            # Calculate delta (percentage point difference)
+            consistency_delta = round(overall_consistency - previous_consistency, 1)
+
+            logger.info(f"  - Previous period: {previous_start_date.isoformat()} to {previous_end_date.isoformat()}")
+            logger.info(f"  - Previous scheduled: {previous_scheduled}, completed: {previous_completed}")
+            logger.info(f"  - Previous period consistency: {previous_consistency}%")
+            logger.info(f"  - Consistency delta: {consistency_delta:+.1f}%")
+
+        # Calculate historical counts (excluding today)
+        historical_days_count = len([d for d in consistency_data if d["date"] != today_str])
+
         return {
-            "data": consistency_data,
+            "data": consistency_data,  # Includes today for heatmap visualization
             "meta": {
                 "timeframe": timeframe,
                 "filter_type": filter_type,
-                "consistency_percentage": overall_consistency,
-                "total_days": len(consistency_data),
+                "consistency_percentage": overall_consistency,  # Task-based: (completed/scheduled) × 100, excludes today
+                "consistency_delta": consistency_delta,  # Percentage point difference vs previous period
+                "total_days": len(consistency_data),  # Includes today
+                "historical_days": historical_days_count,  # Excludes today
+                "total_scheduled": total_scheduled,  # Total tasks scheduled (excluding today)
+                "total_completed": total_completed,  # Total tasks completed (excluding today)
             },
         }
 
@@ -159,14 +364,17 @@ async def get_consistency_data(
 
 @router.get("/binds-grid")
 async def get_binds_grid_data(
+    start_date: Optional[str] = Query(None, description="Start date in YYYY-MM-DD format. If not provided, uses first instance date."),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
     """
     Get bind-level consistency data for 7d grid view.
 
-    Returns binds grouped by needles with completion status for last 7 days.
-    Used for the Dashboard consistency section grid visualization.
+    Query Parameters:
+    - start_date: Optional start date in YYYY-MM-DD format. If not provided, defaults to first instance date.
+
+    Returns binds grouped by needles with completion status for 7 days starting from start_date.
 
     Returns:
     - data: Object with needles array and daily_reflection
@@ -230,27 +438,70 @@ async def get_binds_grid_data(
 
         user_id = user_profile_response.data["id"]
 
-        # Get last 7 days (including today)
-        end_date = date.today()
-        start_date = end_date - timedelta(days=6)
+        # Find user's first scheduled instance to avoid showing empty days before they started
+        first_instance_response = (
+            supabase.table("subtask_instances")
+            .select("scheduled_for_date")
+            .eq("user_id", user_id)
+            .order("scheduled_for_date", desc=False)
+            .limit(1)
+            .execute()
+        )
+
+        # Determine start date: use provided start_date, or default to first instance
+        if start_date:
+            # Use provided start date
+            try:
+                start_date_obj = date.fromisoformat(start_date)
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid start_date format. Use YYYY-MM-DD.",
+                )
+        else:
+            # Default to first instance date
+            first_instance_date = None
+            if first_instance_response.data and len(first_instance_response.data) > 0:
+                first_instance_str = first_instance_response.data[0]["scheduled_for_date"]
+                first_instance_date = date.fromisoformat(first_instance_str)
+                start_date_obj = first_instance_date
+            else:
+                # No instances yet - use default 7d window (today - 6 days)
+                start_date_obj = date.today() - timedelta(days=6)
+
+        # End date: 6 days after start (to show 7 total days)
+        end_date = start_date_obj + timedelta(days=6)
+        # Calculate number of days from start to end
+        num_days = 7  # Always 7 days
         date_range = [
-            (start_date + timedelta(days=i)).isoformat() for i in range(7)
+            (start_date_obj + timedelta(days=i)).isoformat() for i in range(num_days)
         ]
 
-        # Get all ACTIVE goals with their templates
+        print(f"\n{'='*80}")
+        print(f"📊 [BINDS-GRID] Start date (provided or first instance): {start_date_obj.isoformat()}")
+        print(f"📊 [BINDS-GRID] End date (+6 days): {end_date.isoformat()}")
+        print(f"📊 [BINDS-GRID] Number of days: {num_days}")
+        print(f"📊 [BINDS-GRID] Date range: {date_range}")
+        print(f"{'='*80}\n")
+
+        # Get all ACTIVE goals with their NON-ARCHIVED templates
         goals_response = supabase.table("goals").select(
-            "id, title, description, subtask_templates!subtask_templates_goal_id_fkey(id, title)"
+            "id, title, description, subtask_templates!subtask_templates_goal_id_fkey(id, title, is_archived)"
         ).eq("user_id", user_id).eq("status", "active").execute()
 
         goals = goals_response.data or []
         logger.info(f"📊 Found {len(goals)} active goals")
 
         # OPTIMIZATION: Batch fetch all instances and completions for the date range
-        # Extract all template IDs from all goals
+        # Extract all template IDs from all goals (excluding archived templates)
         all_template_ids = []
         for goal in goals:
             templates = goal.get("subtask_templates", [])
-            all_template_ids.extend([t["id"] for t in templates])
+            # Filter out archived (deleted) templates
+            active_templates = [t for t in templates if not t.get("is_archived", False)]
+            all_template_ids.extend([t["id"] for t in active_templates])
+            # Update goal with filtered templates
+            goal["subtask_templates"] = active_templates
 
         if not all_template_ids:
             # No templates found, return empty structure
@@ -262,7 +513,7 @@ async def get_binds_grid_data(
                     },
                 },
                 "meta": {
-                    "start_date": start_date.isoformat(),
+                    "start_date": start_date_obj.isoformat(),
                     "end_date": end_date.isoformat(),
                     "total_needles": 0,
                     "total_binds": 0,
@@ -273,7 +524,7 @@ async def get_binds_grid_data(
         instances_response = supabase.table("subtask_instances").select(
             "id, template_id, scheduled_for_date"
         ).eq("user_id", user_id).in_("template_id", all_template_ids).gte(
-            "scheduled_for_date", start_date.isoformat()
+            "scheduled_for_date", start_date_obj.isoformat()
         ).lte("scheduled_for_date", end_date.isoformat()).execute()
 
         instances = instances_response.data or []
@@ -346,13 +597,21 @@ async def get_binds_grid_data(
         journal_response = supabase.table("journal_entries").select(
             "local_date"
         ).eq("user_id", user_id).gte(
-            "local_date", start_date.isoformat()
+            "local_date", start_date_obj.isoformat()
         ).lte("local_date", end_date.isoformat()).execute()
 
         journal_dates = {j["local_date"] for j in journal_response.data or []}
         reflection_completions = [check_date in journal_dates for check_date in date_range]
 
         logger.info(f"✅ Built binds grid for {len(needles)} needles")
+
+        # Debug: Log completions array lengths
+        logger.info(f"📊 [BINDS-GRID] Daily reflection completions length: {len(reflection_completions)}")
+        logger.info(f"📊 [BINDS-GRID] Daily reflection completions: {reflection_completions}")
+        for needle in needles:
+            for bind in needle["binds"]:
+                logger.info(f"📊 [BINDS-GRID] Bind '{bind['name']}' completions length: {len(bind['completions'])}")
+                logger.info(f"📊 [BINDS-GRID] Bind '{bind['name']}' completions: {bind['completions']}")
 
         return {
             "data": {
@@ -362,7 +621,7 @@ async def get_binds_grid_data(
                 },
             },
             "meta": {
-                "start_date": start_date.isoformat(),
+                "start_date": start_date_obj.isoformat(),
                 "end_date": end_date.isoformat(),
                 "total_needles": len(needles),
                 "total_binds": sum(len(needle["binds"]) for needle in needles),

@@ -34,12 +34,16 @@ def mock_db():
     """Mock Supabase client with chainable methods."""
     db = Mock()
 
+    # Create mock for execute result
+    execute_result = Mock()
+    execute_result.data = [{"id": "test-run-id"}]
+
     # Create chainable mock for Supabase query builder pattern
     chain_mock = Mock()
-    chain_mock.table = Mock(return_value=chain_mock)
     chain_mock.insert = Mock(return_value=chain_mock)
-    chain_mock.execute = Mock(return_value=Mock(data=[{"id": "test-run-id"}]))
+    chain_mock.execute = Mock(return_value=execute_result)
 
+    # db.table() returns the chain_mock
     db.table = Mock(return_value=chain_mock)
 
     return db
@@ -109,7 +113,10 @@ def test_log_to_ai_runs_success(provider, mock_db):
 
     # Verify ai_runs insert was called
     mock_db.table.assert_called_with("ai_runs")
-    insert_call = mock_db.insert.call_args
+
+    # Get the chain mock that was returned from table()
+    chain_mock = mock_db.table.return_value
+    insert_call = chain_mock.insert.call_args
     assert insert_call is not None
 
     # Verify logged data
@@ -142,7 +149,8 @@ def test_log_to_ai_runs_with_defaults(provider, mock_db):
     )
 
     # Verify defaults applied
-    logged_data = mock_db.insert.call_args[0][0]
+    chain_mock = mock_db.table.return_value
+    logged_data = chain_mock.insert.call_args[0][0]
     assert logged_data["model"] == "gpt-4o-mini"  # defaults to get_provider_name()
     assert logged_data["status"] == "success"  # default status
     assert "local_date" in logged_data  # auto-generated
@@ -168,8 +176,9 @@ def test_log_to_ai_runs_without_db():
 
 def test_log_to_ai_runs_error_handling(provider, mock_db):
     """Should handle database errors gracefully."""
-    # Simulate database error
-    mock_db.execute.side_effect = Exception("Database connection lost")
+    # Simulate database error on the chain
+    chain_mock = mock_db.table.return_value
+    chain_mock.execute.side_effect = Exception("Database connection lost")
 
     run_id = provider.log_to_ai_runs(
         user_id="user-error",
