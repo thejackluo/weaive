@@ -45,7 +45,9 @@ export function CreateNeedleScreen() {
   const [editingQGoalIndex, setEditingQGoalIndex] = useState<number | null>(null);
   const [editingBindIndex, setEditingBindIndex] = useState<number | null>(null);
   const [editingBindTitle, setEditingBindTitle] = useState('');
-  const [editingBindFrequency, setEditingBindFrequency] = useState<'daily' | 'weekly'>('daily');
+  const [editingBindFrequency, setEditingBindFrequency] = useState<'daily' | 'weekly' | 'custom'>(
+    'daily'
+  );
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -471,11 +473,13 @@ export function CreateNeedleScreen() {
                             return;
                           }
                           const updated = [...suggestedBinds];
-                          updated[index] = {
+                          const newBind: BindCreate = {
                             title: trimmedTitle,
-                            frequency_type: editingBindFrequency,
-                            frequency_value: editingBindFrequency === 'weekly' ? 1 : undefined,
+                            frequency_type:
+                              editingBindFrequency === 'custom' ? 'daily' : editingBindFrequency,
+                            frequency_value: editingBindFrequency === 'weekly' ? 5 : 1,
                           };
+                          updated[index] = newBind;
                           setSuggestedBinds(updated);
                           setEditingBindIndex(null);
                           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
