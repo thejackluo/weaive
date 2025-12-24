@@ -65,15 +65,15 @@ def get_ai_service(db: SupabaseClient = Depends(get_supabase_client)) -> AIServi
     return AIService(db)
 
 
-def check_admin_key(x_admin_key: Optional[str] = Header(None)) -> bool:
+def check_admin_key(x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key")) -> bool:
     """Check if request has valid admin key for bypass."""
-    logger.debug(f"[ADMIN_KEY_CHECK] Received header: {x_admin_key}")
-    logger.debug(f"[ADMIN_KEY_CHECK] Expected key: {AIChatConfig.ADMIN_API_KEY}")
+    logger.info(f"[ADMIN_KEY_CHECK] Received header: {x_admin_key}")
+    logger.info(f"[ADMIN_KEY_CHECK] Expected key: {AIChatConfig.ADMIN_API_KEY}")
     if not AIChatConfig.ADMIN_API_KEY:
         logger.warning("[ADMIN_KEY_CHECK] AI_ADMIN_KEY not set in .env!")
         return False
     is_valid = x_admin_key == AIChatConfig.ADMIN_API_KEY
-    logger.debug(f"[ADMIN_KEY_CHECK] Valid: {is_valid}")
+    logger.info(f"[ADMIN_KEY_CHECK] Valid: {is_valid}")
     return is_valid
 
 
