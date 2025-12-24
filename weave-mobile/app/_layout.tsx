@@ -63,7 +63,7 @@ LogBox.ignoreLogs([
  * Must be inside AuthProvider to access getAuthToken
  */
 function ApiInitializer({ children }: { children: React.ReactNode }) {
-  const { getAuthToken } = useAuth();
+  const { getAuthToken, user } = useAuth();
 
   useEffect(() => {
     // Initialize journalApi with shared auth token getter
@@ -79,8 +79,11 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
         console.log('[ROOT_LAYOUT] ✅ Admin mode enabled for testing');
       }
     }
+  }, [getAuthToken]);
 
-    // 📬 Initialize push notifications (Story 6.1)
+  // 📬 Initialize push notifications (Story 6.1)
+  // Separate useEffect to run ONCE on mount (not every getAuthToken change)
+  useEffect(() => {
     (async () => {
       try {
         // Register for push notifications and get token
@@ -107,7 +110,47 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
     return () => {
       cleanupListeners();
     };
-  }, [getAuthToken]);
+  }, []); // Empty array = run once on mount
+
+  // 🚀 Eager prefetch AI conversations when user is authenticated (Story 6.2)
+  // This ensures conversations are loaded BEFORE user navigates to AI Chat
+  useEffect(() => {
+    if (user) {
+      console.log('[ROOT_LAYOUT] 🔄 Prefetching AI conversations...');
+
+      // Prefetch conversations list
+      queryClient
+        .prefetchQuery({
+          queryKey: ['ai-conversations'],
+          queryFn: async () => {
+            const response = await apiClient.get('/api/ai-chat/conversations');
+            return response.data.data || [];
+          },
+        })
+        .then(() => {
+          console.log('[ROOT_LAYOUT] ✅ AI conversations prefetched');
+        })
+        .catch((error) => {
+          console.error('[ROOT_LAYOUT] ❌ Failed to prefetch conversations:', error);
+        });
+
+      // Prefetch usage stats
+      queryClient
+        .prefetchQuery({
+          queryKey: ['ai-usage'],
+          queryFn: async () => {
+            const response = await apiClient.get('/api/ai/usage');
+            return response.data.data;
+          },
+        })
+        .then(() => {
+          console.log('[ROOT_LAYOUT] ✅ AI usage stats prefetched');
+        })
+        .catch((error) => {
+          console.error('[ROOT_LAYOUT] ❌ Failed to prefetch usage stats:', error);
+        });
+    }
+  }, [user]);
 
   return <>{children}</>;
 }
