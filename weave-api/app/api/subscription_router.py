@@ -15,8 +15,7 @@ from pydantic import BaseModel
 from supabase import Client
 
 from app.config.subscription_config import SubscriptionConfig
-from app.core.auth import get_current_user
-from app.core.supabase import get_supabase_client
+from app.core.deps import get_current_user, get_supabase_client
 
 router = APIRouter(prefix="/api/subscription", tags=["subscription"])
 

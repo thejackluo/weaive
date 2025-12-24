@@ -153,9 +153,10 @@ async def export_user_data(
         )
         export_data["daily_aggregates"] = aggregates_result.data or []
 
-        # TODO: Store export_data as JSON file in Supabase Storage
-        # For now, return as direct JSON response (not ideal for large datasets)
-        # Production: Upload to storage bucket, return signed URL
+        # TODO (Story 9.5): Store export_data as JSON file in Supabase Storage
+        # Current implementation: Returns placeholder URL (NOT GDPR-COMPLIANT)
+        # Production requirement: Upload to storage bucket, return signed URL with 24hr expiry
+        # Reference: MEDIUM ISSUE #5 from code review - blocks GDPR Article 20 compliance
 
         logger.info(
             f"✅ Data export complete: {len(export_data['goals'])} goals, "
@@ -296,8 +297,10 @@ async def delete_account(
         supabase.table("user_profiles").delete().eq("id", user_id).execute()
 
         # 12. Delete auth user (Supabase Auth)
-        # Note: This requires admin privileges - implement in Story 9.5 (Production Security)
-        # For now, just delete user_profiles (user won't be able to login but auth record remains)
+        # TODO (Story 9.5): Implement auth.users deletion using Supabase Admin API
+        # Current limitation: auth_user_id record persists after deletion (NOT GDPR-COMPLIANT)
+        # Security risk: Email address remains in auth.users table
+        # Reference: MEDIUM ISSUE #6 from code review - blocks GDPR Article 17 compliance
 
         deleted_at = datetime.utcnow().isoformat()
 
