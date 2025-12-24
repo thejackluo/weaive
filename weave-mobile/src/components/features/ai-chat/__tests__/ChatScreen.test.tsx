@@ -145,14 +145,14 @@ describe('ChatScreen Component', () => {
    */
   it.skip('renders quick action chips above input', () => {
     // GIVEN: Chat screen
-    const { getByTestId } = render(<ChatScreen />, { wrapper: TestWrapper });
+    render(<ChatScreen />, { wrapper: TestWrapper });
 
     // TODO: Verify chips when testIDs added
   });
 
   it.skip('sends predefined prompt when chip is tapped', async () => {
     // GIVEN: Chat screen
-    const { getByTestId } = render(<ChatScreen />, { wrapper: TestWrapper });
+    render(<ChatScreen />, { wrapper: TestWrapper });
 
     // TODO: Test chip interaction when implemented
   });
@@ -256,14 +256,14 @@ describe('ChatScreen Component', () => {
 
   it.skip('disables input when rate limited', async () => {
     // GIVEN: User is rate limited
-    const { getByTestId } = render(<ChatScreen />, { wrapper: TestWrapper });
+    render(<ChatScreen />, { wrapper: TestWrapper });
 
     // TODO: Test rate limit disabled state when implemented
   });
 
   it.skip('shows countdown timer to midnight reset', async () => {
     // GIVEN: User is rate limited
-    const { getByTestId } = render(<ChatScreen />, { wrapper: TestWrapper });
+    render(<ChatScreen />, { wrapper: TestWrapper });
 
     // TODO: Test countdown timer when implemented
   });
@@ -276,7 +276,7 @@ describe('ChatScreen Component', () => {
    */
   it.skip('shows special indicator for server-initiated messages', async () => {
     // GIVEN: Server-initiated conversation
-    const { getByTestId } = render(<ChatScreen />, { wrapper: TestWrapper });
+    render(<ChatScreen />, { wrapper: TestWrapper });
 
     // TODO: Test server-initiated indicator when implemented
   });

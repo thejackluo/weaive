@@ -109,8 +109,8 @@ export function ConsistencyHeatmap({
 
   // State for modals
   const [showDayDetailsModal, setShowDayDetailsModal] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
-  const [selectedDayData, setSelectedDayData] = useState<{
+  const [_showSearchModal, setShowSearchModal] = useState(false);
+  const [_selectedDayData, _setSelectedDayData] = useState<{
     date: string;
     completionRate: number;
   } | null>(null);
@@ -259,7 +259,7 @@ export function ConsistencyHeatmap({
   const allBinds: BindCompletionData[] = needles.flatMap((needle) => needle.binds);
 
   // Real daily reflection data (for thread view)
-  const dailyReflections: BindCompletionData =
+  const _dailyReflections: BindCompletionData =
     timeframe === '7d' && bindsGridData?.data.daily_reflection
       ? {
           bindName: 'Daily Reflection',
@@ -451,7 +451,7 @@ export function ConsistencyHeatmap({
   };
 
   // Needle card header (for needle view) - now swipeable with clear segments
-  const renderNeedleCard = () => {
+  const _renderNeedleCard = () => {
     if (filterType !== 'needle') return null;
 
     const CARD_WIDTH = SCREEN_WIDTH - 80; // Width of each card (with margins)
@@ -537,7 +537,7 @@ export function ConsistencyHeatmap({
   };
 
   // Bind selector (for bind view)
-  const renderBindSelector = () => {
+  const _renderBindSelector = () => {
     if (filterType !== 'bind') return null;
 
     return (
