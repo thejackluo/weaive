@@ -443,11 +443,12 @@ class PersonalitySwitchRequest(BaseModel):
 
 
 class WeaveAIPresetUpdateRequest(BaseModel):
-    """Request to update Weave AI preset (Story 6.1 + 6.2 Integration)."""
+    """Request to update Weave AI preset (Story 6.1 + 6.2 Integration with 23 extended personalities)."""
     weave_ai_preset: str = Field(
         ...,
-        description="Weave AI preset: 'gen_z_default', 'supportive_coach', or 'concise_mentor'",
-        pattern="^(gen_z_default|supportive_coach|concise_mentor)$"
+        description="Weave AI preset - one of 26 available personalities (3 core + 23 extended)",
+        # Pattern includes all 26 personalities
+        pattern="^(gen_z_default|supportive_coach|concise_mentor|abg|angry|anime-girl|annoying|chinese-infj|crass|dramatic|dry-humor|flirty|funny|grandpa|millennial|moody|normal|pirate|poetic|professional|rapper|robot|sarcastic|sassy|surfer-dude|zen)$"
     )
 
 
