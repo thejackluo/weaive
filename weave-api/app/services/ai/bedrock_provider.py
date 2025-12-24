@@ -11,8 +11,10 @@ Pricing same as Anthropic direct, but better runway through AWS credits.
 import json
 import logging
 
-import boto3
-from botocore.exceptions import ClientError
+# Lazy import: boto3 imported only when BedrockProvider is instantiated
+# This prevents hanging on module import in test environments without AWS credentials
+# import boto3  # ← Moved to __init__
+# from botocore.exceptions import ClientError  # ← Moved to methods that use it
 
 from .base import AIProvider, AIProviderError, AIResponse
 
@@ -43,6 +45,10 @@ class BedrockProvider(AIProvider):
             db: Supabase client for cost tracking (optional, for AIProviderBase)
         """
         super().__init__(db)  # Initialize AIProviderBase
+
+        # Lazy import boto3 here to prevent hanging on module import
+        import boto3
+
         self.client = boto3.client("bedrock-runtime", region_name=region)
         self.region = region
 
@@ -116,6 +122,9 @@ class BedrockProvider(AIProvider):
         Raises:
             AIProviderError: If Bedrock API call fails
         """
+        # Import ClientError here for lazy loading
+        from botocore.exceptions import ClientError
+
         try:
             # Map user-friendly model name to inference profile ID
             model_id = self.model_id_map.get(model, model)
@@ -284,6 +293,9 @@ class BedrockProvider(AIProvider):
         Raises:
             AIProviderError: If Bedrock API call fails
         """
+        # Import ClientError here for lazy loading
+        from botocore.exceptions import ClientError
+
         try:
             # Map user-friendly model name to inference profile ID
             model_id = self.model_id_map.get(model, model)
