@@ -306,6 +306,21 @@ def another_user_token() -> str:
 
 
 @pytest.fixture
+def auth_headers(test_user_token) -> dict:
+    """
+    Generate authentication headers with JWT token for API tests.
+
+    Used by Story 1.5.2 ATDD tests to verify endpoint stub auth integration.
+
+    Returns:
+        dict: Headers with Authorization bearer token
+    """
+    return {
+        "Authorization": f"Bearer {test_user_token}"
+    }
+
+
+@pytest.fixture
 def authenticated_client(client, test_user_token, mock_supabase_client):
     """
     Create an authenticated test client with JWT token and mock database.
