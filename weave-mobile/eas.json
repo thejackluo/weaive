@@ -38,6 +38,17 @@
         "APP_ENV": "production",
         "SENTRY_ORG": "jackluo",
         "SENTRY_PROJECT": "weavelight"
+      },
+      "hooks": {
+        "postPublish": [
+          {
+            "file": "sentry-expo/upload-sourcemaps",
+            "config": {
+              "organization": "jackluo",
+              "project": "weavelight"
+            }
+          }
+        ]
       }
     }
   },
