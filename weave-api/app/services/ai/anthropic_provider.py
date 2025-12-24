@@ -54,18 +54,20 @@ class AnthropicProvider(AIProvider):
         self,
         prompt: str,
         model: str = 'claude-3-5-sonnet-20241022',
+        tools: list = None,
         **kwargs
     ) -> AIResponse:
         """
-        Generate completion using Anthropic Claude.
+        Generate completion using Anthropic Claude with optional tool use (Story 6.2).
 
         Args:
             prompt: User input text
             model: Anthropic model name (default: Claude 3.5 Sonnet)
+            tools: Optional list of tool schemas for function calling
             **kwargs: Additional parameters (max_tokens, temperature, system, etc.)
 
         Returns:
-            AIResponse with content, tokens, cost
+            AIResponse with content, tokens, cost, and optional tool_calls
 
         Raises:
             AIProviderError: If Anthropic API call fails
@@ -95,11 +97,38 @@ class AnthropicProvider(AIProvider):
                 elif isinstance(system, list):
                     request_params['system'] = system
 
+            # Add tools if provided (Story 6.2)
+            if tools:
+                request_params['tools'] = tools
+                logger.info(f"🔧 Passing {len(tools)} tools to Anthropic")
+
             # Call Anthropic Messages API
             response = self.client.messages.create(**request_params)
 
-            # Extract content and usage
-            content = response.content[0].text
+            # Extract content
+            text_content = ""
+            tool_calls_list = None
+
+            # Anthropic returns content as list of blocks
+            for block in response.content:
+                if block.type == 'text':
+                    text_content += block.text
+                elif block.type == 'tool_use':
+                    # Tool use detected (Story 6.2)
+                    if tool_calls_list is None:
+                        tool_calls_list = []
+                    tool_calls_list.append({
+                        'id': block.id,
+                        'type': 'tool_use',
+                        'function': {
+                            'name': block.name,
+                            'arguments': block.input  # Anthropic returns dict, not JSON string
+                        }
+                    })
+
+            if tool_calls_list:
+                logger.info(f"🔧 AI requested {len(tool_calls_list)} tool call(s): {[tc['function']['name'] for tc in tool_calls_list]}")
+
             input_tokens = response.usage.input_tokens
             output_tokens = response.usage.output_tokens
 
@@ -112,12 +141,13 @@ class AnthropicProvider(AIProvider):
             )
 
             return AIResponse(
-                content=content,
+                content=text_content,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 model=model,
                 cost_usd=cost_usd,
                 provider='anthropic',
+                tool_calls=tool_calls_list  # Story 6.2
             )
 
         except RateLimitError as e:

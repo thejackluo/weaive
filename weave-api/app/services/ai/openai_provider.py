@@ -54,40 +54,71 @@ class OpenAIProvider(AIProvider):
         self,
         prompt: str,
         model: str = 'gpt-4o-mini',
+        tools: list = None,
         **kwargs
     ) -> AIResponse:
         """
-        Generate completion using OpenAI.
+        Generate completion using OpenAI with optional tool use (Story 6.2).
 
         Args:
             prompt: User input text
             model: OpenAI model name (default: gpt-4o-mini)
+            tools: Optional list of tool schemas for function calling
             **kwargs: Additional parameters (temperature, max_tokens, etc.)
 
         Returns:
-            AIResponse with content, tokens, cost
+            AIResponse with content, tokens, cost, and optional tool_calls
 
         Raises:
             AIProviderError: If OpenAI API call fails
         """
         try:
-            logger.info(f"Invoking OpenAI model: {model}")
+            logger.info(f"Invoking OpenAI model: {model}, tools={len(tools) if tools else 0}")
 
-            # Call OpenAI Chat Completions API
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
+            # Build API parameters
+            api_params = {
+                'model': model,
+                'messages': [
                     {'role': 'user', 'content': prompt}
                 ],
-                temperature=kwargs.get('temperature', 1.0),
-                max_tokens=kwargs.get('max_tokens', 2000),
-                **{k: v for k, v in kwargs.items() if k not in ['temperature', 'max_tokens']}
-            )
+                'temperature': kwargs.get('temperature', 1.0),
+                'max_tokens': kwargs.get('max_tokens', 2000),
+            }
 
-            # Extract content and usage
-            content = response.choices[0].message.content
+            # Add tools if provided (Story 6.2)
+            if tools:
+                api_params['tools'] = tools
+                logger.info(f"🔧 Passing {len(tools)} tools to OpenAI")
+
+            # Add remaining kwargs
+            for k, v in kwargs.items():
+                if k not in ['temperature', 'max_tokens', 'tools']:
+                    api_params[k] = v
+
+            # Call OpenAI Chat Completions API
+            response = self.client.chat.completions.create(**api_params)
+
+            # Extract message
+            message = response.choices[0].message
+            content = message.content or ""  # Tool calls may have no content
             input_tokens = response.usage.prompt_tokens
             output_tokens = response.usage.completion_tokens
+
+            # Extract tool calls if present (Story 6.2)
+            tool_calls = None
+            if hasattr(message, 'tool_calls') and message.tool_calls:
+                tool_calls = [
+                    {
+                        'id': tc.id,
+                        'type': tc.type,
+                        'function': {
+                            'name': tc.function.name,
+                            'arguments': tc.function.arguments
+                        }
+                    }
+                    for tc in message.tool_calls
+                ]
+                logger.info(f"🔧 AI requested {len(tool_calls)} tool call(s): {[tc['function']['name'] for tc in tool_calls]}")
 
             # Calculate cost
             cost_usd = self.estimate_cost(input_tokens, output_tokens, model)
@@ -104,6 +135,7 @@ class OpenAIProvider(AIProvider):
                 model=model,
                 cost_usd=cost_usd,
                 provider='openai',
+                tool_calls=tool_calls  # Story 6.2
             )
 
         except RateLimitError as e:
