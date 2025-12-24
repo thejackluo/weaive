@@ -9,7 +9,7 @@ for consistent API error responses across all endpoints.
 import logging
 from typing import Any, Dict, Optional
 
-from fastapi import Request, status
+from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -386,7 +386,7 @@ async def validation_exception_handler(
     )
 
 
-async def http_exception_handler(request: Request, exc: "HTTPException") -> JSONResponse:
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """
     Global handler for FastAPI HTTPException
 
@@ -397,7 +397,6 @@ async def http_exception_handler(request: Request, exc: "HTTPException") -> JSON
         from fastapi import HTTPException
         app.add_exception_handler(HTTPException, http_exception_handler)
     """
-    from fastapi import HTTPException as FastAPIHTTPException
 
     # Map status code to error code
     status_to_error_code = {
