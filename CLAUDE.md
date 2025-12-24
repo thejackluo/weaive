@@ -661,6 +661,16 @@ weavelight/
 - Foreign keys: `{table}_id` (e.g., `user_id`, `goal_id`)
 - Indexes: `idx_{table}_{columns}` (e.g., `idx_subtask_completions_user_date`)
 
+**SQL Migrations (CRITICAL):**
+- **NEVER use emojis in SQL migration files** - They cause SQL parser failures
+- Use ASCII-only characters in RAISE NOTICE statements: `[OK]`, `[ERROR]`, `[WARN]`
+- Example: `RAISE NOTICE '[OK] Column created';` (NOT `'✅ Column created'`)
+- **NEVER assume columns exist in WHERE clauses** - Not all tables have soft delete (`deleted_at`)
+  - ❌ BAD: `CREATE INDEX ... WHERE deleted_at IS NULL;`
+  - ✅ GOOD: `CREATE INDEX ...;` (index all rows, or check column exists first)
+- **Always use IF NOT EXISTS** for idempotent migrations: `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
+- Applies to: All `.sql` files in `supabase/migrations/`
+
 ### API Endpoints (FastAPI)
 - REST: plural nouns, `snake_case` params
 - Examples: `GET /api/goals`, `POST /api/journal-entries`, `GET /api/daily-aggregates/{local_date}`
