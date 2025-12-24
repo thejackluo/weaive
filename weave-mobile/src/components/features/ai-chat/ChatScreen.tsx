@@ -261,14 +261,18 @@ export default function ChatScreen() {
         '[STREAM_FINALIZE] 🔍 Effect triggered - isStreaming:',
         isStreaming,
         'streamingMessageIdRef:',
-        streamingMessageIdRef.current
+        streamingMessageIdRef.current,
+        'metadata:',
+        streamMetadata
       );
 
     if (!isStreaming && streamingMessageIdRef.current) {
       if (__DEV__)
         console.log(
           '[STREAM_FINALIZE] ✅ Finalizing streaming message:',
-          streamingMessageIdRef.current
+          streamingMessageIdRef.current,
+          'with responseId:',
+          streamMetadata.responseId
         );
 
       // Clear failsafe timeout
@@ -278,25 +282,31 @@ export default function ChatScreen() {
         if (__DEV__) console.log('[STREAM_FINALIZE] 🧹 Cleared failsafe timeout');
       }
 
+      // ✅ FIX: Capture current message ID to finalize
+      const messageIdToFinalize = streamingMessageIdRef.current;
+      const finalResponseId = streamMetadata.responseId;
+      const finalConversationId = streamMetadata.conversationId;
+
       // Mark message as complete (not streaming)
       setMessages((prev) =>
         prev.map((m) => {
-          if (m.id === streamingMessageIdRef.current) {
+          if (m.id === messageIdToFinalize) {
             if (__DEV__)
               console.log(
                 '[STREAM_FINALIZE] 🎯 Found message to finalize:',
                 m.id,
-                '-> isStreaming: false'
+                '-> isStreaming: false, responseId:',
+                finalResponseId
               );
-            return { ...m, isStreaming: false, id: streamMetadata.responseId || m.id };
+            return { ...m, isStreaming: false, id: finalResponseId || m.id };
           }
           return m;
         })
       );
 
       // Update conversation ID
-      if (streamMetadata.conversationId) {
-        setCurrentConversationId(streamMetadata.conversationId);
+      if (finalConversationId) {
+        setCurrentConversationId(finalConversationId);
       }
 
       // Refetch usage stats and conversations
@@ -306,11 +316,14 @@ export default function ChatScreen() {
       // Haptic feedback on completion
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-      // Reset streaming message ref
+      // Reset streaming message ref IMMEDIATELY to prevent re-running
       streamingMessageIdRef.current = null;
-      if (__DEV__) console.log('[STREAM_FINALIZE] 🏁 Finalization complete');
+      if (__DEV__) console.log('[STREAM_FINALIZE] 🏁 Finalization complete, ref cleared');
     }
-  }, [isStreaming, streamingContent, streamMetadata, refetchUsage, refetchConversations]);
+    // ✅ FIX: Only depend on isStreaming to prevent multiple finalization runs
+    // We capture metadata, refetchUsage, refetchConversations via closure
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStreaming]);
 
   // Effect: Handle streaming errors
   useEffect(() => {
