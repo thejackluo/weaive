@@ -153,7 +153,7 @@ import { Button, Card, Text } from '@/design-system';
 
 **Standards Include:**
 - ✅ File-based routing with Expo Router (`app/` directory structure)
-- ✅ Screen placeholder templates (3-tab navigation: Home, Goals, Journal, Progress)
+- ✅ Screen placeholder templates (2-tab navigation)
 - ✅ Navigation patterns (tabs, modals, stacks)
 - ✅ Design system component usage (`@/design-system`)
 - ✅ State management boundaries (TanStack Query, Zustand, useState)
@@ -485,14 +485,13 @@ gh cache list | awk '{print $1}' | xargs -I {} gh cache delete {}
 ### Current Approach: Page-Based Implementation
 
 **Status:** 🚀 ACTIVE - Building complete vertical slices
-**Model:** 3-tab navigation (Thread, Dashboard, Weave AI) + Profile & Settings
+**Model:** 2-tab navigation + Profile & Settings
 **Details:** `docs/implementation-strategy.md`
 
 **Implementation Pages:**
 1. **Thread Page** (Epic 3+4) - ✅ COMPLETED in `thread-flow` branch
 2. **Dashboard Page** (Epic 2+5) - Planned
-3. **Weave AI Page** (Epic 6) - Planned
-4. **Profile & Settings** (Epic 7+8) - Planned
+3. **Profile & Settings** (Epic 7+8) - Planned
 
 **Workflow Pattern:**
 1. User provides wireframe/screenshot for a page
@@ -555,7 +554,7 @@ weavelight/
 │   ├── app/             # File-based routing (Expo Router)
 │   │   ├── (auth)/      # Login, signup screens
 │   │   ├── (onboarding)/  # Onboarding flow
-│   │   └── (tabs)/      # Main app (Thread, Dashboard, Weave AI, Profile)
+│   │   └── (tabs)/      # Main app (2-tab navigation + Profile)
 │   └── src/             # Components, hooks, services, design-system
 │
 ├── weave-api/           # FastAPI backend (Python 3.11+, uv)
