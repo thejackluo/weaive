@@ -58,6 +58,27 @@ export default function DevToolsScreen() {
           </Body>
         </View>
 
+        {/* Navigation */}
+        <Card variant="default" style={{ marginBottom: spacing[4] }}>
+          <Heading
+            variant="displayLg"
+            style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+          >
+            Navigation
+          </Heading>
+
+          <View style={{ gap: spacing[3] }}>
+            <Button variant="primary" onPress={() => router.push('/(tabs)/sitemap')}>
+              🗺️ Site Map (All Screens)
+            </Button>
+          </View>
+
+          <Body style={{ color: colors.text.muted, marginTop: spacing[3], fontSize: 12 }}>
+            Access all screens in the app, including new Story 6.2 screens (Personality Settings,
+            AI Chat, etc.)
+          </Body>
+        </Card>
+
         {/* Cache Management */}
         <Card variant="default" style={{ marginBottom: spacing[4] }}>
           <Heading
