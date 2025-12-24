@@ -28,8 +28,10 @@ router = APIRouter(prefix="/api/goals")
 
 # Request/Response Models
 
+
 class QGoalCreate(BaseModel):
     """Q-Goal (Milestone) creation model"""
+
     title: str = Field(..., min_length=1, max_length=200)
     metric_name: Optional[str] = None
     target_value: Optional[float] = None
@@ -39,6 +41,7 @@ class QGoalCreate(BaseModel):
 
 class BindCreate(BaseModel):
     """Bind (Subtask Template) creation model"""
+
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
     frequency_type: str = Field(..., pattern="^(daily|weekly|custom)$")
@@ -47,6 +50,7 @@ class BindCreate(BaseModel):
 
 class GoalCreate(BaseModel):
     """Goal creation request model"""
+
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None  # "Why it matters"
     qgoals: Optional[List[QGoalCreate]] = []
@@ -55,6 +59,7 @@ class GoalCreate(BaseModel):
 
 class GoalUpdate(BaseModel):
     """Goal update request model"""
+
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     status: Optional[str] = Field(None, pattern="^(active|archived)$")
@@ -229,7 +234,9 @@ async def get_goal_by_id(
         # Fetch the goal (RLS enforced - user can only see their own goals)
         goal_response = (
             supabase.table("goals")
-            .select("id, title, description, status, start_date, target_date, created_at, updated_at, user_id")
+            .select(
+                "id, title, description, status, start_date, target_date, created_at, updated_at, user_id"
+            )
             .eq("id", goal_id)
             .eq("user_id", user_id)
             .single()
@@ -254,7 +261,9 @@ async def get_goal_by_id(
         try:
             qgoals_response = (
                 supabase.table("qgoals")
-                .select("id, goal_id, title, metric_name, target_value, current_value, unit, created_at, updated_at")
+                .select(
+                    "id, goal_id, title, metric_name, target_value, current_value, unit, created_at, updated_at"
+                )
                 .eq("goal_id", goal_id)
                 .order("created_at", desc=False)
                 .execute()
@@ -269,7 +278,7 @@ async def get_goal_by_id(
         try:
             binds_response = (
                 supabase.table("subtask_templates")
-                .select("id, goal_id, title, description, frequency_type, frequency_value, is_archived, created_at, updated_at")
+                .select("id, goal_id, title, default_estimated_minutes, recurrence_rule, is_archived, created_at, updated_at")
                 .eq("goal_id", goal_id)
                 .eq("is_archived", False)  # Only active binds
                 .order("created_at", desc=False)
@@ -400,34 +409,75 @@ async def create_goal(
         logger.info(f"✅ Created goal {goal_id}: {created_goal['title']}")
 
         # Create Q-goals (milestones) if provided
-        # TODO: qgoals table doesn't exist yet - will be added in future migration
-        # For now, skip Q-goals creation
         if goal_data.qgoals:
-            logger.info(f"⚠️ Skipping Q-goals creation (table not yet implemented) - {len(goal_data.qgoals)} qgoals provided")
+            qgoals_inserts = []
+            for qgoal in goal_data.qgoals:
+                qgoals_inserts.append({
+                    "user_id": user_id,
+                    "goal_id": goal_id,
+                    "title": qgoal.title,
+                    "metric_name": qgoal.metric_name,
+                    "target_value": float(qgoal.target_value) if qgoal.target_value else None,
+                    "current_value": float(qgoal.current_value) if qgoal.current_value else 0,
+                    "unit": qgoal.unit,
+                })
+
+            try:
+                qgoals_response = supabase.table("qgoals").insert(qgoals_inserts).execute()
+                logger.info(f"✅ Created {len(qgoals_response.data)} qgoals for goal {goal_id}")
+            except Exception as qgoal_error:
+                logger.error(f"❌ Error creating qgoals: {str(qgoal_error)}")
+                # Don't fail the entire goal creation if qgoals fail
+                # This allows gradual rollout of qgoals feature
 
         # Create binds (subtask templates) if provided
         if goal_data.binds:
             binds_inserts = []
             for bind in goal_data.binds:
                 # Convert frequency_type/frequency_value to recurrence_rule (iCal RRULE format)
-                if bind.frequency_type == 'daily':
+                if bind.frequency_type == "daily":
                     recurrence_rule = "FREQ=DAILY;INTERVAL=1"
-                elif bind.frequency_type == 'weekly':
+                elif bind.frequency_type == "weekly":
                     recurrence_rule = f"FREQ=WEEKLY;INTERVAL=1;COUNT={bind.frequency_value}"
                 else:  # custom
                     recurrence_rule = f"FREQ=DAILY;INTERVAL={bind.frequency_value}"
 
-                binds_inserts.append({
-                    "user_id": user_id,  # Required field
-                    "goal_id": goal_id,
-                    "title": bind.title,
-                    "default_estimated_minutes": 30,  # Default to 30 minutes
-                    "recurrence_rule": recurrence_rule,
-                    "is_archived": False,
-                })
+                binds_inserts.append(
+                    {
+                        "user_id": user_id,  # Required field
+                        "goal_id": goal_id,
+                        "title": bind.title,
+                        "default_estimated_minutes": 30,  # Default to 30 minutes
+                        "recurrence_rule": recurrence_rule,
+                        "is_archived": False,
+                    }
+                )
 
             binds_response = supabase.table("subtask_templates").insert(binds_inserts).execute()
             logger.info(f"✅ Created {len(binds_response.data)} binds for goal {goal_id}")
+
+            # Auto-create subtask instances for TODAY
+            # This makes binds immediately visible in Thread home screen
+            today_date = date.today().isoformat()
+            instances_inserts = []
+
+            for bind_template in binds_response.data:
+                instances_inserts.append({
+                    "user_id": user_id,
+                    "goal_id": goal_id,
+                    "template_id": bind_template["id"],
+                    "scheduled_for_date": today_date,
+                    "status": "planned",  # subtask_status enum: 'planned', 'done', 'skipped', 'snoozed'
+                    "estimated_minutes": bind_template.get("default_estimated_minutes", 30),
+                })
+
+            try:
+                instances_response = supabase.table("subtask_instances").insert(instances_inserts).execute()
+                logger.info(f"✅ Created {len(instances_response.data)} instances for {today_date}")
+            except Exception as instance_error:
+                logger.error(f"❌ Error creating instances: {str(instance_error)}")
+                # Don't fail goal creation if instance generation fails
+                # User can still complete binds manually later
 
         # Return created goal
         return {
@@ -651,9 +701,7 @@ async def archive_goal(
         )
 
 
-async def _enrich_goals_with_stats(
-    supabase: Client, goals: list[dict], user_id: str
-) -> list[dict]:
+async def _enrich_goals_with_stats(supabase: Client, goals: list[dict], user_id: str) -> list[dict]:
     """
     Enrich goals with consistency_7d and active_binds_count.
 
@@ -689,9 +737,7 @@ async def _enrich_goals_with_stats(
             )
 
             aggregates = aggregates_response.data
-            logger.debug(
-                f"📊 Goal {goal_id}: Found {len(aggregates)} daily aggregates"
-            )
+            logger.debug(f"📊 Goal {goal_id}: Found {len(aggregates)} daily aggregates")
 
             # Calculate consistency_7d (% of active days with proof)
             if len(aggregates) >= 7:

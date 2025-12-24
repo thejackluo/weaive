@@ -144,7 +144,11 @@ def test_identity_bootup_with_minimum_traits(test_user_with_token):
     payload = {
         "preferred_name": "Min",
         "core_personality": "tough_warm",
-        "identity_traits": ["Decisive Action", "Consistent Effort", "Continuous Growth"],  # Exactly 3
+        "identity_traits": [
+            "Decisive Action",
+            "Consistent Effort",
+            "Continuous Growth",
+        ],  # Exactly 3
     }
 
     # WHEN
@@ -161,7 +165,13 @@ def test_identity_bootup_with_minimum_traits(test_user_with_token):
 
     # Verify in database
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
-    db_result = supabase.table("user_profiles").select("identity_traits").eq("id", user_id).single().execute()
+    db_result = (
+        supabase.table("user_profiles")
+        .select("identity_traits")
+        .eq("id", user_id)
+        .single()
+        .execute()
+    )
     assert len(db_result.data["identity_traits"]) == 3
 
 
@@ -232,7 +242,13 @@ def test_identity_bootup_with_apostrophe_in_name(test_user_with_token):
 
     # Verify in database
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
-    db_result = supabase.table("user_profiles").select("preferred_name").eq("id", user_id).single().execute()
+    db_result = (
+        supabase.table("user_profiles")
+        .select("preferred_name")
+        .eq("id", user_id)
+        .single()
+        .execute()
+    )
     assert db_result.data["preferred_name"] == "O'Brien"
 
 
@@ -269,7 +285,13 @@ def test_identity_bootup_with_hyphen_in_name(test_user_with_token):
 
     # Verify in database
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
-    db_result = supabase.table("user_profiles").select("preferred_name").eq("id", user_id).single().execute()
+    db_result = (
+        supabase.table("user_profiles")
+        .select("preferred_name")
+        .eq("id", user_id)
+        .single()
+        .execute()
+    )
     assert db_result.data["preferred_name"] == "Mary-Jane"
 
 
@@ -306,7 +328,13 @@ def test_identity_bootup_tough_warm_personality(test_user_with_token):
 
     # Verify in database
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
-    db_result = supabase.table("user_profiles").select("core_personality").eq("id", user_id).single().execute()
+    db_result = (
+        supabase.table("user_profiles")
+        .select("core_personality")
+        .eq("id", user_id)
+        .single()
+        .execute()
+    )
     assert db_result.data["core_personality"] == "tough_warm"
 
 
@@ -374,7 +402,11 @@ def test_identity_bootup_idempotency_update(test_user_with_token):
     data = response2.json()
     assert data["preferred_name"] == "Second"
     assert data["core_personality"] == "tough_warm"
-    assert data["identity_traits"] == ["Decisive Action", "Intentional Time", "Emotionally Grounded"]
+    assert data["identity_traits"] == [
+        "Decisive Action",
+        "Intentional Time",
+        "Emotionally Grounded",
+    ]
 
     # THEN: Database has only the second submission (overwritten)
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
@@ -382,7 +414,11 @@ def test_identity_bootup_idempotency_update(test_user_with_token):
 
     assert db_result.data["preferred_name"] == "Second"
     assert db_result.data["core_personality"] == "tough_warm"
-    assert db_result.data["identity_traits"] == ["Decisive Action", "Intentional Time", "Emotionally Grounded"]
+    assert db_result.data["identity_traits"] == [
+        "Decisive Action",
+        "Intentional Time",
+        "Emotionally Grounded",
+    ]
 
 
 # ============================================================================
@@ -442,7 +478,13 @@ def test_identity_bootup_all_allowed_traits(test_user_with_token, trait):
 
     # Verify in database
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
-    db_result = supabase.table("user_profiles").select("identity_traits").eq("id", user_id).single().execute()
+    db_result = (
+        supabase.table("user_profiles")
+        .select("identity_traits")
+        .eq("id", user_id)
+        .single()
+        .execute()
+    )
     assert trait in db_result.data["identity_traits"]
 
 
@@ -509,7 +551,9 @@ def test_identity_bootup_with_invalid_jwt():
 
 
 @pytest.mark.integration
-def test_identity_bootup_personality_timestamp_set(test_user_with_token, valid_identity_bootup_data):
+def test_identity_bootup_personality_timestamp_set(
+    test_user_with_token, valid_identity_bootup_data
+):
     """
     Test that personality_selected_at timestamp is set correctly.
 
@@ -534,12 +578,20 @@ def test_identity_bootup_personality_timestamp_set(test_user_with_token, valid_i
     # THEN
     assert response.status_code == 200
     data = response.json()
-    personality_timestamp = datetime.fromisoformat(data["personality_selected_at"].replace("Z", "+00:00"))
+    personality_timestamp = datetime.fromisoformat(
+        data["personality_selected_at"].replace("Z", "+00:00")
+    )
 
     # Timestamp should be between before and after
     assert before_timestamp <= personality_timestamp <= after_timestamp
 
     # Verify in database
     supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
-    db_result = supabase.table("user_profiles").select("personality_selected_at").eq("id", user_id).single().execute()
+    db_result = (
+        supabase.table("user_profiles")
+        .select("personality_selected_at")
+        .eq("id", user_id)
+        .single()
+        .execute()
+    )
     assert db_result.data["personality_selected_at"] is not None

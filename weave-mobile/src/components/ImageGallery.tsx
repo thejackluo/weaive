@@ -118,7 +118,9 @@ export function ImageGallery({
     return (
       <View className="bg-neutral-900" style={{ padding: 12 }}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {captures.map((item) => renderImage({ item }))}
+          {captures.map((item) => (
+            <View key={item.id}>{renderImage({ item })}</View>
+          ))}
         </View>
         {isFetchingNextPage && renderFooter()}
       </View>

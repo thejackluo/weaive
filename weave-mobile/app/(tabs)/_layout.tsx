@@ -202,16 +202,7 @@ export default function TabLayout() {
   const [hasUnreadCheckins, setHasUnreadCheckins] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Auth guard: redirect to login if not authenticated
-  if (!isLoading && !user) {
-    return <Redirect href="/(auth)/login" />;
-  }
-
-  // Show nothing while loading (prevents flash of content)
-  if (isLoading) {
-    return null;
-  }
-
+  // ✅ FIX: ALL hooks must be BEFORE early returns to maintain consistent hook order
   // Check for unread check-in conversations (system-initiated)
   const { data: conversations } = useQuery({
     queryKey: ['ai-chat-conversations'],
@@ -220,10 +211,11 @@ export default function TabLayout() {
       return response.data.data || [];
     },
     refetchInterval: 30000, // Check every 30 seconds
-    enabled: !aiChatVisible, // Don't check when chat is open
+    enabled: !isLoading && !aiChatVisible && !!user, // Only run when authenticated and chat is closed
   });
 
   // Update unread badge when conversations change
+  // ✅ MOVED BEFORE EARLY RETURNS - must be called every render
   React.useEffect(() => {
     if (conversations && conversations.length > 0) {
       // Check if there are any system-initiated conversations
@@ -233,6 +225,16 @@ export default function TabLayout() {
       setHasUnreadCheckins(hasSystemInitiated);
     }
   }, [conversations]);
+
+  // Auth guard: redirect to login if not authenticated
+  if (!isLoading && !user) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  // Show nothing while loading (prevents flash of content)
+  if (isLoading) {
+    return null;
+  }
 
   const openAIChat = () => {
     setAIChatVisible(true);

@@ -2,6 +2,7 @@
 Vision Service - AI-powered image analysis with provider abstraction
 
 Story: 0.9 - AI-Powered Image Service
+Story: 1.5.3 - Unified AI Services Standardization
 Provider Pattern: Gemini 3.0 Flash (primary) → GPT-4o Vision (fallback) → Graceful degradation
 
 This service follows the provider abstraction pattern from Story 0.6, enabling:
@@ -9,12 +10,17 @@ This service follows the provider abstraction pattern from Story 0.6, enabling:
 - Cost tracking per provider
 - Consistent analysis format across providers
 - Graceful degradation when AI unavailable
+
+Story 1.5.3: VisionProvider now inherits from AIProviderBase for unified
+cost tracking and rate limiting across text/image/audio modalities.
 """
 
 import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
+
+from app.services.ai_provider_base import AIProviderBase as _AIProviderBase
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +84,19 @@ class VisionAnalysisResult:
         }
 
 
-class VisionProvider(ABC):
-    """Abstract base class for AI vision providers"""
+class VisionProvider(_AIProviderBase, ABC):
+    """
+    Abstract base class for AI vision providers.
+
+    Story 1.5.3: Now inherits from AIProviderBase for unified cost tracking
+    and rate limiting across all AI modalities (text/image/audio).
+
+    Inherited from AIProviderBase:
+    - log_to_ai_runs() - Cost tracking
+    - check_rate_limit() - Rate limiting
+    - get_provider_name() - Provider identification (must implement)
+    - is_available() - Availability check (must implement)
+    """
 
     @abstractmethod
     async def analyze_image(
@@ -102,16 +119,6 @@ class VisionProvider(ABC):
         Raises:
             VisionProviderError: If analysis fails
         """
-        pass
-
-    @abstractmethod
-    def get_provider_name(self) -> str:
-        """Return provider identifier (e.g., 'gemini-3-flash-preview')"""
-        pass
-
-    @abstractmethod
-    def is_available(self) -> bool:
-        """Check if provider is configured and available"""
         pass
 
 
@@ -189,7 +196,9 @@ class VisionService:
                 logger.warning(f"⚠️ {e.provider} failed: {e.message}")
 
                 if not e.retryable:
-                    logger.error(f"Non-retryable error from {e.provider}, skipping remaining providers")
+                    logger.error(
+                        f"Non-retryable error from {e.provider}, skipping remaining providers"
+                    )
                     break
 
                 continue

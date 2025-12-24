@@ -58,11 +58,7 @@ async def store_painpoint_selection(
             "session_id": session_id,
         }
 
-        result = (
-            supabase.table("analytics_events")
-            .insert(event_record)
-            .execute()
-        )
+        result = supabase.table("analytics_events").insert(event_record).execute()
 
         if not result.data:
             raise RuntimeError("Failed to store painpoint selection to database")
@@ -79,9 +75,7 @@ async def store_painpoint_selection(
         }
 
     except Exception as e:
-        logger.error(
-            f"❌ Failed to store painpoint selection: {str(e)}"
-        )
+        logger.error(f"❌ Failed to store painpoint selection: {str(e)}")
         raise
 
 
@@ -134,9 +128,7 @@ async def store_identity_bootup(
 
         if not check_result.data or len(check_result.data) == 0:
             logger.error(f"❌ No user_profile found for auth_user_id: {auth_user_id}")
-            raise ValueError(
-                f"User profile not found for auth_user_id: {auth_user_id}"
-            )
+            raise ValueError(f"User profile not found for auth_user_id: {auth_user_id}")
 
         # Prepare update data
         update_data = {
@@ -157,9 +149,7 @@ async def store_identity_bootup(
 
         # Double-check update succeeded
         if not result.data or len(result.data) == 0:
-            raise ValueError(
-                f"User profile update failed for auth_user_id: {auth_user_id}"
-            )
+            raise ValueError(f"User profile update failed for auth_user_id: {auth_user_id}")
 
         profile = result.data[0]
 
@@ -182,9 +172,7 @@ async def store_identity_bootup(
         # Re-raise validation errors
         raise
     except Exception as e:
-        logger.error(
-            f"❌ Failed to store identity bootup data: {str(e)}"
-        )
+        logger.error(f"❌ Failed to store identity bootup data: {str(e)}")
         raise
 
 
@@ -236,19 +224,14 @@ async def create_origin_story(
 
         if not profile_result.data or len(profile_result.data) == 0:
             logger.error(f"❌ No user_profile found for auth_user_id: {auth_user_id}")
-            raise ValueError(
-                f"User profile not found for auth_user_id: {auth_user_id}"
-            )
+            raise ValueError(f"User profile not found for auth_user_id: {auth_user_id}")
 
         profile = profile_result.data[0]
         user_id = profile["id"]
 
         # Check if origin story already exists (one per user)
         existing_check = (
-            supabase.table("origin_stories")
-            .select("id")
-            .eq("user_id", user_id)
-            .execute()
+            supabase.table("origin_stories").select("id").eq("user_id", user_id).execute()
         )
 
         if existing_check.data and len(existing_check.data) > 0:
@@ -269,9 +252,7 @@ async def create_origin_story(
         photo_bytes = base64.b64decode(photo_base64)
         audio_bytes = base64.b64decode(audio_base64)
 
-        logger.info(
-            f"📦 Decoded photo: {len(photo_bytes)} bytes, audio: {len(audio_bytes)} bytes"
-        )
+        logger.info(f"📦 Decoded photo: {len(photo_bytes)} bytes, audio: {len(audio_bytes)} bytes")
 
         # Generate unique filenames with timestamp
         timestamp = int(now.timestamp() * 1000)
@@ -307,11 +288,11 @@ async def create_origin_story(
         # Get signed URLs for private bucket (1 year expiration)
         photo_signed = supabase.storage.from_("origin-stories").create_signed_url(
             path=photo_filename,
-            expires_in=31536000  # 1 year (365 days * 24 hours * 3600 seconds)
+            expires_in=31536000,  # 1 year (365 days * 24 hours * 3600 seconds)
         )
         audio_signed = supabase.storage.from_("origin-stories").create_signed_url(
             path=audio_filename,
-            expires_in=31536000  # 1 year
+            expires_in=31536000,  # 1 year
         )
 
         if not photo_signed or "signedURL" not in photo_signed:
@@ -338,19 +319,13 @@ async def create_origin_story(
             "created_at": now.isoformat(),
         }
 
-        origin_story_result = (
-            supabase.table("origin_stories")
-            .insert(origin_story_data)
-            .execute()
-        )
+        origin_story_result = supabase.table("origin_stories").insert(origin_story_data).execute()
 
         if not origin_story_result.data or len(origin_story_result.data) == 0:
             raise RuntimeError("Failed to create origin_stories record in database")
 
         origin_story = origin_story_result.data[0]
-        logger.info(
-            f"✅ Origin story record created: {origin_story['id']}"
-        )
+        logger.info(f"✅ Origin story record created: {origin_story['id']}")
 
         # Create subtask_instance record for first bind (AC #25)
         # The origin story IS the user's first bind - a symbolic commitment action
@@ -371,20 +346,14 @@ async def create_origin_story(
         }
 
         bind_instance_result = (
-            supabase.table("subtask_instances")
-            .insert(bind_instance_data)
-            .execute()
+            supabase.table("subtask_instances").insert(bind_instance_data).execute()
         )
 
         if not bind_instance_result.data or len(bind_instance_result.data) == 0:
-            logger.warning(
-                "⚠️  Failed to create subtask_instance for first bind (non-fatal)"
-            )
+            logger.warning("⚠️  Failed to create subtask_instance for first bind (non-fatal)")
         else:
             bind_instance = bind_instance_result.data[0]
-            logger.info(
-                f"✅ First bind (subtask_instance) created: {bind_instance['id']}"
-            )
+            logger.info(f"✅ First bind (subtask_instance) created: {bind_instance['id']}")
 
         # Update user_profiles with first_bind completion
         is_first_bind = profile["first_bind_completed_at"] is None
@@ -393,19 +362,19 @@ async def create_origin_story(
             logger.info(f"🎉 This is user {user_id}'s first bind! Updating user_level to 1")
             profile_update = (
                 supabase.table("user_profiles")
-                .update({
-                    "first_bind_completed_at": now.isoformat(),
-                    "user_level": 1,
-                    "updated_at": now.isoformat(),
-                })
+                .update(
+                    {
+                        "first_bind_completed_at": now.isoformat(),
+                        "user_level": 1,
+                        "updated_at": now.isoformat(),
+                    }
+                )
                 .eq("id", user_id)
                 .execute()
             )
 
             if not profile_update.data or len(profile_update.data) == 0:
-                logger.warning(
-                    "⚠️  Failed to update user_profiles for first bind (non-fatal)"
-                )
+                logger.warning("⚠️  Failed to update user_profiles for first bind (non-fatal)")
 
         logger.info(
             f"✅ Origin story created successfully for user {user_id}: "

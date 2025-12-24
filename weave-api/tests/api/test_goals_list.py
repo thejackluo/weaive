@@ -40,12 +40,18 @@ def test_user(test_supabase_client, test_user_auth_id):
         pytest.skip("Supabase client not available")
 
     # Create user profile with actual schema columns
-    response = test_supabase_client.table("user_profiles").insert({
-        "auth_user_id": test_user_auth_id,
-        "timezone": "America/Los_Angeles",
-        "locale": "en-US",
-        "onboarding_completed": False,
-    }).execute()
+    response = (
+        test_supabase_client.table("user_profiles")
+        .insert(
+            {
+                "auth_user_id": test_user_auth_id,
+                "timezone": "America/Los_Angeles",
+                "locale": "en-US",
+                "onboarding_completed": False,
+            }
+        )
+        .execute()
+    )
 
     user = response.data[0]
 
@@ -163,7 +169,9 @@ class TestGoalsListEndpoint:
             assert "active_binds_count" in goal
             assert "updated_at" in goal
 
-    def test_calculates_consistency_from_daily_aggregates(self, auth_headers, sample_goals, test_supabase_client, test_user):
+    def test_calculates_consistency_from_daily_aggregates(
+        self, auth_headers, sample_goals, test_supabase_client, test_user
+    ):
         """
         GIVEN: Goal has 7 days of daily_aggregates data
         WHEN: GET /api/goals with stats
@@ -176,13 +184,15 @@ class TestGoalsListEndpoint:
         # Create 7 days: 6 active days with proof, 1 inactive
         for i in range(7):
             local_date = (datetime.now(timezone.utc) - timedelta(days=i)).date().isoformat()
-            aggregates.append({
-                "user_id": user_id,
-                "local_date": local_date,
-                "completed_count": 2 if i < 6 else 0,  # 6 days with completions
-                "has_proof": True if i < 6 else False,
-                "active_day_with_proof": True if i < 6 else False,  # 6/7 = 85.7%
-            })
+            aggregates.append(
+                {
+                    "user_id": user_id,
+                    "local_date": local_date,
+                    "completed_count": 2 if i < 6 else 0,  # 6 days with completions
+                    "has_proof": True if i < 6 else False,
+                    "active_day_with_proof": True if i < 6 else False,  # 6/7 = 85.7%
+                }
+            )
 
         test_supabase_client.table("daily_aggregates").insert(aggregates).execute()
 
@@ -201,7 +211,9 @@ class TestGoalsListEndpoint:
         assert isinstance(goal["consistency_7d"], (int, float))
         assert 85.0 <= goal["consistency_7d"] <= 86.0  # 6/7 = 85.71%
 
-    def test_returns_null_consistency_for_new_goals(self, auth_headers, test_supabase_client, test_user):
+    def test_returns_null_consistency_for_new_goals(
+        self, auth_headers, test_supabase_client, test_user
+    ):
         """
         GIVEN: Goal created less than 7 days ago with no daily_aggregates
         WHEN: GET /api/goals
@@ -249,23 +261,27 @@ class TestGoalsListEndpoint:
 
         # 3 active subtasks (not archived)
         for i in range(3):
-            subtasks.append({
-                "user_id": user_id,
-                "goal_id": goal_id,
-                "title": f"Active Bind {i+1}",
-                "default_estimated_minutes": 15,
-                "is_archived": False,  # Active = not archived
-            })
+            subtasks.append(
+                {
+                    "user_id": user_id,
+                    "goal_id": goal_id,
+                    "title": f"Active Bind {i + 1}",
+                    "default_estimated_minutes": 15,
+                    "is_archived": False,  # Active = not archived
+                }
+            )
 
         # 2 archived subtasks
         for i in range(2):
-            subtasks.append({
-                "user_id": user_id,
-                "goal_id": goal_id,
-                "title": f"Archived Bind {i+1}",
-                "default_estimated_minutes": 15,
-                "is_archived": True,  # Archived = not active
-            })
+            subtasks.append(
+                {
+                    "user_id": user_id,
+                    "goal_id": goal_id,
+                    "title": f"Archived Bind {i + 1}",
+                    "default_estimated_minutes": 15,
+                    "is_archived": True,  # Archived = not active
+                }
+            )
 
         test_supabase_client.table("subtask_templates").insert(subtasks).execute()
 
@@ -304,7 +320,9 @@ class TestGoalsListEndpoint:
             goals[1]["updated_at"]
         )
 
-    def test_enforces_max_3_active_goals_limit(self, auth_headers, sample_goals, test_supabase_client, test_user):
+    def test_enforces_max_3_active_goals_limit(
+        self, auth_headers, sample_goals, test_supabase_client, test_user
+    ):
         """
         GIVEN: User has exactly 3 active goals
         WHEN: GET /api/goals
@@ -377,19 +395,27 @@ class TestGoalsListEndpoint:
         assert data["data"] == []
         assert data["meta"]["total"] == 0
 
-    def test_enforces_rls_user_can_only_see_own_goals(self, auth_headers, sample_goals, test_supabase_client, test_user):
+    def test_enforces_rls_user_can_only_see_own_goals(
+        self, auth_headers, sample_goals, test_supabase_client, test_user
+    ):
         """
         GIVEN: Database has goals for multiple users
         WHEN: User A requests GET /api/goals
         THEN: Returns only User A's goals (RLS enforcement)
         """
         # Create a second user with their own goals
-        other_user_response = test_supabase_client.table("user_profiles").insert({
-            "auth_user_id": "other-user-auth-id",
-            "timezone": "America/New_York",
-            "locale": "en-US",
-            "onboarding_completed": False,
-        }).execute()
+        other_user_response = (
+            test_supabase_client.table("user_profiles")
+            .insert(
+                {
+                    "auth_user_id": "other-user-auth-id",
+                    "timezone": "America/New_York",
+                    "locale": "en-US",
+                    "onboarding_completed": False,
+                }
+            )
+            .execute()
+        )
         other_user = other_user_response.data[0]
 
         # Create goal for other user
@@ -446,7 +472,9 @@ class TestGoalsListEndpoint:
         # Original goal was 800ms, but CI typically has higher latency
         assert duration_ms < 1000, f"Response took {duration_ms}ms, expected <1000ms"
 
-    def test_uses_efficient_query_with_joins(self, auth_headers, sample_goals, test_supabase_client):
+    def test_uses_efficient_query_with_joins(
+        self, auth_headers, sample_goals, test_supabase_client
+    ):
         """
         GIVEN: Database has goals, daily_aggregates, and subtask_templates
         WHEN: GET /api/goals with stats
