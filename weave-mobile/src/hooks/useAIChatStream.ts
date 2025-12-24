@@ -114,11 +114,10 @@ export function useAIChatStream(): UseAIChatStreamReturn {
 
         // Set 60-second timeout for streaming request
         timeoutIdRef.current = setTimeout(() => {
-          if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-            setError('Request timed out after 60 seconds. Please try again.');
-            setIsStreaming(false);
-          }
+          if (__DEV__) console.log('[STREAM_TIMEOUT] ⏱️ 60s timeout reached, aborting stream');
+          cleanup();
+          setError('Request timed out after 60 seconds. Please try again.');
+          setIsStreaming(false);
         }, 60000);
 
         // Get API base URL and headers from apiClient
@@ -162,6 +161,8 @@ export function useAIChatStream(): UseAIChatStreamReturn {
           body: JSON.stringify({
             message,
             conversation_id: conversationId || null,
+            include_context: true,  // Story 6.2: Enable context building
+            enable_tools: true,     // Story 6.2: Enable tool calling
           }),
         });
 
