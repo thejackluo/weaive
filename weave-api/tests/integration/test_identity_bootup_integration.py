@@ -206,7 +206,7 @@ def test_identity_bootup_with_too_many_traits(test_user_with_token):
     )
 
     # THEN
-    assert response.status_code == 422
+    assert response.status_code == 400  # Validation errors return 400 (custom handler)
 
 
 @pytest.mark.integration
