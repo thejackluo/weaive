@@ -33,8 +33,7 @@ export default function SubscriptionScreen() {
 
   // Fetch subscription data
   const { data: products, isLoading: productsLoading } = useSubscriptionProducts();
-  const { data: subscriptionStatus, isLoading: statusLoading } =
-    useSubscriptionStatus();
+  const { data: subscriptionStatus, isLoading: statusLoading } = useSubscriptionStatus();
 
   // Purchase mutations
   const purchaseMutation = usePurchaseSubscription();
@@ -58,22 +57,18 @@ export default function SubscriptionScreen() {
   };
 
   // Handle upgrade button press
-  const handleUpgrade = async (productId: typeof PRODUCT_IDS[keyof typeof PRODUCT_IDS]) => {
+  const handleUpgrade = async (productId: (typeof PRODUCT_IDS)[keyof typeof PRODUCT_IDS]) => {
     try {
       setIsProcessing(true);
       await purchaseMutation.mutateAsync(productId);
 
-      Alert.alert(
-        'Success! 🎉',
-        'Your subscription is now active. Enjoy unlimited AI coaching!',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      Alert.alert('Success! 🎉', 'Your subscription is now active. Enjoy unlimited AI coaching!', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
     } catch (error) {
-      Alert.alert(
-        'Purchase Failed',
-        error instanceof Error ? error.message : 'Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Purchase Failed', error instanceof Error ? error.message : 'Please try again.', [
+        { text: 'OK' },
+      ]);
     } finally {
       setIsProcessing(false);
     }
@@ -85,11 +80,7 @@ export default function SubscriptionScreen() {
       setIsProcessing(true);
       await restoreMutation.mutateAsync();
 
-      Alert.alert(
-        'Restored! ✅',
-        'Your subscription has been restored.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Restored! ✅', 'Your subscription has been restored.', [{ text: 'OK' }]);
     } catch (error) {
       Alert.alert(
         'Restore Failed',
@@ -198,12 +189,8 @@ export default function SubscriptionScreen() {
 
               {subscriptionStatus?.subscription_expires_at && (
                 <Text style={{ fontSize: 14, color: '#71717A' }}>
-                  {isSubscriptionExpired(subscriptionStatus)
-                    ? 'Expired on'
-                    : 'Renews on'}{' '}
-                  {new Date(
-                    subscriptionStatus.subscription_expires_at
-                  ).toLocaleDateString()}
+                  {isSubscriptionExpired(subscriptionStatus) ? 'Expired on' : 'Renews on'}{' '}
+                  {new Date(subscriptionStatus.subscription_expires_at).toLocaleDateString()}
                 </Text>
               )}
 
@@ -289,10 +276,8 @@ export default function SubscriptionScreen() {
                   </Text>
                 </View>
                 <Text style={{ fontSize: 14, color: '#71717A' }}>
-                  • 5,000 AI messages/month{'\n'}
-                  • Unlimited goal tracking{'\n'}
-                  • Priority support{'\n'}
-                  • 10-day free trial
+                  • 5,000 AI messages/month{'\n'}• Unlimited goal tracking{'\n'}• Priority support
+                  {'\n'}• 10-day free trial
                 </Text>
               </Pressable>
             )}
@@ -349,10 +334,8 @@ export default function SubscriptionScreen() {
                   </Text>
                 </View>
                 <Text style={{ fontSize: 14, color: '#71717A' }}>
-                  • 5,000 AI messages/month{'\n'}
-                  • Unlimited goal tracking{'\n'}
-                  • Priority support{'\n'}
-                  • 10-day free trial
+                  • 5,000 AI messages/month{'\n'}• Unlimited goal tracking{'\n'}• Priority support
+                  {'\n'}• 10-day free trial
                 </Text>
               </Pressable>
             )}
