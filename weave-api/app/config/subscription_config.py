@@ -72,4 +72,6 @@ class SubscriptionConfig:
 
 
 # Validate on module import (fail fast if misconfigured)
-SubscriptionConfig.validate()
+# Only validate in production to allow local development without Apple credentials
+if os.getenv("ENV") == "production":
+    SubscriptionConfig.validate()
