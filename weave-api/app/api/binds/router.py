@@ -8,45 +8,18 @@ Implements Thread Home Screen data requirements
 """
 
 import logging
-from datetime import date
+from datetime import date, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, status
 from supabase import Client
 
 from app.core.deps import get_current_user, get_supabase_client
+from app.core.errors import NotFoundException, ValidationException
+from app.schemas.bind import CompleteBindRequest, CreateBindRequest, UpdateBindRequest
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/binds")
-
-
-class CompleteBindRequest(BaseModel):
-    """Request body for completing a bind"""
-
-    timer_duration: int | None = Field(None, description="Timer duration in minutes")
-    photo_used: bool | None = Field(None, description="Whether photo accountability was used")
-    notes: str | None = Field(
-        None, max_length=500, description="Optional completion notes (e.g., 'Ran 5k in 30min')"
-    )
-
-
-class UpdateBindRequest(BaseModel):
-    """Request body for updating a bind template"""
-
-    title: str | None = Field(None, min_length=1, max_length=200, description="Bind title")
-    recurrence_rule: str | None = Field(None, description="iCal RRULE format (e.g., FREQ=DAILY;INTERVAL=1)")
-    default_estimated_minutes: int | None = Field(None, ge=0, description="Default estimated time in minutes")
-
-
-class CreateBindRequest(BaseModel):
-    """Request body for creating a new bind"""
-
-    goal_id: str = Field(..., description="Goal ID this bind belongs to")
-    title: str = Field(..., min_length=1, max_length=200, description="Bind title")
-    description: str | None = Field(None, max_length=1000, description="Bind description")
-    frequency_type: str = Field(..., pattern="^(daily|weekly)$", description="Frequency type: daily or weekly")
-    frequency_value: int | None = Field(None, ge=1, le=7, description="Days per week (only for weekly)")
 
 
 @router.get("/today")
@@ -82,19 +55,15 @@ async def get_today_binds(
     """
     if not supabase:
         logger.error("❌ Supabase client not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database not configured",
-        )
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(service_name="Database")
 
     # Extract user ID from JWT (auth.uid() is in the 'sub' claim)
     auth_user_id = user.get("sub")
     if not auth_user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        from app.core.errors import UnauthorizedException
+        raise UnauthorizedException(message="Invalid token payload")
 
     logger.info(f"[BINDS_API] Request from auth_user_id: {auth_user_id}")
 
@@ -136,9 +105,10 @@ async def get_today_binds(
                 logger.info(f"✅ Auto-created user_profile.id: {user_id}")
             except Exception as create_error:
                 logger.error(f"❌ Failed to auto-create user profile: {create_error}")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Failed to initialize user profile",
+                from app.core.errors import ServiceUnavailableException
+                raise ServiceUnavailableException(
+                    service_name="Database",
+                    message="Failed to initialize user profile"
                 )
 
         # Get today's date (user's local date)
@@ -180,9 +150,10 @@ async def get_today_binds(
             logger.info(f"[BINDS_API] Found {len(instances)} binds for {today}")
         except Exception as query_error:
             logger.error(f"❌ Database query error: {str(query_error)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Database query failed: {str(query_error)}",
+            from app.core.errors import ServiceUnavailableException
+            raise ServiceUnavailableException(
+                service_name="Database",
+                message=f"Database query failed: {str(query_error)}"
             )
 
         # For each instance, check completion status and proof
@@ -293,17 +264,19 @@ async def get_today_binds(
                 "local_date": today,
                 "total_binds": len(binds),
                 "completed_count": completed_count,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             },
         }
 
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
+    except (NotFoundException, ValidationException):
+        # Re-raise custom exceptions as-is
         raise
     except Exception as e:
         logger.error(f"❌ Error fetching today's binds: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch today's binds",
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(
+            service_name="Database",
+            message=f"Failed to fetch today's binds: {str(e)}"
         )
 
 
@@ -337,19 +310,15 @@ async def complete_bind(
     """
     if not supabase:
         logger.error("❌ Supabase client not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database not configured",
-        )
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(service_name="Database")
 
     # Extract user ID from JWT
     auth_user_id = user.get("sub")
     if not auth_user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        from app.core.errors import UnauthorizedException
+        raise UnauthorizedException(message="Invalid token payload")
 
     logger.info(f"[BINDS_API] Complete bind request from auth_user_id: {auth_user_id}")
 
@@ -365,10 +334,7 @@ async def complete_bind(
 
         if not user_profile_response.data:
             logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found",
-            )
+            raise NotFoundException(resource="User Profile", resource_id=auth_user_id)
 
         user_id = user_profile_response.data["id"]
         logger.info(f"[BINDS_API] Found user_profile.id: {user_id}")
@@ -384,17 +350,12 @@ async def complete_bind(
 
         if not bind_response.data:
             logger.error(f"❌ Bind not found: {bind_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Bind not found",
-            )
+            raise NotFoundException(resource="Bind", resource_id=bind_id)
 
         if bind_response.data["user_id"] != user_id:
             logger.error(f"❌ Bind {bind_id} does not belong to user {user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Unauthorized access to bind",
-            )
+            from app.core.errors import ForbiddenException
+            raise ForbiddenException(message="Unauthorized access to bind")
 
         # Check if already completed
         existing_completion = (
@@ -437,9 +398,10 @@ async def complete_bind(
 
         if not completion_response.data:
             logger.error(f"❌ Failed to create completion for bind {bind_id}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to record completion",
+            from app.core.errors import ServiceUnavailableException
+            raise ServiceUnavailableException(
+                service_name="Database",
+                message="Failed to record completion"
             )
 
         completion = completion_response.data[0]
@@ -557,15 +519,16 @@ async def complete_bind(
             },
         }
 
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
+    except (NotFoundException, ValidationException):
+        # Re-raise custom exceptions as-is
         raise
     except Exception as e:
         logger.error(f"❌ Error completing bind: {str(e)}")
         logger.exception("Full traceback:")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to complete bind: {str(e)}",
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(
+            service_name="Database",
+            message=f"Failed to complete bind: {str(e)}"
         )
 
 
@@ -594,19 +557,15 @@ async def update_bind(
     """
     if not supabase:
         logger.error("❌ Supabase client not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database not configured",
-        )
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(service_name="Database")
 
     # Extract user ID from JWT
     auth_user_id = user.get("sub")
     if not auth_user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        from app.core.errors import UnauthorizedException
+        raise UnauthorizedException(message="Invalid token payload")
 
     logger.info(f"[BINDS_API] Update bind request from auth_user_id: {auth_user_id}")
 
@@ -622,10 +581,7 @@ async def update_bind(
 
         if not user_profile_response.data:
             logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found",
-            )
+            raise NotFoundException(resource="User Profile", resource_id=auth_user_id)
 
         user_id = user_profile_response.data["id"]
         logger.info(f"[BINDS_API] Found user_profile.id: {user_id}")
@@ -640,10 +596,7 @@ async def update_bind(
             update_payload["default_estimated_minutes"] = request.default_estimated_minutes
 
         if not update_payload:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No fields to update",
-            )
+            raise ValidationException(message="No fields to update")
 
         # Update the bind template (RLS enforced)
         update_response = (
@@ -656,10 +609,7 @@ async def update_bind(
 
         if not update_response.data:
             logger.warning(f"⚠️ Bind {bind_id} not found for user {user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Bind not found",
-            )
+            raise NotFoundException(resource="Bind", resource_id=bind_id)
 
         updated_bind = update_response.data[0]
         logger.info(f"✅ Updated bind {bind_id}")
@@ -668,17 +618,18 @@ async def update_bind(
             "success": True,
             "data": updated_bind,
             "meta": {
-                "timestamp": date.today().isoformat(),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             },
         }
 
-    except HTTPException:
+    except (NotFoundException, ValidationException):
         raise
     except Exception as e:
         logger.error(f"❌ Error updating bind {bind_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update bind: {str(e)}",
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(
+            service_name="Database",
+            message=f"Failed to update bind: {str(e)}"
         )
 
 
@@ -708,19 +659,15 @@ async def create_bind(
     """
     if not supabase:
         logger.error("❌ Supabase client not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database not configured",
-        )
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(service_name="Database")
 
     # Extract user ID from JWT
     auth_user_id = user.get("sub")
     if not auth_user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        from app.core.errors import UnauthorizedException
+        raise UnauthorizedException(message="Invalid token payload")
 
     logger.info(
         f"[CREATE_BIND] Request from auth_user_id: {auth_user_id} for goal {request.goal_id}"
@@ -738,10 +685,7 @@ async def create_bind(
 
         if not user_profile_response.data:
             logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found",
-            )
+            raise NotFoundException(resource="User Profile", resource_id=auth_user_id)
 
         user_id = user_profile_response.data["id"]
         logger.info(f"[CREATE_BIND] Resolved user_id: {user_id}")
@@ -758,16 +702,13 @@ async def create_bind(
 
         if not goal_response.data:
             logger.warning(f"⚠️ Goal {request.goal_id} not found for user {user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Goal not found",
-            )
+            raise NotFoundException(resource="Goal", resource_id=request.goal_id)
 
         # Check if goal is active (can't add binds to archived goals)
         if goal_response.data["status"] != "active":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot add binds to archived goals",
+            raise ValidationException(
+                message="Cannot add binds to archived goals",
+                details={"goal_id": request.goal_id, "status": goal_response.data["status"]}
             )
 
         # Check active binds count (max 3 per goal)
@@ -784,9 +725,9 @@ async def create_bind(
             logger.warning(
                 f"⚠️ Goal {request.goal_id} already has {active_binds_count} active binds"
             )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Maximum 3 binds allowed per goal",
+            raise ValidationException(
+                message="Maximum 3 binds allowed per goal",
+                details={"goal_id": request.goal_id, "current_count": active_binds_count, "max_allowed": 3}
             )
 
         # Convert frequency_type to recurrence_rule (iCal RRULE format)
@@ -813,9 +754,10 @@ async def create_bind(
 
         if not bind_response.data:
             logger.error("❌ Failed to create bind")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create bind",
+            from app.core.errors import ServiceUnavailableException
+            raise ServiceUnavailableException(
+                service_name="Database",
+                message="Failed to create bind"
             )
 
         created_bind = bind_response.data[0]
@@ -844,17 +786,18 @@ async def create_bind(
             "success": True,
             "data": created_bind,
             "meta": {
-                "timestamp": date.today().isoformat(),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             },
         }
 
-    except HTTPException:
+    except (NotFoundException, ValidationException):
         raise
     except Exception as e:
         logger.error(f"❌ Error creating bind: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create bind: {str(e)}",
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(
+            service_name="Database",
+            message=f"Failed to create bind: {str(e)}"
         )
 
 
@@ -879,19 +822,15 @@ async def delete_bind(
     """
     if not supabase:
         logger.error("❌ Supabase client not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database not configured",
-        )
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(service_name="Database")
 
     # Extract user ID from JWT
     auth_user_id = user.get("sub")
     if not auth_user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        from app.core.errors import UnauthorizedException
+        raise UnauthorizedException(message="Invalid token payload")
 
     logger.info(f"[DELETE_BIND] Request from auth_user_id: {auth_user_id}")
 
@@ -907,10 +846,7 @@ async def delete_bind(
 
         if not user_profile_response.data:
             logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found",
-            )
+            raise NotFoundException(resource="User Profile", resource_id=auth_user_id)
 
         user_id = user_profile_response.data["id"]
 
@@ -925,10 +861,7 @@ async def delete_bind(
 
         if not archive_response.data:
             logger.warning(f"⚠️ Bind {bind_id} not found for user {user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Bind not found",
-            )
+            raise NotFoundException(resource="Bind", resource_id=bind_id)
 
         archived_bind = archive_response.data[0]
         logger.info(f"✅ Archived bind {bind_id}")
@@ -937,15 +870,16 @@ async def delete_bind(
             "success": True,
             "data": archived_bind,
             "meta": {
-                "timestamp": date.today().isoformat(),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             },
         }
 
-    except HTTPException:
+    except (NotFoundException, ValidationException):
         raise
     except Exception as e:
         logger.error(f"❌ Error deleting bind {bind_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete bind: {str(e)}",
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(
+            service_name="Database",
+            message=f"Failed to delete bind: {str(e)}"
         )
