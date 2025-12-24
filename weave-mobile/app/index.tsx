@@ -34,9 +34,9 @@ export default function Index() {
         {/* Dev Banner (invisible but helps debugging) */}
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }}>
           <View style={{ backgroundColor: '#FF6B00', padding: 8 }}>
-            <RNText style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
+            <Textstyle={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
               🧪 DEV MODE: Auth Bypassed
-            </RNText>
+            </Text>
           </View>
         </View>
       </>
@@ -49,9 +49,9 @@ export default function Index() {
       <View style={{ flex: 1, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
         <View style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: 24, borderRadius: 12 }}>
           <ActivityIndicator size="large" color="#3B72F6" />
-          <RNText style={{ color: '#888888', marginTop: 16, textAlign: 'center' }}>
+          <Textstyle={{ color: '#888888', marginTop: 16, textAlign: 'center' }}>
             Loading...
-          </RNText>
+          </Text>
         </View>
       </View>
     );

@@ -285,12 +285,12 @@ export default function LoginScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <RNText style={{ color: '#ffffff', fontSize: 32, fontWeight: 'bold' }}>
+            <Textstyle={{ color: '#ffffff', fontSize: 32, fontWeight: 'bold' }}>
               {user ? 'Already Signed In' : 'Welcome Back'}
-            </RNText>
-            <RNText style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 18, marginTop: 8 }}>
+            </Text>
+            <Textstyle={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 18, marginTop: 8 }}>
               {user ? 'You are currently signed in' : 'Sign in to continue your journey'}
-            </RNText>
+            </Text>
           </View>
 
           {/* Already Signed In Card */}
@@ -307,15 +307,15 @@ export default function LoginScreen() {
                 }}
               >
                 <View style={{ gap: 8 }}>
-                  <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }}>
+                  <Textstyle={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }}>
                     ✅ You're Already Signed In
-                  </RNText>
-                  <RNText style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
-                    Signed in as <RNText style={{ fontWeight: '600' }}>{user.email}</RNText>
-                  </RNText>
-                  <RNText style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.5)', marginTop: 4 }}>
+                  </Text>
+                  <Textstyle={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
+                    Signed in as <Textstyle={{ fontWeight: '600' }}>{user.email}</Text>
+                  </Text>
+                  <Textstyle={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.5)', marginTop: 4 }}>
                     You can continue to your account or sign out to use a different account.
-                  </RNText>
+                  </Text>
                 </View>
 
                 <View style={{ gap: 12 }}>
@@ -331,9 +331,9 @@ export default function LoginScreen() {
                       opacity: isContinuing || isSigningOut ? 0.5 : 1,
                     }}
                   >
-                    <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       {isContinuing ? 'Loading...' : 'Continue to App'}
-                    </RNText>
+                    </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -348,9 +348,9 @@ export default function LoginScreen() {
                       opacity: isContinuing || isSigningOut ? 0.5 : 1,
                     }}
                   >
-                    <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-                    </RNText>
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -369,7 +369,7 @@ export default function LoginScreen() {
                   padding: 16,
                 }}
               >
-                <RNText
+                <Text
                   style={{
                     color: '#EF4444',
                     fontSize: 14,
@@ -377,7 +377,7 @@ export default function LoginScreen() {
                   }}
                 >
                   {getErrorMessage(authError)}
-                </RNText>
+                </Text>
               </View>
             </View>
           )}
@@ -388,7 +388,7 @@ export default function LoginScreen() {
               <View style={styles.form}>
                 {/* Email Input */}
                 <View>
-                  <RNText style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 14, marginBottom: 8, fontWeight: '500' }}>Email</RNText>
+                  <Textstyle={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 14, marginBottom: 8, fontWeight: '500' }}>Email</Text>
                   <TextInput
                     placeholder="your.email@example.com"
                     value={email}
@@ -412,12 +412,12 @@ export default function LoginScreen() {
                     }}
                     placeholderTextColor="rgba(255, 255, 255, 0.4)"
                   />
-                  {emailError ? <RNText style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{emailError}</RNText> : null}
+                  {emailError ? <Textstyle={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{emailError}</Text> : null}
                 </View>
 
                 {/* Password Input */}
                 <View>
-                  <RNText style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 14, marginBottom: 8, fontWeight: '500' }}>Password</RNText>
+                  <Textstyle={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 14, marginBottom: 8, fontWeight: '500' }}>Password</Text>
                   <View style={{ position: 'relative' }}>
                     <TextInput
                       placeholder="Enter your password"
@@ -449,12 +449,12 @@ export default function LoginScreen() {
                       accessibilityRole="button"
                       style={{ position: 'absolute', right: 16, top: 14 }}
                     >
-                      <RNText style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>
+                      <Textstyle={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 12 }}>
                         {showPassword ? 'Hide' : 'Show'}
-                      </RNText>
+                      </Text>
                     </Pressable>
                   </View>
-                  {passwordError ? <RNText style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{passwordError}</RNText> : null}
+                  {passwordError ? <Textstyle={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{passwordError}</Text> : null}
                 </View>
 
                 {/* Sign In Button */}
@@ -478,9 +478,9 @@ export default function LoginScreen() {
                   {isLoading ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
-                    <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Sign In
-                    </RNText>
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -488,9 +488,9 @@ export default function LoginScreen() {
               {/* Divider */}
               <View style={styles.divider}>
                 <View style={[styles.dividerLine, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
-                <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)' }}>
+                <Textstyle={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)' }}>
                   or continue with
-                </RNText>
+                </Text>
                 <View style={[styles.dividerLine, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} />
               </View>
 
@@ -516,9 +516,9 @@ export default function LoginScreen() {
                   {isOAuthLoading === 'google' ? (
                     <ActivityIndicator color="#3b82f6" />
                   ) : (
-                    <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                    <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                       Sign in with Google
-                    </RNText>
+                    </Text>
                   )}
                 </TouchableOpacity>
 
@@ -542,22 +542,22 @@ export default function LoginScreen() {
                         },
                       ]}
                     >
-                      <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+                      <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
                         Sign in with Apple (Coming Soon)
-                      </RNText>
+                      </Text>
                     </TouchableOpacity>
-                    <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: 4 }}>
+                    <Textstyle={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: 4 }}>
                       Requires Apple Developer Program
-                    </RNText>
+                    </Text>
                   </View>
                 )}
               </View>
 
               {/* Sign Up Link */}
               <View style={styles.footer}>
-                <RNText style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
+                <Textstyle={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)' }}>
                   Don't have an account?{' '}
-                </RNText>
+                </Text>
                 <Pressable
                   onPress={handleNavigateToSignup}
                   disabled={isLoading || isOAuthLoading !== null}
@@ -565,9 +565,9 @@ export default function LoginScreen() {
                   accessibilityRole="button"
                   style={{ opacity: isLoading || isOAuthLoading !== null ? 0.5 : 1 }}
                 >
-                  <RNText style={{ fontSize: 16, color: '#3b82f6', fontWeight: '600' }}>
+                  <Textstyle={{ fontSize: 16, color: '#3b82f6', fontWeight: '600' }}>
                     Sign Up
-                  </RNText>
+                  </Text>
                 </Pressable>
               </View>
 
@@ -586,13 +586,13 @@ export default function LoginScreen() {
                       opacity: 0.6,
                     }}
                   >
-                    <RNText style={{ color: '#ffffff', fontSize: 14 }}>
+                    <Textstyle={{ color: '#ffffff', fontSize: 14 }}>
                       🔧 Skip Auth (Dev Only)
-                    </RNText>
+                    </Text>
                   </TouchableOpacity>
-                  <RNText style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: 4 }}>
+                  <Textstyle={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: 4 }}>
                     Development mode only - bypasses authentication
-                  </RNText>
+                  </Text>
                 </View>
               )}
             </>

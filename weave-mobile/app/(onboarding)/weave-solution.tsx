@@ -79,7 +79,7 @@ function SolutionCard({ content, index, reduceMotion }: SolutionCardProps) {
           accessibilityHint="Solution describing how Weave addresses your challenge"
         >
           {content.title}
-        </RNText>
+        </Text>
         <Text
           style={{
             fontSize: 16,
@@ -89,7 +89,7 @@ function SolutionCard({ content, index, reduceMotion }: SolutionCardProps) {
           }}
         >
           {content.text}
-        </RNText>
+        </Text>
       </View>
     </Animated.View>
   );
@@ -123,7 +123,7 @@ function CTAButton({ onPress, reduceMotion, delayMs }: CTAButtonProps) {
         accessibilityLabel="Show me the app"
         accessibilityRole="button"
       >
-        <RNText style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Show me →</RNText>
+        <Textstyle={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Show me →</Text>
       </Pressable>
     </Animated.View>
   );
@@ -207,7 +207,7 @@ export default function WeaveSolutionScreen() {
             accessibilityRole="header"
           >
             How Weave helps
-          </RNText>
+          </Text>
         </View>
 
         {/* Solution Cards */}

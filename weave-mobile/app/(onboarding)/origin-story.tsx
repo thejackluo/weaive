@@ -377,7 +377,7 @@ export default function OriginStoryScreen() {
           }}
         >
           This is where your story shifts.
-        </RNText>
+        </Text>
 
         {/* Dynamic Content */}
         <View style={{ marginBottom: 40 }}>
@@ -392,7 +392,7 @@ export default function OriginStoryScreen() {
             }}
           >
             {narrativeContent.struggle}
-          </RNText>
+          </Text>
 
           {/* Aspiration */}
           <Text
@@ -405,7 +405,7 @@ export default function OriginStoryScreen() {
             }}
           >
             {narrativeContent.aspiration}
-          </RNText>
+          </Text>
 
           {/* Bridge */}
           <Text
@@ -417,7 +417,7 @@ export default function OriginStoryScreen() {
             }}
           >
             {narrativeContent.bridge}
-          </RNText>
+          </Text>
         </View>
       </ScrollView>
 
@@ -442,9 +442,9 @@ export default function OriginStoryScreen() {
           accessibilityLabel="Take the first step"
           accessibilityRole="button"
         >
-          <RNText style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
+          <Textstyle={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
             Take the first step →
-          </RNText>
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -473,7 +473,7 @@ export default function OriginStoryScreen() {
             }}
           >
             Let's make this moment official.
-          </RNText>
+          </Text>
 
           {/* Subheading */}
           <Text
@@ -485,7 +485,7 @@ export default function OriginStoryScreen() {
             }}
           >
             Capture where you are now — and commit to where you're going.
-          </RNText>
+          </Text>
 
           {/* From/To Summary Card */}
           <View
@@ -499,14 +499,14 @@ export default function OriginStoryScreen() {
             }}
           >
             <View style={{ marginBottom: 12 }}>
-              <RNText style={{ fontSize: 14, fontWeight: '700', color: '#666' }}>From:</RNText>
-              <RNText style={{ fontSize: 15, color: '#333', marginTop: 4 }}>
+              <Textstyle={{ fontSize: 14, fontWeight: '700', color: '#666' }}>From:</Text>
+              <Textstyle={{ fontSize: 15, color: '#333', marginTop: 4 }}>
                 {originData.fromText}
-              </RNText>
+              </Text>
             </View>
             <View>
-              <RNText style={{ fontSize: 14, fontWeight: '700', color: '#666' }}>To:</RNText>
-              <RNText style={{ fontSize: 15, color: '#333', marginTop: 4 }}>{originData.toText}</RNText>
+              <Textstyle={{ fontSize: 14, fontWeight: '700', color: '#666' }}>To:</Text>
+              <Textstyle={{ fontSize: 15, color: '#333', marginTop: 4 }}>{originData.toText}</Text>
             </View>
           </View>
 
@@ -521,7 +521,7 @@ export default function OriginStoryScreen() {
               }}
             >
               1. Take a photo
-            </RNText>
+            </Text>
             <TouchableOpacity
               onPress={handleTakePhoto}
               style={{
@@ -535,9 +535,9 @@ export default function OriginStoryScreen() {
               accessibilityHint="Opens camera to capture a photo representing where you are now"
               accessibilityRole="button"
             >
-              <RNText style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+              <Textstyle={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
                 📷 {originData.photo ? 'Retake Photo' : 'Take a Photo'}
-              </RNText>
+              </Text>
             </TouchableOpacity>
             {originData.photo && (
               <View
@@ -549,7 +549,7 @@ export default function OriginStoryScreen() {
                   borderRadius: 8,
                 }}
               >
-                <RNText style={{ color: '#2E7D32', fontWeight: '600' }}>✓ Photo captured</RNText>
+                <Textstyle={{ color: '#2E7D32', fontWeight: '600' }}>✓ Photo captured</Text>
               </View>
             )}
           </View>
@@ -565,7 +565,7 @@ export default function OriginStoryScreen() {
               }}
             >
               Suggested prompts:
-            </RNText>
+            </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {VOICE_PROMPTS.map((prompt, index) => (
                 <View
@@ -577,7 +577,7 @@ export default function OriginStoryScreen() {
                     borderRadius: 16,
                   }}
                 >
-                  <RNText style={{ fontSize: 13, color: '#555' }}>{prompt}</RNText>
+                  <Textstyle={{ fontSize: 13, color: '#555' }}>{prompt}</Text>
                 </View>
               ))}
             </View>
@@ -594,7 +594,7 @@ export default function OriginStoryScreen() {
               }}
             >
               2. Record your commitment
-            </RNText>
+            </Text>
 
             {!isRecording && !originData.audioUri && (
               <TouchableOpacity
@@ -610,9 +610,9 @@ export default function OriginStoryScreen() {
                 accessibilityHint="Starts recording. Speak for up to 60 seconds about why this matters to you"
                 accessibilityRole="button"
               >
-                <RNText style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+                <Textstyle={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
                   🎤 Start Recording
-                </RNText>
+                </Text>
               </TouchableOpacity>
             )}
 
@@ -645,8 +645,8 @@ export default function OriginStoryScreen() {
                     }}
                   >
                     {Math.max(0, 60 - recordingTime)}s
-                  </RNText>
-                  <RNText style={{ fontSize: 14, color: '#666' }}>Recording...</RNText>
+                  </Text>
+                  <Textstyle={{ fontSize: 14, color: '#666' }}>Recording...</Text>
                 </View>
                 <TouchableOpacity
                   onPress={stopRecording}
@@ -659,7 +659,7 @@ export default function OriginStoryScreen() {
                     minHeight: MIN_TOUCH_TARGET,
                   }}
                 >
-                  <RNText style={{ color: '#FFF', fontSize: 16, fontWeight: '600' }}>Stop</RNText>
+                  <Textstyle={{ color: '#FFF', fontSize: 16, fontWeight: '600' }}>Stop</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -691,10 +691,10 @@ export default function OriginStoryScreen() {
                         }}
                       >
                         ✓ Commitment recorded
-                      </RNText>
-                      <RNText style={{ fontSize: 14, color: '#555' }}>
+                      </Text>
+                      <Textstyle={{ fontSize: 14, color: '#555' }}>
                         {originData.audioDuration} seconds
-                      </RNText>
+                      </Text>
                     </View>
                     <TouchableOpacity
                       onPress={playAudio}
@@ -716,7 +716,7 @@ export default function OriginStoryScreen() {
                         }}
                       >
                         {isPlayingAudio ? '⏸ Pause' : '▶ Play'}
-                      </RNText>
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -729,7 +729,7 @@ export default function OriginStoryScreen() {
                     alignItems: 'center',
                   }}
                 >
-                  <RNText style={{ color: '#555', fontSize: 14 }}>🔄 Re-record</RNText>
+                  <Textstyle={{ color: '#555', fontSize: 14 }}>🔄 Re-record</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -761,11 +761,11 @@ export default function OriginStoryScreen() {
                 }}
               >
                 Your Origin Story
-              </RNText>
-              <RNText style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>
+              </Text>
+              <Textstyle={{ fontSize: 14, color: '#666', marginBottom: 8 }}>
                 From: {originData.fromText.substring(0, 60)}...
-              </RNText>
-              <RNText style={{ fontSize: 14, color: '#666' }}>To: {originData.toText}</RNText>
+              </Text>
+              <Textstyle={{ fontSize: 14, color: '#666' }}>To: {originData.toText}</Text>
             </View>
           )}
         </ScrollView>
@@ -801,7 +801,7 @@ export default function OriginStoryScreen() {
               }}
             >
               Complete Bind
-            </RNText>
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -839,7 +839,7 @@ export default function OriginStoryScreen() {
           }}
         >
           You've completed your first bind!
-        </RNText>
+        </Text>
 
         {/* Subheading */}
         <Text
@@ -855,7 +855,7 @@ export default function OriginStoryScreen() {
         >
           The origin story you've just made is the first of many actions you'll take that
           strengthens us both.
-        </RNText>
+        </Text>
 
         {/* Weave Character Animation Placeholder */}
         <View
@@ -869,7 +869,7 @@ export default function OriginStoryScreen() {
             marginBottom: 24,
           }}
         >
-          <RNText style={{ fontSize: 60 }}>🧵</RNText>
+          <Textstyle={{ fontSize: 60 }}>🧵</Text>
         </View>
 
         {/* Level Progress Bar */}
@@ -901,7 +901,7 @@ export default function OriginStoryScreen() {
             }}
           >
             Level 1
-          </RNText>
+          </Text>
         </View>
 
         {/* Origin Story Summary */}
@@ -933,20 +933,20 @@ export default function OriginStoryScreen() {
                 marginRight: 12,
               }}
             >
-              <RNText style={{ fontSize: 24 }}>📷</RNText>
+              <Textstyle={{ fontSize: 24 }}>📷</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <RNText style={{ fontSize: 14, color: '#666' }}>
+              <Textstyle={{ fontSize: 14, color: '#666' }}>
                 From: {originData.fromText.substring(0, 40)}...
-              </RNText>
-              <RNText style={{ fontSize: 14, color: '#666', marginTop: 4 }}>
+              </Text>
+              <Textstyle={{ fontSize: 14, color: '#666', marginTop: 4 }}>
                 To: {originData.toText.substring(0, 40)}...
-              </RNText>
+              </Text>
             </View>
           </View>
-          <RNText style={{ fontSize: 13, color: '#888', textAlign: 'center' }}>
+          <Textstyle={{ fontSize: 13, color: '#888', textAlign: 'center' }}>
             🎤 {originData.audioDuration}s commitment recorded
-          </RNText>
+          </Text>
         </View>
       </ScrollView>
 
@@ -971,7 +971,7 @@ export default function OriginStoryScreen() {
           accessibilityLabel="Continue"
           accessibilityRole="button"
         >
-          <RNText style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</RNText>
+          <Textstyle={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

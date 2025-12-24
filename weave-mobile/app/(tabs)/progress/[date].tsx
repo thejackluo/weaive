@@ -183,9 +183,9 @@ export default function DayDetailScreen() {
   if (!date) {
     return (
       <View className="flex-1 bg-background items-center justify-center p-6">
-        <RNText style={{ fontSize: 18, color: '#a1a1aa', textAlign: 'center' }}>
+        <Textstyle={{ fontSize: 18, color: '#a1a1aa', textAlign: 'center' }}>
           No date specified
-        </RNText>
+        </Text>
       </View>
     );
   }
@@ -237,9 +237,9 @@ export default function DayDetailScreen() {
       <View className="px-6 pt-16 pb-6 border-b border-neutral-800">
         <Pressable onPress={() => router.back()} className="flex-row items-center mb-4">
           <Ionicons name="chevron-back" size={24} color="#a1a1aa" />
-          <RNText style={{ fontSize: 16, color: '#a1a1aa', marginLeft: 4 }}>
+          <Textstyle={{ fontSize: 16, color: '#a1a1aa', marginLeft: 4 }}>
             Back
-          </RNText>
+          </Text>
         </Pressable>
 
         <View className="flex-row items-center mb-2">
@@ -249,13 +249,13 @@ export default function DayDetailScreen() {
             color="#a1a1aa"
             style={{ marginRight: 8 }}
           />
-          <RNText style={{ fontSize: 32, fontWeight: '700', color: '#ffffff' }}>
+          <Textstyle={{ fontSize: 32, fontWeight: '700', color: '#ffffff' }}>
             {dayOfWeek}
-          </RNText>
+          </Text>
         </View>
-        <RNText style={{ fontSize: 18, color: '#a1a1aa' }}>
+        <Textstyle={{ fontSize: 18, color: '#a1a1aa' }}>
           {formattedDate}
-        </RNText>
+        </Text>
       </View>
 
       <ScrollView className="flex-1 px-6 pt-6">
@@ -268,9 +268,9 @@ export default function DayDetailScreen() {
           borderWidth: 1,
           borderColor: 'rgba(255, 255, 255, 0.1)'
         }}>
-          <RNText style={{ fontSize: 24, fontWeight: '700', color: '#ffffff', marginBottom: 16 }}>
+          <Textstyle={{ fontSize: 24, fontWeight: '700', color: '#ffffff', marginBottom: 16 }}>
             Fulfillment Score
-          </RNText>
+          </Text>
 
           {fulfillmentScore !== null ? (
             <View className="flex-row items-center">
@@ -278,23 +278,23 @@ export default function DayDetailScreen() {
                 className="w-16 h-16 rounded-full items-center justify-center mr-4"
                 style={{ backgroundColor: `${fulfillmentColor}20` }}
               >
-                <RNText style={{ fontSize: 32, fontWeight: '700', color: fulfillmentColor }}>
+                <Textstyle={{ fontSize: 32, fontWeight: '700', color: fulfillmentColor }}>
                   {fulfillmentScore}
-                </RNText>
+                </Text>
               </View>
               <View className="flex-1">
-                <RNText style={{ fontSize: 16, color: '#a1a1aa' }}>
+                <Textstyle={{ fontSize: 16, color: '#a1a1aa' }}>
                   {fulfillmentScore >= 8 && 'Highly fulfilled'}
                   {fulfillmentScore >= 6 && fulfillmentScore < 8 && 'Good fulfillment'}
                   {fulfillmentScore >= 4 && fulfillmentScore < 6 && 'Moderate fulfillment'}
                   {fulfillmentScore < 4 && 'Low fulfillment'}
-                </RNText>
+                </Text>
               </View>
             </View>
           ) : (
-            <RNText style={{ fontSize: 16, color: '#71717a' }}>
+            <Textstyle={{ fontSize: 16, color: '#71717a' }}>
               No fulfillment score recorded for this day
-            </RNText>
+            </Text>
           )}
         </View>
 
@@ -308,12 +308,12 @@ export default function DayDetailScreen() {
           borderColor: 'rgba(255, 255, 255, 0.1)'
         }}>
           <View className="flex-row items-center justify-between mb-4">
-            <RNText style={{ fontSize: 24, fontWeight: '700', color: '#ffffff' }}>
+            <Textstyle={{ fontSize: 24, fontWeight: '700', color: '#ffffff' }}>
               Daily Binds
-            </RNText>
-            <RNText style={{ fontSize: 14, color: '#a1a1aa' }}>
+            </Text>
+            <Textstyle={{ fontSize: 14, color: '#a1a1aa' }}>
               {completedSubtasks.length} / {allBinds.length} completed
-            </RNText>
+            </Text>
           </View>
 
           {allBinds.length > 0 ? (
@@ -342,14 +342,14 @@ export default function DayDetailScreen() {
                     }}
                   >
                     {bind.label}
-                  </RNText>
+                  </Text>
                 </View>
               ))}
             </View>
           ) : (
-            <RNText style={{ fontSize: 16, color: '#71717a' }}>
+            <Textstyle={{ fontSize: 16, color: '#71717a' }}>
               No binds active on this day
-            </RNText>
+            </Text>
           )}
         </View>
 
@@ -362,44 +362,44 @@ export default function DayDetailScreen() {
           borderWidth: 1,
           borderColor: 'rgba(255, 255, 255, 0.1)'
         }}>
-          <RNText style={{ fontSize: 24, fontWeight: '700', color: '#ffffff', marginBottom: 16 }}>
+          <Textstyle={{ fontSize: 24, fontWeight: '700', color: '#ffffff', marginBottom: 16 }}>
             Daily Reflection
-          </RNText>
+          </Text>
 
           {journalEntry ? (
             <View className="space-y-4">
               {journalEntry.journal_text && (
                 <View>
-                  <RNText style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 8 }}>
+                  <Textstyle={{ fontSize: 14, color: '#a1a1aa', marginBottom: 8 }}>
                     Your Entry
-                  </RNText>
-                  <RNText style={{ fontSize: 16, color: '#ffffff', lineHeight: 24 }}>
+                  </Text>
+                  <Textstyle={{ fontSize: 16, color: '#ffffff', lineHeight: 24 }}>
                     {journalEntry.journal_text}
-                  </RNText>
+                  </Text>
                 </View>
               )}
 
               {journalEntry.reflection_insights && (
                 <View className="mt-4 p-4 bg-brand-500/10 rounded-lg border border-brand-500/20">
-                  <RNText style={{ fontSize: 14, color: '#60a5fa', marginBottom: 8 }}>
+                  <Textstyle={{ fontSize: 14, color: '#60a5fa', marginBottom: 8 }}>
                     AI Insights
-                  </RNText>
-                  <RNText style={{ fontSize: 16, color: '#e5e5e5', lineHeight: 24 }}>
+                  </Text>
+                  <Textstyle={{ fontSize: 16, color: '#e5e5e5', lineHeight: 24 }}>
                     {journalEntry.reflection_insights}
-                  </RNText>
+                  </Text>
                 </View>
               )}
 
               {!journalEntry.journal_text && !journalEntry.reflection_insights && (
-                <RNText style={{ fontSize: 16, color: '#71717a' }}>
+                <Textstyle={{ fontSize: 16, color: '#71717a' }}>
                   No reflection recorded for this day
-                </RNText>
+                </Text>
               )}
             </View>
           ) : (
-            <RNText style={{ fontSize: 16, color: '#71717a' }}>
+            <Textstyle={{ fontSize: 16, color: '#71717a' }}>
               No reflection recorded for this day
-            </RNText>
+            </Text>
           )}
         </View>
       </ScrollView>

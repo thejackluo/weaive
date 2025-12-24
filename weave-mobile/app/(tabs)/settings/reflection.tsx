@@ -251,29 +251,29 @@ export default function ReflectionScreen() {
         {!loadingTimeout ? (
           <>
             <ActivityIndicator size="large" color="#6366f1" />
-            <RNText style={styles.loadingText}>Loading your reflection...</RNText>
-            <RNText style={styles.loadingDebugText}>
+            <Textstyle={styles.loadingText}>Loading your reflection...</Text>
+            <Textstyle={styles.loadingDebugText}>
               Journal: {isLoadingJournal ? 'Loading...' : 'Done'}
               {'\n'}
               Questions: {isLoadingQuestions ? 'Loading...' : 'Done'}
-            </RNText>
+            </Text>
           </>
         ) : (
           <>
-            <RNText style={styles.errorText}>⚠️ Cannot load reflection</RNText>
-            <RNText style={styles.errorSubtext}>
+            <Textstyle={styles.errorText}>⚠️ Cannot load reflection</Text>
+            <Textstyle={styles.errorSubtext}>
               {journalError
                 ? `Journal error: ${journalError.message}`
                 : questionsError
                   ? `Questions error: ${questionsError.message}`
                   : 'Loading took too long. Check your connection and try again.'}
-            </RNText>
-            <RNText style={styles.errorDebugText}>
+            </Text>
+            <Textstyle={styles.errorDebugText}>
               Debug Info:{'\n'}• Journal:{' '}
               {isLoadingJournal ? 'Still loading' : journalError ? 'Error' : 'Done'}
               {'\n'}• Questions:{' '}
               {isLoadingQuestions ? 'Still loading' : questionsError ? 'Error' : 'Done'}
-            </RNText>
+            </Text>
             <TouchableOpacity
               style={styles.retryButton}
               onPress={() => {
@@ -282,7 +282,7 @@ export default function ReflectionScreen() {
                 router.back();
               }}
             >
-              <RNText style={styles.retryButtonText}>Go Back</RNText>
+              <Textstyle={styles.retryButtonText}>Go Back</Text>
             </TouchableOpacity>
           </>
         )}
@@ -300,15 +300,15 @@ export default function ReflectionScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         {/* Header */}
         <View style={styles.header}>
-          <RNText style={styles.headerTitle}>How did today go, {userName}?</RNText>
-          <RNText style={styles.headerSubtitle}>Take 60 seconds to reflect</RNText>
+          <Textstyle={styles.headerTitle}>How did today go, {userName}?</Text>
+          <Textstyle={styles.headerSubtitle}>Take 60 seconds to reflect</Text>
         </View>
 
         {/* Question 1: Today's Reflection */}
         <View style={styles.questionContainer}>
-          <RNText style={styles.questionLabel}>
+          <Textstyle={styles.questionLabel}>
             How do you feel about today? What worked well and what didn't?
-          </RNText>
+          </Text>
           <TextInput
             style={styles.multilineInput}
             multiline
@@ -319,17 +319,17 @@ export default function ReflectionScreen() {
             placeholder="Today I felt... The highlight was... I struggled with..."
             placeholderTextColor="#999"
           />
-          <RNText style={styles.characterCount}>{reflectionCount} / 500</RNText>
+          <Textstyle={styles.characterCount}>{reflectionCount} / 500</Text>
           {reflectionCount < 50 && reflectionCount > 0 && (
-            <RNText style={styles.hint}>Keep going! Aim for at least 50 characters.</RNText>
+            <Textstyle={styles.hint}>Keep going! Aim for at least 50 characters.</Text>
           )}
         </View>
 
         {/* Question 2: Tomorrow's Focus */}
         <View style={styles.questionContainer}>
-          <RNText style={styles.questionLabel}>
+          <Textstyle={styles.questionLabel}>
             What is the one thing you want to accomplish tomorrow?
-          </RNText>
+          </Text>
           <TextInput
             style={styles.singleLineInput}
             maxLength={100}
@@ -338,14 +338,14 @@ export default function ReflectionScreen() {
             placeholder="Tomorrow I will..."
             placeholderTextColor="#999"
           />
-          <RNText style={styles.characterCount}>{focusCount} / 100</RNText>
+          <Textstyle={styles.characterCount}>{focusCount} / 100</Text>
         </View>
 
         {/* Fulfillment Score Slider */}
         <View style={styles.questionContainer}>
-          <RNText style={styles.questionLabel}>Overall, how fulfilled do you feel about today?</RNText>
+          <Textstyle={styles.questionLabel}>Overall, how fulfilled do you feel about today?</Text>
           <View style={styles.sliderContainer}>
-            <RNText style={styles.scoreDisplay}>{fulfillmentScore}</RNText>
+            <Textstyle={styles.scoreDisplay}>{fulfillmentScore}</Text>
             <View style={styles.sliderTrack}>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                 <TouchableOpacity
@@ -353,29 +353,29 @@ export default function ReflectionScreen() {
                   style={[styles.sliderDot, num <= fulfillmentScore && styles.sliderDotActive]}
                   onPress={() => setFulfillmentScore(num)}
                 >
-                  <RNText style={styles.sliderDotText}>{num}</RNText>
+                  <Textstyle={styles.sliderDotText}>{num}</Text>
                 </TouchableOpacity>
               ))}
             </View>
             <View style={styles.sliderLabels}>
-              <RNText style={styles.sliderLabel}>Low</RNText>
-              <RNText style={styles.sliderLabel}>High</RNText>
+              <Textstyle={styles.sliderLabel}>Low</Text>
+              <Textstyle={styles.sliderLabel}>High</Text>
             </View>
           </View>
-          <RNText style={styles.sliderFeedback}>
+          <Textstyle={styles.sliderFeedback}>
             {fulfillmentScore <= 3 && '🤔 Tomorrow is a fresh start'}
             {fulfillmentScore > 3 && fulfillmentScore <= 6 && '💭 Steady progress'}
             {fulfillmentScore > 6 && '✨ Great momentum!'}
-          </RNText>
+          </Text>
         </View>
 
         {/* Custom Questions (AC #10) */}
         {customQuestions.length > 0 && (
           <View style={styles.customQuestionsSection}>
             <View style={styles.customQuestionsHeader}>
-              <RNText style={styles.customQuestionsSectionTitle}>Your Custom Questions</RNText>
+              <Textstyle={styles.customQuestionsSectionTitle}>Your Custom Questions</Text>
               <TouchableOpacity onPress={() => setShowManageQuestionsModal(true)}>
-                <RNText style={styles.manageQuestionsLink}>Manage</RNText>
+                <Textstyle={styles.manageQuestionsLink}>Manage</Text>
               </TouchableOpacity>
             </View>
             {customQuestions.map((question) => (
@@ -395,7 +395,7 @@ export default function ReflectionScreen() {
             style={styles.addCustomQuestionsButton}
             onPress={() => setShowManageQuestionsModal(true)}
           >
-            <RNText style={styles.addCustomQuestionsText}>+ Add custom tracking questions</RNText>
+            <Textstyle={styles.addCustomQuestionsText}>+ Add custom tracking questions</Text>
           </TouchableOpacity>
         )}
         {customQuestions.length > 0 && customQuestions.length < 5 && (
@@ -403,7 +403,7 @@ export default function ReflectionScreen() {
             style={styles.addMoreQuestionsButton}
             onPress={() => setShowManageQuestionsModal(true)}
           >
-            <RNText style={styles.addMoreQuestionsText}>+ Add more questions</RNText>
+            <Textstyle={styles.addMoreQuestionsText}>+ Add more questions</Text>
           </TouchableOpacity>
         )}
 
@@ -416,15 +416,15 @@ export default function ReflectionScreen() {
           {isLoading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <RNText style={styles.submitButtonText}>
+            <Textstyle={styles.submitButtonText}>
               {isEditMode ? 'Update Reflection' : 'Submit'}
-            </RNText>
+            </Text>
           )}
         </TouchableOpacity>
         {isLoading && (
-          <RNText style={styles.loadingText}>
+          <Textstyle={styles.loadingText}>
             {isEditMode ? 'Updating your reflection...' : 'Submitting your reflection...'}
-          </RNText>
+          </Text>
         )}
 
         {/* Manage Questions Modal */}

@@ -470,13 +470,13 @@ export default function IdentityBootupScreen() {
         }}
       >
         Let's get to know you
-      </RNText>
+      </Text>
 
       {/* Input Field */}
       <View style={{ marginBottom: 24 }}>
-        <RNText style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
+        <Textstyle={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
           What should we call you?
-        </RNText>
+        </Text>
         <TextInput
           ref={nameInputRef}
           value={formData.preferred_name}
@@ -499,7 +499,7 @@ export default function IdentityBootupScreen() {
           onSubmitEditing={handleStep1Continue}
         />
         {nameError && (
-          <RNText style={{ color: '#EF4444', fontSize: 14, marginTop: 8 }}>{nameError}</RNText>
+          <Textstyle={{ color: '#EF4444', fontSize: 14, marginTop: 8 }}>{nameError}</Text>
         )}
       </View>
 
@@ -521,7 +521,7 @@ export default function IdentityBootupScreen() {
         accessibilityHint="Proceeds to step 2 where you'll choose your Weave's interaction style"
         accessibilityState={{ disabled: !nameValidation.valid }}
       >
-        <RNText style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</RNText>
+        <Textstyle={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
       </TouchableOpacity>
 
       {/* Back Button */}
@@ -537,7 +537,7 @@ export default function IdentityBootupScreen() {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to the previous step"
         >
-          <RNText style={{ color: '#666', fontSize: 16 }}>Back</RNText>
+          <Textstyle={{ color: '#666', fontSize: 16 }}>Back</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -569,7 +569,7 @@ export default function IdentityBootupScreen() {
             }}
           >
             I'm your Weave, your future self that we create together. How should I engage with you?
-          </RNText>
+          </Text>
           <Text
             style={{
               fontSize: 16,
@@ -581,7 +581,7 @@ export default function IdentityBootupScreen() {
           >
             You can change this anytime. This sets my core personality — and I'll adapt as I
             understand you better.
-          </RNText>
+          </Text>
         </View>
 
         {/* Swipeable Persona Cards */}
@@ -645,7 +645,7 @@ export default function IdentityBootupScreen() {
                         transform: [{ scale: iconPulseAnim }],
                       }}
                     >
-                      <RNText style={{ fontSize: 24 }}>🧵</RNText>
+                      <Textstyle={{ fontSize: 24 }}>🧵</Text>
                     </Animated.View>
 
                     {/* Title */}
@@ -659,7 +659,7 @@ export default function IdentityBootupScreen() {
                       }}
                     >
                       {persona.title}
-                    </RNText>
+                    </Text>
 
                     {/* Subtitle */}
                     <Text
@@ -672,7 +672,7 @@ export default function IdentityBootupScreen() {
                       }}
                     >
                       {persona.subtitle}
-                    </RNText>
+                    </Text>
 
                     {/* Example Lines */}
                     <View style={{ marginTop: 16 }}>
@@ -694,7 +694,7 @@ export default function IdentityBootupScreen() {
                             }}
                           >
                             {line}
-                          </RNText>
+                          </Text>
                         </View>
                       ))}
                     </View>
@@ -747,7 +747,7 @@ export default function IdentityBootupScreen() {
           accessibilityHint="Proceeds to step 3 where you'll choose traits you want to develop"
           accessibilityState={{ disabled: !canContinueStep2 }}
         >
-          <RNText style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</RNText>
+          <Textstyle={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
         </TouchableOpacity>
 
         {/* Back Button */}
@@ -762,7 +762,7 @@ export default function IdentityBootupScreen() {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to name entry"
         >
-          <RNText style={{ color: '#666', fontSize: 16 }}>Back</RNText>
+          <Textstyle={{ color: '#666', fontSize: 16 }}>Back</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -788,7 +788,7 @@ export default function IdentityBootupScreen() {
             }}
           >
             Who do we want to become?
-          </RNText>
+          </Text>
           <Text
             style={{
               fontSize: 16,
@@ -798,7 +798,7 @@ export default function IdentityBootupScreen() {
             }}
           >
             Choose the 3 most important qualities you want to embody.
-          </RNText>
+          </Text>
         </View>
 
         {/* Trait Chips */}
@@ -853,7 +853,7 @@ export default function IdentityBootupScreen() {
                       }}
                     >
                       {trait}
-                    </RNText>
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
@@ -864,7 +864,7 @@ export default function IdentityBootupScreen() {
         {/* Max Traits Error */}
         {maxTraitsError && (
           <View style={{ marginBottom: 16, alignItems: 'center' }}>
-            <RNText style={{ color: '#EF4444', fontSize: 14 }}>{maxTraitsError}</RNText>
+            <Textstyle={{ color: '#EF4444', fontSize: 14 }}>{maxTraitsError}</Text>
           </View>
         )}
 
@@ -878,7 +878,7 @@ export default function IdentityBootupScreen() {
             }}
           >
             {formData.identity_traits.length} of {REQUIRED_TRAITS} selected
-          </RNText>
+          </Text>
         </View>
 
         {/* Continue Button */}
@@ -903,9 +903,9 @@ export default function IdentityBootupScreen() {
           {isSubmitting && (
             <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
           )}
-          <RNText style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
+          <Textstyle={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>
             {isSubmitting ? 'Saving...' : 'Continue'}
-          </RNText>
+          </Text>
         </TouchableOpacity>
 
         {/* Back Button */}
@@ -920,7 +920,7 @@ export default function IdentityBootupScreen() {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to personality selection"
         >
-          <RNText style={{ color: '#666', fontSize: 16 }}>Back</RNText>
+          <Textstyle={{ color: '#666', fontSize: 16 }}>Back</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

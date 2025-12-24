@@ -344,20 +344,20 @@ export default function FirstNeedleScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.introContainer}>
         {/* Title */}
-        <RNText style={styles.introTitle}>Give your actions direction.</RNText>
+        <Textstyle={styles.introTitle}>Give your actions direction.</Text>
 
         {/* Body Text */}
         <View style={styles.introBody}>
-          <RNText style={styles.introBodyText}>
+          <Textstyle={styles.introBodyText}>
             The Binds you complete each day connect to your Needles — the long-term goals you're
             working toward.
-          </RNText>
-          <RNText style={[styles.introBodyText, { marginTop: 20 }]}>
+          </Text>
+          <Textstyle={[styles.introBodyText, { marginTop: 20 }]}>
             Let's create your first one.
-          </RNText>
-          <RNText style={[styles.introBodyText, { marginTop: 20, fontStyle: 'italic' }]}>
+          </Text>
+          <Textstyle={[styles.introBodyText, { marginTop: 20, fontStyle: 'italic' }]}>
             You can change or refine this anytime.
-          </RNText>
+          </Text>
         </View>
 
         {/* CTA Button */}
@@ -367,7 +367,7 @@ export default function FirstNeedleScreen() {
           accessibilityRole="button"
           accessibilityLabel="Create my first Needle"
         >
-          <RNText style={styles.introContinueButtonText}>Create my first Needle →</RNText>
+          <Textstyle={styles.introContinueButtonText}>Create my first Needle →</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -385,10 +385,10 @@ export default function FirstNeedleScreen() {
       >
         {/* Title and Subtext (AC #1) */}
         <View style={styles.header}>
-          <RNText style={styles.title}>What do you want to work on first?</RNText>
-          <RNText style={styles.subtext}>
+          <Textstyle={styles.title}>What do you want to work on first?</Text>
+          <Textstyle={styles.subtext}>
             This doesn't have to be perfect — it's just a starting point.
-          </RNText>
+          </Text>
         </View>
 
         {/* 10 Suggested Goal Options (AC #2-#5) */}
@@ -414,7 +414,7 @@ export default function FirstNeedleScreen() {
               accessibilityLabel="Type your own goal"
               accessibilityHint="Opens custom goal input field"
             >
-              <RNText style={styles.customGoalLink}>Can't find yours? Type your own goal.</RNText>
+              <Textstyle={styles.customGoalLink}>Can't find yours? Type your own goal.</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.customInputContainer}>
@@ -430,9 +430,9 @@ export default function FirstNeedleScreen() {
                 multiline
                 numberOfLines={2}
               />
-              <RNText style={styles.charCounter}>
+              <Textstyle={styles.charCounter}>
                 {customGoal.length}/{MAX_CUSTOM_GOAL_LENGTH} characters
-              </RNText>
+              </Text>
             </View>
           )}
         </View>
@@ -440,7 +440,7 @@ export default function FirstNeedleScreen() {
         {/* Optional Customization Step (AC #8-#9) - Inline */}
         {isContinueEnabled && !showCustomization && (
           <View style={styles.customizationPrompt}>
-            <RNText style={styles.customizationLabel}>Want to make this more specific?</RNText>
+            <Textstyle={styles.customizationLabel}>Want to make this more specific?</Text>
             <TextInput
               value={customizationText}
               onChangeText={handleCustomizationChange}
@@ -451,9 +451,9 @@ export default function FirstNeedleScreen() {
               accessibilityLabel="Goal customization input"
               accessibilityHint="Optional: Add specific details, max 30 characters"
             />
-            <RNText style={styles.charCounter}>
+            <Textstyle={styles.charCounter}>
               {customizationText.length}/{MAX_CUSTOMIZATION_LENGTH} characters
-            </RNText>
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -475,7 +475,7 @@ export default function FirstNeedleScreen() {
             ]}
           >
             Continue
-          </RNText>
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -499,13 +499,13 @@ export default function FirstNeedleScreen() {
             accessibilityRole="button"
             accessibilityLabel="Go back to goal selection"
           >
-            <RNText style={styles.backButtonText}>← Back</RNText>
+            <Textstyle={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
 
           {/* Confirmation Content */}
           <View style={styles.confirmationContent}>
-            <RNText style={styles.confirmationMessage}>Ready to commit to this Needle?</RNText>
-            <RNText style={styles.confirmationGoalText}>{displayText}</RNText>
+            <Textstyle={styles.confirmationMessage}>Ready to commit to this Needle?</Text>
+            <Textstyle={styles.confirmationGoalText}>{displayText}</Text>
           </View>
 
           {/* Confirm Button */}
@@ -515,7 +515,7 @@ export default function FirstNeedleScreen() {
             accessibilityRole="button"
             accessibilityLabel="Confirm your first Needle"
           >
-            <RNText style={styles.confirmButtonText}>This will be my first Needle</RNText>
+            <Textstyle={styles.confirmButtonText}>This will be my first Needle</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
