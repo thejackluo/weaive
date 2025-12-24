@@ -149,11 +149,13 @@ class PersonalityService:
         """
         Load Dream Self personality from identity_docs table.
 
+        Returns default identity doc if none exists (graceful fallback).
+
         Args:
             user_id: User ID
 
         Returns:
-            Dream Self personality dict or None if not found
+            Dream Self personality dict or None if error
         """
         try:
             # Get latest version of identity doc (uses versioning, not type column)
@@ -166,37 +168,128 @@ class PersonalityService:
                 .execute()
             )
 
+            # ✅ FIX: Return default identity doc if none exists
             if not response.data:
-                return None
+                logger.info(f"[PERSONALITY] ℹ️ No identity document found for user {user_id}, using default")
+                content = self._get_default_identity_document()
+            else:
+                doc = response.data[0]
+                # Identity doc is stored in 'json' JSONB column
+                content = doc.get("json", {})
+                logger.info(f"[PERSONALITY] ✅ Loaded identity document v{doc.get('version')}")
 
-            doc = response.data[0]
-            # Identity doc is stored in 'json' JSONB column
-            content = doc.get("json", {})
-
-            # Extract Dream Self details
-            dream_self_name = content.get("dream_self_name", "Your Dream Self")
-            traits = content.get("personality_traits", ["supportive", "growth-focused"])
-            speaking_style = content.get("speaking_style", "Personalized and data-driven")
+            # ✅ FIX: Use correct field names (match modify_identity_document_tool schema)
+            dream_self_name = content.get("dream_self", "Your Best Self")
+            traits = content.get("traits", ["growth-oriented", "consistent"])
+            motivations = content.get("motivations", ["Achieve my goals"])
+            archetype = content.get("archetype", "The Builder")
+            failure_mode = content.get("failure_mode", "Inconsistency")
+            coaching_preference = content.get("coaching_preference", "Direct but encouraging")
 
             # Build custom system prompt for Dream Self
             system_prompt = (
-                f"You are {dream_self_name}, the user's personalized AI coach representing their ideal self. "
-                f"Your personality traits: {', '.join(traits)}. "
-                f"Speaking style: {speaking_style}. "
-                f"Help the user achieve their goals with personalized, actionable guidance based on their actual data and progress."
+                f"You are {dream_self_name}, the user's personalized AI coach representing their ideal self.\n\n"
+                f"**IDENTITY:**\n"
+                f"- Archetype: {archetype}\n"
+                f"- Core Traits: {', '.join(traits)}\n"
+                f"- Motivations: {', '.join(motivations)}\n"
+                f"- Failure Mode: {failure_mode}\n"
+                f"- Coaching Preference: {coaching_preference}\n\n"
+                f"**YOUR ROLE:**\n"
+                f"Help the user achieve their goals with personalized, actionable guidance based on their actual data and progress. "
+                f"Speak in a style that matches their coaching preference. "
+                f"Be aware of their failure mode and help them avoid it. "
+                f"Reference their motivations when encouraging them.\n\n"
+                f"**GUIDELINES:**\n"
+                f"- Always reference specific user data (completions, goals, patterns)\n"
+                f"- Match the coaching preference style\n"
+                f"- Keep responses under 80 words\n"
+                f"- No markdown formatting"
             )
 
             return {
                 "personality_type": "dream_self",
                 "name": dream_self_name,
                 "traits": traits,
-                "speaking_style": speaking_style,
+                "speaking_style": coaching_preference,
                 "system_prompt": system_prompt,
+                "archetype": archetype,
+                "motivations": motivations,
+                "failure_mode": failure_mode,
             }
 
         except Exception as e:
             logger.error(f"Error loading Dream Self for user {user_id}: {e}")
-            return None
+            # ✅ Return default instead of None
+            logger.info(f"[PERSONALITY] ⚠️ Falling back to default identity document")
+            return self._build_dream_self_from_content(self._get_default_identity_document())
+
+    def _get_default_identity_document(self) -> Dict:
+        """
+        Get default identity document for users without one.
+
+        This allows Dream Self personality to work out of the box
+        with generic but helpful defaults until user customizes.
+
+        Returns:
+            Default identity document structure
+        """
+        return {
+            "dream_self": "Your Best Self",
+            "traits": ["growth-oriented", "consistent", "self-aware"],
+            "motivations": ["Build better habits", "Achieve my goals", "Become my ideal self"],
+            "archetype": "The Builder",
+            "failure_mode": "Inconsistency and distraction",
+            "coaching_preference": "Direct but encouraging feedback"
+        }
+
+    def _build_dream_self_from_content(self, content: Dict) -> Dict:
+        """
+        Build Dream Self personality dict from identity document content.
+
+        Args:
+            content: Identity document JSON content
+
+        Returns:
+            Dream Self personality dict
+        """
+        dream_self_name = content.get("dream_self", "Your Best Self")
+        traits = content.get("traits", ["growth-oriented"])
+        motivations = content.get("motivations", ["Achieve my goals"])
+        archetype = content.get("archetype", "The Builder")
+        failure_mode = content.get("failure_mode", "Inconsistency")
+        coaching_preference = content.get("coaching_preference", "Direct but encouraging")
+
+        system_prompt = (
+            f"You are {dream_self_name}, the user's personalized AI coach representing their ideal self.\n\n"
+            f"**IDENTITY:**\n"
+            f"- Archetype: {archetype}\n"
+            f"- Core Traits: {', '.join(traits)}\n"
+            f"- Motivations: {', '.join(motivations)}\n"
+            f"- Failure Mode: {failure_mode}\n"
+            f"- Coaching Preference: {coaching_preference}\n\n"
+            f"**YOUR ROLE:**\n"
+            f"Help the user achieve their goals with personalized, actionable guidance based on their actual data and progress. "
+            f"Speak in a style that matches their coaching preference. "
+            f"Be aware of their failure mode and help them avoid it. "
+            f"Reference their motivations when encouraging them.\n\n"
+            f"**GUIDELINES:**\n"
+            f"- Always reference specific user data (completions, goals, patterns)\n"
+            f"- Match the coaching preference style\n"
+            f"- Keep responses under 80 words\n"
+            f"- No markdown formatting"
+        )
+
+        return {
+            "personality_type": "dream_self",
+            "name": dream_self_name,
+            "traits": traits,
+            "speaking_style": coaching_preference,
+            "system_prompt": system_prompt,
+            "archetype": archetype,
+            "motivations": motivations,
+            "failure_mode": failure_mode,
+        }
 
     async def switch_personality(
         self,
