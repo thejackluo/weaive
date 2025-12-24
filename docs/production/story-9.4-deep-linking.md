@@ -348,6 +348,74 @@ Before App Store submission:
 
 ---
 
+## ⚠️ CRITICAL: AASA File Deployment Warning
+
+**Status:** 🔴 **CRITICAL - Deep Linking Will NOT Work Until Fixed**
+
+### Problem
+
+The Apple App Site Association (AASA) file is currently in:
+```
+_bmad-output/implementation-artifacts/apple-app-site-association
+```
+
+This is **WRONG**. Deep linking will fail because Apple can't find the file.
+
+### Required Actions
+
+#### 1. Replace TEAM_ID Placeholder
+- Open `apple-app-site-association` file
+- Replace `"TEAM_ID"` with your actual Apple Team ID
+- Find it at: https://developer.apple.com/account/#!/membership
+
+#### 2. Host at Correct URL
+
+AASA file MUST be accessible at:
+```
+https://weavelight.app/.well-known/apple-app-site-association
+```
+
+**Requirements:**
+- ✅ HTTPS only (no HTTP)
+- ✅ Valid SSL certificate
+- ✅ Content-Type: `application/json` (no .json extension in filename)
+- ✅ Publicly accessible (no auth)
+- ✅ Returns 200 status code
+
+#### 3. Validate Deployment
+
+Use Apple's AASA Validator:
+- URL: https://search.developer.apple.com/appsearch-validation-tool/
+- Enter: `weavelight.app`
+- Expected: ✅ Valid AASA file found
+
+#### 4. Test Deep Links
+
+From Notes/Messages, test these links:
+```
+https://weavelight.app/goals
+https://weavelight.app/binds/[id]
+https://weavelight.app/ai-chat
+```
+
+**Expected:** Opens in Weave app, not Safari
+
+**Fallback (if HTTPS fails):**
+```
+weavelight://goals
+```
+
+### Current Impact
+
+❌ **All Universal Links broken**
+❌ **AC 6 (Deep Linking) incomplete**
+❌ **Production deployment will fail App Review** if deep linking advertised
+
+**Reference:** MEDIUM ISSUE #8 from Story 9.4 code review (2025-12-23)
+**Fix in:** Story 9.5 (Production Security & Deployment)
+
+---
+
 ## Resources
 
 - [Expo Universal Links Guide](https://docs.expo.dev/guides/linking/)
