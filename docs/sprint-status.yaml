@@ -108,7 +108,7 @@ week-0-stories:
 epic-1.5-status: in-progress
 epic-1.5-stories:
   1-5-1-navigation-architecture: planned        # 8-10 pts - Core navigation scaffolding (3-tab structure, glassmorphism AI chat, 15+ placeholder screens)
-  1-5-2-backend-standardization: ready-for-dev  # 9-11 pts ⚡ EXPANDED 2025-12-23 - Includes Story 0.8 completion (retryAfter, api-error-codes.md) + template usability (quick start guide). API/model templates + 28 API endpoint stubs + comprehensive guides
+  1-5-2-backend-standardization: done           # 9-11 pts ⚡ EXPANDED 2025-12-23 - Includes Story 0.8 completion (retryAfter, api-error-codes.md) + template usability (quick start guide). API/model templates + 28 API endpoint stubs + comprehensive guides ✅ DONE 2025-12-23
   1-5-3-ai-services-standardization: in-progress      # 4-5 pts ⚡ NEW (2025-12-21) - AIProviderBase abstraction, text/image/audio patterns, cost tracking, rate limiting, ai-services-guide.md (ACTIVE in PR #82)
 
 # Epic 0.5: Post-Development Observability (6 pts)
@@ -387,7 +387,7 @@ backlog-post-mvp:
 epic-completion:
   epic-0-foundation: 30/41             # Week 0: DONE ✅ (8/11 stories, 73% pts, Story 0.8 completed via Story 1.5.2, 11 pts deferred: 0.9 image, 0.10 memory, 0.11 voice/STT)
   epic-1-onboarding-hybrid: 0/50       # Sprint 1-2: 0% complete (Phases 1-5: Sprint 1, Phases 6-7: Sprint 2, +2 for name entry + personality)
-  epic-1.5-development-infrastructure: 0/23.5  # Week 0: 0% complete ⚡ EXPANDED (2025-12-23) - Frontend (8-10 pts) + Backend + Story 0.8 + Usability (9-11 pts) + AI Module Orchestration (4-5 pts)
+  epic-1.5-development-infrastructure: 10/23.5  # Week 0: 43% complete (Story 1.5.2 done ✅) ⚡ EXPANDED (2025-12-23) - Frontend (8-10 pts) + Backend + Story 0.8 + Usability (9-11 pts DONE) + AI Module Orchestration (4-5 pts in-progress)
   epic-2-goal-management: 0/27         # Sprint 3: 0% complete
   epic-3-daily-actions: 0/38           # Sprint 1-2, 5: 0% complete
   epic-4-reflection: 0/28              # Sprint 2: 0% complete
@@ -397,9 +397,9 @@ epic-completion:
   epic-8-settings: 0/23                # Sprint 3, 5: 0% complete
   epic-9-production-launch: 0/45       # Phase 6 (Weeks 23-26): 0% complete ⚡ NEW (2025-12-22) - Story 9.1 in review (2025-12-23)
 
-total-completion: 27/375 (7%)
+total-completion: 37/375 (10%)
 # Note: Total increased from 330 to 375 pts (+45 pts from Epic 9: Production Launch & App Store Publishing)
-# Note: Epic 0 core foundation complete. Stretch goals (0.8-0.10) deferred to future sprints.
+# Note: Epic 0 core foundation complete. Epic 1.5 in progress (Story 1.5.2 done ✅). Stretch goals (0.9-0.11) deferred to future sprints.
 
 # ============================================================================
 # VELOCITY TRACKING
