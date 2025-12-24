@@ -29,35 +29,29 @@ class AIChatConfig:
     # Rate Limits (FREE tier)
     # ========================================
 
-    FREE_PREMIUM_DAILY_LIMIT: int = int(
-        os.getenv('AI_FREE_PREMIUM_DAILY_LIMIT', '10')
-    )
+    FREE_PREMIUM_DAILY_LIMIT: int = int(os.getenv("AI_FREE_PREMIUM_DAILY_LIMIT", "10"))
     """Free tier: Claude Sonnet messages per day"""
 
-    FREE_FREE_DAILY_LIMIT: int = int(
-        os.getenv('AI_FREE_FREE_DAILY_LIMIT', '40')
-    )
+    FREE_FREE_DAILY_LIMIT: int = int(os.getenv("AI_FREE_FREE_DAILY_LIMIT", "40"))
     """Free tier: Claude Haiku / GPT-4o-mini messages per day"""
 
-    FREE_MONTHLY_LIMIT: int = int(
-        os.getenv('AI_FREE_MONTHLY_LIMIT', '500')
-    )
+    FREE_MONTHLY_LIMIT: int = int(os.getenv("AI_FREE_MONTHLY_LIMIT", "500"))
     """Free tier: Total AI messages per month"""
 
     # ========================================
     # Rate Limits (PRO tier)
     # ========================================
 
-    PRO_MONTHLY_LIMIT: int = int(
-        os.getenv('AI_PRO_MONTHLY_LIMIT', '5000')
-    )
+    PRO_MONTHLY_LIMIT: int = int(os.getenv("AI_PRO_MONTHLY_LIMIT", "5000"))
     """Pro tier: Total AI messages per month (5-10x free tier)"""
 
     # ========================================
     # Admin Bypass
     # ========================================
 
-    ADMIN_API_KEY: Optional[str] = os.getenv('AI_ADMIN_KEY', 'dev-admin-key-12345-change-in-production')
+    ADMIN_API_KEY: Optional[str] = os.getenv(
+        "AI_ADMIN_KEY", "dev-admin-key-12345-change-in-production"
+    )
     # ✅ FIX: Fallback to hardcoded dev key if .env not loaded
     """
     Admin API key for bypassing all rate limits.
@@ -73,26 +67,20 @@ class AIChatConfig:
     # Check-In Scheduler
     # ========================================
 
-    CHECK_IN_ENABLED: bool = os.getenv('AI_CHECK_IN_ENABLED', 'true').lower() == 'true'
+    CHECK_IN_ENABLED: bool = os.getenv("AI_CHECK_IN_ENABLED", "true").lower() == "true"
     """Global toggle for server-initiated check-ins (default: true)"""
 
-    CHECK_IN_INTERVAL_MINUTES: int = int(
-        os.getenv('AI_CHECK_IN_INTERVAL_MINUTES', '5')
-    )
+    CHECK_IN_INTERVAL_MINUTES: int = int(os.getenv("AI_CHECK_IN_INTERVAL_MINUTES", "5"))
     """APScheduler cron interval in minutes (default: 5)"""
 
     # ========================================
     # Streaming Configuration
     # ========================================
 
-    STREAMING_TIMEOUT_SECONDS: int = int(
-        os.getenv('AI_STREAMING_TIMEOUT_SECONDS', '60')
-    )
+    STREAMING_TIMEOUT_SECONDS: int = int(os.getenv("AI_STREAMING_TIMEOUT_SECONDS", "60"))
     """SSE streaming timeout for AI responses (default: 60s)"""
 
-    STREAMING_CHUNK_SIZE: int = int(
-        os.getenv('AI_STREAMING_CHUNK_SIZE', '50')
-    )
+    STREAMING_CHUNK_SIZE: int = int(os.getenv("AI_STREAMING_CHUNK_SIZE", "50"))
     """Characters per SSE chunk for streaming (default: 50)"""
 
     # ========================================
@@ -134,9 +122,9 @@ class AIChatConfig:
         Returns:
             Monthly message limit (999999 for admin = unlimited)
         """
-        if subscription_tier == 'admin':
+        if subscription_tier == "admin":
             return 999999  # Effectively unlimited
-        elif subscription_tier == 'pro':
+        elif subscription_tier == "pro":
             return cls.PRO_MONTHLY_LIMIT
         else:  # free
             return cls.FREE_MONTHLY_LIMIT
@@ -144,7 +132,7 @@ class AIChatConfig:
     @classmethod
     def get_tier_daily_premium_limit(cls, subscription_tier: str) -> int:
         """Get daily premium model limit for a subscription tier."""
-        if subscription_tier in ['admin', 'pro']:
+        if subscription_tier in ["admin", "pro"]:
             return 999999  # Effectively unlimited
         else:  # free
             return cls.FREE_PREMIUM_DAILY_LIMIT
@@ -152,7 +140,7 @@ class AIChatConfig:
     @classmethod
     def get_tier_daily_free_limit(cls, subscription_tier: str) -> int:
         """Get daily free model limit for a subscription tier."""
-        if subscription_tier in ['admin', 'pro']:
+        if subscription_tier in ["admin", "pro"]:
             return 999999  # Effectively unlimited
         else:  # free
             return cls.FREE_FREE_DAILY_LIMIT

@@ -26,8 +26,12 @@
               "weavelight"
             ]
           }
+        ],
+        "UIBackgroundModes": [
+          "remote-notification"
         ]
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.weavelight.app",
@@ -60,6 +64,15 @@
     "plugins": [
       "expo-router",
       "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#3B82F6",
+          "sounds": [],
+          "mode": "production"
+        }
+      ],
       [
         "@sentry/react-native/expo",
         {

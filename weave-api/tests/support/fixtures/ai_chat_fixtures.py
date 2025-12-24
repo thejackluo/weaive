@@ -3,6 +3,7 @@ AI Chat Test Fixtures - Story 6.1
 Provides setup/teardown with auto-cleanup for tests
 Follows fixture-architecture.md patterns
 """
+
 from typing import Any, AsyncGenerator, Dict
 
 import pytest

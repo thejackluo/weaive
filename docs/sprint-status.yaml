@@ -354,7 +354,7 @@ phase-6-stories:
   9-5-production-security-hardening: backlog    # 5 pts - Rate limiting, OWASP scan, penetration testing
   # Week 24: Compliance & Monetization (16 pts)
   9-3-app-store-compliance: backlog             # 8 pts - Privacy policy, ToS, App Store metadata, screenshots
-  9-4-subscription-management-iap: backlog      # 8 pts - RevenueCat, Apple IAP, subscription tiers
+  9-4-subscription-management-iap: in-progress  # 8 pts - RevenueCat, Apple IAP, subscription tiers
   # Week 25: Testing & Submission (11 pts)
   9-6-testflight-beta-testing: backlog          # 3 pts - EAS build, TestFlight upload, beta testing (10-20 users)
   9-8-app-store-submission: backlog             # 8 pts - Demo account, submission, App Review response
