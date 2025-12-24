@@ -47,6 +47,8 @@ import type {
   CreateGoalRequest,
   UpdateGoalRequest,
 } from '@/types/goals';
+import { consistencyQueryKeys } from './useConsistencyData';
+import { bindsQueryKeys } from './useTodayBinds';
 
 /**
  * Query key factory for goals
@@ -151,6 +153,15 @@ export function useCreateGoal() {
     onSuccess: () => {
       // Invalidate active goals query to refetch the list
       queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
+
+      // Invalidate Thread page (today's binds) - shows new goal's binds
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
+
+      // Invalidate Consistency page - includes new goal in consistency calculation
+      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
+
+      // Also invalidate binds grid (7d view)
+      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
     },
   });
 }
@@ -189,6 +200,15 @@ export function useUpdateGoal() {
       // Invalidate both the list and the specific goal query
       queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
       queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) });
+
+      // Invalidate Thread page (today's binds) - reflects updated binds
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
+
+      // Invalidate Consistency page - recalculates with updated data
+      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
+
+      // Also invalidate binds grid (7d view)
+      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
     },
   });
 }
@@ -221,10 +241,18 @@ export function useArchiveGoal() {
       return archiveGoal(goalId, session.access_token);
     },
     onSuccess: async (data, goalId) => {
-      // Refetch both the list and the specific goal query
-      // Using refetchQueries ensures the data is fresh before the mutation completes
+      // Refetch goals list and invalidate the specific goal
       await queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() });
       queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(goalId) });
+
+      // Invalidate Thread page (today's binds) - removes archived goal's binds
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
+
+      // Invalidate Consistency page - recalculates without archived goal's completions
+      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
+
+      // Also invalidate binds grid (7d view)
+      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
     },
   });
 }

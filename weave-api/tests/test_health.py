@@ -35,18 +35,36 @@ def test_health_endpoint():
 
 def test_health_endpoint_database_failure():
     """Test health endpoint returns 503 when database connection fails."""
-    with patch("app.core.deps.get_supabase_client") as mock_supabase:
-        # Mock database connection failure
-        mock_client = MagicMock()
-        mock_client.table().select().limit().execute.side_effect = Exception("Connection refused")
-        mock_supabase.return_value = mock_client
+    from app.core.deps import get_supabase_client
 
+    # Create mock client that throws exception
+    def mock_get_failing_supabase():
+        mock_client = MagicMock()
+        mock_table = MagicMock()
+        mock_select = MagicMock()
+        mock_limit = MagicMock()
+
+        # Chain the mocks properly
+        mock_client.table.return_value = mock_table
+        mock_table.select.return_value = mock_select
+        mock_select.limit.return_value = mock_limit
+        mock_limit.execute.side_effect = Exception("Connection refused")
+
+        return mock_client
+
+    # Override dependency at app level
+    app.dependency_overrides[get_supabase_client] = mock_get_failing_supabase
+
+    try:
         response = client.get("/health")
         assert response.status_code == 503
         data = response.json()
 
         assert data["status"] == "unhealthy"
         assert "database" in data["error"].lower()
+    finally:
+        # Clean up dependency override
+        app.dependency_overrides.clear()
 
 
 def test_root_endpoint():

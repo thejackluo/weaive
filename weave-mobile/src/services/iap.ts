@@ -78,21 +78,25 @@ export async function disconnectIAP(): Promise<void> {
  */
 export async function fetchProducts(productIds: ProductId[]): Promise<Product[]> {
   try {
-    const { results, responseCode } = await InAppPurchases.getProductsAsync(productIds);
+    const response = await InAppPurchases.getProductsAsync(productIds);
 
-    if (responseCode !== InAppPurchases.IAPResponseCode.OK) {
-      throw new Error(`Failed to fetch products: ${responseCode}`);
+    if (response.responseCode !== InAppPurchases.IAPResponseCode.OK) {
+      throw new Error(`Failed to fetch products: ${response.responseCode}`);
+    }
+
+    if (!response.results) {
+      throw new Error('No products returned');
     }
 
     // Transform to our Product type
-    return results.map((product) => ({
+    return response.results.map((product: InAppPurchases.IAPItemDetails) => ({
       productId: product.productId,
       title: product.title,
       description: product.description,
       price: product.price,
       priceAmountMicros: product.priceAmountMicros,
       priceCurrencyCode: product.priceCurrencyCode,
-      type: product.type as 'subscription' | 'consumable' | 'non-consumable',
+      type: product.type as unknown as 'subscription' | 'consumable' | 'non-consumable',
     }));
   } catch (error) {
     console.error('❌ Failed to fetch products:', error);
@@ -106,18 +110,20 @@ export async function fetchProducts(productIds: ProductId[]): Promise<Product[]>
  */
 export async function purchaseProduct(productId: ProductId): Promise<PurchaseResult> {
   try {
-    const { responseCode, results } = await InAppPurchases.purchaseItemAsync(productId);
+    const response = (await InAppPurchases.purchaseItemAsync(
+      productId
+    )) as unknown as InAppPurchases.IAPQueryResponse<InAppPurchases.InAppPurchase>;
 
-    if (responseCode !== InAppPurchases.IAPResponseCode.OK) {
+    if (!response || response.responseCode !== InAppPurchases.IAPResponseCode.OK) {
       // User cancelled or error occurred
       return {
         success: false,
-        error: `Purchase failed: ${responseCode}`,
+        error: `Purchase failed: ${response?.responseCode || 'Unknown error'}`,
       };
     }
 
     // Purchase successful - extract receipt
-    const purchase = results?.[0];
+    const purchase = response.results?.[0];
     if (!purchase) {
       return {
         success: false,
@@ -157,7 +163,7 @@ export async function restorePurchases(): Promise<PurchaseResult> {
 
     // Find most recent active subscription
     const activeSubscription = results?.find(
-      (purchase) =>
+      (purchase: InAppPurchases.InAppPurchase) =>
         purchase.acknowledged &&
         [PRODUCT_IDS.MONTHLY, PRODUCT_IDS.ANNUAL, PRODUCT_IDS.TRIAL].includes(
           purchase.productId as ProductId
@@ -204,12 +210,16 @@ export async function finishTransaction(purchase: InAppPurchases.InAppPurchase):
  * Listens for purchase updates (success, failure, restore)
  */
 export function setPurchaseListener(
-  listener: (event: InAppPurchases.InAppPurchase) => void
-): () => void {
-  const subscription = InAppPurchases.setPurchaseListener(listener);
+  listener: (result: InAppPurchases.IAPQueryResponse<InAppPurchases.InAppPurchase>) => void
+): (() => void) | undefined {
+  const subscription = InAppPurchases.setPurchaseListener(listener) as any;
 
-  // Return cleanup function
-  return () => subscription.remove();
+  // Return cleanup function if subscription exists
+  if (subscription && typeof subscription.remove === 'function') {
+    return () => subscription.remove();
+  }
+
+  return undefined;
 }
 
 /**

@@ -47,7 +47,7 @@ interface ConsistencyHeatmapProps {
   filterId?: string;
   onFilterChange?: (filter: 'overall' | 'needle' | 'bind' | 'thread') => void;
   onTimeframeChange?: (timeframe: '7d' | '2w' | '1m') => void;
-  trendPercentage?: number;
+  onNeedleChange?: (needleId: string) => void; // Callback when needle selection changes
 }
 
 interface BindCompletionData {
@@ -74,15 +74,39 @@ export function ConsistencyHeatmap({
   filterId,
   onFilterChange,
   onTimeframeChange,
-  trendPercentage: _trendPercentageProp,
+  onNeedleChange,
 }: ConsistencyHeatmapProps) {
   const { colors } = useTheme();
-  const { data, isLoading, isError, error } = useConsistencyData(timeframe, filterType, filterId);
+
+  // State for date navigation (7d view)
+  const [currentStartDate, setCurrentStartDate] = useState<string | undefined>(undefined);
+
+  const { data, isLoading, isError, error } = useConsistencyData(
+    timeframe,
+    filterType,
+    filterId,
+    currentStartDate
+  );
+
+  // Debug: Log consistency data
+  console.log('[CONSISTENCY_HEATMAP] API Response:', {
+    isLoading,
+    isError,
+    percentage: data?.meta?.consistency_percentage,
+    delta: data?.meta?.consistency_delta,
+    totalScheduled: data?.meta?.total_scheduled,
+    totalCompleted: data?.meta?.total_completed,
+    dataLength: data?.data?.length,
+  });
+
+  // Use delta from API if available, otherwise use 0 as fallback
+  const actualTrendPercentage = data?.meta?.consistency_delta ?? 0;
+
   const {
     data: bindsGridData,
-    isLoading: isBindsGridLoading,
+    isPending: isBindsGridLoading,
     isError: isBindsGridError,
-  } = useBindsGrid();
+  } = useBindsGrid(currentStartDate);
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
 
   // Fetch journal entries for Thread consistency view (7d timeframe)
@@ -195,12 +219,42 @@ export function ConsistencyHeatmap({
     );
   }
 
-  const getColorForPercentage = (percentage: number) => {
-    if (percentage >= 80) return colors.emerald[500]; // Green - high
-    if (percentage >= 50) return colors.amber[500]; // Yellow - medium
-    return colors.rose[500]; // Red - low
+  /**
+   * Get color for completion percentage based on filter type
+   *
+   * Overall & Needle: Gradient of green shades (lighter → darker as percentage increases)
+   * Bind & Thread: Binary gray (incomplete) or dark green (complete)
+   */
+  const getColorForPercentage = (percentage: number, type: typeof filterType) => {
+    // Binary states for Bind and Thread (single metric: completed or not)
+    if (type === 'bind' || type === 'thread') {
+      return percentage > 0 ? colors.emerald[700] : colors.background.secondary; // Dark green or gray
+    }
+
+    // Gradient shades for Overall and Needle (multiple binds/metrics)
+    // Lighter green → Darker green as completion increases
+    if (percentage === 0) return colors.background.secondary; // Gray for no completion
+    if (percentage <= 20) return colors.emerald[200]; // Very light green
+    if (percentage <= 40) return colors.emerald[300]; // Light green
+    if (percentage <= 60) return colors.emerald[400]; // Medium green
+    if (percentage <= 80) return colors.emerald[500]; // Green
+    return colors.emerald[700]; // Dark green (80-100%)
   };
 
+  // Get real needles data from API (for all timeframes)
+  // For 7d: Use binds grid data with daily completions
+  // For 2w/1m: Use binds grid to get needle list (consistency data is filtered by API)
+  const needles: SampleNeedle[] = bindsGridData?.data.needles
+    ? bindsGridData.data.needles.map((needle) => ({
+        id: needle.id,
+        title: needle.title,
+        description: needle.description,
+        binds: needle.binds.map((bind) => ({
+          bindName: bind.name,
+          completions: bind.completions,
+        })),
+      }))
+    : [];
   // Process journal data for thread consistency view
   // Convert journal entries to completion boolean array for last 7 days
   const getJournalCompletionData = (): BindCompletionData[] => {
@@ -241,19 +295,6 @@ export function ConsistencyHeatmap({
       },
     ];
   };
-  // Get real needles data from API (for 7d view only)
-  const needles: SampleNeedle[] =
-    timeframe === '7d' && bindsGridData?.data.needles
-      ? bindsGridData.data.needles.map((needle) => ({
-          id: needle.id,
-          title: needle.title,
-          description: needle.description,
-          binds: needle.binds.map((bind) => ({
-            bindName: bind.name,
-            completions: bind.completions,
-          })),
-        }))
-      : [];
 
   // All binds combined (for bind and overall views)
   const allBinds: BindCompletionData[] = needles.flatMap((needle) => needle.binds);
@@ -296,42 +337,12 @@ export function ConsistencyHeatmap({
 
   const displayBinds = getDisplayBinds();
 
-  // Calculate consistency percentage from API data (all timeframes now use real data)
-  const calculateConsistencyPercentage = () => {
-    // Use API data for all timeframes (no more mock data calculations)
-    const totalDays = consistencyData.length;
-    const completedDays = consistencyData.filter((d) => d.completion_percentage >= 50).length;
-    return totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
-  };
+  // Use consistency percentage from API (rolling historical - excludes today)
+  // The backend already calculates this correctly, excluding today from the percentage
+  const consistencyPercentage = data?.meta?.consistency_percentage ?? 0;
 
-  const consistencyPercentage = calculateConsistencyPercentage();
-
-  // Calculate trend percentage (comparing first half vs second half)
-  const calculateTrendPercentage = (): number => {
-    if (consistencyData.length === 0) return 0;
-    if (consistencyData.length === 1) return 0; // Can't calculate trend with 1 point
-
-    const midpoint = Math.floor(consistencyData.length / 2);
-    const firstHalf = consistencyData.slice(0, midpoint);
-    const secondHalf = consistencyData.slice(midpoint);
-
-    if (firstHalf.length === 0 || secondHalf.length === 0) return 0;
-
-    // Count active days in each half
-    const firstActiveCount = firstHalf.filter((d) => d.completion_percentage >= 50).length;
-    const secondActiveCount = secondHalf.filter((d) => d.completion_percentage >= 50).length;
-
-    const firstPercentage = (firstActiveCount / firstHalf.length) * 100;
-    const secondPercentage = (secondActiveCount / secondHalf.length) * 100;
-
-    if (firstPercentage === 0) return Math.round(secondPercentage);
-
-    // Calculate percentage change
-    const percentChange = ((secondPercentage - firstPercentage) / firstPercentage) * 100;
-    return Math.round(percentChange);
-  };
-
-  const trendPercentage = calculateTrendPercentage();
+  // Trend percentage is already provided by the API in actualTrendPercentage
+  // (No need for local calculation)
 
   // Handler for opening day details modal
   const handleDayPress = (date: string, _completionRate: number) => {
@@ -420,7 +431,7 @@ export function ConsistencyHeatmap({
             styles.trendBadge,
             {
               backgroundColor:
-                trendPercentage >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                actualTrendPercentage >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
             },
           ]}
         >
@@ -428,11 +439,11 @@ export function ConsistencyHeatmap({
             variant="textSm"
             weight="semibold"
             style={{
-              color: trendPercentage >= 0 ? colors.emerald[500] : colors.rose[500],
+              color: actualTrendPercentage >= 0 ? colors.emerald[500] : colors.rose[500],
             }}
           >
-            {trendPercentage >= 0 ? '+' : ''}
-            {trendPercentage}%
+            {actualTrendPercentage >= 0 ? '+' : ''}
+            {actualTrendPercentage}%
           </Text>
         </View>
       </View>
@@ -447,6 +458,10 @@ export function ConsistencyHeatmap({
     if (index !== selectedNeedleIndex && index >= 0 && index < needles.length) {
       setSelectedNeedleIndex(index);
       Haptics.selectionAsync();
+      // Notify parent of needle change (for 2w/1m to re-fetch data)
+      if (onNeedleChange && needles[index]) {
+        onNeedleChange(needles[index].id);
+      }
     }
   };
 
@@ -512,6 +527,10 @@ export function ConsistencyHeatmap({
                           animated: true,
                         });
                         setSelectedNeedleIndex(index);
+                        // Notify parent of needle change (for 2w/1m to re-fetch data)
+                        if (onNeedleChange && needles[index]) {
+                          onNeedleChange(needles[index].id);
+                        }
                       }}
                     >
                       <View
@@ -653,19 +672,24 @@ export function ConsistencyHeatmap({
     </View>
   );
 
-  // Helper function to generate day headers for last 7 days
+  // Generate day headers from API's date range (starts from user's first instance)
   const getDayHeaders = (): DayHeader[] => {
-    const headers: DayHeader[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      headers.push({
-        dayOfWeek: d.toLocaleDateString('en-US', { weekday: 'short' }),
-        dayOfMonth: d.getDate(),
-        fullDate: d.toISOString().split('T')[0],
-      });
+    const dayHeaders: DayHeader[] = [];
+    if (bindsGridData?.meta?.start_date && bindsGridData?.meta?.end_date) {
+      const startDate = new Date(bindsGridData.meta.start_date);
+      const endDate = new Date(bindsGridData.meta.end_date);
+      let currentDate = new Date(startDate);
+
+      while (currentDate <= endDate) {
+        dayHeaders.push({
+          dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
+          dayOfMonth: currentDate.getDate(),
+          fullDate: currentDate.toISOString().split('T')[0],
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
     }
-    return headers;
+    return dayHeaders;
   };
 
   const dayHeaders = getDayHeaders();
@@ -728,45 +752,99 @@ export function ConsistencyHeatmap({
 
         {renderFilterTabs()}
 
-        {/* Day header row */}
+        {/* Day headers with navigation arrows */}
         <View style={styles.dayHeaderRow}>
-          <View style={styles.bindNameColumnHeader} />
-          {dayHeaders.map((day, index) => (
-            <View key={index} style={styles.dayCell}>
-              <Text variant="textXs" style={{ color: colors.text.muted }} weight="medium">
+          {/* Empty corner cell for bind names column */}
+          <View style={styles.bindNameColumn} />
+
+          {/* Left arrow */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              const currentDate = bindsGridData?.meta.start_date
+                ? new Date(bindsGridData.meta.start_date)
+                : new Date();
+              currentDate.setDate(currentDate.getDate() - 1);
+              setCurrentStartDate(currentDate.toISOString().split('T')[0]);
+            }}
+            style={styles.arrowButton}
+          >
+            <Ionicons name="chevron-back" size={16} color={colors.text.secondary} />
+          </Pressable>
+
+          {/* Day header cells */}
+          {dayHeaders.map((day: DayHeader) => (
+            <View key={day.fullDate} style={styles.dayHeaderCell}>
+              <Text variant="textXs" style={{ color: colors.text.muted }}>
                 {day.dayOfWeek}
               </Text>
-              <Text variant="textSm" weight="semibold">
+              <Text variant="textSm" weight="medium" style={{ marginTop: 2 }}>
                 {day.dayOfMonth}
               </Text>
             </View>
           ))}
+
+          {/* Right arrow */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              const currentDate = bindsGridData?.meta.start_date
+                ? new Date(bindsGridData.meta.start_date)
+                : new Date();
+              currentDate.setDate(currentDate.getDate() + 1);
+              setCurrentStartDate(currentDate.toISOString().split('T')[0]);
+            }}
+            style={styles.arrowButton}
+          >
+            <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+          </Pressable>
         </View>
 
         {/* Bind completion rows */}
         {displayBinds.map((bind, bindIndex) => (
           <View key={bindIndex} style={styles.bindRow}>
-            <View style={styles.bindNameCell}>
-              <Text variant="textSm" numberOfLines={2} style={{ color: colors.text.secondary }}>
+            {/* Bind name */}
+            <View style={styles.bindNameColumn}>
+              <Text variant="textXs" style={{ color: colors.text.secondary }} numberOfLines={2}>
                 {bind.bindName}
               </Text>
             </View>
-            {bind.completions.map((completed, dayIndex) => (
-              <View key={dayIndex} style={styles.dayCell}>
-                <View
-                  style={[
-                    styles.completionCircle,
-                    {
-                      backgroundColor: completed
-                        ? colors.emerald[500]
-                        : colors.background.secondary,
-                    },
-                  ]}
+
+            {/* Left arrow spacer */}
+            <View style={styles.arrowButton} />
+
+            {/* Completion cells */}
+            {bind.completions.map((completed, dayIndex) => {
+              const dayDate = dayHeaders[dayIndex].fullDate;
+              const completionRate = completed ? 100 : 0;
+              return (
+                <Pressable
+                  key={dayIndex}
+                  onPress={() => handleDayPress(dayDate, completionRate)}
+                  style={styles.dayHeaderCell}
                 >
-                  {completed && <Ionicons name="checkmark" size={20} color="white" />}
-                </View>
-              </View>
-            ))}
+                  <View
+                    style={[
+                      styles.completionSquare,
+                      {
+                        backgroundColor: completed
+                          ? colors.emerald[600]
+                          : colors.background.elevated,
+                        borderWidth: 1,
+                        borderColor: completed ? colors.emerald[700] : colors.border.muted,
+                      },
+                    ]}
+                  >
+                    {completed && (
+                      <Ionicons name="checkmark" size={16} color={colors.text.primary} />
+                    )}
+                  </View>
+                </Pressable>
+              );
+            })}
+
+            {/* Right arrow spacer */}
+            <View style={styles.arrowButton} />
           </View>
         ))}
 
@@ -783,6 +861,11 @@ export function ConsistencyHeatmap({
   }
 
   // 2w/1m/90d: Show heat map grid
+  // Calculate day-of-week headers and layout
+  const firstDate = consistencyData.length > 0 ? new Date(consistencyData[0].date) : new Date();
+  const startDayOfWeek = firstDate.getDay(); // 0 = Sunday, 6 = Saturday
+  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
   return (
     <Card variant="glass" style={styles.sevenDayCard}>
       {renderHeader()}
@@ -790,10 +873,34 @@ export function ConsistencyHeatmap({
       {/* Separator line */}
       <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
 
+      {/* Needle card (for needle view) */}
+      {filterType === 'needle' && _renderNeedleCard()}
+
+      {/* Bind selector (for bind view) */}
+      {filterType === 'bind' && _renderBindSelector()}
+
       {renderFilterTabs()}
+
+      {/* Day of week headers */}
+      <View style={styles.weekDayHeaderRow}>
+        {dayLabels.map((label, index) => (
+          <View key={index} style={styles.weekDayHeaderCell}>
+            <Text variant="textXs" weight="medium" style={{ color: colors.text.muted }}>
+              {label}
+            </Text>
+          </View>
+        ))}
+      </View>
+
       <View style={styles.heatmapContainer}>
+        {/* Add empty cells to align first date with correct day of week */}
+        {Array.from({ length: startDayOfWeek }).map((_, index) => (
+          <View key={`spacer-${index}`} style={styles.heatmapCell} />
+        ))}
+
+        {/* Render actual data cells */}
         {consistencyData.map((day) => {
-          const cellColor = getColorForPercentage(day.completion_percentage);
+          const cellColor = getColorForPercentage(day.completion_percentage, filterType);
           const dayOfMonth = new Date(day.date).getDate();
 
           return (
@@ -806,11 +913,18 @@ export function ConsistencyHeatmap({
                   styles.heatmapCell,
                   {
                     backgroundColor: cellColor,
-                    opacity: day.completion_percentage === 0 ? 0.2 : 0.8,
+                    opacity: 1, // Full opacity for all cells (color already conveys completion)
                   },
                 ]}
               >
-                <Text variant="textXs" weight="medium" style={{ color: 'white' }}>
+                <Text
+                  variant="textXs"
+                  weight="medium"
+                  style={{
+                    color:
+                      day.completion_percentage === 0 ? colors.text.muted : colors.text.primary,
+                  }}
+                >
                   {dayOfMonth}
                 </Text>
               </View>
@@ -821,24 +935,47 @@ export function ConsistencyHeatmap({
 
       {/* Legend */}
       <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: colors.emerald[500] }]} />
-          <Text variant="textXs" style={{ color: colors.text.muted }}>
-            80%+
-          </Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: colors.amber[500] }]} />
-          <Text variant="textXs" style={{ color: colors.text.muted }}>
-            50-79%
-          </Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: colors.rose[500] }]} />
-          <Text variant="textXs" style={{ color: colors.text.muted }}>
-            {'<'}50%
-          </Text>
-        </View>
+        {filterType === 'bind' || filterType === 'thread' ? (
+          // Binary legend for Bind and Thread
+          <>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: colors.emerald[700] }]} />
+              <Text variant="textXs" style={{ color: colors.text.muted }}>
+                Completed
+              </Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View
+                style={[styles.legendColor, { backgroundColor: colors.background.secondary }]}
+              />
+              <Text variant="textXs" style={{ color: colors.text.muted }}>
+                Not completed
+              </Text>
+            </View>
+          </>
+        ) : (
+          // Gradient legend for Overall and Needle
+          <>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: colors.emerald[700] }]} />
+              <Text variant="textXs" style={{ color: colors.text.muted }}>
+                80%+
+              </Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: colors.emerald[400] }]} />
+              <Text variant="textXs" style={{ color: colors.text.muted }}>
+                40-60%
+              </Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: colors.emerald[200] }]} />
+              <Text variant="textXs" style={{ color: colors.text.muted }}>
+                {'<'}20%
+              </Text>
+            </View>
+          </>
+        )}
       </View>
 
       {renderInsightBanner()}
@@ -934,27 +1071,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  bindNameColumnHeader: {
-    width: 90,
+  bindNameColumn: {
+    width: 80,
+    paddingRight: 8,
+    justifyContent: 'center',
   },
-  dayCell: {
+  dayHeaderCell: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  arrowButton: {
+    width: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   bindRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
   },
-  bindNameCell: {
-    width: 90,
-    justifyContent: 'center',
-  },
-  completionCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  completionSquare: {
+    width: 36,
+    height: 36,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -972,6 +1112,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   // Heat map view (2w/1m/90d)
+  weekDayHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingHorizontal: 2,
+  },
+  weekDayHeaderCell: {
+    width: 40,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   heatmapContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

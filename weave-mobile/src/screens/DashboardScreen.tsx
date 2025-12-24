@@ -44,6 +44,7 @@ export function DashboardScreen() {
   const [consistencyFilter, setConsistencyFilter] = useState<ConsistencyFilter>('Overall');
   const [consistencyTimeframe, setConsistencyTimeframe] = useState<TimeframeOption>('7d');
   const [fulfillmentTimeframe, setFulfillmentTimeframe] = useState<TimeframeOption>('7d');
+  const [selectedNeedleId, setSelectedNeedleId] = useState<string | undefined>(undefined);
 
   // History filters
   const [historyTimeframe, setHistoryTimeframe] = useState<'days' | 'weeks' | 'months'>('days');
@@ -254,15 +255,23 @@ export function DashboardScreen() {
         <ConsistencyHeatmap
           timeframe={consistencyTimeframe}
           filterType={consistencyFilter.toLowerCase() as 'overall' | 'needle' | 'bind' | 'thread'}
+          filterId={consistencyFilter === 'Needle' ? selectedNeedleId : undefined}
           onFilterChange={(filter) => {
             Haptics.selectionAsync();
             setConsistencyFilter(
               (filter.charAt(0).toUpperCase() + filter.slice(1)) as ConsistencyFilter
             );
+            // Reset needle selection when changing filters
+            if (filter !== 'needle') {
+              setSelectedNeedleId(undefined);
+            }
           }}
           onTimeframeChange={(timeframe) => {
             Haptics.selectionAsync();
             setConsistencyTimeframe(timeframe);
+          }}
+          onNeedleChange={(needleId) => {
+            setSelectedNeedleId(needleId);
           }}
         />
       </View>

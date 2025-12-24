@@ -158,7 +158,7 @@ Use `testID` prop for stable selectors:
 
 ```tsx
 // Component
-<Button testID="login-button">Login</Button>
+<Button testID="login-button">Login</Button>;
 
 // Test
 await element(by.id('login-button')).tap();
@@ -167,6 +167,7 @@ await element(by.id('login-button')).tap();
 ### 2. Test Isolation
 
 Each test should:
+
 - Create its own test data
 - Not depend on other tests
 - Clean up after itself (automatic with fixtures)
@@ -203,6 +204,7 @@ it('should create a goal', async () => {
 ### 5. Screenshot on Failure
 
 Detox automatically captures screenshots on failure. Find them in:
+
 ```
 artifacts/[test-name]/[timestamp].png
 ```
@@ -214,6 +216,7 @@ artifacts/[test-name]/[timestamp].png
 ### Build Failures
 
 **iOS:**
+
 ```bash
 # Clean Xcode build
 cd ios && xcodebuild clean
@@ -221,6 +224,7 @@ cd .. && detox build --configuration ios.sim.debug
 ```
 
 **Android:**
+
 ```bash
 # Clean Gradle build
 cd android && ./gradlew clean
@@ -249,6 +253,7 @@ detox test --configuration ios.sim.debug --cleanup
 ### Simulator/Emulator Issues
 
 **iOS:**
+
 ```bash
 # Reset iOS simulator
 xcrun simctl shutdown all
@@ -256,6 +261,7 @@ xcrun simctl erase all
 ```
 
 **Android:**
+
 ```bash
 # List emulators
 emulator -list-avds

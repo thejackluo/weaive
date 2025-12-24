@@ -1,7 +1,7 @@
 import logging
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -29,6 +29,7 @@ from app.core.errors import (
     AppException,
     app_exception_handler,
     generic_exception_handler,
+    http_exception_handler,
     validation_exception_handler,
 )
 
@@ -46,8 +47,10 @@ app = FastAPI(title="Weave API", description="Backend API for Weave MVP", versio
 
 # Register standardized exception handlers (Story 0.8 via Story 1.5.2)
 # These handlers provide consistent error response format across all endpoints
+# Order matters: More specific exceptions first, then generic
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
 
