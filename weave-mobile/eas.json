@@ -6,16 +6,48 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "APP_ENV": "development"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "preview",
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release"
+      },
+      "env": {
+        "APP_ENV": "staging"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "distribution": "store",
+      "channel": "production",
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release",
+        "bundleIdentifier": "com.weavelight.app"
+      },
+      "env": {
+        "APP_ENV": "production",
+        "SENTRY_ORG": "jackluo",
+        "SENTRY_PROJECT": "weavelight"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "YOUR_APPLE_ID_HERE",
+        "ascAppId": "YOUR_ASC_APP_ID_HERE",
+        "appleTeamId": "YOUR_TEAM_ID_HERE"
+      }
+    }
   }
 }
