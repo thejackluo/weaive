@@ -3,18 +3,22 @@
  * Development-only utilities for testing and debugging
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTheme, Card, Heading, Body, Button } from '@/design-system';
 import { clearAllCaches, logActiveQueries } from '@/utils/devTools';
+import { useAuth } from '@/contexts/AuthContext';
+import apiClient from '@/services/apiClient';
 
 export default function DevToolsScreen() {
   const { colors, spacing } = useTheme();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
 
   const handleClearAllCaches = () => {
     clearAllCaches(queryClient);
@@ -30,6 +34,83 @@ export default function DevToolsScreen() {
     const today = new Date().toISOString().split('T')[0];
     queryClient.invalidateQueries({ queryKey: ['binds', 'today', today] });
     Alert.alert('Success', "Today's binds cache invalidated. Will refetch on next screen load.");
+  };
+
+  const handleSendTestNotification = async () => {
+    if (!user) {
+      Alert.alert('Error', 'Not authenticated');
+      return;
+    }
+
+    setIsSendingNotification(true);
+
+    try {
+      // First, get user_profiles.id from auth_user_id
+      const authUserId = user.id; // This is auth.uid from JWT
+
+      // Query user_profiles to get the internal ID
+      const response = await fetch(`http://192.168.1.112:8000/api/user/me`, {
+        headers: {
+          'Authorization': `Bearer ${await apiClient['getAuthToken']()}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      // For now, we'll use a simplified approach: call the endpoint with auth_user_id
+      // and let the backend handle the lookup
+      // Enable admin mode temporarily
+      const ADMIN_KEY = 'dev-admin-key-12345-change-in-production';
+      apiClient.enableAdminMode(ADMIN_KEY);
+
+      try {
+        // We need to get user_profiles.id, not auth.uid
+        // The trigger-checkin endpoint expects user_profiles.id
+        // Let's make a direct call to get it from Supabase
+        const { supabase } = await import('@lib/supabase');
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('auth_user_id', authUserId)
+          .single();
+
+        if (profileError || !profileData) {
+          throw new Error('User profile not found');
+        }
+
+        const userProfileId = profileData.id;
+
+        // Now call the trigger-checkin endpoint with user_profiles.id
+        const result = await apiClient.post(
+          `/admin/trigger-checkin/${userProfileId}`,
+          {}
+        );
+
+        if (result.data?.data?.success) {
+          Alert.alert(
+            '✅ Notification Sent!',
+            `Test notification triggered successfully!\n\nMessage: "${result.data.data.message}"\n\nCheck your device for the push notification.`,
+            [{ text: 'OK' }]
+          );
+        } else {
+          throw new Error('Unexpected response format');
+        }
+      } finally {
+        // Disable admin mode after use
+        apiClient.disableAdminMode();
+      }
+    } catch (error: any) {
+      console.error('[DEV_TOOLS] Test notification error:', error);
+      Alert.alert(
+        'Error',
+        `Failed to send test notification:\n\n${error.message || 'Unknown error'}`,
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsSendingNotification(false);
+    }
   };
 
   return (
@@ -105,6 +186,34 @@ export default function DevToolsScreen() {
           <Body style={{ color: colors.text.muted, marginTop: spacing[3], fontSize: 12 }}>
             Use "Clear All Caches" when data seems stale or incorrect. This forces a fresh fetch
             from the API.
+          </Body>
+        </Card>
+
+        {/* Push Notifications */}
+        <Card variant="default" style={{ marginBottom: spacing[4] }}>
+          <Heading
+            variant="displayLg"
+            style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+          >
+            Push Notifications
+          </Heading>
+
+          <View style={{ gap: spacing[3] }}>
+            <Button
+              variant="primary"
+              onPress={handleSendTestNotification}
+              disabled={isSendingNotification || !user}
+            >
+              {isSendingNotification
+                ? '⏳ Sending...'
+                : '🔔 Send Test Notification'}
+            </Button>
+          </View>
+
+          <Body style={{ color: colors.text.muted, marginTop: spacing[3], fontSize: 12 }}>
+            Sends a test push notification to this device. Useful for testing check-in notifications
+            and notification handling.
+            {!user && '\n\n⚠️ You must be logged in to send test notifications.'}
           </Body>
         </Card>
 
