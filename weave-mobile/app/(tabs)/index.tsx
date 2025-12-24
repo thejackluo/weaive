@@ -42,7 +42,7 @@ export default function HomeScreen() {
       <View className="gap-3 w-full max-w-xs">
         <Pressable
           onPress={() => router.push('/(tabs)/design-system-showcase')}
-          className="bg-accent-500 px-6 py-4 rounded-lg active:opacity-80 active:scale-98"
+          className="bg-accent-500 px-6 py-4 rounded-lg active:opacity-80 active:scale-[0.98]"
         >
           <Text style={{ color: '#18181b', fontSize: 14, fontWeight: '500', letterSpacing: 1, textAlign: 'center' }}>
             View Full Design System
@@ -51,7 +51,7 @@ export default function HomeScreen() {
 
         <Pressable
           onPress={() => router.push('/(tabs)/component-testing')}
-          className="bg-violet-600 px-6 py-4 rounded-lg active:opacity-80 active:scale-98 border border-violet-500"
+          className="bg-violet-600 px-6 py-4 rounded-lg active:opacity-80 active:scale-[0.98] border border-violet-500"
         >
           <Text style={{ color: '#fafafa', fontSize: 14, fontWeight: '500', letterSpacing: 1, textAlign: 'center' }}>
             🧪 Component Testing
