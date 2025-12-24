@@ -1,10 +1,9 @@
 import logging
 import os
 
-from fastapi import FastAPI, Request, status
-from fastapi.exceptions import HTTPException, RequestValidationError
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from app.api import (
     admin,
@@ -24,6 +23,12 @@ from app.api import (
     user,
 )
 from app.core.config import settings
+from app.core.errors import (
+    AppException,
+    app_exception_handler,
+    generic_exception_handler,
+    validation_exception_handler,
+)
 
 # Log environment status on startup
 logger = logging.getLogger(__name__)
@@ -37,68 +42,11 @@ logger.info("=" * 60)
 
 app = FastAPI(title="Weave API", description="Backend API for Weave MVP", version="0.1.0")
 
-
-# Custom error handler for standard error response format
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    """
-    Convert FastAPI HTTPException to standard error response format.
-
-    Standard format: {"error": {"code": "ERROR_CODE", "message": "..."}}
-    """
-    # Map HTTP status codes to error codes
-    error_code_map = {
-        400: "BAD_REQUEST",
-        401: "UNAUTHORIZED",
-        403: "FORBIDDEN",
-        404: "NOT_FOUND",
-        422: "VALIDATION_ERROR",
-        500: "INTERNAL_SERVER_ERROR",
-    }
-
-    error_code = error_code_map.get(exc.status_code, "UNKNOWN_ERROR")
-
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "error": {
-                "code": error_code,
-                "message": exc.detail if isinstance(exc.detail, str) else str(exc.detail),
-            }
-        },
-    )
-
-
-# Custom handler for Pydantic validation errors
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """
-    Convert Pydantic RequestValidationError to standard error response format.
-
-    Standard format: {"error": {"code": "VALIDATION_ERROR", "message": "..."}}
-    """
-    # Extract validation error details
-    errors = exc.errors()
-    error_messages = []
-
-    for error in errors:
-        field = " -> ".join(
-            str(loc) for loc in error["loc"] if loc not in ["body", "query", "path"]
-        )
-        message = error["msg"]
-        error_messages.append(f"{field}: {message}" if field else message)
-
-    combined_message = "; ".join(error_messages)
-
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
-            "error": {
-                "code": "VALIDATION_ERROR",
-                "message": combined_message,
-            }
-        },
-    )
+# Register standardized exception handlers (Story 0.8 via Story 1.5.2)
+# These handlers provide consistent error response format across all endpoints
+app.add_exception_handler(AppException, app_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
 
 
 # CORS - Environment-based configuration
