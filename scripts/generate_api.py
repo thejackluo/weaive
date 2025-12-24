@@ -233,47 +233,35 @@ def generate_test(resource: str, resources: str, Resource: str) -> Path:
 def print_next_steps(resource: str, resources: str, Resource: str):
     """Print instructions for next steps after generation"""
     print("\n" + "=" * 70)
-    print("📝 NEXT STEPS")
+    print("✅ Generated API scaffold for '{}'".format(resource))
     print("=" * 70)
 
     print(f"""
-1. **Review Generated Files:**
-   - Router:  weave-api/app/api/{resources}/router.py
-   - Schemas: weave-api/app/schemas/{resource}.py
-   - Tests:   weave-api/tests/test_{resource}_api.py
+📁 FILES CREATED:
+   - app/api/{resources}/router.py     (5 CRUD endpoints with 501 stubs)
+   - app/schemas/{resource}.py         ({Resource}Create, {Resource}Update, {Resource}Response)
+   - tests/test_{resource}_api.py      (5 integration tests)
 
-2. **Register Router in main.py:**
-   Add to weave-api/app/main.py:
+🚀 NEXT STEPS:
 
-   from app.api.{resources} import router as {resources}_router
-   app.include_router({resources}_router)
+   1. Define schemas in app/schemas/{resource}.py
+   2. Implement router logic in app/api/{resources}/router.py
+   3. Register router in app/main.py:
 
-3. **Implement Endpoints:**
-   - Replace HTTPException(501) placeholders with actual logic
-   - Add database queries (Supabase)
-   - Implement business logic
-   - Update Epic/Story references in docstrings
+      from app.api.{resources} import router as {resources}_router
+      app.include_router({resources}_router)
 
-4. **Customize Schemas:**
-   - Add resource-specific fields
-   - Update field validators
-   - Adjust constraints and validation rules
+   4. Run tests: uv run pytest tests/test_{resource}_api.py -v
 
-5. **Write Tests:**
-   - Implement test cases (currently using pytest.skip())
-   - Add test fixtures as needed
-   - Run: uv run pytest tests/test_{resource}_api.py -v
+📖 NEED HELP?
+   See docs/dev/backend-quick-start.md for complete 30-minute walkthrough
+   (Step-by-step guide using Goals API as example)
 
-6. **Documentation:**
-   - Update endpoint docstrings with Epic/Story references
-   - Add OpenAPI examples
-   - Document business rules
-
-7. **Test Your Implementation:**
-   - Run tests: uv run pytest tests/test_{resource}_api.py
-   - Run linting: uv run ruff check .
-   - Start server: uv run uvicorn app.main:app --reload
-   - Test endpoints: curl http://localhost:8000/api/{resources}
+📚 RESOURCES:
+   - Backend Patterns:   docs/dev/backend-patterns-guide.md
+   - API Registry:       docs/dev/backend-api-integration.md
+   - Error Codes:        docs/api-error-codes.md
+   - Story 1.5.2:        docs/stories/1-5-2-backend-standardization.md
 """)
 
 
@@ -281,18 +269,111 @@ def print_next_steps(resource: str, resources: str, Resource: str):
 # MAIN
 # ============================================================================
 
+def print_help():
+    """Print help message"""
+    help_text = """
+API Scaffolding Script for Weave Backend
+Story 1.5.2: Backend API/Model Standardization (AC-11)
+
+USAGE:
+    python scripts/generate_api.py <resource_name> [resource_plural]
+    python scripts/generate_api.py --help
+
+ARGUMENTS:
+    resource_name      Resource name (singular, e.g., 'goal', 'journal-entry')
+    resource_plural    Optional plural form (auto-generated if omitted)
+
+EXAMPLES:
+    python scripts/generate_api.py goal
+    → Creates: goals/router.py, goal.py, test_goal_api.py
+
+    python scripts/generate_api.py journal-entry journal-entries
+    → Creates: journal-entries/router.py, journal_entry.py, test_journal_entry_api.py
+
+GENERATED FILES:
+    - app/api/{resources}/router.py     (5 CRUD endpoint stubs with 501 responses)
+    - app/schemas/{resource}.py         (GoalCreate, GoalUpdate, GoalResponse)
+    - tests/test_{resource}_api.py      (5 integration tests)
+
+NAMING CONVENTIONS:
+    - Use lowercase with hyphens: 'journal-entry' (not 'JournalEntry' or 'journal_entry')
+    - Script auto-converts to snake_case for code and kebab-case for paths
+
+VALIDATION:
+    - ❌ No spaces allowed ('journal entry' → Invalid)
+    - ❌ No capital letters ('Goal' → Invalid)
+    - ✅ Use lowercase with optional hyphens ('journal-entry')
+
+NEXT STEPS:
+    After scaffolding, see docs/dev/backend-quick-start.md for complete walkthrough
+
+TEMPLATES:
+    Located in scripts/templates/
+    - api_router_template.py
+    - pydantic_schema_template.py
+    - test_template.py
+"""
+    print(help_text)
+
+
+def validate_resource_name(name: str) -> bool:
+    """Validate resource name format"""
+    # Check for spaces
+    if ' ' in name:
+        print("❌ Invalid resource name: spaces not allowed")
+        print("   Use hyphens instead: 'journal-entry' (not 'journal entry')")
+        return False
+
+    # Check for capital letters
+    if name != name.lower():
+        print("❌ Invalid resource name: capital letters not allowed")
+        print(f"   Use lowercase: '{name.lower()}' (not '{name}')")
+        return False
+
+    # Check for special characters (only allow alphanumeric and hyphens)
+    if not re.match(r'^[a-z0-9-]+$', name):
+        print("❌ Invalid resource name: only lowercase letters, numbers, and hyphens allowed")
+        print("   Valid examples: 'goal', 'journal-entry', 'ai-chat'")
+        return False
+
+    return True
+
+
 def main():
     """Main entry point"""
-    # Parse arguments
-    if len(sys.argv) < 2:
-        print("Usage: python scripts/generate_api.py <resource_name> [resource_plural]")
-        print("\nExamples:")
-        print("  python scripts/generate_api.py goal")
-        print("  python scripts/generate_api.py journal-entry journal-entries")
-        sys.exit(1)
+    # Check for help flag
+    if len(sys.argv) > 1 and sys.argv[1] in ["--help", "-h", "help"]:
+        print_help()
+        sys.exit(0)
 
-    resource_name = sys.argv[1]
-    resource_plural = sys.argv[2] if len(sys.argv) > 2 else None
+    # Interactive mode if no arguments
+    if len(sys.argv) < 2:
+        print("=" * 70)
+        print("🚀 API Scaffolding Script (Interactive Mode)")
+        print("=" * 70)
+        print()
+        print("This script generates API scaffolding for a new resource.")
+        print("Use --help flag for detailed usage information.")
+        print()
+
+        resource_name = input("Enter resource name (singular, e.g., 'goal', 'journal-entry'): ").strip()
+
+        if not resource_name:
+            print("❌ Resource name is required")
+            sys.exit(1)
+
+        # Ask for plural (optional)
+        print()
+        resource_plural_input = input(f"Enter plural form (press Enter for auto: '{resource_name}s'): ").strip()
+        resource_plural = resource_plural_input if resource_plural_input else None
+
+    else:
+        resource_name = sys.argv[1]
+        resource_plural = sys.argv[2] if len(sys.argv) > 2 else None
+
+    # Validate resource name
+    if not validate_resource_name(resource_name):
+        sys.exit(1)
 
     # Get standardized names
     resource, resources, Resource = get_resource_names(resource_name, resource_plural)
