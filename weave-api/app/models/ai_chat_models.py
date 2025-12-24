@@ -14,12 +14,18 @@ from pydantic import BaseModel, Field, field_validator
 # REQUEST MODELS
 # ============================================================
 
+
 class ChatMessageCreate(BaseModel):
     """Request body for sending a chat message."""
-    message: str = Field(..., min_length=1, max_length=500, description="User message content (max 500 chars)")
-    conversation_id: Optional[UUID] = Field(None, description="Existing conversation ID (omit to start new conversation)")
 
-    @field_validator('message')
+    message: str = Field(
+        ..., min_length=1, max_length=500, description="User message content (max 500 chars)"
+    )
+    conversation_id: Optional[UUID] = Field(
+        None, description="Existing conversation ID (omit to start new conversation)"
+    )
+
+    @field_validator("message")
     @classmethod
     def validate_message(cls, v: str) -> str:
         """Ensure message is not just whitespace."""
@@ -30,6 +36,7 @@ class ChatMessageCreate(BaseModel):
 
 class TriggerCheckinRequest(BaseModel):
     """Admin request to manually trigger check-in for a user."""
+
     user_id: UUID = Field(..., description="User ID to trigger check-in for")
 
 
@@ -37,8 +44,10 @@ class TriggerCheckinRequest(BaseModel):
 # RESPONSE MODELS
 # ============================================================
 
+
 class ChatMessage(BaseModel):
     """Individual chat message in a conversation."""
+
     id: UUID
     role: Literal["user", "assistant", "system"]
     content: str
@@ -48,6 +57,7 @@ class ChatMessage(BaseModel):
 
 class ChatMessageResponse(BaseModel):
     """Response after sending a chat message."""
+
     message_id: UUID = Field(..., description="ID of user's message")
     response: str = Field(..., description="AI assistant's response")
     response_id: UUID = Field(..., description="ID of assistant's response message")
@@ -57,6 +67,7 @@ class ChatMessageResponse(BaseModel):
 
 class ConversationSummary(BaseModel):
     """Summary of a conversation thread."""
+
     id: UUID
     started_at: datetime
     last_message_at: datetime
@@ -66,6 +77,7 @@ class ConversationSummary(BaseModel):
 
 class ConversationDetail(BaseModel):
     """Full conversation thread with all messages."""
+
     id: UUID
     started_at: datetime
     last_message_at: datetime
@@ -75,7 +87,10 @@ class ConversationDetail(BaseModel):
 
 class UsageStats(BaseModel):
     """User's current AI usage statistics."""
-    premium_today: dict = Field(..., description="Premium model usage today: {used: int, limit: int}")
+
+    premium_today: dict = Field(
+        ..., description="Premium model usage today: {used: int, limit: int}"
+    )
     free_today: dict = Field(..., description="Free model usage today: {used: int, limit: int}")
     monthly: dict = Field(..., description="Monthly total usage: {used: int, limit: int}")
     tier: Literal["free", "pro", "admin"]
@@ -85,31 +100,33 @@ class UsageStats(BaseModel):
 # WRAPPER MODELS (API Response Format)
 # ============================================================
 
+
 class ChatMessageResponseWrapper(BaseModel):
     """Standard API response wrapper for chat message."""
+
     data: ChatMessageResponse
     meta: dict = Field(default_factory=lambda: {"timestamp": datetime.now().isoformat()})
 
 
 class ConversationListResponseWrapper(BaseModel):
     """Standard API response wrapper for conversation list."""
+
     data: List[ConversationSummary]
     meta: dict = Field(
-        default_factory=lambda: {
-            "timestamp": datetime.now().isoformat(),
-            "total": 0
-        }
+        default_factory=lambda: {"timestamp": datetime.now().isoformat(), "total": 0}
     )
 
 
 class ConversationDetailResponseWrapper(BaseModel):
     """Standard API response wrapper for conversation detail."""
+
     data: ConversationDetail
     meta: dict = Field(default_factory=lambda: {"timestamp": datetime.now().isoformat()})
 
 
 class UsageStatsResponseWrapper(BaseModel):
     """Standard API response wrapper for usage stats."""
+
     data: UsageStats
     meta: dict = Field(default_factory=lambda: {"timestamp": datetime.now().isoformat()})
 
@@ -118,6 +135,8 @@ class UsageStatsResponseWrapper(BaseModel):
 # ERROR MODELS
 # ============================================================
 
+
 class ErrorResponse(BaseModel):
     """Standard error response format."""
+
     error: dict = Field(..., description="Error details: {code: str, message: str}")

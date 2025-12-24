@@ -252,7 +252,7 @@ async def save_push_token(
             detail="Invalid authentication token",
         )
 
-    if not request.expo_push_token.startswith('ExponentPushToken['):
+    if not request.expo_push_token.startswith("ExponentPushToken["):
         logger.error(f"❌ Invalid push token format: {request.expo_push_token}")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -262,11 +262,13 @@ async def save_push_token(
     logger.info(f"💾 Saving push token for user: {auth_user_id}")
 
     try:
-        profile_result = supabase.table('user_profiles') \
-            .select('id') \
-            .eq('auth_user_id', auth_user_id) \
-            .single() \
+        profile_result = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
             .execute()
+        )
 
         if not profile_result.data:
             logger.error(f"❌ User profile not found for auth_user_id: {auth_user_id}")
@@ -275,19 +277,15 @@ async def save_push_token(
                 detail="User profile not found",
             )
 
-        user_id = profile_result.data['id']
+        user_id = profile_result.data["id"]
 
-        supabase.table('user_profiles') \
-            .update({'expo_push_token': request.expo_push_token}) \
-            .eq('id', user_id) \
-            .execute()
+        supabase.table("user_profiles").update({"expo_push_token": request.expo_push_token}).eq(
+            "id", user_id
+        ).execute()
 
         logger.info(f"✅ Push token saved for user: {user_id}")
 
-        return {
-            "message": "Push token saved successfully",
-            "user_id": user_id
-        }
+        return {"message": "Push token saved successfully", "user_id": user_id}
 
     except HTTPException:
         raise
@@ -380,11 +378,7 @@ async def get_user_stats(
         today = date.today()
 
         # Create a set of active dates for fast lookup
-        active_dates = {
-            agg["local_date"]
-            for agg in aggregates
-            if agg.get("active_day_with_proof")
-        }
+        active_dates = {agg["local_date"] for agg in aggregates if agg.get("active_day_with_proof")}
 
         for i in range(len(aggregates) + 1):
             check_date = (today - timedelta(days=i)).isoformat()

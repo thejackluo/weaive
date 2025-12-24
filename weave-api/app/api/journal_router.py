@@ -3,6 +3,7 @@ Story 4.1a: Journal Entry API Endpoints
 
 FastAPI router for journal entry operations:
 - POST /api/journal-entries: Create new journal entry
+- GET /api/journal-entries: Retrieve journal entries (with optional date range filters)
 - GET /api/journal-entries/today: Retrieve today's journal entry
 - PATCH /api/journal-entries/{journal_id}: Update existing journal entry
 """
@@ -13,7 +14,7 @@ import traceback
 from datetime import date, datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from app.core.deps import get_ai_service, get_current_user, get_supabase_client
@@ -52,15 +53,23 @@ async def get_or_create_user_profile(supabase, auth_user_id: str) -> str:
         return user_id
     except Exception:
         # Profile doesn't exist - auto-create it
-        logger.warning(f"⚠️  No user profile found for auth_user_id: {auth_user_id}, creating one...")
+        logger.warning(
+            f"⚠️  No user profile found for auth_user_id: {auth_user_id}, creating one..."
+        )
 
         try:
-            new_profile = supabase.table("user_profiles").insert({
-                "auth_user_id": auth_user_id,
-                "display_name": "User",
-                "timezone": "America/Los_Angeles",
-                "locale": "en-US"
-            }).execute()
+            new_profile = (
+                supabase.table("user_profiles")
+                .insert(
+                    {
+                        "auth_user_id": auth_user_id,
+                        "display_name": "User",
+                        "timezone": "America/Los_Angeles",
+                        "locale": "en-US",
+                    }
+                )
+                .execute()
+            )
 
             user_id = new_profile.data[0]["id"]
             logger.info(f"✅ Auto-created user_profile.id: {user_id}")
@@ -258,19 +267,41 @@ async def create_journal_entry(
 
     created_journal = response.data[0]
 
-    # Update daily_aggregates.has_journal = true
+    # Update daily_aggregates.has_journal = true and recalculate active_day_with_proof
     try:
-        supabase.table("daily_aggregates").upsert(
-            {
-                "user_id": profile_id,
-                "local_date": entry.local_date,
-                "has_journal": True,
-            },
-            on_conflict="user_id,local_date",
-        ).execute()
+        # Fetch current daily_aggregates
+        current_agg_response = (
+            supabase.table("daily_aggregates")
+            .select("completed_count, has_proof")
+            .eq("user_id", profile_id)
+            .eq("local_date", entry.local_date)
+            .single()
+            .execute()
+        )
+
+        # Get current values
+        current_completed = current_agg_response.data.get("completed_count", 0) if current_agg_response.data else 0
+        current_has_proof = current_agg_response.data.get("has_proof", False) if current_agg_response.data else False
+
+        # North star metric: active_day_with_proof = (≥1 completion + has_proof) OR has_journal
+        # A day counts as "active" if EITHER:
+        # 1. User completed at least one bind AND provided proof (capture or journal), OR
+        # 2. User submitted a journal entry (even without bind completions)
+        has_bind_with_proof = current_completed >= 1 and current_has_proof
+        has_journal = True  # We're creating a journal entry
+        active_day_with_proof = has_bind_with_proof or has_journal
+
+        supabase.table("daily_aggregates").upsert({
+            "user_id": profile_id,
+            "local_date": entry.local_date,
+            "has_journal": True,
+            "active_day_with_proof": active_day_with_proof,
+        }, on_conflict="user_id,local_date").execute()
+
+        logger.info(f"✅ Updated daily_aggregates: has_journal=True, active_day_with_proof={active_day_with_proof}")
     except Exception as e:
         # Log error but don't fail the request
-        print(f"Failed to update daily_aggregates: {str(e)}")
+        logger.error(f"❌ Failed to update daily_aggregates: {str(e)}")
 
     # Calculate level and progress (same system as bind completion)
     # Simple level system: 10 journal entries per level
@@ -287,7 +318,9 @@ async def create_journal_entry(
         journals_in_level = total_journals % 10
         level_progress = (journals_in_level / 10) * 100  # Percentage to next level
 
-        logger.info(f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}")
+        logger.info(
+            f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}"
+        )
     except Exception as level_error:
         logger.error(f"❌ Error calculating level: {str(level_error)}")
         # Default to level 1 if calculation fails
@@ -311,7 +344,7 @@ async def create_journal_entry(
             "timestamp": datetime.utcnow().isoformat(),
             "level": level,
             "level_progress": round(level_progress, 1),
-        }
+        },
     }
 
 
@@ -337,6 +370,7 @@ async def get_today_journal_entry(
     today_date = date.today().isoformat()
 
     # Query journal entry for today
+    logger.info(f"[GET /today] 🔍 Querying with user_id={profile_id}, local_date={today_date}")
     response = (
         supabase.table("journal_entries")
         .select("*")
@@ -344,15 +378,86 @@ async def get_today_journal_entry(
         .eq("local_date", today_date)
         .execute()
     )
+    logger.info(f"[GET /today] 📊 Query result: found {len(response.data) if response.data else 0} entries")
 
     if not response.data or len(response.data) == 0:
+        logger.info("[GET /today] ❌ No journal found - returning 404")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No journal entry found for today"
         )
 
     journal = response.data[0]
+    logger.info(f"[GET /today] ✅ Journal found: id={journal.get('id')}")
 
     return ApiResponse(data=JournalEntryResponse(**journal))
+
+
+class JournalEntriesListResponse(BaseModel):
+    """List of journal entries response"""
+    data: list
+    meta: dict
+
+
+@router.get("", response_model=JournalEntriesListResponse)
+async def get_journal_entries(
+    start_date: Optional[str] = Query(None, description="Start date in YYYY-MM-DD format"),
+    end_date: Optional[str] = Query(None, description="End date in YYYY-MM-DD format"),
+    user: dict = Depends(get_current_user),
+):
+    """
+    Retrieve journal entries for authenticated user within a date range
+
+    Query Parameters:
+    - start_date: Optional start date (YYYY-MM-DD)
+    - end_date: Optional end date (YYYY-MM-DD)
+
+    Returns:
+    - List of journal entries ordered by date (most recent first)
+    - If no date range specified, returns all entries
+    """
+    user_id = user["sub"]  # Extract user ID from JWT payload
+    supabase = get_supabase_client()
+
+    if not supabase:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database connection not configured"
+        )
+
+    # Get user's profile ID
+    profile_id = await get_or_create_user_profile(supabase, user_id)
+
+    # Build query
+    query = supabase.table("journal_entries").select("*").eq("user_id", profile_id)
+
+    if start_date:
+        query = query.gte("local_date", start_date)
+    if end_date:
+        query = query.lte("local_date", end_date)
+
+    # Order by date (most recent first)
+    query = query.order("local_date", desc=False)
+
+    # Execute query
+    try:
+        response = query.execute()
+        logger.info(f"[GET /journal-entries] 📊 Found {len(response.data)} entries for user {profile_id}")
+
+        return {
+            "data": response.data,
+            "meta": {
+                "timestamp": datetime.utcnow().isoformat(),
+                "total": len(response.data),
+                "start_date": start_date,
+                "end_date": end_date,
+            }
+        }
+    except Exception as e:
+        logger.error(f"❌ Error fetching journal entries: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch journal entries: {str(e)}"
+        )
 
 
 @router.patch("/{journal_id}", response_model=ApiResponse)
@@ -421,18 +526,43 @@ async def update_journal_entry(
 
     updated_journal = response.data[0]
 
-    # Update daily_aggregates.has_journal = true (idempotent)
+    # Update daily_aggregates.has_journal = true and recalculate active_day_with_proof (idempotent)
     try:
-        supabase.table("daily_aggregates").upsert(
-            {
-                "user_id": profile_id,
-                "local_date": updated_journal["local_date"],
-                "has_journal": True,
-            },
-            on_conflict="user_id,local_date",
-        ).execute()
+ # Fetch current daily_aggregates
+          current_agg_response = (
+              supabase.table("daily_aggregates")
+              .select("completed_count, has_proof")
+              .eq("user_id", profile_id)
+              .eq("local_date", updated_journal["local_date"])
+              .single()
+              .execute()
+          )
+
+          # Get current values
+          current_completed = current_agg_response.data.get("completed_count", 0) if current_agg_response.data else 0
+          current_has_proof = current_agg_response.data.get("has_proof", False) if current_agg_response.data else False
+
+          # North star metric: active_day_with_proof = (≥1 completion + has_proof) OR has_journal
+          # A day counts as "active" if EITHER:
+          # 1. User completed at least one bind AND provided proof (capture or journal), OR
+          # 2. User submitted a journal entry (even without bind completions)
+          has_bind_with_proof = current_completed >= 1 and current_has_proof
+          has_journal = True  # We're updating a journal entry
+          active_day_with_proof = has_bind_with_proof or has_journal
+
+          supabase.table("daily_aggregates").upsert(
+              {
+                  "user_id": profile_id,
+                  "local_date": updated_journal["local_date"],
+                  "has_journal": True,
+                  "active_day_with_proof": active_day_with_proof,
+              },
+              on_conflict="user_id,local_date",
+          ).execute()
+
+          logger.info(f"✅ Updated daily_aggregates: has_journal=True, active_day_with_proof={active_day_with_proof}")
     except Exception as e:
-        print(f"Failed to update daily_aggregates: {str(e)}")
+        logger.error(f"❌ Failed to update daily_aggregates: {str(e)}")
 
     # Calculate level and progress (same system as bind completion)
     try:
@@ -448,7 +578,9 @@ async def update_journal_entry(
         journals_in_level = total_journals % 10
         level_progress = (journals_in_level / 10) * 100
 
-        logger.info(f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}")
+        logger.info(
+            f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}"
+        )
     except Exception as level_error:
         logger.error(f"❌ Error calculating level: {str(level_error)}")
         level = 1
@@ -471,5 +603,5 @@ async def update_journal_entry(
             "timestamp": datetime.utcnow().isoformat(),
             "level": level,
             "level_progress": round(level_progress, 1),
-        }
+        },
     }

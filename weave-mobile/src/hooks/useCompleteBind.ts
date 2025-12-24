@@ -7,6 +7,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { getApiBaseUrl } from '@/utils/api';
 import { bindsQueryKeys } from './useTodayBinds';
+import { consistencyQueryKeys } from './useConsistencyData';
+import { userStatsQueryKeys } from './useUserStats';
+import { historyQueryKeys } from './useHistory';
 import { goalsQueryKeys } from './useActiveGoals';
 
 interface CompleteBindRequest {
@@ -84,6 +87,12 @@ export function useCompleteBind() {
     onSuccess: () => {
       // Refetch today's binds query immediately (not just invalidate)
       const today = new Date().toISOString().split('T')[0];
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.today(today) });
+
+      // Invalidate dashboard stats (auto-refresh Dashboard after completion)
+      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: userStatsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: historyQueryKeys.all });
       queryClient.refetchQueries({ queryKey: bindsQueryKeys.today(today) });
 
       // Refetch Dashboard queries to update consistency and stats immediately

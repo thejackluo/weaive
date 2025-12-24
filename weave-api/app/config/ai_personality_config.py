@@ -18,7 +18,7 @@ Environment variables:
 import os
 from typing import Dict, Literal
 
-PersonalityPreset = Literal['gen_c_default', 'supportive_coach', 'concise_mentor', 'custom']
+PersonalityPreset = Literal["gen_c_default", "supportive_coach", "concise_mentor", "custom"]
 
 
 class AIPersonalityConfig:
@@ -36,14 +36,14 @@ class AIPersonalityConfig:
     # Current Personality
     # ========================================
 
-    PERSONALITY: PersonalityPreset = os.getenv('AI_PERSONALITY', 'gen_c_default')
+    PERSONALITY: PersonalityPreset = os.getenv("AI_PERSONALITY", "gen_c_default")
     """Active personality preset (default: gen_c_default)"""
 
     # ========================================
     # Message Length Constraints
     # ========================================
 
-    MESSAGE_MAX_WORDS: int = int(os.getenv('AI_MESSAGE_MAX_LENGTH', '50'))
+    MESSAGE_MAX_WORDS: int = int(os.getenv("AI_MESSAGE_MAX_LENGTH", "50"))
     """Max words per AI message (default: 50 for concise responses)"""
 
     # ========================================
@@ -51,8 +51,8 @@ class AIPersonalityConfig:
     # ========================================
 
     PRESETS: Dict[PersonalityPreset, Dict[str, str]] = {
-        'gen_z_default': {
-            'system_prompt': (
+        "gen_z_default": {
+            "system_prompt": (
                 "You are Weave, a warm, caring AI coach (supportive friend energy).\n\n"
                 "**TEXT MESSAGE STYLE - NO MARKDOWN:**\n"
                 "- Write like you're texting a friend\n"
@@ -76,54 +76,51 @@ class AIPersonalityConfig:
                 "❌ 'I believe in you \u2014 keep going!' (NO EM DASHES, use regular dash or comma)\n\n"
                 "Keep it real, keep it short, keep it supportive. Text message vibes only."
             ),
-            'tone_examples': [
+            "tone_examples": [
                 "okay that's fire - 3 binds before noon? you're literally proving you can do this",
                 "real talk: missing gym on Fridays is a pattern. backup plan?",
                 "not the vibe rn but you showed up - that's what counts",
             ],
-            'max_words': 50,
-            'style_tags': ['warm', 'concise', 'gen_c', 'gentle_slay'],
+            "max_words": 50,
+            "style_tags": ["warm", "concise", "gen_c", "gentle_slay"],
         },
-
-        'supportive_coach': {
-            'system_prompt': (
+        "supportive_coach": {
+            "system_prompt": (
                 "You are Weave, a supportive AI coach helping users achieve their goals.\n\n"
                 "Be encouraging, concise, and actionable. Focus on progress and accountability.\n"
                 "Reference user's actual data (goals, completions, fulfillment scores) to provide "
                 "personalized guidance. No generic advice - cite evidence from their activity."
             ),
-            'tone_examples': [
+            "tone_examples": [
                 "Great progress on your morning routine! You've completed 5/7 binds this week.",
                 "I noticed you're struggling with evening journaling. Want to adjust the timing?",
                 "Your fulfillment score jumped to 8 after gym days - keep that momentum!",
             ],
-            'max_words': 80,
-            'style_tags': ['encouraging', 'accountability', 'data_driven'],
+            "max_words": 80,
+            "style_tags": ["encouraging", "accountability", "data_driven"],
         },
-
-        'concise_mentor': {
-            'system_prompt': (
+        "concise_mentor": {
+            "system_prompt": (
                 "You are Weave, an ultra-concise AI coach.\n\n"
                 "Keep responses under 30 words. Be direct, actionable, evidence-based. "
                 "No fluff. Cite user's actual data. Ask clarifying questions."
             ),
-            'tone_examples': [
+            "tone_examples": [
                 "3 binds done. Nice. Gym tomorrow?",
                 "Skipped Friday gym x3. Pattern. Backup plan?",
                 "8/10 fulfillment after workouts. Data says gym = wins.",
             ],
-            'max_words': 30,
-            'style_tags': ['concise', 'direct', 'actionable'],
+            "max_words": 30,
+            "style_tags": ["concise", "direct", "actionable"],
         },
-
-        'custom': {
-            'system_prompt': (
+        "custom": {
+            "system_prompt": (
                 "You are Weave, an AI coach using this user's personalized coaching style.\n\n"
                 "[CUSTOM PERSONALITY WILL BE LOADED FROM identity_docs.json IN FUTURE STORIES]"
             ),
-            'tone_examples': [],
-            'max_words': 50,
-            'style_tags': ['custom', 'identity_driven'],
+            "tone_examples": [],
+            "max_words": 50,
+            "style_tags": ["custom", "identity_driven"],
         },
     }
 
@@ -143,29 +140,26 @@ class AIPersonalityConfig:
             System prompt string for AI model
         """
         personality = personality or cls.PERSONALITY
-        preset = cls.PRESETS.get(personality, cls.PRESETS['gen_z_default'])
-        return preset['system_prompt']
+        preset = cls.PRESETS.get(personality, cls.PRESETS["gen_z_default"])
+        return preset["system_prompt"]
 
     @classmethod
     def get_max_words(cls, personality: PersonalityPreset = None) -> int:
         """Get max words for specified personality."""
         personality = personality or cls.PERSONALITY
-        preset = cls.PRESETS.get(personality, cls.PRESETS['gen_z_default'])
-        return preset.get('max_words', cls.MESSAGE_MAX_WORDS)
+        preset = cls.PRESETS.get(personality, cls.PRESETS["gen_z_default"])
+        return preset.get("max_words", cls.MESSAGE_MAX_WORDS)
 
     @classmethod
     def get_tone_examples(cls, personality: PersonalityPreset = None) -> list[str]:
         """Get tone examples for specified personality."""
         personality = personality or cls.PERSONALITY
-        preset = cls.PRESETS.get(personality, cls.PRESETS['gen_z_default'])
-        return preset.get('tone_examples', [])
+        preset = cls.PRESETS.get(personality, cls.PRESETS["gen_z_default"])
+        return preset.get("tone_examples", [])
 
     @classmethod
     def build_context_prompt(
-        cls,
-        user_message: str,
-        personality: PersonalityPreset = None,
-        user_context: Dict = None
+        cls, user_message: str, personality: PersonalityPreset = None, user_context: Dict = None
     ) -> str:
         """
         Build full prompt with personality, context, and user message.
@@ -198,11 +192,13 @@ class AIPersonalityConfig:
         # Ensure personality exists
         if cls.PERSONALITY not in cls.PRESETS:
             print(f"⚠️  AI_PERSONALITY='{cls.PERSONALITY}' not found, defaulting to 'gen_c_default'")
-            cls.PERSONALITY = 'gen_c_default'
+            cls.PERSONALITY = "gen_c_default"
 
         # Ensure max words is reasonable
         if cls.MESSAGE_MAX_WORDS < 10 or cls.MESSAGE_MAX_WORDS > 500:
-            print(f"⚠️  AI_MESSAGE_MAX_LENGTH={cls.MESSAGE_MAX_WORDS} out of range (10-500), using 50")
+            print(
+                f"⚠️  AI_MESSAGE_MAX_LENGTH={cls.MESSAGE_MAX_WORDS} out of range (10-500), using 50"
+            )
             cls.MESSAGE_MAX_WORDS = 50
 
         print(f"✅ AI Personality: {cls.PERSONALITY} (max {cls.get_max_words()} words)")

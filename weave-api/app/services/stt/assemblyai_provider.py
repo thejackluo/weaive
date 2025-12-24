@@ -48,13 +48,13 @@ class AssemblyAIProvider(STTProvider):
             STTProviderError: If API key is not configured
         """
         super().__init__(db)  # Initialize AIProviderBase
-        self.api_key = api_key or os.getenv('ASSEMBLYAI_API_KEY')
+        self.api_key = api_key or os.getenv("ASSEMBLYAI_API_KEY")
         if not self.api_key:
             raise STTProviderError(
                 message="ASSEMBLYAI_API_KEY not configured",
                 provider="assemblyai",
                 retryable=False,
-                error_code="ASSEMBLYAI_API_KEY_MISSING"
+                error_code="ASSEMBLYAI_API_KEY_MISSING",
             )
 
         # Configure AssemblyAI SDK
@@ -69,10 +69,7 @@ class AssemblyAIProvider(STTProvider):
         return self.api_key is not None and len(self.api_key) > 0
 
     async def transcribe(
-        self,
-        audio_file: bytes,
-        language: str = 'en',
-        **kwargs
+        self, audio_file: bytes, language: str = "en", **kwargs
     ) -> TranscriptionResult:
         """
         Transcribe audio using AssemblyAI API.
@@ -124,7 +121,7 @@ class AssemblyAIProvider(STTProvider):
             # Transcribe (blocks until complete - AssemblyAI SDK handles upload + polling)
             transcript = await asyncio.to_thread(
                 transcriber.transcribe,
-                audio_buffer  # Pass BytesIO buffer, not raw bytes
+                audio_buffer,  # Pass BytesIO buffer, not raw bytes
             )
 
             # Check for errors
@@ -133,7 +130,7 @@ class AssemblyAIProvider(STTProvider):
                     message=f"AssemblyAI transcription failed: {transcript.error}",
                     provider="assemblyai",
                     retryable=True,
-                    error_code="STT_PRIMARY_UNAVAILABLE"
+                    error_code="STT_PRIMARY_UNAVAILABLE",
                 )
 
             # Calculate confidence (average of word confidences)
@@ -149,7 +146,7 @@ class AssemblyAIProvider(STTProvider):
                 duration_sec=duration_sec,
                 language=language,
                 provider="assemblyai",
-                cost_usd=cost
+                cost_usd=cost,
             )
 
         except aai.types.TranscriptError as e:
@@ -158,7 +155,7 @@ class AssemblyAIProvider(STTProvider):
                 provider="assemblyai",
                 retryable=True,
                 error_code="STT_PRIMARY_UNAVAILABLE",
-                original_error=e
+                original_error=e,
             )
         except Exception as e:
             # Generic error (network, timeout, etc.)
@@ -167,7 +164,7 @@ class AssemblyAIProvider(STTProvider):
                 provider="assemblyai",
                 retryable=True,
                 error_code="STT_PRIMARY_UNAVAILABLE",
-                original_error=e
+                original_error=e,
             )
 
     def _calculate_confidence(self, transcript: aai.Transcript) -> float:
