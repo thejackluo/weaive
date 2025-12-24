@@ -82,8 +82,8 @@ export function useAIChat() {
     const response = await apiClient.post<{ data: ChatMessageResponse }>('/api/ai-chat/messages', {
       message,
       conversation_id,
-      include_context,  // Story 6.2
-      enable_tools,     // Story 6.2
+      include_context, // Story 6.2
+      enable_tools, // Story 6.2
     });
 
     return response.data.data;

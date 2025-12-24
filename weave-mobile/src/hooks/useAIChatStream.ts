@@ -13,11 +13,12 @@
 import React, { useState, useRef, useCallback } from 'react';
 // ✅ FIX: react-native-sse exports EventSource as default, not named export
 import EventSource from 'react-native-sse';
+import { useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/services/apiClient';
 import { getAccessToken } from '@/services/secureStorage';
 
 export interface StreamChunk {
-  type: 'chunk' | 'metadata' | 'done' | 'error';
+  type: 'chunk' | 'metadata' | 'done' | 'error' | 'tool_start' | 'tool_result' | 'tool_error';
   content?: string;
   message_id?: string;
   conversation_id?: string;
@@ -26,6 +27,20 @@ export interface StreamChunk {
   cost_usd?: number;
   code?: string;
   message?: string;
+  // Tool execution fields
+  tool_name?: string;
+  tool_input?: any;
+  tool_result?: any;
+  tool_error?: string;
+}
+
+export interface ToolExecution {
+  toolName: string;
+  status: 'starting' | 'running' | 'completed' | 'error';
+  input?: any;
+  result?: any;
+  error?: string;
+  timestamp: number;
 }
 
 export interface UseAIChatStreamReturn {
@@ -39,10 +54,13 @@ export interface UseAIChatStreamReturn {
     responseId?: string;
     tokensUsed?: number;
   };
+  toolExecutions: ToolExecution[];
+  currentTool: ToolExecution | null;
   cancelStream: () => void;
 }
 
 export function useAIChatStream(): UseAIChatStreamReturn {
+  const queryClient = useQueryClient();
   const [streamingContent, setStreamingContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +70,8 @@ export function useAIChatStream(): UseAIChatStreamReturn {
     responseId?: string;
     tokensUsed?: number;
   }>({});
+  const [toolExecutions, setToolExecutions] = useState<ToolExecution[]>([]);
+  const [currentTool, setCurrentTool] = useState<ToolExecution | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -107,6 +127,8 @@ export function useAIChatStream(): UseAIChatStreamReturn {
         setStreamingContent('');
         setError(null);
         setMetadata({});
+        setToolExecutions([]);
+        setCurrentTool(null);
         setIsStreaming(true);
 
         // Create AbortController for cancellation support
@@ -161,8 +183,8 @@ export function useAIChatStream(): UseAIChatStreamReturn {
           body: JSON.stringify({
             message,
             conversation_id: conversationId || null,
-            include_context: true,  // Story 6.2: Enable context building
-            enable_tools: true,     // Story 6.2: Enable tool calling
+            include_context: true, // Story 6.2: Enable context building
+            enable_tools: true, // Story 6.2: Enable tool calling
           }),
         });
 
@@ -179,6 +201,90 @@ export function useAIChatStream(): UseAIChatStreamReturn {
                 messageId: chunk.message_id,
                 conversationId: chunk.conversation_id,
               }));
+            } else if (chunk.type === 'tool_start') {
+              // Tool execution started
+              const toolExec: ToolExecution = {
+                toolName: chunk.tool_name || 'unknown',
+                status: 'starting',
+                input: chunk.tool_input,
+                timestamp: Date.now(),
+              };
+              setCurrentTool(toolExec);
+              setToolExecutions((prev) => [...prev, toolExec]);
+              if (__DEV__) console.log('[TOOL_EXEC] 🔧 Tool started:', toolExec.toolName);
+            } else if (chunk.type === 'tool_result') {
+              // Tool execution completed
+              const toolName = chunk.tool_name;
+              if (toolName) {
+                // Update tool executions array - find most recent tool with matching name
+                setToolExecutions((prev) => {
+                  const toolIndex = prev.findIndex((t) => t.toolName === toolName && t.status === 'starting');
+                  if (toolIndex >= 0) {
+                    const updated = [...prev];
+                    const completedTool = {
+                      ...prev[toolIndex],
+                      status: 'completed' as const,
+                      result: chunk.tool_result,
+                    };
+                    updated[toolIndex] = completedTool;
+
+                    // Show completed state in indicator
+                    setCurrentTool(completedTool);
+
+                    // Auto-clear after 2.5 seconds so user sees success state
+                    setTimeout(() => {
+                      setCurrentTool(null);
+                    }, 2500);
+
+                    return updated;
+                  }
+                  return prev;
+                });
+
+                if (__DEV__)
+                  console.log('[TOOL_EXEC] ✅ Tool completed:', toolName, chunk.tool_result);
+
+                // ✅ Invalidate relevant caches to update app state
+                if (toolName === 'modify_identity_document') {
+                  queryClient.invalidateQueries({ queryKey: ['identity-doc'] });
+                  if (__DEV__) console.log('[CACHE] 🔄 Invalidated identity-doc cache');
+                } else if (toolName === 'modify_personality') {
+                  queryClient.invalidateQueries({ queryKey: ['personality'] });
+                  if (__DEV__) console.log('[CACHE] 🔄 Invalidated personality cache');
+                }
+              }
+            } else if (chunk.type === 'tool_error') {
+              // Tool execution failed
+              const toolName = chunk.tool_name;
+              if (toolName) {
+                // Update tool executions array - find most recent tool with matching name
+                setToolExecutions((prev) => {
+                  const toolIndex = prev.findIndex((t) => t.toolName === toolName && t.status === 'starting');
+                  if (toolIndex >= 0) {
+                    const updated = [...prev];
+                    const errorTool = {
+                      ...prev[toolIndex],
+                      status: 'error' as const,
+                      error: chunk.tool_error || 'Unknown tool error',
+                    };
+                    updated[toolIndex] = errorTool;
+
+                    // Show error state in indicator
+                    setCurrentTool(errorTool);
+
+                    // Auto-clear after 3 seconds so user sees error state
+                    setTimeout(() => {
+                      setCurrentTool(null);
+                    }, 3000);
+
+                    return updated;
+                  }
+                  return prev;
+                });
+
+                if (__DEV__)
+                  console.log('[TOOL_EXEC] ❌ Tool failed:', toolName, chunk.tool_error);
+              }
             } else if (chunk.type === 'chunk') {
               // Append content chunk
               if (chunk.content) {
@@ -265,6 +371,8 @@ export function useAIChatStream(): UseAIChatStreamReturn {
     isStreaming,
     error,
     metadata,
+    toolExecutions,
+    currentTool,
     cancelStream,
   };
 }
