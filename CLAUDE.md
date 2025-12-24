@@ -94,9 +94,31 @@ python scripts/generate_api.py <resource>     # Auto-generates router, schemas, 
 python scripts/generate_api.py goal           # Example: creates goals router
 ```
 
+**Quick Start: Creating Your First API**
+
+New to backend development on this project? Start here:
+1. 📖 Read `docs/dev/backend-quick-start.md` (30-minute walkthrough) ⚡ Coming in AC-11
+2. 🚀 Run `python scripts/generate_api.py <resource>` to scaffold
+3. ✏️ Follow step-by-step guide to implement your first endpoint
+
+Example: `python scripts/generate_api.py goal` creates Goals API scaffold with:
+- `app/api/goals/router.py` (5 CRUD endpoints with 501 stubs)
+- `app/schemas/goal.py` (GoalCreate, GoalUpdate, GoalResponse)
+- `tests/test_goals_api.py` (5 integration tests)
+
+**Developer Guides:**
+- `docs/dev/backend-patterns-guide.md` - Comprehensive patterns reference
+- `docs/dev/backend-api-integration.md` - 28 API endpoint registry
+- `docs/dev/backend-quick-start.md` - Step-by-step first API walkthrough ⚡ AC-11
+- `docs/api-error-codes.md` - Complete error code catalog (17 codes) ⚡ AC-10
+
+**Error Handling (Story 0.8 Complete via AC-10):**
+- ✅ 17 standard error codes (VALIDATION_ERROR, NOT_FOUND, RATE_LIMIT_EXCEEDED, etc.)
+- ✅ Error response format: `{error, message, retryable, retryAfter?}`
+- ✅ Exception handlers and utilities in `app/core/errors.py`
+- 📖 See `docs/api-error-codes.md` for complete catalog
+
 **Full Spec:** `docs/stories/1-5-2-backend-standardization.md`
-**Developer Guide:** `docs/dev/backend-patterns-guide.md` (created by Story 1.5.2)
-**API Endpoint Registry:** `docs/dev/backend-api-integration.md` (28 endpoints mapped)
 
 ---
 

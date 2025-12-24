@@ -3,8 +3,10 @@
 **Status:** ready-for-dev
 **Epic:** 1.5 - Development Infrastructure
 **Priority:** S (Should Have)
-**Estimate:** 7-9 story points
+**Estimate:** 9-11 story points (EXPANDED 2025-12-23 to include Story 0.8 completion + template usability)
 **Type:** Infrastructure
+
+**⚡ SPRINT CHANGE (2025-12-23):** Story expanded to merge Story 0.8 (Error Handling Framework) completion. Story 1.5.2 implementation already includes 90% of Story 0.8's backend requirements. Added AC-10 (complete Story 0.8) and AC-11 (template usability) to avoid duplicate work and improve developer experience. See: `docs/sprint-artifacts/sprint-change-proposals/sprint-change-proposal-story-1.5.2-merge-0.8-20251223.md`
 
 ---
 
@@ -624,6 +626,162 @@ def test_get_goal_not_implemented(client: TestClient, auth_headers):
 
 ---
 
+### AC-10: Complete Story 0.8 Error Handling Framework
+
+**Context:** Story 1.5.2 implementation already includes 90% of Story 0.8's backend error handling requirements. Complete the remaining 10% to deliver both stories at a higher standard and avoid duplicate work.
+
+**Story 0.8 Gap Analysis:**
+- ✅ Standard error format: MOSTLY COMPLETE (missing `retryAfter`)
+- ✅ HTTP status codes: EXCEEDED (17 codes vs 5 required)
+- ✅ Error response utilities: COMPLETE (app/core/errors.py, 492 lines)
+- ❌ `retryAfter` field: MISSING
+- ❌ API error codes documentation: MISSING
+- ⚠️ Exception handlers: CREATED but NOT REGISTERED
+
+**Tasks:**
+
+**1. Add `retryAfter` Field to Error Response Format**
+- [ ] Update `format_error_response()` in `app/core/errors.py`:
+  ```python
+  def format_error_response(
+      code: str,
+      message: str,
+      retryable: bool = False,
+      retry_after: Optional[int] = None  # NEW: Seconds until retry allowed
+  ) -> Dict[str, Any]:
+      response = {
+          "error": code,
+          "message": message,
+          "retryable": retryable
+      }
+      if retry_after is not None:  # NEW
+          response["retryAfter"] = retry_after
+      return response
+  ```
+- [ ] Use case: Rate limiting errors (429) return `retryAfter: 3600` (1 hour)
+- [ ] Example: `format_error_response("RATE_LIMIT_EXCEEDED", "Too many requests", retryable=True, retry_after=3600)`
+
+**2. Create API Error Codes Documentation**
+- [ ] Create `docs/api-error-codes.md` with comprehensive error catalog
+- [ ] Sections:
+  1. **Client Errors (4xx):** VALIDATION_ERROR, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, CONFLICT, RATE_LIMIT_EXCEEDED
+  2. **Business Logic Errors (400):** GOAL_LIMIT_EXCEEDED, INVALID_STATUS_TRANSITION, DUPLICATE_RESOURCE
+  3. **Server Errors (5xx):** INTERNAL_ERROR, NOT_IMPLEMENTED, SERVICE_UNAVAILABLE
+  4. **External Service Errors:** DATABASE_ERROR, AI_SERVICE_ERROR, STORAGE_ERROR, EXTERNAL_API_ERROR
+- [ ] For each error code, document:
+  - HTTP status code
+  - Retryable (yes/no)
+  - Example scenarios
+  - Frontend handling recommendation
+  - retryAfter behavior (if applicable)
+
+**3. Exception Handler Registration (Decision Point)**
+- [ ] **Decision:** Register exception handlers in `main.py` for consistent error responses
+- [ ] Recommended: Register handlers (Option A)
+- [ ] If registered:
+  ```python
+  # app/main.py
+  from app.core.errors import (
+      app_exception_handler,
+      validation_exception_handler,
+      generic_exception_handler,
+      AppException
+  )
+  from fastapi.exceptions import RequestValidationError
+
+  app.add_exception_handler(AppException, app_exception_handler)
+  app.add_exception_handler(RequestValidationError, validation_exception_handler)
+  app.add_exception_handler(Exception, generic_exception_handler)
+  ```
+- [ ] Document decision and rationale
+
+**4. Mobile Error Handling Hooks**
+- [ ] **Decision:** Defer to Epic 1 UI stories (frontend work, out of scope for backend story)
+- [ ] Document deferral decision
+
+**Story 0.8 Completion Criteria:**
+- [ ] `retryAfter` field added and tested
+- [ ] `docs/api-error-codes.md` complete with all 17 error codes
+- [ ] Exception handler registration decision documented
+- [ ] Mobile hooks deferred with rationale documented
+- [ ] All Story 0.8 backend acceptance criteria met
+
+---
+
+### AC-11: Template Usability Improvements
+
+**Goal:** Make templates immediately useful for Epic 2-8 developers with clear, actionable guidance
+
+**Problem:** Templates exist but developers don't have a "start here" guide for using them effectively
+
+**Solution:** Create comprehensive Quick Start Guide with step-by-step walkthrough
+
+**Tasks:**
+
+**1. Create Backend Quick Start Guide**
+- [ ] Create `docs/dev/backend-quick-start.md` (new file)
+- [ ] Structure:
+
+  **Section 1: "I Want to Create a New API Endpoint"**
+  - Prerequisites checklist (Story 0.3 auth, Story 0.4 RLS)
+  - 5-step process overview
+  - Expected time: 30 minutes
+
+  **Section 2: Step-by-Step Walkthrough (Using Goals API as Example)**
+  - Step 1: Generate API Scaffold (2 minutes) - `python scripts/generate_api.py goal`
+  - Step 2: Define Your Schemas (5 minutes) - Edit `app/schemas/goal.py`
+  - Step 3: Implement Router Logic (15 minutes) - Replace 501 stubs in `app/api/goals/router.py`
+  - Step 4: Write Tests (5 minutes) - Replace 501 tests with real tests
+  - Step 5: Register Router & Test (3 minutes) - Add to main.py, run pytest
+
+  **Section 3: Common Patterns**
+  - Pagination best practices
+  - Filtering and sorting
+  - Error handling (using app.core.errors)
+  - Service layer decision (when to extract)
+
+  **Section 4: Troubleshooting**
+  - Router not registered → Check main.py
+  - Auth failing → Check get_current_user import
+  - Tests failing → Check fixtures in conftest.py
+  - Database errors → Check RLS policies
+
+**2. Enhance Scaffolding Script (Optional)**
+- [ ] Add help text: `python scripts/generate_api.py --help`
+- [ ] Add interactive mode: Prompts for resource name if not provided
+- [ ] Add validation: Prevent invalid resource names (spaces, capitals)
+- [ ] Add success message with next steps:
+  ```
+  ✅ Generated API scaffold for 'goal'
+
+  Files created:
+  - app/api/goals/router.py (5 endpoints)
+  - app/schemas/goal.py (3 schemas)
+  - tests/test_goals_api.py (5 tests)
+
+  Next steps:
+  1. Define schemas in app/schemas/goal.py
+  2. Implement router logic in app/api/goals/router.py
+  3. Register router in app/main.py
+  4. Run tests: uv run pytest tests/test_goals_api.py -v
+
+  See docs/dev/backend-quick-start.md for detailed walkthrough
+  ```
+
+**3. Update CLAUDE.md**
+- [ ] Add "Quick Start: Creating Your First API" section under Story 1.5.2
+- [ ] Include link to backend-quick-start.md
+- [ ] Include link to api-error-codes.md
+- [ ] Confirm Story 0.8 completion
+
+**Completion Criteria:**
+- [ ] `docs/dev/backend-quick-start.md` created with complete walkthrough
+- [ ] Scaffolding script enhanced with better CLI (or documented as optional)
+- [ ] CLAUDE.md updated with quick start reference and error handling section
+- [ ] At least 1 developer successfully creates API using guide (validation)
+
+---
+
 ## Story Points Breakdown
 
 | Task | Estimate | Rationale |
@@ -634,8 +792,10 @@ def test_get_goal_not_implemented(client: TestClient, auth_headers):
 | Testing conventions + fixtures | 1 pt | Pytest fixtures, integration test template |
 | **API endpoint mapping (AC-9)** | **2-3 pts** | **28 endpoint stubs + tests across 7 router files** |
 | Backend patterns guide + API integration guide | 1-2 pts | Comprehensive developer documentation (2 guides) |
+| **Story 0.8 completion (AC-10)** | **1 pt** | **retryAfter field, api-error-codes.md, handler registration decision** |
+| **Template usability (AC-11)** | **1 pt** | **Quick start guide, enhanced CLI (optional), CLAUDE.md updates** |
 
-**Total: 7-9 story points**
+**Total: 9-11 story points** (expanded to include Story 0.8 + usability improvements)
 
 ---
 
@@ -666,6 +826,19 @@ def test_get_goal_not_implemented(client: TestClient, auth_headers):
 - [ ] `docs/dev/backend-api-integration.md` created (API endpoint registry + implementation checklist)
 - [ ] `docs/architecture/implementation-patterns-consistency-rules.md` updated with Story 1.5.2 reference
 - [ ] `CLAUDE.md` updated with link to backend standardization docs
+
+### Story 0.8 Completion (AC-10)
+- [ ] `retryAfter` field added to `format_error_response()` function
+- [ ] `docs/api-error-codes.md` created with all 17 error codes documented
+- [ ] Exception handler registration decision documented
+- [ ] Mobile error hooks deferred (documented in sprint artifacts)
+- [ ] Test added for `retryAfter` field functionality
+
+### Template Usability (AC-11)
+- [ ] `docs/dev/backend-quick-start.md` created with step-by-step walkthrough
+- [ ] Scaffolding script enhanced with help text and success messages (optional)
+- [ ] CLAUDE.md updated with "Quick Start: Creating Your First API" section
+- [ ] At least 1 developer successfully follows quick start guide (validation)
 
 ### Code Review
 - [ ] Code reviewed and approved
