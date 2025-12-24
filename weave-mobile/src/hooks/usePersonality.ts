@@ -4,13 +4,15 @@
  * Manages AI personality state and switching logic
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   switchPersonality as apiSwitchPersonality,
   PersonalityType,
   PersonalityDetails,
 } from '@/services/personalityApi';
 import { useAuth } from '@/contexts/AuthContext';
+import apiClient from '@/services/apiClient';
 
 /**
  * Hook state
@@ -62,12 +64,39 @@ const DEFAULT_WEAVE_PERSONALITY: PersonalityDetails = {
  */
 export function usePersonality(): UsePersonalityReturn {
   const { session } = useAuth();
+  const queryClient = useQueryClient();
 
   const [personality, setPersonality] = useState<PersonalityDetails | null>(
     DEFAULT_WEAVE_PERSONALITY
   );
   const [isSwitching, setIsSwitching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ✅ FIX: Fetch personality from backend on mount
+  const { data: personalityData, isLoading } = useQuery({
+    queryKey: ['personality'],
+    queryFn: async () => {
+      if (!session?.access_token) return null;
+      try {
+        const response = await apiClient.get('/api/personality');
+        return response.data.data as PersonalityDetails;
+      } catch (err) {
+        if (__DEV__) console.error('[PERSONALITY] Failed to fetch:', err);
+        return DEFAULT_WEAVE_PERSONALITY;
+      }
+    },
+    enabled: !!session?.access_token,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // ✅ FIX: Update local state when query data changes
+  useEffect(() => {
+    if (personalityData) {
+      setPersonality(personalityData);
+      if (__DEV__)
+        console.log('[PERSONALITY] Loaded:', personalityData.personality_type, personalityData.name);
+    }
+  }, [personalityData]);
 
   /**
    * Switch to a different personality
@@ -91,6 +120,10 @@ export function usePersonality(): UsePersonalityReturn {
         const response = await apiSwitchPersonality(session.access_token, newPersonality);
 
         setPersonality(response.data.personality_details);
+
+        // ✅ FIX: Invalidate query to trigger refetch
+        queryClient.invalidateQueries({ queryKey: ['personality'] });
+        if (__DEV__) console.log('[PERSONALITY] Switched to:', newPersonality);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to switch personality';
         setError(errorMessage);
@@ -99,7 +132,7 @@ export function usePersonality(): UsePersonalityReturn {
         setIsSwitching(false);
       }
     },
-    [session, personality]
+    [session, personality, queryClient]
   );
 
   /**
@@ -111,7 +144,7 @@ export function usePersonality(): UsePersonalityReturn {
 
   return {
     personality,
-    isSwitching,
+    isSwitching: isSwitching || isLoading,
     error,
     switchTo,
     clearError,
