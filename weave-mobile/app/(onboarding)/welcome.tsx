@@ -52,7 +52,7 @@ export default function WelcomeScreen() {
    */
   const _handleViewDesignSystem = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/(tabs)/design-system-showcase');
+    router.push('/(tabs)/design-system');
   };
 
   /**

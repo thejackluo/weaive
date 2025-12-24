@@ -41,7 +41,7 @@ export default function HomeScreen() {
       {/* Design System Buttons */}
       <View className="gap-3 w-full max-w-xs">
         <Pressable
-          onPress={() => router.push('/(tabs)/design-system-showcase')}
+          onPress={() => router.push('/(tabs)/design-system')}
           className="bg-accent-500 px-6 py-4 rounded-lg active:opacity-80 active:scale-[0.98]"
         >
           <Text style={{ color: '#18181b', fontSize: 14, fontWeight: '500', letterSpacing: 1, textAlign: 'center' }}>

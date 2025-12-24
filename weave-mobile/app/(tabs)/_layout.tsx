@@ -369,7 +369,7 @@ export default function TabLayout() {
 
         {/* HIDDEN ROUTES (Not visible in tab bar) */}
         <Tabs.Screen name="ai-chat" options={{ href: null }} />
-        <Tabs.Screen name="design-system-showcase" options={{ href: null }} />
+        <Tabs.Screen name="design-system" options={{ href: null }} />
         <Tabs.Screen name="needles" options={{ href: null }} />
         <Tabs.Screen name="sitemap" options={{ href: null }} />
 
