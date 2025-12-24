@@ -193,6 +193,9 @@ Request → AIOrchestrator (NEW - which product module?)
 ```bash
 cd weave-mobile
 
+# IMPORTANT: After pulling new code, always sync dependencies first
+npm install
+
 # Start Expo dev server (most common)
 npm start
 

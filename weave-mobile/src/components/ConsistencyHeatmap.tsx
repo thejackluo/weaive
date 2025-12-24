@@ -24,20 +24,20 @@ import {
   StyleSheet,
   ActivityIndicator,
   Pressable,
-  ScrollView,
   FlatList,
+  ScrollView,
   Dimensions,
-  NativeScrollEvent,
   NativeSyntheticEvent,
-  Modal,
-  TextInput,
+  NativeScrollEvent,
 } from 'react-native';
-import { Text, Card, Button } from '@/design-system';
+import { Text, Card } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useConsistencyData } from '@/hooks/useConsistencyData';
+import { useGetJournalsByDateRange } from '@/hooks/useJournal';
+import { useBindsGrid } from '@/hooks/useBindsGrid';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { DayDetailsModal } from '@/components/dashboard/DayDetailsModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -61,7 +61,6 @@ interface DayHeader {
   fullDate: string;
 }
 
-// Sample needle/bind data structure for demo
 interface SampleNeedle {
   id: string;
   title: string;
@@ -75,19 +74,38 @@ export function ConsistencyHeatmap({
   filterId,
   onFilterChange,
   onTimeframeChange,
-  trendPercentage = 2,
+  trendPercentage: _trendPercentageProp,
 }: ConsistencyHeatmapProps) {
-  const router = useRouter();
   const { colors } = useTheme();
   const { data, isLoading, isError, error } = useConsistencyData(timeframe, filterType, filterId);
+  const {
+    data: bindsGridData,
+    isLoading: isBindsGridLoading,
+    isError: isBindsGridError,
+  } = useBindsGrid();
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
 
-  // State for needle/bind filtering
-  const [selectedNeedleIndex, setSelectedNeedleIndex] = useState(0);
-  const [selectedBindIndex, setSelectedBindIndex] = useState(0);
-  const [bindSearchQuery, setBindSearchQuery] = useState('');
-  const scrollViewRef = useRef<ScrollView>(null);
-  const needleFlatListRef = useRef<FlatList>(null);
+  // Fetch journal entries for Thread consistency view (7d timeframe)
+  const today = new Date();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6); // Last 7 days including today
+
+  const startDate = sevenDaysAgo.toISOString().split('T')[0];
+  const endDate = today.toISOString().split('T')[0];
+
+  const { data: journalData, isLoading: journalLoading } = useGetJournalsByDateRange(
+    startDate,
+    endDate
+  );
+
+  // Debug journal data
+  console.log('[CONSISTENCY_HEATMAP] Journal data debug:', {
+    startDate,
+    endDate,
+    journalLoading,
+    journalDataLength: journalData?.length || 0,
+    journalData: journalData?.map((j) => ({ date: j.local_date, score: j.fulfillment_score })),
+  });
 
   // State for modals
   const [showDayDetailsModal, setShowDayDetailsModal] = useState(false);
@@ -97,56 +115,84 @@ export function ConsistencyHeatmap({
     completionRate: number;
   } | null>(null);
 
-  // Temporary: Force sample data for demo purposes until user has real data
-  const FORCE_SAMPLE_DATA = false;
+  // State for needle/bind filtering
+  const [selectedNeedleIndex, setSelectedNeedleIndex] = useState(0);
+  const [selectedBindIndex, setSelectedBindIndex] = useState(0);
+  const [bindSearchQuery, setBindSearchQuery] = useState('');
+  const [selectedDate, setSelectedDate] = useState<string>('');
+
+  // Refs for scrolling
+  const needleFlatListRef = useRef<FlatList>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const timeframeOptions: ('7d' | '2w' | '1m')[] = ['7d', '2w', '1m'];
 
-  if (isLoading && !FORCE_SAMPLE_DATA) {
-    return (
-      <Card variant="glass" style={styles.card}>
-        <ActivityIndicator size="large" color={colors.accent[500]} />
-      </Card>
-    );
+  // For 7d grid view, we need binds grid data (not daily aggregates)
+  if (timeframe === '7d') {
+    if (isBindsGridLoading) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <ActivityIndicator size="large" color={colors.accent[500]} />
+        </Card>
+      );
+    }
+
+    if (isBindsGridError) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <Text variant="textSm" style={{ color: colors.text.error }}>
+            Error loading bind data
+          </Text>
+        </Card>
+      );
+    }
+  } else {
+    // For heat map views (2w/1m), use daily aggregates
+    if (isLoading) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <ActivityIndicator size="large" color={colors.accent[500]} />
+        </Card>
+      );
+    }
+
+    if (isError) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <Text variant="textSm" style={{ color: colors.text.error }}>
+            Error loading consistency data: {error?.message}
+          </Text>
+        </Card>
+      );
+    }
   }
 
-  if (isError) {
+  const consistencyData = data?.data || [];
+
+  // Show empty state if no data
+  if (consistencyData.length === 0) {
     return (
       <Card variant="glass" style={styles.card}>
-        <Text variant="textSm" style={{ color: colors.text.error }}>
-          Error loading consistency data: {error?.message}
-        </Text>
+        <View style={styles.headerSection}>
+          <Text variant="textLg" weight="semibold">
+            Overall Consistency
+          </Text>
+          <Text variant="displayLg" weight="bold" style={styles.percentageText}>
+            0%
+          </Text>
+        </View>
+        <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
+        <View style={styles.emptyState}>
+          <Ionicons name="calendar-outline" size={64} color={colors.text.muted} />
+          <Text
+            variant="textBase"
+            style={{ color: colors.text.secondary, marginTop: 16, textAlign: 'center' }}
+          >
+            No consistency data yet. Complete some binds and your consistency will appear here!
+          </Text>
+        </View>
       </Card>
     );
-  }
-
-  let consistencyData = data?.data || [];
-
-  // Calculate expected days for timeframe
-  const timeframeDays = { '7d': 7, '2w': 14, '1m': 30 };
-  const expectedDays = timeframeDays[timeframe];
-
-  // If sparse or no data (less than 50% of expected days), show sample data
-  const useSampleData = FORCE_SAMPLE_DATA || consistencyData.length < expectedDays * 0.5;
-
-  if (useSampleData) {
-    // Generate sample data for the selected timeframe
-    consistencyData = Array.from({ length: expectedDays }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (expectedDays - 1 - i));
-
-      // Generate realistic sample percentages (60-90% range with some variation)
-      const basePercentage = 70;
-      const variation = Math.sin(i * 0.5) * 15; // Wave pattern
-      const percentage = Math.max(0, Math.min(100, basePercentage + variation));
-
-      return {
-        date: date.toISOString().split('T')[0],
-        completion_percentage: Math.round(percentage),
-        completed_count: percentage > 50 ? Math.floor(percentage / 25) : 0,
-        total_count: 4,
-      };
-    });
   }
 
   const getColorForPercentage = (percentage: number) => {
@@ -155,52 +201,82 @@ export function ConsistencyHeatmap({
     return colors.rose[500]; // Red - low
   };
 
-  // Sample needle data (for needle view)
-  const sampleNeedles: SampleNeedle[] = [
-    {
-      id: '1',
-      title: 'Make $1 Million in Profit this Year',
-      description: "Why: to live a free life that's not constrained to a job",
-      binds: [
-        { bindName: 'Deep Work', completions: [false, false, true, false, true, false, true] },
-        { bindName: 'Reading', completions: [false, true, false, true, true, true, true] },
-        { bindName: 'Meditation', completions: [true, true, true, true, false, true, true] },
-      ],
-    },
-    {
-      id: '2',
-      title: 'Get in Best Physical Shape',
-      description: 'Why: to feel confident and energized',
-      binds: [
-        { bindName: 'Workout', completions: [true, true, true, true, true, true, true] },
-        { bindName: 'Meal Prep', completions: [true, false, true, true, false, true, true] },
-      ],
-    },
-    {
-      id: '3',
-      title: 'Build Strong Relationships',
-      description: 'Why: to have meaningful connections',
-      binds: [
-        { bindName: 'Daily Check-in', completions: [true, true, false, true, true, true, false] },
-        { bindName: 'Quality Time', completions: [false, true, true, false, true, true, true] },
-      ],
-    },
-  ];
+  // Process journal data for thread consistency view
+  // Convert journal entries to completion boolean array for last 7 days
+  const getJournalCompletionData = (): BindCompletionData[] => {
+    if (!journalData || journalData.length === 0) {
+      console.log('[CONSISTENCY_HEATMAP] No journal data - returning empty completions');
+      // Return empty array with no completions
+      return [
+        {
+          bindName: 'Daily Check-in',
+          completions: [false, false, false, false, false, false, false],
+        },
+      ];
+    }
+
+    // Create map of dates to journal entries
+    const journalMap = new Map(journalData.map((j) => [j.local_date, j]));
+    console.log('[CONSISTENCY_HEATMAP] Journal map:', Array.from(journalMap.keys()));
+
+    // Generate completion array for last 7 days
+    const completions: boolean[] = [];
+    const dateChecks: { date: string; hasEntry: boolean }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() - i);
+      const dateStr = checkDate.toISOString().split('T')[0];
+      const hasEntry = journalMap.has(dateStr);
+      completions.push(hasEntry);
+      dateChecks.push({ date: dateStr, hasEntry });
+    }
+
+    console.log('[CONSISTENCY_HEATMAP] Date checks:', dateChecks);
+    console.log('[CONSISTENCY_HEATMAP] Final completions:', completions);
+
+    return [
+      {
+        bindName: 'Daily Check-in',
+        completions,
+      },
+    ];
+  };
+  // Get real needles data from API (for 7d view only)
+  const needles: SampleNeedle[] =
+    timeframe === '7d' && bindsGridData?.data.needles
+      ? bindsGridData.data.needles.map((needle) => ({
+          id: needle.id,
+          title: needle.title,
+          description: needle.description,
+          binds: needle.binds.map((bind) => ({
+            bindName: bind.name,
+            completions: bind.completions,
+          })),
+        }))
+      : [];
 
   // All binds combined (for bind and overall views)
-  const allBinds: BindCompletionData[] = sampleNeedles.flatMap((needle) => needle.binds);
+  const allBinds: BindCompletionData[] = needles.flatMap((needle) => needle.binds);
 
-  // Sample daily reflection data (for thread view)
-  const dailyReflections: BindCompletionData = {
-    bindName: 'Daily Reflection',
-    completions: [false, true, false, true, false, true, true],
-  };
+  // Real daily reflection data (for thread view)
+  const dailyReflections: BindCompletionData =
+    timeframe === '7d' && bindsGridData?.data.daily_reflection
+      ? {
+          bindName: 'Daily Reflection',
+          completions: bindsGridData.data.daily_reflection.completions,
+        }
+      : {
+          bindName: 'Daily Reflection',
+          completions: [false, false, false, false, false, false, false],
+        };
+
+  const dailyCheckInData: BindCompletionData[] = getJournalCompletionData();
 
   // Determine which binds to display based on filter type
   const getDisplayBinds = (): BindCompletionData[] => {
     switch (filterType) {
       case 'needle':
-        return sampleNeedles[selectedNeedleIndex]?.binds || [];
+        return needles[selectedNeedleIndex]?.binds || [];
       case 'bind': {
         const filtered = bindSearchQuery
           ? allBinds.filter((bind) =>
@@ -210,27 +286,19 @@ export function ConsistencyHeatmap({
         return filtered.length > 0 ? [filtered[selectedBindIndex]] : [];
       }
       case 'thread':
-        return [dailyReflections];
+        return dailyCheckInData;
       case 'overall':
       default:
-        return [...allBinds, dailyReflections];
+        // For now, only show Daily Check-in until bind completion history API is added
+        return dailyCheckInData;
     }
   };
 
   const displayBinds = getDisplayBinds();
 
-  // Calculate consistency percentage (used in both views)
+  // Calculate consistency percentage from API data (all timeframes now use real data)
   const calculateConsistencyPercentage = () => {
-    if (timeframe === '7d') {
-      // For 7d bind view, calculate from displayed bind completions
-      const totalCompletions = displayBinds.reduce(
-        (sum, bind) => sum + bind.completions.filter((c) => c).length,
-        0
-      );
-      const totalPossible = displayBinds.length * 7;
-      return totalPossible > 0 ? Math.round((totalCompletions / totalPossible) * 100) : 0;
-    }
-    // For heat map view, calculate from daily aggregates
+    // Use API data for all timeframes (no more mock data calculations)
     const totalDays = consistencyData.length;
     const completedDays = consistencyData.filter((d) => d.completion_percentage >= 50).length;
     return totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
@@ -238,19 +306,38 @@ export function ConsistencyHeatmap({
 
   const consistencyPercentage = calculateConsistencyPercentage();
 
-  // Handler for opening day details modal
-  const handleDayPress = (date: string, completionRate: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSelectedDayData({ date, completionRate });
-    setShowDayDetailsModal(true);
+  // Calculate trend percentage (comparing first half vs second half)
+  const calculateTrendPercentage = (): number => {
+    if (consistencyData.length === 0) return 0;
+    if (consistencyData.length === 1) return 0; // Can't calculate trend with 1 point
+
+    const midpoint = Math.floor(consistencyData.length / 2);
+    const firstHalf = consistencyData.slice(0, midpoint);
+    const secondHalf = consistencyData.slice(midpoint);
+
+    if (firstHalf.length === 0 || secondHalf.length === 0) return 0;
+
+    // Count active days in each half
+    const firstActiveCount = firstHalf.filter((d) => d.completion_percentage >= 50).length;
+    const secondActiveCount = secondHalf.filter((d) => d.completion_percentage >= 50).length;
+
+    const firstPercentage = (firstActiveCount / firstHalf.length) * 100;
+    const secondPercentage = (secondActiveCount / secondHalf.length) * 100;
+
+    if (firstPercentage === 0) return Math.round(secondPercentage);
+
+    // Calculate percentage change
+    const percentChange = ((secondPercentage - firstPercentage) / firstPercentage) * 100;
+    return Math.round(percentChange);
   };
 
-  // Handler for navigating to day's entries
-  const handleViewDayEntries = () => {
-    if (selectedDayData) {
-      setShowDayDetailsModal(false);
-      router.push(`/(tabs)/progress/${selectedDayData.date}`);
-    }
+  const trendPercentage = calculateTrendPercentage();
+
+  // Handler for opening day details modal
+  const handleDayPress = (date: string, _completionRate: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelectedDate(date);
+    setShowDayDetailsModal(true);
   };
 
   // Get title based on filter type
@@ -357,7 +444,7 @@ export function ConsistencyHeatmap({
     const offsetX = event.nativeEvent.contentOffset.x;
     const cardWidth = SCREEN_WIDTH - 48 + 16; // Card width + spacing
     const index = Math.round(offsetX / cardWidth);
-    if (index !== selectedNeedleIndex && index >= 0 && index < sampleNeedles.length) {
+    if (index !== selectedNeedleIndex && index >= 0 && index < needles.length) {
       setSelectedNeedleIndex(index);
       Haptics.selectionAsync();
     }
@@ -374,7 +461,7 @@ export function ConsistencyHeatmap({
       <View style={styles.needleSwipeContainer}>
         <FlatList
           ref={needleFlatListRef}
-          data={sampleNeedles}
+          data={needles}
           horizontal
           pagingEnabled={false}
           showsHorizontalScrollIndicator={false}
@@ -413,9 +500,9 @@ export function ConsistencyHeatmap({
               </View>
 
               {/* Pagination dots */}
-              {sampleNeedles.length > 1 && (
+              {needles.length > 1 && (
                 <View style={styles.paginationDots}>
-                  {sampleNeedles.map((_, index) => (
+                  {needles.map((_, index) => (
                     <Pressable
                       key={index}
                       onPress={() => {
@@ -566,18 +653,70 @@ export function ConsistencyHeatmap({
     </View>
   );
 
-  // 7d: Show bind grid view with daily checkmarks
-  if (timeframe === '7d') {
-    // Generate day headers for last 7 days
-    const dayHeaders: DayHeader[] = [];
+  // Helper function to generate day headers for last 7 days
+  const getDayHeaders = (): DayHeader[] => {
+    const headers: DayHeader[] = [];
     for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      dayHeaders.push({
-        dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
-        dayOfMonth: date.getDate(),
-        fullDate: date.toISOString().split('T')[0],
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      headers.push({
+        dayOfWeek: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        dayOfMonth: d.getDate(),
+        fullDate: d.toISOString().split('T')[0],
       });
+    }
+    return headers;
+  };
+
+  const dayHeaders = getDayHeaders();
+
+  // 7d: Show grid view with bind completion data
+  if (timeframe === '7d') {
+    const showLoadingState =
+      (filterType === 'thread' && journalLoading) || (filterType === 'overall' && journalLoading);
+
+    if (showLoadingState) {
+      return (
+        <Card variant="glass" style={styles.card}>
+          <ActivityIndicator size="large" color={colors.accent[500]} />
+        </Card>
+      );
+    }
+
+    // Show empty state for Needle and Bind views (no data available yet)
+    if (filterType === 'needle' || filterType === 'bind') {
+      return (
+        <Card variant="glass" style={styles.sevenDayCard}>
+          {renderHeader()}
+
+          {/* Separator line */}
+          <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
+
+          {renderFilterTabs()}
+
+          {/* Empty state message */}
+          <View style={styles.emptyState}>
+            <Ionicons name="calendar-outline" size={64} color={colors.text.muted} />
+            <Text
+              variant="textBase"
+              style={{ color: colors.text.secondary, marginTop: 16, textAlign: 'center' }}
+            >
+              {filterType === 'needle'
+                ? 'Needle-specific breakdown coming soon! Switch to Overall or Thread to see your consistency.'
+                : 'Bind-specific breakdown coming soon! Switch to Overall or Thread to see your consistency.'}
+            </Text>
+          </View>
+
+          {renderInsightBanner()}
+
+          {/* Day Details Modal */}
+          <DayDetailsModal
+            visible={showDayDetailsModal}
+            date={selectedDate}
+            onClose={() => setShowDayDetailsModal(false)}
+          />
+        </Card>
+      );
     }
 
     return (
@@ -587,186 +726,58 @@ export function ConsistencyHeatmap({
         {/* Separator line */}
         <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
 
-        {/* Needle card (for needle view) */}
-        {renderNeedleCard()}
-
-        {/* Bind selector (for bind view) */}
-        {renderBindSelector()}
-
         {renderFilterTabs()}
 
-        {/* Day headers */}
+        {/* Day header row */}
         <View style={styles.dayHeaderRow}>
-          {/* Empty corner cell for bind names column */}
           <View style={styles.bindNameColumnHeader} />
-
-          {/* Day header cells */}
-          {dayHeaders.map((day) => (
-            <View key={day.fullDate} style={styles.dayCell}>
-              <Text variant="textXs" style={{ color: colors.text.muted }}>
+          {dayHeaders.map((day, index) => (
+            <View key={index} style={styles.dayCell}>
+              <Text variant="textXs" style={{ color: colors.text.muted }} weight="medium">
                 {day.dayOfWeek}
               </Text>
-              <Text variant="textBase" weight="medium" style={{ marginTop: 2 }}>
+              <Text variant="textSm" weight="semibold">
                 {day.dayOfMonth}
               </Text>
             </View>
           ))}
         </View>
 
-        {/* Bind rows */}
+        {/* Bind completion rows */}
         {displayBinds.map((bind, bindIndex) => (
           <View key={bindIndex} style={styles.bindRow}>
-            {/* Bind name */}
             <View style={styles.bindNameCell}>
-              <Text variant="textBase" style={{ color: colors.text.secondary }}>
+              <Text variant="textSm" numberOfLines={2} style={{ color: colors.text.secondary }}>
                 {bind.bindName}
               </Text>
             </View>
-
-            {/* Completion cells */}
-            {bind.completions.map((completed, dayIndex) => {
-              const dayDate = dayHeaders[dayIndex].fullDate;
-              const completionRate = completed ? 100 : 0;
-              return (
-                <View key={dayIndex} style={styles.dayCell}>
-                  <Pressable onPress={() => handleDayPress(dayDate, completionRate)}>
-                    <View
-                      style={[
-                        styles.completionCircle,
-                        {
-                          backgroundColor: completed
-                            ? colors.background.secondary
-                            : colors.background.elevated,
-                        },
-                      ]}
-                    >
-                      {completed && (
-                        <Ionicons name="checkmark" size={18} color={colors.text.primary} />
-                      )}
-                    </View>
-                  </Pressable>
+            {bind.completions.map((completed, dayIndex) => (
+              <View key={dayIndex} style={styles.dayCell}>
+                <View
+                  style={[
+                    styles.completionCircle,
+                    {
+                      backgroundColor: completed
+                        ? colors.emerald[500]
+                        : colors.background.secondary,
+                    },
+                  ]}
+                >
+                  {completed && <Ionicons name="checkmark" size={20} color="white" />}
                 </View>
-              );
-            })}
+              </View>
+            ))}
           </View>
         ))}
 
         {renderInsightBanner()}
 
         {/* Day Details Modal */}
-        <Modal
+        <DayDetailsModal
           visible={showDayDetailsModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowDayDetailsModal(false)}
-        >
-          <Pressable style={styles.modalOverlay} onPress={() => setShowDayDetailsModal(false)}>
-            <Pressable
-              style={[styles.modalContent, { backgroundColor: colors.background.elevated }]}
-              onPress={(e) => e.stopPropagation()}
-            >
-              {selectedDayData && (
-                <>
-                  <Text variant="textLg" weight="bold" style={styles.modalDate}>
-                    {new Date(selectedDayData.date).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </Text>
-
-                  <View style={styles.modalSection}>
-                    <Text variant="textBase" style={{ color: colors.text.secondary }}>
-                      Completion Rate
-                    </Text>
-                    <Text variant="displayMd" weight="bold" style={styles.modalPercentage}>
-                      {selectedDayData.completionRate}%
-                    </Text>
-                  </View>
-
-                  <Button
-                    onPress={handleViewDayEntries}
-                    variant="primary"
-                    style={styles.modalButton}
-                  >
-                    View Day&apos;s Entries →
-                  </Button>
-
-                  <Pressable
-                    onPress={() => setShowDayDetailsModal(false)}
-                    style={styles.modalCloseButton}
-                  >
-                    <Text variant="textBase" style={{ color: colors.text.secondary }}>
-                      Close
-                    </Text>
-                  </Pressable>
-                </>
-              )}
-            </Pressable>
-          </Pressable>
-        </Modal>
-
-        {/* Search Modal */}
-        <Modal
-          visible={showSearchModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowSearchModal(false)}
-        >
-          <Pressable style={styles.modalOverlay} onPress={() => setShowSearchModal(false)}>
-            <Pressable
-              style={[styles.searchModalContent, { backgroundColor: colors.background.elevated }]}
-              onPress={(e) => e.stopPropagation()}
-            >
-              <View style={styles.searchModalHeader}>
-                <Text variant="textLg" weight="semibold">
-                  Search Binds
-                </Text>
-                <Pressable onPress={() => setShowSearchModal(false)}>
-                  <Ionicons name="close" size={24} color={colors.text.secondary} />
-                </Pressable>
-              </View>
-
-              <TextInput
-                style={[
-                  styles.searchInput,
-                  {
-                    backgroundColor: colors.background.secondary,
-                    color: colors.text.primary,
-                    borderColor: colors.border.muted,
-                  },
-                ]}
-                placeholder="Search for a bind..."
-                placeholderTextColor={colors.text.muted}
-                value={bindSearchQuery}
-                onChangeText={setBindSearchQuery}
-                autoFocus
-              />
-
-              <ScrollView style={styles.searchResults}>
-                {allBinds
-                  .filter((bind) =>
-                    bind.bindName.toLowerCase().includes(bindSearchQuery.toLowerCase())
-                  )
-                  .map((bind, index) => (
-                    <Pressable
-                      key={index}
-                      style={[styles.searchResultItem, { borderBottomColor: colors.border.muted }]}
-                      onPress={() => {
-                        Haptics.selectionAsync();
-                        setSelectedBindIndex(allBinds.indexOf(bind));
-                        setShowSearchModal(false);
-                        setBindSearchQuery('');
-                      }}
-                    >
-                      <Text variant="textBase">{bind.bindName}</Text>
-                      <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
-                    </Pressable>
-                  ))}
-              </ScrollView>
-            </Pressable>
-          </Pressable>
-        </Modal>
+          date={selectedDate}
+          onClose={() => setShowDayDetailsModal(false)}
+        />
       </Card>
     );
   }
@@ -833,115 +844,11 @@ export function ConsistencyHeatmap({
       {renderInsightBanner()}
 
       {/* Day Details Modal */}
-      <Modal
+      <DayDetailsModal
         visible={showDayDetailsModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowDayDetailsModal(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setShowDayDetailsModal(false)}>
-          <Pressable
-            style={[styles.modalContent, { backgroundColor: colors.background.elevated }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            {selectedDayData && (
-              <>
-                <Text variant="textLg" weight="bold" style={styles.modalDate}>
-                  {new Date(selectedDayData.date).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </Text>
-
-                <View style={styles.modalSection}>
-                  <Text variant="textBase" style={{ color: colors.text.secondary }}>
-                    Completion Rate
-                  </Text>
-                  <Text variant="displayMd" weight="bold" style={styles.modalPercentage}>
-                    {selectedDayData.completionRate}%
-                  </Text>
-                </View>
-
-                <Button onPress={handleViewDayEntries} variant="primary" style={styles.modalButton}>
-                  View Day&apos;s Entries →
-                </Button>
-
-                <Pressable
-                  onPress={() => setShowDayDetailsModal(false)}
-                  style={styles.modalCloseButton}
-                >
-                  <Text variant="textBase" style={{ color: colors.text.secondary }}>
-                    Close
-                  </Text>
-                </Pressable>
-              </>
-            )}
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* Search Modal */}
-      <Modal
-        visible={showSearchModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowSearchModal(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setShowSearchModal(false)}>
-          <Pressable
-            style={[styles.searchModalContent, { backgroundColor: colors.background.elevated }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={styles.searchModalHeader}>
-              <Text variant="textLg" weight="semibold">
-                Search Binds
-              </Text>
-              <Pressable onPress={() => setShowSearchModal(false)}>
-                <Ionicons name="close" size={24} color={colors.text.secondary} />
-              </Pressable>
-            </View>
-
-            <TextInput
-              style={[
-                styles.searchInput,
-                {
-                  backgroundColor: colors.background.secondary,
-                  color: colors.text.primary,
-                  borderColor: colors.border.muted,
-                },
-              ]}
-              placeholder="Search for a bind..."
-              placeholderTextColor={colors.text.muted}
-              value={bindSearchQuery}
-              onChangeText={setBindSearchQuery}
-              autoFocus
-            />
-
-            <ScrollView style={styles.searchResults}>
-              {allBinds
-                .filter((bind) =>
-                  bind.bindName.toLowerCase().includes(bindSearchQuery.toLowerCase())
-                )
-                .map((bind, index) => (
-                  <Pressable
-                    key={index}
-                    style={[styles.searchResultItem, { borderBottomColor: colors.border.muted }]}
-                    onPress={() => {
-                      Haptics.selectionAsync();
-                      setSelectedBindIndex(allBinds.indexOf(bind));
-                      setShowSearchModal(false);
-                      setBindSearchQuery('');
-                    }}
-                  >
-                    <Text variant="textBase">{bind.bindName}</Text>
-                    <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
-                  </Pressable>
-                ))}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        date={selectedDate}
+        onClose={() => setShowDayDetailsModal(false)}
+      />
     </Card>
   );
 }
@@ -1096,35 +1003,34 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 4,
   },
-  // Needle card styles
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  // Needle swipe view styles
   needleSwipeContainer: {
-    marginBottom: 16,
-    marginHorizontal: -24, // Extend to edges for full-width swipe
+    marginBottom: 20,
   },
   needleCard: {
     padding: 16,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
   },
   needleCardHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
+    marginBottom: 12,
   },
   needleColorIndicator: {
     width: 4,
-    height: 60,
+    height: 40,
     borderRadius: 2,
   },
   paginationDots: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 16,
+    marginTop: 12,
   },
   paginationDot: {
     width: 8,
@@ -1135,10 +1041,11 @@ const styles = StyleSheet.create({
   bindSelectorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
     marginBottom: 16,
   },
   bindScrollContent: {
+    flexDirection: 'row',
     gap: 8,
     paddingRight: 8,
   },
@@ -1153,68 +1060,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: SCREEN_WIDTH - 48,
-    borderRadius: 20,
-    padding: 32,
-    alignItems: 'center',
-  },
-  modalDate: {
-    marginBottom: 24,
-  },
-  modalSection: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  modalPercentage: {
-    marginTop: 8,
-  },
-  modalButton: {
-    width: '100%',
-    marginBottom: 16,
-  },
-  modalCloseButton: {
-    paddingVertical: 8,
-  },
-  // Search modal styles
-  searchModalContent: {
-    width: SCREEN_WIDTH,
-    height: '80%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 24,
-    marginTop: 'auto',
-  },
-  searchModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  searchInput: {
-    height: 48,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-  searchResults: {
-    flex: 1,
-  },
-  searchResultItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
   },
 });

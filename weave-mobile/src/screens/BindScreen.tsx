@@ -25,8 +25,19 @@ export function BindScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   // Fetch bind details (using existing useTodayBinds hook)
-  const { data } = useTodayBinds();
+  const { data, isLoading: isLoadingBinds } = useTodayBinds();
   const bind = data?.data.find((b) => b.id === id);
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('[BindScreen] Route params:', { id });
+    console.log('[BindScreen] Available binds:', data?.data?.length || 0);
+    console.log(
+      '[BindScreen] Bind IDs:',
+      data?.data?.map((b) => b.id)
+    );
+    console.log('[BindScreen] Found bind:', bind ? 'YES' : 'NO');
+  }, [id, data, bind]);
 
   // Completion mutation
   const completeMutation = useCompleteBind();
@@ -47,6 +58,21 @@ export function BindScreen() {
   const weekDays = ['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'];
   const weekCompletions = [true, true, false, false, false, false, false]; // TODO: Get from API
 
+  // Loading state
+  if (isLoadingBinds) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background.primary }]}
+        edges={['top']}
+      >
+        <View style={[styles.centerContent, { padding: spacing[4] }]}>
+          <Body style={{ color: colors.text.secondary }}>Loading bind...</Body>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Bind not found
   if (!bind) {
     return (
       <SafeAreaView
@@ -55,7 +81,15 @@ export function BindScreen() {
       >
         <View style={[styles.centerContent, { padding: spacing[4] }]}>
           <Body style={{ color: colors.text.secondary }}>Bind not found</Body>
-          <Button variant="secondary" onPress={() => router.back()}>
+          <Caption style={{ color: colors.text.muted, marginTop: spacing[2] }}>ID: {id}</Caption>
+          <Caption style={{ color: colors.text.muted }}>
+            Available binds: {data?.data?.length || 0}
+          </Caption>
+          <Button
+            variant="secondary"
+            onPress={() => router.back()}
+            style={{ marginTop: spacing[4] }}
+          >
             Go Back
           </Button>
         </View>

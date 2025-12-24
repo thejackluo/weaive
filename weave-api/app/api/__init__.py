@@ -11,6 +11,7 @@ __all__ = [
     "goals",
     "health",
     "journal_router",
+    "memories_router",
     "onboarding",
     "stats",
     "subscription_router",
