@@ -14,6 +14,7 @@
     "ios:16e": "expo run:ios --device \"iPhone 16e\"",
     "web": "expo start --web",
     "reset": "watchman watch-del-all && rm -rf node_modules && npm install && npm run start:clean",
+    "hard-reset": "bash ./scripts/hard-reset.sh",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
