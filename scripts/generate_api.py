@@ -120,12 +120,12 @@ def load_template(template_path: Path) -> str:
         return f.read()
 
 
-def replace_placeholders(content: str, resource: str, resources: str, Resource: str) -> str:
+def replace_placeholders(content: str, resource: str, resources: str, resource_class: str) -> str:
     """Replace template placeholders with actual resource names"""
     replacements = {
         "{resource}": resource,
         "{resources}": resources,
-        "{Resource}": Resource,
+        "{Resource}": resource_class,
         "{TABLE}": resources.upper(),  # For SQL constraints
     }
 
@@ -166,13 +166,13 @@ def write_file(output_path: Path, content: str, overwrite: bool = False) -> bool
 # GENERATION FUNCTIONS
 # ============================================================================
 
-def generate_router(resource: str, resources: str, Resource: str) -> Path:
+def generate_router(resource: str, resources: str, resource_class: str) -> Path:
     """Generate API router file"""
     # Load template
     template = load_template(API_ROUTER_TEMPLATE)
 
     # Replace placeholders
-    content = replace_placeholders(template, resource, resources, Resource)
+    content = replace_placeholders(template, resource, resources, resource_class)
 
     # Output path: weave-api/app/api/{resources}/router.py
     output_dir = API_DIR / resources
@@ -194,13 +194,13 @@ def generate_router(resource: str, resources: str, Resource: str) -> Path:
     return output_path
 
 
-def generate_schema(resource: str, resources: str, Resource: str) -> Path:
+def generate_schema(resource: str, resources: str, resource_class: str) -> Path:
     """Generate Pydantic schema file"""
     # Load template
     template = load_template(PYDANTIC_SCHEMA_TEMPLATE)
 
     # Replace placeholders
-    content = replace_placeholders(template, resource, resources, Resource)
+    content = replace_placeholders(template, resource, resources, resource_class)
 
     # Output path: weave-api/app/schemas/{resource}.py
     output_path = SCHEMAS_DIR / f"{resource}.py"
@@ -211,13 +211,13 @@ def generate_schema(resource: str, resources: str, Resource: str) -> Path:
     return output_path
 
 
-def generate_test(resource: str, resources: str, Resource: str) -> Path:
+def generate_test(resource: str, resources: str, resource_class: str) -> Path:
     """Generate test file"""
     # Load template
     template = load_template(TEST_TEMPLATE)
 
     # Replace placeholders
-    content = replace_placeholders(template, resource, resources, Resource)
+    content = replace_placeholders(template, resource, resources, resource_class)
 
     # Output path: weave-api/tests/test_{resource}_api.py
     output_path = TESTS_DIR / f"test_{resource}_api.py"
@@ -228,7 +228,7 @@ def generate_test(resource: str, resources: str, Resource: str) -> Path:
     return output_path
 
 
-def print_next_steps(resource: str, resources: str, Resource: str):
+def print_next_steps(resource: str, resources: str, resource_class: str):
     """Print instructions for next steps after generation"""
     print("\n" + "=" * 70)
     print("✅ Generated API scaffold for '{}'".format(resource))
@@ -237,7 +237,7 @@ def print_next_steps(resource: str, resources: str, Resource: str):
     print(f"""
 📁 FILES CREATED:
    - app/api/{resources}/router.py     (5 CRUD endpoints with 501 stubs)
-   - app/schemas/{resource}.py         ({Resource}Create, {Resource}Update, {Resource}Response)
+   - app/schemas/{resource}.py         ({resource_class}Create, {resource_class}Update, {resource_class}Response)
    - tests/test_{resource}_api.py      (5 integration tests)
 
 🚀 NEXT STEPS:
@@ -374,14 +374,14 @@ def main():
         sys.exit(1)
 
     # Get standardized names
-    resource, resources, Resource = get_resource_names(resource_name, resource_plural)
+    resource, resources, resource_class = get_resource_names(resource_name, resource_plural)
 
     print("=" * 70)
     print("🚀 GENERATING API SCAFFOLDING")
     print("=" * 70)
     print(f"Resource (singular): {resource}")
     print(f"Resource (plural):   {resources}")
-    print(f"Resource (class):    {Resource}")
+    print(f"Resource (class):    {resource_class}")
     print("=" * 70)
 
     # Check if templates exist
@@ -394,14 +394,14 @@ def main():
     print("\n📁 Generating files...\n")
 
     try:
-        generate_router(resource, resources, Resource)
-        generate_schema(resource, resources, Resource)
-        generate_test(resource, resources, Resource)
+        generate_router(resource, resources, resource_class)
+        generate_schema(resource, resources, resource_class)
+        generate_test(resource, resources, resource_class)
 
         print("\n✅ All files generated successfully!")
 
         # Print next steps
-        print_next_steps(resource, resources, Resource)
+        print_next_steps(resource, resources, resource_class)
 
     except Exception as e:
         print(f"\n❌ Error during generation: {e}")
