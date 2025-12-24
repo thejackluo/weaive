@@ -6,12 +6,13 @@ Provides standardized error codes, custom exceptions, and error formatting
 for consistent API error responses across all endpoints.
 """
 
-from typing import Any, Dict, Optional
-from fastapi import HTTPException, Request, status
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from pydantic import ValidationError
 import logging
+from typing import Any, Dict, Optional
+
+from fastapi import Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -230,6 +231,7 @@ def format_error_response(
     code: str,
     message: str,
     retryable: bool = False,
+    retry_after: Optional[int] = None,
     details: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
@@ -239,6 +241,7 @@ def format_error_response(
         code: Error code (use ErrorCode constants)
         message: Human-readable error message
         retryable: Whether client should retry
+        retry_after: Seconds until retry allowed (for rate limiting, typically 3600 for 1 hour)
         details: Optional additional error details
 
     Returns:
@@ -253,12 +256,26 @@ def format_error_response(
                 details={"field": "email"}
             )
         )
+
+    Example with retry_after (rate limiting):
+        return JSONResponse(
+            status_code=429,
+            content=format_error_response(
+                code=ErrorCode.RATE_LIMIT_EXCEEDED,
+                message="Too many requests",
+                retryable=True,
+                retry_after=3600  # 1 hour
+            )
+        )
     """
     response = {
         "error": code,
         "message": message,
         "retryable": retryable
     }
+
+    if retry_after is not None:
+        response["retryAfter"] = retry_after
 
     if details:
         response["details"] = details
@@ -313,12 +330,16 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
         }
     )
 
+    # Extract retry_after from details if present (e.g., for rate limiting)
+    retry_after = exc.details.get("retry_after") if exc.details else None
+
     return JSONResponse(
         status_code=exc.status_code,
         content=format_error_response(
             code=exc.code,
             message=exc.message,
             retryable=exc.retryable,
+            retry_after=retry_after,
             details=exc.details
         )
     )
