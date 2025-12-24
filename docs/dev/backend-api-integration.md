@@ -19,7 +19,7 @@
 
 ## API Endpoint Registry
 
-**Total: 28 API endpoints** across Epic 2-8
+**Total: 29 API endpoints** across Epic 2-8
 
 ### Epic 2: Goal Management (5 endpoints)
 
@@ -75,13 +75,65 @@
 
 ---
 
-### Epic 6: AI Coaching (3 endpoints)
+### Epic 6: AI Coaching (4 endpoints)
 
 | Method | Endpoint | Story | Description | Request Body | Response |
 |--------|----------|-------|-------------|--------------|----------|
 | POST | `/api/ai/chat` | 6.1, 6.2 | Send message to Dream Self Advisor | `{message, context?}` | `{"data": {response, conversation_id}, "meta": {...}}` |
 | GET | `/api/ai/chat/history` | 6.1 | Conversation history | Query: `conversation_id?`, `limit?` | `{"data": [messages], "meta": {...}}` |
+| GET | `/api/personality` | 6.2 | Get active personality configuration | - | `{"data": PersonalityResponse, "meta": {...}}` |
 | POST | `/api/ai/insights` | 6.4 | Trigger weekly pattern insights | - | `{"data": {job_id, status: "queued"}, "meta": {...}}` |
+
+#### Personality Configuration Details
+
+The `/api/personality` endpoint returns the user's active AI personality configuration, used by the `usePersonality` hook for frontend display and personality switching.
+
+**Request:**
+```http
+GET /api/personality
+Authorization: Bearer {jwt_token}
+```
+
+**Response Schema:**
+```json
+{
+  "data": {
+    "personality_type": "dream_self" | "weave_ai",
+    "name": "Jack",
+    "traits": ["curious", "ambitious"],
+    "speaking_style": "Direct but encouraging",
+    "system_prompt": "You are Jack, the user's Dream Self...",
+    "archetype": "The Builder",
+    "motivations": ["Financial freedom", "Impact"],
+    "failure_mode": "Inconsistency",
+    "preset": "gen_z_default" | null
+  },
+  "meta": {
+    "timestamp": "2025-12-24T10:00:00Z"
+  }
+}
+```
+
+**Frontend Integration:**
+```typescript
+import { usePersonality } from '@/hooks/usePersonality';
+
+function PersonalitySwitcher() {
+  const { personality, isSwitching, switchTo } = usePersonality();
+
+  return (
+    <View>
+      <Text>Current: {personality.name}</Text>
+      <Text>Type: {personality.personality_type}</Text>
+      <Button onPress={() => switchTo('dream_self')}>
+        Switch to Dream Self
+      </Button>
+    </View>
+  );
+}
+```
+
+**Implementation:** Story 6.2 (lines 1040-1081 in `ai_chat_router.py`)
 
 **Router file:** `weave-api/app/api/routers/ai.py`
 
