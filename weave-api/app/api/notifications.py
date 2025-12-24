@@ -6,10 +6,9 @@ This router provides endpoints for push notification management.
 All endpoints return 501 Not Implemented until implemented in Epic 7 stories.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from datetime import datetime, time
-from typing import Optional
 import logging
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.deps import get_current_user
 

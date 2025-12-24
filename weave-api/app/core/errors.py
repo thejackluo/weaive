@@ -115,11 +115,14 @@ RETRYABLE_ERROR_CODES = {
 # CUSTOM EXCEPTION CLASSES
 # ============================================================================
 
-class AppException(Exception):
+class AppException(Exception):  # noqa: N818
     """
     Base exception class for application errors
 
     Use this for business logic errors that should be returned to the client.
+
+    Note: Named "AppException" (not "AppError") following FastAPI/Python community
+    conventions. Suppressing N818 linting rule intentionally.
 
     Example:
         if goal_count >= 3:

@@ -6,8 +6,7 @@ AC-5: Error Handling Patterns
 RED Phase: Tests will fail until utilities are implemented.
 Generated: 2025-12-23
 """
-import pytest
-from app.core.errors import format_error_response, AppException
+from app.core.errors import AppException, format_error_response
 
 
 def test_format_error_response_with_required_fields():

@@ -8,8 +8,8 @@ Story 1.5.2: Backend API/Model Standardization
 RED Phase: All tests should fail until endpoints are implemented.
 Generated: 2025-12-23
 """
-import pytest
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)

@@ -6,8 +6,8 @@ AC-2: Database Model Standardization
 RED Phase: Tests will fail until BaseModel is implemented.
 Generated: 2025-12-23
 """
-import pytest
 from datetime import datetime
+
 from app.models.base import BaseModel
 
 
