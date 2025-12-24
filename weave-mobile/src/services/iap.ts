@@ -8,11 +8,56 @@
 
 import { Platform } from 'react-native';
 
+// Type definitions for expo-in-app-purchases
+declare namespace InAppPurchases {
+  enum IAPResponseCode {
+    OK = 0,
+    USER_CANCELED = 1,
+    ERROR = 2,
+    DEFERRED = 3,
+  }
+
+  interface IAPItemDetails {
+    productId: string;
+    title: string;
+    description: string;
+    price: string;
+    priceAmountMicros: number;
+    priceCurrencyCode: string;
+    type: 'subscription' | 'consumable' | 'non-consumable';
+  }
+
+  interface InAppPurchase {
+    productId: string;
+    orderId: string;
+    transactionReceipt: string;
+    acknowledged: boolean;
+    purchaseTime: number;
+  }
+
+  interface IAPQueryResponse<T> {
+    responseCode: IAPResponseCode;
+    results?: T[];
+  }
+
+  interface IAPModule {
+    connectAsync: () => Promise<void>;
+    disconnectAsync: () => Promise<void>;
+    getProductsAsync: (productIds: string[]) => Promise<IAPQueryResponse<IAPItemDetails>>;
+    purchaseItemAsync: (productId: string) => Promise<IAPQueryResponse<InAppPurchase>>;
+    getPurchaseHistoryAsync: () => Promise<IAPQueryResponse<InAppPurchase>>;
+    finishTransactionAsync: (purchase: InAppPurchase, consume: boolean) => Promise<void>;
+    setPurchaseListener: (
+      listener: (result: IAPQueryResponse<InAppPurchase>) => void
+    ) => { remove: () => void } | undefined;
+  }
+}
+
 // Conditionally import IAP module to prevent "Cannot find native module" errors in Expo Go
-let InAppPurchases: any = null;
+let iapModule: InAppPurchases.IAPModule | null = null;
 try {
-  InAppPurchases = require('expo-in-app-purchases');
-} catch (error) {
+  iapModule = require('expo-in-app-purchases') as InAppPurchases.IAPModule;
+} catch {
   if (__DEV__) {
     console.warn('⚠️ expo-in-app-purchases not available (requires development build)');
   }
@@ -61,18 +106,20 @@ export async function initializeIAP(): Promise<boolean> {
 
     // Check if native module is available
     // expo-in-app-purchases requires a development build or production build
-    if (!InAppPurchases || typeof InAppPurchases.connectAsync !== 'function') {
+    if (!iapModule || typeof iapModule.connectAsync !== 'function') {
       console.warn('⚠️ IAP native module not available (likely running in Expo Go)');
       return false;
     }
 
-    await InAppPurchases.connectAsync();
+    await iapModule.connectAsync();
     console.log('✅ IAP connection established');
     return true;
   } catch (error) {
     // Handle "Cannot find native module" error gracefully
     if (error instanceof Error && error.message.includes('Cannot find native module')) {
-      console.warn('⚠️ IAP native module not available. This requires a development build or production build.');
+      console.warn(
+        '⚠️ IAP native module not available. This requires a development build or production build.'
+      );
       return false;
     }
     console.error('❌ IAP initialization failed:', error);
@@ -87,11 +134,11 @@ export async function initializeIAP(): Promise<boolean> {
 export async function disconnectIAP(): Promise<void> {
   try {
     // Check if native module is available
-    if (!InAppPurchases || typeof InAppPurchases.disconnectAsync !== 'function') {
+    if (!iapModule || typeof iapModule.disconnectAsync !== 'function') {
       return; // Silently return if module not available
     }
 
-    await InAppPurchases.disconnectAsync();
+    await iapModule.disconnectAsync();
     console.log('✅ IAP connection closed');
   } catch (error) {
     // Handle "Cannot find native module" error gracefully
@@ -108,7 +155,10 @@ export async function disconnectIAP(): Promise<void> {
  */
 export async function fetchProducts(productIds: ProductId[]): Promise<Product[]> {
   try {
-    const response = await InAppPurchases.getProductsAsync(productIds);
+    if (!iapModule) {
+      throw new Error('IAP module not available');
+    }
+    const response = await iapModule.getProductsAsync(productIds);
 
     if (response.responseCode !== InAppPurchases.IAPResponseCode.OK) {
       throw new Error(`Failed to fetch products: ${response.responseCode}`);
@@ -140,9 +190,13 @@ export async function fetchProducts(productIds: ProductId[]): Promise<Product[]>
  */
 export async function purchaseProduct(productId: ProductId): Promise<PurchaseResult> {
   try {
-    const response = (await InAppPurchases.purchaseItemAsync(
-      productId
-    )) as unknown as InAppPurchases.IAPQueryResponse<InAppPurchases.InAppPurchase>;
+    if (!iapModule) {
+      return {
+        success: false,
+        error: 'IAP module not available',
+      };
+    }
+    const response = await iapModule.purchaseItemAsync(productId);
 
     if (!response || response.responseCode !== InAppPurchases.IAPResponseCode.OK) {
       // User cancelled or error occurred
@@ -182,7 +236,13 @@ export async function purchaseProduct(productId: ProductId): Promise<PurchaseRes
  */
 export async function restorePurchases(): Promise<PurchaseResult> {
   try {
-    const { responseCode, results } = await InAppPurchases.getPurchaseHistoryAsync();
+    if (!iapModule) {
+      return {
+        success: false,
+        error: 'IAP module not available',
+      };
+    }
+    const { responseCode, results } = await iapModule.getPurchaseHistoryAsync();
 
     if (responseCode !== InAppPurchases.IAPResponseCode.OK) {
       return {
@@ -228,7 +288,10 @@ export async function restorePurchases(): Promise<PurchaseResult> {
  */
 export async function finishTransaction(purchase: InAppPurchases.InAppPurchase): Promise<void> {
   try {
-    await InAppPurchases.finishTransactionAsync(purchase, true);
+    if (!iapModule) {
+      return;
+    }
+    await iapModule.finishTransactionAsync(purchase, true);
     console.log('✅ Transaction finished:', purchase.orderId);
   } catch (error) {
     console.error('❌ Failed to finish transaction:', error);
@@ -242,7 +305,10 @@ export async function finishTransaction(purchase: InAppPurchases.InAppPurchase):
 export function setPurchaseListener(
   listener: (result: InAppPurchases.IAPQueryResponse<InAppPurchases.InAppPurchase>) => void
 ): (() => void) | undefined {
-  const subscription = InAppPurchases.setPurchaseListener(listener) as any;
+  if (!iapModule) {
+    return undefined;
+  }
+  const subscription = iapModule.setPurchaseListener(listener);
 
   // Return cleanup function if subscription exists
   if (subscription && typeof subscription.remove === 'function') {
