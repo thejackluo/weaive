@@ -64,6 +64,16 @@ class ModifyPersonalityTool(BaseTool):
                         "'weave_ai' = general supportive coach without personalization."
                     )
                 },
+                "weave_preset": {
+                    "type": "string",
+                    "enum": ["gen_z_default", "supportive_coach", "concise_mentor"],
+                    "description": (
+                        "Optional: Weave AI preset style when active_personality is 'weave_ai'. "
+                        "'gen_z_default' = casual, text-message style. "
+                        "'supportive_coach' = encouraging, accountability-focused. "
+                        "'concise_mentor' = brief, action-oriented."
+                    )
+                },
                 "reason": {
                     "type": "string",
                     "description": (
@@ -81,12 +91,13 @@ class ModifyPersonalityTool(BaseTool):
         parameters: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Execute personality switch.
+        Execute personality switch with optional preset change.
 
         Args:
             user_id: User ID (from user_profiles.id)
             parameters: {
                 "active_personality": "dream_self" | "weave_ai",
+                "weave_preset": "gen_z_default" | "supportive_coach" | "concise_mentor" (optional),
                 "reason": "Optional reason for switch"
             }
 
@@ -108,6 +119,7 @@ class ModifyPersonalityTool(BaseTool):
             ValueError: If active_personality is invalid
         """
         active_personality = parameters.get("active_personality")
+        weave_preset = parameters.get("weave_preset")
         reason = parameters.get("reason", "AI-initiated switch")
 
         logger.info(
@@ -154,20 +166,43 @@ class ModifyPersonalityTool(BaseTool):
                 new_personality=active_personality
             )
 
+            # Update weave_ai_preset if provided and switching to Weave AI
+            if weave_preset and active_personality == 'weave_ai':
+                try:
+                    supabase.table("user_profiles") \
+                        .update({"weave_ai_preset": weave_preset}) \
+                        .eq("id", user_id) \
+                        .execute()
+
+                    logger.info(f"✅ Updated Weave AI preset to: {weave_preset}")
+
+                    # Refresh personality details to include new preset
+                    new_personality = await personality_service.get_active_personality(user_id)
+                except Exception as preset_error:
+                    logger.warning(f"⚠️  Failed to update Weave AI preset: {preset_error}")
+                    # Don't fail the whole operation if preset update fails
+
             logger.info(
                 f"✅ User {user_id} switched from {previous_personality['personality_type']} "
                 f"to {new_personality['personality_type']}"
             )
+
+            # Build response message
+            response_message = f"Switched to {active_personality}. Now speaking as {new_personality['name']}."
+            if weave_preset and active_personality == 'weave_ai':
+                preset_names = {
+                    'gen_z_default': 'Gen Z Default (casual)',
+                    'supportive_coach': 'Supportive Coach',
+                    'concise_mentor': 'Concise Mentor'
+                }
+                response_message += f" Using {preset_names.get(weave_preset, weave_preset)} style."
 
             return {
                 "success": True,
                 "data": {
                     "previous_personality": previous_personality["personality_type"],
                     "new_personality": new_personality,
-                    "message": (
-                        f"Switched to {active_personality}. "
-                        f"Now speaking as {new_personality['name']}."
-                    )
+                    "message": response_message
                 }
             }
 
