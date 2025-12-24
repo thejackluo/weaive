@@ -1,6 +1,7 @@
 {
   "name": "weave-mobile",
   "version": "0.0.1",
+  "type": "commonjs",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
