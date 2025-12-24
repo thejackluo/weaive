@@ -110,68 +110,46 @@ async def export_user_data(
         }
 
         # Goals
-        goals_result = (
-            supabase.table("goals").select("*").eq("user_id", user_id).execute()
-        )
+        goals_result = supabase.table("goals").select("*").eq("user_id", user_id).execute()
         export_data["goals"] = goals_result.data or []
 
         # Subtask templates
         templates_result = (
-            supabase.table("subtask_templates")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
+            supabase.table("subtask_templates").select("*").eq("user_id", user_id).execute()
         )
         export_data["subtask_templates"] = templates_result.data or []
 
         # Subtask instances
         instances_result = (
-            supabase.table("subtask_instances")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
+            supabase.table("subtask_instances").select("*").eq("user_id", user_id).execute()
         )
         export_data["subtask_instances"] = instances_result.data or []
 
         # Completions
         completions_result = (
-            supabase.table("subtask_completions")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
+            supabase.table("subtask_completions").select("*").eq("user_id", user_id).execute()
         )
         export_data["completions"] = completions_result.data or []
 
         # Captures
-        captures_result = (
-            supabase.table("captures").select("*").eq("user_id", user_id).execute()
-        )
+        captures_result = supabase.table("captures").select("*").eq("user_id", user_id).execute()
         export_data["captures"] = captures_result.data or []
 
         # Journal entries
         journal_result = (
-            supabase.table("journal_entries")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
+            supabase.table("journal_entries").select("*").eq("user_id", user_id).execute()
         )
         export_data["journal_entries"] = journal_result.data or []
 
         # Identity docs
         identity_result = (
-            supabase.table("identity_docs")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
+            supabase.table("identity_docs").select("*").eq("user_id", user_id).execute()
         )
         export_data["identity_docs"] = identity_result.data or []
 
         # Daily aggregates
         aggregates_result = (
-            supabase.table("daily_aggregates")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
+            supabase.table("daily_aggregates").select("*").eq("user_id", user_id).execute()
         )
         export_data["daily_aggregates"] = aggregates_result.data or []
 
@@ -188,7 +166,7 @@ async def export_user_data(
         # Placeholder response (production: return signed storage URL)
         return ExportDataResponse(
             message="Data export ready (placeholder - implement storage upload)",
-            export_url=f"https://api.weavelight.app/api/account/export-data",
+            export_url="https://api.weavelight.app/api/account/export-data",
             expires_at=(datetime.utcnow().isoformat()),
         )
 

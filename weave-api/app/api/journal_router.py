@@ -52,15 +52,23 @@ async def get_or_create_user_profile(supabase, auth_user_id: str) -> str:
         return user_id
     except Exception:
         # Profile doesn't exist - auto-create it
-        logger.warning(f"⚠️  No user profile found for auth_user_id: {auth_user_id}, creating one...")
+        logger.warning(
+            f"⚠️  No user profile found for auth_user_id: {auth_user_id}, creating one..."
+        )
 
         try:
-            new_profile = supabase.table("user_profiles").insert({
-                "auth_user_id": auth_user_id,
-                "display_name": "User",
-                "timezone": "America/Los_Angeles",
-                "locale": "en-US"
-            }).execute()
+            new_profile = (
+                supabase.table("user_profiles")
+                .insert(
+                    {
+                        "auth_user_id": auth_user_id,
+                        "display_name": "User",
+                        "timezone": "America/Los_Angeles",
+                        "locale": "en-US",
+                    }
+                )
+                .execute()
+            )
 
             user_id = new_profile.data[0]["id"]
             logger.info(f"✅ Auto-created user_profile.id: {user_id}")
@@ -287,7 +295,9 @@ async def create_journal_entry(
         journals_in_level = total_journals % 10
         level_progress = (journals_in_level / 10) * 100  # Percentage to next level
 
-        logger.info(f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}")
+        logger.info(
+            f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}"
+        )
     except Exception as level_error:
         logger.error(f"❌ Error calculating level: {str(level_error)}")
         # Default to level 1 if calculation fails
@@ -311,7 +321,7 @@ async def create_journal_entry(
             "timestamp": datetime.utcnow().isoformat(),
             "level": level,
             "level_progress": round(level_progress, 1),
-        }
+        },
     }
 
 
@@ -448,7 +458,9 @@ async def update_journal_entry(
         journals_in_level = total_journals % 10
         level_progress = (journals_in_level / 10) * 100
 
-        logger.info(f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}")
+        logger.info(
+            f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}"
+        )
     except Exception as level_error:
         logger.error(f"❌ Error calculating level: {str(level_error)}")
         level = 1
@@ -471,5 +483,5 @@ async def update_journal_entry(
             "timestamp": datetime.utcnow().isoformat(),
             "level": level,
             "level_progress": round(level_progress, 1),
-        }
+        },
     }
