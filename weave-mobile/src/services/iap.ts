@@ -16,7 +16,7 @@ export const PRODUCT_IDS = {
   TRIAL: 'com.weavelight.app.trial.10day',
 } as const;
 
-export type ProductId = typeof PRODUCT_IDS[keyof typeof PRODUCT_IDS];
+export type ProductId = (typeof PRODUCT_IDS)[keyof typeof PRODUCT_IDS];
 
 // Product details type
 export interface Product {
@@ -76,13 +76,9 @@ export async function disconnectIAP(): Promise<void> {
  * Fetch available products from App Store
  * Returns product details (price, description, etc.)
  */
-export async function fetchProducts(
-  productIds: ProductId[]
-): Promise<Product[]> {
+export async function fetchProducts(productIds: ProductId[]): Promise<Product[]> {
   try {
-    const { results, responseCode } = await InAppPurchases.getProductsAsync(
-      productIds
-    );
+    const { results, responseCode } = await InAppPurchases.getProductsAsync(productIds);
 
     if (responseCode !== InAppPurchases.IAPResponseCode.OK) {
       throw new Error(`Failed to fetch products: ${responseCode}`);
@@ -108,13 +104,9 @@ export async function fetchProducts(
  * Purchase a product
  * Initiates Apple IAP flow (native payment sheet)
  */
-export async function purchaseProduct(
-  productId: ProductId
-): Promise<PurchaseResult> {
+export async function purchaseProduct(productId: ProductId): Promise<PurchaseResult> {
   try {
-    const { responseCode, results } = await InAppPurchases.purchaseItemAsync(
-      productId
-    );
+    const { responseCode, results } = await InAppPurchases.purchaseItemAsync(productId);
 
     if (responseCode !== InAppPurchases.IAPResponseCode.OK) {
       // User cancelled or error occurred
@@ -154,8 +146,7 @@ export async function purchaseProduct(
  */
 export async function restorePurchases(): Promise<PurchaseResult> {
   try {
-    const { responseCode, results } =
-      await InAppPurchases.getPurchaseHistoryAsync();
+    const { responseCode, results } = await InAppPurchases.getPurchaseHistoryAsync();
 
     if (responseCode !== InAppPurchases.IAPResponseCode.OK) {
       return {
@@ -199,9 +190,7 @@ export async function restorePurchases(): Promise<PurchaseResult> {
  * Finish a transaction (acknowledge purchase)
  * Must be called after successful purchase/restore to prevent re-prompting
  */
-export async function finishTransaction(
-  purchase: InAppPurchases.InAppPurchase
-): Promise<void> {
+export async function finishTransaction(purchase: InAppPurchases.InAppPurchase): Promise<void> {
   try {
     await InAppPurchases.finishTransactionAsync(purchase, true);
     console.log('✅ Transaction finished:', purchase.orderId);
@@ -217,8 +206,7 @@ export async function finishTransaction(
 export function setPurchaseListener(
   listener: (event: InAppPurchases.InAppPurchase) => void
 ): () => void {
-  const subscription =
-    InAppPurchases.setPurchaseListener(listener);
+  const subscription = InAppPurchases.setPurchaseListener(listener);
 
   // Return cleanup function
   return () => subscription.remove();

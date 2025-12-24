@@ -55,7 +55,7 @@ export default function DevToolsScreen() {
 
       Alert.alert(
         'Notification Sent!',
-        'Check your notification center. If you don\'t see it, check notification permissions in Settings.'
+        "Check your notification center. If you don't see it, check notification permissions in Settings."
       );
     } catch (error) {
       Alert.alert(
@@ -78,9 +78,9 @@ export default function DevToolsScreen() {
       Alert.alert(
         'Subscription Status',
         `Tier: ${status.subscription_tier}\n` +
-        `Monthly Limit: ${status.monthly_limit}\n` +
-        `Expires: ${status.subscription_expires_at || 'N/A'}\n` +
-        `Product: ${status.subscription_product_id || 'N/A'}`,
+          `Monthly Limit: ${status.monthly_limit}\n` +
+          `Expires: ${status.subscription_expires_at || 'N/A'}\n` +
+          `Product: ${status.subscription_product_id || 'N/A'}`,
         [{ text: 'OK' }]
       );
     } catch (error) {
@@ -190,11 +190,14 @@ export default function DevToolsScreen() {
               }}
             >
               <Body style={{ color: colors.text.secondary, fontSize: 12, lineHeight: 18 }}>
-                Current Tier: {subscriptionStatus.subscription_tier.toUpperCase()}{'\n'}
-                Monthly Limit: {
-                  subscriptionStatus.subscription_tier === 'free' ? '500' :
-                  subscriptionStatus.subscription_tier === 'pro' ? '5000' : 'Unlimited'
-                }
+                Current Tier: {subscriptionStatus.subscription_tier.toUpperCase()}
+                {'\n'}
+                Monthly Limit:{' '}
+                {subscriptionStatus.subscription_tier === 'free'
+                  ? '500'
+                  : subscriptionStatus.subscription_tier === 'pro'
+                    ? '5000'
+                    : 'Unlimited'}
               </Body>
             </View>
           )}

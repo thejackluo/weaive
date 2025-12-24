@@ -81,8 +81,7 @@ export function useNotifications(): UseNotificationsReturn {
       } catch (err) {
         if (!isMounted) return;
 
-        const errorMessage =
-          err instanceof Error ? err.message : 'Unknown error';
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setError(errorMessage);
         setIsReady(true);
         console.error('[NOTIFICATIONS] ❌ Setup failed:', errorMessage);
