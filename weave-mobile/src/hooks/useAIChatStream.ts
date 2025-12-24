@@ -197,8 +197,15 @@ export function useAIChatStream(): UseAIChatStreamReturn {
                 responseId: chunk.response_id,
                 tokensUsed: chunk.tokens_used,
               }));
+
+              // Close EventSource first, then update state
+              if (eventSourceRef.current) {
+                eventSourceRef.current.close();
+                eventSourceRef.current = null;
+              }
               setIsStreaming(false);
-              eventSourceRef.current?.close();
+
+              if (__DEV__) console.log('[STREAM_DEBUG] ✅ Stream completed, cleaned up');
             } else if (chunk.type === 'error') {
               // ✅ FIX: Clear timeout on error
               if (timeoutIdRef.current) {
@@ -208,8 +215,15 @@ export function useAIChatStream(): UseAIChatStreamReturn {
 
               // Handle error event
               setError(chunk.message || 'Unknown error occurred');
+
+              // Close EventSource first, then update state
+              if (eventSourceRef.current) {
+                eventSourceRef.current.close();
+                eventSourceRef.current = null;
+              }
               setIsStreaming(false);
-              eventSourceRef.current?.close();
+
+              if (__DEV__) console.log('[STREAM_DEBUG] ❌ Stream error, cleaned up');
             }
           } catch (parseError) {
             if (__DEV__)
