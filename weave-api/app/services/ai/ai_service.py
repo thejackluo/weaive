@@ -16,6 +16,7 @@ Features:
 """
 
 import hashlib
+import json
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
@@ -30,6 +31,7 @@ from .deterministic_provider import DeterministicProvider
 from .openai_provider import OpenAIProvider
 from .rate_limiter import RateLimiter, RateLimitError
 from ..response_quality_checker import ResponseQualityChecker
+# Story 6.2: Tool registry imported lazily to avoid circular dependency
 
 logger = logging.getLogger(__name__)
 
@@ -149,14 +151,22 @@ class AIService:
         context_used = user_context is not None
         enriched_prompt = self._enrich_prompt_with_context(prompt, user_context, module)
 
-        # 3. Check cache (use enriched prompt for hash)
+        # 3. Get tool schemas (Story 6.2: AI Tool Use)
+        # Lazy import to avoid circular dependency
+        from ..tools.tool_registry import get_tool_registry
+        tool_registry = get_tool_registry()
+        tool_schemas = tool_registry.get_tool_schemas() if len(tool_registry) > 0 else None
+        if tool_schemas:
+            logger.info(f"🔧 {len(tool_schemas)} tools available: {[t['name'] for t in tool_schemas]}")
+
+        # 4. Check cache (use enriched prompt for hash)
         input_hash = self._compute_hash(enriched_prompt, module, kwargs.get('model', 'auto'))
         cached_response = self._check_cache(user_id, input_hash)
         if cached_response:
             logger.info(f"⚡ Cache hit for user {user_id}, module {module}")
             return cached_response
 
-        # 4. Check budgets (dual: total + per-user)
+        # 5. Check budgets (dual: total + per-user)
         budget_exceeded = self._check_budgets(user_id, user_tier)
 
         # 4. Determine providers to try
@@ -168,7 +178,7 @@ class AIService:
             # Budget OK - try all providers
             providers_to_try = self.providers
 
-        # 5. Try fallback chain
+        # 6. Try fallback chain
         errors = []
         for provider_name, provider in providers_to_try:
             try:
@@ -177,12 +187,24 @@ class AIService:
 
                 logger.info(f"🔄 Trying provider: {provider_name}")
 
-                # Call provider with enriched prompt
+                # Call provider with enriched prompt and tools (Story 6.2)
                 response = provider.complete(
                     prompt=enriched_prompt,
+                    tools=tool_schemas,  # Story 6.2: Enable function calling
                     module=module,
                     **kwargs
                 )
+
+                # Tool execution loop (Story 6.2: AI Tool Use)
+                if response.tool_calls:
+                    response = self._execute_tool_loop(
+                        user_id=user_id,
+                        provider=provider,
+                        initial_response=response,
+                        enriched_prompt=enriched_prompt,
+                        module=module,
+                        **kwargs
+                    )
 
                 # Quality check + retry logic (Story 6.2 AC #4)
                 quality_flag = 'specific'  # Default
@@ -792,3 +814,143 @@ IMPORTANT INSTRUCTIONS:
         logger.info(f"✅ Enriched prompt with user context (goals: {len(goals)}, completions: {completions_count}, streak: {current_streak})")
 
         return enriched_prompt
+
+    def _execute_tool_loop(
+        self,
+        user_id: str,
+        provider,
+        initial_response: AIResponse,
+        enriched_prompt: str,
+        module: str,
+        **kwargs
+    ) -> AIResponse:
+        """
+        Execute tools requested by AI and get final natural language response.
+
+        Story 6.2: AI Tool Use - Multi-turn conversation with tool execution
+
+        Flow:
+        1. Parse tool calls from initial AI response
+        2. Execute each tool via tool_registry.execute_tool()
+        3. Build conversation with tool results
+        4. Send back to AI for natural language wrapping
+        5. Return final wrapped response
+
+        Args:
+            user_id: User ID
+            provider: AI provider instance (Bedrock, OpenAI, Anthropic)
+            initial_response: AI response containing tool_calls
+            enriched_prompt: Original user prompt (for context)
+            module: AI module name
+            **kwargs: Additional provider parameters
+
+        Returns:
+            Final AIResponse with natural language content
+        """
+        # Lazy import to avoid circular dependency
+        from ..tools.tool_registry import get_tool_registry
+        tool_registry = get_tool_registry()
+        tool_results = []
+
+        logger.info(f"🔧 Executing {len(initial_response.tool_calls)} tool call(s)...")
+
+        # Step 1: Execute each tool
+        for tool_call in initial_response.tool_calls:
+            tool_name = tool_call['function']['name']
+
+            # Parse arguments (handle both JSON string and dict)
+            try:
+                if isinstance(tool_call['function']['arguments'], str):
+                    # OpenAI format: JSON string
+                    arguments = json.loads(tool_call['function']['arguments'])
+                else:
+                    # Anthropic format: dict
+                    arguments = tool_call['function']['arguments']
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse tool arguments: {e}")
+                tool_results.append({
+                    'tool_call_id': tool_call['id'],
+                    'role': 'tool',
+                    'name': tool_name,
+                    'content': json.dumps({'error': f'Invalid arguments: {e}'})
+                })
+                continue
+
+            # Execute tool
+            try:
+                logger.info(f"🔧 Executing tool: {tool_name} with args: {arguments}")
+                result = tool_registry.execute_tool(tool_name, arguments, user_id)
+
+                tool_results.append({
+                    'tool_call_id': tool_call['id'],
+                    'role': 'tool',
+                    'name': tool_name,
+                    'content': json.dumps(result) if not isinstance(result, str) else result
+                })
+                logger.info(f"✅ Tool {tool_name} executed successfully")
+
+            except Exception as e:
+                logger.error(f"Tool execution failed: {tool_name}: {e}")
+                tool_results.append({
+                    'tool_call_id': tool_call['id'],
+                    'role': 'tool',
+                    'name': tool_name,
+                    'content': json.dumps({'error': str(e)})
+                })
+
+        # Step 2: Build follow-up prompt with tool results
+        tool_results_text = "\n".join([
+            f"Tool '{r['name']}' executed successfully. Result: {r['content']}"
+            for r in tool_results
+        ])
+
+        follow_up_prompt = f"""You previously requested to execute these tools, and here are the results:
+
+{tool_results_text}
+
+Original user message: {enriched_prompt}
+
+Please provide a natural language response to the user that:
+1. Confirms what actions were taken
+2. Explains the results in user-friendly terms
+3. Answers the user's original question based on the tool results
+
+Be concise and helpful."""
+
+        # Step 3: Send tool results back to AI for natural language wrapping
+        logger.info(f"🔄 Sending tool results back to {provider.__class__.__name__} for wrapping...")
+
+        try:
+            final_response = provider.complete(
+                prompt=follow_up_prompt,
+                module=module,
+                tools=None,  # Don't allow recursive tool calls
+                **kwargs
+            )
+
+            # Combine costs and token counts from both AI calls
+            final_response.cost_usd += initial_response.cost_usd
+            final_response.input_tokens += initial_response.input_tokens
+            final_response.output_tokens += initial_response.output_tokens
+
+            logger.info(
+                f"✅ Tool loop complete. Final response: {len(final_response.content)} chars, "
+                f"Total cost: ${final_response.cost_usd:.6f}"
+            )
+
+            return final_response
+
+        except Exception as e:
+            logger.error(f"Failed to wrap tool results: {e}")
+            # Fallback: return a simple text response with tool results
+            fallback_content = f"I executed the following actions:\n\n{tool_results_text}\n\nHowever, I encountered an error wrapping the results. Please try again."
+
+            return AIResponse(
+                content=fallback_content,
+                input_tokens=initial_response.input_tokens,
+                output_tokens=initial_response.output_tokens,
+                model=initial_response.model,
+                cost_usd=initial_response.cost_usd,
+                provider=initial_response.provider,
+                cached=False,
+            )
