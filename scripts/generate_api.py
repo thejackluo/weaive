@@ -19,12 +19,10 @@ Generated Files:
     - weave-api/tests/test_{resource}_api.py
 """
 
-import sys
-import os
 import re
+import sys
 from pathlib import Path
 from typing import Tuple
-
 
 # ============================================================================
 # CONFIGURATION
@@ -186,8 +184,8 @@ def generate_router(resource: str, resources: str, Resource: str) -> Path:
         output_dir.mkdir(parents=True, exist_ok=True)
         with open(init_path, 'w') as f:
             f.write(f'"""API router for {resources}"""\n')
-            f.write(f'from .router import router\n\n')
-            f.write(f'__all__ = ["router"]\n')
+            f.write('from .router import router\n\n')
+            f.write('__all__ = ["router"]\n')
         print(f"✅ Created: {init_path.relative_to(PROJECT_ROOT)}")
 
     # Write router file
