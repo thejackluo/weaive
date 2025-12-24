@@ -20,9 +20,9 @@ class TestPersonalityService:
     @pytest.mark.asyncio
     async def test_get_active_personality_weave_ai(self, mock_supabase):
         """Test getting active personality when user prefers Weave AI."""
-        # Mock user_profiles response
+        # Mock user_profiles response with default preset
         mock_supabase.table().select().eq().execute.return_value = MagicMock(
-            data=[{"active_personality": "weave_ai"}]
+            data=[{"active_personality": "weave_ai", "weave_ai_preset": "gen_z_default"}]
         )
 
         service = PersonalityService(mock_supabase)
@@ -30,13 +30,51 @@ class TestPersonalityService:
 
         assert personality["personality_type"] == "weave_ai"
         assert personality["name"] == "Weave"
-        assert "encouraging" in personality["traits"]
+        assert personality["preset"] == "gen_z_default"
+        assert "max_words" in personality
+        assert "system_prompt" in personality
+
+    @pytest.mark.asyncio
+    async def test_get_active_personality_weave_ai_all_presets(self, mock_supabase):
+        """Test getting Weave AI personality with all three presets."""
+        presets = ["gen_z_default", "supportive_coach", "concise_mentor"]
+
+        for preset in presets:
+            # Mock user_profiles response with specific preset
+            mock_supabase.table().select().eq().execute.return_value = MagicMock(
+                data=[{"active_personality": "weave_ai", "weave_ai_preset": preset}]
+            )
+
+            service = PersonalityService(mock_supabase)
+            personality = await service.get_active_personality("user_123")
+
+            assert personality["personality_type"] == "weave_ai"
+            assert personality["preset"] == preset
+            assert personality["name"] == "Weave"
+            assert "max_words" in personality
+            assert isinstance(personality["traits"], list)
+            assert len(personality["traits"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_get_active_personality_weave_ai_invalid_preset(self, mock_supabase):
+        """Test Weave AI with invalid preset falls back to gen_z_default."""
+        # Mock user_profiles with invalid preset
+        mock_supabase.table().select().eq().execute.return_value = MagicMock(
+            data=[{"active_personality": "weave_ai", "weave_ai_preset": "invalid_preset"}]
+        )
+
+        service = PersonalityService(mock_supabase)
+        personality = await service.get_active_personality("user_123")
+
+        # Should fallback to gen_z_default
+        assert personality["personality_type"] == "weave_ai"
+        assert personality["preset"] == "gen_z_default"
 
     @pytest.mark.asyncio
     async def test_get_active_personality_dream_self(self, mock_supabase):
         """Test getting active personality when user prefers Dream Self."""
         # Mock user_profiles response
-        user_response = MagicMock(data=[{"active_personality": "dream_self"}])
+        user_response = MagicMock(data=[{"active_personality": "dream_self", "weave_ai_preset": "gen_z_default"}])
 
         # Mock identity_docs response
         identity_response = MagicMock(
@@ -67,7 +105,7 @@ class TestPersonalityService:
     async def test_get_active_personality_dream_self_missing_doc(self, mock_supabase):
         """Test fallback to Weave AI when Dream Self doc is missing."""
         # Mock user_profiles response (wants dream_self)
-        user_response = MagicMock(data=[{"active_personality": "dream_self"}])
+        user_response = MagicMock(data=[{"active_personality": "dream_self", "weave_ai_preset": "supportive_coach"}])
 
         # Mock identity_docs response (no documents)
         identity_response = MagicMock(data=[])
@@ -81,9 +119,10 @@ class TestPersonalityService:
         service = PersonalityService(mock_supabase)
         personality = await service.get_active_personality("user_123")
 
-        # Should fallback to Weave AI
+        # Should fallback to Weave AI with user's preset
         assert personality["personality_type"] == "weave_ai"
         assert personality["name"] == "Weave"
+        assert personality["preset"] == "supportive_coach"
 
     @pytest.mark.asyncio
     async def test_get_active_personality_user_not_found(self, mock_supabase):
@@ -102,14 +141,15 @@ class TestPersonalityService:
         """Test fallback for unknown personality type."""
         # Mock user with unknown personality type
         mock_supabase.table().select().eq().execute.return_value = MagicMock(
-            data=[{"active_personality": "unknown_type"}]
+            data=[{"active_personality": "unknown_type", "weave_ai_preset": "concise_mentor"}]
         )
 
         service = PersonalityService(mock_supabase)
         personality = await service.get_active_personality("user_123")
 
-        # Should fallback to Weave AI
+        # Should fallback to Weave AI with user's preset
         assert personality["personality_type"] == "weave_ai"
+        assert personality["preset"] == "concise_mentor"
 
     @pytest.mark.asyncio
     async def test_get_active_personality_exception_handling(self, mock_supabase):
