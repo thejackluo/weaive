@@ -79,9 +79,7 @@ export function PersonalitySwitcher({
           <TouchableOpacity
             onPress={() => handleSwitch('weave_ai')}
             disabled={isSwitching || !isDreamSelf}
-            className={`px-3 py-1 rounded-full ${
-              !isDreamSelf ? 'bg-opal-500' : 'bg-transparent'
-            }`}
+            className={`px-3 py-1 rounded-full ${!isDreamSelf ? 'bg-opal-500' : 'bg-transparent'}`}
           >
             <Caption className={!isDreamSelf ? 'text-opal-950 font-semibold' : 'text-opal-400'}>
               Weave
@@ -91,18 +89,14 @@ export function PersonalitySwitcher({
           <TouchableOpacity
             onPress={() => handleSwitch('dream_self')}
             disabled={isSwitching || isDreamSelf}
-            className={`px-3 py-1 rounded-full ${
-              isDreamSelf ? 'bg-opal-500' : 'bg-transparent'
-            }`}
+            className={`px-3 py-1 rounded-full ${isDreamSelf ? 'bg-opal-500' : 'bg-transparent'}`}
           >
             <Caption className={isDreamSelf ? 'text-opal-950 font-semibold' : 'text-opal-400'}>
               Dream Self
             </Caption>
           </TouchableOpacity>
 
-          {isSwitching && (
-            <ActivityIndicator size="small" color="#A78BFA" className="ml-2" />
-          )}
+          {isSwitching && <ActivityIndicator size="small" color="#A78BFA" className="ml-2" />}
         </View>
       </View>
     );
@@ -127,9 +121,7 @@ export function PersonalitySwitcher({
             }`}
           >
             <Caption
-              className={`font-semibold ${
-                isDreamSelf ? 'text-purple-400' : 'text-opal-400'
-              }`}
+              className={`font-semibold ${isDreamSelf ? 'text-purple-400' : 'text-opal-400'}`}
             >
               {isDreamSelf ? 'Dream Self' : 'Weave AI'}
             </Caption>
@@ -172,9 +164,7 @@ export function PersonalitySwitcher({
             {isDreamSelf ? '✓ Using Dream Self' : 'Switch to Dream Self'}
           </Body>
           {!isDreamSelf && (
-            <Caption className="text-opal-900 mt-1">
-              Personalized AI based on your identity
-            </Caption>
+            <Caption className="text-opal-900 mt-1">Personalized AI based on your identity</Caption>
           )}
         </Button>
 
@@ -188,9 +178,7 @@ export function PersonalitySwitcher({
             {!isDreamSelf ? '✓ Using Weave AI' : 'Switch to Weave AI'}
           </Body>
           {isDreamSelf && (
-            <Caption className="text-opal-400 mt-1">
-              General supportive coach
-            </Caption>
+            <Caption className="text-opal-400 mt-1">General supportive coach</Caption>
           )}
         </Button>
       </View>
