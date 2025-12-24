@@ -1,15 +1,19 @@
 """
-AI Chat API Router (Story 6.1)
+AI Chat API Router (Story 6.1 + 6.2 UNIFIED)
 
-Endpoints for AI chat interface with server-initiated conversations.
+Endpoints for AI chat interface with contextual AI responses and dual personality system.
 
 Endpoints:
-- POST /api/ai-chat/messages - Send message, get AI response
+- POST /api/ai-chat/messages - Send message, get AI response (with context + tools)
 - POST /api/ai-chat/messages/stream - Send message, get streaming AI response (SSE)
 - GET /api/ai-chat/conversations - List user's conversation history
 - GET /api/ai-chat/conversations/{conversation_id} - Get full conversation thread
 - GET /api/ai/usage - Get user's AI usage statistics
 - POST /api/admin/trigger-checkin/{user_id} - Manually trigger check-in (admin only)
+
+Personality System (Unified Story 6.1 + 6.2):
+- Dream Self: Personalized AI from identity_docs (user's ideal self)
+- Weave AI: General coach with Story 6.1 presets (gen_z_default, supportive_coach, concise_mentor)
 """
 
 import json
@@ -23,7 +27,6 @@ from fastapi.responses import StreamingResponse
 from supabase import Client as SupabaseClient
 
 from app.config.ai_chat_config import AIChatConfig
-from app.config.ai_personality_config import AIPersonalityConfig
 from app.core.deps import get_current_user, get_supabase_client
 from app.models.ai_chat_models import (
     ChatMessage,
@@ -39,6 +42,9 @@ from app.models.ai_chat_models import (
 )
 from app.services.ai import AIService
 from app.services.ai.tiered_rate_limiter import TieredRateLimiter
+from app.services.context_builder import ContextBuilderService  # Story 6.2
+from app.services.personality_service import PersonalityService  # Story 6.2
+from app.services.ai_orchestrator import AIOrchestrator  # Story 6.2
 
 logger = logging.getLogger(__name__)
 
@@ -264,49 +270,105 @@ async def send_chat_message(
         content=request.message
     )
 
+    # Story 6.2: Build user context if requested
+    user_context = None
+    context_used = False
+    if request.include_context:
+        try:
+            context_builder = ContextBuilderService(db)
+            user_context = await context_builder.build_context(str(user_id))
+            context_used = user_context is not None
+            if context_used:
+                logger.info(f"✅ [CONTEXT] Built context for user {user_id}")
+            else:
+                logger.warning(f"⚠️  [CONTEXT] Context assembly timed out for user {user_id}")
+        except Exception as e:
+            logger.error(f"❌ [CONTEXT] Error building context for user {user_id}: {e}")
+            context_used = False
+
+    # Story 6.2: Get active personality (UNIFIED with Story 6.1 presets)
+    personality_details = None
+    personality_type = "weave_ai"  # Default
+    system_prompt = "You are Weave, a supportive AI coach."  # Fallback
+
+    try:
+        personality_service = PersonalityService(db)
+        personality_details = await personality_service.get_active_personality(str(user_id))
+        personality_type = personality_details.get('personality_type', 'weave_ai')
+        system_prompt = personality_details.get('system_prompt', system_prompt)
+
+        if personality_type == "weave_ai":
+            preset = personality_details.get('preset', 'gen_z_default')
+            logger.info(f"✅ [PERSONALITY] User {user_id} using Weave AI (preset: {preset})")
+        else:
+            name = personality_details.get('name', 'Dream Self')
+            logger.info(f"✅ [PERSONALITY] User {user_id} using Dream Self: {name}")
+    except Exception as e:
+        logger.warning(f"⚠️  [PERSONALITY] Error getting personality for user {user_id}: {e}")
+
+    # Build full prompt with user message
+    full_prompt = f"{system_prompt}\n\nUser: {request.message}"
+
     # Call AI service with model fallback chain
     ai_response = None
     response_text = None
     tokens_used = 0
+    tools_invoked = []
 
-    # Build context-aware prompt
-    system_prompt = (
-        "You are Weave, a supportive AI coach helping users achieve their goals. "
-        "Be encouraging, concise, and actionable. Focus on progress and accountability."
-    )
-    full_prompt = f"{system_prompt}\n\nUser: {request.message}"
-
-    # Try each model in sequence
-    for i, model_to_try in enumerate(models_to_try):
+    # Story 6.2: Use AIOrchestrator if tools enabled, otherwise regular AIService
+    if request.enable_tools:
         try:
-            logger.info(f"🔄 [MODEL_FALLBACK] Trying model {i+1}/{len(models_to_try)}: {model_to_try}")
-
-            # Call existing AIService
-            ai_response = ai_service.generate(
+            orchestrator = AIOrchestrator(ai_service)
+            result = await orchestrator.generate_with_tools(
                 user_id=str(user_id),
-                user_role='admin' if is_admin else 'user',
-                user_tier=subscription_tier,
-                module='chat',  # ✅ Fixed: Use 'chat' not 'ai_chat' (must match enum in database)
                 prompt=full_prompt,
-                model=model_to_try,
-                max_tokens=500
+                user_context=user_context,
+                enable_tools=True,
+                max_tool_iterations=2
             )
-
-            response_text = ai_response.get('content', 'Sorry, I encountered an issue. Please try again.')
-            tokens_used = ai_response.get('total_tokens', 0)
-
-            logger.info(f"✅ [MODEL_FALLBACK] Success with model: {model_to_try}")
-            model = model_to_try  # Update model for usage tracking
-            break  # Success! Exit the loop
-
+            response_text = result.content
+            tokens_used = result.input_tokens + result.output_tokens
+            tools_invoked = getattr(result, 'tools_invoked', [])
+            logger.info(f"✅ [TOOLS] Generated response with tools: {tools_invoked}")
         except Exception as e:
-            logger.warning(f"⚠️  [MODEL_FALLBACK] Model {model_to_try} failed: {e}")
-            if i == len(models_to_try) - 1:  # Last model failed
-                logger.error(f"💥 [MODEL_FALLBACK] All models failed for user {user_id}")
-                # Fallback response (deterministic)
-                response_text = "I'm having trouble responding right now. Please try again in a moment."
-                tokens_used = 0
-            # Continue to next model
+            logger.error(f"❌ [TOOLS] Tool-enabled generation failed: {e}")
+            # Fall back to regular generation
+            request.enable_tools = False
+
+    # Regular generation (if tools disabled or failed)
+    if not request.enable_tools:
+        # Try each model in sequence
+        for i, model_to_try in enumerate(models_to_try):
+            try:
+                logger.info(f"🔄 [MODEL_FALLBACK] Trying model {i+1}/{len(models_to_try)}: {model_to_try}")
+
+                # Call existing AIService
+                ai_response = ai_service.generate(
+                    user_id=str(user_id),
+                    user_role='admin' if is_admin else 'user',
+                    user_tier=subscription_tier,
+                    module='chat',
+                    prompt=full_prompt,
+                    model=model_to_try,
+                    max_tokens=500,
+                    user_context=user_context  # Story 6.2: Pass context
+                )
+
+                response_text = ai_response.get('content', 'Sorry, I encountered an issue. Please try again.')
+                tokens_used = ai_response.get('total_tokens', 0)
+
+                logger.info(f"✅ [MODEL_FALLBACK] Success with model: {model_to_try}")
+                model = model_to_try  # Update model for usage tracking
+                break  # Success! Exit the loop
+
+            except Exception as e:
+                logger.warning(f"⚠️  [MODEL_FALLBACK] Model {model_to_try} failed: {e}")
+                if i == len(models_to_try) - 1:  # Last model failed
+                    logger.error(f"💥 [MODEL_FALLBACK] All models failed for user {user_id}")
+                    # Fallback response (deterministic)
+                    response_text = "I'm having trouble responding right now. Please try again in a moment."
+                    tokens_used = 0
+                # Continue to next model
 
     # Save assistant response
     assistant_message_id = save_message(
@@ -324,14 +386,17 @@ async def send_chat_message(
         bypass_admin_key=is_admin
     )
 
-    # Return response
+    # Return response with Story 6.2 metadata
     return ChatMessageResponseWrapper(
         data=ChatMessageResponse(
             message_id=user_message_id,
             response=response_text,
             response_id=assistant_message_id,
             conversation_id=conversation_id,
-            tokens_used=tokens_used
+            tokens_used=tokens_used,
+            context_used=context_used,  # Story 6.2
+            personality_type=personality_type,  # Story 6.2
+            tools_invoked=tools_invoked  # Story 6.2
         )
     )
 
@@ -461,12 +526,28 @@ async def send_chat_message_stream(
             })
             yield f"data: {metadata_event}\n\n"
 
-            # ✅ Build context-aware prompt using personality config
-            full_prompt = AIPersonalityConfig.build_context_prompt(
-                user_message=request.message,
-                personality=AIPersonalityConfig.PERSONALITY,
-                user_context=None  # TODO: Load from Context Builder (Story 1.5.3)
-            )
+            # Story 6.2: Get active personality (UNIFIED with Story 6.1 presets)
+            personality_details = None
+            personality_type = "weave_ai"  # Default
+            system_prompt = "You are Weave, a supportive AI coach."  # Fallback
+
+            try:
+                personality_service = PersonalityService(db)
+                personality_details = await personality_service.get_active_personality(str(user_id))
+                personality_type = personality_details.get('personality_type', 'weave_ai')
+                system_prompt = personality_details.get('system_prompt', system_prompt)
+
+                if personality_type == "weave_ai":
+                    preset = personality_details.get('preset', 'gen_z_default')
+                    logger.info(f"✅ [PERSONALITY] User {user_id} using Weave AI (preset: {preset})")
+                else:
+                    name = personality_details.get('name', 'Dream Self')
+                    logger.info(f"✅ [PERSONALITY] User {user_id} using Dream Self: {name}")
+            except Exception as e:
+                logger.warning(f"⚠️  [PERSONALITY] Error getting personality for user {user_id}: {e}")
+
+            # Build full prompt with user message
+            full_prompt = f"{system_prompt}\n\nUser: {request.message}"
 
             # Stream AI response with model fallback chain (save message even if client disconnects)
             full_content = []
