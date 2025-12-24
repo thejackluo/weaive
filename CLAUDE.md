@@ -653,6 +653,44 @@ weavelight/
 
 **Tip:** Use `docs/architecture/index.md`, `docs/prd/index.md`, or `docs/pages/` as navigation starting points.
 
+## Import Path Conventions (React Native/TypeScript)
+
+**🚨 CRITICAL - Path Alias Patterns (Prevents Recurring Metro Bundler Errors)**
+
+This project uses **TWO different path alias prefixes** in `tsconfig.json`:
+
+| Path Alias | Maps To | Example Usage |
+|------------|---------|---------------|
+| `@/*` | `./src/*` | `import { Button } from '@/design-system'` |
+| `@lib/*` | `./lib/*` | `import { supabase } from '@lib/supabase'` |
+
+**❌ COMMON MISTAKE (causes "Unable to resolve" errors):**
+```typescript
+// WRONG - This looks for src/lib/supabase (doesn't exist!)
+import { supabase } from '@/lib/supabase';
+```
+
+**✅ CORRECT:**
+```typescript
+// RIGHT - Uses @lib prefix (no middle slash)
+import { supabase } from '@lib/supabase';
+```
+
+**Rule:**
+- Use `@/` for files inside `src/` directory
+- Use `@lib/` for files inside `lib/` directory (at project root, NOT in src/)
+
+**Why This Matters:**
+- Metro bundler resolves `@/lib/supabase` → `./src/lib/supabase` (doesn't exist)
+- Correct: `@lib/supabase` → `./lib/supabase` (exists)
+- This error has caused repeated bundler failures across multiple AI agent sessions
+
+**Quick Check:**
+- If importing from `lib/supabase.ts` → use `@lib/supabase`
+- If importing from `src/services/api.ts` → use `@/services/api`
+
+---
+
 ## Naming Conventions
 
 ### Database (Supabase PostgreSQL)

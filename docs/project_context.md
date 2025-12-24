@@ -46,7 +46,7 @@ This is your template for all features. Copy this pattern.
 ```typescript
 // hooks/useGoals.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@lib/supabase'
 import { apiClient } from '@/lib/api'
 
 interface CreateGoalInput {
