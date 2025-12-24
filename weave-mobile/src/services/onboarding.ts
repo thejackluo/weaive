@@ -17,9 +17,10 @@ const API_BASE_URL = getApiBaseUrl();
 export type PainpointId = 'clarity' | 'action' | 'consistency' | 'alignment';
 
 /**
- * Valid personality types from Story 1.6
+ * Valid personality types from Story 1.6 (onboarding personas)
+ * Note: Renamed to OnboardingPersonaType to avoid collision with Story 6.2's PersonalityType
  */
-export type PersonalityType = 'supportive_direct' | 'tough_warm';
+export type OnboardingPersonaType = 'supportive_direct' | 'tough_warm';
 
 /**
  * Valid identity traits from Story 1.6
@@ -115,7 +116,7 @@ export async function storePainpointSelection(
  */
 export async function storeIdentityBootup(
   preferredName: string,
-  corePersonality: PersonalityType,
+  corePersonality: OnboardingPersonaType,
   identityTraits: IdentityTrait[]
 ): Promise<{
   success: boolean;
