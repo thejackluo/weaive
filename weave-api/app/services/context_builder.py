@@ -215,17 +215,20 @@ class ContextBuilderService:
             Or default persona if no Dream Self doc exists
         """
         try:
+            # Get latest version of identity doc (identity_docs uses versioning, not type column)
             response = (
                 self.db.table("identity_docs")
                 .select("*")
                 .eq("user_id", user_id)
-                .eq("type", "dream_self")
+                .order("version", desc=True)
+                .limit(1)
                 .execute()
             )
 
             if response.data:
                 doc = response.data[0]
-                content = doc.get("content", {})
+                # Identity doc is stored in 'json' JSONB column
+                content = doc.get("json", {})
 
                 return {
                     "dream_self_name": content.get("dream_self_name", "Your Guide"),
