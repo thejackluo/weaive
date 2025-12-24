@@ -17,6 +17,7 @@ Features:
 
 import hashlib
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
@@ -24,7 +25,7 @@ from supabase import Client as SupabaseClient
 
 from .anthropic_provider import AnthropicProvider
 from .base import AIProviderError, AIResponse
-from .bedrock_provider import BedrockProvider
+# BedrockProvider imported conditionally in __init__ to avoid boto3 import in tests
 from .cost_tracker import CostTracker
 from .deterministic_provider import DeterministicProvider
 from .openai_provider import OpenAIProvider
@@ -35,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 class AIServiceError(Exception):
     """Raised when AI service encounters unrecoverable error."""
+
     pass
 
 
@@ -56,9 +58,9 @@ class AIService:
     def __init__(
         self,
         db: SupabaseClient,
-        bedrock_region: str = 'us-east-1',
+        bedrock_region: str = "us-east-1",
         openai_key: Optional[str] = None,
-        anthropic_key: Optional[str] = None
+        anthropic_key: Optional[str] = None,
     ):
         """
         Initialize AI service with all providers.
@@ -76,17 +78,23 @@ class AIService:
         # Initialize providers (4-tier fallback chain)
         self.providers = []
 
-        # 1. Bedrock (PRIMARY)
-        try:
-            self.providers.append(('bedrock', BedrockProvider(region=bedrock_region)))
-            logger.info("✅ Bedrock provider initialized (PRIMARY)")
-        except Exception as e:
-            logger.warning(f"⚠️  Bedrock initialization failed: {e}")
+        # 1. Bedrock (PRIMARY) - Skip in test environment to avoid boto3 import hang
+        if os.getenv("ENV") != "test":
+            try:
+                # Import here to avoid loading boto3 in test environments
+                from .bedrock_provider import BedrockProvider
+
+                self.providers.append(("bedrock", BedrockProvider(region=bedrock_region)))
+                logger.info("✅ Bedrock provider initialized (PRIMARY)")
+            except Exception as e:
+                logger.warning(f"⚠️  Bedrock initialization failed: {e}")
+        else:
+            logger.info("⚡ Skipping Bedrock provider in test environment (avoids boto3 hang)")
 
         # 2. OpenAI (FALLBACK #1)
         if openai_key:
             try:
-                self.providers.append(('openai', OpenAIProvider(api_key=openai_key)))
+                self.providers.append(("openai", OpenAIProvider(api_key=openai_key)))
                 logger.info("✅ OpenAI provider initialized (FALLBACK #1)")
             except Exception as e:
                 logger.warning(f"⚠️  OpenAI initialization failed: {e}")
@@ -94,13 +102,13 @@ class AIService:
         # 3. Anthropic (FALLBACK #2)
         if anthropic_key:
             try:
-                self.providers.append(('anthropic', AnthropicProvider(api_key=anthropic_key)))
+                self.providers.append(("anthropic", AnthropicProvider(api_key=anthropic_key)))
                 logger.info("✅ Anthropic provider initialized (FALLBACK #2)")
             except Exception as e:
                 logger.warning(f"⚠️  Anthropic initialization failed: {e}")
 
         # 4. Deterministic (ULTIMATE FALLBACK - always succeeds)
-        self.providers.append(('deterministic', DeterministicProvider()))
+        self.providers.append(("deterministic", DeterministicProvider()))
         logger.info("✅ Deterministic provider initialized (ULTIMATE FALLBACK)")
 
         logger.info(f"🚀 AI Service initialized with {len(self.providers)} providers")
@@ -108,11 +116,11 @@ class AIService:
     def generate(
         self,
         user_id: str,
-        user_role: str = 'user',
-        user_tier: str = 'free',
-        module: str = 'triad',
-        prompt: str = '',
-        **kwargs
+        user_role: str = "user",
+        user_tier: str = "free",
+        module: str = "triad",
+        prompt: str = "",
+        **kwargs,
     ) -> AIResponse:
         """
         Generate AI response with automatic fallback chain.
@@ -132,7 +140,9 @@ class AIService:
             RateLimitError: If user exceeds rate limit
             AIServiceError: If all providers fail (shouldn't happen with Deterministic)
         """
-        logger.info(f"🎯 AI generation request: user={user_id}, module={module}, role={user_role}, tier={user_tier}")
+        logger.info(
+            f"🎯 AI generation request: user={user_id}, module={module}, role={user_role}, tier={user_tier}"
+        )
 
         # 1. Check rate limit
         try:
@@ -142,7 +152,7 @@ class AIService:
             raise
 
         # 2. Check cache
-        input_hash = self._compute_hash(prompt, module, kwargs.get('model', 'auto'))
+        input_hash = self._compute_hash(prompt, module, kwargs.get("model", "auto"))
         cached_response = self._check_cache(user_id, input_hash)
         if cached_response:
             logger.info(f"⚡ Cache hit for user {user_id}, module {module}")
@@ -155,7 +165,9 @@ class AIService:
         if budget_exceeded:
             # Budget exceeded - skip paid providers, use deterministic only
             logger.warning(f"💰 Budget exceeded, using deterministic fallback for user {user_id}")
-            providers_to_try = [('deterministic', self.providers[-1][1])]  # Last provider is always deterministic
+            providers_to_try = [
+                ("deterministic", self.providers[-1][1])
+            ]  # Last provider is always deterministic
         else:
             # Budget OK - try all providers
             providers_to_try = self.providers
@@ -170,11 +182,7 @@ class AIService:
                 logger.info(f"🔄 Trying provider: {provider_name}")
 
                 # Call provider
-                response = provider.complete(
-                    prompt=prompt,
-                    module=module,
-                    **kwargs
-                )
+                response = provider.complete(prompt=prompt, module=module, **kwargs)
 
                 # Update run as success (includes cost, tokens, model)
                 self._update_run_success(run_id, response, module)
@@ -197,7 +205,9 @@ class AIService:
                 logger.warning(f"❌ {provider_name} failed: {e.message}")
 
                 if not e.retryable:
-                    logger.error(f"🛑 {provider_name} error is not retryable, skipping remaining fallbacks")
+                    logger.error(
+                        f"🛑 {provider_name} error is not retryable, skipping remaining fallbacks"
+                    )
                     break
 
                 continue  # Try next provider
@@ -217,11 +227,11 @@ class AIService:
     async def generate_stream(
         self,
         user_id: str,
-        user_role: str = 'user',
-        user_tier: str = 'free',
-        module: str = 'triad',
-        prompt: str = '',
-        **kwargs
+        user_role: str = "user",
+        user_tier: str = "free",
+        module: str = "triad",
+        prompt: str = "",
+        **kwargs,
     ):
         """
         Generate AI response with real-time streaming (async generator).
@@ -246,7 +256,9 @@ class AIService:
             RateLimitError: If user exceeds rate limit
             AIServiceError: If all providers fail
         """
-        logger.info(f"🌊 AI streaming request: user={user_id}, module={module}, role={user_role}, tier={user_tier}")
+        logger.info(
+            f"🌊 AI streaming request: user={user_id}, module={module}, role={user_role}, tier={user_tier}"
+        )
 
         # 1. Check rate limit
         try:
@@ -265,25 +277,28 @@ class AIService:
             response = deterministic.complete(prompt=prompt, module=module, **kwargs)
 
             # Yield as single chunk
-            yield {'type': 'chunk', 'content': response.content}
+            yield {"type": "chunk", "content": response.content}
             yield {
-                'type': 'done',
-                'input_tokens': response.input_tokens,
-                'output_tokens': response.output_tokens,
-                'cost_usd': 0.0,
-                'provider': 'deterministic',
+                "type": "done",
+                "input_tokens": response.input_tokens,
+                "output_tokens": response.output_tokens,
+                "cost_usd": 0.0,
+                "provider": "deterministic",
             }
             return
 
         # 3. Compute input hash for run tracking
-        input_hash = self._compute_hash(prompt, module, kwargs.get('model', 'auto'))
+        input_hash = self._compute_hash(prompt, module, kwargs.get("model", "auto"))
 
         # 4. Try streaming with each provider in fallback chain
         errors = []
 
         # Get providers that support streaming (exclude deterministic)
-        streaming_providers = [(name, provider) for name, provider in self.providers
-                              if name in ['bedrock', 'openai', 'anthropic']]
+        streaming_providers = [
+            (name, provider)
+            for name, provider in self.providers
+            if name in ["bedrock", "openai", "anthropic"]
+        ]
 
         if not streaming_providers:
             logger.error("🚨 No streaming providers available")
@@ -291,7 +306,7 @@ class AIService:
 
         for provider_name, provider in streaming_providers:
             # Check if provider has stream() method
-            if not hasattr(provider, 'stream'):
+            if not hasattr(provider, "stream"):
                 logger.warning(f"⚠️  Provider {provider_name} does not support streaming, skipping")
                 continue
 
@@ -306,23 +321,23 @@ class AIService:
                 input_tokens = 0
                 output_tokens = 0
                 cost_usd = 0.0
-                model = kwargs.get('model', 'auto')
+                model = kwargs.get("model", "auto")
 
                 # Stream from provider
                 for chunk in provider.stream(prompt=prompt, module=module, **kwargs):
-                    if chunk['type'] == 'chunk':
+                    if chunk["type"] == "chunk":
                         # Yield content chunk
-                        full_content.append(chunk['content'])
+                        full_content.append(chunk["content"])
                         yield chunk
-                    elif chunk['type'] == 'done':
+                    elif chunk["type"] == "done":
                         # Store final metadata
-                        input_tokens = chunk.get('input_tokens', 0)
-                        output_tokens = chunk.get('output_tokens', 0)
-                        cost_usd = chunk.get('cost_usd', 0.0)
-                        model = chunk.get('model', model)
+                        input_tokens = chunk.get("input_tokens", 0)
+                        output_tokens = chunk.get("output_tokens", 0)
+                        cost_usd = chunk.get("cost_usd", 0.0)
+                        model = chunk.get("model", model)
 
                 # Build response object for database
-                complete_content = ''.join(full_content)
+                complete_content = "".join(full_content)
                 response = AIResponse(
                     content=complete_content,
                     input_tokens=input_tokens,
@@ -347,12 +362,12 @@ class AIService:
 
                 # Yield final metadata
                 yield {
-                    'type': 'done',
-                    'input_tokens': input_tokens,
-                    'output_tokens': output_tokens,
-                    'cost_usd': cost_usd,
-                    'provider': provider_name,
-                    'run_id': run_id,
+                    "type": "done",
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "cost_usd": cost_usd,
+                    "provider": provider_name,
+                    "run_id": run_id,
                 }
 
                 # Success! Exit without trying other providers
@@ -366,7 +381,9 @@ class AIService:
 
                 # ✅ Fixed: Don't break on non-retryable errors - try other providers
                 if not e.retryable:
-                    logger.warning(f"⚠️  {provider_name} error is not retryable, but will try other streaming providers")
+                    logger.warning(
+                        f"⚠️  {provider_name} error is not retryable, but will try other streaming providers"
+                    )
 
                 continue  # Try next provider
 
@@ -388,18 +405,18 @@ class AIService:
                 user_tier=user_tier,
                 module=module,
                 prompt=prompt,
-                **kwargs
+                **kwargs,
             )
 
             # Yield as single chunk (non-streaming response)
-            yield {'type': 'chunk', 'content': response.content}
+            yield {"type": "chunk", "content": response.content}
             yield {
-                'type': 'done',
-                'input_tokens': response.input_tokens,
-                'output_tokens': response.output_tokens,
-                'cost_usd': response.cost_usd,
-                'provider': response.provider,
-                'run_id': response.run_id,
+                "type": "done",
+                "input_tokens": response.input_tokens,
+                "output_tokens": response.output_tokens,
+                "cost_usd": response.cost_usd,
+                "provider": response.provider,
+                "run_id": response.run_id,
             }
 
         except Exception as e:
@@ -408,13 +425,13 @@ class AIService:
             deterministic = self.providers[-1][1]
             response = deterministic.complete(prompt=prompt, module=module, **kwargs)
 
-            yield {'type': 'chunk', 'content': response.content}
+            yield {"type": "chunk", "content": response.content}
             yield {
-                'type': 'done',
-                'input_tokens': response.input_tokens,
-                'output_tokens': response.output_tokens,
-                'cost_usd': 0.0,
-                'provider': 'deterministic',
+                "type": "done",
+                "input_tokens": response.input_tokens,
+                "output_tokens": response.output_tokens,
+                "cost_usd": 0.0,
+                "provider": "deterministic",
             }
 
     def _compute_hash(self, prompt: str, module: str, model: str) -> str:
@@ -448,21 +465,23 @@ class AIService:
             cutoff = datetime.now() - timedelta(hours=24)
             cutoff_str = cutoff.isoformat()
 
-            result = self.db.table('ai_runs') \
-                .select('*, ai_artifacts(*)') \
-                .eq('user_id', user_id) \
-                .eq('input_hash', input_hash) \
-                .eq('status', 'success') \
-                .gte('created_at', cutoff_str) \
-                .order('created_at', desc=True) \
-                .limit(1) \
+            result = (
+                self.db.table("ai_runs")
+                .select("*, ai_artifacts(*)")
+                .eq("user_id", user_id)
+                .eq("input_hash", input_hash)
+                .eq("status", "success")
+                .gte("created_at", cutoff_str)
+                .order("created_at", desc=True)
+                .limit(1)
                 .execute()
+            )
 
             if not result.data:
                 return None
 
             run = result.data[0]
-            artifacts = run.get('ai_artifacts', [])
+            artifacts = run.get("ai_artifacts", [])
 
             if not artifacts:
                 return None
@@ -470,17 +489,17 @@ class AIService:
             artifact = artifacts[0]
 
             # Build cached response
-            content = artifact.get('json', {}).get('content', '')
+            content = artifact.get("json", {}).get("content", "")
 
             return AIResponse(
                 content=content,
-                input_tokens=run.get('input_tokens', 0),
-                output_tokens=run.get('output_tokens', 0),
-                model=run.get('model', 'unknown'),
+                input_tokens=run.get("input_tokens", 0),
+                output_tokens=run.get("output_tokens", 0),
+                model=run.get("model", "unknown"),
                 cost_usd=0.0,  # No cost for cache hit
-                provider='cache',
+                provider="cache",
                 cached=True,
-                run_id=run.get('id'),
+                run_id=run.get("id"),
             )
 
         except Exception as e:
@@ -508,13 +527,7 @@ class AIService:
 
         return False
 
-    def _create_run(
-        self,
-        user_id: str,
-        module: str,
-        input_hash: str,
-        provider: str
-    ) -> str:
+    def _create_run(self, user_id: str, module: str, input_hash: str, provider: str) -> str:
         """
         Create ai_runs record with status='running'.
 
@@ -528,19 +541,23 @@ class AIService:
             Run ID
         """
         try:
-            result = self.db.table('ai_runs') \
-                .insert({
-                    'user_id': user_id,
-                    'module': module,
-                    'input_hash': input_hash,
-                    'prompt_version': f'{module}-v1.0',  # ✅ Fixed: Added prompt_version (required NOT NULL field)
-                    'provider': provider,
-                    'status': 'running',
-                    'model': 'unknown',  # Will update on success
-                }) \
+            result = (
+                self.db.table("ai_runs")
+                .insert(
+                    {
+                        "user_id": user_id,
+                        "module": module,
+                        "input_hash": input_hash,
+                        "prompt_version": f"{module}-v1.0",  # ✅ Fixed: Added prompt_version (required NOT NULL field)
+                        "provider": provider,
+                        "status": "running",
+                        "model": "unknown",  # Will update on success
+                    }
+                )
                 .execute()
+            )
 
-            run_id = result.data[0]['id']
+            run_id = result.data[0]["id"]
             logger.debug(f"Created ai_run: {run_id}")
             return run_id
 
@@ -549,12 +566,7 @@ class AIService:
             # Generate temporary ID (won't persist, but allows flow to continue)
             return f"temp_{datetime.now().timestamp()}"
 
-    def _update_run_success(
-        self,
-        run_id: str,
-        response: AIResponse,
-        module: str
-    ) -> None:
+    def _update_run_success(self, run_id: str, response: AIResponse, module: str) -> None:
         """
         Update ai_runs record with success status and usage.
 
@@ -564,16 +576,15 @@ class AIService:
             module: AI module
         """
         try:
-            self.db.table('ai_runs') \
-                .update({
-                    'status': 'success',
-                    'model': response.model,
-                    'input_tokens': response.input_tokens,
-                    'output_tokens': response.output_tokens,
-                    'cost_estimate': response.cost_usd,
-                }) \
-                .eq('id', run_id) \
-                .execute()
+            self.db.table("ai_runs").update(
+                {
+                    "status": "success",
+                    "model": response.model,
+                    "input_tokens": response.input_tokens,
+                    "output_tokens": response.output_tokens,
+                    "cost_estimate": response.cost_usd,
+                }
+            ).eq("id", run_id).execute()
 
         except Exception as e:
             logger.error(f"Error updating ai_run {run_id}: {e}")
@@ -587,23 +598,18 @@ class AIService:
             error: Error message
         """
         try:
-            self.db.table('ai_runs') \
-                .update({
-                    'status': 'failed',
-                    'error_message': error[:500],  # Truncate long errors
-                }) \
-                .eq('id', run_id) \
-                .execute()
+            self.db.table("ai_runs").update(
+                {
+                    "status": "failed",
+                    "error_message": error[:500],  # Truncate long errors
+                }
+            ).eq("id", run_id).execute()
 
         except Exception as e:
             logger.error(f"Error updating ai_run {run_id} failure: {e}")
 
     def _create_artifact(
-        self,
-        run_id: str,
-        user_id: str,
-        module: str,
-        response: AIResponse
+        self, run_id: str, user_id: str, module: str, response: AIResponse
     ) -> None:
         """
         Create ai_artifacts record with generated content.
@@ -615,18 +621,18 @@ class AIService:
             response: AIResponse
         """
         try:
-            self.db.table('ai_artifacts') \
-                .insert({
-                    'run_id': run_id,
-                    'user_id': user_id,
-                    'type': 'message',
-                    'json': {
-                        'content': response.content,
-                        'model': response.model,
-                        'provider': response.provider,
-                    }
-                }) \
-                .execute()
+            self.db.table("ai_artifacts").insert(
+                {
+                    "run_id": run_id,
+                    "user_id": user_id,
+                    "type": "message",
+                    "json": {
+                        "content": response.content,
+                        "model": response.model,
+                        "provider": response.provider,
+                    },
+                }
+            ).execute()
 
         except Exception as e:
             logger.error(f"Error creating ai_artifact for run {run_id}: {e}")
@@ -639,8 +645,8 @@ class AIService:
             Dict with cost stats, rate limit info, provider health
         """
         return {
-            'cost_stats': self.cost_tracker.get_cost_stats(days=7),
-            'providers': [name for name, _ in self.providers],
-            'total_daily_cost': self.cost_tracker.get_total_daily_cost(),
-            'daily_budget': self.cost_tracker.DAILY_BUDGET_USD,
+            "cost_stats": self.cost_tracker.get_cost_stats(days=7),
+            "providers": [name for name, _ in self.providers],
+            "total_daily_cost": self.cost_tracker.get_total_daily_cost(),
+            "daily_budget": self.cost_tracker.DAILY_BUDGET_USD,
         }

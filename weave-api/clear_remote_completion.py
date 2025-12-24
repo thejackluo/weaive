@@ -21,6 +21,7 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 print(f"🔗 Connecting to: {SUPABASE_URL}")
 
+
 def main():
     """Delete the most recent completion by bypassing triggers"""
     try:
@@ -28,7 +29,13 @@ def main():
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
         # Get the most recent completion
-        response = supabase.table("subtask_completions").select("*").order("completed_at", desc=True).limit(1).execute()
+        response = (
+            supabase.table("subtask_completions")
+            .select("*")
+            .order("completed_at", desc=True)
+            .limit(1)
+            .execute()
+        )
 
         if not response.data:
             print("❌ No completions found")
@@ -41,7 +48,7 @@ def main():
         print(f"   - Duration: {completion.get('duration_minutes', 'N/A')} minutes")
 
         # Use RPC to execute raw SQL (bypass triggers)
-        completion_id = completion['id']
+        completion_id = completion["id"]
 
         # For remote Supabase, we need to use postgrest RPC
         # Note: Raw SQL execution not available via Supabase client
@@ -61,6 +68,7 @@ def main():
 
     except Exception as e:
         print(f"❌ Error: {str(e)}")
+
 
 if __name__ == "__main__":
     main()

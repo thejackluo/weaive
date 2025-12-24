@@ -85,7 +85,7 @@ class AIProviderBase(ABC):
         cost_usd: float,
         duration_ms: int,
         model: Optional[str] = None,
-        status: str = 'success',
+        status: str = "success",
         local_date: Optional[str] = None,
         input_hash: Optional[str] = None,
     ) -> Optional[str]:
@@ -118,21 +118,27 @@ class AIProviderBase(ABC):
             model = model or self.get_provider_name()
             local_date = local_date or datetime.now(timezone.utc).date().isoformat()
 
-            result = self.db.table('ai_runs').insert({
-                'user_id': user_id,
-                'operation_type': operation_type,
-                'provider': self.get_provider_name(),
-                'model': model,
-                'input_tokens': input_tokens,
-                'output_tokens': output_tokens,
-                'cost_estimate': cost_usd,
-                'duration_ms': duration_ms,
-                'status': status,
-                'local_date': local_date,
-                'input_hash': input_hash,
-            }).execute()
+            result = (
+                self.db.table("ai_runs")
+                .insert(
+                    {
+                        "user_id": user_id,
+                        "operation_type": operation_type,
+                        "provider": self.get_provider_name(),
+                        "model": model,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                        "cost_estimate": cost_usd,
+                        "duration_ms": duration_ms,
+                        "status": status,
+                        "local_date": local_date,
+                        "input_hash": input_hash,
+                    }
+                )
+                .execute()
+            )
 
-            run_id = result.data[0]['id'] if result.data else None
+            run_id = result.data[0]["id"] if result.data else None
 
             logger.debug(
                 f"✅ Logged to ai_runs: {operation_type} | "
@@ -150,8 +156,8 @@ class AIProviderBase(ABC):
         self,
         user_id: str,
         operation_type: str,
-        user_role: str = 'user',
-        user_tier: str = 'free',
+        user_role: str = "user",
+        user_tier: str = "free",
     ) -> bool:
         """
         Check if user can make an AI call within their rate limit.
@@ -179,7 +185,7 @@ class AIProviderBase(ABC):
             RateLimitError: If user exceeds their tier limit (should be caught by API endpoint)
         """
         # Admin users bypass rate limits
-        if user_role == 'admin':
+        if user_role == "admin":
             logger.debug(f"Admin user {user_id}: unlimited access ({operation_type})")
             return True
 
@@ -205,13 +211,14 @@ class AIProviderError(Exception):
         error_code: Standardized error code for client handling
         original_error: Original exception that caused this error
     """
+
     def __init__(
         self,
         message: str,
         provider: str,
         retryable: bool = True,
         error_code: str = "AI_PROVIDER_ERROR",
-        original_error: Optional[Exception] = None
+        original_error: Optional[Exception] = None,
     ):
         self.message = message
         self.provider = provider
