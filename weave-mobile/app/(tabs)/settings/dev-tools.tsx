@@ -19,6 +19,7 @@ export default function DevToolsScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isSendingNotification, setIsSendingNotification] = useState(false);
+  const [adminModeEnabled, setAdminModeEnabled] = useState(apiClient.getAdminKey() !== null);
 
   const handleClearAllCaches = () => {
     clearAllCaches(queryClient);
@@ -34,6 +35,23 @@ export default function DevToolsScreen() {
     const today = new Date().toISOString().split('T')[0];
     queryClient.invalidateQueries({ queryKey: ['binds', 'today', today] });
     Alert.alert('Success', "Today's binds cache invalidated. Will refetch on next screen load.");
+  };
+
+  const handleToggleAdminMode = () => {
+    const ADMIN_KEY = 'dev-admin-key-12345-change-in-production';
+    if (adminModeEnabled) {
+      apiClient.disableAdminMode();
+      setAdminModeEnabled(false);
+      Alert.alert('🔒 Admin Mode Disabled', 'Normal rate limits will apply.');
+    } else {
+      apiClient.enableAdminMode(ADMIN_KEY);
+      setAdminModeEnabled(true);
+      Alert.alert(
+        '🔓 Admin Mode Enabled',
+        'Unlimited rate limits active. Use for testing only.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const handleSendTestNotification = async () => {
@@ -61,45 +79,34 @@ export default function DevToolsScreen() {
 
       // For now, we'll use a simplified approach: call the endpoint with auth_user_id
       // and let the backend handle the lookup
-      // Enable admin mode temporarily
-      const ADMIN_KEY = 'dev-admin-key-12345-change-in-production';
-      apiClient.enableAdminMode(ADMIN_KEY);
+      // Note: Admin mode must be enabled manually in Dev Tools for this to work
+      const { supabase } = await import('@lib/supabase');
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .single();
 
-      try {
-        // We need to get user_profiles.id, not auth.uid
-        // The trigger-checkin endpoint expects user_profiles.id
-        // Let's make a direct call to get it from Supabase
-        const { supabase } = await import('@lib/supabase');
-        const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('auth_user_id', authUserId)
-          .single();
+      if (profileError || !profileData) {
+        throw new Error('User profile not found');
+      }
 
-        if (profileError || !profileData) {
-          throw new Error('User profile not found');
-        }
+      const userProfileId = profileData.id;
 
-        const userProfileId = profileData.id;
+      // Now call the trigger-checkin endpoint with user_profiles.id
+      const result = await apiClient.post(
+        `/admin/trigger-checkin/${userProfileId}`,
+        {}
+      );
 
-        // Now call the trigger-checkin endpoint with user_profiles.id
-        const result = await apiClient.post(
-          `/admin/trigger-checkin/${userProfileId}`,
-          {}
+      if (result.data?.data?.success) {
+        Alert.alert(
+          '✅ Notification Sent!',
+          `Test notification triggered successfully!\n\nMessage: "${result.data.data.message}"\n\nCheck your device for the push notification.`,
+          [{ text: 'OK' }]
         );
-
-        if (result.data?.data?.success) {
-          Alert.alert(
-            '✅ Notification Sent!',
-            `Test notification triggered successfully!\n\nMessage: "${result.data.data.message}"\n\nCheck your device for the push notification.`,
-            [{ text: 'OK' }]
-          );
-        } else {
-          throw new Error('Unexpected response format');
-        }
-      } finally {
-        // Disable admin mode after use
-        apiClient.disableAdminMode();
+      } else {
+        throw new Error('Unexpected response format');
       }
     } catch (error: any) {
       console.error('[DEV_TOOLS] Test notification error:', error);
@@ -186,6 +193,62 @@ export default function DevToolsScreen() {
           <Body style={{ color: colors.text.muted, marginTop: spacing[3], fontSize: 12 }}>
             Use "Clear All Caches" when data seems stale or incorrect. This forces a fresh fetch
             from the API.
+          </Body>
+        </Card>
+
+        {/* Admin Mode */}
+        <Card variant="default" style={{ marginBottom: spacing[4] }}>
+          <Heading
+            variant="displayLg"
+            style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+          >
+            Admin Mode
+          </Heading>
+
+          <View style={{ gap: spacing[3] }}>
+            <Button
+              variant={adminModeEnabled ? 'destructive' : 'primary'}
+              onPress={handleToggleAdminMode}
+            >
+              {adminModeEnabled ? '🔓 Disable Admin Mode' : '🔒 Enable Admin Mode'}
+            </Button>
+
+            {adminModeEnabled && (
+              <View
+                style={{
+                  padding: spacing[3],
+                  backgroundColor: colors.accent.warning + '20',
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: colors.accent.warning,
+                }}
+              >
+                <Body
+                  style={{
+                    color: colors.accent.warning,
+                    fontWeight: '600',
+                  }}
+                >
+                  ⚠️ ADMIN MODE ACTIVE
+                </Body>
+                <Body
+                  style={{
+                    color: colors.text.secondary,
+                    fontSize: 12,
+                    marginTop: spacing[1],
+                  }}
+                >
+                  • Unlimited AI requests (no rate limits){'\n'}
+                  • All admin endpoints accessible{'\n'}
+                  • Development only - DO NOT use in production
+                </Body>
+              </View>
+            )}
+          </View>
+
+          <Body style={{ color: colors.text.muted, marginTop: spacing[3], fontSize: 12 }}>
+            Enable admin mode to bypass rate limits during testing. This uses the dev admin key and
+            grants unlimited access to AI endpoints.
           </Body>
         </Card>
 
