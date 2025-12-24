@@ -8,20 +8,20 @@ Tests validate that standardization patterns and templates are working correctly
 - Template file integrity
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
 from app.core.errors import (
-    ErrorCode,
     AppException,
-    ValidationException,
+    ErrorCode,
     NotFoundException,
-    format_error_response
+    ValidationException,
+    format_error_response,
 )
-from app.models.base import BaseCreateModel, BaseUpdateModel, BaseResponseModel
-
+from app.main import app
+from app.models.base import BaseCreateModel, BaseResponseModel, BaseUpdateModel
 
 client = TestClient(app)
 
@@ -51,6 +51,31 @@ def test_format_error_response():
     assert response["error"] == "TEST_ERROR"
     assert response["message"] == "Test error message"
     assert response["retryable"] is True
+
+
+def test_format_error_response_with_retry_after():
+    """Test error response with retryAfter field (AC-10.1)"""
+    response = format_error_response(
+        code=ErrorCode.RATE_LIMIT_EXCEEDED,
+        message="Too many requests",
+        retryable=True,
+        retry_after=3600  # 1 hour
+    )
+
+    assert response["error"] == ErrorCode.RATE_LIMIT_EXCEEDED
+    assert response["message"] == "Too many requests"
+    assert response["retryable"] is True
+    assert response["retryAfter"] == 3600
+
+    # Test that retryAfter is omitted when None
+    response_no_retry = format_error_response(
+        code=ErrorCode.VALIDATION_ERROR,
+        message="Invalid input",
+        retryable=False,
+        retry_after=None
+    )
+
+    assert "retryAfter" not in response_no_retry
 
 
 def test_app_exception():
@@ -99,8 +124,8 @@ def test_base_create_model():
 
 def test_base_response_model():
     """Test BaseResponseModel has required fields"""
-    from uuid import uuid4
     from datetime import datetime
+    from uuid import uuid4
 
     # Create instance
     instance = BaseResponseModel(
