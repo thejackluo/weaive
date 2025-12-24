@@ -22,6 +22,8 @@ export interface Goal {
   updated_at: string; // ISO 8601
   created_at: string; // ISO 8601
   user_id: string;
+  why?: string; // Optional: User's motivation for the goal
+  color?: string; // Optional: Visual color identifier (hex code)
 }
 
 /**
@@ -52,8 +54,20 @@ export interface Milestone {
 export interface Bind {
   id: string;
   title: string;
+  description?: string;
   frequency: string;
+  recurrence_rule?: string; // iCal RRULE format (e.g., "FREQ=DAILY;INTERVAL=1")
   completedToday?: boolean;
+}
+
+/**
+ * Memory - Image/photo associated with a goal
+ */
+export interface Memory {
+  id: string;
+  image_url: string;
+  thumbnail_url?: string;
+  created_at: string; // ISO 8601
 }
 
 /**
@@ -63,6 +77,8 @@ export interface Bind {
 export interface GoalDetail extends Goal {
   milestones: Milestone[];
   binds: Bind[];
+  qgoals?: Milestone[]; // Alias for milestones (Q-Goals)
+  memories: Memory[];
   stats?: {
     consistency_7d: number | null;
     total_completions: number;
