@@ -15,7 +15,6 @@ import logging
 # This prevents hanging on module import in test environments without AWS credentials
 # import boto3  # ← Moved to __init__
 # from botocore.exceptions import ClientError  # ← Moved to methods that use it
-
 from .base import AIProvider, AIProviderError, AIResponse
 
 logger = logging.getLogger(__name__)

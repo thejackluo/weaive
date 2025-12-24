@@ -25,6 +25,7 @@ from supabase import Client as SupabaseClient
 
 from .anthropic_provider import AnthropicProvider
 from .base import AIProviderError, AIResponse
+
 # BedrockProvider imported conditionally in __init__ to avoid boto3 import in tests
 from .cost_tracker import CostTracker
 from .deterministic_provider import DeterministicProvider

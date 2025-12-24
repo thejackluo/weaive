@@ -48,7 +48,6 @@ interface ConsistencyHeatmapProps {
   onFilterChange?: (filter: 'overall' | 'needle' | 'bind' | 'thread') => void;
   onTimeframeChange?: (timeframe: '7d' | '2w' | '1m') => void;
   onNeedleChange?: (needleId: string) => void; // Callback when needle selection changes
-  trendPercentage?: number;
 }
 
 interface BindCompletionData {
@@ -76,7 +75,6 @@ export function ConsistencyHeatmap({
   onFilterChange,
   onTimeframeChange,
   onNeedleChange,
-  trendPercentage = 0, // Fallback value (will use API delta if available)
 }: ConsistencyHeatmapProps) {
   const { colors } = useTheme();
 
@@ -101,8 +99,8 @@ export function ConsistencyHeatmap({
     dataLength: data?.data?.length,
   });
 
-  // Use delta from API if available, otherwise use prop fallback
-  const actualTrendPercentage = data?.meta?.consistency_delta ?? trendPercentage;
+  // Use delta from API if available, otherwise use 0 as fallback
+  const actualTrendPercentage = data?.meta?.consistency_delta ?? 0;
 
   const {
     data: bindsGridData,
@@ -298,7 +296,6 @@ export function ConsistencyHeatmap({
     ];
   };
 
-
   // All binds combined (for bind and overall views)
   const allBinds: BindCompletionData[] = needles.flatMap((needle) => needle.binds);
 
@@ -344,32 +341,8 @@ export function ConsistencyHeatmap({
   // The backend already calculates this correctly, excluding today from the percentage
   const consistencyPercentage = data?.meta?.consistency_percentage ?? 0;
 
-  // Calculate trend percentage (comparing first half vs second half)
-  const calculateTrendPercentage = (): number => {
-    if (consistencyData.length === 0) return 0;
-    if (consistencyData.length === 1) return 0; // Can't calculate trend with 1 point
-
-    const midpoint = Math.floor(consistencyData.length / 2);
-    const firstHalf = consistencyData.slice(0, midpoint);
-    const secondHalf = consistencyData.slice(midpoint);
-
-    if (firstHalf.length === 0 || secondHalf.length === 0) return 0;
-
-    // Count active days in each half
-    const firstActiveCount = firstHalf.filter((d) => d.completion_percentage >= 50).length;
-    const secondActiveCount = secondHalf.filter((d) => d.completion_percentage >= 50).length;
-
-    const firstPercentage = (firstActiveCount / firstHalf.length) * 100;
-    const secondPercentage = (secondActiveCount / secondHalf.length) * 100;
-
-    if (firstPercentage === 0) return Math.round(secondPercentage);
-
-    // Calculate percentage change
-    const percentChange = ((secondPercentage - firstPercentage) / firstPercentage) * 100;
-    return Math.round(percentChange);
-  };
-
-  const trendPercentage = calculateTrendPercentage();
+  // Trend percentage is already provided by the API in actualTrendPercentage
+  // (No need for local calculation)
 
   // Handler for opening day details modal
   const handleDayPress = (date: string, _completionRate: number) => {
@@ -699,9 +672,8 @@ export function ConsistencyHeatmap({
     </View>
   );
 
-  // 7d: Show bind grid view with daily checkmarks
-  if (timeframe === '7d') {
-    // Generate day headers from API's date range (starts from user's first instance)
+  // Generate day headers from API's date range (starts from user's first instance)
+  const getDayHeaders = (): DayHeader[] => {
     const dayHeaders: DayHeader[] = [];
     if (bindsGridData?.meta?.start_date && bindsGridData?.meta?.end_date) {
       const startDate = new Date(bindsGridData.meta.start_date);
@@ -717,7 +689,7 @@ export function ConsistencyHeatmap({
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
-    return headers;
+    return dayHeaders;
   };
 
   const dayHeaders = getDayHeaders();
@@ -801,7 +773,7 @@ export function ConsistencyHeatmap({
           </Pressable>
 
           {/* Day header cells */}
-          {dayHeaders.map((day) => (
+          {dayHeaders.map((day: DayHeader) => (
             <View key={day.fullDate} style={styles.dayHeaderCell}>
               <Text variant="textXs" style={{ color: colors.text.muted }}>
                 {day.dayOfWeek}
@@ -902,10 +874,10 @@ export function ConsistencyHeatmap({
       <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
 
       {/* Needle card (for needle view) */}
-      {renderNeedleCard()}
+      {filterType === 'needle' && _renderNeedleCard()}
 
       {/* Bind selector (for bind view) */}
-      {renderBindSelector()}
+      {filterType === 'bind' && _renderBindSelector()}
 
       {renderFilterTabs()}
 
