@@ -81,13 +81,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **❌ NEVER use placeholder auth:** `auth_user_id = "placeholder_auth_user_id"` is a **CRITICAL SECURITY VULNERABILITY**
 
-**Templates Available:**
-- API endpoint template (FastAPI router with auth, validation, error handling)
-- Database model template (BaseModel with timestamps, soft delete)
-- Pydantic schema template (request/response models)
+**Templates Available** (`scripts/templates/`):
+- `api_router_template.py` - FastAPI router with all CRUD operations, auth, error handling
+- `pydantic_schema_template.py` - Request/response models with validation patterns
+- `service_template.py` - Service layer with decision tree guidance
+- `test_template.py` - Pytest fixtures and test patterns
+- `database_table_template.sql` - PostgreSQL table with RLS policies
+
+**Scaffolding Tool:**
+```bash
+python scripts/generate_api.py <resource>     # Auto-generates router, schemas, tests
+python scripts/generate_api.py goal           # Example: creates goals router
+```
+
+**Quick Start: Creating Your First API**
+
+New to backend development on this project? Start here:
+1. 📖 Read `docs/dev/backend-quick-start.md` (30-minute walkthrough)
+2. 🚀 Run `python scripts/generate_api.py <resource>` to scaffold
+3. ✏️ Follow step-by-step guide to implement your first endpoint
+
+Example: `python scripts/generate_api.py goal` creates Goals API scaffold with:
+- `app/api/goals/router.py` (5 CRUD endpoints with 501 stubs)
+- `app/schemas/goal.py` (GoalCreate, GoalUpdate, GoalResponse)
+- `tests/test_goals_api.py` (5 integration tests)
+
+**Developer Guides:**
+- `docs/dev/backend-patterns-guide.md` - Comprehensive patterns reference
+- `docs/dev/backend-api-integration.md` - 28 API endpoint registry
+- `docs/dev/backend-quick-start.md` - Step-by-step first API walkthrough ✅
+- `docs/api-error-codes.md` - Complete error code catalog (17 codes) ✅
+
+**Error Handling (Story 0.8 Complete):**
+- ✅ 17 standard error codes (VALIDATION_ERROR, NOT_FOUND, RATE_LIMIT_EXCEEDED, etc.)
+- ✅ Error response format: `{error, message, retryable, retryAfter?}`
+- ✅ Exception handlers registered in `app/main.py`
+- ✅ Comprehensive utilities in `app/core/errors.py`
+- 📖 See `docs/api-error-codes.md` for complete catalog
 
 **Full Spec:** `docs/stories/1-5-2-backend-standardization.md`
-**Developer Guide:** `docs/dev/backend-patterns-guide.md` (created by Story 1.5.2)
 
 ---
 
