@@ -54,6 +54,67 @@ export default function SettingsScreen() {
           </Text>
         </View>
 
+        {/* AI Personality Section */}
+        <View
+          style={{
+            backgroundColor: '#1F1F23',
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: '#27272A',
+            overflow: 'hidden',
+          }}
+        >
+          <View
+            style={{
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: '#27272A',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: '#FAFAFA',
+              }}
+            >
+              AI Personality
+            </Text>
+          </View>
+
+          {/* Personality Settings Link */}
+          <Pressable
+            onPress={() => router.push('/(tabs)/settings/personality')}
+            style={{
+              padding: 16,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: '#FAFAFA',
+                  marginBottom: 4,
+                }}
+              >
+                🤖 Personality & Coaching Style
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: '#71717A',
+                }}
+              >
+                Switch between Dream Self and Weave AI
+              </Text>
+            </View>
+            <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
+          </Pressable>
+        </View>
+
         {/* Reflection Preferences Section */}
         <View
           style={{
