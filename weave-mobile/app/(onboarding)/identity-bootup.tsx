@@ -40,7 +40,7 @@ import {
 } from '@/constants/identityTraits';
 import { storeIdentityBootup } from '@/services/onboarding';
 import { updateWeaveAIPreset } from '@/services/personalityApi';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@lib/supabase';
 
 // UI Constants
 const CARD_WIDTH_RATIO = 0.8;
