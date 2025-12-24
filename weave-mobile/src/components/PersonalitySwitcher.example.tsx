@@ -70,9 +70,7 @@ export function AIChatScreen() {
       {/* Chat messages... */}
 
       <View className="p-4 border-t border-opal-800">
-        <Body className="text-opal-400 mb-3 text-center">
-          Choose your AI coach style:
-        </Body>
+        <Body className="text-opal-400 mb-3 text-center">Choose your AI coach style:</Body>
 
         <PersonalitySwitcher compact className="justify-center" />
       </View>
@@ -121,8 +119,8 @@ export function OnboardingPersonalityStep({ onNext }: { onNext: () => void }) {
       </Heading>
 
       <Body className="text-opal-400 mb-6">
-        Weave offers two AI coaching styles. Choose the one that fits you best.
-        You can change this anytime in settings.
+        Weave offers two AI coaching styles. Choose the one that fits you best. You can change this
+        anytime in settings.
       </Body>
 
       <PersonalitySwitcher
@@ -148,13 +146,9 @@ export function PersonalityAwareComponent() {
   return (
     <View className="p-4">
       {personality?.personality_type === 'dream_self' ? (
-        <Body className="text-purple-400">
-          🌟 {personality.name} is here to guide you!
-        </Body>
+        <Body className="text-purple-400">🌟 {personality.name} is here to guide you!</Body>
       ) : (
-        <Body className="text-opal-400">
-          💚 Weave is ready to support you!
-        </Body>
+        <Body className="text-opal-400">💚 Weave is ready to support you!</Body>
       )}
 
       {/* Show different UI based on personality... */}
