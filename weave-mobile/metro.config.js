@@ -1,8 +1,8 @@
+const { getDefaultConfig } = require('expo/metro-config');
 const { withNativewind } = require('nativewind/metro');
-const {
-  getSentryExpoConfig
-} = require("@sentry/react-native/metro");
 
-const config = getSentryExpoConfig(__dirname);
+// Use default Expo config - Sentry is configured via Expo plugin in app.json
+// This avoids Windows ESM path resolution issues with getSentryExpoConfig
+const config = getDefaultConfig(__dirname);
 
 module.exports = withNativewind(config, { input: './global.css' });
