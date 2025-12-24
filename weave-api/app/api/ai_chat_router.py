@@ -18,7 +18,7 @@ Personality System (Unified Story 6.1 + 6.2):
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import AsyncGenerator, Optional
 from uuid import UUID
 
@@ -45,6 +45,8 @@ from app.services.ai.tiered_rate_limiter import TieredRateLimiter
 from app.services.context_builder import ContextBuilderService  # Story 6.2
 from app.services.personality_service import PersonalityService  # Story 6.2
 from app.services.ai_orchestrator import AIOrchestrator  # Story 6.2
+from app.services.tools import get_tool_registry  # Story 6.2
+from app.services.tools.ai_tool_classifier import create_tool_classifier  # Story 6.2 - AI-based classification
 
 logger = logging.getLogger(__name__)
 
@@ -128,8 +130,8 @@ def create_conversation(
         result = db.table('ai_chat_conversations').insert({
             'user_id': str(user_id),
             'initiated_by': initiated_by,
-            'started_at': datetime.now().isoformat(),
-            'last_message_at': datetime.now().isoformat()
+            'started_at': datetime.now(timezone.utc).isoformat(),
+            'last_message_at': datetime.now(timezone.utc).isoformat()
         }).execute()
 
         return UUID(result.data[0]['id'])
@@ -168,12 +170,12 @@ def save_message(
             'role': role,
             'content': content,
             'tokens_used': tokens_used,
-            'created_at': datetime.now().isoformat()
+            'created_at': datetime.now(timezone.utc).isoformat()
         }).execute()
 
         # Update conversation last_message_at
         db.table('ai_chat_conversations').update({
-            'last_message_at': datetime.now().isoformat()
+            'last_message_at': datetime.now(timezone.utc).isoformat()
         }).eq('id', str(conversation_id)).execute()
 
         return UUID(result.data[0]['id'])
@@ -315,60 +317,93 @@ async def send_chat_message(
     tokens_used = 0
     tools_invoked = []
 
-    # Story 6.2: Use AIOrchestrator if tools enabled, otherwise regular AIService
+    # Story 6.2: AI-based tool classification
     if request.enable_tools:
         try:
-            orchestrator = AIOrchestrator(ai_service)
-            result = await orchestrator.generate_with_tools(
-                user_id=str(user_id),
-                prompt=full_prompt,
-                user_context=user_context,
-                enable_tools=True,
-                max_tool_iterations=2
-            )
-            response_text = result.content
-            tokens_used = result.input_tokens + result.output_tokens
-            tools_invoked = getattr(result, 'tools_invoked', [])
-            logger.info(f"✅ [TOOLS] Generated response with tools: {tools_invoked}")
+            logger.info(f"🔧 [TOOLS] Tool calling enabled - analyzing message with AI classifier")
+
+            # Step 1: Analyze message for tool triggers (AI-based classification)
+            tool_classifier = create_tool_classifier(ai_service)
+            triggered_tools = await tool_classifier.analyze_message(request.message, str(user_id))
+
+            logger.info(f"🎯 [TOOLS] AI identified {len(triggered_tools)} tool(s)")
+
+            # Step 2: Execute triggered tools immediately
+            tool_registry = get_tool_registry()
+            tool_execution_results = []
+
+            for tool_call in triggered_tools:
+                tool_name = tool_call['tool_name']
+                parameters = tool_call['parameters']
+                logger.info(f"🔄 [TOOLS] Executing tool: {tool_name} with params: {parameters}")
+
+                # Execute tool
+                result = await tool_registry.execute_tool(tool_name, str(user_id), parameters)
+
+                tool_execution_results.append({
+                    'tool_name': tool_name,
+                    'input': parameters,
+                    'success': result.get('success', False),
+                    'result': result.get('data'),
+                    'error': result.get('error')
+                })
+
+                if result.get('success'):
+                    logger.info(f"✅ [TOOLS] Tool {tool_name} succeeded")
+                else:
+                    logger.error(f"❌ [TOOLS] Tool {tool_name} failed: {result.get('error')}")
+
+            tools_invoked = tool_execution_results
+            logger.info(f"✅ [TOOLS] Executed {len(tools_invoked)} tool(s)")
+
+            # Step 3: Build enhanced prompt with tool results
+            if tool_execution_results:
+                tool_results_summary = "\n\n".join([
+                    f"Tool '{t['tool_name']}' executed:\n"
+                    f"- Input: {t['input']}\n"
+                    f"- Result: {t['result'] if t['success'] else 'ERROR: ' + str(t.get('error', 'Unknown error'))}"
+                    for t in tool_execution_results
+                ])
+                full_prompt = f"{full_prompt}\n\n[System: The following tools were executed:\n{tool_results_summary}\n\nPlease incorporate these results into your response naturally.]"
+
         except Exception as e:
-            logger.error(f"❌ [TOOLS] Tool-enabled generation failed: {e}")
-            # Fall back to regular generation
-            request.enable_tools = False
+            logger.error(f"❌ [TOOLS] Tool execution failed: {e}")
+            # Continue with regular generation (don't disable tools, just skip execution)
+            tools_invoked = []
 
-    # Regular generation (if tools disabled or failed)
-    if not request.enable_tools:
-        # Try each model in sequence
-        for i, model_to_try in enumerate(models_to_try):
-            try:
-                logger.info(f"🔄 [MODEL_FALLBACK] Trying model {i+1}/{len(models_to_try)}: {model_to_try}")
+    # Generate AI response (with or without tool results in prompt)
+    # Try each model in sequence
+    for i, model_to_try in enumerate(models_to_try):
+        try:
+            logger.info(f"🔄 [MODEL_FALLBACK] Trying model {i+1}/{len(models_to_try)}: {model_to_try}")
 
-                # Call existing AIService
-                ai_response = ai_service.generate(
-                    user_id=str(user_id),
-                    user_role='admin' if is_admin else 'user',
-                    user_tier=subscription_tier,
-                    module='chat',
-                    prompt=full_prompt,
-                    model=model_to_try,
-                    max_tokens=500,
-                    user_context=user_context  # Story 6.2: Pass context
-                )
+            # Call existing AIService
+            ai_response = ai_service.generate(
+                user_id=str(user_id),
+                user_role='admin' if is_admin else 'user',
+                user_tier=subscription_tier,
+                module='chat',
+                prompt=full_prompt,
+                model=model_to_try,
+                max_tokens=500,
+                user_context=user_context  # Story 6.2: Pass context
+            )
 
-                response_text = ai_response.get('content', 'Sorry, I encountered an issue. Please try again.')
-                tokens_used = ai_response.get('total_tokens', 0)
+            response_text = ai_response.get('content', 'Sorry, I encountered an issue. Please try again.')
+            tokens_used = ai_response.get('total_tokens', 0)
 
-                logger.info(f"✅ [MODEL_FALLBACK] Success with model: {model_to_try}")
-                model = model_to_try  # Update model for usage tracking
-                break  # Success! Exit the loop
+            logger.info(f"✅ [MODEL_FALLBACK] Success with model: {model_to_try}")
+            model = model_to_try  # Update model for usage tracking
+            break  # Success! Exit the loop
 
-            except Exception as e:
-                logger.warning(f"⚠️  [MODEL_FALLBACK] Model {model_to_try} failed: {e}")
-                if i == len(models_to_try) - 1:  # Last model failed
-                    logger.error(f"💥 [MODEL_FALLBACK] All models failed for user {user_id}")
-                    # Fallback response (deterministic)
-                    response_text = "I'm having trouble responding right now. Please try again in a moment."
-                    tokens_used = 0
-                # Continue to next model
+        except Exception as e:
+            logger.warning(f"⚠️  [MODEL_FALLBACK] Model {model_to_try} failed: {e}")
+            if i == len(models_to_try) - 1:  # Last model failed
+                logger.error(f"💥 [MODEL_FALLBACK] All models failed for user {user_id}")
+                # Fallback response (deterministic)
+                response_text = "I'm having trouble responding right now. Please try again in a moment."
+                tokens_used = 0
+            # Continue to next model
 
     # Save assistant response
     assistant_message_id = save_message(
@@ -549,90 +584,233 @@ async def send_chat_message_stream(
             # Build full prompt with user message
             full_prompt = f"{system_prompt}\n\nUser: {request.message}"
 
+            # Story 6.2: Build user context if requested
+            user_context = None
+            context_used = False
+            if request.include_context:
+                try:
+                    context_builder = ContextBuilderService(db)
+                    user_context = await context_builder.build_context(str(user_id))
+                    context_used = user_context is not None
+                    if context_used:
+                        logger.info(f"✅ [CONTEXT] Built context for user {user_id}")
+                    else:
+                        logger.warning(f"⚠️  [CONTEXT] Context assembly timed out for user {user_id}")
+                except Exception as e:
+                    logger.error(f"❌ [CONTEXT] Error building context for user {user_id}: {e}")
+                    context_used = False
+
             # Stream AI response with model fallback chain (save message even if client disconnects)
             full_content = []
             tokens_used = 0
             cost_usd = 0.0
             run_id = None
             streaming_succeeded = False
+            tools_invoked = []
+            assistant_message_id = None  # Initialize to avoid UnboundLocalError
 
-            try:
-                # Try each model in sequence for streaming
-                for i, model_to_try in enumerate(models_to_try):
-                    try:
-                        logger.info(f"🔄 [STREAMING_FALLBACK] Trying model {i+1}/{len(models_to_try)}: {model_to_try}")
+            # Story 6.2: AI-based tool classification
+            if request.enable_tools:
+                try:
+                    logger.info(f"🔧 [TOOLS] Tool calling enabled - analyzing message with AI classifier")
 
-                        # Call existing AIService streaming method
-                        async for chunk in ai_service.generate_stream(
-                            user_id=str(user_id),
-                            user_role='admin' if is_admin else 'user',
-                            user_tier=subscription_tier,
-                            module='chat',  # ✅ Fixed: Use 'chat' not 'ai_chat' (must match enum in database)
-                            prompt=full_prompt,
-                            model=model_to_try,
-                            max_tokens=500
-                        ):
-                            if chunk['type'] == 'chunk':
-                                # Stream content chunk to frontend
-                                full_content.append(chunk['content'])
+                    # Step 1: Analyze message for tool triggers (AI-based classification)
+                    tool_classifier = create_tool_classifier(ai_service)
+                    triggered_tools = await tool_classifier.analyze_message(request.message, str(user_id))
+
+                    logger.info(f"🎯 [TOOLS] AI identified {len(triggered_tools)} tool(s)")
+
+                    # Step 2: Execute triggered tools immediately
+                    tool_registry = get_tool_registry()
+                    tool_execution_results = []
+
+                    for tool_call in triggered_tools:
+                        tool_name = tool_call['tool_name']
+                        parameters = tool_call['parameters']
+                        logger.info(f"🔄 [TOOLS] Executing tool: {tool_name} with params: {parameters}")
+
+                        # Emit tool_start event
+                        tool_start_event = json.dumps({
+                            "type": "tool_start",
+                            "tool_name": tool_name,
+                            "tool_input": parameters
+                        })
+                        yield f"data: {tool_start_event}\n\n"
+
+                        # Execute tool
+                        result = await tool_registry.execute_tool(tool_name, str(user_id), parameters)
+
+                        tool_execution_results.append({
+                            'tool_name': tool_name,
+                            'input': parameters,
+                            'success': result.get('success', False),
+                            'result': result.get('data'),
+                            'error': result.get('error')
+                        })
+
+                        # Emit tool result/error event
+                        if result.get('success'):
+                            tool_result_event = json.dumps({
+                                "type": "tool_result",
+                                "tool_name": tool_name,
+                                "tool_result": result.get('data', {})
+                            })
+                            yield f"data: {tool_result_event}\n\n"
+                            logger.info(f"✅ [TOOLS] Tool {tool_name} succeeded")
+                        else:
+                            tool_error_event = json.dumps({
+                                "type": "tool_error",
+                                "tool_name": tool_name,
+                                "tool_error": result.get('error', 'Unknown error')
+                            })
+                            yield f"data: {tool_error_event}\n\n"
+                            logger.error(f"❌ [TOOLS] Tool {tool_name} failed: {result.get('error')}")
+
+                    tools_invoked = tool_execution_results
+                    logger.info(f"✅ [TOOLS] Executed {len(tools_invoked)} tool(s)")
+
+                    # Step 3: Build enhanced prompt with tool results
+                    if tool_execution_results:
+                        tool_results_summary = "\n\n".join([
+                            f"Tool '{t['tool_name']}' executed:\n"
+                            f"- Input: {t['input']}\n"
+                            f"- Result: {t['result'] if t['success'] else 'ERROR: ' + str(t.get('error', 'Unknown error'))}"
+                            for t in tool_execution_results
+                        ])
+                        enhanced_prompt = f"{full_prompt}\n\n[System: The following tools were executed:\n{tool_results_summary}\n\nPlease incorporate these results into your response naturally.]"
+                    else:
+                        enhanced_prompt = full_prompt
+
+                    # Step 4: Stream AI response with tool results context
+                    # Use regular streaming (not orchestrator) with enhanced prompt
+                    for i, model_to_try in enumerate(models_to_try):
+                        try:
+                            logger.info(f"🔄 [TOOLS+STREAM] Generating response with model {i+1}/{len(models_to_try)}: {model_to_try}")
+
+                            # Call AIService streaming with enhanced prompt (includes tool results)
+                            async for chunk in ai_service.generate_stream(
+                                user_id=str(user_id),
+                                user_role='admin' if is_admin else 'user',
+                                user_tier=subscription_tier,
+                                module='chat',
+                                prompt=enhanced_prompt,
+                                model=model_to_try,
+                                max_tokens=500
+                            ):
+                                if chunk['type'] == 'chunk':
+                                    # Stream content chunk to frontend
+                                    full_content.append(chunk['content'])
+                                    chunk_event = json.dumps({
+                                        "type": "chunk",
+                                        "content": chunk['content']
+                                    })
+                                    yield f"data: {chunk_event}\n\n"
+
+                                elif chunk['type'] == 'done':
+                                    # Store final metadata
+                                    tokens_used = chunk.get('tokens_used', chunk.get('output_tokens', 0))
+                                    cost_usd = chunk.get('cost_usd', 0.0)
+                                    run_id = chunk.get('run_id')
+                                    streaming_succeeded = True
+
+                            logger.info(f"✅ [TOOLS+STREAM] Success with model: {model_to_try}")
+                            model = model_to_try
+                            break  # Success!
+
+                        except Exception as stream_error:
+                            logger.warning(f"⚠️  [TOOLS+STREAM] Model {model_to_try} failed: {stream_error}")
+                            if i == len(models_to_try) - 1:  # Last model failed
+                                logger.error(f"💥 [TOOLS+STREAM] All models failed")
+                                fallback_text = "I executed your request, but I'm having trouble generating a response. Please check your data and try asking again."
+                                full_content = [fallback_text]
+                                chunk_event = json.dumps({"type": "chunk", "content": fallback_text})
+                                yield f"data: {chunk_event}\n\n"
+                            # Continue to next model
+
+                except Exception as e:
+                    logger.error(f"❌ [TOOLS] Tool-enabled generation failed: {e}")
+                    # Fall back to regular streaming
+                    request.enable_tools = False
+
+            # Regular streaming generation (if tools disabled or failed)
+            if not request.enable_tools:
+                try:
+                    # Try each model in sequence for streaming
+                    for i, model_to_try in enumerate(models_to_try):
+                        try:
+                            logger.info(f"🔄 [STREAMING_FALLBACK] Trying model {i+1}/{len(models_to_try)}: {model_to_try}")
+
+                            # Call existing AIService streaming method
+                            async for chunk in ai_service.generate_stream(
+                                user_id=str(user_id),
+                                user_role='admin' if is_admin else 'user',
+                                user_tier=subscription_tier,
+                                module='chat',  # ✅ Fixed: Use 'chat' not 'ai_chat' (must match enum in database)
+                                prompt=full_prompt,
+                                model=model_to_try,
+                                max_tokens=500
+                            ):
+                                if chunk['type'] == 'chunk':
+                                    # Stream content chunk to frontend
+                                    full_content.append(chunk['content'])
+                                    chunk_event = json.dumps({
+                                        "type": "chunk",
+                                        "content": chunk['content']
+                                    })
+                                    yield f"data: {chunk_event}\n\n"
+
+                                elif chunk['type'] == 'done':
+                                    # Store final metadata
+                                    tokens_used = chunk.get('tokens_used', chunk.get('output_tokens', 0))
+                                    cost_usd = chunk.get('cost_usd', 0.0)
+                                    run_id = chunk.get('run_id')
+                                    streaming_succeeded = True
+
+                            logger.info(f"✅ [STREAMING_FALLBACK] Success with model: {model_to_try}")
+                            model = model_to_try  # Update model for usage tracking
+                            break  # Success! Exit the loop
+
+                        except Exception as e:
+                            logger.warning(f"⚠️  [STREAMING_FALLBACK] Model {model_to_try} failed: {e}")
+                            if i == len(models_to_try) - 1:  # Last model failed
+                                logger.error(f"💥 [STREAMING_FALLBACK] All models failed for user {user_id}")
+                                # Fallback response (deterministic)
+                                fallback_text = "I'm having trouble responding right now. Please try again in a moment."
+                                full_content = [fallback_text]
+
+                                # Send fallback as single chunk
                                 chunk_event = json.dumps({
                                     "type": "chunk",
-                                    "content": chunk['content']
+                                    "content": fallback_text
                                 })
                                 yield f"data: {chunk_event}\n\n"
+                            # Continue to next model
 
-                            elif chunk['type'] == 'done':
-                                # Store final metadata
-                                tokens_used = chunk.get('tokens_used', chunk.get('output_tokens', 0))
-                                cost_usd = chunk.get('cost_usd', 0.0)
-                                run_id = chunk.get('run_id')
-                                streaming_succeeded = True
-
-                        logger.info(f"✅ [STREAMING_FALLBACK] Success with model: {model_to_try}")
-                        model = model_to_try  # Update model for usage tracking
-                        break  # Success! Exit the loop
-
-                    except Exception as e:
-                        logger.warning(f"⚠️  [STREAMING_FALLBACK] Model {model_to_try} failed: {e}")
-                        if i == len(models_to_try) - 1:  # Last model failed
-                            logger.error(f"💥 [STREAMING_FALLBACK] All models failed for user {user_id}")
-                            # Fallback response (deterministic)
-                            fallback_text = "I'm having trouble responding right now. Please try again in a moment."
-                            full_content = [fallback_text]
-
-                            # Send fallback as single chunk
-                            chunk_event = json.dumps({
-                                "type": "chunk",
-                                "content": fallback_text
-                            })
-                            yield f"data: {chunk_event}\n\n"
-                        # Continue to next model
-
-            finally:
-                # ALWAYS save assistant message (even if client disconnects mid-stream)
-                # This prevents race condition where tokens counted but message lost
-                response_text = ''.join(full_content) or "I'm having trouble responding right now."
-                assistant_message_id = save_message(
-                    db=db,
-                    conversation_id=conversation_id,
-                    role="assistant",
-                    content=response_text,
-                    tokens_used=tokens_used
-                )
-
-                # Only increment usage if streaming actually succeeded
-                # (don't count failed attempts or client disconnects)
-                if streaming_succeeded and not is_admin:
-                    rate_limiter.increment_usage(
-                        user_id=str(user_id),
-                        model=model,
-                        bypass_admin_key=False
+                finally:
+                    # ALWAYS save assistant message (even if client disconnects mid-stream)
+                    # This prevents race condition where tokens counted but message lost
+                    response_text = ''.join(full_content) or "I'm having trouble responding right now."
+                    assistant_message_id = save_message(
+                        db=db,
+                        conversation_id=conversation_id,
+                        role="assistant",
+                        content=response_text,
+                        tokens_used=tokens_used
                     )
+
+                    # Only increment usage if streaming actually succeeded
+                    # (don't count failed attempts or client disconnects)
+                    if streaming_succeeded and not is_admin:
+                        rate_limiter.increment_usage(
+                            user_id=str(user_id),
+                            model=model,
+                            bypass_admin_key=False
+                        )
 
             # Send final metadata event
             done_event = json.dumps({
                 "type": "done",
-                "response_id": str(assistant_message_id),
+                "response_id": str(assistant_message_id) if assistant_message_id else None,
                 "tokens_used": tokens_used,
                 "cost_usd": cost_usd,
                 "run_id": str(run_id) if run_id else None
@@ -717,7 +895,7 @@ async def list_conversations(
         return ConversationListResponseWrapper(
             data=conversations,
             meta={
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "total": len(conversations)
             }
         )
@@ -859,6 +1037,54 @@ async def get_usage_stats(
     )
 
 
+@router.get("/api/personality")
+async def get_personality(
+    user: dict = Depends(get_current_user),
+    db: SupabaseClient = Depends(get_supabase_client)
+):
+    """
+    Get user's active personality configuration (Story 6.2).
+
+    Returns personality details including:
+    - personality_type: 'dream_self' or 'weave_ai'
+    - name: Personality name
+    - traits: Personality traits or style tags
+    - speaking_style: Description of communication style
+    - system_prompt: AI system prompt (for backend use)
+    - preset: Weave AI preset name (if weave_ai)
+
+    This endpoint is used by the frontend to display personality info
+    and personalize greetings in the AI chat interface.
+    """
+    # Extract auth.uid from JWT token
+    auth_user_id = user["sub"]
+
+    user_id = get_user_id_from_auth(db, auth_user_id)
+    if not user_id:
+        raise HTTPException(status_code=404, detail={
+            "code": "USER_NOT_FOUND",
+            "message": "User profile not found"
+        })
+
+    try:
+        personality_service = PersonalityService(db)
+        personality_data = await personality_service.get_active_personality(str(user_id))
+
+        return {
+            "data": personality_data,
+            "meta": {
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting personality for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail={
+            "code": "PERSONALITY_GET_ERROR",
+            "message": "Failed to get personality configuration"
+        })
+
+
 @router.post("/admin/trigger-checkin/{user_id}")
 async def trigger_checkin(
     user_id: UUID,
@@ -913,7 +1139,7 @@ async def trigger_checkin(
 
         # Update last_checkin_at
         db.table('user_profiles').update({
-            'last_checkin_at': datetime.now().isoformat()
+            'last_checkin_at': datetime.now(timezone.utc).isoformat()
         }).eq('id', str(user_id)).execute()
 
         logger.info(f"✅ Admin-triggered check-in for user {user_id}: conversation {conversation_id}")
@@ -925,7 +1151,7 @@ async def trigger_checkin(
                 "message": message
             },
             "meta": {
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         }
 
