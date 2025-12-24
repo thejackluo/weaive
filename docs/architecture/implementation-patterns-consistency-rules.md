@@ -385,3 +385,247 @@ Request → AIOrchestrator (NEW - which product module?)
 4. Use appropriate React Native hook for frontend
 
 ---
+
+## 8. AI Tool Execution Patterns
+
+### 8.1 AI-Based Tool Classification (Current Implementation)
+
+**When to Use:** All user-facing tool invocations where natural language understanding is critical
+
+**Architecture:**
+```
+User Message
+    ↓
+ AIToolClassifier (AI-powered analysis using GPT-4o-mini/Claude 3.5 Haiku)
+    ├─ Analyzes message with prompt containing tool descriptions
+    ├─ Identifies which tools (if any) should be called
+    └─ Extracts parameters from natural language
+    ↓
+Tool Execution (async, parallel if multiple tools)
+    ├─ Database operations
+    ├─ Validation
+    └─ Error handling
+    ↓
+AI Response Formatting
+    ├─ Tool results included in context
+    └─ Natural language response incorporating results
+```
+
+**Key Components:**
+- `AIToolClassifier` (weave-api/app/services/tools/ai_tool_classifier.py): AI-powered tool analysis using small models
+- `ToolRegistry`: Central registration of all available tools
+- Tool execution happens BEFORE main AI response generation
+
+**Cost & Performance:**
+- Classification cost: ~$0.00006 per message (~2% of total AI spend)
+- Latency: ~100-150ms (small model, low tokens)
+- Temperature: 0.1 (consistent classification while maintaining flexibility)
+
+**Example Classification Prompt:**
+```python
+"""You are a tool classification system. Analyze the user's message and determine if any tools should be called.
+
+Available Tools:
+
+**modify_personality**
+Description: Change the AI coaching personality or adjust Weave AI's speaking style
+Parameters: {
+  "active_personality": "dream_self" | "weave_ai",
+  "weave_preset": "gen_z_default" | "supportive_coach" | "concise_mentor"
+}
+Example phrases: switch to my dream self, be more casual, talk like a supportive coach
+
+User Message: "be more casual"
+
+Response Format (JSON only):
+{
+  "tools": [
+    {
+      "tool_name": "modify_personality",
+      "parameters": {
+        "active_personality": "weave_ai",
+        "weave_preset": "gen_z_default"
+      }
+    }
+  ]
+}
+"""
+```
+
+**Benefits:**
+- **Natural Language Understanding:** Handles varied phrasings ("I am Jack", "I'm Jack", "call me Jack" all work)
+- **Flexible:** No rigid regex patterns to maintain
+- **Context-Aware:** AI can infer intent from conversation context
+- **Model-Agnostic:** Uses small, fast models (not dependent on main AI provider)
+
+**Decision Rationale:**
+Chosen over regex-based deterministic triggering because:
+1. **UX Requirement:** Users speak naturally, not in command syntax
+2. **Flexibility:** Handles typos, variations, synonyms without code changes
+3. **Context Understanding:** AI can use conversation history to infer tool needs
+4. **Maintainability:** No regex pattern library to maintain and debug
+
+**Alternative Approaches Considered:**
+
+1. **Regex Pattern Matching (Deterministic)**
+   - ❌ Rejected: Too rigid, doesn't handle natural language variations
+   - ❌ Rejected: Requires maintaining complex regex patterns for every phrasing
+   - Example failure: "I go by Jack" wouldn't match `r'(?:I am|I\'m)\s+[A-Z]\w+'`
+
+2. **AI Function Calling (Main Model)**
+   - ❌ Rejected: Higher cost (uses main model, not small classifier)
+   - ❌ Rejected: Higher latency (~500ms vs ~100ms)
+   - May revisit for complex multi-step reasoning (Story 6.4+)
+
+3. **Hybrid: AI Classification + User Confirmation**
+   - ❌ Rejected: Adds UX friction ("Are you sure?")
+   - Better to make tools idempotent and allow immediate execution
+
+**When to Use Alternative Patterns:**
+
+- **AI Function Calling (Main Model):** Complex multi-step reasoning where tool selection depends on deep conversation analysis
+- **Hybrid Approach:** High-risk operations requiring explicit user confirmation (delete account, clear all data)
+- **Deterministic Fallback:** Simple exact-match commands in constrained contexts (e.g., slash commands)
+
+### 8.2 Tool Execution Flow
+
+**Standard Flow:**
+1. User sends message via chat interface
+2. `AIToolClassifier.analyze_message()` sends message + tool descriptions to small AI model
+3. AI returns structured JSON with tools to call and parameters
+4. Matching tools executed immediately (before main AI call)
+5. Tool results included in main AI context
+6. Main AI generates natural language response incorporating results
+7. Frontend shows tool status indicators during execution (⚙️ starting → ✓ completed)
+8. Cache invalidated after successful tool execution
+
+**Error Handling Flow:**
+1. Tool execution fails (validation error, DB error, etc.)
+2. Error returned with structured format: `{success: false, error: "code", message: "..."}`
+3. Error displayed in UI via ToolExecutionIndicator (❌ error state, 3s timeout)
+4. Main AI still generates response (may acknowledge tool failure)
+5. User can retry with corrected input
+
+**Concurrency:**
+- Multiple tools can trigger from single message
+- Tools execute in parallel (no ordering guarantees)
+- Main AI response waits for all tools to complete
+
+**Frontend Integration:**
+```typescript
+// Tool execution events in SSE stream:
+// 1. tool_start: { tool_name, parameters }
+// 2. tool_result: { tool_name, result }  OR  tool_error: { tool_name, error }
+// 3. chunk: { content } - Main AI response chunks
+// 4. done: {} - Stream complete
+
+// React hook handles tool status automatically:
+const { currentTool, toolExecutions } = useAIChatStream();
+// currentTool shows in ToolExecutionIndicator component
+```
+
+### 8.3 Tool Development Guidelines
+
+**Creating New Tools:**
+1. Create tool class in `weave-api/app/services/tools/[tool_name]_tool.py`
+2. Implement `async execute(user_id, parameters)` method
+3. Add tool description with parameters and example phrases to `AIToolClassifier._get_tool_descriptions()`
+4. Register in `ToolRegistry`
+5. Write unit tests (parameter extraction, validation, execution)
+6. Write integration tests (chat flow with tool)
+7. Test with natural language variations manually
+
+**Tool Description Template:**
+```python
+{
+    "name": "my_tool",
+    "description": "Brief description of what this tool does",
+    "parameters": {
+        "param1": "Description of param1 (required)",
+        "param2": "Description of param2 (optional)"
+    },
+    "examples": [
+        "natural phrase 1",
+        "natural phrase 2",
+        "natural phrase 3"
+    ]
+}
+```
+
+**See:** `docs/dev/ai-services-guide.md` Section 12 for complete guide
+
+### 8.4 Consistency Rules
+
+**DO:**
+- ✅ Write clear, natural example phrases in tool descriptions
+- ✅ Return structured responses: `{success: bool, data?: dict, error?: str, message?: str}`
+- ✅ Register all tools in central `ToolRegistry`
+- ✅ Add debug logging for tool classification and execution
+- ✅ Write tests for both AI classification accuracy and execution logic
+- ✅ Make tools idempotent (safe to call multiple times)
+- ✅ Include conversation context in classification when relevant
+
+**DON'T:**
+- ❌ Assume AI will extract parameters perfectly (validate in tool code)
+- ❌ Return raw strings from tools (use structured dict)
+- ❌ Skip parameter validation (check required fields before DB operations)
+- ❌ Create tools without example phrases (AI needs reference points)
+- ❌ Bypass ToolRegistry (all tools must be centrally registered)
+- ❌ Execute tools after main AI response (breaks UX flow - user sees delay)
+- ❌ Use overly specific tool names (e.g., "update_user_identity_document_dream_self" vs "modify_identity_document")
+
+### 8.5 Testing Strategy
+
+**Unit Tests:**
+- Test AI classification with diverse natural language variations
+- Test parameter extraction accuracy
+- Test validation logic (required fields, type checking)
+- Test error handling (DB errors, validation failures)
+- Mock AI responses for deterministic tests
+
+**Integration Tests:**
+- Test tool execution in chat flow end-to-end
+- Test tool result incorporation in AI response
+- Test cache invalidation after tool completion
+- Test concurrent tool execution from single message
+- Test error recovery (invalid input, then corrected input)
+
+**Manual Testing Checklist:**
+- Try 5+ natural language variations per tool
+- Test edge cases (typos, ambiguous input, missing parameters)
+- Test error recovery (invalid input, then corrected input)
+- Test performance (classification should be <150ms, tool execution <200ms)
+- Test with different personalities (Dream Self vs Weave AI)
+
+**Example Test Cases for "modify_identity_document":**
+```
+✅ "I am Jack" → Should extract dream_self="Jack"
+✅ "I'm Jack" → Should extract dream_self="Jack"
+✅ "call me Jack" → Should extract dream_self="Jack"
+✅ "I go by Jack" → Should extract dream_self="Jack"
+✅ "my traits are curious and ambitious" → Should extract traits=["curious", "ambitious"]
+✅ "I'm a builder archetype" → Should extract archetype="The Builder"
+❌ "hello" → Should NOT trigger tool
+❌ "what's my name?" → Should NOT trigger tool (query, not statement)
+```
+
+### 8.6 Performance Considerations
+
+**Classification Overhead:**
+- Small model call: ~100-150ms
+- Cost: ~$0.00006 per message (2% of total AI budget)
+- Happens in parallel with context building (minimal latency impact)
+
+**Optimization Strategies:**
+- Use smallest possible model (GPT-4o-mini, Claude 3.5 Haiku)
+- Keep tool descriptions concise (200-300 tokens total)
+- Use low temperature (0.1) for consistent classification
+- Cache tool descriptions (don't rebuild on every request)
+- Execute tools in parallel when multiple tools trigger
+
+**Future Optimizations:**
+- Pattern caching: Cache classification results for exact message matches (1 hour TTL)
+- Tool batching: Group similar tool calls to reduce DB roundtrips
+- Streaming classification: Start tool execution before main AI call completes
+
+---
