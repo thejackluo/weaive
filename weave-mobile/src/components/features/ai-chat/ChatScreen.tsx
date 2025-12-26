@@ -525,15 +525,27 @@ export default function ChatScreen() {
 
   // Voice recording handlers
   const handleVoiceRecord = async () => {
-    if (isRecording) {
-      // Stop recording and transcribe
-      const transcribedText = await stopRecordingAndTranscribe();
-      if (transcribedText) {
-        setInputValue(transcribedText);
-        if (__DEV__) console.log('[VOICE] ✅ Transcribed:', transcribedText);
+    if (__DEV__) console.log('[VOICE] handleVoiceRecord called, isRecording:', isRecording, 'isTranscribing:', isTranscribing);
+
+    if (isRecording || isTranscribing) {
+      // Stop recording and transcribe (or wait if already transcribing)
+      if (isRecording) {
+        if (__DEV__) console.log('[VOICE] Stopping recording and transcribing...');
+        const transcribedText = await stopRecordingAndTranscribe();
+        if (__DEV__) console.log('[VOICE] Received transcribedText:', transcribedText);
+
+        if (transcribedText) {
+          setInputValue(transcribedText);
+          if (__DEV__) console.log('[VOICE] ✅ Text set in input:', transcribedText);
+        } else {
+          if (__DEV__) console.log('[VOICE] ⚠️ No transcribedText returned');
+        }
+      } else {
+        if (__DEV__) console.log('[VOICE] Already transcribing, ignoring click');
       }
     } else {
       // Start recording
+      if (__DEV__) console.log('[VOICE] Starting recording...');
       await startRecording();
     }
   };

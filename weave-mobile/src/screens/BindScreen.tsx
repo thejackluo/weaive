@@ -10,7 +10,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme, Card, Heading, Body, Caption, Button } from '@/design-system';
@@ -18,6 +18,8 @@ import { useTodayBinds } from '@/hooks/useTodayBinds';
 import { useCompleteBind } from '@/hooks/useCompleteBind';
 import { PomodoroTimer } from '@/components/thread/PomodoroTimer';
 import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
+import { ProofCaptureSheet } from '@/components/ProofCaptureSheet';
+import { ProofCaptureContext } from '@/types/captures';
 
 export function BindScreen() {
   const { colors, spacing, radius } = useTheme();
@@ -48,6 +50,7 @@ export function BindScreen() {
   const [showTimerPresets, setShowTimerPresets] = useState(false);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showCaptureSheet, setShowCaptureSheet] = useState(false);
   const [completionData, setCompletionData] = useState<{
     needleName: string;
     level?: number;
@@ -132,12 +135,21 @@ export function BindScreen() {
       setPhotoUri(null);
       console.log('Photo deselected');
     } else {
-      // Select photo option
-      console.log('Photo option selected');
-      // For now, just mark that photo will be taken
-      // TODO: Request camera permissions and open camera on completion
-      setPhotoUri('mock-photo-uri');
+      // Open capture sheet
+      setShowCaptureSheet(true);
     }
+  };
+
+  const handleCaptureSuccess = (result: any) => {
+    // Set the photo URI from the capture result
+    setPhotoUri(result.data.storage_path);
+    setShowCaptureSheet(false);
+    console.log('Photo captured successfully:', result.data.storage_path);
+  };
+
+  const handleCaptureCancel = () => {
+    setShowCaptureSheet(false);
+    console.log('Photo capture cancelled');
   };
 
   const handleStartBind = () => {
@@ -553,6 +565,26 @@ export function BindScreen() {
         levelProgress={completionData?.levelProgress}
         onComplete={handleCelebrationComplete}
       />
+
+      {/* Proof Capture Sheet */}
+      <Modal
+        visible={showCaptureSheet}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={handleCaptureCancel}
+      >
+        <ProofCaptureSheet
+          context={{
+            subtask_instance_id: id || null,
+            goal_id: bind?.needle_id || null,
+            local_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+            bind_description: bind?.title,
+          }}
+          onSuccess={handleCaptureSuccess}
+          onCancel={handleCaptureCancel}
+          allowSkip={true}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }

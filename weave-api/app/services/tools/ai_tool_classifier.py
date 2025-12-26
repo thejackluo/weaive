@@ -111,6 +111,8 @@ class AIToolClassifier:
 
         try:
             # Use fast, cheap model for classification (GPT-4o-mini or Claude 3.5 Haiku)
+            logger.info(f"[TOOL_CLASSIFIER] 🔍 Analyzing message: '{user_message[:100]}'")
+
             response = self.ai_service.generate(
                 user_id=user_id,
                 user_role='user',
@@ -122,8 +124,11 @@ class AIToolClassifier:
                 model='gpt-4o-mini',  # Use smallest, fastest model
             )
 
-            # Parse AI response
-            tool_calls = self._parse_classification_response(response['content'])
+            # Log raw AI response for debugging
+            logger.info(f"[TOOL_CLASSIFIER] 📝 Raw AI response: {response.content[:200]}")
+
+            # Parse AI response (response is an object, not a dict)
+            tool_calls = self._parse_classification_response(response.content)
 
             if __DEV__ := True:
                 if tool_calls:
@@ -135,6 +140,7 @@ class AIToolClassifier:
 
         except Exception as e:
             logger.error(f"[TOOL_CLASSIFIER] ❌ Classification failed: {e}")
+            logger.exception(e)  # Full stack trace
             return []  # Fail gracefully - no tools called
 
     def _build_classification_prompt(self, user_message: str) -> str:
