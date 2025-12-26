@@ -390,6 +390,35 @@ export function ThreadHomeScreen() {
               {hasCompletedReflection ? 'Edit Reflection' : 'Begin'}
             </Button>
           </Card>
+
+          {/* Dev Tools Section - Voice & Camera */}
+          <Card variant="glass" style={{ marginTop: spacing[4], padding: spacing[4] }}>
+            <Heading
+              variant="displaySm"
+              style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+            >
+              🛠️ Dev Tools (for Arman)
+            </Heading>
+            <View style={{ gap: spacing[3] }}>
+              {/* Voice Demo Button */}
+              <Button
+                variant="secondary"
+                size="md"
+                onPress={() => router.push('/(tabs)/voice-demo')}
+              >
+                🎤 Voice Demo
+              </Button>
+
+              {/* Capture Picture Button */}
+              <Button
+                variant="secondary"
+                size="md"
+                onPress={() => router.push('/(tabs)/captures')}
+              >
+                📸 Capture Picture
+              </Button>
+            </View>
+          </Card>
         </View>
       </ScrollView>
     </SafeAreaView>
