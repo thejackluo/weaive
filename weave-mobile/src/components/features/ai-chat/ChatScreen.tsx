@@ -242,59 +242,70 @@ export default function ChatScreen() {
 
   // Effect: Update streaming message in real-time
   useEffect(() => {
-    if (isStreaming && streamingContent) {
-      // Create or update streaming message
-      const streamingMessageId =
-        streamingMessageIdRef.current || `assistant-streaming-${Date.now()}`;
-      streamingMessageIdRef.current = streamingMessageId;
+    // ✅ ROOT FIX: Always process streamingContent when it exists, regardless of isStreaming state
+    // Why: React 19 batches state updates, so by the time this effect runs, isStreaming might already be false
+    // The bug: Backend streams chunks, sets streamingContent, then sends "done" (isStreaming=false).
+    // React batches both updates, so when this effect runs, isStreaming is already false.
+    // Solution: Process ANY streamingContent immediately, don't gate on isStreaming.
+    if (!streamingContent) return;
 
-      if (__DEV__)
-        console.log(
-          '[STREAM_UPDATE] 📝 Updating message:',
-          streamingMessageId,
-          '- isStreaming: true'
-        );
-
-      // Set failsafe timeout (30s) to force clear isStreaming if stuck
-      if (isStreamingTimeoutRef.current) {
-        clearTimeout(isStreamingTimeoutRef.current);
-      }
-      isStreamingTimeoutRef.current = setTimeout(() => {
-        if (__DEV__)
-          console.log('[STREAM_FAILSAFE] ⚠️ Timeout reached, forcing isStreaming = false');
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === streamingMessageIdRef.current ? { ...m, isStreaming: false } : m
-          )
-        );
-        streamingMessageIdRef.current = null;
-      }, 30000);
-
-      setMessages((prev) => {
-        const existingIndex = prev.findIndex((m) => m.id === streamingMessageId);
-
-        const streamingMessage: Message = {
-          id: streamingMessageId,
-          role: 'assistant',
-          content: streamingContent,
-          timestamp: new Date(),
-          isStreaming: true,
-        };
-
-        if (existingIndex >= 0) {
-          // Update existing streaming message
-          const updated = [...prev];
-          updated[existingIndex] = streamingMessage;
-          return updated;
-        } else {
-          // Add new streaming message
-          return [...prev, streamingMessage];
-        }
-      });
-
-      // Auto-scroll as content streams in
-      scrollToBottom();
+    // Create or update streaming message ID
+    if (!streamingMessageIdRef.current) {
+      streamingMessageIdRef.current = `assistant-streaming-${Date.now()}`;
     }
+    const streamingMessageId = streamingMessageIdRef.current;
+
+    if (__DEV__)
+      console.log(
+        '[STREAM_UPDATE] 📝 Content update:',
+        streamingMessageId,
+        'length:',
+        streamingContent.length,
+        'isStreaming:',
+        isStreaming
+      );
+
+    // Set failsafe timeout (30s) to force clear isStreaming if stuck
+    if (isStreamingTimeoutRef.current) {
+      clearTimeout(isStreamingTimeoutRef.current);
+    }
+    isStreamingTimeoutRef.current = setTimeout(() => {
+      if (__DEV__)
+        console.log('[STREAM_FAILSAFE] ⚠️ Timeout reached, forcing isStreaming = false');
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === streamingMessageIdRef.current ? { ...m, isStreaming: false } : m
+        )
+      );
+      streamingMessageIdRef.current = null;
+    }, 30000);
+
+    setMessages((prev) => {
+      const existingIndex = prev.findIndex((m) => m.id === streamingMessageId);
+
+      const streamingMessage: Message = {
+        id: streamingMessageId,
+        role: 'assistant',
+        content: streamingContent,
+        timestamp: new Date(),
+        isStreaming: isStreaming, // ✅ Will be true while streaming, false when done
+      };
+
+      if (existingIndex >= 0) {
+        // Update existing message
+        if (__DEV__) console.log('[STREAM_UPDATE] 🔄 Updating index:', existingIndex);
+        const updated = [...prev];
+        updated[existingIndex] = streamingMessage;
+        return updated;
+      } else {
+        // Add new message
+        if (__DEV__) console.log('[STREAM_UPDATE] ✅ Adding new message, total:', prev.length + 1);
+        return [...prev, streamingMessage];
+      }
+    });
+
+    // Auto-scroll as content streams in
+    setTimeout(() => scrollToBottom(), 50);
   }, [streamingContent, isStreaming]);
 
   // Effect: Finalize streaming message when complete
@@ -625,5 +636,6 @@ const styles = StyleSheet.create({
   messagesContent: {
     padding: 8,
     paddingBottom: 24,
+    flexGrow: 1, // ✅ FIX: Force content to fill space, enabling proper scroll behavior
   },
 });
