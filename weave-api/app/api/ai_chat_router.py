@@ -165,6 +165,9 @@ def save_message(
         Message ID
     """
     try:
+        # Enhanced logging for debugging conversation history
+        logger.info(f"[SAVE_MESSAGE] 💾 Saving {role} message to conv {conversation_id}: {content[:50]}...")
+
         result = db.table('ai_chat_messages').insert({
             'conversation_id': str(conversation_id),
             'role': role,
@@ -173,15 +176,18 @@ def save_message(
             'created_at': datetime.now(timezone.utc).isoformat()
         }).execute()
 
+        message_id = UUID(result.data[0]['id'])
+        logger.info(f"[SAVE_MESSAGE] ✅ Saved {role} message: {message_id}")
+
         # Update conversation last_message_at
         db.table('ai_chat_conversations').update({
             'last_message_at': datetime.now(timezone.utc).isoformat()
         }).eq('id', str(conversation_id)).execute()
 
-        return UUID(result.data[0]['id'])
+        return message_id
 
     except Exception as e:
-        logger.error(f"Error saving message to conversation {conversation_id}: {e}")
+        logger.error(f"[SAVE_MESSAGE] ❌ Error saving {role} message to conversation {conversation_id}: {e}")
         raise HTTPException(status_code=500, detail={
             "code": "MESSAGE_SAVE_ERROR",
             "message": "Failed to save message"

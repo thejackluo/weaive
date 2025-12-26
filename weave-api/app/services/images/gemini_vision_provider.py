@@ -19,8 +19,7 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, Optional
 
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
 from .vision_service import (
     VisionAnalysisResult,
