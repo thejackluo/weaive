@@ -195,16 +195,13 @@ export function useVoiceInput() {
         progressIntervalRef.current = null;
       }
 
-      // Set to 100% briefly before resetting
-      setState((prev) => ({ ...prev, uploadProgress: 100 }));
-      setTimeout(() => {
-        setState({
-          isRecording: false,
-          isTranscribing: false,
-          uploadProgress: 0,
-          error: null,
-        });
-      }, 500);
+      // Reset state immediately (don't delay)
+      setState({
+        isRecording: false,
+        isTranscribing: false,
+        uploadProgress: 0,
+        error: null,
+      });
 
       return transcribedText;
     } catch (error: any) {
