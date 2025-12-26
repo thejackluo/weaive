@@ -229,6 +229,8 @@ export default function ChatScreen() {
   // ✅ FIX: Reload greeting when personality changes (for intro message updates)
   useEffect(() => {
     // Only reload greeting if it's the initial message (no real conversation yet)
+    // IMPORTANT: Don't include 'messages' or 'loadInitialGreeting' in dependencies to avoid infinite loop
+    // The setMessages call inside loadInitialGreeting would trigger this effect again
     if (
       messages.length === 1 &&
       messages[0].id === 'initial-greeting' &&
@@ -238,7 +240,8 @@ export default function ChatScreen() {
         console.log('[PERSONALITY] Personality changed, reloading greeting:', personality.name);
       loadInitialGreeting();
     }
-  }, [personality?.personality_type, personality?.name, messages, loadInitialGreeting]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personality?.personality_type, personality?.name]);
 
   // Effect: Update streaming message in real-time
   useEffect(() => {
