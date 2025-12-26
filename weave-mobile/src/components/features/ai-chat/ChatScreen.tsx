@@ -132,6 +132,10 @@ export default function ChatScreen() {
           const conversationDetail = detailResponse.data.data;
           const convMessages = conversationDetail.messages || [];
           if (__DEV__) console.log('[HISTORY] 💬 Loaded messages:', convMessages.length);
+          if (__DEV__ && convMessages.length > 0) {
+            console.log('[HISTORY] 🔍 First message:', JSON.stringify(convMessages[0]));
+            console.log('[HISTORY] 📊 Message roles:', convMessages.map((m: any) => m.role).join(', '));
+          }
 
           // Transform backend messages to UI format
           const transformedMessages: Message[] = convMessages.map((msg: any) => ({
@@ -140,6 +144,11 @@ export default function ChatScreen() {
             content: msg.content,
             timestamp: new Date(msg.created_at),
           }));
+
+          if (__DEV__ && transformedMessages.length > 0) {
+            console.log('[HISTORY] ✨ Transformed messages:', transformedMessages.length);
+            console.log('[HISTORY] 📋 Roles after transform:', transformedMessages.map(m => m.role).join(', '));
+          }
 
           if (transformedMessages.length > 0) {
             setMessages(transformedMessages);
@@ -455,12 +464,25 @@ export default function ChatScreen() {
       const conversationDetail = response.data.data;
       const convMessages = conversationDetail.messages || [];
 
+      if (__DEV__) {
+        console.log('[CONV_SWITCH] 📨 Raw messages from backend:', convMessages.length);
+        if (convMessages.length > 0) {
+          console.log('[CONV_SWITCH] 🔍 First message:', JSON.stringify(convMessages[0]));
+          console.log('[CONV_SWITCH] 📊 Roles:', convMessages.map((m: any) => m.role).join(', '));
+        }
+      }
+
       const transformedMessages: Message[] = convMessages.map((msg: any) => ({
         id: msg.id,
         role: msg.role,
         content: msg.content,
         timestamp: new Date(msg.created_at),
       }));
+
+      if (__DEV__) {
+        console.log('[CONV_SWITCH] ✨ Transformed messages:', transformedMessages.length);
+        console.log('[CONV_SWITCH] 📋 Roles after:', transformedMessages.map(m => m.role).join(', '));
+      }
 
       setMessages(transformedMessages);
       setCurrentConversationId(conversationId);
