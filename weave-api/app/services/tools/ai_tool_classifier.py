@@ -87,7 +87,7 @@ class AIToolClassifier:
             }
         ]
 
-    async def analyze_message(self, user_message: str, user_id: str) -> List[Dict[str, Any]]:
+    def analyze_message(self, user_message: str, user_id: str) -> List[Dict[str, Any]]:
         """
         Analyze user message to determine if tools should be called.
 
@@ -113,6 +113,7 @@ class AIToolClassifier:
             # Use fast, cheap model for classification (GPT-4o-mini or Claude 3.5 Haiku)
             logger.info(f"[TOOL_CLASSIFIER] 🔍 Analyzing message: '{user_message[:100]}'")
 
+            # ✅ FIX: ai_service.generate() is NOT async - don't use await
             response = self.ai_service.generate(
                 user_id=user_id,
                 user_role='user',
