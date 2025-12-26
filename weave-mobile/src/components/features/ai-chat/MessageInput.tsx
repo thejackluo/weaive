@@ -10,10 +10,17 @@
  * - Glassmorphism design
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, TextInput, Pressable, Text, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -41,10 +48,29 @@ export default function MessageInput({
 }: MessageInputProps) {
   const scale = useSharedValue(1);
   const micScale = useSharedValue(1);
+  const micOpacity = useSharedValue(1);
   const characterCount = value.length;
   const showCounter = characterCount >= SHOW_COUNTER_AT;
   const isOverLimit = characterCount > MAX_CHARACTERS;
   const canSend = value.trim().length > 0 && !isOverLimit && !disabled;
+
+  // Pulsing animation when recording
+  useEffect(() => {
+    if (isRecording) {
+      // Start pulsing animation (opacity: 1 → 0.3 → 1)
+      micOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: 600 }),
+          withTiming(1, { duration: 600 })
+        ),
+        -1, // Infinite repeat
+        false // Don't reverse
+      );
+    } else {
+      // Stop animation and reset to full opacity
+      micOpacity.value = withTiming(1, { duration: 300 });
+    }
+  }, [isRecording, micOpacity]);
 
   const handleSend = () => {
     if (!canSend) return;
@@ -65,6 +91,7 @@ export default function MessageInput({
 
   const animatedMicStyle = useAnimatedStyle(() => ({
     transform: [{ scale: withSpring(micScale.value) }],
+    opacity: micOpacity.value, // Pulsing effect when recording
   }));
 
   return (

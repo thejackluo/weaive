@@ -164,13 +164,14 @@ export function useVoiceInput() {
 
       formData.append('language', 'en');
 
-      console.log('[VOICE_INPUT] 📤 Uploading to /api/transcribe...');
+      console.log('[VOICE_INPUT] 📤 Uploading to /api/stt/transcribe...');
 
       // Switch to transcription progress simulation
       simulateProgress('transcribe');
 
       // Upload to backend (using fetch directly for FormData)
-      const response = await fetch(`${apiClient.defaults.baseURL}/api/transcribe`, {
+      // ✅ FIX: Correct URL is /api/stt/transcribe (not /api/transcribe)
+      const response = await fetch(`${apiClient.defaults.baseURL}/api/stt/transcribe`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${await require('@/services/secureStorage').getAccessToken()}`,
@@ -181,11 +182,15 @@ export function useVoiceInput() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('[VOICE_INPUT] ❌ Transcription API error:', errorData);
         throw new Error(errorData?.error?.message || 'Transcription failed');
       }
 
       const data = await response.json();
-      const transcribedText = data.data?.transcribed_text || '';
+      console.log('[VOICE_INPUT] 📦 API response:', data);
+
+      // ✅ FIX: Backend returns data.transcript (not data.transcribed_text)
+      const transcribedText = data.data?.transcript || '';
 
       console.log('[VOICE_INPUT] ✅ Transcription complete:', transcribedText);
 
