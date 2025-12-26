@@ -26,6 +26,7 @@ import ConversationList, { Conversation } from './ConversationList';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAIChatStream } from '@/hooks/useAIChatStream';
 import { usePersonality } from '@/hooks/usePersonality';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 import apiClient from '@/services/apiClient';
 
 export interface Message {
@@ -72,6 +73,17 @@ export default function ChatScreen() {
 
   // Get personality for personalized greetings
   const { personality } = usePersonality();
+
+  // Voice input hook
+  const {
+    isRecording,
+    isTranscribing,
+    uploadProgress,
+    error: voiceError,
+    startRecording,
+    stopRecordingAndTranscribe,
+    cancelRecording,
+  } = useVoiceInput();
 
   // Fetch usage stats
   const { data: usageStats, refetch: refetchUsage } = useQuery({
@@ -511,6 +523,34 @@ export default function ChatScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
+  // Voice recording handlers
+  const handleVoiceRecord = async () => {
+    if (isRecording) {
+      // Stop recording and transcribe
+      const transcribedText = await stopRecordingAndTranscribe();
+      if (transcribedText) {
+        setInputValue(transcribedText);
+        if (__DEV__) console.log('[VOICE] ✅ Transcribed:', transcribedText);
+      }
+    } else {
+      // Start recording
+      await startRecording();
+    }
+  };
+
+  // Manual tool call handlers
+  const handleModifyPersonality = () => {
+    const message = 'Switch to dream self personality';
+    handleSendMessage(message);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const handleUpdateIdentity = () => {
+    const message = 'Update my identity document';
+    handleSendMessage(message);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
   // Check if rate limited
   const isRateLimited = usageStats
     ? (usageStats.premium_today.used >= usageStats.premium_today.limit &&
@@ -619,11 +659,50 @@ export default function ChatScreen() {
             </Animated.View>
           )}
 
+          {/* Manual Tool Call Buttons (Always visible) */}
+          {!showQuickChips && !isRateLimited && (
+            <View style={styles.toolButtonsContainer}>
+              <TouchableOpacity
+                style={styles.toolButton}
+                onPress={handleModifyPersonality}
+                disabled={isStreaming}
+              >
+                <Ionicons name="person-outline" size={16} color="#a78bfa" />
+                <Text style={styles.toolButtonText}>Personality</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.toolButton}
+                onPress={handleUpdateIdentity}
+                disabled={isStreaming}
+              >
+                <Ionicons name="document-text-outline" size={16} color="#a78bfa" />
+                <Text style={styles.toolButtonText}>Identity</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Voice Recording Progress Indicator */}
+          {(isRecording || isTranscribing) && (
+            <View style={styles.voiceProgressContainer}>
+              <View style={styles.voiceProgressBar}>
+                <View style={[styles.voiceProgressFill, { width: `${uploadProgress}%` }]} />
+              </View>
+              <Text style={styles.voiceProgressText}>
+                {isRecording
+                  ? '🎤 Recording...'
+                  : `Transcribing... ${Math.round(uploadProgress)}%`}
+              </Text>
+            </View>
+          )}
+
           {/* Message Input */}
           <MessageInput
             value={inputValue}
             onChangeText={setInputValue}
             onSend={handleSendMessage}
+            onVoiceRecord={handleVoiceRecord}
+            isRecording={isRecording || isTranscribing}
             disabled={isRateLimited || isStreaming}
             placeholder={isRateLimited ? 'Rate limit reached' : 'Talk to Weave...'}
           />
@@ -662,5 +741,54 @@ const styles = StyleSheet.create({
     padding: 8,
     paddingBottom: 24,
     flexGrow: 1, // ✅ FIX: Force content to fill space, enabling proper scroll behavior
+  },
+  toolButtonsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.10)',
+    backgroundColor: 'rgba(10, 10, 10, 0.8)',
+  },
+  toolButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(167, 139, 250, 0.15)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(167, 139, 250, 0.3)',
+  },
+  toolButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#a78bfa',
+  },
+  voiceProgressContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(10, 10, 10, 0.9)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  voiceProgressBar: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  voiceProgressFill: {
+    height: '100%',
+    backgroundColor: '#a78bfa',
+    borderRadius: 2,
+  },
+  voiceProgressText: {
+    fontSize: 13,
+    color: '#9ca3af',
+    textAlign: 'center',
   },
 });

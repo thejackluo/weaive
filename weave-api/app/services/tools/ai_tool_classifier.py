@@ -111,12 +111,15 @@ class AIToolClassifier:
 
         try:
             # Use fast, cheap model for classification (GPT-4o-mini or Claude 3.5 Haiku)
-            response = await self.ai_service.generate(
+            response = self.ai_service.generate(
                 user_id=user_id,
+                user_role='user',
+                user_tier='free',
+                module='chat',
                 prompt=classification_prompt,
                 max_tokens=500,
                 temperature=0.1,  # Low temperature for consistent classification
-                model_size='mini',  # Use smallest, fastest model
+                model='gpt-4o-mini',  # Use smallest, fastest model
             )
 
             # Parse AI response
@@ -148,17 +151,33 @@ class AIToolClassifier:
             for tool in self.available_tools
         ])
 
-        prompt = f"""You are a tool classification system. Analyze the user's message and determine if any tools should be called.
+        prompt = f"""You are a VERY GENEROUS tool classification system. Your job is to detect when users want to modify their settings or identity.
 
 Available Tools:
 {tools_description}
 
 User Message: "{user_message}"
 
-Instructions:
-1. Determine if the user's message requires calling any of the available tools
-2. If YES: Identify which tool(s) and extract the necessary parameters from their message
-3. If NO: Return an empty list
+CRITICAL INSTRUCTIONS - BE LIBERAL WITH TOOL DETECTION:
+1. **TRIGGER TOOLS GENEROUSLY** - If there's even a HINT the user wants to change something, trigger the tool
+2. **Look for these patterns (ALWAYS trigger):**
+   - Any mention of "change", "update", "modify", "switch", "edit", "set" + identity/personality/self
+   - Direct statements like "I am X", "my traits are Y", "I want Z"
+   - Requests like "be more casual", "talk differently", "adjust your style"
+   - ANY reference to their dream self, archetype, traits, motivations, failure mode
+   - Commands like "change my identity", "update my profile", "modify my document"
+3. **Even VAGUE requests should trigger** - "I want to be called Jack" → modify_identity_document
+4. **When in doubt, TRIGGER THE TOOL** - It's better to call a tool unnecessarily than miss a legitimate request
+5. **Extract ALL parameters you can find** - Even if not explicitly stated, infer from context
+
+EXAMPLES THAT SHOULD TRIGGER:
+- "change my identity document" → modify_identity_document (even without specific fields)
+- "I am Jack" → modify_identity_document with dream_self
+- "be more casual" → modify_personality with weave_preset
+- "my archetype is builder" → modify_identity_document with archetype
+- "I struggle with consistency" → modify_identity_document with failure_mode
+- "switch to dream self" → modify_personality
+- "update my profile" → modify_identity_document (even if fields unknown)
 
 Response Format (JSON only):
 {{
@@ -172,7 +191,7 @@ Response Format (JSON only):
   ]
 }}
 
-Or if no tools needed:
+Or if ABSOLUTELY NO TOOLS are mentioned:
 {{
   "tools": []
 }}
