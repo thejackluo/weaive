@@ -330,7 +330,8 @@ async def send_chat_message(
 
             # Step 1: Analyze message for tool triggers (AI-based classification)
             tool_classifier = create_tool_classifier(ai_service)
-            triggered_tools = await tool_classifier.analyze_message(request.message, str(user_id))
+            # ✅ FIX: analyze_message is NOT async - don't use await
+            triggered_tools = tool_classifier.analyze_message(request.message, str(user_id))
 
             logger.info(f"🎯 [TOOLS] AI identified {len(triggered_tools)} tool(s)")
 
@@ -617,15 +618,20 @@ async def send_chat_message_stream(
 
             # Story 6.2: AI-based tool classification
             try:
+                logger.info(f"🔍 [TOOLS_FLOW] enable_tools={request.enable_tools}, message='{request.message[:100]}'")
+
                 if request.enable_tools:
                     try:
                         logger.info(f"🔧 [TOOLS] Tool calling enabled - analyzing message with AI classifier")
 
                         # Step 1: Analyze message for tool triggers (AI-based classification)
                         tool_classifier = create_tool_classifier(ai_service)
-                        triggered_tools = await tool_classifier.analyze_message(request.message, str(user_id))
+                        logger.info(f"🏗️ [TOOLS] Tool classifier created, calling analyze_message...")
 
-                        logger.info(f"🎯 [TOOLS] AI identified {len(triggered_tools)} tool(s)")
+                        # ✅ FIX: analyze_message is NOT async - don't use await
+                        triggered_tools = tool_classifier.analyze_message(request.message, str(user_id))
+
+                        logger.info(f"🎯 [TOOLS] AI classifier returned {len(triggered_tools)} tool(s): {triggered_tools}")
 
                         # Step 2: Execute triggered tools immediately
                         tool_registry = get_tool_registry()
@@ -642,10 +648,12 @@ async def send_chat_message_stream(
                                 "tool_name": tool_name,
                                 "tool_input": parameters
                             })
+                            logger.info(f"📤 [TOOLS] Emitting tool_start event: {tool_start_event}")
                             yield f"data: {tool_start_event}\n\n"
 
                             # Execute tool
                             result = await tool_registry.execute_tool(tool_name, str(user_id), parameters)
+                            logger.info(f"🎲 [TOOLS] Tool execution result: success={result.get('success')}, data={result.get('data')}, error={result.get('error')}")
 
                             tool_execution_results.append({
                                 'tool_name': tool_name,
@@ -662,6 +670,7 @@ async def send_chat_message_stream(
                                     "tool_name": tool_name,
                                     "tool_result": result.get('data', {})
                                 })
+                                logger.info(f"📤 [TOOLS] Emitting tool_result event: {tool_result_event}")
                                 yield f"data: {tool_result_event}\n\n"
                                 logger.info(f"✅ [TOOLS] Tool {tool_name} succeeded")
                             else:
@@ -670,6 +679,7 @@ async def send_chat_message_stream(
                                     "tool_name": tool_name,
                                     "tool_error": result.get('error', 'Unknown error')
                                 })
+                                logger.info(f"📤 [TOOLS] Emitting tool_error event: {tool_error_event}")
                                 yield f"data: {tool_error_event}\n\n"
                                 logger.error(f"❌ [TOOLS] Tool {tool_name} failed: {result.get('error')}")
 
