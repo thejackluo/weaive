@@ -232,7 +232,7 @@ def test_rate_limiting():
 ```typescript
 // mobile/tests/integration/bind-completion.test.ts
 import { apiClient } from '@/lib/api/client';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@lib/supabase';
 
 describe('Bind Completion Flow', () => {
   it('should update daily aggregates when bind completed', async () => {

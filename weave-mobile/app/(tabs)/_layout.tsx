@@ -204,8 +204,9 @@ export default function TabLayout() {
 
   // ✅ FIX: ALL hooks must be BEFORE early returns to maintain consistent hook order
   // Check for unread check-in conversations (system-initiated)
+  // Uses same query key as prefetch in root layout for instant data availability
   const { data: conversations } = useQuery({
-    queryKey: ['ai-chat-conversations'],
+    queryKey: ['ai-conversations'], // ✅ CHANGED: Same key as prefetch in _layout.tsx
     queryFn: async () => {
       const response = await apiClient.get('/api/ai-chat/conversations');
       return response.data.data || [];

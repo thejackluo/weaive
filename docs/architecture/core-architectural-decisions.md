@@ -1143,6 +1143,368 @@ async def create_goal(
 
 ---
 
+## AI Tool Use System - "Mini Private MCP Server" (Story 6.2)
+
+**Purpose:** Enable AI to execute actions directly in chat using industry-standard function calling patterns (OpenAI/Anthropic tool use).
+
+### Architecture Overview
+
+**Pattern:** AI can call tools/functions to execute workflows, not just respond conversationally.
+
+**Example Flow:**
+```
+1. User: "Change my personality to be more direct"
+2. AI Service receives message + tool definitions
+3. AI decides to call tool → { tool: "modify_personality", params: { new_traits: "assertive, direct" } }
+4. Tool Registry executes → modify_personality(user_id, new_traits)
+5. Tool updates identity_docs table → Returns { success: true, message: "Personality updated" }
+6. AI wraps result naturally → "Done! I've made your personality more assertive and direct."
+```
+
+**Why This Pattern:**
+- **Natural UX:** Users say "Create a goal" instead of navigating to Goal Creation screen
+- **Composable:** AI can chain tools (e.g., "Create goal X, then break it down")
+- **Extensible:** Add new tools without changing AI service logic
+- **Industry Standard:** Same pattern as OpenAI function calling, Anthropic tool use, MCP protocol
+- **Future-proof:** Enables 10+ tools (goal creation, breakdown, reflection, scheduling, analytics)
+
+### Tool Registry Pattern
+
+**Core Components:**
+
+```python
+# weave-api/app/services/tools/registry.py
+class ToolRegistry:
+    """Central registry for all AI-callable tools."""
+
+    def __init__(self):
+        self.tools: dict[str, ToolBase] = {
+            "modify_personality": ModifyPersonalityTool(),
+            # Future tools: create_goal, breakdown_goal, analyze_reflection, etc.
+        }
+
+    def get_tool_definitions(self) -> list[dict]:
+        """Return OpenAI/Anthropic-compatible tool schemas."""
+        return [tool.get_schema() for tool in self.tools.values()]
+
+    async def execute_tool(self, tool_name: str, params: dict, user_id: UUID) -> dict:
+        """Execute a tool by name."""
+        if tool_name not in self.tools:
+            return {"success": False, "message": f"Tool '{tool_name}' not found"}
+
+        tool = self.tools[tool_name]
+        return await tool.execute(user_id, params)
+```
+
+**ToolBase Abstract Class:**
+
+```python
+# weave-api/app/services/tools/base.py
+from abc import ABC, abstractmethod
+
+class ToolBase(ABC):
+    @abstractmethod
+    async def execute(self, user_id: UUID, params: dict) -> dict:
+        """Execute the tool with given params."""
+        pass
+
+    @abstractmethod
+    def get_schema(self) -> dict:
+        """Return OpenAI/Anthropic-compatible tool schema."""
+        pass
+
+    @abstractmethod
+    def get_name(self) -> str:
+        """Return tool name."""
+        pass
+```
+
+### Tool Schema Format
+
+**OpenAI/Anthropic Compatible:**
+
+```python
+{
+    "name": "modify_personality",
+    "description": "Updates the user's AI personality traits (Dream Self)",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "new_traits": {
+                "type": "string",
+                "description": "Comma-separated personality traits (e.g., 'assertive, direct, supportive')"
+            }
+        },
+        "required": ["new_traits"]
+    }
+}
+```
+
+### AI Service Integration
+
+**Enhanced AIService with Tool Use:**
+
+```python
+# weave-api/app/services/ai/ai_service.py
+async def generate(
+    self,
+    user_id: UUID,
+    module: str,
+    prompt: str,
+    model: str,
+    tools: Optional[list[dict]] = None  # NEW: Tool definitions
+) -> dict:
+    """Generate AI response with optional tool calling."""
+
+    # For Anthropic (Claude)
+    if provider == "anthropic":
+        response = anthropic.messages.create(
+            model=model,
+            messages=[...],
+            tools=tools  # Pass tool definitions
+        )
+
+        # Detect tool use
+        for content_block in response.content:
+            if content_block.type == "tool_use":
+                tool_name = content_block.name
+                tool_params = content_block.input
+
+                # Execute tool
+                tool_result = await tool_registry.execute_tool(
+                    tool_name, tool_params, user_id
+                )
+
+                # Send result back to AI for natural wrapping
+                # ... continue conversation with tool result
+
+    # For OpenAI (GPT-4o)
+    if provider == "openai":
+        response = openai.chat.completions.create(
+            model=model,
+            messages=[...],
+            tools=tools  # Pass tool definitions
+        )
+
+        # Detect tool calls
+        if response.choices[0].message.tool_calls:
+            for tool_call in response.choices[0].message.tool_calls:
+                tool_name = tool_call.function.name
+                tool_params = json.loads(tool_call.function.arguments)
+
+                # Execute tool
+                tool_result = await tool_registry.execute_tool(
+                    tool_name, tool_params, user_id
+                )
+
+                # Send result back to AI for natural wrapping
+                # ... continue conversation with tool result
+```
+
+### Initial Tool: Personality Modification
+
+**Implementation:**
+
+```python
+# weave-api/app/services/tools/modify_personality.py
+class ModifyPersonalityTool(ToolBase):
+    """Updates the user's AI personality traits (Dream Self)."""
+
+    def get_name(self) -> str:
+        return "modify_personality"
+
+    def get_schema(self) -> dict:
+        return {
+            "name": "modify_personality",
+            "description": "Updates the user's AI personality traits (Dream Self)",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "new_traits": {
+                        "type": "string",
+                        "description": "Comma-separated personality traits"
+                    }
+                },
+                "required": ["new_traits"]
+            }
+        }
+
+    async def execute(self, user_id: UUID, params: dict) -> dict:
+        try:
+            new_traits = params.get("new_traits", "").strip()
+
+            # Load Dream Self document
+            supabase = get_supabase()
+            identity_doc = supabase.table("identity_docs")\
+                .select("*")\
+                .eq("user_id", str(user_id))\
+                .eq("type", "dream_self")\
+                .single()\
+                .execute()
+
+            if not identity_doc.data:
+                return {
+                    "success": False,
+                    "message": "No Dream Self personality found"
+                }
+
+            # Update personality traits
+            updated_content = self._update_traits(
+                identity_doc.data["content"],
+                new_traits
+            )
+
+            supabase.table("identity_docs")\
+                .update({"content": updated_content})\
+                .eq("id", identity_doc.data["id"])\
+                .execute()
+
+            return {
+                "success": True,
+                "message": f"Personality updated with traits: {new_traits}",
+                "data": {"new_traits": new_traits}
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Failed to update personality: {str(e)}"
+            }
+```
+
+### Chat API Integration
+
+**Tool Use Flow:**
+
+```python
+# weave-api/app/api/ai_chat_router.py
+@router.post("/messages")
+async def send_message(request: ChatMessageCreate, user: User):
+    # 1. Load tool definitions
+    tool_registry = ToolRegistry()
+    tool_definitions = tool_registry.get_tool_definitions()
+
+    # 2. Call AI with tools
+    ai_service = AIService()
+    response = await ai_service.generate(
+        user_id=user.id,
+        module="ai_chat",
+        prompt=request.message,
+        model="claude-3-7-sonnet-20250219",
+        tools=tool_definitions  # Pass tools
+    )
+
+    # 3. If AI called tool, execute it
+    if response.get("tool_calls"):
+        for tool_call in response["tool_calls"]:
+            tool_result = await tool_registry.execute_tool(
+                tool_call["name"],
+                tool_call["params"],
+                user.id
+            )
+
+            # 4. Send tool result back to AI for natural wrapping
+            final_response = await ai_service.wrap_tool_result(
+                tool_result, user.id
+            )
+
+            return {"data": {"response": final_response}}
+
+    return {"data": {"response": response["text"]}}
+```
+
+### Future Tools (Enabled by This Pattern)
+
+| Tool Name | Purpose | Epic | Story |
+|-----------|---------|------|-------|
+| `create_goal` | Create new goal from natural language | Epic 2 | US-2.1 |
+| `breakdown_goal` | Generate subtasks/binds for goal | Epic 2 | US-2.2 |
+| `delete_goal` | Delete/archive goal | Epic 2 | US-2.3 |
+| `update_goal` | Modify goal title/description | Epic 2 | US-2.3 |
+| `analyze_reflection` | Analyze journal patterns | Epic 4 | US-4.4 |
+| `generate_weekly_insights` | Create weekly pattern report | Epic 6 | US-6.4 |
+| `schedule_reminder` | Set bind reminder notifications | Epic 7 | US-7.2 |
+| `suggest_goals` | Recommend goals based on behavior | Future | - |
+| `optimize_habit` | Suggest timing/frequency adjustments | Future | - |
+
+### Cost Tracking
+
+**Tool Execution Logging:**
+
+```python
+# Log to ai_runs table
+await log_ai_run(
+    user_id=user_id,
+    module=f"tool:{tool_name}",
+    provider="tool_execution",
+    tokens_used=0,  # No tokens for tool execution itself
+    cost_usd=0.0,   # Tool execution is server-side (no API cost)
+    context_used=True,
+    metadata={
+        "tool_name": tool_name,
+        "params": params,
+        "execution_time_ms": execution_time
+    }
+)
+```
+
+**Cost Impact:**
+- Tool calling is **part of normal AI chat** (no additional API cost)
+- Tool definitions included in system prompt (~200 tokens per message)
+- Tool execution results included in conversation (~50-100 tokens per tool call)
+- **Marginal cost increase: ~20% more tokens when tools used** (still within AI budget)
+
+### Security Considerations
+
+**Always Validate User Ownership:**
+
+```python
+# ✅ GOOD - Verify user owns the resource
+resource = supabase.table("goals")\
+    .select("*")\
+    .eq("id", goal_id)\
+    .eq("user_id", str(user_id))\\  # CRITICAL
+    .single()\
+    .execute()
+
+if not resource.data:
+    return {"success": False, "message": "Resource not found or access denied"}
+```
+
+**Rate Limiting:**
+- Tools that trigger expensive operations (AI calls, external APIs) should check rate limits
+- Tool execution logged to `ai_runs` for cost tracking
+
+**Input Validation:**
+- Never trust tool params directly from AI
+- Validate and sanitize all inputs
+- Check length constraints, format requirements
+
+### Developer Guide
+
+**Complete Documentation:** `docs/dev/ai-tool-development-guide.md`
+
+**Key Sections:**
+- Creating new tools (step-by-step)
+- Tool schema best practices
+- Tool implementation patterns (data modification, retrieval, AI-powered analysis)
+- Error handling
+- Testing strategies
+- OpenAI/Anthropic compatibility
+- Security considerations
+- Performance optimization
+
+**Quick Start Checklist:**
+- [ ] Create `weave-api/app/services/tools/your_tool.py`
+- [ ] Inherit from `ToolBase`
+- [ ] Implement `get_name()`, `get_schema()`, `execute()`
+- [ ] Register tool in `ToolRegistry.__init__()`
+- [ ] Write unit tests in `tests/test_tools/test_your_tool.py`
+- [ ] Write integration test in `tests/test_ai_chat_integration.py`
+- [ ] Test manually: Send message to AI chat that should trigger your tool
+- [ ] Verify tool execution logged to `ai_runs` table
+
+---
+
 ## Full Image Service Architecture
 
 **Purpose:** Complete image lifecycle management (upload, store, retrieve, analyze, delete) with gallery UI.

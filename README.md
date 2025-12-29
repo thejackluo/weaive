@@ -429,6 +429,23 @@ bash scripts/verify-mcp-setup.sh
 
 **Documentation is now SHARDED** - no more single 1000+ line files!
 
+### 📂 Documentation Structure
+
+All documentation lives in `docs/` with organized subdirectories:
+
+| Directory | Purpose | Examples |
+|-----------|---------|----------|
+| **docs/architecture/** | Technical decisions and implementation patterns | `implementation-patterns-consistency-rules.md` (Section 8: AI Tool Execution) |
+| **docs/dev/** | Developer guides and how-tos | `ai-services-guide.md` (Sections 12-13: Tool Creation), `backend-api-integration.md` (29 endpoints) |
+| **docs/stories/** | Feature specifications with acceptance criteria | Story 6.2 (AI Chat), Story 1.5.3 (AI Orchestration) |
+| **docs/sprint-artifacts/** | Implementation summaries and decision records | `story-6.2-ai-classification-migration.md`, `story-6.2-session-log-2025-12-24.md` |
+| **docs/prd/** | Product requirements (sharded into 26+ files) | `epic-6-ai-coaching.md`, `implementation-pages.md` |
+| **docs/testing/** | Test design and ATDD checklists | `atdd/`, `epic/` |
+
+**Navigation:** Start with `docs/architecture/index.md` or `docs/prd/index.md` for complete table of contents
+
+---
+
 ### Product & Design
 
 - **[MVP Specification](docs/idea/mvp.md)** - Complete product definition (1600+ lines comprehensive spec)

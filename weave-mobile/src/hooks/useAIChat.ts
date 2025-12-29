@@ -26,6 +26,10 @@ interface ChatMessageResponse {
   response_id: string;
   conversation_id: string;
   tokens_used: number;
+  // Story 6.2 metadata
+  context_used?: boolean;
+  personality_type?: 'dream_self' | 'weave_ai';
+  tools_invoked?: string[];
 }
 
 interface UsageStats {
@@ -62,18 +66,27 @@ interface ConversationDetail {
  */
 export function useAIChat() {
   /**
-   * Send a chat message (STUB)
+   * Send a chat message (Story 6.2: with context and tool support)
    */
   const sendMessage = async ({
-    message: _message,
-    conversation_id: _conversation_id,
+    message,
+    conversation_id,
+    include_context = true,
+    enable_tools = false,
   }: {
     message: string;
     conversation_id?: string;
+    include_context?: boolean;
+    enable_tools?: boolean;
   }): Promise<ChatMessageResponse> => {
-    throw new Error(
-      'useAIChat.sendMessage() is not yet implemented. This is a stub for Story 6.1. Use useAITextGeneration for AI text generation (Story 1.5.3).'
-    );
+    const response = await apiClient.post<{ data: ChatMessageResponse }>('/api/ai-chat/messages', {
+      message,
+      conversation_id,
+      include_context, // Story 6.2
+      enable_tools, // Story 6.2
+    });
+
+    return response.data.data;
   };
 
   /**

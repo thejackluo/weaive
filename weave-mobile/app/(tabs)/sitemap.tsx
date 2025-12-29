@@ -5,8 +5,8 @@ import { Link } from 'expo-router';
 /**
  * Sitemap / Navigation Test Screen
  *
- * Complete navigation map for Epic 1.5 testing
- * Clean, minimal design with color-coded sections
+ * Complete navigation map for testing all screens
+ * Includes Story 6.2 additions (Personality, AI Chat, etc.)
  */
 export default function SitemapScreen() {
   return (
@@ -17,7 +17,7 @@ export default function SitemapScreen() {
           Navigation Sitemap
         </Text>
         <Text variant="textBase" className="text-white/60 mb-6">
-          20 screens • 2 main tabs • Color-coded by epic
+          35+ screens • 3 main tabs • Color-coded by epic
         </Text>
 
         {/* Main Tabs */}
@@ -35,32 +35,34 @@ export default function SitemapScreen() {
               📊 Dashboard
             </Button>
           </Link>
-          <Text variant="textSm" className="text-white/40 mt-2">
-            ✨ AI Chat accessible via center button
-          </Text>
+          <Link href="/(tabs)/ai-chat" asChild>
+            <Button variant="ai" size="md" style={styles.button}>
+              💬 AI Chat (Story 6.2)
+            </Button>
+          </Link>
         </View>
 
         {/* Goals Screens - Blue */}
         <View style={styles.section}>
           <Text variant="textLg" style={styles.sectionTitle}>
-            🎯 Goals
+            🎯 Goals (Epic 2)
           </Text>
-          <Link href="/goals" asChild>
+          <Link href="/(tabs)/goals" asChild>
             <Button variant="primary" size="md" style={styles.button}>
               Goals List
             </Button>
           </Link>
-          <Link href="/goals/example-goal-1" asChild>
+          <Link href="/(tabs)/goals/example-goal-1" asChild>
             <Button variant="primary" size="md" style={styles.button}>
               Goal Detail
             </Button>
           </Link>
-          <Link href="/goals/new" asChild>
+          <Link href="/(tabs)/goals/new" asChild>
             <Button variant="primary" size="md" style={styles.button}>
               Create Goal
             </Button>
           </Link>
-          <Link href="/goals/edit/example-goal-1" asChild>
+          <Link href="/(tabs)/goals/edit/example-goal-1" asChild>
             <Button variant="primary" size="md" style={styles.button}>
               Edit Goal
             </Button>
@@ -70,14 +72,14 @@ export default function SitemapScreen() {
         {/* Binds Screens - Green */}
         <View style={styles.section}>
           <Text variant="textLg" style={styles.sectionTitle}>
-            ✅ Binds
+            ✅ Binds (Epic 3)
           </Text>
-          <Link href="/binds/example-bind-1" asChild>
+          <Link href="/(tabs)/binds/example-bind-1" asChild>
             <Button variant="success" size="md" style={styles.button}>
               Bind Detail
             </Button>
           </Link>
-          <Link href="/binds/proof/example-bind-1" asChild>
+          <Link href="/(tabs)/binds/proof/example-bind-1" asChild>
             <Button variant="success" size="md" style={styles.button}>
               Attach Proof
             </Button>
@@ -87,19 +89,19 @@ export default function SitemapScreen() {
         {/* Journal Screens - Purple Gradient */}
         <View style={styles.section}>
           <Text variant="textLg" style={styles.sectionTitle}>
-            📝 Journal
+            📝 Journal (Epic 4)
           </Text>
-          <Link href="/journal" asChild>
+          <Link href="/(tabs)/journal" asChild>
             <Button variant="ai" size="md" style={styles.button}>
               Daily Reflection
             </Button>
           </Link>
-          <Link href="/journal/history" asChild>
+          <Link href="/(tabs)/journal/history" asChild>
             <Button variant="ai" size="md" style={styles.button}>
               Journal History
             </Button>
           </Link>
-          <Link href="/journal/2025-12-20" asChild>
+          <Link href="/(tabs)/journal/2025-12-20" asChild>
             <Button variant="ai" size="md" style={styles.button}>
               Past Entry Example
             </Button>
@@ -109,38 +111,146 @@ export default function SitemapScreen() {
         {/* Captures Screens - Light Blue */}
         <View style={styles.section}>
           <Text variant="textLg" style={styles.sectionTitle}>
-            📸 Captures
+            📸 Captures (Epic 3)
           </Text>
-          <Link href="/captures" asChild>
+          <Link href="/(tabs)/captures" asChild>
             <Button variant="secondary" size="md" style={styles.button}>
               Capture Gallery
             </Button>
           </Link>
-          <Link href="/captures/example-capture-1" asChild>
+          <Link href="/(tabs)/captures/example-capture-1" asChild>
             <Button variant="secondary" size="md" style={styles.button}>
               Capture Detail
             </Button>
           </Link>
         </View>
 
-        {/* Settings Screens - Subtle */}
+        {/* Progress Screens */}
+        <View style={styles.section}>
+          <Text variant="textLg" style={styles.sectionTitle}>
+            📈 Progress (Epic 5)
+          </Text>
+          <Link href="/(tabs)/progress/2025-12-20" asChild>
+            <Button variant="secondary" size="md" style={styles.button}>
+              Daily Progress View
+            </Button>
+          </Link>
+        </View>
+
+        {/* Settings Screens - Story 6.2 Additions */}
         <View style={styles.section}>
           <Text variant="textLg" style={styles.sectionTitle}>
             ⚙️ Settings
           </Text>
-          <Link href="/settings" asChild>
+          <Link href="/(tabs)/settings" asChild>
             <Button variant="ghost" size="md" style={styles.button}>
               Settings Home
             </Button>
           </Link>
-          <Link href="/settings/identity" asChild>
-            <Button variant="ghost" size="md" style={styles.button}>
-              Edit Identity
+          <Link href="/(tabs)/settings/personality" asChild>
+            <Button variant="ai" size="md" style={styles.button}>
+              🤖 AI Personality (Story 6.2) ✨ NEW
             </Button>
           </Link>
-          <Link href="/settings/subscription" asChild>
+          <Link href="/(tabs)/settings/reflection" asChild>
             <Button variant="ghost" size="md" style={styles.button}>
-              Subscription
+              📝 Reflection Preferences
+            </Button>
+          </Link>
+          <Link href="/(tabs)/settings/identity" asChild>
+            <Button variant="ghost" size="md" style={styles.button}>
+              🧬 Edit Identity
+            </Button>
+          </Link>
+          <Link href="/(tabs)/settings/subscription" asChild>
+            <Button variant="ghost" size="md" style={styles.button}>
+              💳 Subscription
+            </Button>
+          </Link>
+          <Link href="/(tabs)/settings/dev-tools" asChild>
+            <Button variant="ghost" size="md" style={styles.button}>
+              🛠️ Dev Tools
+            </Button>
+          </Link>
+        </View>
+
+        {/* Onboarding Screens (for testing) */}
+        <View style={styles.section}>
+          <Text variant="textLg" style={styles.sectionTitle}>
+            🌟 Onboarding (Epic 1)
+          </Text>
+          <Link href="/(onboarding)" asChild>
+            <Button variant="secondary" size="md" style={styles.button}>
+              Welcome Screen
+            </Button>
+          </Link>
+          <Link href="/(onboarding)/origin-story" asChild>
+            <Button variant="secondary" size="md" style={styles.button}>
+              Origin Story
+            </Button>
+          </Link>
+          <Link href="/(onboarding)/weave-solution" asChild>
+            <Button variant="secondary" size="md" style={styles.button}>
+              Weave Solution
+            </Button>
+          </Link>
+          <Link href="/(onboarding)/emotional-state" asChild>
+            <Button variant="secondary" size="md" style={styles.button}>
+              Emotional State
+            </Button>
+          </Link>
+          <Link href="/(onboarding)/identity-bootup" asChild>
+            <Button variant="secondary" size="md" style={styles.button}>
+              Identity Bootup
+            </Button>
+          </Link>
+          <Link href="/(onboarding)/identity-traits" asChild>
+            <Button variant="secondary" size="md" style={styles.button}>
+              Identity Traits
+            </Button>
+          </Link>
+          <Link href="/(onboarding)/first-needle" asChild>
+            <Button variant="secondary" size="md" style={styles.button}>
+              First Needle (Goal)
+            </Button>
+          </Link>
+          <Link href="/(onboarding)/weave-path-generation" asChild>
+            <Button variant="secondary" size="md" style={styles.button}>
+              Weave Path Generation
+            </Button>
+          </Link>
+        </View>
+
+        {/* Auth Screens (for testing) */}
+        <View style={styles.section}>
+          <Text variant="textLg" style={styles.sectionTitle}>
+            🔐 Authentication (Epic 0)
+          </Text>
+          <Link href="/(auth)/login" asChild>
+            <Button variant="ghost" size="md" style={styles.button}>
+              Login Screen
+            </Button>
+          </Link>
+          <Link href="/(auth)/signup" asChild>
+            <Button variant="ghost" size="md" style={styles.button}>
+              Signup Screen
+            </Button>
+          </Link>
+        </View>
+
+        {/* Developer Screens */}
+        <View style={styles.section}>
+          <Text variant="textLg" style={styles.sectionTitle}>
+            🧪 Developer Tools
+          </Text>
+          <Link href="/(tabs)/design-system-showcase" asChild>
+            <Button variant="ghost" size="md" style={styles.button}>
+              Design System Showcase
+            </Button>
+          </Link>
+          <Link href="/(tabs)/voice-demo" asChild>
+            <Button variant="ghost" size="md" style={styles.button}>
+              Voice Demo
             </Button>
           </Link>
         </View>
@@ -148,7 +258,8 @@ export default function SitemapScreen() {
         {/* Footer Stats */}
         <View className="pt-4 pb-8 border-t border-white/10">
           <Text variant="textSm" className="text-white/40 text-center">
-            20 total screens • 2 main tabs • 5 epic groups
+            35+ total screens • 3 main tabs • 7 epic groups
+            {'\n'}✨ Story 6.2: Personality + AI Chat added
           </Text>
         </View>
       </View>
