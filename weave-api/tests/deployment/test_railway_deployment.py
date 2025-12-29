@@ -76,9 +76,12 @@ class TestCICDPipeline:
         content = workflow_file.read_text()
         workflow_data = yaml.safe_load(content)
 
+        # YAML parses 'on:' as True (boolean keyword), so we need to access it via True key
+        on_config = workflow_data.get("on", workflow_data.get(True, {}))
+
         # Check workflow triggers on main branch
-        assert "push" in workflow_data.get("on", {}), "Workflow should trigger on push"
-        assert "main" in workflow_data.get("on", {}).get("push", {}).get("branches", []), (
+        assert "push" in on_config, "Workflow should trigger on push"
+        assert "main" in on_config.get("push", {}).get("branches", []), (
             "Workflow should trigger on push to main branch"
         )
 
