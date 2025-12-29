@@ -2,7 +2,7 @@
  * Pomodoro Timer Component (US-3.4: Timer Tracking)
  *
  * Features:
- * - Duration presets: 15, 25, 45, 60 minutes
+ * - iOS Clock app-style time picker (hours and minutes)
  * - Focus mode UI (minimal distractions)
  * - Circle progress visualization
  * - Pause/extend functionality
@@ -15,6 +15,7 @@ import { View, Pressable, StyleSheet, Modal } from 'react-native';
 import { useTheme, Heading, Body, Caption, Button } from '@/design-system';
 import Animated, { useSharedValue, useAnimatedProps, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
+import { Picker } from '@react-native-picker/picker';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -27,15 +28,12 @@ interface PomodoroTimerProps {
   onCancel: () => void;
 }
 
-const PRESET_DURATIONS = [
-  { label: '15 min', minutes: 15 },
-  { label: '25 min', minutes: 25 },
-  { label: '45 min', minutes: 45 },
-  { label: '60 min', minutes: 60 },
-];
-
 const CIRCLE_RADIUS = 120;
 const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
+
+// Generate hour and minute options
+const HOURS = Array.from({ length: 24 }, (_, i) => i); // 0-23 hours
+const MINUTES = Array.from({ length: 60 }, (_, i) => i); // 0-59 minutes
 
 export function PomodoroTimer({
   visible,
@@ -48,6 +46,8 @@ export function PomodoroTimer({
   const { colors, spacing } = useTheme();
 
   // State
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(25); // Default to 25 minutes
   const [secondsRemaining, setSecondsRemaining] = useState(0);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showEarlyCompleteConfirm, setShowEarlyCompleteConfirm] = useState(false);
@@ -74,10 +74,12 @@ export function PomodoroTimer({
     progress.value = withTiming(0, { duration: totalSeconds * 1000 });
   };
 
-  // Handle preset selection (does NOT start timer)
-  const handlePresetSelect = (minutes: number) => {
-    onPresetSelect(minutes);
-    // Don't start timer here - wait for parent to set isRunning to true
+  // Handle start timer button press
+  const handleStartTimer = () => {
+    const totalMinutes = hours * 60 + minutes;
+    if (totalMinutes > 0) {
+      onPresetSelect(totalMinutes);
+    }
   };
 
   // Effect: Start timer when isRunningProp becomes true
@@ -172,10 +174,15 @@ export function PomodoroTimer({
     }
   }, [isRunningProp, selectedDurationProp, onComplete]);
 
-  // Format time as MM:SS
+  // Format time as HH:MM:SS or MM:SS
   const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
+
+    if (hrs > 0) {
+      return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
@@ -189,57 +196,83 @@ export function PomodoroTimer({
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
       <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
         {!isRunningProp ? (
-          // Preset Selection Screen
+          // Time Picker Screen (iOS Clock app style)
           <View style={styles.centerContent}>
             <Heading
               variant="displayLg"
               style={{ color: colors.text.primary, marginBottom: spacing[6] }}
             >
-              How long will you focus?
+              Timer
             </Heading>
 
-            <View style={styles.presetGrid}>
-              {PRESET_DURATIONS.map((preset) => (
-                <Pressable
-                  key={preset.minutes}
-                  style={[
-                    styles.presetButton,
-                    {
-                      backgroundColor:
-                        selectedDurationProp === preset.minutes
-                          ? colors.accent[500]
-                          : colors.background.secondary,
-                      borderColor:
-                        selectedDurationProp === preset.minutes
-                          ? colors.accent[600]
-                          : colors.border.subtle,
-                      borderRadius: 16,
-                      padding: spacing[5],
-                    },
-                  ]}
-                  onPress={() => handlePresetSelect(preset.minutes)}
-                >
-                  <Heading
-                    variant="displayLg"
-                    style={{
-                      color:
-                        selectedDurationProp === preset.minutes ? 'white' : colors.text.primary,
-                    }}
+            {/* Time Picker Container */}
+            <View style={styles.timePickerContainer}>
+              <View style={styles.pickerRow}>
+                {/* Hours Picker */}
+                <View style={styles.pickerColumn}>
+                  <Picker
+                    selectedValue={hours}
+                    onValueChange={(value) => setHours(value)}
+                    style={[styles.picker, { color: colors.text.primary }]}
+                    itemStyle={styles.pickerItem}
                   >
-                    {preset.label}
-                  </Heading>
-                </Pressable>
-              ))}
+                    {HOURS.map((hour) => (
+                      <Picker.Item
+                        key={hour}
+                        label={String(hour)}
+                        value={hour}
+                        color={colors.text.primary}
+                      />
+                    ))}
+                  </Picker>
+                  <Caption style={[styles.pickerLabel, { color: colors.text.secondary }]}>
+                    hours
+                  </Caption>
+                </View>
+
+                {/* Minutes Picker */}
+                <View style={styles.pickerColumn}>
+                  <Picker
+                    selectedValue={minutes}
+                    onValueChange={(value) => setMinutes(value)}
+                    style={[styles.picker, { color: colors.text.primary }]}
+                    itemStyle={styles.pickerItem}
+                  >
+                    {MINUTES.map((minute) => (
+                      <Picker.Item
+                        key={minute}
+                        label={String(minute)}
+                        value={minute}
+                        color={colors.text.primary}
+                      />
+                    ))}
+                  </Picker>
+                  <Caption style={[styles.pickerLabel, { color: colors.text.secondary }]}>
+                    min
+                  </Caption>
+                </View>
+              </View>
             </View>
 
-            <Button
-              variant="secondary"
-              size="lg"
-              onPress={onCancel}
-              style={{ marginTop: spacing[6] }}
-            >
-              Cancel
-            </Button>
+            {/* Action Buttons */}
+            <View style={styles.pickerButtons}>
+              <Button
+                variant="primary"
+                size="lg"
+                onPress={handleStartTimer}
+                disabled={hours === 0 && minutes === 0}
+              >
+                Save
+              </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                onPress={onCancel}
+                style={{ marginTop: spacing[3] }}
+              >
+                Cancel
+              </Button>
+            </View>
           </View>
         ) : (
           // Timer Running Screen
@@ -401,18 +434,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
-  presetGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    justifyContent: 'center',
-  },
-  presetButton: {
-    width: 140,
-    height: 120,
-    borderWidth: 1,
-    justifyContent: 'center',
+  timePickerContainer: {
+    width: '100%',
     alignItems: 'center',
+    marginBottom: 40,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  pickerColumn: {
+    alignItems: 'center',
+  },
+  picker: {
+    width: 100,
+    height: 180,
+  },
+  pickerItem: {
+    fontSize: 24,
+    height: 180,
+  },
+  pickerLabel: {
+    marginTop: -20,
+    fontSize: 16,
+  },
+  pickerButtons: {
+    width: '100%',
+    maxWidth: 400,
   },
   timerContent: {
     flex: 1,

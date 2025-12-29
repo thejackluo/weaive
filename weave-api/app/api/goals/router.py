@@ -224,7 +224,7 @@ async def get_goal_by_id(
         try:
             binds_response = (
                 supabase.table("subtask_templates")
-                .select("id, goal_id, title, default_estimated_minutes, recurrence_rule, is_archived, created_at, updated_at")
+                .select("id, goal_id, title, default_estimated_minutes, times_per_week, recurrence_rule, is_archived, created_at, updated_at")
                 .eq("goal_id", goal_id)
                 .eq("is_archived", False)  # Only active binds
                 .order("created_at", desc=False)
