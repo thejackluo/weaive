@@ -60,7 +60,7 @@ class TestCICDPipeline:
 
     def test_github_workflow_file_exists(self):
         """Verify GitHub Actions workflow file exists."""
-        workflow_file = Path(".github/workflows/railway-deploy.yml")
+        workflow_file = Path("../.github/workflows/railway-deploy.yml")
 
         assert workflow_file.exists(), (
             ".github/workflows/railway-deploy.yml not found. Create workflow file for Railway deployment."
@@ -68,7 +68,7 @@ class TestCICDPipeline:
 
     def test_github_workflow_has_required_steps(self):
         """Verify GitHub Actions workflow has required deployment steps."""
-        workflow_file = Path(".github/workflows/railway-deploy.yml")
+        workflow_file = Path("../.github/workflows/railway-deploy.yml")
 
         if not workflow_file.exists():
             pytest.skip(".github/workflows/railway-deploy.yml not created yet")
