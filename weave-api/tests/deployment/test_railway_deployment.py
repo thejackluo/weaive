@@ -60,7 +60,7 @@ class TestCICDPipeline:
 
     def test_github_workflow_file_exists(self):
         """Verify GitHub Actions workflow file exists."""
-        workflow_file = Path(".github/workflows/railway-deploy.yml")
+        workflow_file = Path("../.github/workflows/railway-deploy.yml")
 
         assert workflow_file.exists(), (
             ".github/workflows/railway-deploy.yml not found. Create workflow file for Railway deployment."
@@ -68,7 +68,7 @@ class TestCICDPipeline:
 
     def test_github_workflow_has_required_steps(self):
         """Verify GitHub Actions workflow has required deployment steps."""
-        workflow_file = Path(".github/workflows/railway-deploy.yml")
+        workflow_file = Path("../.github/workflows/railway-deploy.yml")
 
         if not workflow_file.exists():
             pytest.skip(".github/workflows/railway-deploy.yml not created yet")
@@ -76,9 +76,12 @@ class TestCICDPipeline:
         content = workflow_file.read_text()
         workflow_data = yaml.safe_load(content)
 
+        # YAML parses 'on:' as True (boolean keyword), so we need to access it via True key
+        on_config = workflow_data.get("on", workflow_data.get(True, {}))
+
         # Check workflow triggers on main branch
-        assert "push" in workflow_data.get("on", {}), "Workflow should trigger on push"
-        assert "main" in workflow_data.get("on", {}).get("push", {}).get("branches", []), (
+        assert "push" in on_config, "Workflow should trigger on push"
+        assert "main" in on_config.get("push", {}).get("branches", []), (
             "Workflow should trigger on push to main branch"
         )
 

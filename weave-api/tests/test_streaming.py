@@ -86,7 +86,7 @@ def test_openai_streaming_integration(mock_openai_client):
     assert "cost_usd" in done_chunk, "Done event should have cost_usd"
 
 
-@patch("app.services.ai.bedrock_provider.boto3.client")
+@patch("boto3.client")
 def test_bedrock_streaming_integration(mock_boto3_client):
     """Test Bedrock streaming integration with mocked API."""
     # Create mock streaming response

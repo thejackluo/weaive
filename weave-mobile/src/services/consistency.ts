@@ -20,12 +20,16 @@ export interface ConsistencyDataPoint {
  * Consistency API response
  */
 export interface ConsistencyResponse {
-  data: ConsistencyDataPoint[];
+  data: ConsistencyDataPoint[]; // Includes today for heatmap visualization
   meta: {
     timeframe: '7d' | '2w' | '1m' | '90d';
     filter_type: 'overall' | 'needle' | 'bind' | 'thread';
-    consistency_percentage: number;
-    total_days: number;
+    consistency_percentage: number; // Task-based: (completed/scheduled) × 100, excludes today
+    consistency_delta: number; // Percentage point difference vs previous period
+    total_days: number; // Total days in response (includes today)
+    historical_days: number; // Excludes today
+    total_scheduled: number; // Total tasks scheduled (excluding today)
+    total_completed: number; // Total tasks completed (excluding today)
   };
 }
 
@@ -46,6 +50,7 @@ export interface ApiErrorResponse {
  * @param timeframe - Time range: 7d, 2w, 1m, 90d (default: 7d)
  * @param filterType - Filter type: overall, needle, bind, thread (default: overall)
  * @param filterId - Optional goal/bind ID if filtering by needle or bind
+ * @param startDate - Optional start date (YYYY-MM-DD) for dynamic navigation
  * @returns Promise with consistency data
  * @throws Error if API call fails or returns error
  *
@@ -59,7 +64,8 @@ export async function fetchConsistencyData(
   accessToken: string,
   timeframe: '7d' | '2w' | '1m' | '90d' = '7d',
   filterType: 'overall' | 'needle' | 'bind' | 'thread' = 'overall',
-  filterId?: string
+  filterId?: string,
+  startDate?: string
 ): Promise<ConsistencyResponse> {
   const baseUrl = getApiBaseUrl();
 
@@ -67,6 +73,9 @@ export async function fetchConsistencyData(
   let queryParams = `timeframe=${timeframe}&filter_type=${filterType}`;
   if (filterId) {
     queryParams += `&filter_id=${filterId}`;
+  }
+  if (startDate) {
+    queryParams += `&start_date=${startDate}`;
   }
 
   const url = `${baseUrl}/api/stats/consistency?${queryParams}`;

@@ -4,6 +4,7 @@ This script finds test.weave@anthropic.com and marks them as onboarding_complete
 
 Run with: uv run python scripts/setup_test_user.py
 """
+
 import os
 
 from supabase import create_client
@@ -13,16 +14,13 @@ TEST_USER_EMAIL = "test.weave@anthropic.com"
 
 # Load .env
 print("Loading environment variables...")
-with open('.env') as f:
+with open(".env") as f:
     for line in f:
-        if '=' in line and not line.strip().startswith('#'):
-            key, value = line.strip().split('=', 1)
+        if "=" in line and not line.strip().startswith("#"):
+            key, value = line.strip().split("=", 1)
             os.environ[key] = value
 
-supabase = create_client(
-    os.environ["SUPABASE_URL"],
-    os.environ["SUPABASE_SERVICE_KEY"]
-)
+supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
 
 print(f"\n🔍 Looking for auth user: {TEST_USER_EMAIL}")
 
@@ -61,8 +59,8 @@ existing = supabase.table("user_profiles").select("*").eq("auth_user_id", auth_u
 
 if existing.data:
     # Profile exists - update it
-    profile_id = existing.data[0]['id']
-    current_status = existing.data[0].get('onboarding_completed', False)
+    profile_id = existing.data[0]["id"]
+    current_status = existing.data[0].get("onboarding_completed", False)
 
     print("✅ User profile exists:")
     print(f"   Profile ID: {profile_id}")
@@ -72,10 +70,12 @@ if existing.data:
         print("\n✅ User already has onboarding_completed=True!")
     else:
         print("\n🔄 Updating onboarding_completed to True...")
-        update_result = supabase.table("user_profiles").update({
-            "onboarding_completed": True,
-            "updated_at": "now()"
-        }).eq("id", profile_id).execute()
+        update_result = (
+            supabase.table("user_profiles")
+            .update({"onboarding_completed": True, "updated_at": "now()"})
+            .eq("id", profile_id)
+            .execute()
+        )
 
         if update_result.data:
             print("✅ Updated user profile!")
@@ -86,13 +86,19 @@ else:
     # Profile doesn't exist - create it
     print("⚠️  No user_profile found - creating new profile...")
 
-    create_result = supabase.table("user_profiles").insert({
-        "auth_user_id": auth_user_id,
-        "timezone": "America/Los_Angeles",
-        "locale": "en-US",
-        "onboarding_completed": True,  # Skip onboarding for test user
-        "selected_painpoints": [],
-    }).execute()
+    create_result = (
+        supabase.table("user_profiles")
+        .insert(
+            {
+                "auth_user_id": auth_user_id,
+                "timezone": "America/Los_Angeles",
+                "locale": "en-US",
+                "onboarding_completed": True,  # Skip onboarding for test user
+                "selected_painpoints": [],
+            }
+        )
+        .execute()
+    )
 
     if create_result.data:
         print("✅ Created new user_profile!")

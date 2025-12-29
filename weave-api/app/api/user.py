@@ -11,6 +11,7 @@ from app.core.deps import get_current_user, get_optional_user, get_supabase_clie
 from app.models.user_profile import UserProfileCreate, UserProfileResponse
 from app.services import user_profile
 from app.services.personality_service import PersonalityService  # Story 6.2
+from app.services.progress_service import get_user_progress_stats
 
 logger = logging.getLogger(__name__)
 
@@ -253,7 +254,7 @@ async def save_push_token(
             detail="Invalid authentication token",
         )
 
-    if not request.expo_push_token.startswith('ExponentPushToken['):
+    if not request.expo_push_token.startswith("ExponentPushToken["):
         logger.error(f"❌ Invalid push token format: {request.expo_push_token}")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -263,11 +264,13 @@ async def save_push_token(
     logger.info(f"💾 Saving push token for user: {auth_user_id}")
 
     try:
-        profile_result = supabase.table('user_profiles') \
-            .select('id') \
-            .eq('auth_user_id', auth_user_id) \
-            .single() \
+        profile_result = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
             .execute()
+        )
 
         if not profile_result.data:
             logger.error(f"❌ User profile not found for auth_user_id: {auth_user_id}")
@@ -276,19 +279,15 @@ async def save_push_token(
                 detail="User profile not found",
             )
 
-        user_id = profile_result.data['id']
+        user_id = profile_result.data["id"]
 
-        supabase.table('user_profiles') \
-            .update({'expo_push_token': request.expo_push_token}) \
-            .eq('id', user_id) \
-            .execute()
+        supabase.table("user_profiles").update({"expo_push_token": request.expo_push_token}).eq(
+            "id", user_id
+        ).execute()
 
         logger.info(f"✅ Push token saved for user: {user_id}")
 
-        return {
-            "message": "Push token saved successfully",
-            "user_id": user_id
-        }
+        return {"message": "Push token saved successfully", "user_id": user_id}
 
     except HTTPException:
         raise
@@ -309,16 +308,21 @@ async def get_user_stats(
     Get computed user statistics (US-5.1, US-5.4: Level, Streak, Character State).
 
     Returns:
-    - data: User stats object
+    - data: User stats object with XP-based leveling system
     - meta: Metadata with timestamp
 
     Data format:
     {
-      "level": 5,                         // Computed from total active days
+      "level": 5,                         // Computed from total_xp using 2x formula
+      "total_xp": 42,                     // Total XP accumulated
+      "xp_to_next_level": 8,              // XP needed to reach next level
       "current_streak": 12,               // Consecutive days with completions
+      "longest_streak": 15,               // Longest streak ever achieved
+      "streak_status": "active",          // "active" | "at_risk" | "broken"
+      "grace_period_active": false,       // True if grace period is saving streak
       "weave_character_state": "thread",  // "strand" | "thread" | "weave"
       "total_completions": 145,           // Total subtask completions
-      "total_active_days": 42             // Total days with active_day_with_proof=true
+      "total_active_days": 42             // Total days with completions
     }
 
     Character state mapping:
@@ -362,60 +366,19 @@ async def get_user_stats(
         user_id = user_profile_response.data["id"]
         logger.debug(f"✅ Resolved user_id: {user_id} for auth_user_id: {auth_user_id}")
 
-        aggregates_response = (
-            supabase.table("daily_aggregates")
-            .select("local_date, active_day_with_proof, completed_count")
-            .eq("user_id", user_id)
-            .order("local_date", desc=False)
-            .execute()
-        )
-
-        aggregates = aggregates_response.data or []
-        logger.info(f"📊 Found {len(aggregates)} days of data for user stats")
-
-        total_active_days = sum(1 for agg in aggregates if agg.get("active_day_with_proof"))
-        level = (total_active_days // 10) + 1 if total_active_days > 0 else 1
-        total_completions = sum(agg.get("completed_count", 0) for agg in aggregates)
-
-        current_streak = 0
-        today = date.today()
-
-        # Create a set of active dates for fast lookup
-        active_dates = {
-            agg["local_date"]
-            for agg in aggregates
-            if agg.get("active_day_with_proof")
-        }
-
-        for i in range(len(aggregates) + 1):
-            check_date = (today - timedelta(days=i)).isoformat()
-            if check_date in active_dates:
-                current_streak += 1
-            else:
-                break
-
-        if level <= 3:
-            character_state = "strand"
-        elif level <= 7:
-            character_state = "thread"
-        else:
-            character_state = "weave"
+        # Use progress service for XP-based leveling system
+        progress_data = get_user_progress_stats(supabase, user_id)
 
         logger.info(
-            f"✅ User stats computed: level={level}, streak={current_streak}, "
-            f"character={character_state}, completions={total_completions}"
+            f"✅ User stats computed: level={progress_data['level']}, "
+            f"xp={progress_data['total_xp']}, streak={progress_data['current_streak']}, "
+            f"character={progress_data['weave_character_state']}"
         )
 
         return {
-            "data": {
-                "level": level,
-                "current_streak": current_streak,
-                "weave_character_state": character_state,
-                "total_completions": total_completions,
-                "total_active_days": total_active_days,
-            },
+            "data": progress_data,
             "meta": {
-                "timestamp": today.isoformat(),
+                "timestamp": date.today().isoformat(),
             },
         }
 

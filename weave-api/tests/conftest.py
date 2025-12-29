@@ -97,11 +97,27 @@ def client(supabase_client):
     return TestClient(app)
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope="function")
+async def async_client(supabase_client):
+    """Create an async test client for the FastAPI app with real database.
+
+    Args:
+        supabase_client: Supabase client fixture (ensures database is available)
+
+    Returns:
+        AsyncClient configured for async integration testing
+    """
+    from httpx import AsyncClient
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest.fixture(scope="function")
 def cleanup_test_data(supabase_client):
     """Clean up test data after each test function.
 
-    This fixture runs automatically (autouse=True) after EVERY test.
+    NOTE: No longer autouse=True - tests must explicitly request this fixture
+    to enable cleanup. This prevents forced Supabase initialization for all tests.
     It deletes all data from user-owned tables to ensure test isolation.
 
     Cleanup order matters: delete child records before parent records
@@ -305,6 +321,21 @@ def another_user_token() -> str:
 
 
 @pytest.fixture
+def auth_headers(test_user_token) -> dict:
+    """
+    Generate authentication headers with JWT token for API tests.
+
+    Used by Story 1.5.2 ATDD tests to verify endpoint stub auth integration.
+
+    Returns:
+        dict: Headers with Authorization bearer token
+    """
+    return {
+        "Authorization": f"Bearer {test_user_token}"
+    }
+
+
+@pytest.fixture
 def authenticated_client(client, test_user_token, mock_supabase_client):
     """
     Create an authenticated test client with JWT token and mock database.
@@ -461,6 +492,34 @@ def cleanup_production_test_data(request):
     # For now, we document that test data should be manually cleaned periodically
     # TODO: Implement /admin/cleanup-test-data endpoint for automated cleanup
     pass
+
+
+@pytest.fixture
+def complete_test_user(supabase_client):
+    """
+    Create a test user with COMPLETE data for GDPR export testing.
+
+    This fixture uses the gdpr_test_factory to create a user with:
+    - User profile
+    - 3 active goals
+    - 9 subtask templates (3 per goal)
+    - Subtask instances
+    - 10 completions
+    - 5 journal entries
+    - Identity document
+    - 3 AI chat messages
+    - 3 proof photos in Supabase Storage
+    - Daily aggregates
+    - Triad tasks
+
+    Used by: test_gdpr_compliance_api.py (Story 9.4)
+
+    Returns:
+        dict with user_id, auth_user_id, email, goals, completions, journal_entries, proof_photos
+    """
+    from tests.support.factories.gdpr_test_factory import create_complete_test_user
+
+    return lambda client: create_complete_test_user(client)
 
 
 def pytest_configure(config):

@@ -20,7 +20,7 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Text, Card } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
@@ -31,6 +31,7 @@ import { ConsistencyHeatmap } from '@/components/ConsistencyHeatmap';
 import { FulfillmentChart } from '@/components/FulfillmentChart';
 import { WeaveCharacter } from '@/components/WeaveCharacter';
 import { HistoryList } from '@/components/HistoryList';
+import { getLevelProgress } from '@/utils/levelProgression';
 
 type ConsistencyFilter = 'Overall' | 'Needle' | 'Bind' | 'Thread';
 type TimeframeOption = '7d' | '2w' | '1m';
@@ -38,12 +39,22 @@ type TimeframeOption = '7d' | '2w' | '1m';
 export function DashboardScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { data: goalsData, isLoading } = useActiveGoals();
+  const { data: goalsData, isLoading, refetch: refetchGoals } = useActiveGoals();
   const { data: userStatsData, isLoading: isStatsLoading } = useUserStats();
+
+  // 🐛 FIX: Refetch goals when screen comes into focus
+  // This ensures new/deleted/archived goals appear immediately when navigating back
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[Dashboard] Screen focused - refetching goals');
+      refetchGoals();
+    }, [refetchGoals])
+  );
 
   const [consistencyFilter, setConsistencyFilter] = useState<ConsistencyFilter>('Overall');
   const [consistencyTimeframe, setConsistencyTimeframe] = useState<TimeframeOption>('7d');
   const [fulfillmentTimeframe, setFulfillmentTimeframe] = useState<TimeframeOption>('7d');
+  const [selectedNeedleId, setSelectedNeedleId] = useState<string | undefined>(undefined);
 
   // History filters
   const [historyTimeframe, setHistoryTimeframe] = useState<'days' | 'weeks' | 'months'>('days');
@@ -57,7 +68,12 @@ export function DashboardScreen() {
   // User stats from API (with fallback to defaults)
   const userLevel = userStatsData?.data?.level || 1;
   const userStreak = userStatsData?.data?.current_streak || 0;
+  const totalXP = userStatsData?.data?.total_xp || 0;
+  const xpToNext = userStatsData?.data?.xp_to_next_level || 4;
   const characterState = userStatsData?.data?.weave_character_state || 'strand';
+
+  // Calculate level progress percentage (0-100) within current level
+  const levelProgressPercent = getLevelProgress(totalXP, userLevel);
 
   const handleNeedlePress = (goalId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -95,11 +111,15 @@ export function DashboardScreen() {
                 styles.levelBarFill,
                 {
                   backgroundColor: colors.accent[500],
-                  width: `${(userLevel % 10) * 10 || 5}%`, // Progress within current level
+                  width: `${Math.max(5, levelProgressPercent)}%`,
                 },
               ]}
             />
           </View>
+          {/* XP to next level */}
+          <Text variant="textXs" style={{ color: colors.text.muted, fontSize: 10 }}>
+            {xpToNext} XP to Level {userLevel + 1}
+          </Text>
           {/* Streak badge */}
           <View style={styles.streakBadge}>
             <Text variant="textSm" weight="semibold">
@@ -254,15 +274,23 @@ export function DashboardScreen() {
         <ConsistencyHeatmap
           timeframe={consistencyTimeframe}
           filterType={consistencyFilter.toLowerCase() as 'overall' | 'needle' | 'bind' | 'thread'}
+          filterId={consistencyFilter === 'Needle' ? selectedNeedleId : undefined}
           onFilterChange={(filter) => {
             Haptics.selectionAsync();
             setConsistencyFilter(
               (filter.charAt(0).toUpperCase() + filter.slice(1)) as ConsistencyFilter
             );
+            // Reset needle selection when changing filters
+            if (filter !== 'needle') {
+              setSelectedNeedleId(undefined);
+            }
           }}
           onTimeframeChange={(timeframe) => {
             Haptics.selectionAsync();
             setConsistencyTimeframe(timeframe);
+          }}
+          onNeedleChange={(needleId) => {
+            setSelectedNeedleId(needleId);
           }}
         />
       </View>

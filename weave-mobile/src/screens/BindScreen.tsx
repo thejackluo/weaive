@@ -10,16 +10,19 @@
  */
 
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, Alert, Modal } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, Alert, Modal, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme, Card, Heading, Body, Caption, Button } from '@/design-system';
 import { useTodayBinds } from '@/hooks/useTodayBinds';
 import { useCompleteBind } from '@/hooks/useCompleteBind';
+import { useUserStats } from '@/hooks/useUserStats';
 import { PomodoroTimer } from '@/components/thread/PomodoroTimer';
 import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
 import { ProofCaptureSheet } from '@/components/ProofCaptureSheet';
 import { ProofCaptureContext } from '@/types/captures';
+import { getLevelProgress } from '@/utils/levelProgression';
+import { launchCamera } from '@/services/imageCapture';
 
 export function BindScreen() {
   const { colors, spacing, radius } = useTheme();
@@ -27,8 +30,21 @@ export function BindScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   // Fetch bind details (using existing useTodayBinds hook)
-  const { data, isLoading: isLoadingBinds } = useTodayBinds();
+  const { data, isLoading: isLoadingBinds, refetch } = useTodayBinds();
   const bind = data?.data.find((b) => b.id === id);
+
+  // Fetch user stats for level display
+  const { data: userStatsData, isLoading: isLoadingStats } = useUserStats();
+
+  // Auto-refetch if bind not found (handles newly created binds)
+  const [hasAttemptedRefetch, setHasAttemptedRefetch] = React.useState(false);
+  React.useEffect(() => {
+    if (!isLoadingBinds && !bind && !hasAttemptedRefetch && data) {
+      console.log('[BindScreen] Bind not found in cache, refetching...');
+      setHasAttemptedRefetch(true);
+      refetch();
+    }
+  }, [bind, isLoadingBinds, hasAttemptedRefetch, data, refetch]);
 
   // Debug logging
   React.useEffect(() => {
@@ -40,6 +56,19 @@ export function BindScreen() {
     );
     console.log('[BindScreen] Found bind:', bind ? 'YES' : 'NO');
   }, [id, data, bind]);
+
+  // 🐛 FIX: Reset state when switching between binds
+  // This ensures photos and timer settings don't carry over to other binds
+  React.useEffect(() => {
+    console.log('[BindScreen] Bind ID changed, resetting state for:', id);
+    setPhotoUri(null);
+    setTimerDuration(null);
+    setShowTimerPresets(false);
+    setIsTimerRunning(false);
+    setShowCelebration(false);
+    setCompletionData(null);
+    setHasAttemptedRefetch(false);
+  }, [id]); // Reset whenever the bind ID changes
 
   // Completion mutation
   const completeMutation = useCompleteBind();
@@ -53,16 +82,23 @@ export function BindScreen() {
   const [showCaptureSheet, setShowCaptureSheet] = useState(false);
   const [completionData, setCompletionData] = useState<{
     needleName: string;
-    level?: number;
-    levelProgress?: number;
+    progressUpdate?: {
+      level_before: number;
+      level_after: number;
+      level_up: boolean;
+      xp_gained: number;
+      total_xp: number;
+      xp_to_next_level: number;
+      streak_before: number;
+      streak_after: number;
+      streak_status: 'active' | 'at_risk' | 'broken';
+      streak_milestone_reached: { day: number; message: string } | null;
+      grace_period_saved: boolean;
+    };
   } | null>(null);
 
-  // Get current week completion status (mock for now)
-  const weekDays = ['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'];
-  const weekCompletions = [true, true, false, false, false, false, false]; // TODO: Get from API
-
   // Loading state
-  if (isLoadingBinds) {
+  if (isLoadingBinds || isLoadingStats) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background.primary }]}
@@ -135,7 +171,7 @@ export function BindScreen() {
       setPhotoUri(null);
       console.log('Photo deselected');
     } else {
-      // Open capture sheet
+      // Open capture sheet (Story 6.2 ProofCaptureSheet component)
       setShowCaptureSheet(true);
     }
   };
@@ -196,38 +232,53 @@ export function BindScreen() {
       // In future: const photoResult = await openCamera();
     }
 
-    // Show celebration modal with loading state
+    // ⚡ OPTIMISTIC: Show celebration modal IMMEDIATELY with optimistic data
+    // This gives instant feedback while API call happens in background
+    const userStats = userStatsData?.data;
+    const optimisticProgress = {
+      level_before: userStats?.level || 1,
+      level_after: userStats?.level || 1, // Will update from API
+      level_up: false, // Will update from API
+      xp_gained: 1,
+      total_xp: userStats?.total_xp || 0,
+      xp_to_next_level: userStats?.xp_to_next_level || 4,
+      streak_before: userStats?.current_streak || 0,
+      streak_after: userStats?.current_streak || 0,
+      streak_status: userStats?.streak_status || ('active' as const),
+      streak_milestone_reached: null,
+      grace_period_saved: false,
+    };
+
     setCompletionData({
       needleName: bind.needle_title,
-      level: undefined, // Loading state
-      levelProgress: undefined, // Loading state
+      progressUpdate: optimisticProgress,
     });
     setShowCelebration(true);
 
-    // Call completion API immediately to get level data
-    try {
-      const result = await completeMutation.mutateAsync({
+    // Call completion API in background (non-blocking)
+    completeMutation.mutate(
+      {
         bindId: id,
         timerDuration: timerDuration ?? undefined,
         photoUsed: photoUri ? true : undefined,
         notes: undefined, // Notes will be saved separately when Done is clicked
-      });
-
-      // Update completion data with real values from API
-      setCompletionData({
-        needleName: bind.needle_title,
-        level: result.data.level,
-        levelProgress: result.data.level_progress,
-      });
-
-      console.log('Bind completed successfully!', result);
-    } catch (error) {
-      console.error('Failed to complete bind:', error);
-      // Close modal and show error
-      setShowCelebration(false);
-      // Show error alert
-      Alert.alert('Error', 'Failed to complete bind. Please try again.');
-    }
+      },
+      {
+        onSuccess: (result) => {
+          // Update celebration data with real server response
+          setCompletionData({
+            needleName: bind.needle_title,
+            progressUpdate: result.data.progress_update,
+          });
+          console.log('[BIND_COMPLETE] ✅ API success - updated celebration with real data');
+        },
+        onError: (error) => {
+          console.error('[BIND_COMPLETE] ❌ API error:', error);
+          // Don't show error to user - celebration already showing
+          // The optimistic update will remain, and background refetch will eventually sync
+        },
+      }
+    );
   };
 
   const handleCelebrationComplete = async (notes?: string) => {
@@ -240,6 +291,10 @@ export function BindScreen() {
 
     // Close celebration modal
     setShowCelebration(false);
+
+    // Navigate back to ThreadHomeScreen
+    // The bind will show as completed when user navigates back to it later
+    router.back();
   };
 
   return (
@@ -249,20 +304,33 @@ export function BindScreen() {
     >
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { padding: spacing[4] }]}
+        contentContainerStyle={[styles.content, { padding: spacing[3] }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header with back button */}
         <Pressable
           onPress={() => router.back()}
-          style={[styles.backButton, { marginBottom: spacing[4] }]}
+          style={[styles.backButton, { marginBottom: spacing[3] }]}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Body style={{ color: colors.text.primary }}>← Back</Body>
         </Pressable>
 
+        {/* Bind Title */}
+        <Heading
+          variant="displayLg"
+          style={{
+            color: colors.text.primary,
+            textAlign: 'center',
+            marginBottom: spacing[3],
+            fontSize: 28,
+          }}
+        >
+          {bind.title}
+        </Heading>
+
         {/* Needle Context Card */}
-        <Card variant="ai" style={{ marginBottom: spacing[5] }}>
+        <Card variant="ai" style={{ marginBottom: spacing[4] }}>
           <View style={styles.aiContext}>
             <Body style={{ fontSize: 24, marginRight: spacing[2] }}>🧶</Body>
             <Body style={{ flex: 1, color: colors.violet[200] }}>
@@ -275,54 +343,8 @@ export function BindScreen() {
           </View>
         </Card>
 
-        {/* Bind Title */}
-        <Heading
-          variant="displayLg"
-          style={{
-            color: colors.text.primary,
-            textAlign: 'center',
-            marginBottom: spacing[5],
-            fontSize: 28,
-          }}
-        >
-          {bind.title}
-        </Heading>
-
-        {/* Week Completion Calendar */}
-        <Card variant="default" style={{ marginBottom: spacing[5] }}>
-          <Caption
-            style={{ color: colors.text.secondary, marginBottom: spacing[3], textAlign: 'center' }}
-          >
-            This Week
-          </Caption>
-          <View style={styles.weekCalendar}>
-            {weekDays.map((day, index) => (
-              <View key={index} style={styles.weekDay}>
-                <Caption style={{ color: colors.text.muted, marginBottom: spacing[1] }}>
-                  {day}
-                </Caption>
-                <View
-                  style={[
-                    styles.dayCircle,
-                    {
-                      backgroundColor: weekCompletions[index]
-                        ? colors.semantic.success.base
-                        : colors.background.secondary,
-                      borderColor: colors.border.subtle,
-                    },
-                  ]}
-                >
-                  {weekCompletions[index] && (
-                    <Body style={{ color: 'white', fontSize: 12 }}>✓</Body>
-                  )}
-                </View>
-              </View>
-            ))}
-          </View>
-        </Card>
-
         {/* Accountability Section */}
-        <Card variant="default" style={{ marginBottom: spacing[5] }}>
+        <Card variant="default" style={{ marginBottom: spacing[4] }}>
           <Heading
             variant="displayLg"
             style={{ color: colors.text.primary, marginBottom: spacing[3] }}
@@ -419,7 +441,23 @@ export function BindScreen() {
               onPress={bind.completed ? undefined : handleOpenCamera}
               disabled={bind.completed}
             >
-              <Body style={{ fontSize: 32, marginBottom: spacing[2] }}>📸</Body>
+              {photoUri ? (
+                // Show photo preview
+                <Image
+                  source={{ uri: photoUri }}
+                  style={[
+                    styles.photoPreview,
+                    {
+                      borderRadius: radius.md,
+                      marginBottom: spacing[2],
+                    },
+                  ]}
+                  resizeMode="cover"
+                />
+              ) : (
+                // Show camera icon
+                <Body style={{ fontSize: 32, marginBottom: spacing[2] }}>📸</Body>
+              )}
               <Body
                 weight="semibold"
                 style={{
@@ -436,7 +474,7 @@ export function BindScreen() {
               {bind.completed && bind.has_proof ? (
                 <Caption style={{ color: colors.semantic.success.dark }}>Photo attached</Caption>
               ) : photoUri ? (
-                <Caption style={{ color: 'rgba(255,255,255,0.8)' }}>Will attach photo</Caption>
+                <Caption style={{ color: 'rgba(255,255,255,0.8)' }}>Tap to change</Caption>
               ) : (
                 <Caption
                   style={{
@@ -452,7 +490,7 @@ export function BindScreen() {
 
         {/* Completion Notes or No Notes Card */}
         {bind.completed ? (
-          <Card variant="default" style={{ marginBottom: spacing[5] }}>
+          <Card variant="default" style={{ marginBottom: spacing[4] }}>
             <Caption style={{ color: colors.text.secondary, marginBottom: spacing[2] }}>
               {bind.completion_details?.notes ? 'Your Note' : 'Notes'}
             </Caption>
@@ -466,42 +504,53 @@ export function BindScreen() {
           </Card>
         ) : (
           // Show level preview if not completed
-          <Card variant="default" style={{ marginBottom: spacing[5] }}>
-            <View style={styles.levelPreview}>
-              <Body style={{ fontSize: 48 }}>🧵</Body>
-              <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                <Body
-                  weight="semibold"
-                  style={{ color: colors.text.primary, marginBottom: spacing[1] }}
-                >
-                  Level 2
-                </Body>
-                <View
-                  style={[
-                    styles.progressBar,
-                    {
-                      backgroundColor: colors.background.secondary,
-                      borderRadius: radius.sm,
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: '35%',
-                        backgroundColor: colors.accent[500],
-                        borderRadius: radius.sm,
-                      },
-                    ]}
-                  />
+          (() => {
+            // Calculate level progress from user stats
+            const userStats = userStatsData?.data;
+            const currentLevel = userStats?.level || 1;
+            const totalXP = userStats?.total_xp || 0;
+            const progressPercent = Math.round(getLevelProgress(totalXP, currentLevel));
+            const nextLevel = currentLevel + 1;
+
+            return (
+              <Card variant="default" style={{ marginBottom: spacing[4] }}>
+                <View style={styles.levelPreview}>
+                  <Body style={{ fontSize: 48 }}>🧵</Body>
+                  <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                    <Body
+                      weight="semibold"
+                      style={{ color: colors.text.primary, marginBottom: spacing[1] }}
+                    >
+                      Level {currentLevel}
+                    </Body>
+                    <View
+                      style={[
+                        styles.progressBar,
+                        {
+                          backgroundColor: colors.background.secondary,
+                          borderRadius: radius.sm,
+                        },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.progressFill,
+                          {
+                            width: `${progressPercent}%`,
+                            backgroundColor: colors.accent[500],
+                            borderRadius: radius.sm,
+                          },
+                        ]}
+                      />
+                    </View>
+                    <Caption style={{ color: colors.text.secondary, marginTop: spacing[1] }}>
+                      {progressPercent}% to Level {nextLevel}
+                    </Caption>
+                  </View>
                 </View>
-                <Caption style={{ color: colors.text.secondary, marginTop: spacing[1] }}>
-                  35% to Level 3
-                </Caption>
-              </View>
-            </View>
-          </Card>
+              </Card>
+            );
+          })()
         )}
 
         {/* Action Buttons */}
@@ -561,8 +610,7 @@ export function BindScreen() {
       <CompletionCelebration
         visible={showCelebration}
         needleName={completionData?.needleName || 'your goal'}
-        level={completionData?.level}
-        levelProgress={completionData?.levelProgress}
+        progressUpdate={completionData?.progressUpdate}
         onComplete={handleCelebrationComplete}
       />
 
@@ -597,7 +645,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 32,
+    paddingBottom: 16,
   },
   centerContent: {
     flex: 1,
@@ -611,21 +659,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  weekCalendar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  weekDay: {
-    alignItems: 'center',
-  },
-  dayCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   accountabilityButtons: {
     flexDirection: 'row',
     gap: 12,
@@ -634,6 +667,11 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     alignItems: 'center',
+  },
+  photoPreview: {
+    width: 60,
+    height: 60,
+    alignSelf: 'center',
   },
   levelPreview: {
     flexDirection: 'row',
@@ -647,7 +685,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   actions: {
-    marginBottom: 32,
+    marginBottom: 16,
   },
   completedBadge: {
     padding: 16,

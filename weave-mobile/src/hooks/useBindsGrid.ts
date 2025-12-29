@@ -37,9 +37,13 @@ export interface BindsGridResponse {
   };
 }
 
-async function fetchBindsGrid(accessToken: string): Promise<BindsGridResponse> {
+async function fetchBindsGrid(accessToken: string, startDate?: string): Promise<BindsGridResponse> {
   const baseUrl = getApiBaseUrl();
-  const url = `${baseUrl}/api/stats/binds-grid`;
+  const params = new URLSearchParams();
+  if (startDate) {
+    params.append('start_date', startDate);
+  }
+  const url = `${baseUrl}/api/stats/binds-grid${params.toString() ? `?${params.toString()}` : ''}`;
 
   console.log('[BINDS_GRID] Fetching:', url);
 
@@ -62,17 +66,17 @@ async function fetchBindsGrid(accessToken: string): Promise<BindsGridResponse> {
   return result;
 }
 
-export function useBindsGrid() {
+export function useBindsGrid(startDate?: string) {
   const { session } = useAuth();
 
   return useQuery<BindsGridResponse, Error>({
-    queryKey: ['bindsGrid'],
+    queryKey: ['bindsGrid', startDate],
     queryFn: async () => {
       if (!session?.access_token) {
         throw new Error('No active session');
       }
 
-      return fetchBindsGrid(session.access_token);
+      return fetchBindsGrid(session.access_token, startDate);
     },
     enabled: !!session?.access_token,
     staleTime: 2 * 60 * 1000, // 2 minutes
