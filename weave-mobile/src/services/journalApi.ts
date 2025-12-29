@@ -11,9 +11,6 @@
 
 import { getApiBaseUrl } from '@/utils/api';
 
-// API endpoint (loaded from .env via app.config.js)
-const API_BASE_URL = getApiBaseUrl();
-
 // Auth token getter (set by initJournalApi)
 let getAuthTokenFn: (() => Promise<string>) | null = null;
 
@@ -86,13 +83,16 @@ async function getAuthToken(): Promise<string> {
 export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
   const overallStart = performance.now();
   console.log("[JOURNAL_API] 📖 Fetching today's journal...");
-  console.log('[JOURNAL_API] 🌐 API Base URL:', API_BASE_URL);
 
   try {
-    // Step 1: Get auth token
+    // Step 1: Get API base URL
+    const baseUrl = getApiBaseUrl();
+    console.log('[JOURNAL_API] 🌐 API Base URL:', baseUrl);
+
+    // Step 2: Get auth token
     const token = await getAuthToken();
 
-    // Step 2: Make API request with timeout
+    // Step 3: Make API request with timeout
     const fetchStart = performance.now();
     console.log('[JOURNAL_API] 🚀 Sending GET request to /api/journal-entries/today');
 
@@ -104,7 +104,7 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
     }, 10000);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/journal-entries/today`, {
+      const response = await fetch(`${baseUrl}/api/journal-entries/today`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -184,12 +184,13 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
  */
 export async function createJournalEntry(entry: JournalEntryCreate): Promise<any> {
   try {
+    const baseUrl = getApiBaseUrl();
     const token = await getAuthToken();
 
     // Calculate local_date on client (user's timezone)
     const localDate = new Date().toISOString().split('T')[0];
 
-    const response = await fetch(`${API_BASE_URL}/api/journal-entries`, {
+    const response = await fetch(`${baseUrl}/api/journal-entries`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -227,9 +228,10 @@ export async function updateJournalEntry(
   update: JournalEntryUpdate
 ): Promise<any> {
   try {
+    const baseUrl = getApiBaseUrl();
     const token = await getAuthToken();
 
-    const response = await fetch(`${API_BASE_URL}/api/journal-entries/${journalId}`, {
+    const response = await fetch(`${baseUrl}/api/journal-entries/${journalId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -290,10 +292,11 @@ export async function getJournalEntriesByDateRange(
   endDate: string
 ): Promise<JournalEntryResponse[]> {
   try {
+    const baseUrl = getApiBaseUrl();
     const token = await getAuthToken();
 
     const response = await fetch(
-      `${API_BASE_URL}/api/journal-entries?start_date=${startDate}&end_date=${endDate}`,
+      `${baseUrl}/api/journal-entries?start_date=${startDate}&end_date=${endDate}`,
       {
         method: 'GET',
         headers: {

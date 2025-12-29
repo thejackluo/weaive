@@ -23,9 +23,7 @@
             "CFBundleURLSchemes": ["weavelight"]
           }
         ],
-        "UIBackgroundModes": [
-          "remote-notification"
-        ]
+        "UIBackgroundModes": ["remote-notification"]
       },
       "usesAppleSignIn": true
     },

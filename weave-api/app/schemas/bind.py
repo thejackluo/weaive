@@ -59,9 +59,15 @@ class UpdateBindRequest(BaseUpdateModel):
         max_length=200,
         description="Bind title"
     )
+    times_per_week: Optional[int] = Field(
+        None,
+        ge=1,
+        le=7,
+        description="Number of times per week this bind should be completed (1-7)"
+    )
     recurrence_rule: Optional[str] = Field(
         None,
-        description="iCal RRULE format (e.g., FREQ=DAILY;INTERVAL=1)"
+        description="iCal RRULE format (DEPRECATED - use times_per_week instead)"
     )
     default_estimated_minutes: Optional[int] = Field(
         None,
@@ -74,7 +80,7 @@ class UpdateBindRequest(BaseUpdateModel):
             "examples": [
                 {
                     "title": "Evening run",
-                    "recurrence_rule": "FREQ=DAILY;INTERVAL=2",
+                    "times_per_week": 3,
                     "default_estimated_minutes": 45
                 }
             ]
@@ -91,16 +97,11 @@ class CreateBindRequest(BaseCreateModel):
         max_length=1000,
         description="Bind description"
     )
-    frequency_type: str = Field(
-        ...,
-        pattern="^(daily|weekly)$",
-        description="Frequency type: daily or weekly"
-    )
-    frequency_value: Optional[int] = Field(
-        None,
+    times_per_week: int = Field(
+        3,
         ge=1,
         le=7,
-        description="Days per week (only for weekly)"
+        description="Number of times per week this bind should be completed (1-7). Default: 3"
     )
 
     class Config:
@@ -110,8 +111,7 @@ class CreateBindRequest(BaseCreateModel):
                     "goal_id": "550e8400-e29b-41d4-a716-446655440000",
                     "title": "Morning meditation",
                     "description": "10 minutes of mindfulness",
-                    "frequency_type": "daily",
-                    "frequency_value": None
+                    "times_per_week": 3
                 }
             ]
         }

@@ -19,17 +19,32 @@ interface CompleteBindRequest {
   notes?: string; // Optional completion description (280 char max)
 }
 
+interface ProgressUpdate {
+  level_before: number;
+  level_after: number;
+  level_up: boolean;
+  xp_gained: number;
+  total_xp: number;
+  xp_to_next_level: number;
+  streak_before: number;
+  streak_after: number;
+  streak_status: 'active' | 'at_risk' | 'broken';
+  streak_milestone_reached: { day: number; message: string } | null;
+  grace_period_saved: boolean;
+}
+
 interface CompleteBindResponse {
   success: boolean;
   data: {
     completion_id: string;
     bind_id: string;
     completed_at: string;
-    level: number;
-    level_progress: number; // Percentage to next level (0-100)
     affirmation: string;
+    progress_update: ProgressUpdate;
   };
 }
+
+export type { ProgressUpdate, CompleteBindResponse };
 
 async function completeBind(
   accessToken: string,

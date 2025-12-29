@@ -104,7 +104,7 @@ export async function fetchGoalById(
  *   title: 'Get Ripped',
  *   description: 'to auafarm mfs',
  *   qgoals: [{title: 'Reach 180 lbs', target_value: 180, unit: 'lbs'}],
- *   binds: [{title: 'Workout', frequency_type: 'weekly', frequency_value: 5}]
+ *   binds: [{title: 'Workout', times_per_week: 5}]
  * }, accessToken);
  * ```
  */

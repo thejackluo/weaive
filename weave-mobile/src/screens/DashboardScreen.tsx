@@ -31,6 +31,7 @@ import { ConsistencyHeatmap } from '@/components/ConsistencyHeatmap';
 import { FulfillmentChart } from '@/components/FulfillmentChart';
 import { WeaveCharacter } from '@/components/WeaveCharacter';
 import { HistoryList } from '@/components/HistoryList';
+import { getLevelProgress } from '@/utils/levelProgression';
 
 type ConsistencyFilter = 'Overall' | 'Needle' | 'Bind' | 'Thread';
 type TimeframeOption = '7d' | '2w' | '1m';
@@ -58,7 +59,12 @@ export function DashboardScreen() {
   // User stats from API (with fallback to defaults)
   const userLevel = userStatsData?.data?.level || 1;
   const userStreak = userStatsData?.data?.current_streak || 0;
+  const totalXP = userStatsData?.data?.total_xp || 0;
+  const xpToNext = userStatsData?.data?.xp_to_next_level || 4;
   const characterState = userStatsData?.data?.weave_character_state || 'strand';
+
+  // Calculate level progress percentage (0-100) within current level
+  const levelProgressPercent = getLevelProgress(totalXP, userLevel);
 
   const handleNeedlePress = (goalId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -96,11 +102,15 @@ export function DashboardScreen() {
                 styles.levelBarFill,
                 {
                   backgroundColor: colors.accent[500],
-                  width: `${(userLevel % 10) * 10 || 5}%`, // Progress within current level
+                  width: `${Math.max(5, levelProgressPercent)}%`,
                 },
               ]}
             />
           </View>
+          {/* XP to next level */}
+          <Text variant="textXs" style={{ color: colors.text.muted, fontSize: 10 }}>
+            {xpToNext} XP to Level {userLevel + 1}
+          </Text>
           {/* Streak badge */}
           <View style={styles.streakBadge}>
             <Text variant="textSm" weight="semibold">
