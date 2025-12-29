@@ -11,7 +11,12 @@ import { getApiBaseUrl } from '@/utils/api';
  */
 export interface UserStatsData {
   level: number;
+  total_xp: number;
+  xp_to_next_level: number;
   current_streak: number;
+  longest_streak: number;
+  streak_status: 'active' | 'at_risk' | 'broken';
+  grace_period_active: boolean;
   weave_character_state: 'strand' | 'thread' | 'weave';
   total_completions: number;
   total_active_days: number;

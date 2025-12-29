@@ -48,12 +48,12 @@ export function NeedleDetailScreen() {
   // State for editing binds
   const [editingBindId, setEditingBindId] = useState<string | null>(null);
   const [editingBindTitle, setEditingBindTitle] = useState('');
-  const [editingBindFrequency, setEditingBindFrequency] = useState('daily');
+  const [editingBindTimesPerWeek, setEditingBindTimesPerWeek] = useState(3);
 
   // State for creating new bind
   const [isCreatingBind, setIsCreatingBind] = useState(false);
   const [newBindTitle, setNewBindTitle] = useState('');
-  const [newBindFrequency, setNewBindFrequency] = useState<'daily' | 'weekly'>('daily');
+  const [newBindTimesPerWeek, setNewBindTimesPerWeek] = useState(3);
 
   // Refs for tracking original values (for auto-save comparison)
   const originalTitleRef = useRef('');
@@ -155,27 +155,12 @@ export function NeedleDetailScreen() {
     }
   };
 
-  // Helper: Convert recurrence_rule to human-readable frequency
-  const parseFrequency = (recurrenceRule: string | null | undefined): string => {
-    if (!recurrenceRule) return 'daily';
-    if (recurrenceRule.includes('DAILY')) return 'daily';
-    if (recurrenceRule.includes('WEEKLY')) return 'weekly';
-    return 'daily';
-  };
-
-  // Helper: Convert human-readable frequency to recurrence_rule
-  const toRecurrenceRule = (frequency: string): string => {
-    if (frequency === 'daily') return 'FREQ=DAILY;INTERVAL=1';
-    if (frequency === 'weekly') return 'FREQ=WEEKLY;INTERVAL=1';
-    return 'FREQ=DAILY;INTERVAL=1';
-  };
-
   // Start editing a bind
   const handleBindPress = (bind: any) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setEditingBindId(bind.id);
     setEditingBindTitle(bind.title || '');
-    setEditingBindFrequency(parseFrequency(bind.recurrence_rule));
+    setEditingBindTimesPerWeek(bind.times_per_week || 3);
   };
 
   // Save bind changes
@@ -192,7 +177,7 @@ export function NeedleDetailScreen() {
       {
         bindId: editingBindId,
         title: trimmedTitle,
-        recurrenceRule: toRecurrenceRule(editingBindFrequency),
+        times_per_week: editingBindTimesPerWeek,
       },
       {
         onSuccess: () => {
@@ -210,7 +195,7 @@ export function NeedleDetailScreen() {
   const handleCancelBindEdit = () => {
     setEditingBindId(null);
     setEditingBindTitle('');
-    setEditingBindFrequency('daily');
+    setEditingBindTimesPerWeek(3);
   };
 
   // Start creating a new bind
@@ -218,7 +203,7 @@ export function NeedleDetailScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsCreatingBind(true);
     setNewBindTitle('');
-    setNewBindFrequency('daily');
+    setNewBindTimesPerWeek(3);
   };
 
   // Save new bind
@@ -233,8 +218,7 @@ export function NeedleDetailScreen() {
       {
         goal_id: id || '',
         title: trimmedTitle,
-        frequency_type: newBindFrequency,
-        frequency_value: newBindFrequency === 'weekly' ? 1 : undefined,
+        times_per_week: newBindTimesPerWeek,
       },
       {
         onSuccess: () => {
@@ -253,7 +237,7 @@ export function NeedleDetailScreen() {
   const handleCancelCreateBind = () => {
     setIsCreatingBind(false);
     setNewBindTitle('');
-    setNewBindFrequency('daily');
+    setNewBindTimesPerWeek(3);
   };
 
   // Delete a bind
@@ -586,62 +570,49 @@ export function NeedleDetailScreen() {
 
                       <View style={styles.bindEditField}>
                         <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
-                          Frequency
+                          Times Per Week
                         </Text>
-                        <View style={styles.frequencyButtons}>
-                          <Pressable
-                            style={[
-                              styles.frequencyButton,
-                              {
-                                backgroundColor:
-                                  editingBindFrequency === 'daily'
-                                    ? colors.accent[500]
-                                    : colors.background.secondary,
-                                borderColor: colors.border.muted,
-                              },
-                            ]}
-                            onPress={() => setEditingBindFrequency('daily')}
-                          >
-                            <Text
-                              variant="textSm"
-                              weight="medium"
-                              style={{
-                                color:
-                                  editingBindFrequency === 'daily'
-                                    ? colors.background.primary
-                                    : colors.text.secondary,
+                        <View style={styles.timesPerWeekSlider}>
+                          {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                            <Pressable
+                              key={num}
+                              style={[
+                                styles.sliderSegment,
+                                {
+                                  backgroundColor:
+                                    editingBindTimesPerWeek === num
+                                      ? colors.accent[500]
+                                      : colors.background.secondary,
+                                  borderColor: colors.border.muted,
+                                },
+                              ]}
+                              onPress={() => {
+                                Haptics.selectionAsync();
+                                setEditingBindTimesPerWeek(num);
                               }}
                             >
-                              Daily
-                            </Text>
-                          </Pressable>
-                          <Pressable
-                            style={[
-                              styles.frequencyButton,
-                              {
-                                backgroundColor:
-                                  editingBindFrequency === 'weekly'
-                                    ? colors.accent[500]
-                                    : colors.background.secondary,
-                                borderColor: colors.border.muted,
-                              },
-                            ]}
-                            onPress={() => setEditingBindFrequency('weekly')}
-                          >
-                            <Text
-                              variant="textSm"
-                              weight="medium"
-                              style={{
-                                color:
-                                  editingBindFrequency === 'weekly'
-                                    ? colors.background.primary
-                                    : colors.text.secondary,
-                              }}
-                            >
-                              Weekly
-                            </Text>
-                          </Pressable>
+                              <Text
+                                variant="textSm"
+                                weight="semibold"
+                                style={{
+                                  color:
+                                    editingBindTimesPerWeek === num
+                                      ? colors.background.primary
+                                      : colors.text.secondary,
+                                }}
+                              >
+                                {num}
+                              </Text>
+                            </Pressable>
+                          ))}
                         </View>
+                        <Text variant="textXs" color="secondary" style={styles.helperText}>
+                          {editingBindTimesPerWeek === 7
+                            ? 'Daily (every day)'
+                            : editingBindTimesPerWeek === 1
+                              ? 'Once a week'
+                              : `${editingBindTimesPerWeek} times per week`}
+                        </Text>
                       </View>
 
                       <View style={styles.bindEditActions}>
@@ -672,7 +643,11 @@ export function NeedleDetailScreen() {
                           {bind.title}
                         </Text>
                         <Text variant="textSm" color="muted" style={styles.bindFrequency}>
-                          {parseFrequency(bind.recurrence_rule) === 'daily' ? 'Daily' : 'Weekly'}
+                          {bind.times_per_week === 7
+                            ? 'Daily'
+                            : bind.times_per_week === 1
+                              ? 'Once a week'
+                              : `${bind.times_per_week}x per week`}
                         </Text>
                       </Pressable>
                       <View style={styles.bindActions}>
@@ -724,62 +699,49 @@ export function NeedleDetailScreen() {
 
                 <View style={styles.bindEditField}>
                   <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
-                    Frequency
+                    Times Per Week
                   </Text>
-                  <View style={styles.frequencyButtons}>
-                    <Pressable
-                      style={[
-                        styles.frequencyButton,
-                        {
-                          backgroundColor:
-                            newBindFrequency === 'daily'
-                              ? colors.accent[500]
-                              : colors.background.secondary,
-                          borderColor: colors.border.muted,
-                        },
-                      ]}
-                      onPress={() => setNewBindFrequency('daily')}
-                    >
-                      <Text
-                        variant="textSm"
-                        weight="medium"
-                        style={{
-                          color:
-                            newBindFrequency === 'daily'
-                              ? colors.background.primary
-                              : colors.text.secondary,
+                  <View style={styles.timesPerWeekSlider}>
+                    {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                      <Pressable
+                        key={num}
+                        style={[
+                          styles.sliderSegment,
+                          {
+                            backgroundColor:
+                              newBindTimesPerWeek === num
+                                ? colors.accent[500]
+                                : colors.background.secondary,
+                            borderColor: colors.border.muted,
+                          },
+                        ]}
+                        onPress={() => {
+                          Haptics.selectionAsync();
+                          setNewBindTimesPerWeek(num);
                         }}
                       >
-                        Daily
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      style={[
-                        styles.frequencyButton,
-                        {
-                          backgroundColor:
-                            newBindFrequency === 'weekly'
-                              ? colors.accent[500]
-                              : colors.background.secondary,
-                          borderColor: colors.border.muted,
-                        },
-                      ]}
-                      onPress={() => setNewBindFrequency('weekly')}
-                    >
-                      <Text
-                        variant="textSm"
-                        weight="medium"
-                        style={{
-                          color:
-                            newBindFrequency === 'weekly'
-                              ? colors.background.primary
-                              : colors.text.secondary,
-                        }}
-                      >
-                        Weekly
-                      </Text>
-                    </Pressable>
+                        <Text
+                          variant="textSm"
+                          weight="semibold"
+                          style={{
+                            color:
+                              newBindTimesPerWeek === num
+                                ? colors.background.primary
+                                : colors.text.secondary,
+                          }}
+                        >
+                          {num}
+                        </Text>
+                      </Pressable>
+                    ))}
                   </View>
+                  <Text variant="textXs" color="secondary" style={styles.helperText}>
+                    {newBindTimesPerWeek === 7
+                      ? 'Daily (every day)'
+                      : newBindTimesPerWeek === 1
+                        ? 'Once a week'
+                        : `${newBindTimesPerWeek} times per week`}
+                  </Text>
                 </View>
 
                 <View style={styles.bindEditActions}>
@@ -1084,17 +1046,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
   },
-  frequencyButtons: {
+  timesPerWeekSlider: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
-  frequencyButton: {
+  sliderSegment: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helperText: {
+    marginTop: 8,
+    textAlign: 'center',
   },
   bindEditActions: {
     flexDirection: 'row',
