@@ -262,7 +262,7 @@ sprint-4-stories:
   # Epic 6: AI Coaching (29 pts)
   epic-6: backlog
   6-1-access-ai-chat: ready-for-dev             # 8 pts ✅ Story 6.1 drafted (server-initiated conversations + admin mode)
-  6-2-contextual-ai-responses: backlog          # 10 pts (Tech Context Engine)
+  6-2-contextual-ai-responses: ready-for-dev    # 10 pts ✅ Story 6.2 created & validated (Tech Context Engine - AI references user's actual data, 3 critical fixes + 5 enhancements applied)
   6-3-edit-ai-chat-responses: backlog           # 3 pts
   6-4-ai-weekly-insights: backlog               # 5 pts
   6-5-ai-needle-suggestions: backlog            # 3 pts

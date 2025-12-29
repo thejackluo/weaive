@@ -10,7 +10,7 @@
  * - Server-initiated conversation support
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ScrollView, View, StyleSheet, Keyboard, TouchableOpacity, Text } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import Animated, { FadeIn, FadeInDown, SlideInUp } from 'react-native-reanimated';
@@ -21,9 +21,12 @@ import QuickActionChips from './QuickActionChips';
 import MessageInput from './MessageInput';
 import RateLimitIndicator from './RateLimitIndicator';
 import TypingIndicator from './TypingIndicator';
+import ToolExecutionIndicator from './ToolExecutionIndicator';
 import ConversationList, { Conversation } from './ConversationList';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAIChatStream } from '@/hooks/useAIChatStream';
+import { usePersonality } from '@/hooks/usePersonality';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 import apiClient from '@/services/apiClient';
 
 export interface Message {
@@ -56,7 +59,31 @@ export default function ChatScreen() {
     isStreaming,
     error: streamError,
     metadata: streamMetadata,
+    toolExecutions,
+    currentTool,
   } = useAIChatStream();
+
+  // 🔍 DEBUG: Log tool state changes
+  React.useEffect(() => {
+    if (__DEV__) {
+      console.log('[ChatScreen] 🔧 currentTool:', currentTool);
+      console.log('[ChatScreen] 📋 toolExecutions:', toolExecutions);
+    }
+  }, [currentTool, toolExecutions]);
+
+  // Get personality for personalized greetings
+  const { personality } = usePersonality();
+
+  // Voice input hook
+  const {
+    isRecording,
+    isTranscribing,
+    uploadProgress,
+    error: voiceError,
+    startRecording,
+    stopRecordingAndTranscribe,
+    cancelRecording,
+  } = useVoiceInput();
 
   // Fetch usage stats
   const { data: usageStats, refetch: refetchUsage } = useQuery({
@@ -117,6 +144,10 @@ export default function ChatScreen() {
           const conversationDetail = detailResponse.data.data;
           const convMessages = conversationDetail.messages || [];
           if (__DEV__) console.log('[HISTORY] 💬 Loaded messages:', convMessages.length);
+          if (__DEV__ && convMessages.length > 0) {
+            console.log('[HISTORY] 🔍 First message:', JSON.stringify(convMessages[0]));
+            console.log('[HISTORY] 📊 Message roles:', convMessages.map((m: any) => m.role).join(', '));
+          }
 
           // Transform backend messages to UI format
           const transformedMessages: Message[] = convMessages.map((msg: any) => ({
@@ -125,6 +156,11 @@ export default function ChatScreen() {
             content: msg.content,
             timestamp: new Date(msg.created_at),
           }));
+
+          if (__DEV__ && transformedMessages.length > 0) {
+            console.log('[HISTORY] ✨ Transformed messages:', transformedMessages.length);
+            console.log('[HISTORY] 📋 Roles after transform:', transformedMessages.map(m => m.role).join(', '));
+          }
 
           if (transformedMessages.length > 0) {
             setMessages(transformedMessages);
@@ -155,17 +191,31 @@ export default function ChatScreen() {
     }
   };
 
-  const loadInitialGreeting = () => {
+  const loadInitialGreeting = useCallback(() => {
     const hour = new Date().getHours();
+    const isDreamSelf = personality?.personality_type === 'dream_self';
+    const personalityName = personality?.name || 'Weave';
     let greeting = '';
 
-    if (hour < 12) {
-      greeting = "good morning! I'm weave, your AI coach. how can I help you make today count?";
-    } else if (hour < 17) {
-      greeting = "hey there! ready to crush your goals today? what's on your mind?";
+    if (isDreamSelf) {
+      // Dream Self greeting - more personal and tailored
+      if (hour < 12) {
+        greeting = `Good morning! I'm ${personalityName}, your personalized growth coach. Ready to build your best self today?`;
+      } else if (hour < 17) {
+        greeting = `Hey! ${personalityName} here. What goals are you working toward today?`;
+      } else {
+        greeting = `Evening! Let's reflect on your progress. What did you accomplish today?`;
+      }
     } else {
-      greeting =
-        "evening! let's reflect on your day and plan for tomorrow. what would you like to talk about?";
+      // Weave AI greeting - more general coaching style
+      if (hour < 12) {
+        greeting = "good morning! I'm weave, your AI coach. how can I help you make today count?";
+      } else if (hour < 17) {
+        greeting = "hey there! ready to crush your goals today? what's on your mind?";
+      } else {
+        greeting =
+          "evening! let's reflect on your day and plan for tomorrow. what would you like to talk about?";
+      }
     }
 
     const initialMessage: Message = {
@@ -176,7 +226,7 @@ export default function ChatScreen() {
     };
 
     setMessages([initialMessage]);
-  };
+  }, [personality]);
 
   // Effect: Update conversation ID as soon as metadata arrives (prevents desync)
   useEffect(() => {
@@ -197,61 +247,89 @@ export default function ChatScreen() {
     };
   }, []);
 
+  // ✅ FIX: Reload greeting when personality changes (for intro message updates)
+  useEffect(() => {
+    // Only reload greeting if it's the initial message (no real conversation yet)
+    // IMPORTANT: Don't include 'messages' or 'loadInitialGreeting' in dependencies to avoid infinite loop
+    // The setMessages call inside loadInitialGreeting would trigger this effect again
+    if (
+      messages.length === 1 &&
+      messages[0].id === 'initial-greeting' &&
+      personality // Wait for personality to load
+    ) {
+      if (__DEV__)
+        console.log('[PERSONALITY] Personality changed, reloading greeting:', personality.name);
+      loadInitialGreeting();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personality?.personality_type, personality?.name]);
+
   // Effect: Update streaming message in real-time
   useEffect(() => {
-    if (isStreaming && streamingContent) {
-      // Create or update streaming message
-      const streamingMessageId =
-        streamingMessageIdRef.current || `assistant-streaming-${Date.now()}`;
-      streamingMessageIdRef.current = streamingMessageId;
+    // ✅ ROOT FIX: Always process streamingContent when it exists, regardless of isStreaming state
+    // Why: React 19 batches state updates, so by the time this effect runs, isStreaming might already be false
+    // The bug: Backend streams chunks, sets streamingContent, then sends "done" (isStreaming=false).
+    // React batches both updates, so when this effect runs, isStreaming is already false.
+    // Solution: Process ANY streamingContent immediately, don't gate on isStreaming.
+    if (!streamingContent) return;
 
-      if (__DEV__)
-        console.log(
-          '[STREAM_UPDATE] 📝 Updating message:',
-          streamingMessageId,
-          '- isStreaming: true'
-        );
-
-      // Set failsafe timeout (30s) to force clear isStreaming if stuck
-      if (isStreamingTimeoutRef.current) {
-        clearTimeout(isStreamingTimeoutRef.current);
-      }
-      isStreamingTimeoutRef.current = setTimeout(() => {
-        if (__DEV__)
-          console.log('[STREAM_FAILSAFE] ⚠️ Timeout reached, forcing isStreaming = false');
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === streamingMessageIdRef.current ? { ...m, isStreaming: false } : m
-          )
-        );
-        streamingMessageIdRef.current = null;
-      }, 30000);
-
-      setMessages((prev) => {
-        const existingIndex = prev.findIndex((m) => m.id === streamingMessageId);
-
-        const streamingMessage: Message = {
-          id: streamingMessageId,
-          role: 'assistant',
-          content: streamingContent,
-          timestamp: new Date(),
-          isStreaming: true,
-        };
-
-        if (existingIndex >= 0) {
-          // Update existing streaming message
-          const updated = [...prev];
-          updated[existingIndex] = streamingMessage;
-          return updated;
-        } else {
-          // Add new streaming message
-          return [...prev, streamingMessage];
-        }
-      });
-
-      // Auto-scroll as content streams in
-      scrollToBottom();
+    // Create or update streaming message ID
+    if (!streamingMessageIdRef.current) {
+      streamingMessageIdRef.current = `assistant-streaming-${Date.now()}`;
     }
+    const streamingMessageId = streamingMessageIdRef.current;
+
+    if (__DEV__)
+      console.log(
+        '[STREAM_UPDATE] 📝 Content update:',
+        streamingMessageId,
+        'length:',
+        streamingContent.length,
+        'isStreaming:',
+        isStreaming
+      );
+
+    // Set failsafe timeout (30s) to force clear isStreaming if stuck
+    if (isStreamingTimeoutRef.current) {
+      clearTimeout(isStreamingTimeoutRef.current);
+    }
+    isStreamingTimeoutRef.current = setTimeout(() => {
+      if (__DEV__)
+        console.log('[STREAM_FAILSAFE] ⚠️ Timeout reached, forcing isStreaming = false');
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === streamingMessageIdRef.current ? { ...m, isStreaming: false } : m
+        )
+      );
+      streamingMessageIdRef.current = null;
+    }, 30000);
+
+    setMessages((prev) => {
+      const existingIndex = prev.findIndex((m) => m.id === streamingMessageId);
+
+      const streamingMessage: Message = {
+        id: streamingMessageId,
+        role: 'assistant',
+        content: streamingContent,
+        timestamp: new Date(),
+        isStreaming: isStreaming, // ✅ Will be true while streaming, false when done
+      };
+
+      if (existingIndex >= 0) {
+        // Update existing message
+        if (__DEV__) console.log('[STREAM_UPDATE] 🔄 Updating index:', existingIndex);
+        const updated = [...prev];
+        updated[existingIndex] = streamingMessage;
+        return updated;
+      } else {
+        // Add new message
+        if (__DEV__) console.log('[STREAM_UPDATE] ✅ Adding new message, total:', prev.length + 1);
+        return [...prev, streamingMessage];
+      }
+    });
+
+    // Auto-scroll as content streams in
+    setTimeout(() => scrollToBottom(), 50);
   }, [streamingContent, isStreaming]);
 
   // Effect: Finalize streaming message when complete
@@ -261,14 +339,18 @@ export default function ChatScreen() {
         '[STREAM_FINALIZE] 🔍 Effect triggered - isStreaming:',
         isStreaming,
         'streamingMessageIdRef:',
-        streamingMessageIdRef.current
+        streamingMessageIdRef.current,
+        'metadata:',
+        streamMetadata
       );
 
     if (!isStreaming && streamingMessageIdRef.current) {
       if (__DEV__)
         console.log(
           '[STREAM_FINALIZE] ✅ Finalizing streaming message:',
-          streamingMessageIdRef.current
+          streamingMessageIdRef.current,
+          'with responseId:',
+          streamMetadata.responseId
         );
 
       // Clear failsafe timeout
@@ -278,25 +360,31 @@ export default function ChatScreen() {
         if (__DEV__) console.log('[STREAM_FINALIZE] 🧹 Cleared failsafe timeout');
       }
 
+      // ✅ FIX: Capture current message ID to finalize
+      const messageIdToFinalize = streamingMessageIdRef.current;
+      const finalResponseId = streamMetadata.responseId;
+      const finalConversationId = streamMetadata.conversationId;
+
       // Mark message as complete (not streaming)
       setMessages((prev) =>
         prev.map((m) => {
-          if (m.id === streamingMessageIdRef.current) {
+          if (m.id === messageIdToFinalize) {
             if (__DEV__)
               console.log(
                 '[STREAM_FINALIZE] 🎯 Found message to finalize:',
                 m.id,
-                '-> isStreaming: false'
+                '-> isStreaming: false, responseId:',
+                finalResponseId
               );
-            return { ...m, isStreaming: false, id: streamMetadata.responseId || m.id };
+            return { ...m, isStreaming: false, id: finalResponseId || m.id };
           }
           return m;
         })
       );
 
       // Update conversation ID
-      if (streamMetadata.conversationId) {
-        setCurrentConversationId(streamMetadata.conversationId);
+      if (finalConversationId) {
+        setCurrentConversationId(finalConversationId);
       }
 
       // Refetch usage stats and conversations
@@ -306,11 +394,14 @@ export default function ChatScreen() {
       // Haptic feedback on completion
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-      // Reset streaming message ref
+      // Reset streaming message ref IMMEDIATELY to prevent re-running
       streamingMessageIdRef.current = null;
-      if (__DEV__) console.log('[STREAM_FINALIZE] 🏁 Finalization complete');
+      if (__DEV__) console.log('[STREAM_FINALIZE] 🏁 Finalization complete, ref cleared');
     }
-  }, [isStreaming, streamingContent, streamMetadata, refetchUsage, refetchConversations]);
+    // ✅ FIX: Only depend on isStreaming to prevent multiple finalization runs
+    // We capture metadata, refetchUsage, refetchConversations via closure
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStreaming]);
 
   // Effect: Handle streaming errors
   useEffect(() => {
@@ -385,12 +476,25 @@ export default function ChatScreen() {
       const conversationDetail = response.data.data;
       const convMessages = conversationDetail.messages || [];
 
+      if (__DEV__) {
+        console.log('[CONV_SWITCH] 📨 Raw messages from backend:', convMessages.length);
+        if (convMessages.length > 0) {
+          console.log('[CONV_SWITCH] 🔍 First message:', JSON.stringify(convMessages[0]));
+          console.log('[CONV_SWITCH] 📊 Roles:', convMessages.map((m: any) => m.role).join(', '));
+        }
+      }
+
       const transformedMessages: Message[] = convMessages.map((msg: any) => ({
         id: msg.id,
         role: msg.role,
         content: msg.content,
         timestamp: new Date(msg.created_at),
       }));
+
+      if (__DEV__) {
+        console.log('[CONV_SWITCH] ✨ Transformed messages:', transformedMessages.length);
+        console.log('[CONV_SWITCH] 📋 Roles after:', transformedMessages.map(m => m.role).join(', '));
+      }
 
       setMessages(transformedMessages);
       setCurrentConversationId(conversationId);
@@ -417,6 +521,46 @@ export default function ChatScreen() {
   const toggleConversationList = () => {
     setShowConversationList(!showConversationList);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  // Voice recording handlers
+  const handleVoiceRecord = async () => {
+    if (__DEV__) console.log('[VOICE] handleVoiceRecord called, isRecording:', isRecording, 'isTranscribing:', isTranscribing);
+
+    if (isRecording || isTranscribing) {
+      // Stop recording and transcribe (or wait if already transcribing)
+      if (isRecording) {
+        if (__DEV__) console.log('[VOICE] Stopping recording and transcribing...');
+        const transcribedText = await stopRecordingAndTranscribe();
+        if (__DEV__) console.log('[VOICE] Received transcribedText:', transcribedText);
+
+        if (transcribedText) {
+          setInputValue(transcribedText);
+          if (__DEV__) console.log('[VOICE] ✅ Text set in input:', transcribedText);
+        } else {
+          if (__DEV__) console.log('[VOICE] ⚠️ No transcribedText returned');
+        }
+      } else {
+        if (__DEV__) console.log('[VOICE] Already transcribing, ignoring click');
+      }
+    } else {
+      // Start recording
+      if (__DEV__) console.log('[VOICE] Starting recording...');
+      await startRecording();
+    }
+  };
+
+  // Manual tool call handlers
+  const handleModifyPersonality = () => {
+    const message = 'Switch to dream self personality';
+    handleSendMessage(message);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const handleUpdateIdentity = () => {
+    const message = 'Update my identity document';
+    handleSendMessage(message);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   // Check if rate limited
@@ -504,8 +648,16 @@ export default function ChatScreen() {
               </Animated.View>
             ))}
 
+            {/* Tool Execution Indicators */}
+            {currentTool && (
+              <Animated.View entering={FadeIn.duration(300)} style={{ paddingHorizontal: 16 }}>
+                {__DEV__ && console.log('[ChatScreen] 🎨 Rendering ToolExecutionIndicator:', currentTool)}
+                <ToolExecutionIndicator toolExecution={currentTool} />
+              </Animated.View>
+            )}
+
             {/* Typing Indicator */}
-            {isStreaming && !streamingContent && (
+            {isStreaming && !streamingContent && !currentTool && (
               <Animated.View entering={FadeIn.duration(300)}>
                 <TypingIndicator />
               </Animated.View>
@@ -519,11 +671,50 @@ export default function ChatScreen() {
             </Animated.View>
           )}
 
+          {/* Manual Tool Call Buttons (Always visible) */}
+          {!showQuickChips && !isRateLimited && (
+            <View style={styles.toolButtonsContainer}>
+              <TouchableOpacity
+                style={styles.toolButton}
+                onPress={handleModifyPersonality}
+                disabled={isStreaming}
+              >
+                <Ionicons name="person-outline" size={16} color="#a78bfa" />
+                <Text style={styles.toolButtonText}>Personality</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.toolButton}
+                onPress={handleUpdateIdentity}
+                disabled={isStreaming}
+              >
+                <Ionicons name="document-text-outline" size={16} color="#a78bfa" />
+                <Text style={styles.toolButtonText}>Identity</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Voice Recording Progress Indicator */}
+          {(isRecording || isTranscribing) && (
+            <View style={styles.voiceProgressContainer}>
+              <View style={styles.voiceProgressBar}>
+                <View style={[styles.voiceProgressFill, { width: `${uploadProgress}%` }]} />
+              </View>
+              <Text style={styles.voiceProgressText}>
+                {isRecording
+                  ? '🎤 Recording...'
+                  : `Transcribing... ${Math.round(uploadProgress)}%`}
+              </Text>
+            </View>
+          )}
+
           {/* Message Input */}
           <MessageInput
             value={inputValue}
             onChangeText={setInputValue}
             onSend={handleSendMessage}
+            onVoiceRecord={handleVoiceRecord}
+            isRecording={isRecording || isTranscribing}
             disabled={isRateLimited || isStreaming}
             placeholder={isRateLimited ? 'Rate limit reached' : 'Talk to Weave...'}
           />
@@ -561,5 +752,55 @@ const styles = StyleSheet.create({
   messagesContent: {
     padding: 8,
     paddingBottom: 24,
+    flexGrow: 1, // ✅ FIX: Force content to fill space, enabling proper scroll behavior
+  },
+  toolButtonsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.10)',
+    backgroundColor: 'rgba(10, 10, 10, 0.8)',
+  },
+  toolButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(167, 139, 250, 0.15)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(167, 139, 250, 0.3)',
+  },
+  toolButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#a78bfa',
+  },
+  voiceProgressContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(10, 10, 10, 0.9)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  voiceProgressBar: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  voiceProgressFill: {
+    height: '100%',
+    backgroundColor: '#a78bfa',
+    borderRadius: 2,
+  },
+  voiceProgressText: {
+    fontSize: 13,
+    color: '#9ca3af',
+    textAlign: 'center',
   },
 });

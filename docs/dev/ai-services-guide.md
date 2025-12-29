@@ -1020,5 +1020,596 @@ When integrating a new AI service:
 
 ---
 
-**Last Updated:** 2025-12-23 (Story 1.5.3 completion - Unified AI Services)
+## 12. Creating New Tools with AI Classification
+
+### 12.1 Quick Start Checklist
+
+When creating a new tool for the AI chat system:
+
+- [ ] **Define the tool purpose** - What user action does this tool handle?
+- [ ] **Write tool description** - Clear description with example phrases
+- [ ] **Create tool class** - Extend base tool pattern
+- [ ] **Implement execute method** - Handle parameters and return structured response
+- [ ] **Register in ToolRegistry** - Make tool available to system
+- [ ] **Add to AIToolClassifier** - Include in tool descriptions for AI classification
+- [ ] **Write unit tests** - Test parameter extraction and execution
+- [ ] **Write integration tests** - Test in full chat flow
+- [ ] **Test natural language variations** - Try 5+ phrasings manually
+
+### 12.2 Tool Class Template
+
+```python
+# weave-api/app/services/tools/my_tool.py
+from typing import Dict, Any, Optional
+from supabase import Client as SupabaseClient
+import logging
+
+logger = logging.getLogger(__name__)
+
+class MyTool:
+    """
+    Brief description of what this tool does.
+
+    Example triggers:
+    - "do something"
+    - "perform action"
+    - "change setting"
+    """
+
+    async def execute(
+        self,
+        user_id: str,
+        parameters: Dict[str, Any],
+        db: Optional[SupabaseClient] = None
+    ) -> Dict[str, Any]:
+        """
+        Execute the tool with given parameters.
+
+        Args:
+            user_id: User ID from JWT authentication
+            parameters: Dict extracted by AI classifier
+            db: Optional Supabase client (injected by router)
+
+        Returns:
+            {
+                "success": bool,
+                "data": dict (optional),
+                "error": str (optional),
+                "message": str (optional)
+            }
+        """
+        try:
+            # 1. Validate required parameters
+            required_fields = ["param1", "param2"]
+            for field in required_fields:
+                if field not in parameters:
+                    return {
+                        "success": False,
+                        "error": "MISSING_PARAMETER",
+                        "message": f"Missing required parameter: {field}"
+                    }
+
+            # 2. Extract parameters
+            param1 = parameters.get("param1")
+            param2 = parameters.get("param2")
+            optional_param = parameters.get("optional_param", "default_value")
+
+            # 3. Perform database operations
+            if db:
+                result = db.table("my_table").update({
+                    "field1": param1,
+                    "field2": param2,
+                    "updated_at": "now()"
+                }).eq("user_id", user_id).execute()
+
+                if not result.data:
+                    return {
+                        "success": False,
+                        "error": "UPDATE_FAILED",
+                        "message": "Failed to update database"
+                    }
+
+            # 4. Log success
+            logger.info(f"[MyTool] Successfully executed for user {user_id}")
+
+            # 5. Return structured response
+            return {
+                "success": True,
+                "data": {
+                    "param1": param1,
+                    "param2": param2
+                },
+                "message": f"Successfully updated {param1} to {param2}"
+            }
+
+        except Exception as e:
+            logger.error(f"[MyTool] Error executing tool: {str(e)}")
+            return {
+                "success": False,
+                "error": "EXECUTION_ERROR",
+                "message": str(e)
+            }
+```
+
+### 12.3 Adding Tool to AIToolClassifier
+
+Update `weave-api/app/services/tools/ai_tool_classifier.py`:
+
+```python
+def _get_tool_descriptions(self) -> List[Dict[str, Any]]:
+    """Return list of all available tools with descriptions."""
+    return [
+        # ... existing tools ...
+        {
+            "name": "my_tool",
+            "description": "Brief description of what this tool does and when to use it",
+            "parameters": {
+                "param1": "Description of param1 (required)",
+                "param2": "Description of param2 (required)",
+                "optional_param": "Description of optional_param (optional, defaults to X)"
+            },
+            "examples": [
+                "do something with X",
+                "change Y to Z",
+                "update my settings",
+                "perform action ABC"
+            ]
+        }
+    ]
+```
+
+**Writing Good Example Phrases:**
+- ✅ Use natural, conversational language ("change my name to Jack")
+- ✅ Include variations in phrasing ("I am Jack", "I'm Jack", "call me Jack")
+- ✅ Cover different ways users might express intent
+- ❌ Don't use technical jargon ("update identity_docs.dream_self")
+- ❌ Don't use exact command syntax ("SET name=Jack")
+
+### 12.4 Registering Tool in ToolRegistry
+
+Update `weave-api/app/services/tools/tool_registry.py`:
+
+```python
+from app.services.tools.my_tool import MyTool
+
+# Central registry of all available tools
+TOOL_REGISTRY = {
+    "modify_personality": ModifyPersonalityTool(),
+    "modify_identity_document": ModifyIdentityDocumentTool(),
+    "my_tool": MyTool(),  # Add your tool here
+}
+```
+
+### 12.5 Parameter Extraction Strategies
+
+The AI classifier extracts parameters automatically, but your tool must validate them:
+
+**Strategy 1: Required Fields Validation**
+```python
+required = ["param1", "param2"]
+missing = [f for f in required if f not in parameters]
+if missing:
+    return {
+        "success": False,
+        "error": "MISSING_PARAMETERS",
+        "message": f"Missing required parameters: {', '.join(missing)}"
+    }
+```
+
+**Strategy 2: Type Validation**
+```python
+# Validate types
+if not isinstance(parameters.get("count"), (int, float)):
+    return {
+        "success": False,
+        "error": "INVALID_TYPE",
+        "message": "count must be a number"
+    }
+
+# Validate enum values
+valid_types = ["dream_self", "weave_ai"]
+if parameters.get("personality_type") not in valid_types:
+    return {
+        "success": False,
+        "error": "INVALID_VALUE",
+        "message": f"personality_type must be one of: {', '.join(valid_types)}"
+    }
+```
+
+**Strategy 3: Default Values for Optional Parameters**
+```python
+# Use .get() with defaults
+preset = parameters.get("preset", "gen_z_default")
+include_context = parameters.get("include_context", True)
+limit = parameters.get("limit", 10)
+```
+
+### 12.6 Error Handling Patterns
+
+**Standard Error Response Format:**
+```python
+{
+    "success": False,
+    "error": "ERROR_CODE",  # UPPERCASE_SNAKE_CASE
+    "message": "Human-readable error description"
+}
+```
+
+**Common Error Codes:**
+- `MISSING_PARAMETER` - Required parameter not provided by AI
+- `INVALID_TYPE` - Parameter has wrong type
+- `INVALID_VALUE` - Parameter value not in allowed set
+- `NOT_FOUND` - Referenced entity doesn't exist
+- `UPDATE_FAILED` - Database operation failed
+- `PERMISSION_DENIED` - User lacks permission
+- `EXECUTION_ERROR` - Unexpected error during execution
+
+**Try-Except Pattern:**
+```python
+try:
+    # Tool logic here
+    return {"success": True, "data": {...}}
+except ValueError as e:
+    logger.error(f"[MyTool] Validation error: {str(e)}")
+    return {
+        "success": False,
+        "error": "VALIDATION_ERROR",
+        "message": str(e)
+    }
+except Exception as e:
+    logger.error(f"[MyTool] Unexpected error: {str(e)}")
+    return {
+        "success": False,
+        "error": "EXECUTION_ERROR",
+        "message": "An unexpected error occurred"
+    }
+```
+
+### 12.7 Testing Strategy
+
+**Unit Tests (pytest):**
+```python
+# tests/test_my_tool.py
+import pytest
+from app.services.tools.my_tool import MyTool
+
+@pytest.mark.asyncio
+async def test_my_tool_success():
+    """Test successful tool execution."""
+    tool = MyTool()
+    result = await tool.execute(
+        user_id="test_user",
+        parameters={"param1": "value1", "param2": "value2"}
+    )
+
+    assert result["success"] is True
+    assert result["data"]["param1"] == "value1"
+
+@pytest.mark.asyncio
+async def test_my_tool_missing_parameter():
+    """Test error when required parameter is missing."""
+    tool = MyTool()
+    result = await tool.execute(
+        user_id="test_user",
+        parameters={"param1": "value1"}  # Missing param2
+    )
+
+    assert result["success"] is False
+    assert result["error"] == "MISSING_PARAMETER"
+
+@pytest.mark.asyncio
+async def test_my_tool_natural_language_variations():
+    """Test AI classifier extracts parameters from natural language."""
+    # This tests the AI classifier, not the tool directly
+    from app.services.tools.ai_tool_classifier import AIToolClassifier
+    from app.services.ai import get_ai_service
+
+    classifier = AIToolClassifier(get_ai_service())
+
+    test_messages = [
+        "do something with X",
+        "change Y to Z",
+        "update my settings"
+    ]
+
+    for message in test_messages:
+        tools = await classifier.analyze_message(message, "test_user")
+        assert any(t["tool_name"] == "my_tool" for t in tools)
+```
+
+**Integration Tests:**
+```python
+# tests/test_chat_with_my_tool.py
+@pytest.mark.asyncio
+async def test_chat_triggers_my_tool(test_client, authenticated_user):
+    """Test tool triggers in full chat flow."""
+    response = test_client.post(
+        "/api/ai-chat/messages",
+        json={"message": "do something with X"},
+        headers={"Authorization": f"Bearer {authenticated_user['token']}"}
+    )
+
+    assert response.status_code == 200
+    # Verify tool was executed
+    # Verify cache was invalidated
+    # Verify AI response includes tool result
+```
+
+### 12.8 Current Tools Reference
+
+| Tool Name | Purpose | Example Phrases | Parameters |
+|-----------|---------|-----------------|------------|
+| `modify_personality` | Change AI coaching personality | "be more casual", "switch to coach" | `active_personality`, `weave_preset` |
+| `modify_identity_document` | Update user's identity document | "I am Jack", "my traits are..." | `dream_self`, `traits`, `archetype`, etc. |
+
+### 12.9 When to Create New Tool vs Extend Existing
+
+**Create New Tool When:**
+- Handles entirely different user intent
+- Requires different database tables
+- Has different validation rules
+- Needs separate error handling
+
+**Extend Existing Tool When:**
+- Adds optional parameters to existing tool
+- Handles variations of same intent
+- Uses same database operations
+
+**Example:**
+- ✅ NEW TOOL: "create_goal" (different from "modify_identity_document")
+- ❌ EXTEND: "add motivation" → extend "modify_identity_document" with `motivations` param
+
+---
+
+## 13. Tool Execution Flow & Debugging
+
+### 13.1 Request Lifecycle Diagram
+
+```
+1. User sends message: "I am Jack"
+       ↓
+2. POST /api/ai-chat/messages/stream
+       ↓
+3. AIToolClassifier.analyze_message()
+   - Sends message + tool descriptions to GPT-4o-mini
+   - AI returns: {"tools": [{"tool_name": "modify_identity_document", "parameters": {"dream_self": "Jack"}}]}
+   - Classification time: ~100-150ms
+       ↓
+4. For each tool identified:
+   - Look up tool in ToolRegistry
+   - Call tool.execute(user_id, parameters, db)
+   - Send SSE event: {"type": "tool_start", "tool_name": "...", "parameters": {...}}
+   - Tool execution time: ~50-200ms
+       ↓
+5. Tool returns result:
+   - Success: {"success": true, "data": {...}, "message": "..."}
+   - Error: {"success": false, "error": "CODE", "message": "..."}
+   - Send SSE event: {"type": "tool_result" | "tool_error", "tool_name": "...", "result": {...}}
+       ↓
+6. Build AI context:
+   - Conversation history
+   - User identity (if tool modified it)
+   - Tool results: "Identity updated: dream_self=Jack"
+   - Personality system prompt
+       ↓
+7. Generate AI response:
+   - Call AIService.generate_streaming()
+   - AI response naturally incorporates tool results
+   - Stream chunks to frontend: {"type": "chunk", "content": "..."}
+   - Generation time: ~1-3 seconds
+       ↓
+8. Frontend handles events:
+   - tool_start → Show "⚙️ Updating..." indicator
+   - tool_result → Show "✓ Completed" (2.5s), invalidate cache
+   - tool_error → Show "❌ Error" (3s)
+   - chunk → Append to AI response
+   - done → Mark response complete
+```
+
+### 13.2 Debugging Tools
+
+**Backend Logs (FastAPI):**
+```python
+# View real-time logs
+tail -f logs/app.log
+
+# Search for tool execution
+grep "AIToolClassifier" logs/app.log
+grep "ModifyIdentityDocumentTool" logs/app.log
+
+# Look for errors
+grep "ERROR" logs/app.log | grep -i "tool"
+```
+
+**Frontend Console (React Native):**
+```javascript
+// Tool classification result
+console.log('[TOOL] Classifier returned:', tools);
+
+// Tool execution start
+console.log('[TOOL] Starting execution:', toolName, parameters);
+
+// Tool execution complete
+console.log('[TOOL] Execution complete:', result);
+
+// Tool error
+console.error('[TOOL] Execution failed:', error);
+```
+
+**Testing AI Classification Locally:**
+```python
+# Test classifier directly in Python REPL
+from app.services.tools.ai_tool_classifier import create_tool_classifier
+from app.services.ai import get_ai_service
+
+classifier = create_tool_classifier(get_ai_service())
+
+# Test classification
+tools = await classifier.analyze_message("I am Jack", "test_user")
+print(tools)
+# Expected: [{"tool_name": "modify_identity_document", "parameters": {"dream_self": "Jack"}}]
+```
+
+### 13.3 Common Issues and Solutions
+
+**Issue 1: Tool Not Triggering**
+
+**Symptoms:**
+- User sends message that should trigger tool
+- Tool execution indicator doesn't appear
+- AI responds but tool doesn't run
+
+**Debug Steps:**
+1. Check if tool is in `ToolRegistry`:
+   ```python
+   from app.services.tools.tool_registry import TOOL_REGISTRY
+   print(TOOL_REGISTRY.keys())
+   ```
+
+2. Check if tool description is in AIToolClassifier:
+   ```python
+   classifier = create_tool_classifier(get_ai_service())
+   descriptions = classifier._get_tool_descriptions()
+   print([d["name"] for d in descriptions])
+   ```
+
+3. Test AI classification with exact user message:
+   ```python
+   tools = await classifier.analyze_message("your test message", "test_user")
+   print(tools)  # Should include your tool
+   ```
+
+4. Check AI classification logs:
+   ```bash
+   grep "AIToolClassifier" logs/app.log | tail -20
+   ```
+
+**Solution:** Add more example phrases to tool description that match user's phrasing.
+
+---
+
+**Issue 2: Tool Triggers But Execution Fails**
+
+**Symptoms:**
+- Tool execution indicator shows "⚙️ Starting..."
+- Then shows "❌ Error"
+- AI response mentions tool failed
+
+**Debug Steps:**
+1. Check tool execution logs:
+   ```bash
+   grep "ERROR.*MyTool" logs/app.log
+   ```
+
+2. Check parameter extraction:
+   ```python
+   # In tool execute method
+   logger.info(f"[MyTool] Received parameters: {parameters}")
+   ```
+
+3. Test tool directly:
+   ```python
+   from app.services.tools.my_tool import MyTool
+   tool = MyTool()
+   result = await tool.execute(
+       user_id="test_user",
+       parameters={"param1": "value1"}
+   )
+   print(result)  # Should show error details
+   ```
+
+**Solution:** Fix validation logic or database query in tool code.
+
+---
+
+**Issue 3: Parameters Extracted Incorrectly**
+
+**Symptoms:**
+- Tool triggers correctly
+- But parameters are wrong or missing
+- AI classifier misunderstood user intent
+
+**Debug Steps:**
+1. Log AI classifier response:
+   ```python
+   # In ai_tool_classifier.py
+   logger.info(f"[AIToolClassifier] Raw AI response: {response['content']}")
+   ```
+
+2. Check tool description clarity:
+   ```python
+   # Is parameter description clear?
+   # Are example phrases representative?
+   ```
+
+3. Test with more explicit phrasing:
+   ```
+   User: "I am Jack" → AI might extract dream_self="Jack" ✓
+   User: "Jack" → AI might not extract anything ✗
+   ```
+
+**Solution:** Improve tool description with clearer parameter descriptions and more example phrases.
+
+---
+
+**Issue 4: Tool Status Indicator Disappears Too Fast**
+
+**Symptoms:**
+- Tool executes successfully
+- But user doesn't see "✓ Completed" state
+- Indicator disappears immediately
+
+**Debug Steps:**
+1. Check useAIChatStream.ts for auto-clear timeouts:
+   ```typescript
+   // Should have 2.5s delay for completed
+   setTimeout(() => { setCurrentTool(null); }, 2500);
+
+   // Should have 3s delay for errors
+   setTimeout(() => { setCurrentTool(null); }, 3000);
+   ```
+
+2. Check if SSE events are being received:
+   ```javascript
+   console.log('[SSE] Event type:', chunk.type);
+   console.log('[SSE] Tool name:', chunk.tool_name);
+   ```
+
+**Solution:** Ensure timeouts are present in useAIChatStream (lines 224-242, 265-283).
+
+---
+
+### 13.4 Performance Debugging
+
+**Measure Tool Classification Time:**
+```python
+import time
+
+start = time.time()
+tools = await classifier.analyze_message(message, user_id)
+elapsed = time.time() - start
+logger.info(f"[PERF] Classification took {elapsed*1000:.0f}ms")
+```
+
+**Target:** <150ms for classification
+
+**Measure Tool Execution Time:**
+```python
+start = time.time()
+result = await tool.execute(user_id, parameters, db)
+elapsed = time.time() - start
+logger.info(f"[PERF] Tool execution took {elapsed*1000:.0f}ms")
+```
+
+**Target:** <200ms for database operations
+
+**Optimize Slow Tools:**
+1. Add database indexes for frequently queried columns
+2. Reduce number of database roundtrips (use batch operations)
+3. Cache frequently accessed data (user profile, identity doc)
+4. Use database functions for complex operations (stored procedures)
+
+---
+
+**Last Updated:** 2025-12-24 (Story 6.2 - AI Tool Classification System)
 **Next Review:** When adding new AI provider or modality

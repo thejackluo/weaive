@@ -1,473 +1,700 @@
 # Backend API Integration Guide
 
-**Story 1.5.2: Backend API/Model Standardization**
+**Purpose:** Complete API endpoint registry and integration patterns for implementing Epic 2-8 features.
 
-Complete reference for all API endpoints across Epic 2-8. Use this guide to understand the full API surface area and implement endpoints systematically.
+**Created:** 2025-12-22 (Story 1.5.2 AC-9)
 
 ---
 
 ## Table of Contents
 
-1. [Complete Endpoint Registry](#complete-endpoint-registry) ⚡ **UPDATED**
-2. [Implementation Checklist](#implementation-checklist)
-3. [Testing Patterns](#testing-patterns)
-4. [Authentication & RLS](#authentication--rls)
-5. [Common Patterns](#common-patterns)
+1. [API Endpoint Registry](#api-endpoint-registry)
+2. [Implementation Workflow](#implementation-workflow)
+3. [Standard Patterns](#standard-patterns)
+4. [Testing Patterns](#testing-patterns)
+5. [Authentication & RLS Integration](#authentication--rls-integration)
+6. [Examples](#examples)
 
 ---
 
-## Complete Endpoint Registry
+## API Endpoint Registry
 
-### Overview
-
-**Total Endpoints:** 28 across 7 router modules
-**Router Modules:** `goals`, `binds`, `journal`, `stats`, `ai`, `notifications`, `user`
-
----
+**Total: 29 API endpoints** across Epic 2-8
 
 ### Epic 2: Goal Management (5 endpoints)
 
-**Router:** `app/api/goals/router.py`
-**Database Tables:** `goals`, `subtask_templates`
+| Method | Endpoint | Story | Description | Request Body | Response |
+|--------|----------|-------|-------------|--------------|----------|
+| GET | `/api/goals` | 2.1 | List user's active goals | - | `{"data": [goals], "meta": {...}}` |
+| GET | `/api/goals/{id}` | 2.2 | Get goal details with Q-goals and binds | - | `{"data": goal, "meta": {...}}` |
+| POST | `/api/goals` | 2.3 | Create new goal (AI-assisted) | `{title, description, motivation}` | `{"data": goal, "meta": {...}}` |
+| PUT | `/api/goals/{id}` | 2.4 | Edit goal details | `{title?, description?, motivation?}` | `{"data": goal, "meta": {...}}` |
+| PUT | `/api/goals/{id}/archive` | 2.5 | Archive goal (soft delete) | - | `{"data": goal, "meta": {...}}` |
 
-| Method | Endpoint | Epic/Story | Purpose | Status |
-|--------|----------|------------|---------|--------|
-| GET | `/api/goals` | Epic 2, Story 2.1 | List user's active goals | 📋 Ready for implementation |
-| GET | `/api/goals/{id}` | Epic 2, Story 2.2 | Get goal details | 📋 Ready for implementation |
-| POST | `/api/goals` | Epic 2, Story 2.3 | Create new goal with AI | 📋 Ready for implementation |
-| PUT | `/api/goals/{id}` | Epic 2, Story 2.4 | Edit goal | 📋 Ready for implementation |
-| PUT | `/api/goals/{id}/archive` | Epic 2, Story 2.5 | Archive goal | 📋 Ready for implementation |
-
-**Business Rules:**
-- Max 3 active goals per user
-- Archiving goal soft-deletes subtask instances
-- Creating goal with AI calls GoalBreakdownService
-
-**Implementation Notes:**
-- Use `GoalBreakdownService` for AI integration (Story 2.3)
-- Validate goal limit before creation
-- Archive operation sets `is_archived=true`, not hard delete
+**Router file:** `weave-api/app/api/routers/goals.py`
 
 ---
 
-### Epic 3: Daily Actions (4 endpoints)
+### Epic 3: Daily Actions & Proof (4 endpoints)
 
-**Router:** `app/api/binds/router.py`
-**Database Tables:** `subtask_instances`, `subtask_completions`, `captures`
+| Method | Endpoint | Story | Description | Request Body | Response |
+|--------|----------|-------|-------------|--------------|----------|
+| GET | `/api/subtask-instances?local_date={date}` | 3.1 | Today's binds by goal | Query: `local_date` (YYYY-MM-DD) | `{"data": [instances], "meta": {...}}` |
+| POST | `/api/subtask-completions` | 3.3 | Mark bind complete | `{subtask_instance_id, completed_at, local_date}` | `{"data": completion, "meta": {...}}` |
+| POST | `/api/captures` | 3.3, 3.4 | Upload proof (photo/video/timer) | FormData: `file`, `type`, `description?`, `linked_subtask_id?` | `{"data": capture, "meta": {...}}` |
+| GET | `/api/daily-aggregates?local_date={date}` | 3.1 | Daily completion stats | Query: `local_date` (YYYY-MM-DD) | `{"data": aggregate, "meta": {...}}` |
 
-| Method | Endpoint | Epic/Story | Purpose | Status |
-|--------|----------|------------|---------|--------|
-| GET | `/api/binds/today` | Epic 3, Story 3.1 | Get today's binds | ✅ **IMPLEMENTED** (thread-flow branch) |
-| POST | `/api/binds/{id}/complete` | Epic 3, Story 3.3 | Mark bind complete | ✅ **IMPLEMENTED** (thread-flow branch) |
-| POST | `/api/captures` | Epic 3, Story 3.3 | Upload proof (photo/audio/timer) | 📋 Ready for implementation |
-| GET | `/api/daily-aggregates` | Epic 3, Story 3.1 | Daily stats (completion rate) | 📋 Ready for implementation |
-
-**Business Rules:**
-- Only complete binds scheduled for today or past
-- Captures optional but increase authenticity score
-- Daily aggregates compute completion percentage, streak
-
-**Implementation Notes:**
-- Binds = subtask_instances scheduled for specific date
-- Completions are append-only (no updates/deletes)
-- Captures link to completions via `completion_id`
+**Router file:** `weave-api/app/api/routers/actions.py`
 
 ---
 
 ### Epic 4: Reflection & Journaling (5 endpoints)
 
-**Router:** `app/api/journal/router.py`
-**Database Tables:** `journal_entries`, `ai_artifacts`
+| Method | Endpoint | Story | Description | Request Body | Response |
+|--------|----------|-------|-------------|--------------|----------|
+| POST | `/api/journal-entries` | 4.1 | Submit daily reflection | `{local_date, fulfillment_score, default_responses, custom_responses}` | `{"data": journal, "meta": {...}}` |
+| GET | `/api/journal-entries` | 4.5 | List past journal entries | Query: `timeframe?` (7\|30\|60\|90) | `{"data": [journals], "meta": {...}}` |
+| GET | `/api/journal-entries/{date}` | 4.5 | Get specific journal entry | - | `{"data": journal, "meta": {...}}` |
+| POST | `/api/ai/recap` | 4.3 | Generate AI feedback (batch trigger) | `{journal_entry_id}` | `{"data": {job_id, status: "queued"}, "meta": {...}}` |
+| PUT | `/api/ai-artifacts/{id}` | 4.4 | Edit AI-generated feedback | `{content, is_user_edited: true}` | `{"data": artifact, "meta": {...}}` |
 
-| Method | Endpoint | Epic/Story | Purpose | Status |
-|--------|----------|------------|---------|--------|
-| POST | `/api/journal` | Epic 4, Story 4.1 | Submit daily reflection | ✅ **IMPLEMENTED** (thread-flow branch) |
-| GET | `/api/journal` | Epic 4, Story 4.5 | List past journals | 📋 Ready for implementation |
-| GET | `/api/journal/{date}` | Epic 4, Story 4.5 | Get specific entry | 📋 Ready for implementation |
-| POST | `/api/ai/recap` | Epic 4, Story 4.3 | Generate AI feedback | 📋 Ready for implementation |
-| PUT | `/api/ai-artifacts/{id}` | Epic 4, Story 4.4 | Edit AI feedback | 📋 Ready for implementation |
-
-**Business Rules:**
-- One journal entry per user per day
-- Fulfillment score 0-10 required
-- AI recap generated after reflection submission
-- AI artifacts editable (user can modify AI output)
-
-**Implementation Notes:**
-- Journal entries use `local_date` (user timezone)
-- AI recap calls `DailyRecapService`
-- AI artifacts stored separately, linked to journal entry
+**Router files:**
+- `weave-api/app/api/routers/journal.py`
+- `weave-api/app/api/routers/ai.py`
 
 ---
 
 ### Epic 5: Progress Visualization (2 endpoints)
 
-**Router:** `app/api/stats/router.py`
-**Database Tables:** `daily_aggregates`, `user_profiles`
+| Method | Endpoint | Story | Description | Request Body | Response |
+|--------|----------|-------|-------------|--------------|----------|
+| GET | `/api/user-stats` | 5.1 | Overall user metrics (streak, consistency) | - | `{"data": stats, "meta": {...}}` |
+| GET | `/api/daily-aggregates?timeframe={7\|30\|60\|90}` | 5.2, 5.3 | Aggregates for heat map and charts | Query: `timeframe` | `{"data": [aggregates], "meta": {...}}` |
 
-| Method | Endpoint | Epic/Story | Purpose | Status |
-|--------|----------|------------|---------|--------|
-| GET | `/api/user-stats` | Epic 5, Story 5.1 | Overall user metrics | 📋 Ready for implementation |
-| GET | `/api/daily-aggregates` | Epic 5, Story 5.2 | Aggregates for heat map | 📋 Ready for implementation |
-
-**Query Parameters:**
-- `?timeframe=7|30|60|90` - Days to include
-- `?local_date=YYYY-MM-DD` - Specific date
-
-**Business Rules:**
-- Daily aggregates computed nightly (cron job)
-- User stats include: total goals, active goals, completion rate, streak
-- Heat map shows completion percentage per day
-
-**Implementation Notes:**
-- Daily aggregates table pre-computed (not real-time)
-- Query by `local_date` for timezone consistency
-- Missing days return null (not computed yet)
+**Router file:** `weave-api/app/api/routers/progress.py`
 
 ---
 
-### Epic 6: AI Coaching (3 endpoints)
+### Epic 6: AI Coaching (4 endpoints)
 
-**Router:** `app/api/ai/router.py`
-**Database Tables:** `ai_chat_sessions`, `ai_chat_messages`, `ai_artifacts`
+| Method | Endpoint | Story | Description | Request Body | Response |
+|--------|----------|-------|-------------|--------------|----------|
+| POST | `/api/ai/chat` | 6.1, 6.2 | Send message to Dream Self Advisor | `{message, context?}` | `{"data": {response, conversation_id}, "meta": {...}}` |
+| GET | `/api/ai/chat/history` | 6.1 | Conversation history | Query: `conversation_id?`, `limit?` | `{"data": [messages], "meta": {...}}` |
+| GET | `/api/personality` | 6.2 | Get active personality configuration | - | `{"data": PersonalityResponse, "meta": {...}}` |
+| POST | `/api/ai/insights` | 6.4 | Trigger weekly pattern insights | - | `{"data": {job_id, status: "queued"}, "meta": {...}}` |
 
-| Method | Endpoint | Epic/Story | Purpose | Status |
-|--------|----------|------------|---------|--------|
-| POST | `/api/ai/chat` | Epic 6, Story 6.1 | Send message to Dream Self | 📋 Ready for implementation |
-| GET | `/api/ai/chat/history` | Epic 6, Story 6.1 | Chat conversation history | 📋 Ready for implementation |
-| POST | `/api/ai/insights` | Epic 6, Story 6.4 | Trigger weekly insights | 📋 Ready for implementation |
+#### Personality Configuration Details
 
-**Business Rules:**
-- Chat sessions maintain context across messages
-- Dream Self personality based on user archetype
-- Weekly insights generated Sunday night
-- Rate limit: 10 AI requests/hour per user
+The `/api/personality` endpoint returns the user's active AI personality configuration, used by the `usePersonality` hook for frontend display and personality switching.
 
-**Implementation Notes:**
-- Use `DreamSelfAdvisorService` for chat
-- Use `AIInsightsService` for weekly insights
-- Sessions expire after 24h of inactivity
-- Check `daily_aggregates.ai_request_count` for rate limiting
+**Request:**
+```http
+GET /api/personality
+Authorization: Bearer {jwt_token}
+```
+
+**Response Schema:**
+```json
+{
+  "data": {
+    "personality_type": "dream_self" | "weave_ai",
+    "name": "Jack",
+    "traits": ["curious", "ambitious"],
+    "speaking_style": "Direct but encouraging",
+    "system_prompt": "You are Jack, the user's Dream Self...",
+    "archetype": "The Builder",
+    "motivations": ["Financial freedom", "Impact"],
+    "failure_mode": "Inconsistency",
+    "preset": "gen_z_default" | null
+  },
+  "meta": {
+    "timestamp": "2025-12-24T10:00:00Z"
+  }
+}
+```
+
+**Frontend Integration:**
+```typescript
+import { usePersonality } from '@/hooks/usePersonality';
+
+function PersonalitySwitcher() {
+  const { personality, isSwitching, switchTo } = usePersonality();
+
+  return (
+    <View>
+      <Text>Current: {personality.name}</Text>
+      <Text>Type: {personality.personality_type}</Text>
+      <Button onPress={() => switchTo('dream_self')}>
+        Switch to Dream Self
+      </Button>
+    </View>
+  );
+}
+```
+
+**Implementation:** Story 6.2 (lines 1040-1081 in `ai_chat_router.py`)
+
+**Router file:** `weave-api/app/api/routers/ai.py`
 
 ---
 
 ### Epic 7: Notifications (4 endpoints)
 
-**Router:** `app/api/notifications/router.py`
-**Database Tables:** `notification_settings`, `notification_log`
+| Method | Endpoint | Story | Description | Request Body | Response |
+|--------|----------|-------|-------------|--------------|----------|
+| POST | `/api/notifications/schedule` | 7.1 | Schedule morning intention notification | `{notification_type, scheduled_for, content}` | `{"data": notification, "meta": {...}}` |
+| POST | `/api/notifications/bind-reminder` | 7.2 | Bind reminder notification | `{subtask_instance_id, reminder_time}` | `{"data": notification, "meta": {...}}` |
+| POST | `/api/notifications/reflection-prompt` | 7.3 | Evening reflection prompt | - | `{"data": notification, "meta": {...}}` |
+| POST | `/api/notifications/streak-recovery` | 7.4 | Streak recovery nudge | `{days_inactive}` | `{"data": notification, "meta": {...}}` |
 
-| Method | Endpoint | Epic/Story | Purpose | Status |
-|--------|----------|------------|---------|--------|
-| POST | `/api/notifications/schedule` | Epic 7, Story 7.1 | Schedule notification | 📋 Ready for implementation |
-| POST | `/api/notifications/bind-reminder` | Epic 7, Story 7.2 | Bind reminder | 📋 Ready for implementation |
-| POST | `/api/notifications/reflection-prompt` | Epic 7, Story 7.3 | Evening prompt | 📋 Ready for implementation |
-| POST | `/api/notifications/streak-recovery` | Epic 7, Story 7.4 | Recovery nudge | 📋 Ready for implementation |
-
-**Business Rules:**
-- Notifications require Expo Push Notification token
-- Users can customize notification times
-- Bind reminders sent 30min before scheduled time
-- Reflection prompts sent 30min before user's evening time
-
-**Implementation Notes:**
-- Use Expo Push Notification service
-- Store notification settings in `user_profiles`
-- Log all sent notifications for audit trail
-- Handle iOS APNs errors gracefully
+**Router file:** `weave-api/app/api/routers/notifications.py`
 
 ---
 
 ### Epic 8: Settings & Profile (5 endpoints)
 
-**Router:** `app/api/user/router.py`
-**Database Tables:** `user_profiles`, `identity_docs`, `subscriptions`
+| Method | Endpoint | Story | Description | Request Body | Response |
+|--------|----------|-------|-------------|--------------|----------|
+| GET | `/api/user/profile` | 8.1 | Get user profile | - | `{"data": profile, "meta": {...}}` |
+| PUT | `/api/user/profile` | 8.1 | Update user profile | `{name?, email?, preferences?}` | `{"data": profile, "meta": {...}}` |
+| GET | `/api/user/export` | 8.3 | Data export (JSON) | - | `{"data": {download_url}, "meta": {...}}` |
+| DELETE | `/api/user/account` | 8.3 | Soft delete account | `{confirmation: "DELETE"}` | `{"data": {deleted_at}, "meta": {...}}` |
+| GET | `/api/subscriptions` | 8.4 | Subscription status | - | `{"data": subscription, "meta": {...}}` |
 
-| Method | Endpoint | Epic/Story | Purpose | Status |
-|--------|----------|------------|---------|--------|
-| GET | `/api/user/profile` | Epic 8, Story 8.1 | Get user profile | ✅ **IMPLEMENTED** (Story 0.3) |
-| PUT | `/api/user/profile` | Epic 8, Story 8.1 | Update profile | 📋 Ready for implementation |
-| GET | `/api/user/export` | Epic 8, Story 8.3 | Data export (JSON) | 📋 Ready for implementation |
-| DELETE | `/api/user/account` | Epic 8, Story 8.3 | Soft delete account | 📋 Ready for implementation |
-| GET | `/api/subscriptions` | Epic 8, Story 8.4 | Subscription status | 📋 Ready for implementation |
-
-**Business Rules:**
-- Profile updates limited to non-auth fields
-- Data export includes all user data (GDPR)
-- Account deletion soft-deletes user + all resources
-- Free tier limits: 3 goals, 10 AI requests/day
-
-**Implementation Notes:**
-- Profile endpoint already exists (Story 0.3)
-- Data export generates ZIP with JSON files
-- Account deletion cascades to all related tables
-- Subscriptions managed via external service (TBD)
+**Router files:**
+- `weave-api/app/api/routers/user.py`
+- `weave-api/app/api/routers/subscriptions.py`
 
 ---
 
-## Implementation Checklist
+## Implementation Workflow
 
-### For Each Endpoint
+### Step 1: Identify Your Endpoint
 
-1. **Create Router (if not exists)**
-   ```bash
-   python scripts/generate_api.py <resource>
-   ```
+When implementing a story, find the corresponding endpoint in the registry above.
 
-2. **Register in main.py**
-   ```python
-   from app.api.<resource> import router as <resource>_router
-   app.include_router(<resource>_router)
-   ```
+**Example:** Story 2.1 (View Goals List) → `GET /api/goals`
 
-3. **Replace 501 Placeholder**
-   - Remove `HTTPException(501)` stub
-   - Implement actual logic
-   - Update Epic/Story references in docstring
+### Step 2: Locate the Route Stub
 
-4. **Add Business Logic**
-   - Validate business rules
-   - Query database (Supabase)
-   - Format response (`{data, meta}`)
+Navigate to the router file:
 
-5. **Error Handling**
-   - Use `ErrorCode` constants
-   - Raise appropriate exceptions
-   - Log errors with context
+```bash
+# Example for Epic 2
+cd weave-api/app/api/routers
+cat goals.py
+```
 
-6. **Write Tests**
-   - Implement `pytest.skip()` cases
-   - Test happy path
-   - Test error cases
-   - Test authentication
+You'll see a 501 stub:
 
-7. **Run Tests**
-   ```bash
-   uv run pytest tests/test_<resource>_api.py -v
-   ```
+```python
+@router.get("/")
+async def list_goals(user=Depends(get_current_user)):
+    """
+    Epic 2, Story 2.1: View Goals List
+    TODO: Implement goal list retrieval
+    """
+    raise HTTPException(
+        status_code=501,
+        detail={
+            "error": "NOT_IMPLEMENTED",
+            "message": "This endpoint has not been developed",
+            "epic": "Epic 2: Goal Management",
+            "story": "Story 2.1: View Goals List"
+        }
+    )
+```
+
+### Step 3: Replace 501 Stub with Real Implementation
+
+```python
+from app.api.dependencies import get_current_user
+from app.models.user import User
+from app.models.goal import Goal
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.api.dependencies import get_db
+
+@router.get("/")
+async def list_goals(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Epic 2, Story 2.1: View Goals List
+
+    Returns user's active goals with consistency metrics.
+    """
+
+    # Query user's active goals
+    result = await db.execute(
+        select(Goal)
+        .where(Goal.user_id == user.id)
+        .where(Goal.status == "active")
+        .where(Goal.deleted_at.is_(None))
+        .order_by(Goal.created_at.desc())
+    )
+    goals = result.scalars().all()
+
+    # Format response
+    return {
+        "data": [goal.to_dict() for goal in goals],
+        "meta": {
+            "timestamp": datetime.utcnow().isoformat(),
+            "total": len(goals)
+        }
+    }
+```
+
+### Step 4: Update Tests
+
+Replace the 501 test with real integration tests:
+
+```python
+# tests/test_goals_api.py
+def test_list_goals_success(client: TestClient, auth_headers, db_session):
+    """Test successful goal list retrieval"""
+
+    # Setup: Create test goals
+    goal1 = create_test_goal(db_session, title="Learn Python", status="active")
+    goal2 = create_test_goal(db_session, title="Exercise Daily", status="active")
+
+    # Execute
+    response = client.get("/api/goals", headers=auth_headers)
+
+    # Assert
+    assert response.status_code == 200
+    data = response.json()
+    assert "data" in data
+    assert "meta" in data
+    assert len(data["data"]) == 2
+    assert data["data"][0]["title"] == "Learn Python"
+    assert data["data"][1]["title"] == "Exercise Daily"
+
+def test_list_goals_empty(client: TestClient, auth_headers):
+    """Test empty goal list"""
+    response = client.get("/api/goals", headers=auth_headers)
+    assert response.status_code == 200
+    assert response.json()["data"] == []
+```
+
+---
+
+## Standard Patterns
+
+### Response Format
+
+**Success Response:**
+```json
+{
+  "data": { ... },  // or array
+  "meta": {
+    "timestamp": "2025-12-22T10:00:00Z",
+    "total": 10       // for lists
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Title is required",
+    "retryable": false
+  }
+}
+```
+
+### Standard Error Codes
+
+| Code | HTTP Status | Usage |
+|------|-------------|-------|
+| `VALIDATION_ERROR` | 400 | Request validation failed |
+| `UNAUTHORIZED` | 401 | Missing or invalid auth token |
+| `FORBIDDEN` | 403 | Authenticated but not authorized (RLS violation) |
+| `NOT_FOUND` | 404 | Resource doesn't exist |
+| `CONFLICT` | 409 | Resource already exists (e.g., journal entry for today) |
+| `RATE_LIMIT_EXCEEDED` | 429 | User exceeded rate limit (AI calls, uploads) |
+| `INTERNAL_ERROR` | 500 | Server error |
+
+### Authentication Pattern
+
+All endpoints use JWT authentication:
+
+```python
+from app.api.dependencies import get_current_user
+from app.models.user import User
+
+@router.get("/")
+async def endpoint(user: User = Depends(get_current_user)):
+    # user is guaranteed authenticated
+    # user.id is available for queries
+    pass
+```
+
+### RLS Integration
+
+Database queries automatically enforce Row Level Security:
+
+```python
+# RLS enforced at database level
+result = await db.execute(
+    select(Goal).where(Goal.user_id == user.id)
+)
+# Only returns goals owned by authenticated user
+```
+
+See `docs/security-architecture.md` for complete RLS patterns.
+
+### Rate Limiting Pattern
+
+For AI endpoints and uploads:
+
+```python
+from app.api.dependencies import check_rate_limit
+
+@router.post("/ai/chat")
+async def chat(
+    user: User = Depends(get_current_user),
+    _: None = Depends(check_rate_limit("ai_text", limit=10, window="1h"))
+):
+    # Rate limit enforced before handler execution
+    pass
+```
 
 ---
 
 ## Testing Patterns
 
-### Test Structure
+### Test File Structure
 
-Every endpoint needs:
+```
+tests/
+├── test_goals_api.py          # Epic 2
+├── test_actions_api.py         # Epic 3
+├── test_journal_api.py         # Epic 4
+├── test_progress_api.py        # Epic 5
+├── test_ai_api.py              # Epic 6
+├── test_notifications_api.py   # Epic 7
+└── test_user_api.py            # Epic 8
+```
+
+### Integration Test Template
 
 ```python
-# Happy path test
-def test_create_goal_success(auth_headers):
-    response = client.post("/api/goals", json={...}, headers=auth_headers)
-    assert response.status_code == 201
-    assert "data" in response.json()
+import pytest
+from fastapi.testclient import TestClient
 
-# Error case tests
-def test_create_goal_unauthorized():
-    response = client.post("/api/goals", json={...})
+def test_endpoint_success(client: TestClient, auth_headers, db_session):
+    """Test successful operation"""
+    # Setup: Create test data
+    test_data = create_test_resource(db_session, ...)
+
+    # Execute: Call endpoint
+    response = client.post("/api/endpoint", json={...}, headers=auth_headers)
+
+    # Assert: Verify response
+    assert response.status_code == 200
+    data = response.json()
+    assert "data" in data
+    assert "meta" in data
+
+def test_endpoint_validation_error(client: TestClient, auth_headers):
+    """Test validation error handling"""
+    response = client.post("/api/endpoint", json={}, headers=auth_headers)
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+def test_endpoint_unauthorized(client: TestClient):
+    """Test authentication required"""
+    response = client.get("/api/endpoint")
     assert response.status_code == 401
 
-def test_create_goal_validation_error(auth_headers):
-    response = client.post("/api/goals", json={}, headers=auth_headers)
-    assert response.status_code == 400
-    assert response.json()["error"] == "VALIDATION_ERROR"
-
-def test_create_goal_limit_exceeded(auth_headers):
-    # Create 3 goals (max)
-    for i in range(3):
-        client.post("/api/goals", json={...}, headers=auth_headers)
-
-    # 4th should fail
-    response = client.post("/api/goals", json={...}, headers=auth_headers)
-    assert response.status_code == 400
-    assert response.json()["error"] == "GOAL_LIMIT_EXCEEDED"
+def test_endpoint_not_found(client: TestClient, auth_headers):
+    """Test resource not found"""
+    response = client.get("/api/endpoint/nonexistent-id", headers=auth_headers)
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "NOT_FOUND"
 ```
 
-### Running Tests
+### Pytest Fixtures
 
-```bash
-# All API tests
-uv run pytest tests/ -v
+```python
+# tests/conftest.py
+@pytest.fixture
+def client():
+    """FastAPI test client"""
+    from app.main import app
+    return TestClient(app)
 
-# Specific router
-uv run pytest tests/test_goals_api.py -v
+@pytest.fixture
+def auth_headers(test_user):
+    """Authentication headers for test user"""
+    token = create_jwt_token(test_user.id)
+    return {"Authorization": f"Bearer {token}"}
 
-# With coverage
-uv run pytest tests/ --cov=app.api --cov-report=html
+@pytest.fixture
+def db_session():
+    """Database session for test data setup"""
+    # Setup
+    session = TestSessionLocal()
+    yield session
+    # Teardown
+    session.rollback()
+    session.close()
 ```
 
 ---
 
-## Authentication & RLS
+## Authentication & RLS Integration
 
-### JWT Middleware
+### JWT Token Flow
 
-**Every protected endpoint** must use:
+```mermaid
+sequenceDiagram
+    participant Client as Mobile App
+    participant API as FastAPI Router
+    participant Auth as get_current_user
+    participant Supabase as Supabase Auth
+    participant DB as PostgreSQL + RLS
 
-```python
-from app.core.auth import get_current_user
-
-@router.get("/api/goals")
-async def list_goals(user: dict = Depends(get_current_user)):
-    auth_user_id = user["sub"]
-    # Implementation...
+    Client->>API: GET /api/goals<br/>Authorization: Bearer <token>
+    API->>Auth: Verify JWT token
+    Auth->>Supabase: Validate token
+    Supabase-->>Auth: User ID
+    Auth-->>API: User object
+    API->>DB: SELECT * FROM goals<br/>WHERE user_id = $1
+    Note over DB: RLS enforces:<br/>auth.uid() check
+    DB-->>API: User's goals only
+    API-->>Client: {"data": [goals], "meta": {...}}
 ```
 
-### RLS Pattern
+### RLS Policy Pattern
 
-Database queries automatically enforce RLS:
+All user-owned tables use this pattern:
 
-```python
-# Query user's goals (RLS enforces user_id filtering)
-response = supabase.table('goals').select('*').execute()
-
-# Manual user_id filter not needed (RLS handles it)
-# But explicit filtering is OK for clarity
-response = supabase.table('goals').select('*').eq(
-    'user_id', auth_user_id
-).execute()
+```sql
+-- Example: goals table RLS policy
+CREATE POLICY "users_manage_own_goals" ON goals
+    FOR ALL
+    USING (user_id IN (
+        SELECT id FROM user_profiles WHERE auth_user_id = auth.uid()::text
+    ));
 ```
 
-**RLS policies reference:** Story 0.4 (`supabase/migrations/20251219170656_row_level_security.sql`)
+**Key Points:**
+- RLS enforced at database level (not application layer)
+- `auth.uid()` provides authenticated user's UUID
+- Lookup through `user_profiles.auth_user_id` → `user_profiles.id`
+- FastAPI never needs to filter by `user_id` explicitly (RLS does this)
 
 ---
 
-## Common Patterns
+## Examples
 
-### Pagination
+### Example 1: List Goals (GET /api/goals)
+
+**Full Implementation:**
 
 ```python
-@router.get("/api/goals")
+# weave-api/app/api/routers/goals.py
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.api.dependencies import get_current_user, get_db
+from app.models.user import User
+from app.models.goal import Goal
+from typing import List
+from datetime import datetime
+
+router = APIRouter(prefix="/api/goals", tags=["goals"])
+
+@router.get("/")
 async def list_goals(
-    user: dict = Depends(get_current_user),
-    page: int = Query(1, ge=1),
-    per_page: int = Query(20, ge=1, le=100)
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
-    start = (page - 1) * per_page
-    end = page * per_page - 1
+    """
+    Epic 2, Story 2.1: View Goals List
 
-    response = supabase.table('goals').select(
-        '*', count='exact'
-    ).eq('user_id', auth_user_id).range(start, end).execute()
+    Returns user's active goals with metadata.
+    RLS automatically filters by user_id.
+    """
 
+    # Query active goals (RLS enforces user_id filter)
+    result = await db.execute(
+        select(Goal)
+        .where(Goal.status == "active")
+        .where(Goal.deleted_at.is_(None))
+        .order_by(Goal.created_at.desc())
+    )
+    goals = result.scalars().all()
+
+    # Format response
     return {
-        "data": response.data,
+        "data": [
+            {
+                "id": str(goal.id),
+                "title": goal.title,
+                "description": goal.description,
+                "status": goal.status,
+                "created_at": goal.created_at.isoformat(),
+                "binds_count": len(goal.subtask_templates),
+                "consistency_percent": goal.computed_consistency_percent
+            }
+            for goal in goals
+        ],
         "meta": {
-            "total": response.count,
-            "page": page,
-            "per_page": per_page
+            "timestamp": datetime.utcnow().isoformat(),
+            "total": len(goals)
         }
     }
 ```
 
-### Soft Delete
+**Test:**
 
 ```python
-@router.delete("/api/goals/{goal_id}")
-async def delete_goal(goal_id: str, user: dict = Depends(get_current_user)):
-    # Soft delete (set deleted_at timestamp)
-    supabase.table('goals').update({
-        'deleted_at': datetime.utcnow().isoformat()
-    }).eq('id', goal_id).eq('user_id', auth_user_id).execute()
+# tests/test_goals_api.py
+def test_list_goals(client, auth_headers, db_session):
+    # Setup
+    goal = Goal(
+        user_id=test_user_id,
+        title="Learn Python",
+        description="Master async/await",
+        status="active"
+    )
+    db_session.add(goal)
+    db_session.commit()
+
+    # Execute
+    response = client.get("/api/goals", headers=auth_headers)
+
+    # Assert
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["data"]) == 1
+    assert data["data"][0]["title"] == "Learn Python"
+    assert "meta" in data
+```
+
+---
+
+### Example 2: Create Goal (POST /api/goals)
+
+**Full Implementation:**
+
+```python
+from pydantic import BaseModel, Field
+
+class GoalCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    description: str = Field(..., max_length=2000)
+    motivation: str = Field(..., max_length=500)
+
+@router.post("/")
+async def create_goal(
+    goal_data: GoalCreate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Epic 2, Story 2.3: Create New Goal (AI-Assisted)
+
+    Creates goal with AI-generated Q-goals and binds.
+    """
+
+    # Check 3-goal limit
+    result = await db.execute(
+        select(func.count(Goal.id))
+        .where(Goal.status == "active")
+        .where(Goal.deleted_at.is_(None))
+    )
+    active_count = result.scalar()
+
+    if active_count >= 3:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "GOAL_LIMIT_REACHED",
+                "message": "Maximum 3 active goals allowed",
+                "retryable": False
+            }
+        )
+
+    # Call AI Orchestrator to generate goal breakdown
+    from app.services.ai.ai_orchestrator import get_orchestrator
+    orchestrator = get_orchestrator()
+
+    ai_result = await orchestrator.execute_ai_operation(
+        user_id=str(user.id),
+        operation_type="generate_goal_breakdown",
+        params={
+            "title": goal_data.title,
+            "description": goal_data.description,
+            "motivation": goal_data.motivation
+        }
+    )
+
+    # Create goal with AI-generated Q-goals
+    goal = Goal(
+        user_id=user.id,
+        title=goal_data.title,
+        description=goal_data.description,
+        motivation=goal_data.motivation,
+        status="active"
+    )
+    db.add(goal)
+    await db.flush()
+
+    # Create Q-goals and binds from AI output
+    for qgoal_data in ai_result["qgoals"]:
+        qgoal = QGoal(
+            goal_id=goal.id,
+            title=qgoal_data["title"],
+            metric=qgoal_data["metric"],
+            target_value=qgoal_data["target"]
+        )
+        db.add(qgoal)
+
+    await db.commit()
+    await db.refresh(goal)
 
     return {
-        "data": {"deleted": True, "id": goal_id},
-        "meta": {"timestamp": datetime.utcnow().isoformat() + "Z"}
+        "data": goal.to_dict(),
+        "meta": {"timestamp": datetime.utcnow().isoformat()}
     }
 ```
 
-### Business Rule Validation
+---
 
-```python
-@router.post("/api/goals")
-async def create_goal(data: GoalCreate, user: dict = Depends(get_current_user)):
-    auth_user_id = user["sub"]
+## Next Steps
 
-    # Check goal limit
-    count_response = supabase.table('goals').select(
-        'id', count='exact'
-    ).eq('user_id', auth_user_id).eq(
-        'status', 'active'
-    ).is_('deleted_at', 'null').execute()
+1. **When implementing Epic 2-8 stories:**
+   - Reference this guide for endpoint specifications
+   - Copy endpoint stubs from router files
+   - Follow standard patterns for responses, errors, auth
+   - Write integration tests before implementation
 
-    if count_response.count >= 3:
-        raise AppException(
-            code=ErrorCode.GOAL_LIMIT_EXCEEDED,
-            message="Maximum 3 active goals allowed",
-            status_code=400,
-            details={"current": count_response.count, "max": 3}
-        )
+2. **When adding new endpoints (post-MVP):**
+   - Add to this registry
+   - Follow naming conventions (`/api/{resource}`)
+   - Use standard response format
+   - Create corresponding tests
 
-    # Create goal...
-```
-
-### AI Service Integration
-
-```python
-@router.post("/api/ai/chat")
-async def ai_chat(
-    message: str,
-    user: dict = Depends(get_current_user)
-):
-    auth_user_id = user["sub"]
-
-    # Check AI rate limit
-    today = date.today().isoformat()
-    agg_response = supabase.table('daily_aggregates').select(
-        'ai_request_count'
-    ).eq('user_id', auth_user_id).eq('local_date', today).single().execute()
-
-    if agg_response.data and agg_response.data['ai_request_count'] >= 10:
-        raise RateLimitException(
-            message="AI request limit exceeded for today",
-            retry_after=86400  # 24 hours
-        )
-
-    # Call AI service
-    service = DreamSelfAdvisorService(supabase)
-    response = await service.chat(auth_user_id, message)
-
-    # Increment AI request count
-    supabase.rpc('increment_ai_requests', {
-        'p_user_id': auth_user_id,
-        'p_local_date': today
-    }).execute()
-
-    return {"data": response}
-```
+3. **Documentation updates:**
+   - Keep this file in sync with `docs/dev/backend-patterns-guide.md`
+   - Update `CLAUDE.md` when new patterns emerge
 
 ---
 
-## Quick Reference
+## References
 
-### Endpoint Status Legend
+- **Backend Patterns Guide:** `docs/dev/backend-patterns-guide.md` (Story 1.5.2 AC-1 to AC-8)
+- **AI Services Guide:** `docs/dev/ai-services-guide.md` (Story 1.5.3)
+- **Security Architecture:** `docs/security-architecture.md` (Story 0.4 - RLS)
+- **Epic Stories:** `docs/prd/epic-{2-8}-*.md`
 
-| Icon | Status | Meaning |
-|------|--------|---------|
-| ✅ | Implemented | Fully functional (ready to use) |
-| 📋 | Ready | Templates ready (awaiting implementation) |
-| 🚧 | In Progress | Currently being developed |
-| ⏸️ | Blocked | Waiting on dependency |
-
-### Implementation Order (Recommended)
-
-1. **Epic 2 (Goals)** - Foundation for all features
-2. **Epic 3 (Binds)** - Core daily actions (partially complete)
-3. **Epic 4 (Journal)** - Reflection loop (partially complete)
-4. **Epic 5 (Stats)** - Progress visualization
-5. **Epic 6 (AI Coaching)** - Advanced features
-6. **Epic 7 (Notifications)** - Engagement layer
-7. **Epic 8 (Settings)** - Profile management (mostly complete)
-
----
-
-## Additional Resources
-
-- **Backend Patterns Guide:** `docs/dev/backend-patterns-guide.md`
-- **Templates:** `scripts/templates/`
-- **Scaffolding Script:** `scripts/generate_api.py`
-- **Error Handling:** `weave-api/app/core/errors.py`
-- **Base Models:** `weave-api/app/models/base.py`
-- **Architecture Rules:** `docs/architecture/implementation-patterns-consistency-rules.md`
-
----
-
-**Last Updated:** 2025-12-23 (Story 1.5.2)
+**Created:** 2025-12-22
+**Story:** 1.5.2 AC-9 (API Endpoint Mapping)
+**Maintainer:** Development Team

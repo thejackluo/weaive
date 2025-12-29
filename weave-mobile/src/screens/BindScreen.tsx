@@ -10,7 +10,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, Alert, Image } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, Alert, Modal, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme, Card, Heading, Body, Caption, Button } from '@/design-system';
@@ -19,6 +19,8 @@ import { useCompleteBind } from '@/hooks/useCompleteBind';
 import { useUserStats } from '@/hooks/useUserStats';
 import { PomodoroTimer } from '@/components/thread/PomodoroTimer';
 import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
+import { ProofCaptureSheet } from '@/components/ProofCaptureSheet';
+import { ProofCaptureContext } from '@/types/captures';
 import { getLevelProgress } from '@/utils/levelProgression';
 import { launchCamera } from '@/services/imageCapture';
 
@@ -77,6 +79,7 @@ export function BindScreen() {
   const [showTimerPresets, setShowTimerPresets] = useState(false);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showCaptureSheet, setShowCaptureSheet] = useState(false);
   const [completionData, setCompletionData] = useState<{
     needleName: string;
     progressUpdate?: {
@@ -168,28 +171,21 @@ export function BindScreen() {
       setPhotoUri(null);
       console.log('Photo deselected');
     } else {
-      try {
-        // Launch camera
-        console.log('Launching camera...');
-        const result = await launchCamera();
-
-        if (result.canceled || !result.assets || result.assets.length === 0) {
-          console.log('Camera cancelled or no photo taken');
-          return;
-        }
-
-        // Store photo URI for preview
-        const capturedUri = result.assets[0].uri;
-        setPhotoUri(capturedUri);
-        console.log('Photo captured:', capturedUri);
-      } catch (error) {
-        console.error('Camera launch failed:', error);
-        Alert.alert(
-          'Camera Error',
-          error instanceof Error ? error.message : 'Failed to open camera'
-        );
-      }
+      // Open capture sheet (Story 6.2 ProofCaptureSheet component)
+      setShowCaptureSheet(true);
     }
+  };
+
+  const handleCaptureSuccess = (result: any) => {
+    // Set the photo URI from the capture result
+    setPhotoUri(result.data.storage_path);
+    setShowCaptureSheet(false);
+    console.log('Photo captured successfully:', result.data.storage_path);
+  };
+
+  const handleCaptureCancel = () => {
+    setShowCaptureSheet(false);
+    console.log('Photo capture cancelled');
   };
 
   const handleStartBind = () => {
@@ -617,6 +613,26 @@ export function BindScreen() {
         progressUpdate={completionData?.progressUpdate}
         onComplete={handleCelebrationComplete}
       />
+
+      {/* Proof Capture Sheet */}
+      <Modal
+        visible={showCaptureSheet}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={handleCaptureCancel}
+      >
+        <ProofCaptureSheet
+          context={{
+            subtask_instance_id: id || null,
+            goal_id: bind?.needle_id || null,
+            local_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+            bind_description: bind?.title,
+          }}
+          onSuccess={handleCaptureSuccess}
+          onCancel={handleCaptureCancel}
+          allowSkip={true}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }

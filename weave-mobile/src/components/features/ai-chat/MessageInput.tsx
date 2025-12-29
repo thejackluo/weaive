@@ -10,10 +10,17 @@
  * - Glassmorphism design
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, TextInput, Pressable, Text, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -23,6 +30,8 @@ interface MessageInputProps {
   onSend: (text: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  onVoiceRecord?: () => void;
+  isRecording?: boolean;
 }
 
 const MAX_CHARACTERS = 500;
@@ -34,12 +43,34 @@ export default function MessageInput({
   onSend,
   disabled = false,
   placeholder = 'Talk to Weave...',
+  onVoiceRecord,
+  isRecording = false,
 }: MessageInputProps) {
   const scale = useSharedValue(1);
+  const micScale = useSharedValue(1);
+  const micOpacity = useSharedValue(1);
   const characterCount = value.length;
   const showCounter = characterCount >= SHOW_COUNTER_AT;
   const isOverLimit = characterCount > MAX_CHARACTERS;
   const canSend = value.trim().length > 0 && !isOverLimit && !disabled;
+
+  // Pulsing animation when recording
+  useEffect(() => {
+    if (isRecording) {
+      // Start pulsing animation (opacity: 1 → 0.3 → 1)
+      micOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: 600 }),
+          withTiming(1, { duration: 600 })
+        ),
+        -1, // Infinite repeat
+        false // Don't reverse
+      );
+    } else {
+      // Stop animation and reset to full opacity
+      micOpacity.value = withTiming(1, { duration: 300 });
+    }
+  }, [isRecording, micOpacity]);
 
   const handleSend = () => {
     if (!canSend) return;
@@ -48,8 +79,19 @@ export default function MessageInput({
     onSend(value);
   };
 
+  const handleVoicePress = () => {
+    if (!onVoiceRecord || disabled) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onVoiceRecord();
+  };
+
   const animatedButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: withSpring(scale.value) }],
+  }));
+
+  const animatedMicStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: withSpring(micScale.value) }],
+    opacity: micOpacity.value, // Pulsing effect when recording
   }));
 
   return (
@@ -88,6 +130,39 @@ export default function MessageInput({
             }
           }}
         />
+
+        {/* Voice Input Button */}
+        {onVoiceRecord && (
+          <Pressable
+            testID="voice-button"
+            onPress={handleVoicePress}
+            onPressIn={() => {
+              if (!disabled) {
+                micScale.value = 0.95;
+              }
+            }}
+            onPressOut={() => {
+              micScale.value = 1;
+            }}
+            disabled={disabled}
+            style={styles.voiceButtonWrapper}
+          >
+            <Animated.View
+              style={[
+                styles.voiceButton,
+                isRecording && styles.voiceButtonRecording,
+                disabled && styles.voiceButtonDisabled,
+                animatedMicStyle,
+              ]}
+            >
+              <Ionicons
+                name={isRecording ? 'mic' : 'mic-outline'}
+                size={20}
+                color={isRecording ? '#ef4444' : disabled ? '#6b7280' : '#a78bfa'}
+              />
+            </Animated.View>
+          </Pressable>
+        )}
 
         {/* Send Button */}
         <Pressable
@@ -161,6 +236,27 @@ const styles = StyleSheet.create({
   },
   inputDisabled: {
     opacity: 0.5,
+  },
+  voiceButtonWrapper: {
+    marginBottom: 2,
+  },
+  voiceButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(167, 139, 250, 0.2)', // Purple translucent
+    borderWidth: 1,
+    borderColor: '#a78bfa',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceButtonRecording: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)', // Red translucent when recording
+    borderColor: '#ef4444',
+  },
+  voiceButtonDisabled: {
+    opacity: 0.5,
+    borderColor: '#6b7280',
   },
   sendButtonWrapper: {
     marginBottom: 2,

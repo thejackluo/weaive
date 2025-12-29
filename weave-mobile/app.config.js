@@ -52,7 +52,7 @@ module.exports = {
       favicon: './assets/favicon.png',
       bundler: 'metro'
     },
-    plugins: ['expo-router', 'expo-web-browser'],
+    plugins: ['expo-router', 'expo-web-browser', 'expo-font'],
     extra: {
       router: {},
       eas: {

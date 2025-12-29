@@ -27,7 +27,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PERSONAS, PersonalityType } from '@/constants/personalityContent';
+import {
+  PERSONAS,
+  OnboardingPersonaType,
+  mapOnboardingPersonaToPreset,
+} from '@/constants/personalityContent';
 import {
   IDENTITY_TRAITS,
   REQUIRED_TRAITS,
@@ -35,6 +39,8 @@ import {
   isValidTraitCount,
 } from '@/constants/identityTraits';
 import { storeIdentityBootup } from '@/services/onboarding';
+import { updateWeaveAIPreset } from '@/services/personalityApi';
+import { supabase } from '@lib/supabase';
 
 // UI Constants
 const CARD_WIDTH_RATIO = 0.8;
@@ -53,7 +59,7 @@ type Step = 1 | 2 | 3;
 
 interface OnboardingData {
   preferred_name: string;
-  core_personality: PersonalityType | null;
+  core_personality: OnboardingPersonaType | null;
   personality_selected_at: Date | null;
   identity_traits: IdentityTrait[];
 }
@@ -247,7 +253,7 @@ export default function IdentityBootupScreen() {
   /**
    * Handle persona selection (tap to select)
    */
-  const handlePersonaSelect = (personalityType: PersonalityType) => {
+  const handlePersonaSelect = (personalityType: OnboardingPersonaType) => {
     try {
       setFormData({
         ...formData,
@@ -388,6 +394,30 @@ export default function IdentityBootupScreen() {
         console.log(
           '[Onboarding] Continuing with local storage only (backend integration deferred)'
         );
+      }
+
+      // Story 6.1 + 6.2 Integration: Update Weave AI preset in backend
+      // Map onboarding persona to backend preset and persist to database
+      if (formData.core_personality) {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+
+          if (session?.access_token) {
+            const backendPreset = mapOnboardingPersonaToPreset(formData.core_personality);
+            await updateWeaveAIPreset(session.access_token, backendPreset);
+            console.log(
+              `[ONBOARDING] Successfully updated Weave AI preset: ${formData.core_personality} → ${backendPreset}`
+            );
+          } else {
+            console.warn('[ONBOARDING] No active session, skipping preset update');
+          }
+        } catch (presetError) {
+          // Log but don't block - preset update is optional
+          console.warn('[ONBOARDING] Failed to update Weave AI preset:', presetError);
+          console.log('[ONBOARDING] Continuing with local personality selection');
+        }
       }
 
       // Save onboarding data to AsyncStorage for Story 1.7

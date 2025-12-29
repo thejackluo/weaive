@@ -47,10 +47,11 @@ class DeterministicProvider(AIProvider):
     def complete(
         self,
         prompt: str,
-        model: str = "deterministic",
-        module: str = "triad",
-        variant: str = "default",
-        **kwargs,
+        model: str = 'deterministic',
+        tools: list = None,
+        module: str = 'triad',
+        variant: str = 'default',
+        **kwargs
     ) -> AIResponse:
         """
         Generate deterministic response from templates.

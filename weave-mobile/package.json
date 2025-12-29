@@ -1,6 +1,7 @@
 {
   "name": "weave-mobile",
   "version": "0.0.1",
+  "type": "commonjs",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -34,6 +35,7 @@
     "@react-native-community/netinfo": "11.4.1",
     "@react-native-community/slider": "5.0.1",
     "@react-native-picker/picker": "^2.11.4",
+    "@shopify/react-native-skia": "2.2.12",
     "@sentry/react-native": "^7.8.0",
     "@supabase/supabase-js": "^2.88.0",
     "@tanstack/react-query": "^5.90.12",
@@ -45,6 +47,7 @@
     "expo-blur": "^15.0.8",
     "expo-constants": "~18.0.12",
     "expo-device": "~8.0.10",
+    "expo-font": "~14.0.10",
     "expo-haptics": "~15.0.8",
     "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.10",

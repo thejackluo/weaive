@@ -29,6 +29,7 @@ class AIResponse:
         provider: Provider name ('bedrock', 'openai', 'anthropic', 'deterministic', 'cache')
         cached: Whether this response came from cache (no API call)
         run_id: Database ID of the ai_runs record (if persisted)
+        tool_calls: List of tool calls requested by AI (Story 6.2 Tool Use)
     """
 
     content: str
@@ -39,6 +40,7 @@ class AIResponse:
     provider: str
     cached: bool = False
     run_id: Optional[str] = None
+    tool_calls: Optional[list] = None  # Story 6.2: Tool Use support
 
 
 class AIProviderError(Exception):
@@ -84,17 +86,18 @@ class AIProvider(_AIProviderBase, ABC):
     """
 
     @abstractmethod
-    def complete(self, prompt: str, model: str, **kwargs) -> AIResponse:
+    def complete(self, prompt: str, model: str, tools: Optional[list] = None, **kwargs) -> AIResponse:
         """
         Generate AI completion for the given prompt.
 
         Args:
             prompt: User's input text
             model: Model identifier (provider-specific)
+            tools: Optional list of tool schemas for function calling (Story 6.2)
             **kwargs: Additional provider-specific parameters
 
         Returns:
-            AIResponse with content, token counts, cost
+            AIResponse with content, token counts, cost, and optional tool_calls
 
         Raises:
             AIProviderError: If generation fails (retryable or not)

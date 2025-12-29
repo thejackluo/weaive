@@ -164,6 +164,28 @@ You're building something real here. Week by week, day by day.
 
 Next week: {next_milestone}""",
     },
+    "chat": {
+        "default": """I'm here to support your growth journey.
+
+What's on your mind? I can help you:
+• Break down goals into actionable steps
+• Track your daily progress
+• Build consistent habits
+• Reflect on your journey
+
+What would be most helpful right now?""",
+        "greeting": """Hey! Ready to tackle your goals today?
+
+I'm here to help you stay focused and make progress.
+
+What are you working on?""",
+        "followup": """Let's keep the momentum going.
+
+Based on what you shared, here's what I think:
+{reflection}
+
+What's your next step?""",
+    },
     "factual_question": {
         "default": """I don't have access to real-time information or specific factual knowledge.
 
