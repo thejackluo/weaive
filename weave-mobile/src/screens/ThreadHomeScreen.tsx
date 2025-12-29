@@ -49,15 +49,38 @@ export function ThreadHomeScreen() {
   // This ensures the red dot disappears after submitting reflection
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[ThreadHome] Screen focused - refetching journal status');
-      refetchJournal();
-    }, [refetchJournal])
+      console.log('[ThreadHome] Screen focused - refetching binds and journal');
+      // Force refetch by invalidating cache first
+      refetch(); // Refetch today's binds
+      refetchJournal(); // Refetch journal status
+    }, [refetch, refetchJournal])
   );
+
+  // Also refetch when data changes (to catch new binds)
+  React.useEffect(() => {
+    if (data) {
+      console.log('[ThreadHome] Data updated - total binds:', data.data.length);
+      console.log('[ThreadHome] Bind IDs:', data.data.map((b) => b.id).join(', '));
+    }
+  }, [data]);
 
   // Mock user data (will be replaced with real user data in future)
   const user = mockUser;
   const greeting = getGreeting();
   const aiInsight = getRandomInsight();
+
+  // Get today's date formatted as "Monday, December 28"
+  const getTodayDate = () => {
+    const today = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    };
+    return today.toLocaleDateString('en-US', options);
+  };
+
+  const todayDate = getTodayDate();
 
   // Determine if reflection is complete (has today's journal entry)
   const hasCompletedReflection = !!todayJournal;
@@ -66,27 +89,6 @@ export function ThreadHomeScreen() {
     journalId: todayJournal?.id,
     hasCompletedReflection,
   });
-
-  // Get current week dates (Su-Sa)
-  const getCurrentWeek = () => {
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday
-    const weekDates = [];
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - dayOfWeek + i);
-      weekDates.push({
-        day: ['Su', 'M', 'T', 'W', 'Th', 'F', 'Sa'][i],
-        date: date.getDate(),
-        isToday: i === dayOfWeek,
-      });
-    }
-
-    return weekDates;
-  };
-
-  const weekDates = getCurrentWeek();
 
   // Handle needle toggle
   const handleNeedleToggle = (needleId: string) => {
@@ -163,11 +165,6 @@ export function ThreadHomeScreen() {
     // TODO: Open Weave AI modal with this insight as context
   };
 
-  // Handle profile press
-  const handleProfilePress = () => {
-    router.push('/(tabs)/settings');
-  };
-
   // Loading state
   if (isLoading || isLoadingGoals) {
     return (
@@ -219,68 +216,10 @@ export function ThreadHomeScreen() {
     >
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { padding: spacing[4] }]}
+        contentContainerStyle={[styles.content, { padding: spacing[4], gap: spacing[4] }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={[styles.header, { marginBottom: spacing[6] }]}>
-          {/* Streak counter */}
-          <View style={styles.streakBadge}>
-            <Body weight="semibold" style={{ color: colors.text.primary }}>
-              {user.streak} 🔥
-            </Body>
-          </View>
-
-          {/* Greeting */}
-          <View style={styles.greetingContainer}>
-            <Body style={{ color: colors.text.secondary }}>{greeting},</Body>
-            <Heading variant="displayLg" style={{ color: colors.text.primary }}>
-              {user.name}.
-            </Heading>
-          </View>
-
-          {/* Profile button */}
-          <Pressable
-            style={[styles.profileButton, { backgroundColor: colors.accent[500] }]}
-            onPress={handleProfilePress}
-          >
-            <Body weight="bold" style={{ color: 'white' }}>
-              {user.name.charAt(0).toUpperCase()}
-            </Body>
-          </Pressable>
-        </View>
-
-        {/* Calendar Widget */}
-        <View style={[styles.calendar, { marginBottom: spacing[5] }]}>
-          {weekDates.map((item, index) => (
-            <View key={index} style={styles.calendarDay}>
-              <Caption style={{ color: colors.text.muted, marginBottom: spacing[1] }}>
-                {item.day}
-              </Caption>
-              <View
-                style={[
-                  styles.dateCircle,
-                  {
-                    backgroundColor: item.isToday
-                      ? colors.text.primary
-                      : colors.background.secondary,
-                    borderColor: colors.border.subtle,
-                  },
-                ]}
-              >
-                <Body
-                  style={{
-                    color: item.isToday ? colors.background.primary : colors.text.primary,
-                  }}
-                >
-                  {item.date}
-                </Body>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* Today's Progress Metric */}
+        {/* Combined Header with Progress */}
         {(() => {
           const totalBinds = data?.data?.length || 0;
           const completedBinds = data?.data?.filter((bind) => bind.completed).length || 0;
@@ -296,20 +235,35 @@ export function ThreadHomeScreen() {
                 : colors.background.secondary;
 
           return (
-            <Card variant="default" style={{ marginBottom: spacing[5], padding: spacing[4] }}>
-              <View style={styles.todayProgressContainer}>
-                <View>
-                  <Caption style={{ color: colors.text.muted, marginBottom: spacing[1] }}>
-                    Today's Progress
-                  </Caption>
-                  <Heading variant="displayLg" style={{ color: colors.text.primary }}>
-                    {completedTasks}/{totalTasks}
-                  </Heading>
-                </View>
-                <View style={[styles.todayProgressBadge, { backgroundColor: badgeColor }]}>
-                  <Body weight="bold" style={{ color: 'white' }}>
-                    {percentage}%
+            <Card variant="default" style={{ padding: spacing[4] }}>
+              <View style={styles.combinedHeader}>
+                {/* Left side: Greeting, date, and progress */}
+                <View style={styles.headerLeft}>
+                  <Body style={{ color: colors.text.secondary, marginBottom: spacing[1] }}>
+                    {greeting}, {user.name}
                   </Body>
+                  <Heading
+                    variant="displayXl"
+                    style={{ color: colors.text.primary, marginBottom: spacing[2] }}
+                  >
+                    {todayDate}
+                  </Heading>
+                  <View style={styles.progressInfo}>
+                    <Caption style={{ color: colors.text.muted }}>Today's Progress</Caption>
+                    <Body
+                      weight="semibold"
+                      style={{ color: colors.text.primary, marginTop: spacing[1] }}
+                    >
+                      {completedTasks}/{totalTasks}
+                    </Body>
+                  </View>
+                </View>
+
+                {/* Right side: Progress badge */}
+                <View style={[styles.progressBadgeLarge, { backgroundColor: badgeColor }]}>
+                  <Heading variant="displayXl" style={{ color: 'white' }}>
+                    {percentage}%
+                  </Heading>
                 </View>
               </View>
             </Card>
@@ -317,12 +271,7 @@ export function ThreadHomeScreen() {
         })()}
 
         {/* AI Insight Card */}
-        <Card
-          variant="ai"
-          pressable
-          onPress={handleAIInsightPress}
-          style={{ marginBottom: spacing[5] }}
-        >
+        <Card variant="ai" pressable onPress={handleAIInsightPress}>
           <View style={styles.aiInsightContent}>
             <Body style={{ fontSize: 24, marginRight: spacing[2] }}>🧶</Body>
             <Body style={{ flex: 1, color: colors.violet[200] }}>{aiInsight}</Body>
@@ -330,10 +279,10 @@ export function ThreadHomeScreen() {
         </Card>
 
         {/* Your Needles Section */}
-        <View style={{ marginBottom: spacing[5] }}>
+        <View>
           <Heading
             variant="displayLg"
-            style={{ color: colors.text.primary, marginBottom: spacing[4] }}
+            style={{ color: colors.text.primary, marginBottom: spacing[3] }}
           >
             Your Needles
           </Heading>
@@ -380,10 +329,10 @@ export function ThreadHomeScreen() {
         </View>
 
         {/* Your Thread Section */}
-        <View style={{ marginBottom: spacing[8] }}>
+        <View>
           <Heading
             variant="displayLg"
-            style={{ color: colors.text.primary, marginBottom: spacing[4] }}
+            style={{ color: colors.text.primary, marginBottom: spacing[3] }}
           >
             Your Thread
           </Heading>
@@ -449,47 +398,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 32,
+    paddingBottom: 24,
   },
   centerContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  header: {
+  combinedHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  greetingContainer: {
+  headerLeft: {
     flex: 1,
-    alignItems: 'center',
   },
-  profileButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+  progressInfo: {
+    marginTop: 2,
   },
-  calendar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  calendarDay: {
-    alignItems: 'center',
-  },
-  dateCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
+  progressBadgeLarge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: 16,
   },
   aiInsightContent: {
     flexDirection: 'row',
@@ -508,17 +441,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
-  },
-  todayProgressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  todayProgressBadge: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

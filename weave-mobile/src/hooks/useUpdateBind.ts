@@ -11,7 +11,8 @@ import { goalsQueryKeys } from './useActiveGoals';
 interface UpdateBindRequest {
   bindId: string;
   title?: string;
-  recurrenceRule?: string; // iCal RRULE format
+  times_per_week?: number; // Number of times per week (1-7)
+  recurrenceRule?: string; // iCal RRULE format (deprecated, use times_per_week)
   defaultEstimatedMinutes?: number;
 }
 
@@ -36,12 +37,16 @@ async function updateBind(
   // Build request body, omitting undefined values
   const body: {
     title?: string;
+    times_per_week?: number;
     recurrence_rule?: string;
     default_estimated_minutes?: number;
   } = {};
 
   if (request.title !== undefined) {
     body.title = request.title;
+  }
+  if (request.times_per_week !== undefined) {
+    body.times_per_week = request.times_per_week;
   }
   if (request.recurrenceRule !== undefined) {
     body.recurrence_rule = request.recurrenceRule;
@@ -85,9 +90,9 @@ export function useUpdateBind() {
       return updateBind(session.access_token, request);
     },
     onSuccess: () => {
-      // Invalidate goal queries to refetch updated binds
-      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
-      console.log('[UPDATE_BIND] Invalidated goal queries');
+      // Invalidate ALL goal queries (list + detail views) to refetch updated binds
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.all });
+      console.log('[UPDATE_BIND] Invalidated all goal queries');
     },
   });
 }

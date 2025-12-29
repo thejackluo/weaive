@@ -64,7 +64,7 @@ export async function fetchTodayBinds(accessToken: string): Promise<BindsRespons
  * const newBind = await createBind({
  *   goal_id: 'goal-123',
  *   title: 'Workout',
- *   frequency_type: 'daily'
+ *   times_per_week: 3
  * }, accessToken);
  * ```
  */

@@ -2,9 +2,10 @@
 Stats API Router - Epic 5: Progress Visualization
 
 Endpoints:
+- GET /api/stats/progress - Level, XP, and streak data (NEW: Gamification)
 - GET /api/stats/consistency - Consistency heat map data
 - GET /api/stats/fulfillment - Fulfillment trend chart data
-- GET /api/stats/streaks - Streak tracking metrics
+- GET /api/stats/streaks - Streak tracking metrics (DEPRECATED: Use /progress instead)
 
 Implements US-5.2, US-5.3, US-5.5
 """
@@ -17,10 +18,95 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client
 
 from app.core.deps import get_current_user, get_supabase_client
+from app.services.progress_service import get_user_progress_stats
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/stats")
+
+
+@router.get("/progress")
+async def get_progress(
+    user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase_client),
+):
+    """
+    Get user progress stats (level, XP, streak) for dashboard display.
+
+    Returns:
+    - data: Progress object with level, XP, streak, and aggregate stats
+    - meta: Metadata with timestamp
+
+    Data format:
+    {
+      "level": 5,
+      "current_xp": 75,
+      "xp_to_next_level": 25,
+      "current_streak": 12,
+      "longest_streak": 18,
+      "streak_status": "active",  // "active" | "at_risk" | "broken"
+      "grace_period_active": false,
+      "total_binds_completed": 52,
+      "total_reflections": 23
+    }
+    """
+    if not supabase:
+        logger.error("❌ Supabase client not configured")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not configured",
+        )
+
+    # Extract user ID from JWT
+    auth_user_id = user.get("sub")
+    if not auth_user_id:
+        logger.error("❌ JWT payload missing 'sub' field (user ID)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    logger.info(f"[STATS_API] Progress request from auth_user_id: {auth_user_id}")
+
+    try:
+        # Get user_profile.id
+        user_profile_response = (
+            supabase.table("user_profiles")
+            .select("id")
+            .eq("auth_user_id", auth_user_id)
+            .single()
+            .execute()
+        )
+
+        if not user_profile_response.data:
+            logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found",
+            )
+
+        user_id = user_profile_response.data["id"]
+
+        # Get progress stats from service
+        progress_data = get_user_progress_stats(supabase, user_id)
+
+        logger.info(f"✅ Progress data: Level {progress_data['level']}, XP {progress_data['current_xp']}, Streak {progress_data['current_streak']}")
+
+        return {
+            "data": progress_data,
+            "meta": {
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error fetching progress data: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch progress data",
+        )
 
 
 @router.get("/consistency")
