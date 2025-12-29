@@ -31,13 +31,22 @@ export function ThreadHomeScreen() {
   const { data, isLoading, isError, error, refetch } = useTodayBinds();
 
   // Fetch active goals (needles) - to show goals even without binds
-  const { data: goalsData, isLoading: isLoadingGoals } = useActiveGoals();
+  const { data: goalsData, isLoading: isLoadingGoals, refetch: refetchGoals } = useActiveGoals();
 
   // Check if today's journal entry exists (for completion status)
   const { data: todayJournal, refetch: refetchJournal } = useGetTodayJournal();
 
-  // Refetch data when screen comes into focus
-  // This ensures binds and journal are always up-to-date
+  // 🐛 FIX: Refetch goals when screen comes into focus
+  // This ensures new/deleted goals appear immediately when navigating back from create/delete actions
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[ThreadHome] Screen focused - refetching goals');
+      refetchGoals();
+    }, [refetchGoals])
+  );
+
+  // Refetch journal status when screen comes into focus
+  // This ensures the red dot disappears after submitting reflection
   useFocusEffect(
     React.useCallback(() => {
       console.log('[ThreadHome] Screen focused - refetching binds and journal');
