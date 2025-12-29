@@ -20,7 +20,7 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Text, Card } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
@@ -39,8 +39,17 @@ type TimeframeOption = '7d' | '2w' | '1m';
 export function DashboardScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { data: goalsData, isLoading } = useActiveGoals();
+  const { data: goalsData, isLoading, refetch: refetchGoals } = useActiveGoals();
   const { data: userStatsData, isLoading: isStatsLoading } = useUserStats();
+
+  // 🐛 FIX: Refetch goals when screen comes into focus
+  // This ensures new/deleted/archived goals appear immediately when navigating back
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[Dashboard] Screen focused - refetching goals');
+      refetchGoals();
+    }, [refetchGoals])
+  );
 
   const [consistencyFilter, setConsistencyFilter] = useState<ConsistencyFilter>('Overall');
   const [consistencyTimeframe, setConsistencyTimeframe] = useState<TimeframeOption>('7d');
