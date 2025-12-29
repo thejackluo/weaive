@@ -12,57 +12,18 @@ Implements AC1 and AC4 from Story 2.1, US-2.2 detail view, US-2.3 goal creation
 """
 
 import logging
-from datetime import date, timedelta
-from typing import List, Optional
+from datetime import date, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, Query, status
 from supabase import Client
 
 from app.core.deps import get_current_user, get_supabase_client
+from app.core.errors import NotFoundException, ValidationException
+from app.schemas.goal import GoalCreate, GoalUpdate
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/goals")
-
-
-# Request/Response Models
-
-
-class QGoalCreate(BaseModel):
-    """Q-Goal (Milestone) creation model"""
-
-    title: str = Field(..., min_length=1, max_length=200)
-    metric_name: Optional[str] = None
-    target_value: Optional[float] = None
-    current_value: Optional[float] = None
-    unit: Optional[str] = None
-
-
-class BindCreate(BaseModel):
-    """Bind (Subtask Template) creation model"""
-
-    title: str = Field(..., min_length=1, max_length=200)
-    description: Optional[str] = None
-    frequency_type: str = Field(..., pattern="^(daily|weekly|custom)$")
-    frequency_value: int = Field(..., ge=1, le=7)
-
-
-class GoalCreate(BaseModel):
-    """Goal creation request model"""
-
-    title: str = Field(..., min_length=1, max_length=200)
-    description: Optional[str] = None  # "Why it matters"
-    qgoals: Optional[List[QGoalCreate]] = []
-    binds: Optional[List[BindCreate]] = []
-
-
-class GoalUpdate(BaseModel):
-    """Goal update request model"""
-
-    title: Optional[str] = Field(None, min_length=1, max_length=200)
-    description: Optional[str] = None
-    status: Optional[str] = Field(None, pattern="^(active|archived)$")
 
 
 @router.get("")
@@ -89,19 +50,15 @@ async def list_goals(
     """
     if not supabase:
         logger.error("❌ Supabase client not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database not configured",
-        )
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(service_name="Database")
 
     # Extract user ID from JWT (auth.uid() is in the 'sub' claim)
     auth_user_id = user.get("sub")
     if not auth_user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        from app.core.errors import UnauthorizedException
+        raise UnauthorizedException(message="Invalid token payload")
 
     logger.info(f"[GOALS_API] Request from auth_user_id: {auth_user_id}")
 
@@ -118,10 +75,7 @@ async def list_goals(
 
         if not user_profile_response.data:
             logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found",
-            )
+            raise NotFoundException(resource="User Profile", resource_id=auth_user_id)
 
         user_id = user_profile_response.data["id"]
         logger.info(f"[GOALS_API] Found user_profile.id: {user_id}")
@@ -161,17 +115,19 @@ async def list_goals(
             "meta": {
                 "total": len(goals),
                 "active_goal_limit": 3,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             },
         }
 
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
+    except (NotFoundException, ValidationException):
+        # Re-raise custom exceptions as-is
         raise
     except Exception as e:
         logger.error(f"❌ Error fetching goals: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch goals",
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(
+            service_name="Database",
+            message=f"Failed to fetch goals: {str(e)}"
         )
 
 
@@ -195,19 +151,15 @@ async def get_goal_by_id(
     """
     if not supabase:
         logger.error("❌ Supabase client not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database not configured",
-        )
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(service_name="Database")
 
     # Extract user ID from JWT
     auth_user_id = user.get("sub")
     if not auth_user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        from app.core.errors import UnauthorizedException
+        raise UnauthorizedException(message="Invalid token payload")
 
     logger.info(f"[GOALS_API] Get goal {goal_id} for auth_user_id: {auth_user_id}")
 
@@ -223,10 +175,7 @@ async def get_goal_by_id(
 
         if not user_profile_response.data:
             logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found",
-            )
+            raise NotFoundException(resource="User Profile", resource_id=auth_user_id)
 
         user_id = user_profile_response.data["id"]
         logger.debug(f"✅ Resolved user_id: {user_id} for auth_user_id: {auth_user_id}")
@@ -245,10 +194,7 @@ async def get_goal_by_id(
 
         if not goal_response.data:
             logger.warning(f"⚠️ Goal {goal_id} not found for user {user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Goal not found",
-            )
+            raise NotFoundException(resource="Goal", resource_id=goal_id)
 
         goal = goal_response.data
         logger.info(f"✅ Found goal {goal_id}: {goal.get('title')}")
@@ -278,7 +224,7 @@ async def get_goal_by_id(
         try:
             binds_response = (
                 supabase.table("subtask_templates")
-                .select("id, goal_id, title, default_estimated_minutes, recurrence_rule, is_archived, created_at, updated_at")
+                .select("id, goal_id, title, default_estimated_minutes, times_per_week, recurrence_rule, is_archived, created_at, updated_at")
                 .eq("goal_id", goal_id)
                 .eq("is_archived", False)  # Only active binds
                 .order("created_at", desc=False)
@@ -294,18 +240,19 @@ async def get_goal_by_id(
         return {
             "data": enriched_goal,
             "meta": {
-                "timestamp": date.today().isoformat(),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             },
         }
 
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
+    except (NotFoundException, ValidationException):
+        # Re-raise custom exceptions as-is
         raise
     except Exception as e:
         logger.error(f"❌ Error fetching goal {goal_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch goal",
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(
+            service_name="Database",
+            message=f"Failed to fetch goal: {str(e)}"
         )
 
 
@@ -334,19 +281,15 @@ async def create_goal(
     """
     if not supabase:
         logger.error("❌ Supabase client not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database not configured",
-        )
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(service_name="Database")
 
     # Extract user ID from JWT
     auth_user_id = user.get("sub")
     if not auth_user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        from app.core.errors import UnauthorizedException
+        raise UnauthorizedException(message="Invalid token payload")
 
     logger.info(f"[CREATE_GOAL] Request from auth_user_id: {auth_user_id}")
 
@@ -362,10 +305,7 @@ async def create_goal(
 
         if not user_profile_response.data:
             logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found",
-            )
+            raise NotFoundException(resource="User Profile", resource_id=auth_user_id)
 
         user_id = user_profile_response.data["id"]
         logger.info(f"[CREATE_GOAL] Resolved user_id: {user_id}")
@@ -382,9 +322,9 @@ async def create_goal(
         active_goal_count = active_goals_response.count or 0
         if active_goal_count >= 3:
             logger.warning(f"⚠️ User {user_id} already has {active_goal_count} active goals")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Maximum 3 active goals allowed. Archive an existing goal first.",
+            raise ValidationException(
+                message="Maximum 3 active goals allowed. Archive an existing goal first.",
+                details={"current_count": active_goal_count, "max_allowed": 3}
             )
 
         # Create the goal
@@ -399,9 +339,10 @@ async def create_goal(
 
         if not goal_response.data:
             logger.error("❌ Failed to create goal")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create goal",
+            from app.core.errors import ServiceUnavailableException
+            raise ServiceUnavailableException(
+                service_name="Database",
+                message="Failed to create goal"
             )
 
         created_goal = goal_response.data[0]
@@ -483,17 +424,18 @@ async def create_goal(
         return {
             "data": created_goal,
             "meta": {
-                "timestamp": date.today().isoformat(),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             },
         }
 
-    except HTTPException:
+    except (NotFoundException, ValidationException):
         raise
     except Exception as e:
         logger.error(f"❌ Error creating goal: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create goal",
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(
+            service_name="Database",
+            message=f"Failed to create goal: {str(e)}"
         )
 
 
@@ -523,19 +465,15 @@ async def update_goal(
     """
     if not supabase:
         logger.error("❌ Supabase client not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database not configured",
-        )
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(service_name="Database")
 
     # Extract user ID from JWT
     auth_user_id = user.get("sub")
     if not auth_user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        from app.core.errors import UnauthorizedException
+        raise UnauthorizedException(message="Invalid token payload")
 
     logger.info(f"[UPDATE_GOAL] Request from auth_user_id: {auth_user_id}")
 
@@ -551,10 +489,7 @@ async def update_goal(
 
         if not user_profile_response.data:
             logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found",
-            )
+            raise NotFoundException(resource="User Profile", resource_id=auth_user_id)
 
         user_id = user_profile_response.data["id"]
 
@@ -568,10 +503,7 @@ async def update_goal(
             update_payload["status"] = goal_data.status
 
         if not update_payload:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No fields to update",
-            )
+            raise ValidationException(message="No fields to update")
 
         # Update the goal (RLS enforced)
         update_response = (
@@ -584,10 +516,7 @@ async def update_goal(
 
         if not update_response.data:
             logger.warning(f"⚠️ Goal {goal_id} not found for user {user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Goal not found",
-            )
+            raise NotFoundException(resource="Goal", resource_id=goal_id)
 
         updated_goal = update_response.data[0]
         logger.info(f"✅ Updated goal {goal_id}")
@@ -595,17 +524,18 @@ async def update_goal(
         return {
             "data": updated_goal,
             "meta": {
-                "timestamp": date.today().isoformat(),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             },
         }
 
-    except HTTPException:
+    except (NotFoundException, ValidationException):
         raise
     except Exception as e:
         logger.error(f"❌ Error updating goal {goal_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update goal",
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(
+            service_name="Database",
+            message=f"Failed to update goal: {str(e)}"
         )
 
 
@@ -630,19 +560,15 @@ async def archive_goal(
     """
     if not supabase:
         logger.error("❌ Supabase client not configured")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database not configured",
-        )
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(service_name="Database")
 
     # Extract user ID from JWT
     auth_user_id = user.get("sub")
     if not auth_user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
+        from app.core.errors import UnauthorizedException
+        raise UnauthorizedException(message="Invalid token payload")
 
     logger.info(f"[ARCHIVE_GOAL] Request from auth_user_id: {auth_user_id}")
 
@@ -658,10 +584,7 @@ async def archive_goal(
 
         if not user_profile_response.data:
             logger.error(f"❌ No user profile found for auth_user_id: {auth_user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User profile not found",
-            )
+            raise NotFoundException(resource="User Profile", resource_id=auth_user_id)
 
         user_id = user_profile_response.data["id"]
 
@@ -676,10 +599,7 @@ async def archive_goal(
 
         if not archive_response.data:
             logger.warning(f"⚠️ Goal {goal_id} not found for user {user_id}")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Goal not found",
-            )
+            raise NotFoundException(resource="Goal", resource_id=goal_id)
 
         archived_goal = archive_response.data[0]
         logger.info(f"✅ Archived goal {goal_id}")
@@ -687,17 +607,18 @@ async def archive_goal(
         return {
             "data": archived_goal,
             "meta": {
-                "timestamp": date.today().isoformat(),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             },
         }
 
-    except HTTPException:
+    except (NotFoundException, ValidationException):
         raise
     except Exception as e:
         logger.error(f"❌ Error archiving goal {goal_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to archive goal",
+        from app.core.errors import ServiceUnavailableException
+        raise ServiceUnavailableException(
+            service_name="Database",
+            message=f"Failed to archive goal: {str(e)}"
         )
 
 

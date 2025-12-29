@@ -237,28 +237,198 @@ export default function SettingsScreen() {
           </Pressable>
         </View>
 
-        {/* Placeholder for Future Settings */}
+        {/* Account Section (Story 9.4 - AC 7) */}
         <View
           style={{
             backgroundColor: '#1F1F23',
             borderRadius: 12,
             borderWidth: 1,
             borderColor: '#27272A',
-            padding: 20,
-            alignItems: 'center',
+            overflow: 'hidden',
           }}
         >
-          <Text
+          <View
             style={{
-              fontSize: 14,
-              color: '#71717A',
-              textAlign: 'center',
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: '#27272A',
             }}
           >
-            More settings coming soon...
-            {'\n'}
-            Account • Notifications • Privacy
-          </Text>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: '#FAFAFA',
+              }}
+            >
+              Account
+            </Text>
+          </View>
+
+          {/* Subscription Link */}
+          <Pressable
+            onPress={() => router.push('/(tabs)/settings/subscription')}
+            style={{
+              padding: 16,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottomWidth: 1,
+              borderBottomColor: '#27272A',
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: '#FAFAFA',
+                  marginBottom: 4,
+                }}
+              >
+                💳 Subscription
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: '#71717A',
+                }}
+              >
+                Manage your Weave Pro subscription
+              </Text>
+            </View>
+            <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
+          </Pressable>
+
+          {/* Account Management Link */}
+          <Pressable
+            onPress={() => router.push('/(tabs)/settings/account')}
+            style={{
+              padding: 16,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: '#FAFAFA',
+                  marginBottom: 4,
+                }}
+              >
+                🔐 Account Management
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: '#71717A',
+                }}
+              >
+                Export data, delete account (GDPR)
+              </Text>
+            </View>
+            <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
+          </Pressable>
+        </View>
+
+        {/* Privacy & Legal Section (Story 9.4 - AC 7) */}
+        <View
+          style={{
+            backgroundColor: '#1F1F23',
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: '#27272A',
+            overflow: 'hidden',
+          }}
+        >
+          <View
+            style={{
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: '#27272A',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: '#FAFAFA',
+              }}
+            >
+              Privacy & Legal
+            </Text>
+          </View>
+
+          {/* Privacy Policy Link (Placeholder) */}
+          <Pressable
+            onPress={() => {
+              /* TODO: Open privacy policy */
+            }}
+            style={{
+              padding: 16,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottomWidth: 1,
+              borderBottomColor: '#27272A',
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: '#FAFAFA',
+                  marginBottom: 4,
+                }}
+              >
+                🔒 Privacy Policy
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: '#71717A',
+                }}
+              >
+                How we handle your data
+              </Text>
+            </View>
+            <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
+          </Pressable>
+
+          {/* Terms of Service Link (Placeholder) */}
+          <Pressable
+            onPress={() => {
+              /* TODO: Open terms of service */
+            }}
+            style={{
+              padding: 16,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: '#FAFAFA',
+                  marginBottom: 4,
+                }}
+              >
+                📄 Terms of Service
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: '#71717A',
+                }}
+              >
+                Legal terms and conditions
+              </Text>
+            </View>
+            <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -47,6 +47,8 @@ import type {
   CreateGoalRequest,
   UpdateGoalRequest,
 } from '@/types/goals';
+import { consistencyQueryKeys } from './useConsistencyData';
+import { bindsQueryKeys } from './useTodayBinds';
 
 /**
  * Query key factory for goals
@@ -148,9 +150,14 @@ export function useCreateGoal() {
 
       return createGoal(goalData, session.access_token);
     },
-    onSuccess: () => {
-      // Invalidate active goals query to refetch the list
-      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
+    onSuccess: async () => {
+      // Refetch all related queries immediately to show new data
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
+        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: ['bindsGrid'] }),
+      ]);
     },
   });
 }
@@ -185,10 +192,15 @@ export function useUpdateGoal() {
 
       return updateGoal(goalId, data, session.access_token);
     },
-    onSuccess: (data, variables) => {
-      // Invalidate both the list and the specific goal query
-      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
-      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) });
+    onSuccess: async (data, variables) => {
+      // Refetch all related queries immediately to show updated data
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
+        queryClient.refetchQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) }),
+        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: ['bindsGrid'] }),
+      ]);
     },
   });
 }
@@ -221,9 +233,15 @@ export function useArchiveGoal() {
       return archiveGoal(goalId, session.access_token);
     },
     onSuccess: async (data, goalId) => {
-      // Refetch both the list and the specific goal query
-      // Using refetchQueries ensures the data is fresh before the mutation completes
-      await queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() });
+      // Refetch all related queries immediately to show updated data
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
+        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: ['bindsGrid'] }),
+      ]);
+
+      // Invalidate the specific goal (no longer needed in active queries)
       queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(goalId) });
     },
   });

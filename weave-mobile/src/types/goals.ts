@@ -55,8 +55,8 @@ export interface Bind {
   id: string;
   title: string;
   description?: string;
-  frequency: string;
-  recurrence_rule?: string; // iCal RRULE format (e.g., "FREQ=DAILY;INTERVAL=1")
+  times_per_week: number; // Number of times per week (1-7)
+  recurrence_rule?: string; // iCal RRULE format (deprecated, use times_per_week)
   completedToday?: boolean;
 }
 
@@ -124,8 +124,7 @@ export interface QGoalCreate {
 export interface BindCreate {
   title: string;
   description?: string;
-  frequency_type: 'daily' | 'weekly' | 'custom';
-  frequency_value: number; // 1-7
+  times_per_week: number; // Number of times per week (1-7), default: 3
 }
 
 /**

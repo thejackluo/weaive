@@ -1,0 +1,327 @@
+/**
+ * In-App Purchase Service
+ * Story 9.4: App Store Readiness - AC 1 (Phase 1: Manual IAP)
+ *
+ * Direct integration with Apple IAP using expo-in-app-purchases.
+ * Handles product fetching, purchase flow, and receipt restoration.
+ */
+
+import { Platform } from 'react-native';
+
+// Type definitions for expo-in-app-purchases
+declare namespace InAppPurchases {
+  enum IAPResponseCode {
+    OK = 0,
+    USER_CANCELED = 1,
+    ERROR = 2,
+    DEFERRED = 3,
+  }
+
+  interface IAPItemDetails {
+    productId: string;
+    title: string;
+    description: string;
+    price: string;
+    priceAmountMicros: number;
+    priceCurrencyCode: string;
+    type: 'subscription' | 'consumable' | 'non-consumable';
+  }
+
+  interface InAppPurchase {
+    productId: string;
+    orderId: string;
+    transactionReceipt: string;
+    acknowledged: boolean;
+    purchaseTime: number;
+  }
+
+  interface IAPQueryResponse<T> {
+    responseCode: IAPResponseCode;
+    results?: T[];
+  }
+
+  interface IAPModule {
+    connectAsync: () => Promise<void>;
+    disconnectAsync: () => Promise<void>;
+    getProductsAsync: (productIds: string[]) => Promise<IAPQueryResponse<IAPItemDetails>>;
+    purchaseItemAsync: (productId: string) => Promise<IAPQueryResponse<InAppPurchase>>;
+    getPurchaseHistoryAsync: () => Promise<IAPQueryResponse<InAppPurchase>>;
+    finishTransactionAsync: (purchase: InAppPurchase, consume: boolean) => Promise<void>;
+    setPurchaseListener: (
+      listener: (result: IAPQueryResponse<InAppPurchase>) => void
+    ) => { remove: () => void } | undefined;
+  }
+}
+
+// Conditionally import IAP module to prevent "Cannot find native module" errors in Expo Go
+let iapModule: InAppPurchases.IAPModule | null = null;
+try {
+  iapModule = require('expo-in-app-purchases') as InAppPurchases.IAPModule;
+} catch {
+  if (__DEV__) {
+    console.warn('⚠️ expo-in-app-purchases not available (requires development build)');
+  }
+}
+
+// Product IDs (must match App Store Connect configuration)
+export const PRODUCT_IDS = {
+  MONTHLY: 'com.weavelight.app.pro.monthly',
+  ANNUAL: 'com.weavelight.app.pro.annual',
+  TRIAL: 'com.weavelight.app.trial.10day',
+} as const;
+
+export type ProductId = (typeof PRODUCT_IDS)[keyof typeof PRODUCT_IDS];
+
+// Product details type
+export interface Product {
+  productId: string;
+  title: string;
+  description: string;
+  price: string;
+  priceAmountMicros: number;
+  priceCurrencyCode: string;
+  type: 'subscription' | 'consumable' | 'non-consumable';
+}
+
+// Purchase result type
+export interface PurchaseResult {
+  success: boolean;
+  receipt?: string;
+  transactionId?: string;
+  productId?: string;
+  error?: string;
+}
+
+/**
+ * Initialize IAP connection
+ * Must be called before any IAP operations
+ */
+export async function initializeIAP(): Promise<boolean> {
+  try {
+    // iOS only - Android uses Google Play Billing
+    if (Platform.OS !== 'ios') {
+      console.warn('IAP only supported on iOS for this MVP');
+      return false;
+    }
+
+    // Check if native module is available
+    // expo-in-app-purchases requires a development build or production build
+    if (!iapModule || typeof iapModule.connectAsync !== 'function') {
+      console.warn('⚠️ IAP native module not available (likely running in Expo Go)');
+      return false;
+    }
+
+    await iapModule.connectAsync();
+    console.log('✅ IAP connection established');
+    return true;
+  } catch (error) {
+    // Handle "Cannot find native module" error gracefully
+    if (error instanceof Error && error.message.includes('Cannot find native module')) {
+      console.warn(
+        '⚠️ IAP native module not available. This requires a development build or production build.'
+      );
+      return false;
+    }
+    console.error('❌ IAP initialization failed:', error);
+    return false;
+  }
+}
+
+/**
+ * Disconnect IAP connection
+ * Call when app is backgrounded or user logs out
+ */
+export async function disconnectIAP(): Promise<void> {
+  try {
+    // Check if native module is available
+    if (!iapModule || typeof iapModule.disconnectAsync !== 'function') {
+      return; // Silently return if module not available
+    }
+
+    await iapModule.disconnectAsync();
+    console.log('✅ IAP connection closed');
+  } catch (error) {
+    // Handle "Cannot find native module" error gracefully
+    if (error instanceof Error && error.message.includes('Cannot find native module')) {
+      return; // Silently return if module not available
+    }
+    console.error('❌ IAP disconnect failed:', error);
+  }
+}
+
+/**
+ * Fetch available products from App Store
+ * Returns product details (price, description, etc.)
+ */
+export async function fetchProducts(productIds: ProductId[]): Promise<Product[]> {
+  try {
+    if (!iapModule) {
+      throw new Error('IAP module not available');
+    }
+    const response = await iapModule.getProductsAsync(productIds);
+
+    if (response.responseCode !== InAppPurchases.IAPResponseCode.OK) {
+      throw new Error(`Failed to fetch products: ${response.responseCode}`);
+    }
+
+    if (!response.results) {
+      throw new Error('No products returned');
+    }
+
+    // Transform to our Product type
+    return response.results.map((product: InAppPurchases.IAPItemDetails) => ({
+      productId: product.productId,
+      title: product.title,
+      description: product.description,
+      price: product.price,
+      priceAmountMicros: product.priceAmountMicros,
+      priceCurrencyCode: product.priceCurrencyCode,
+      type: product.type as unknown as 'subscription' | 'consumable' | 'non-consumable',
+    }));
+  } catch (error) {
+    console.error('❌ Failed to fetch products:', error);
+    throw error;
+  }
+}
+
+/**
+ * Purchase a product
+ * Initiates Apple IAP flow (native payment sheet)
+ */
+export async function purchaseProduct(productId: ProductId): Promise<PurchaseResult> {
+  try {
+    if (!iapModule) {
+      return {
+        success: false,
+        error: 'IAP module not available',
+      };
+    }
+    const response = await iapModule.purchaseItemAsync(productId);
+
+    if (!response || response.responseCode !== InAppPurchases.IAPResponseCode.OK) {
+      // User cancelled or error occurred
+      return {
+        success: false,
+        error: `Purchase failed: ${response?.responseCode || 'Unknown error'}`,
+      };
+    }
+
+    // Purchase successful - extract receipt
+    const purchase = response.results?.[0];
+    if (!purchase) {
+      return {
+        success: false,
+        error: 'No purchase data returned',
+      };
+    }
+
+    return {
+      success: true,
+      receipt: purchase.transactionReceipt,
+      transactionId: purchase.orderId,
+      productId: purchase.productId,
+    };
+  } catch (error) {
+    console.error('❌ Purchase failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Restore previous purchases
+ * Required for users who reinstall the app or switch devices
+ */
+export async function restorePurchases(): Promise<PurchaseResult> {
+  try {
+    if (!iapModule) {
+      return {
+        success: false,
+        error: 'IAP module not available',
+      };
+    }
+    const { responseCode, results } = await iapModule.getPurchaseHistoryAsync();
+
+    if (responseCode !== InAppPurchases.IAPResponseCode.OK) {
+      return {
+        success: false,
+        error: `Restore failed: ${responseCode}`,
+      };
+    }
+
+    // Find most recent active subscription
+    const activeSubscription = results?.find(
+      (purchase: InAppPurchases.InAppPurchase) =>
+        purchase.acknowledged &&
+        [PRODUCT_IDS.MONTHLY, PRODUCT_IDS.ANNUAL, PRODUCT_IDS.TRIAL].includes(
+          purchase.productId as ProductId
+        )
+    );
+
+    if (!activeSubscription) {
+      return {
+        success: false,
+        error: 'No active subscription found',
+      };
+    }
+
+    return {
+      success: true,
+      receipt: activeSubscription.transactionReceipt,
+      transactionId: activeSubscription.orderId,
+      productId: activeSubscription.productId,
+    };
+  } catch (error) {
+    console.error('❌ Restore purchases failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Finish a transaction (acknowledge purchase)
+ * Must be called after successful purchase/restore to prevent re-prompting
+ */
+export async function finishTransaction(purchase: InAppPurchases.InAppPurchase): Promise<void> {
+  try {
+    if (!iapModule) {
+      return;
+    }
+    await iapModule.finishTransactionAsync(purchase, true);
+    console.log('✅ Transaction finished:', purchase.orderId);
+  } catch (error) {
+    console.error('❌ Failed to finish transaction:', error);
+  }
+}
+
+/**
+ * Set purchase listener
+ * Listens for purchase updates (success, failure, restore)
+ */
+export function setPurchaseListener(
+  listener: (result: InAppPurchases.IAPQueryResponse<InAppPurchases.InAppPurchase>) => void
+): (() => void) | undefined {
+  if (!iapModule) {
+    return undefined;
+  }
+  const subscription = iapModule.setPurchaseListener(listener);
+
+  // Return cleanup function if subscription exists
+  if (subscription && typeof subscription.remove === 'function') {
+    return () => subscription.remove();
+  }
+
+  return undefined;
+}
+
+/**
+ * Check if device supports IAP
+ * iOS only for MVP
+ */
+export function isIAPSupported(): boolean {
+  return Platform.OS === 'ios';
+}

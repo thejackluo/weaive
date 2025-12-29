@@ -3,6 +3,7 @@ AI Chat Data Factories - Story 6.1
 Use faker for random test data generation
 Supports overrides for specific test scenarios
 """
+
 import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -13,9 +14,7 @@ fake = Faker()
 
 
 def create_conversation(
-    user_id: Optional[uuid.UUID] = None,
-    initiated_by: str = "user",
-    **overrides
+    user_id: Optional[uuid.UUID] = None, initiated_by: str = "user", **overrides
 ) -> Dict[str, Any]:
     """
     Create a test AI chat conversation.
@@ -59,9 +58,7 @@ def create_conversations(count: int, **kwargs) -> list[Dict[str, Any]]:
 
 
 def create_message(
-    conversation_id: Optional[uuid.UUID] = None,
-    role: str = "user",
-    **overrides
+    conversation_id: Optional[uuid.UUID] = None, role: str = "user", **overrides
 ) -> Dict[str, Any]:
     """
     Create a test chat message.
@@ -102,9 +99,7 @@ def create_messages(count: int, **kwargs) -> list[Dict[str, Any]]:
 
 
 def create_user_profile(
-    checkin_enabled: bool = True,
-    checkin_deterministic: bool = False,
-    **overrides
+    checkin_enabled: bool = True, checkin_deterministic: bool = False, **overrides
 ) -> Dict[str, Any]:
     """
     Create a test user profile with AI chat settings.
@@ -153,9 +148,7 @@ def create_user_profiles(count: int, **kwargs) -> list[Dict[str, Any]]:
 
 
 def create_ai_run(
-    user_id: Optional[uuid.UUID] = None,
-    operation_type: str = "chat",
-    **overrides
+    user_id: Optional[uuid.UUID] = None, operation_type: str = "chat", **overrides
 ) -> Dict[str, Any]:
     """
     Create a test AI run record for cost tracking.
@@ -177,7 +170,9 @@ def create_ai_run(
         ),
         "input_tokens": fake.random_int(min=100, max=1000),
         "output_tokens": fake.random_int(min=50, max=500),
-        "cost_usd": fake.pydecimal(left_digits=1, right_digits=4, positive=True, min_value=0.001, max_value=0.5),
+        "cost_usd": fake.pydecimal(
+            left_digits=1, right_digits=4, positive=True, min_value=0.001, max_value=0.5
+        ),
         "duration_ms": fake.random_int(min=500, max=3000),
         "created_at": fake.date_time_this_hour(),
     }
@@ -196,7 +191,7 @@ def create_rate_limited_user(**overrides) -> Dict[str, Any]:
         ai_premium_messages_today=10,  # Daily premium limit
         ai_free_messages_today=40,  # Daily free limit
         ai_messages_this_month=500,  # Monthly limit
-        **overrides
+        **overrides,
     )
 
 
@@ -212,7 +207,7 @@ def create_pro_user(**overrides) -> Dict[str, Any]:
         ai_premium_messages_today=50,
         ai_free_messages_today=100,
         ai_messages_this_month=150,
-        **overrides
+        **overrides,
     )
 
 

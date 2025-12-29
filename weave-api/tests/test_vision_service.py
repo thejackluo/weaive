@@ -33,6 +33,7 @@ def mock_vision_result():
         provider="test-provider",
         validation_score=85,
         is_verified=True,
+        summary="Test OCR text and image analysis",
         ocr_text="Test OCR text",
         categories=[
             {"label": "gym", "confidence": 0.92},
@@ -72,6 +73,7 @@ class MockVisionProvider(VisionProvider):
             provider=self.name,
             validation_score=85,
             is_verified=True,
+            summary="Mock image analysis summary",
             ocr_text="Mock OCR",
             categories=[{"label": "gym", "confidence": 0.9}],
             quality_score=4,

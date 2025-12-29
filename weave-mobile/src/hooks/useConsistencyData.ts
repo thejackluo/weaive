@@ -36,8 +36,8 @@ import { fetchConsistencyData, type ConsistencyResponse } from '@/services/consi
  */
 export const consistencyQueryKeys = {
   all: ['consistency'] as const,
-  byTimeframe: (timeframe: string, filterType: string, filterId?: string) =>
-    [...consistencyQueryKeys.all, timeframe, filterType, filterId] as const,
+  byTimeframe: (timeframe: string, filterType: string, filterId?: string, startDate?: string) =>
+    [...consistencyQueryKeys.all, timeframe, filterType, filterId, startDate] as const,
 };
 
 /**
@@ -46,6 +46,7 @@ export const consistencyQueryKeys = {
  * @param timeframe - Time range: 7d, 2w, 1m, 90d (default: 7d)
  * @param filterType - Filter type: overall, needle, bind, thread (default: overall)
  * @param filterId - Optional goal/bind ID if filtering by needle or bind
+ * @param startDate - Optional start date (YYYY-MM-DD) for dynamic navigation
  * @returns TanStack Query result with consistency data
  *
  * - data: ConsistencyResponse with {data: ConsistencyDataPoint[], meta: {...}}
@@ -58,18 +59,19 @@ export const consistencyQueryKeys = {
 export function useConsistencyData(
   timeframe: '7d' | '2w' | '1m' | '90d' = '7d',
   filterType: 'overall' | 'needle' | 'bind' | 'thread' = 'overall',
-  filterId?: string
+  filterId?: string,
+  startDate?: string
 ) {
   const { session } = useAuth();
 
   return useQuery<ConsistencyResponse, Error>({
-    queryKey: consistencyQueryKeys.byTimeframe(timeframe, filterType, filterId),
+    queryKey: consistencyQueryKeys.byTimeframe(timeframe, filterType, filterId, startDate),
     queryFn: async () => {
       if (!session?.access_token) {
         throw new Error('No active session - user must be authenticated');
       }
 
-      return fetchConsistencyData(session.access_token, timeframe, filterType, filterId);
+      return fetchConsistencyData(session.access_token, timeframe, filterType, filterId, startDate);
     },
     enabled: !!session?.access_token, // Only run if authenticated
     staleTime: 2 * 60 * 1000, // 2 minutes (stats data updates frequently)

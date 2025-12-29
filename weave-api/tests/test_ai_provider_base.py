@@ -34,12 +34,16 @@ def mock_db():
     """Mock Supabase client with chainable methods."""
     db = Mock()
 
+    # Create mock for execute result
+    execute_result = Mock()
+    execute_result.data = [{"id": "test-run-id"}]
+
     # Create chainable mock for Supabase query builder pattern
     chain_mock = Mock()
-    chain_mock.table = Mock(return_value=chain_mock)
     chain_mock.insert = Mock(return_value=chain_mock)
-    chain_mock.execute = Mock(return_value=Mock(data=[{'id': 'test-run-id'}]))
+    chain_mock.execute = Mock(return_value=execute_result)
 
+    # db.table() returns the chain_mock
     db.table = Mock(return_value=chain_mock)
 
     return db
@@ -54,6 +58,7 @@ def provider(mock_db):
 # Abstract method tests
 def test_provider_must_implement_get_provider_name():
     """Concrete providers must implement get_provider_name()."""
+
     class IncompleteProvider(AIProviderBase):
         def is_available(self) -> bool:
             return True
@@ -64,6 +69,7 @@ def test_provider_must_implement_get_provider_name():
 
 def test_provider_must_implement_is_available():
     """Concrete providers must implement is_available()."""
+
     class IncompleteProvider(AIProviderBase):
         def get_provider_name(self) -> str:
             return "test"
@@ -106,23 +112,26 @@ def test_log_to_ai_runs_success(provider, mock_db):
     )
 
     # Verify ai_runs insert was called
-    mock_db.table.assert_called_with('ai_runs')
-    insert_call = mock_db.insert.call_args
+    mock_db.table.assert_called_with("ai_runs")
+
+    # Get the chain mock that was returned from table()
+    chain_mock = mock_db.table.return_value
+    insert_call = chain_mock.insert.call_args
     assert insert_call is not None
 
     # Verify logged data
     logged_data = insert_call[0][0]
-    assert logged_data['user_id'] == "user-123"
-    assert logged_data['operation_type'] == "triad_generation"
-    assert logged_data['provider'] == "gpt-4o-mini"
-    assert logged_data['model'] == "gpt-4o-mini-2024-07-18"
-    assert logged_data['input_tokens'] == 120
-    assert logged_data['output_tokens'] == 300
-    assert logged_data['cost_estimate'] == 0.0025
-    assert logged_data['duration_ms'] == 1450
-    assert logged_data['status'] == "success"
-    assert logged_data['local_date'] == "2025-12-22"
-    assert logged_data['input_hash'] == "abc123"
+    assert logged_data["user_id"] == "user-123"
+    assert logged_data["operation_type"] == "triad_generation"
+    assert logged_data["provider"] == "gpt-4o-mini"
+    assert logged_data["model"] == "gpt-4o-mini-2024-07-18"
+    assert logged_data["input_tokens"] == 120
+    assert logged_data["output_tokens"] == 300
+    assert logged_data["cost_estimate"] == 0.0025
+    assert logged_data["duration_ms"] == 1450
+    assert logged_data["status"] == "success"
+    assert logged_data["local_date"] == "2025-12-22"
+    assert logged_data["input_hash"] == "abc123"
 
     # Verify run_id returned
     assert run_id == "test-run-id"
@@ -140,11 +149,12 @@ def test_log_to_ai_runs_with_defaults(provider, mock_db):
     )
 
     # Verify defaults applied
-    logged_data = mock_db.insert.call_args[0][0]
-    assert logged_data['model'] == "gpt-4o-mini"  # defaults to get_provider_name()
-    assert logged_data['status'] == "success"  # default status
-    assert 'local_date' in logged_data  # auto-generated
-    assert logged_data['input_hash'] is None  # optional
+    chain_mock = mock_db.table.return_value
+    logged_data = chain_mock.insert.call_args[0][0]
+    assert logged_data["model"] == "gpt-4o-mini"  # defaults to get_provider_name()
+    assert logged_data["status"] == "success"  # default status
+    assert "local_date" in logged_data  # auto-generated
+    assert logged_data["input_hash"] is None  # optional
 
 
 def test_log_to_ai_runs_without_db():
@@ -166,8 +176,9 @@ def test_log_to_ai_runs_without_db():
 
 def test_log_to_ai_runs_error_handling(provider, mock_db):
     """Should handle database errors gracefully."""
-    # Simulate database error
-    mock_db.execute.side_effect = Exception("Database connection lost")
+    # Simulate database error on the chain
+    chain_mock = mock_db.table.return_value
+    chain_mock.execute.side_effect = Exception("Database connection lost")
 
     run_id = provider.log_to_ai_runs(
         user_id="user-error",
@@ -267,11 +278,13 @@ def test_multiple_providers_with_same_base():
     assert provider_2.get_provider_name() == "claude-3.7-sonnet"
     assert provider_3.get_provider_name() == "gemini-3-flash"
 
-    assert all([
-        provider_1.is_available(),
-        provider_2.is_available(),
-        provider_3.is_available(),
-    ])
+    assert all(
+        [
+            provider_1.is_available(),
+            provider_2.is_available(),
+            provider_3.is_available(),
+        ]
+    )
 
 
 def test_provider_polymorphism():

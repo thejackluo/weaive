@@ -100,9 +100,14 @@ def verify_jwt_token(token: str) -> dict:
             "❌ SUPABASE_JWT_SECRET is not configured. Cannot verify JWT tokens. "
             "Set this in .env for Story 0.3+."
         )
+        from app.core.errors import ErrorCode, format_error_response
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication is not configured on the server",
+            detail=format_error_response(
+                code=ErrorCode.INTERNAL_ERROR,
+                message="Authentication is not configured on the server",
+                retryable=False
+            ),
         )
 
     try:
@@ -122,16 +127,26 @@ def verify_jwt_token(token: str) -> dict:
 
     except jwt.ExpiredSignatureError:
         logger.warning("⚠️  JWT token has expired")
+        from app.core.errors import ErrorCode, format_error_response
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
+            detail=format_error_response(
+                code=ErrorCode.UNAUTHORIZED,
+                message="Token has expired",
+                retryable=False
+            ),
             headers={"WWW-Authenticate": "Bearer"},
         )
     except jwt.InvalidTokenError as e:
         logger.warning(f"⚠️  Invalid JWT token: {str(e)}")
+        from app.core.errors import ErrorCode, format_error_response
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication token",
+            detail=format_error_response(
+                code=ErrorCode.UNAUTHORIZED,
+                message="Invalid authentication token",
+                retryable=False
+            ),
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -175,9 +190,14 @@ def get_current_user(
     user_id = payload.get("sub")
     if not user_id:
         logger.error("❌ JWT payload missing 'sub' field (user ID)")
+        from app.core.errors import ErrorCode, format_error_response
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
+            detail=format_error_response(
+                code=ErrorCode.UNAUTHORIZED,
+                message="Invalid token payload",
+                retryable=False
+            ),
         )
 
     return payload
