@@ -8,6 +8,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/design-system$': '<rootDir>/src/design-system/index.ts',
     '^@/design-system/(.*)$': '<rootDir>/src/design-system/$1',
+    '^@lib/(.*)$': '<rootDir>/lib/$1',
   },
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.test.(ts|tsx|js)',
