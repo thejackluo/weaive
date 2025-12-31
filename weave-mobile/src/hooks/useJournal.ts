@@ -53,7 +53,7 @@ export function useGetTodayJournal() {
         throw error;
       }
     },
-    retry: 1,
+    retry: 0, // Disable retry to avoid doubling the timeout
     staleTime: 0, // Always consider data stale (force refetch)
     gcTime: 0, // Don't cache data after component unmounts
     // Return null instead of throwing on 404

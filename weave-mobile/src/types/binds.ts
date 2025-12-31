@@ -23,6 +23,7 @@ export interface CompletionDetails {
  */
 export interface Bind {
   id: string;
+  template_id: string; // Template ID for grid optimistic updates
   title: string;
   subtitle: string; // Progress context (e.g., "3x per week • 2/3 this week")
   needle_id: string | null; // Goal ID

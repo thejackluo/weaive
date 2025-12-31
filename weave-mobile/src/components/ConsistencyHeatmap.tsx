@@ -30,6 +30,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Text, Card } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useConsistencyData } from '@/hooks/useConsistencyData';
@@ -37,7 +38,6 @@ import { useGetJournalsByDateRange } from '@/hooks/useJournal';
 import { useBindsGrid } from '@/hooks/useBindsGrid';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { DayDetailsModal } from '@/components/dashboard/DayDetailsModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -129,8 +129,9 @@ export function ConsistencyHeatmap({
     journalData: journalData?.map((j) => ({ date: j.local_date, score: j.fulfillment_score })),
   });
 
+  const router = useRouter();
+
   // State for modals
-  const [showDayDetailsModal, setShowDayDetailsModal] = useState(false);
   const [_showSearchModal, setShowSearchModal] = useState(false);
   const [_selectedDayData, _setSelectedDayData] = useState<{
     date: string;
@@ -141,7 +142,6 @@ export function ConsistencyHeatmap({
   const [selectedNeedleIndex, setSelectedNeedleIndex] = useState(0);
   const [selectedBindIndex, setSelectedBindIndex] = useState(0);
   const [bindSearchQuery, setBindSearchQuery] = useState('');
-  const [selectedDate, setSelectedDate] = useState<string>('');
 
   // Refs for scrolling
   const needleFlatListRef = useRef<FlatList>(null);
@@ -363,11 +363,10 @@ export function ConsistencyHeatmap({
   // Trend percentage is already provided by the API in actualTrendPercentage
   // (No need for local calculation)
 
-  // Handler for opening day details modal
+  // Handler for navigating to day details page
   const handleDayPress = (date: string, _completionRate: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSelectedDate(date);
-    setShowDayDetailsModal(true);
+    router.push(`/(tabs)/dashboard/daily/${date}` as any);
   };
 
   // Get title based on filter type
@@ -824,13 +823,6 @@ export function ConsistencyHeatmap({
         )}
 
         {renderInsightBanner()}
-
-        {/* Day Details Modal */}
-        <DayDetailsModal
-          visible={showDayDetailsModal}
-          date={selectedDate}
-          onClose={() => setShowDayDetailsModal(false)}
-        />
       </Card>
     );
   }
@@ -954,13 +946,6 @@ export function ConsistencyHeatmap({
       </View>
 
       {renderInsightBanner()}
-
-      {/* Day Details Modal */}
-      <DayDetailsModal
-        visible={showDayDetailsModal}
-        date={selectedDate}
-        onClose={() => setShowDayDetailsModal(false)}
-      />
     </Card>
   );
 }
