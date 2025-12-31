@@ -615,16 +615,6 @@ async def get_binds_grid_data(
 
         user_id = user_profile_response.data["id"]
 
-        # Find user's first scheduled instance to avoid showing empty days before they started
-        first_instance_response = (
-            supabase.table("subtask_instances")
-            .select("scheduled_for_date")
-            .eq("user_id", user_id)
-            .order("scheduled_for_date", desc=False)
-            .limit(1)
-            .execute()
-        )
-
         # Determine start date: use provided start_date, or default to last 7 days (rolling window)
         if start_date:
             # Use provided start date

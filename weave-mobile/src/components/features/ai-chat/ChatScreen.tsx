@@ -146,7 +146,10 @@ export default function ChatScreen() {
           if (__DEV__) console.log('[HISTORY] 💬 Loaded messages:', convMessages.length);
           if (__DEV__ && convMessages.length > 0) {
             console.log('[HISTORY] 🔍 First message:', JSON.stringify(convMessages[0]));
-            console.log('[HISTORY] 📊 Message roles:', convMessages.map((m: any) => m.role).join(', '));
+            console.log(
+              '[HISTORY] 📊 Message roles:',
+              convMessages.map((m: any) => m.role).join(', ')
+            );
           }
 
           // Transform backend messages to UI format
@@ -159,7 +162,10 @@ export default function ChatScreen() {
 
           if (__DEV__ && transformedMessages.length > 0) {
             console.log('[HISTORY] ✨ Transformed messages:', transformedMessages.length);
-            console.log('[HISTORY] 📋 Roles after transform:', transformedMessages.map(m => m.role).join(', '));
+            console.log(
+              '[HISTORY] 📋 Roles after transform:',
+              transformedMessages.map((m) => m.role).join(', ')
+            );
           }
 
           if (transformedMessages.length > 0) {
@@ -261,8 +267,7 @@ export default function ChatScreen() {
         console.log('[PERSONALITY] Personality changed, reloading greeting:', personality.name);
       loadInitialGreeting();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [personality?.personality_type, personality?.name]);
+  }, [personality?.personality_type, personality?.name, loadInitialGreeting]);
 
   // Effect: Update streaming message in real-time
   useEffect(() => {
@@ -294,12 +299,9 @@ export default function ChatScreen() {
       clearTimeout(isStreamingTimeoutRef.current);
     }
     isStreamingTimeoutRef.current = setTimeout(() => {
-      if (__DEV__)
-        console.log('[STREAM_FAILSAFE] ⚠️ Timeout reached, forcing isStreaming = false');
+      if (__DEV__) console.log('[STREAM_FAILSAFE] ⚠️ Timeout reached, forcing isStreaming = false');
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === streamingMessageIdRef.current ? { ...m, isStreaming: false } : m
-        )
+        prev.map((m) => (m.id === streamingMessageIdRef.current ? { ...m, isStreaming: false } : m))
       );
       streamingMessageIdRef.current = null;
     }, 30000);
@@ -400,7 +402,6 @@ export default function ChatScreen() {
     }
     // ✅ FIX: Only depend on isStreaming to prevent multiple finalization runs
     // We capture metadata, refetchUsage, refetchConversations via closure
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStreaming]);
 
   // Effect: Handle streaming errors
@@ -493,7 +494,10 @@ export default function ChatScreen() {
 
       if (__DEV__) {
         console.log('[CONV_SWITCH] ✨ Transformed messages:', transformedMessages.length);
-        console.log('[CONV_SWITCH] 📋 Roles after:', transformedMessages.map(m => m.role).join(', '));
+        console.log(
+          '[CONV_SWITCH] 📋 Roles after:',
+          transformedMessages.map((m) => m.role).join(', ')
+        );
       }
 
       setMessages(transformedMessages);
@@ -525,7 +529,13 @@ export default function ChatScreen() {
 
   // Voice recording handlers
   const handleVoiceRecord = async () => {
-    if (__DEV__) console.log('[VOICE] handleVoiceRecord called, isRecording:', isRecording, 'isTranscribing:', isTranscribing);
+    if (__DEV__)
+      console.log(
+        '[VOICE] handleVoiceRecord called, isRecording:',
+        isRecording,
+        'isTranscribing:',
+        isTranscribing
+      );
 
     if (isRecording || isTranscribing) {
       // Stop recording and transcribe (or wait if already transcribing)
@@ -651,7 +661,6 @@ export default function ChatScreen() {
             {/* Tool Execution Indicators */}
             {currentTool && (
               <Animated.View entering={FadeIn.duration(300)} style={{ paddingHorizontal: 16 }}>
-                {__DEV__ && console.log('[ChatScreen] 🎨 Rendering ToolExecutionIndicator:', currentTool)}
                 <ToolExecutionIndicator toolExecution={currentTool} />
               </Animated.View>
             )}
@@ -701,9 +710,7 @@ export default function ChatScreen() {
                 <View style={[styles.voiceProgressFill, { width: `${uploadProgress}%` }]} />
               </View>
               <Text style={styles.voiceProgressText}>
-                {isRecording
-                  ? '🎤 Recording...'
-                  : `Transcribing... ${Math.round(uploadProgress)}%`}
+                {isRecording ? '🎤 Recording...' : `Transcribing... ${Math.round(uploadProgress)}%`}
               </Text>
             </View>
           )}

@@ -8,6 +8,7 @@ import React from 'react';
 import { View, ScrollView } from 'react-native';
 import { Heading, Body } from '@/design-system';
 import { PersonalitySwitcher } from './PersonalitySwitcher';
+import { usePersonality } from '@/hooks/usePersonality';
 
 /**
  * Example 1: Full version in settings screen

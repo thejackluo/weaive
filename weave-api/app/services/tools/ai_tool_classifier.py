@@ -11,9 +11,10 @@ Architecture:
 User Message → AI Classifier (with tool descriptions) → Tool Selection + Parameters
 """
 
-import logging
 import json
-from typing import Dict, Any, List
+import logging
+from typing import Any, Dict, List
+
 from app.services.ai import AIService
 
 logger = logging.getLogger(__name__)
@@ -131,11 +132,11 @@ class AIToolClassifier:
             # Parse AI response (response is an object, not a dict)
             tool_calls = self._parse_classification_response(response.content)
 
-            if __DEV__ := True:
-                if tool_calls:
-                    logger.info(f"[TOOL_CLASSIFIER] 🎯 AI identified {len(tool_calls)} tool(s): {[t['tool_name'] for t in tool_calls]}")
-                else:
-                    logger.info(f"[TOOL_CLASSIFIER] ✋ No tools needed for message: {user_message[:50]}")
+            # Log classification results
+            if tool_calls:
+                logger.info(f"[TOOL_CLASSIFIER] 🎯 AI identified {len(tool_calls)} tool(s): {[t['tool_name'] for t in tool_calls]}")
+            else:
+                logger.info(f"[TOOL_CLASSIFIER] ✋ No tools needed for message: {user_message[:50]}")
 
             return tool_calls
 
