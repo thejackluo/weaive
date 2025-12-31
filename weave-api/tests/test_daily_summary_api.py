@@ -7,8 +7,8 @@ Tests AC #1-3 from tech-spec:
 - AC #3: Future date blocked
 """
 
-import pytest
 from datetime import date, timedelta
+
 from fastapi import status
 
 

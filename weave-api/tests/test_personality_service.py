@@ -2,8 +2,9 @@
 Tests for PersonalityService (Story 6.2)
 """
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock
 
 from app.services.personality_service import PersonalityService
 

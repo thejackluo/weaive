@@ -181,8 +181,8 @@ def register_default_tools() -> None:
     This function is called at app startup to register all
     available tools for AI use.
     """
-    from app.services.tools.modify_personality_tool import ModifyPersonalityTool
     from app.services.tools.modify_identity_document_tool import ModifyIdentityDocumentTool
+    from app.services.tools.modify_personality_tool import ModifyPersonalityTool
 
     registry = get_tool_registry()
 

@@ -145,9 +145,7 @@ export function ProofCaptureSheet({
         <View className="gap-4">
           {/* Optional Description Input */}
           <View className="gap-2">
-            <Text className="text-neutral-400 text-sm">
-              Optional Description
-            </Text>
+            <Text className="text-neutral-400 text-sm">Optional Description</Text>
             <TextInput
               className="bg-neutral-800 text-white rounded-lg p-3 min-h-[80px]"
               placeholder="Add details about your progress..."
@@ -159,9 +157,7 @@ export function ProofCaptureSheet({
               onChangeText={setDescription}
               textAlignVertical="top"
             />
-            <Text className="text-neutral-500 text-xs text-right">
-              {description.length}/500
-            </Text>
+            <Text className="text-neutral-500 text-xs text-right">{description.length}/500</Text>
           </View>
 
           {/* Camera Button */}

@@ -4,10 +4,10 @@ Integration Tests for Story 6.2: Contextual AI Responses + AI Tool Use
 Tests the full flow from API endpoints through services to database.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -543,7 +543,6 @@ class TestQualityCheckRetry:
         # This test verifies the quality check + retry pattern exists
         # Full testing requires more complex mocking of the provider chain
 
-        from app.services.ai.ai_service import AIService
         from app.services.ai.base import AIResponse
 
         # Create mock provider

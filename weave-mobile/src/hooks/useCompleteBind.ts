@@ -116,7 +116,10 @@ export function useCompleteBind() {
 
       // Snapshot the previous value for rollback
       const previousData = queryClient.getQueryData(queryKey);
-      const previousGridData = queryClient.getQueriesData({ queryKey: ['bindsGrid'], exact: false });
+      const previousGridData = queryClient.getQueriesData({
+        queryKey: ['bindsGrid'],
+        exact: false,
+      });
 
       // Get template_id BEFORE updating (from original data)
       const originalThreadData: any = previousData;
@@ -160,7 +163,9 @@ export function useCompleteBind() {
           // Calculate which day index today is in the 7-day grid
           const startDate = new Date(data.meta.start_date);
           const todayDate = new Date(today);
-          const dayIndex = Math.floor((todayDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          const dayIndex = Math.floor(
+            (todayDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+          );
 
           // Only update if today is within the grid's date range (0-6)
           if (dayIndex < 0 || dayIndex > 6) return;
@@ -176,7 +181,9 @@ export function useCompleteBind() {
                     const newCompletions = [...bind.completions];
                     newCompletions[dayIndex] = true;
                     if (__DEV__) {
-                      console.log(`[COMPLETE_BIND] Updated grid for template ${templateId} on day ${dayIndex}`);
+                      console.log(
+                        `[COMPLETE_BIND] Updated grid for template ${templateId} on day ${dayIndex}`
+                      );
                     }
                     return { ...bind, completions: newCompletions };
                   }

@@ -218,7 +218,9 @@ export function useAIChatStream(): UseAIChatStreamReturn {
               if (toolName) {
                 // Update tool executions array - find most recent tool with matching name
                 setToolExecutions((prev) => {
-                  const toolIndex = prev.findIndex((t) => t.toolName === toolName && t.status === 'starting');
+                  const toolIndex = prev.findIndex(
+                    (t) => t.toolName === toolName && t.status === 'starting'
+                  );
                   if (toolIndex >= 0) {
                     const updated = [...prev];
                     const completedTool = {
@@ -259,7 +261,9 @@ export function useAIChatStream(): UseAIChatStreamReturn {
               if (toolName) {
                 // Update tool executions array - find most recent tool with matching name
                 setToolExecutions((prev) => {
-                  const toolIndex = prev.findIndex((t) => t.toolName === toolName && t.status === 'starting');
+                  const toolIndex = prev.findIndex(
+                    (t) => t.toolName === toolName && t.status === 'starting'
+                  );
                   if (toolIndex >= 0) {
                     const updated = [...prev];
                     const errorTool = {
@@ -282,8 +286,7 @@ export function useAIChatStream(): UseAIChatStreamReturn {
                   return prev;
                 });
 
-                if (__DEV__)
-                  console.log('[TOOL_EXEC] ❌ Tool failed:', toolName, chunk.tool_error);
+                if (__DEV__) console.log('[TOOL_EXEC] ❌ Tool failed:', toolName, chunk.tool_error);
               }
             } else if (chunk.type === 'chunk') {
               // Append content chunk
