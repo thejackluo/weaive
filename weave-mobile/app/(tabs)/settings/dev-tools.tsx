@@ -381,6 +381,30 @@ export default function DevToolsScreen() {
           </Body>
         </View>
 
+        {/* Voice & Camera Testing */}
+        <Card variant="default" style={{ marginBottom: spacing[4] }}>
+          <Heading
+            variant="displayLg"
+            style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+          >
+            Voice & Camera Testing
+          </Heading>
+
+          <View style={{ gap: spacing[3] }}>
+            <Button variant="primary" onPress={() => router.push('/(tabs)/voice-demo')}>
+              🎤 Voice Demo
+            </Button>
+
+            <Button variant="secondary" onPress={() => router.push('/(tabs)/captures')}>
+              📸 Capture Picture
+            </Button>
+          </View>
+
+          <Body style={{ color: colors.text.muted, marginTop: spacing[3], fontSize: 12 }}>
+            Test voice recording and photo capture functionality.
+          </Body>
+        </Card>
+
         {/* Navigation */}
         <Card variant="default" style={{ marginBottom: spacing[4] }}>
           <Heading

@@ -115,13 +115,31 @@ export async function createGoal(
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}/api/goals`;
 
+  // Transform binds: convert times_per_week to frequency_type + frequency_value
+  const transformedBinds = goalData.binds?.map((bind) => {
+    const frequencyType = bind.times_per_week === 7 ? 'daily' : 'weekly';
+    const frequencyValue = bind.times_per_week === 7 ? 1 : bind.times_per_week;
+
+    return {
+      title: bind.title,
+      description: bind.description,
+      frequency_type: frequencyType,
+      frequency_value: frequencyValue,
+    };
+  });
+
+  const transformedGoalData = {
+    ...goalData,
+    binds: transformedBinds,
+  };
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify(goalData),
+    body: JSON.stringify(transformedGoalData),
   });
 
   if (!response.ok) {

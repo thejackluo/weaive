@@ -156,7 +156,7 @@ export function useCreateGoal() {
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
         queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['bindsGrid'] }),
+        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
       ]);
     },
   });
@@ -199,7 +199,7 @@ export function useUpdateGoal() {
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) }),
         queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['bindsGrid'] }),
+        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
       ]);
     },
   });
@@ -238,7 +238,7 @@ export function useArchiveGoal() {
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
         queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['bindsGrid'] }),
+        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
       ]);
 
       // Invalidate the specific goal (no longer needed in active queries)

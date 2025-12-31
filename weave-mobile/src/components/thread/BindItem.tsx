@@ -56,13 +56,6 @@ export function BindItem({ bind, onPress }: BindItemProps) {
             {bind.title}
           </Body>
         </View>
-
-        {/* Proof Indicator (if completed) */}
-        {bind.has_proof && (
-          <View style={styles.proofBadge}>
-            <Caption style={{ color: colors.emerald[400] }}>✓</Caption>
-          </View>
-        )}
       </View>
     </Pressable>
   );
@@ -94,13 +87,5 @@ const styles = StyleSheet.create({
   },
   details: {
     flex: 1,
-  },
-  proofBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

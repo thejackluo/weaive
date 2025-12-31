@@ -34,8 +34,8 @@ export function useCreateBind() {
       // Refetch consistency queries to refresh dashboard metrics immediately
       await queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all });
 
-      // Refetch binds grid (7d consistency view)
-      await queryClient.refetchQueries({ queryKey: ['bindsGrid'] });
+      // Refetch binds grid (7d consistency view) - use exact: false for partial matching
+      await queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false });
 
       console.log('[CREATE_BIND] Refetched goal, bind, consistency, and grid queries');
     },

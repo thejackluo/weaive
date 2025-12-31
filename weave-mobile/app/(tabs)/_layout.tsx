@@ -299,6 +299,9 @@ export default function TabLayout() {
         {/* Progress Routes (Day Detail Pages) */}
         <Tabs.Screen name="progress/[date]" options={{ href: null }} />
 
+        {/* Dashboard Routes */}
+        <Tabs.Screen name="dashboard/daily/[date]" options={{ href: null }} />
+
         {/* Binds Routes */}
         <Tabs.Screen name="binds/[id]" options={{ href: null }} />
         <Tabs.Screen name="binds/proof/[id]" options={{ href: null }} />
@@ -324,6 +327,8 @@ export default function TabLayout() {
         <Tabs.Screen name="settings/account" options={{ href: null }} />
         <Tabs.Screen name="settings/subscription" options={{ href: null }} />
         <Tabs.Screen name="settings/reflection" options={{ href: null }} />
+        <Tabs.Screen name="settings/personality" options={{ href: null }} />
+        <Tabs.Screen name="settings/tool-testing" options={{ href: null }} />
         <Tabs.Screen name="settings/dev-tools" options={{ href: null }} />
       </Tabs>
 

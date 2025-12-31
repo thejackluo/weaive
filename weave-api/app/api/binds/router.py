@@ -537,6 +537,7 @@ async def get_today_binds(
             # Construct bind object
             bind = {
                 "id": instance["id"],
+                "template_id": template_id,  # For grid optimistic updates
                 "title": bind_title,
                 "subtitle": subtitle,
                 "needle_id": goal_id,
@@ -772,30 +773,9 @@ async def complete_bind(
         completion = completion_response.data[0]
         logger.info(f"✅ Bind {bind_id} completed successfully")
 
-        # Create capture record if photo accountability was used
-        if request.photo_used:
-            try:
-                # Use 'text' type with content_text to indicate photo accountability was used
-                # Since no actual photo is captured yet (mock implementation), we store a placeholder
-                # When real photo capture is implemented, this should be 'photo' type with storage_key
-                capture_data = {
-                    "user_id": user_id,
-                    "subtask_instance_id": bind_id,
-                    "type": "text",  # Using text type for mock photo accountability
-                    "content_text": "Photo accountability used (placeholder)",
-                    "local_date": date.today().isoformat(),
-                }
-                capture_response = supabase.table("captures").insert(capture_data).execute()
-
-                if capture_response.data:
-                    logger.info(
-                        f"✅ Created capture record for bind {bind_id} (photo accountability)"
-                    )
-                else:
-                    logger.warning(f"⚠️ Failed to create capture record for bind {bind_id}")
-            except Exception as capture_error:
-                # Don't fail the entire completion if capture creation fails
-                logger.error(f"❌ Error creating capture record: {str(capture_error)}")
+        # NOTE: Photo captures are now handled separately via /api/captures/upload endpoint
+        # The ProofCaptureSheet uploads photos before bind completion is called
+        # No need to create placeholder capture records here
 
         # Update daily_aggregates (CRITICAL: Dashboard data source)
         try:

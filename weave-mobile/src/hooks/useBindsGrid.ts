@@ -69,8 +69,13 @@ async function fetchBindsGrid(accessToken: string, startDate?: string): Promise<
 export function useBindsGrid(startDate?: string) {
   const { session } = useAuth();
 
+  // 🐛 FIX: Include today's date in query key when startDate is undefined
+  // This ensures the query refetches automatically when the date changes
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const effectiveQueryKey = startDate || today;
+
   return useQuery<BindsGridResponse, Error>({
-    queryKey: ['bindsGrid', startDate],
+    queryKey: ['bindsGrid', effectiveQueryKey],
     queryFn: async () => {
       if (!session?.access_token) {
         throw new Error('No active session');

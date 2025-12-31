@@ -141,7 +141,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
       // Navigate to day detail page for the item's date
       const date = new Date(item.timestamp);
       const dateStr = date.toISOString().split('T')[0];
-      router.push(`/(tabs)/progress/${dateStr}`);
+      router.push(`/(tabs)/dashboard/daily/${dateStr}` as any);
     };
 
     return (

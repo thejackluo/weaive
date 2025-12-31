@@ -625,7 +625,7 @@ async def get_binds_grid_data(
             .execute()
         )
 
-        # Determine start date: use provided start_date, or default to first instance
+        # Determine start date: use provided start_date, or default to last 7 days (rolling window)
         if start_date:
             # Use provided start date
             try:
@@ -636,15 +636,9 @@ async def get_binds_grid_data(
                     detail="Invalid start_date format. Use YYYY-MM-DD.",
                 )
         else:
-            # Default to first instance date
-            first_instance_date = None
-            if first_instance_response.data and len(first_instance_response.data) > 0:
-                first_instance_str = first_instance_response.data[0]["scheduled_for_date"]
-                first_instance_date = date.fromisoformat(first_instance_str)
-                start_date_obj = first_instance_date
-            else:
-                # No instances yet - use default 7d window (today - 6 days)
-                start_date_obj = date.today() - timedelta(days=6)
+            # 🐛 FIX: Default to rolling 7-day window (today - 6 days → today)
+            # This ensures the grid always shows the most recent 7 days, including today
+            start_date_obj = date.today() - timedelta(days=6)
 
         # End date: 6 days after start (to show 7 total days)
         end_date = start_date_obj + timedelta(days=6)

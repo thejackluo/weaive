@@ -50,10 +50,7 @@ export default function ReflectionScreen() {
 
   // Celebration modal state
   const [showCelebration, setShowCelebration] = useState(false);
-  const [celebrationData, setCelebrationData] = useState<{
-    level: number;
-    levelProgress: number;
-  } | null>(null);
+  const [celebrationData, setCelebrationData] = useState<any | null>(null);
 
   // Hooks
   console.log('[REFLECTION_SCREEN] 🎣 Initializing hooks...');
@@ -194,19 +191,12 @@ export default function ReflectionScreen() {
         await clearDraft();
       }
 
-      // Show celebration modal with level data (only for NEW reflections, not edits)
-      if (
-        !isEditMode &&
-        result?.meta?.level !== undefined &&
-        result?.meta?.level_progress !== undefined
-      ) {
-        setCelebrationData({
-          level: result.meta.level,
-          levelProgress: result.meta.level_progress,
-        });
+      // Show celebration modal with progress data (only for NEW reflections, not edits)
+      if (!isEditMode && result?.meta?.progress_update) {
+        setCelebrationData(result.meta.progress_update);
         setShowCelebration(true);
       } else {
-        // If editing or no level data, just go back
+        // If editing or no progress data, just go back
         router.back();
       }
     } catch (error) {
@@ -366,8 +356,7 @@ export default function ReflectionScreen() {
         <CompletionCelebration
           visible={showCelebration}
           needleName="your goals"
-          level={celebrationData.level}
-          levelProgress={celebrationData.levelProgress}
+          progressUpdate={celebrationData}
           showNotes={false}
           onComplete={() => {
             setShowCelebration(false);
