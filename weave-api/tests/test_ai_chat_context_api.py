@@ -7,8 +7,6 @@ Run: uv run pytest tests/test_ai_chat_context_api.py -v
 """
 
 import os
-from datetime import datetime, timezone
-from uuid import uuid4
 
 import pytest
 

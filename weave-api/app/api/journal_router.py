@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 
 from app.core.deps import get_ai_service, get_current_user, get_supabase_client
 from app.services.ai.ai_service import AIService
+from app.services.progress_service import update_user_progress
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/journal-entries", tags=["journal"])
@@ -303,29 +304,30 @@ async def create_journal_entry(
         # Log error but don't fail the request
         logger.error(f"❌ Failed to update daily_aggregates: {str(e)}")
 
-    # Calculate level and progress (same system as bind completion)
-    # Simple level system: 10 journal entries per level
+    # Update user progress (same XP-based system as bind completion)
+    # Award 1 XP for journal completion to maintain consistent progression
     try:
-        total_journals_response = (
-            supabase.table("journal_entries")
-            .select("id", count="exact")
-            .eq("user_id", profile_id)
-            .execute()
-        )
-
-        total_journals = total_journals_response.count or 0
-        level = (total_journals // 10) + 1  # Level 1 starts at 0-9 journals
-        journals_in_level = total_journals % 10
-        level_progress = (journals_in_level / 10) * 100  # Percentage to next level
-
+        progress_update = update_user_progress(supabase, profile_id, xp_gained=1, local_date=entry.local_date)
         logger.info(
-            f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}"
+            f"[JOURNAL_API] Progress update: Level {progress_update['level_after']}, "
+            f"XP {progress_update['total_xp']}, Streak {progress_update['streak_after']}"
         )
-    except Exception as level_error:
-        logger.error(f"❌ Error calculating level: {str(level_error)}")
-        # Default to level 1 if calculation fails
-        level = 1
-        level_progress = 0.0
+    except Exception as progress_error:
+        logger.error(f"❌ Error updating progress: {str(progress_error)}")
+        # Return minimal progress data if update fails
+        progress_update = {
+            "level_before": 1,
+            "level_after": 1,
+            "level_up": False,
+            "xp_gained": 1,
+            "total_xp": 0,
+            "xp_to_next_level": 4,
+            "streak_before": 0,
+            "streak_after": 0,
+            "streak_status": "active",
+            "streak_milestone_reached": None,
+            "grace_period_saved": False,
+        }
 
     # AC #15, Subtask 2.8: Trigger AI batch job asynchronously (Story 4.1/4.3)
     asyncio.create_task(
@@ -337,13 +339,19 @@ async def create_journal_entry(
         )
     )
 
-    # Return with level data for celebration modal
+    # Return with progress data for celebration modal (matches bind completion format)
     return {
         "data": JournalEntryResponse(**created_journal),
         "meta": {
             "timestamp": datetime.utcnow().isoformat(),
-            "level": level,
-            "level_progress": round(level_progress, 1),
+            "progress_update": progress_update,
+            # Keep deprecated fields for backward compatibility
+            "level": progress_update["level_after"],
+            "level_progress": round(
+                ((progress_update["total_xp"] - progress_update["xp_to_next_level"]) /
+                 (progress_update["total_xp"] + progress_update["xp_to_next_level"]) * 100)
+                if progress_update["xp_to_next_level"] > 0 else 100, 1
+            ),
         },
     }
 
@@ -359,11 +367,15 @@ async def get_today_journal_entry(
     - Returns 404 if no entry exists for today
     - Returns full journal data if exists
     """
+    logger.info("[GET /today] 📥 Request received")
     user_id = user["sub"]  # Extract user ID from JWT payload
+    logger.info(f"[GET /today] 🔑 Auth user ID: {user_id}")
     supabase = get_supabase_client()
 
     # Get user's profile ID
+    logger.info("[GET /today] 🔍 Getting or creating user profile...")
     profile_id = await get_or_create_user_profile(supabase, user_id)
+    logger.info(f"[GET /today] ✅ Got profile ID: {profile_id}")
 
     # Calculate today's local_date (use user's timezone)
     # For now, use server's date - TODO: Use user's timezone from profile
@@ -564,25 +576,21 @@ async def update_journal_entry(
     except Exception as e:
         logger.error(f"❌ Failed to update daily_aggregates: {str(e)}")
 
-    # Calculate level and progress (same system as bind completion)
+    # Get current progress stats (no XP awarded for editing existing entries)
     try:
-        total_journals_response = (
-            supabase.table("journal_entries")
-            .select("id", count="exact")
-            .eq("user_id", profile_id)
-            .execute()
+        from app.services.progress_service import get_user_progress_stats
+        progress_stats = get_user_progress_stats(supabase, profile_id)
+        level = progress_stats["level"]
+        level_progress = round(
+            ((progress_stats["total_xp"] - progress_stats["xp_to_next_level"]) /
+             (progress_stats["total_xp"] + progress_stats["xp_to_next_level"]) * 100)
+            if progress_stats["xp_to_next_level"] > 0 else 100, 1
         )
-
-        total_journals = total_journals_response.count or 0
-        level = (total_journals // 10) + 1
-        journals_in_level = total_journals % 10
-        level_progress = (journals_in_level / 10) * 100
-
         logger.info(
-            f"[JOURNAL_API] Level calculation: total={total_journals}, level={level}, progress={level_progress}"
+            f"[JOURNAL_API] Current progress: Level {level}, XP {progress_stats['total_xp']}"
         )
-    except Exception as level_error:
-        logger.error(f"❌ Error calculating level: {str(level_error)}")
+    except Exception as progress_error:
+        logger.error(f"❌ Error fetching progress: {str(progress_error)}")
         level = 1
         level_progress = 0.0
 

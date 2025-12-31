@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, Pressable, StyleSheet, Alert, Modal, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme, Card, Heading, Body, Caption, Button } from '@/design-system';
 import { useTodayBinds } from '@/hooks/useTodayBinds';
 import { useCompleteBind } from '@/hooks/useCompleteBind';
@@ -20,9 +21,11 @@ import { useUserStats } from '@/hooks/useUserStats';
 import { PomodoroTimer } from '@/components/thread/PomodoroTimer';
 import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
 import { ProofCaptureSheet } from '@/components/ProofCaptureSheet';
+import { ImageLightbox } from '@/components/ImageLightbox';
 import { ProofCaptureContext } from '@/types/captures';
 import { getLevelProgress } from '@/utils/levelProgression';
 import { launchCamera } from '@/services/imageCapture';
+import { supabase } from '@lib/supabase';
 
 export function BindScreen() {
   const { colors, spacing, radius } = useTheme();
@@ -80,6 +83,7 @@ export function BindScreen() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showCaptureSheet, setShowCaptureSheet] = useState(false);
+  const [showPhotoLightbox, setShowPhotoLightbox] = useState(false);
   const [completionData, setCompletionData] = useState<{
     needleName: string;
     progressUpdate?: {
@@ -166,21 +170,29 @@ export function BindScreen() {
   };
 
   const handleOpenCamera = async () => {
+    // Open capture sheet (Story 6.2 ProofCaptureSheet component)
+    setShowCaptureSheet(true);
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoUri(null);
+    console.log('Photo removed');
+  };
+
+  const handleViewPhoto = () => {
     if (photoUri) {
-      // Deselect photo if already selected
-      setPhotoUri(null);
-      console.log('Photo deselected');
-    } else {
-      // Open capture sheet (Story 6.2 ProofCaptureSheet component)
-      setShowCaptureSheet(true);
+      setShowPhotoLightbox(true);
     }
   };
 
   const handleCaptureSuccess = (result: any) => {
-    // Set the photo URI from the capture result
-    setPhotoUri(result.data.storage_path);
+    // Set the photo URI from the capture result (use signed_url for preview)
+    setPhotoUri(result.data.signed_url);
     setShowCaptureSheet(false);
-    console.log('Photo captured successfully:', result.data.storage_path);
+    console.log('Photo captured successfully:', {
+      id: result.data.id,
+      signed_url: result.data.signed_url,
+    });
   };
 
   const handleCaptureCancel = () => {
@@ -282,11 +294,51 @@ export function BindScreen() {
   };
 
   const handleCelebrationComplete = async (notes?: string) => {
-    // If notes were added, save them as a capture record
+    // If notes were added, save them as a text capture record
     if (notes?.trim() && id) {
-      // TODO: Create capture record with notes via API
-      console.log('Notes to save:', notes);
-      // For now, just log. Will implement capture API call if needed.
+      try {
+        console.log('[BIND] Saving notes as text capture:', notes);
+
+        // Get user profile ID for captures table
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          console.error('[BIND] No authenticated user found');
+          return;
+        }
+
+        // Get user profile ID from auth_user_id
+        const { data: profileData } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('auth_user_id', user.id)
+          .single();
+
+        if (!profileData) {
+          console.error('[BIND] User profile not found');
+          return;
+        }
+
+        // Create text capture record
+        const { error } = await supabase.from('captures').insert({
+          user_id: profileData.id,
+          subtask_instance_id: id,
+          type: 'text',
+          content_text: notes.trim(),
+          local_date: new Date().toISOString().split('T')[0],
+          goal_id: bind?.needle_id || null,
+        });
+
+        if (error) {
+          console.error('[BIND] Failed to save notes capture:', error);
+        } else {
+          console.log('[BIND] ✅ Notes saved successfully');
+        }
+      } catch (error) {
+        console.error('[BIND] Error saving notes:', error);
+        // Don't block user from completing - just log the error
+      }
     }
 
     // Close celebration modal
@@ -438,22 +490,40 @@ export function BindScreen() {
                   opacity: bind.completed && !bind.has_proof ? 0.5 : 1,
                 },
               ]}
-              onPress={bind.completed ? undefined : handleOpenCamera}
+              onPress={bind.completed ? undefined : photoUri ? handleViewPhoto : handleOpenCamera}
               disabled={bind.completed}
             >
               {photoUri ? (
-                // Show photo preview
-                <Image
-                  source={{ uri: photoUri }}
-                  style={[
-                    styles.photoPreview,
-                    {
-                      borderRadius: radius.md,
-                      marginBottom: spacing[2],
-                    },
-                  ]}
-                  resizeMode="cover"
-                />
+                // Show photo preview with trash icon
+                <View style={styles.photoPreviewContainer}>
+                  <Image
+                    source={{ uri: photoUri }}
+                    style={[
+                      styles.photoPreview,
+                      {
+                        borderRadius: radius.md,
+                        marginBottom: spacing[2],
+                      },
+                    ]}
+                    resizeMode="cover"
+                  />
+                  <Pressable
+                    style={[
+                      styles.trashIcon,
+                      {
+                        backgroundColor: colors.semantic.error.base,
+                        borderRadius: radius.sm,
+                      },
+                    ]}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleRemovePhoto();
+                    }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <MaterialIcons name="delete" size={16} color="white" />
+                  </Pressable>
+                </View>
               ) : (
                 // Show camera icon
                 <Body style={{ fontSize: 32, marginBottom: spacing[2] }}>📸</Body>
@@ -474,7 +544,7 @@ export function BindScreen() {
               {bind.completed && bind.has_proof ? (
                 <Caption style={{ color: colors.semantic.success.dark }}>Photo attached</Caption>
               ) : photoUri ? (
-                <Caption style={{ color: 'rgba(255,255,255,0.8)' }}>Tap to change</Caption>
+                <Caption style={{ color: 'rgba(255,255,255,0.8)' }}>Tap to view</Caption>
               ) : (
                 <Caption
                   style={{
@@ -633,6 +703,16 @@ export function BindScreen() {
           allowSkip={true}
         />
       </Modal>
+
+      {/* Photo Lightbox */}
+      {photoUri && (
+        <ImageLightbox
+          images={[{ id: 'proof-photo', signed_url: photoUri }]}
+          initialIndex={0}
+          visible={showPhotoLightbox}
+          onClose={() => setShowPhotoLightbox(false)}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -668,10 +748,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
   },
-  photoPreview: {
+  photoPreviewContainer: {
+    position: 'relative',
     width: 60,
     height: 60,
     alignSelf: 'center',
+    marginBottom: 8,
+  },
+  photoPreview: {
+    width: 60,
+    height: 60,
+  },
+  trashIcon: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    padding: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   levelPreview: {
     flexDirection: 'row',

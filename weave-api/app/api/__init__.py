@@ -8,6 +8,7 @@ __all__ = [
     "analytics",
     "binds",
     "captures",
+    "daily_summary_router",
     "goals",
     "health",
     "journal_router",

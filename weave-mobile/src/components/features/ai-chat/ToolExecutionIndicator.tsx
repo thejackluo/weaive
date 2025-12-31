@@ -199,7 +199,9 @@ export function ToolExecutionIndicator({
                     borderColor: colors.semantic.error.border,
                   }}
                 >
-                  <Caption style={{ color: colors.semantic.error.base }}>{toolExecution.error}</Caption>
+                  <Caption style={{ color: colors.semantic.error.base }}>
+                    {toolExecution.error}
+                  </Caption>
                 </View>
               </View>
             )}

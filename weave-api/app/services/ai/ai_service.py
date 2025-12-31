@@ -23,6 +23,7 @@ from typing import Any, Dict, Optional
 
 from supabase import Client as SupabaseClient
 
+from ..response_quality_checker import ResponseQualityChecker
 from .anthropic_provider import AnthropicProvider
 from .base import AIProviderError, AIResponse
 from .bedrock_provider import BedrockProvider
@@ -30,7 +31,7 @@ from .cost_tracker import CostTracker
 from .deterministic_provider import DeterministicProvider
 from .openai_provider import OpenAIProvider
 from .rate_limiter import RateLimiter, RateLimitError
-from ..response_quality_checker import ResponseQualityChecker
+
 # Story 6.2: Tool registry imported lazily to avoid circular dependency
 
 logger = logging.getLogger(__name__)

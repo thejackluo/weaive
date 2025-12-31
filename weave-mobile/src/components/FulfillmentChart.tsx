@@ -10,12 +10,12 @@
 
 import React, { useState, useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator, Pressable, PanResponder } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Text, Card } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useFulfillmentData } from '@/hooks/useFulfillmentData';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
-import { DayDetailsModal } from '@/components/dashboard/DayDetailsModal';
 
 interface FulfillmentChartProps {
   timeframe: '7d' | '2w' | '1m';
@@ -24,13 +24,12 @@ interface FulfillmentChartProps {
 
 export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentChartProps) {
   const { colors } = useTheme();
+  const router = useRouter();
   const { data, isLoading, isError, error } = useFulfillmentData(timeframe);
 
   // State for interactions
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
   const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
-  const [showDayDetailsModal, setShowDayDetailsModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>('');
 
   // Refs for drag calculations (using refs so PanResponder closure has access to current values)
   const chartWidthRef = useRef<number>(0);
@@ -62,11 +61,10 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
     return barIndex;
   };
 
-  // Handler for opening day details modal
+  // Handler for navigating to day details page
   const handleTooltipPress = (date: string, _fulfillmentScore: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSelectedDate(date);
-    setShowDayDetailsModal(true);
+    router.push(`/(tabs)/dashboard/daily/${date}` as any);
   };
 
   // PanResponder for drag interaction across bars (MUST be before any conditional returns)
@@ -187,7 +185,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
   // Always use 10 as max for consistent Y-axis scale
 
   // Generate full timeframe array with placeholders for missing days
-  // Ordered from most recent (left) to oldest (right)
+  // Ordered chronologically from oldest (left) to most recent (right)
   const generateFullTimeframe = () => {
     const today = new Date();
     const result = [];
@@ -207,7 +205,8 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
       });
     }
 
-    return result;
+    // Reverse to show chronological order (oldest → newest, left → right)
+    return result.reverse();
   };
 
   const displayData = generateFullTimeframe();
@@ -446,7 +445,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
           <View style={styles.xAxisRow}>
             <View style={styles.yAxisSpacer} />
             {timeframe === '7d' ? (
-              // For 7d: Show all dates aligned under their bars
+              // 7d: Show all dates aligned under their bars (one container per bar)
               <View style={styles.xAxisLabelsComplete}>
                 {displayData.map((day) => (
                   <View
@@ -467,37 +466,32 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                 ))}
               </View>
             ) : (
-              // For 2w and 1m: Show evenly spaced labels
-              <View style={styles.xAxisLabelsSpaced}>
+              // 2w/1m: Use absolute positioning for labels at specific indices
+              <View style={styles.xAxisLabelsPositioned}>
                 {(() => {
-                  const labelsToShow: string[] = [];
+                  const labelIndices = timeframe === '2w' ? [0, 4, 9, 13] : [0, 15, 29];
 
-                  if (timeframe === '2w') {
-                    // Show ~4 evenly spaced labels for 2 weeks (0, 4, 9, 13)
-                    [0, 4, 9, 13].forEach((idx) => {
-                      if (idx < displayData.length && displayData[idx].hasData) {
-                        labelsToShow.push(displayData[idx].date);
-                      }
-                    });
-                  } else if (timeframe === '1m') {
-                    // Show ~3 evenly spaced labels for 1 month (0, 15, 29)
-                    [0, 15, 29].forEach((idx) => {
-                      if (idx < displayData.length && displayData[idx].hasData) {
-                        labelsToShow.push(displayData[idx].date);
-                      }
-                    });
-                  }
+                  return labelIndices.map((idx) => {
+                    if (idx >= displayData.length) return null;
 
-                  return labelsToShow.map((date) => (
-                    <Text
-                      key={date}
-                      variant="textXs"
-                      weight="medium"
-                      style={{ color: colors.text.secondary }}
-                    >
-                      {formatDateLabel(date)}
-                    </Text>
-                  ));
+                    // Calculate position: center of the bar at this index
+                    const positionPercent = ((idx + 0.5) / expectedDays) * 100;
+
+                    return (
+                      <View
+                        key={displayData[idx].date}
+                        style={[styles.absoluteLabel, { left: `${positionPercent}%` }]}
+                      >
+                        <Text
+                          variant="textXs"
+                          weight="medium"
+                          style={{ color: colors.text.secondary }}
+                        >
+                          {formatDateLabel(displayData[idx].date)}
+                        </Text>
+                      </View>
+                    );
+                  });
                 })()}
               </View>
             )}
@@ -513,13 +507,6 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
             </Text>
           </View>
         </View>
-
-        {/* Day Details Modal */}
-        <DayDetailsModal
-          visible={showDayDetailsModal}
-          date={selectedDate}
-          onClose={() => setShowDayDetailsModal(false)}
-        />
       </Card>
     </Pressable>
   );
@@ -671,10 +658,16 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
   },
-  xAxisLabelsSpaced: {
+  xAxisLabelsPositioned: {
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    position: 'relative',
+    height: 24,
+  },
+  absoluteLabel: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ translateX: -20 }], // Center the label (assuming ~40px label width)
     paddingTop: 4,
   },
   xAxisLabelItem: {

@@ -9,7 +9,7 @@ Run: uv run pytest tests/test_context_builder.py -v
 
 import time
 from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest

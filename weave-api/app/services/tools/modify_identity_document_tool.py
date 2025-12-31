@@ -5,7 +5,7 @@ Allows AI to create or update user's identity document (Dream Self profile).
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from app.core.deps import get_supabase_client
 from app.services.tools.base_tool import BaseTool
@@ -151,7 +151,7 @@ class ModifyIdentityDocumentTool(BaseTool):
                 existing_content = latest_doc.get("json", {})
                 logger.info(f"[IDENTITY_DOC_TOOL] Found existing doc v{latest_doc['version']}, creating v{next_version}")
             else:
-                logger.info(f"[IDENTITY_DOC_TOOL] No existing doc, creating v1")
+                logger.info("[IDENTITY_DOC_TOOL] No existing doc, creating v1")
 
             # Merge new fields with existing content (partial update pattern)
             updated_content = {**existing_content}
@@ -176,7 +176,7 @@ class ModifyIdentityDocumentTool(BaseTool):
             if not insert_response.data:
                 raise Exception("Failed to insert identity document")
 
-            new_doc = insert_response.data[0]
+            _ = insert_response.data[0]  # Verify insertion succeeded
             logger.info(f"[IDENTITY_DOC_TOOL] ✅ Created identity doc v{next_version}")
 
             # If user was using Weave AI, switch them to Dream Self automatically
@@ -193,7 +193,7 @@ class ModifyIdentityDocumentTool(BaseTool):
                 supabase.table("user_profiles").update({
                     "active_personality": "dream_self"
                 }).eq("id", user_id).execute()
-                logger.info(f"[IDENTITY_DOC_TOOL] ✅ Switched user to Dream Self personality")
+                logger.info("[IDENTITY_DOC_TOOL] ✅ Switched user to Dream Self personality")
                 switched_personality = True
 
             return {

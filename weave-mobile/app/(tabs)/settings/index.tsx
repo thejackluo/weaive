@@ -204,6 +204,40 @@ export default function SettingsScreen() {
             </Text>
           </View>
 
+          {/* Tool Testing Link */}
+          <Pressable
+            onPress={() => router.push('/(tabs)/settings/tool-testing')}
+            style={{
+              padding: 16,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottomWidth: 1,
+              borderBottomColor: '#27272A',
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: '#FAFAFA',
+                  marginBottom: 4,
+                }}
+              >
+                🧪 Tool Testing
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: '#71717A',
+                }}
+              >
+                Test AI tool execution with visual indicators
+              </Text>
+            </View>
+            <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
+          </Pressable>
+
           {/* Dev Tools Link */}
           <Pressable
             onPress={() => router.push('/(tabs)/settings/dev-tools')}
@@ -230,7 +264,7 @@ export default function SettingsScreen() {
                   color: '#71717A',
                 }}
               >
-                Clear caches and debug utilities
+                Voice Demo and Capture Picture
               </Text>
             </View>
             <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>

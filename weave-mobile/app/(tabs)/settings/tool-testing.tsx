@@ -84,7 +84,10 @@ export default function ToolTestingScreen() {
         </Card>
 
         {/* Preset Tests */}
-        <Heading variant="displayMd" style={{ color: colors.text.primary, marginBottom: spacing[3] }}>
+        <Heading
+          variant="displayMd"
+          style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+        >
           Preset Tests
         </Heading>
         {presetTests.map((test, index) => (
@@ -118,7 +121,10 @@ export default function ToolTestingScreen() {
         ))}
 
         {/* Custom Test */}
-        <Heading variant="displayMd" style={{ color: colors.text.primary, marginBottom: spacing[3] }}>
+        <Heading
+          variant="displayMd"
+          style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+        >
           Custom Test
         </Heading>
         <Card variant="default" style={{ marginBottom: spacing[4] }}>
@@ -169,7 +175,11 @@ export default function ToolTestingScreen() {
               {currentTool && (
                 <View style={{ marginBottom: spacing[3] }}>
                   <Caption
-                    style={{ color: colors.accent.info, fontWeight: '600', marginBottom: spacing[2] }}
+                    style={{
+                      color: colors.accent.info,
+                      fontWeight: '600',
+                      marginBottom: spacing[2],
+                    }}
                   >
                     Currently Executing:
                   </Caption>
@@ -181,7 +191,11 @@ export default function ToolTestingScreen() {
               {toolExecutions.length > 0 && (
                 <View>
                   <Caption
-                    style={{ color: colors.text.muted, fontWeight: '600', marginBottom: spacing[2] }}
+                    style={{
+                      color: colors.text.muted,
+                      fontWeight: '600',
+                      marginBottom: spacing[2],
+                    }}
                   >
                     Tool Execution History ({toolExecutions.length}):
                   </Caption>
@@ -209,7 +223,13 @@ export default function ToolTestingScreen() {
               ) : (
                 <>
                   {isStreaming && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[2] }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginBottom: spacing[2],
+                      }}
+                    >
                       <ActivityIndicator size="small" color={colors.accent.info} />
                       <Caption style={{ color: colors.accent.info, marginLeft: spacing[2] }}>
                         Streaming...

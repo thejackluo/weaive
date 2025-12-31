@@ -7,6 +7,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ChatScreen from '../ChatScreen';
+import { AuthProvider } from '../../../../contexts/AuthContext';
 
 // Create QueryClient for tests
 const createTestQueryClient = () =>
@@ -20,7 +21,11 @@ const createTestQueryClient = () =>
 // Wrapper component with providers
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = createTestQueryClient();
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </AuthProvider>
+  );
 };
 
 describe('ChatScreen Component', () => {

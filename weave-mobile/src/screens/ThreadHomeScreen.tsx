@@ -153,6 +153,18 @@ export function ThreadHomeScreen() {
 
   const needleGroups = groupBindsByNeedle();
 
+  // 🐛 FIX: Reset expandedNeedleId if the expanded needle was archived/deleted
+  // This prevents all needles from becoming invisible when archiving the expanded needle
+  React.useEffect(() => {
+    if (expandedNeedleId) {
+      const needleStillExists = needleGroups.some((group) => group.needle.id === expandedNeedleId);
+      if (!needleStillExists) {
+        console.log('[ThreadHome] Expanded needle no longer exists - resetting expandedNeedleId');
+        setExpandedNeedleId(null);
+      }
+    }
+  }, [expandedNeedleId, needleGroups]);
+
   // Handle bind press
   const handleBindPress = (bind: Bind) => {
     console.log('[ThreadHome] Navigate to bind:', bind.id);
@@ -383,35 +395,6 @@ export function ThreadHomeScreen() {
             >
               {hasCompletedReflection ? 'Edit Reflection' : 'Begin'}
             </Button>
-          </Card>
-
-          {/* Dev Tools Section - Voice & Camera */}
-          <Card variant="glass" style={{ marginTop: spacing[4], padding: spacing[4] }}>
-            <Heading
-              variant="displaySm"
-              style={{ color: colors.text.primary, marginBottom: spacing[3] }}
-            >
-              🛠️ Dev Tools (for Arman)
-            </Heading>
-            <View style={{ gap: spacing[3] }}>
-              {/* Voice Demo Button */}
-              <Button
-                variant="secondary"
-                size="md"
-                onPress={() => router.push('/(tabs)/voice-demo')}
-              >
-                🎤 Voice Demo
-              </Button>
-
-              {/* Capture Picture Button */}
-              <Button
-                variant="secondary"
-                size="md"
-                onPress={() => router.push('/(tabs)/captures')}
-              >
-                📸 Capture Picture
-              </Button>
-            </View>
           </Card>
         </View>
       </ScrollView>

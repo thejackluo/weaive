@@ -96,12 +96,12 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
     const fetchStart = performance.now();
     console.log('[JOURNAL_API] 🚀 Sending GET request to /api/journal-entries/today');
 
-    // Create AbortController for 10-second timeout
+    // Create AbortController for 30-second timeout (increased for dev debugging)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.error('[JOURNAL_API] ⏱️  Request timeout - aborting after 10s');
+      console.error('[JOURNAL_API] ⏱️  Request timeout - aborting after 30s');
       controller.abort();
-    }, 10000);
+    }, 30000);
 
     try {
       const response = await fetch(`${baseUrl}/api/journal-entries/today`, {
@@ -153,8 +153,8 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
 
       // Handle abort error specially
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        console.error('[JOURNAL_API] ⏱️  Request aborted after 10s timeout');
-        throw new Error('Request timeout - backend not responding');
+        console.error('[JOURNAL_API] ⏱️  Request aborted after 30s timeout');
+        throw new Error('Request timeout - backend not responding (waited 30s)');
       }
 
       throw fetchError;

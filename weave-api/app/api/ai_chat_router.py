@@ -44,9 +44,10 @@ from app.services.ai import AIService
 from app.services.ai.tiered_rate_limiter import TieredRateLimiter
 from app.services.context_builder import ContextBuilderService  # Story 6.2
 from app.services.personality_service import PersonalityService  # Story 6.2
-from app.services.ai_orchestrator import AIOrchestrator  # Story 6.2
 from app.services.tools import get_tool_registry  # Story 6.2
-from app.services.tools.ai_tool_classifier import create_tool_classifier  # Story 6.2 - AI-based classification
+from app.services.tools.ai_tool_classifier import (
+    create_tool_classifier,  # Story 6.2 - AI-based classification
+)
 
 logger = logging.getLogger(__name__)
 
@@ -326,7 +327,7 @@ async def send_chat_message(
     # Story 6.2: AI-based tool classification
     if request.enable_tools:
         try:
-            logger.info(f"🔧 [TOOLS] Tool calling enabled - analyzing message with AI classifier")
+            logger.info("🔧 [TOOLS] Tool calling enabled - analyzing message with AI classifier")
 
             # Step 1: Analyze message for tool triggers (AI-based classification)
             tool_classifier = create_tool_classifier(ai_service)
@@ -622,11 +623,11 @@ async def send_chat_message_stream(
 
                 if request.enable_tools:
                     try:
-                        logger.info(f"🔧 [TOOLS] Tool calling enabled - analyzing message with AI classifier")
+                        logger.info("🔧 [TOOLS] Tool calling enabled - analyzing message with AI classifier")
 
                         # Step 1: Analyze message for tool triggers (AI-based classification)
                         tool_classifier = create_tool_classifier(ai_service)
-                        logger.info(f"🏗️ [TOOLS] Tool classifier created, calling analyze_message...")
+                        logger.info("🏗️ [TOOLS] Tool classifier created, calling analyze_message...")
 
                         # ✅ FIX: analyze_message is NOT async - don't use await
                         triggered_tools = tool_classifier.analyze_message(request.message, str(user_id))
@@ -737,7 +738,7 @@ async def send_chat_message_stream(
                             except Exception as stream_error:
                                 logger.warning(f"⚠️  [TOOLS+STREAM] Model {model_to_try} failed: {stream_error}")
                                 if i == len(models_to_try) - 1:  # Last model failed
-                                    logger.error(f"💥 [TOOLS+STREAM] All models failed")
+                                    logger.error("💥 [TOOLS+STREAM] All models failed")
                                     fallback_text = "I executed your request, but I'm having trouble generating a response. Please check your data and try asking again."
                                     full_content = [fallback_text]
                                     chunk_event = json.dumps({"type": "chunk", "content": fallback_text})

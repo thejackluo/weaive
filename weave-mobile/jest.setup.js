@@ -127,6 +127,27 @@ jest.mock('expo-linking', () => ({
   parse: jest.fn(),
 }));
 
+jest.mock('expo-web-browser', () => ({
+  openAuthSessionAsync: jest.fn(() => Promise.resolve({ type: 'success' })),
+  dismissBrowser: jest.fn(() => Promise.resolve()),
+  maybeCompleteAuthSession: jest.fn(),
+}));
+
+jest.mock('expo-auth-session', () => ({
+  makeRedirectUri: jest.fn(() => 'http://localhost:8081'),
+  AuthSessionResult: {
+    SUCCESS: 'success',
+    DISMISS: 'dismiss',
+    CANCEL: 'cancel',
+  },
+}));
+
+jest.mock('expo-auth-session/build/QueryParams', () => ({
+  default: {
+    parse: jest.fn(() => ({})),
+  },
+}));
+
 jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: {
     Light: 'light',
