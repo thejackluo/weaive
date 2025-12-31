@@ -18,6 +18,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import apiClient from '@/services/apiClient';
 
 // Types matching backend Pydantic models (Story 6.1)
 interface ChatMessageResponse {
