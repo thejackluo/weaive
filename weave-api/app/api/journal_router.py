@@ -367,13 +367,13 @@ async def get_today_journal_entry(
     - Returns 404 if no entry exists for today
     - Returns full journal data if exists
     """
-    logger.info(f"[GET /today] 📥 Request received")
+    logger.info("[GET /today] 📥 Request received")
     user_id = user["sub"]  # Extract user ID from JWT payload
     logger.info(f"[GET /today] 🔑 Auth user ID: {user_id}")
     supabase = get_supabase_client()
 
     # Get user's profile ID
-    logger.info(f"[GET /today] 🔍 Getting or creating user profile...")
+    logger.info("[GET /today] 🔍 Getting or creating user profile...")
     profile_id = await get_or_create_user_profile(supabase, user_id)
     logger.info(f"[GET /today] ✅ Got profile ID: {profile_id}")
 

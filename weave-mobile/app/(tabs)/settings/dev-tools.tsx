@@ -419,7 +419,10 @@ export default function DevToolsScreen() {
               🗺️ Site Map (All Screens)
             </Button>
 
-            <Button variant="secondary" onPress={() => router.push('/(tabs)/settings/tool-testing')}>
+            <Button
+              variant="secondary"
+              onPress={() => router.push('/(tabs)/settings/tool-testing')}
+            >
               🔧 Tool Testing Page
             </Button>
           </View>

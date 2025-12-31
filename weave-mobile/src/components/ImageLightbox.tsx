@@ -8,15 +8,7 @@
  */
 
 import React, { useState } from 'react';
-import {
-  Modal,
-  View,
-  Image,
-  Pressable,
-  Dimensions,
-  StyleSheet,
-  StatusBar,
-} from 'react-native';
+import { Modal, View, Image, Pressable, Dimensions, StyleSheet, StatusBar } from 'react-native';
 import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -36,12 +28,7 @@ export interface ImageLightboxProps {
   onClose: () => void;
 }
 
-export function ImageLightbox({
-  images,
-  initialIndex = 0,
-  visible,
-  onClose,
-}: ImageLightboxProps) {
+export function ImageLightbox({ images, initialIndex = 0, visible, onClose }: ImageLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
   // Animated values for gestures

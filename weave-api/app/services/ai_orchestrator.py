@@ -8,7 +8,7 @@ Handles tool invocation flow: AI → Tool Execution → AI with Results.
 import json
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from app.services.ai.ai_service import AIService
 from app.services.ai.base import AIResponse

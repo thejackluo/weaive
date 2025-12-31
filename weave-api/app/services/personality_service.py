@@ -221,7 +221,7 @@ class PersonalityService:
         except Exception as e:
             logger.error(f"Error loading Dream Self for user {user_id}: {e}")
             # ✅ Return default instead of None
-            logger.info(f"[PERSONALITY] ⚠️ Falling back to default identity document")
+            logger.info("[PERSONALITY] ⚠️ Falling back to default identity document")
             return self._build_dream_self_from_content(self._get_default_identity_document())
 
     def _get_default_identity_document(self) -> Dict:

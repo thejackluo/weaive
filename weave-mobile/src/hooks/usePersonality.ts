@@ -94,7 +94,11 @@ export function usePersonality(): UsePersonalityReturn {
     if (personalityData) {
       setPersonality(personalityData);
       if (__DEV__)
-        console.log('[PERSONALITY] Loaded:', personalityData.personality_type, personalityData.name);
+        console.log(
+          '[PERSONALITY] Loaded:',
+          personalityData.personality_type,
+          personalityData.name
+        );
     }
   }, [personalityData]);
 

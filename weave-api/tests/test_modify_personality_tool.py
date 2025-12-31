@@ -2,8 +2,9 @@
 Tests for ModifyPersonalityTool (Story 6.2)
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.services.tools.modify_personality_tool import ModifyPersonalityTool
 

@@ -9,7 +9,7 @@ import time
 from datetime import date, datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from supabase import Client
 
 from app.core.deps import get_supabase_client

@@ -59,10 +59,7 @@ export default function MessageInput({
     if (isRecording) {
       // Start pulsing animation (opacity: 1 → 0.3 → 1)
       micOpacity.value = withRepeat(
-        withSequence(
-          withTiming(0.3, { duration: 600 }),
-          withTiming(1, { duration: 600 })
-        ),
+        withSequence(withTiming(0.3, { duration: 600 }), withTiming(1, { duration: 600 })),
         -1, // Infinite repeat
         false // Don't reverse
       );

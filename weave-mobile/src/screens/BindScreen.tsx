@@ -300,7 +300,9 @@ export function BindScreen() {
         console.log('[BIND] Saving notes as text capture:', notes);
 
         // Get user profile ID for captures table
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) {
           console.error('[BIND] No authenticated user found');
           return;

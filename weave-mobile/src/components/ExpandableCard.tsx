@@ -74,20 +74,12 @@ export function ExpandableCard({
         </View>
 
         <Animated.View style={chevronStyle}>
-          <MaterialIcons
-            name="expand-more"
-            size={24}
-            color={colors.text.secondary}
-          />
+          <MaterialIcons name="expand-more" size={24} color={colors.text.secondary} />
         </Animated.View>
       </Pressable>
 
       {/* Content - Conditionally Rendered */}
-      {isExpanded && (
-        <View style={[styles.content, { marginTop: spacing[4] }]}>
-          {children}
-        </View>
-      )}
+      {isExpanded && <View style={[styles.content, { marginTop: spacing[4] }]}>{children}</View>}
     </Card>
   );
 }

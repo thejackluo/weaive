@@ -480,10 +480,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                     return (
                       <View
                         key={displayData[idx].date}
-                        style={[
-                          styles.absoluteLabel,
-                          { left: `${positionPercent}%` }
-                        ]}
+                        style={[styles.absoluteLabel, { left: `${positionPercent}%` }]}
                       >
                         <Text
                           variant="textXs"
