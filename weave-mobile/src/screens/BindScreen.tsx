@@ -22,6 +22,7 @@ import { PomodoroTimer } from '@/components/thread/PomodoroTimer';
 import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
 import { ProofCaptureSheet } from '@/components/ProofCaptureSheet';
 import { ImageLightbox } from '@/components/ImageLightbox';
+import { WeaveLogoIcon } from '@/components/WeaveLogoIcon';
 import { ProofCaptureContext } from '@/types/captures';
 import { getLevelProgress } from '@/utils/levelProgression';
 import { launchCamera } from '@/services/imageCapture';
@@ -356,13 +357,13 @@ export function BindScreen() {
     >
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { padding: spacing[3] }]}
+        contentContainerStyle={[styles.content, { padding: spacing[4], paddingTop: spacing[5] }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header with back button */}
         <Pressable
           onPress={() => router.back()}
-          style={[styles.backButton, { marginBottom: spacing[3] }]}
+          style={[styles.backButton, { marginBottom: spacing[5] }]}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Body style={{ color: colors.text.primary }}>← Back</Body>
@@ -374,18 +375,24 @@ export function BindScreen() {
           style={{
             color: colors.text.primary,
             textAlign: 'center',
-            marginBottom: spacing[3],
-            fontSize: 28,
+            marginBottom: spacing[5],
+            fontSize: 32,
+            fontWeight: '700',
           }}
         >
           {bind.title}
         </Heading>
 
         {/* Needle Context Card */}
-        <Card variant="ai" style={{ marginBottom: spacing[4] }}>
+        <Card variant="ai" style={{ marginBottom: spacing[6] }}>
           <View style={styles.aiContext}>
-            <Body style={{ fontSize: 24, marginRight: spacing[2] }}>🧶</Body>
-            <Body style={{ flex: 1, color: colors.violet[200] }}>
+            <MaterialIcons
+              name="lightbulb"
+              size={28}
+              color={colors.violet[200]}
+              style={{ marginRight: spacing[2] }}
+            />
+            <Body style={{ flex: 1, color: colors.violet[200], fontSize: 15, lineHeight: 22 }}>
               Remember, you are doing this to{' '}
               <Body weight="bold" style={{ color: colors.violet[100] }}>
                 {bind.needle_title}
@@ -396,17 +403,22 @@ export function BindScreen() {
         </Card>
 
         {/* Accountability Section */}
-        <Card variant="default" style={{ marginBottom: spacing[4] }}>
+        <Card variant="default" style={{ marginBottom: spacing[6] }}>
           <Heading
             variant="displayLg"
-            style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+            style={{
+              color: colors.text.primary,
+              marginBottom: spacing[2],
+              fontSize: 20,
+              fontWeight: '600',
+            }}
           >
             Accountability
           </Heading>
-          <Body style={{ color: colors.text.secondary, marginBottom: spacing[4] }}>
+          <Body style={{ color: colors.text.muted, marginBottom: spacing[4], fontSize: 14 }}>
             {bind.completed
               ? 'You used these accountability options:'
-              : 'Use timer or capture proof to lock in your progress.'}
+              : 'Set a timer and/or take a picture.'}
           </Body>
 
           <View style={styles.accountabilityButtons}>
@@ -426,7 +438,7 @@ export function BindScreen() {
                       ? colors.semantic.success.base
                       : timerDuration
                         ? colors.accent[600]
-                        : colors.border.subtle,
+                        : colors.neutral[600],
                   borderRadius: radius.lg,
                   padding: spacing[4],
                   opacity: bind.completed && !bind.completion_details?.duration_minutes ? 0.5 : 1,
@@ -435,35 +447,35 @@ export function BindScreen() {
               onPress={bind.completed ? undefined : handleTimerSetup}
               disabled={bind.completed}
             >
-              <Body style={{ fontSize: 32, marginBottom: spacing[2] }}>⏱️</Body>
-              <Body
-                weight="semibold"
-                style={{
-                  color:
+              <View style={styles.iconContainer}>
+                <MaterialIcons
+                  name="schedule"
+                  size={40}
+                  color={
                     bind.completed && bind.completion_details?.duration_minutes
                       ? colors.semantic.success.dark
                       : timerDuration
-                        ? 'white'
-                        : colors.text.primary,
-                }}
-              >
-                Timer
-              </Body>
+                        ? 'black'
+                        : colors.text.primary
+                  }
+                />
+              </View>
               {bind.completed && bind.completion_details?.duration_minutes ? (
-                <Caption style={{ color: colors.semantic.success.dark }}>
+                <Caption style={{ color: colors.semantic.success.dark, fontSize: 13 }}>
                   {bind.completion_details.duration_minutes} min used
                 </Caption>
               ) : timerDuration ? (
-                <Caption style={{ color: 'rgba(255,255,255,0.8)' }}>
+                <Caption style={{ color: colors.text.inverse, opacity: 0.8, fontSize: 13 }}>
                   {timerDuration} min selected
                 </Caption>
               ) : (
                 <Caption
                   style={{
                     color: bind.completed ? colors.text.muted : colors.text.secondary,
+                    fontSize: 13,
                   }}
                 >
-                  {bind.completed ? 'Not used' : 'Set duration'}
+                  {bind.completed ? 'Not used' : ''}
                 </Caption>
               )}
             </Pressable>
@@ -484,7 +496,7 @@ export function BindScreen() {
                       ? colors.semantic.success.base
                       : photoUri
                         ? colors.accent[600]
-                        : colors.border.subtle,
+                        : colors.neutral[600],
                   borderRadius: radius.lg,
                   padding: spacing[4],
                   opacity: bind.completed && !bind.has_proof ? 0.5 : 1,
@@ -526,32 +538,36 @@ export function BindScreen() {
                 </View>
               ) : (
                 // Show camera icon
-                <Body style={{ fontSize: 32, marginBottom: spacing[2] }}>📸</Body>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons
+                    name="camera-alt"
+                    size={40}
+                    color={
+                      bind.completed && bind.has_proof
+                        ? colors.semantic.success.dark
+                        : photoUri
+                          ? 'black'
+                          : colors.text.primary
+                    }
+                  />
+                </View>
               )}
-              <Body
-                weight="semibold"
-                style={{
-                  color:
-                    bind.completed && bind.has_proof
-                      ? colors.semantic.success.dark
-                      : photoUri
-                        ? 'white'
-                        : colors.text.primary,
-                }}
-              >
-                Photo
-              </Body>
               {bind.completed && bind.has_proof ? (
-                <Caption style={{ color: colors.semantic.success.dark }}>Photo attached</Caption>
+                <Caption style={{ color: colors.semantic.success.dark, fontSize: 13 }}>
+                  Photo attached
+                </Caption>
               ) : photoUri ? (
-                <Caption style={{ color: 'rgba(255,255,255,0.8)' }}>Tap to view</Caption>
+                <Caption style={{ color: colors.text.inverse, opacity: 0.8, fontSize: 13 }}>
+                  Tap to view
+                </Caption>
               ) : (
                 <Caption
                   style={{
                     color: bind.completed ? colors.text.muted : colors.text.secondary,
+                    fontSize: 13,
                   }}
                 >
-                  {bind.completed ? 'Not used' : 'Take photo'}
+                  {bind.completed ? 'Not used' : ''}
                 </Caption>
               )}
             </Pressable>
@@ -560,7 +576,7 @@ export function BindScreen() {
 
         {/* Completion Notes or No Notes Card */}
         {bind.completed ? (
-          <Card variant="default" style={{ marginBottom: spacing[4] }}>
+          <Card variant="default" style={{ marginBottom: spacing[6] }}>
             <Caption style={{ color: colors.text.secondary, marginBottom: spacing[2] }}>
               {bind.completion_details?.notes ? 'Your Note' : 'Notes'}
             </Caption>
@@ -583,13 +599,18 @@ export function BindScreen() {
             const nextLevel = currentLevel + 1;
 
             return (
-              <Card variant="default" style={{ marginBottom: spacing[4] }}>
+              <Card variant="default" style={{ marginBottom: spacing[6] }}>
                 <View style={styles.levelPreview}>
-                  <Body style={{ fontSize: 48 }}>🧵</Body>
+                  <WeaveLogoIcon size={48} color={colors.accent[500]} />
                   <View style={{ flex: 1, marginLeft: spacing[3] }}>
                     <Body
                       weight="semibold"
-                      style={{ color: colors.text.primary, marginBottom: spacing[1] }}
+                      style={{
+                        color: colors.text.primary,
+                        marginBottom: spacing[1],
+                        fontSize: 18,
+                        fontWeight: '600',
+                      }}
                     >
                       Level {currentLevel}
                     </Body>
@@ -613,7 +634,9 @@ export function BindScreen() {
                         ]}
                       />
                     </View>
-                    <Caption style={{ color: colors.text.secondary, marginTop: spacing[1] }}>
+                    <Caption
+                      style={{ color: colors.text.muted, marginTop: spacing[1], fontSize: 13 }}
+                    >
                       {progressPercent}% to Level {nextLevel}
                     </Caption>
                   </View>
@@ -624,7 +647,7 @@ export function BindScreen() {
         )}
 
         {/* Action Buttons */}
-        <View style={styles.actions}>
+        <View style={[styles.actions, { marginTop: spacing[6] }]}>
           {!bind.completed ? (
             <>
               {isTimerRunning ? (
@@ -725,7 +748,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 16,
+    paddingBottom: 32,
+    flexGrow: 1,
   },
   centerContent: {
     flex: 1,
@@ -747,6 +771,13 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     alignItems: 'center',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 60,
+    marginTop: 12,
+    marginBottom: 4,
   },
   photoPreviewContainer: {
     position: 'relative',

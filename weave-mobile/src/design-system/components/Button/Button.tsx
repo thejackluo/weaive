@@ -1,13 +1,11 @@
 /**
- * Button Component - Weave Design System
+ * Button Component - Minimal Black/White Design
  *
- * A unique, thematic button with micro-interactions that embody identity transformation.
+ * Stoic aesthetic: clean, purposeful, no unnecessary decoration
  * Features:
- * - Morphing glass effect on press
- * - Gradient shimmer on hover
- * - Haptic feedback
- * - Weave-pattern ripple animation
- * - Dynamic letter-spacing (tightens on press, mimicking "weaving")
+ * - Simple scale animation on press
+ * - Haptic feedback (purposeful interaction)
+ * - iOS 17-style rounded corners
  */
 
 import React, { useCallback } from 'react';
@@ -21,15 +19,7 @@ import {
   PressableProps,
   StyleProp,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  withSequence,
-  interpolate,
-  Extrapolate,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { ButtonVariant, ButtonSize } from './types';
@@ -65,88 +55,32 @@ export function Button({
   onPress,
   ...pressableProps
 }: ButtonProps) {
-  const { colors, spacing, radius: _radius, typography, springs } = useTheme();
+  const { colors, spacing, typography, springs } = useTheme();
 
-  // Animation values
+  // Simple scale animation
   const scale = useSharedValue(1);
-  const shimmer = useSharedValue(0);
-  const glassOpacity = useSharedValue(0.7);
-  const letterSpacing = useSharedValue(typography.labelBase.letterSpacing || 0);
-  const rippleScale = useSharedValue(0);
 
   // Handle press in
   const handlePressIn = useCallback(
     (event: any) => {
       if (!disabled && !loading) {
-        // Haptic feedback
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-        // Scale down slightly (like pressing into fabric)
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         scale.value = withSpring(0.96, springs.press);
-
-        // Increase glass effect (more transparent)
-        glassOpacity.value = withTiming(0.9, { duration: 150 });
-
-        // Tighten letter spacing (weaving tighter)
-        letterSpacing.value = withTiming(-0.5, { duration: 150 });
-
-        // Ripple animation from center
-        rippleScale.value = withSpring(1, springs.quick);
       }
       onPressIn?.(event);
     },
-    [disabled, loading, onPressIn, scale, glassOpacity, letterSpacing, rippleScale, springs]
+    [disabled, loading, onPressIn, scale, springs]
   );
 
   // Handle press out
   const handlePressOut = useCallback(
     (event: any) => {
       if (!disabled && !loading) {
-        // Scale back to normal
         scale.value = withSpring(1, springs.default);
-
-        // Reset glass opacity
-        glassOpacity.value = withTiming(0.7, { duration: 200 });
-
-        // Reset letter spacing
-        letterSpacing.value = withTiming(typography.labelBase.letterSpacing || 0, {
-          duration: 200,
-        });
-
-        // Reset ripple
-        rippleScale.value = withTiming(0, { duration: 300 });
       }
       onPressOut?.(event);
     },
-    [
-      disabled,
-      loading,
-      onPressOut,
-      scale,
-      glassOpacity,
-      letterSpacing,
-      rippleScale,
-      springs,
-      typography,
-    ]
-  );
-
-  // Handle press
-  const handlePress = useCallback(
-    (event: any) => {
-      if (!disabled && !loading) {
-        // Success haptic
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-        // Shimmer effect
-        shimmer.value = withSequence(
-          withTiming(1, { duration: 400 }),
-          withTiming(0, { duration: 200 })
-        );
-      }
-      onPress?.(event);
-    },
-    [disabled, loading, onPress, shimmer]
+    [disabled, loading, onPressOut, scale, springs]
   );
 
   // Get variant styles
@@ -154,39 +88,9 @@ export function Button({
   const sizeStyles = getSizeStyles(size, spacing);
 
   // Animated styles
-  const animatedButtonStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: scale.value }],
-    };
-  });
-
-  const animatedGlassStyle = useAnimatedStyle(() => {
-    return {
-      opacity: glassOpacity.value,
-    };
-  });
-
-  const animatedTextStyle = useAnimatedStyle(() => {
-    return {
-      letterSpacing: letterSpacing.value,
-    };
-  });
-
-  const animatedShimmerStyle = useAnimatedStyle(() => {
-    const translateX = interpolate(shimmer.value, [0, 1], [-200, 200], Extrapolate.CLAMP);
-
-    return {
-      transform: [{ translateX }],
-      opacity: shimmer.value * 0.5,
-    };
-  });
-
-  const animatedRippleStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: rippleScale.value }],
-      opacity: 1 - rippleScale.value,
-    };
-  });
+  const animatedButtonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   const buttonStyle = [
     styles.button,
@@ -194,6 +98,7 @@ export function Button({
     sizeStyles.button,
     fullWidth && styles.fullWidth,
     disabled && styles.disabled,
+    styles.buttonShadow, // Add subtle shadow for depth
     style,
   ];
 
@@ -209,195 +114,137 @@ export function Button({
     <AnimatedPressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      onPress={handlePress}
+      onPress={onPress}
       disabled={disabled || loading}
       style={[animatedButtonStyle, buttonStyle]}
       {...pressableProps}
     >
-      {/* Glass morphism layer */}
-      <Animated.View style={[styles.glassLayer, variantStyles.glass, animatedGlassStyle]} />
-
-      {/* Ripple effect */}
-      <Animated.View
-        style={[styles.ripple, { backgroundColor: variantStyles.ripple }, animatedRippleStyle]}
-      />
-
-      {/* Shimmer effect */}
-      <Animated.View style={[styles.shimmer, animatedShimmerStyle]}>
-        <View style={styles.shimmerGradient} />
-      </Animated.View>
-
       {/* Content */}
       <View style={styles.contentContainer}>
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
 
-        <Animated.Text style={[innerTextStyle, animatedTextStyle]}>
-          {loading ? 'Loading...' : children}
-        </Animated.Text>
+        <Animated.Text style={innerTextStyle}>{loading ? 'Loading...' : children}</Animated.Text>
 
         {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
-      </View>
-
-      {/* Weave pattern overlay (subtle) */}
-      <View style={styles.weavePattern} pointerEvents="none">
-        <WeavePatternSVG color={variantStyles.weaveColor} />
       </View>
     </AnimatedPressable>
   );
 }
 
-// Variant styles
+// Variant styles - Minimal black/white/gray
 function getVariantStyles(variant: ButtonVariant, colors: any) {
   const variants = {
+    // Primary: White button with black text
     primary: {
       button: {
-        backgroundColor: colors.accent[500],
+        backgroundColor: colors.neutral[0], // White
         borderWidth: 0,
       },
-      glass: {
-        backgroundColor: `${colors.accent[400]}40`,
-      },
       text: {
-        color: colors.text.inverse,
-        fontWeight: '600' as const,
+        color: colors.text.inverse, // Black
+        fontWeight: '700' as const,
       },
-      ripple: `${colors.accent[300]}80`,
-      weaveColor: `${colors.accent[200]}20`,
     },
+    // Secondary: Outlined white border, white text
     secondary: {
       button: {
         backgroundColor: 'transparent',
         borderWidth: 1.5,
-        borderColor: colors.accent[500],
-      },
-      glass: {
-        backgroundColor: `${colors.accent[500]}10`,
+        borderColor: colors.neutral[0], // White border
       },
       text: {
-        color: colors.accent[500],
-        fontWeight: '500' as const,
+        color: colors.text.primary, // White text
+        fontWeight: '700' as const,
       },
-      ripple: `${colors.accent[500]}40`,
-      weaveColor: `${colors.accent[500]}10`,
     },
+    // Ghost: Transparent with white text
     ghost: {
       button: {
         backgroundColor: 'transparent',
         borderWidth: 0,
       },
-      glass: {
-        backgroundColor: `${colors.text.primary}08`,
-      },
       text: {
         color: colors.text.primary,
-        fontWeight: '500' as const,
+        fontWeight: '700' as const,
       },
-      ripple: `${colors.text.primary}20`,
-      weaveColor: `${colors.text.primary}05`,
     },
+    // Destructive: Red for delete actions
     destructive: {
       button: {
-        backgroundColor: colors.rose[500],
+        backgroundColor: colors.red[500],
         borderWidth: 0,
       },
-      glass: {
-        backgroundColor: `${colors.rose[400]}40`,
-      },
       text: {
-        color: colors.text.inverse,
-        fontWeight: '600' as const,
+        color: colors.neutral[0], // White
+        fontWeight: '700' as const,
       },
-      ripple: `${colors.rose[300]}80`,
-      weaveColor: `${colors.rose[200]}20`,
     },
-    ai: {
-      button: {
-        backgroundColor: colors.violet[500],
-        borderWidth: 0,
-      },
-      glass: {
-        backgroundColor: `${colors.violet[400]}40`,
-      },
-      text: {
-        color: colors.text.inverse,
-        fontWeight: '600' as const,
-      },
-      ripple: `${colors.violet[300]}80`,
-      weaveColor: `${colors.violet[200]}20`,
-    },
+    // Success: Green for positive actions (maps to primary green button when needed)
     success: {
       button: {
-        backgroundColor: colors.emerald[500],
+        backgroundColor: colors.green[500],
         borderWidth: 0,
       },
-      glass: {
-        backgroundColor: `${colors.emerald[400]}40`,
+      text: {
+        color: colors.neutral[1000], // Black
+        fontWeight: '700' as const,
+      },
+    },
+    // AI: Maps to primary (no special color in minimal design)
+    ai: {
+      button: {
+        backgroundColor: colors.neutral[0],
+        borderWidth: 0,
       },
       text: {
         color: colors.text.inverse,
-        fontWeight: '600' as const,
+        fontWeight: '700' as const,
       },
-      ripple: `${colors.emerald[300]}80`,
-      weaveColor: `${colors.emerald[200]}20`,
     },
   };
 
   return variants[variant];
 }
 
-// Size styles
+// Size styles - iOS 17 rounded corners
 function getSizeStyles(size: ButtonSize, spacing: any) {
   const sizes = {
     sm: {
       button: {
-        height: 40, // Increased from 36 to prevent text cutoff
+        height: 40,
         paddingHorizontal: spacing[3],
-        paddingVertical: 2, // Add vertical padding for better text alignment
-        borderRadius: 10,
+        borderRadius: 10, // iOS 17 style
       },
       text: {
-        fontSize: 12,
-        lineHeight: 16, // Explicit line height for consistent text rendering
+        fontSize: 13,
+        lineHeight: 16,
       },
     },
     md: {
       button: {
-        height: 48, // Increased from 44 to prevent text cutoff
-        paddingHorizontal: spacing[4],
-        paddingVertical: 2, // Add vertical padding for better text alignment
-        borderRadius: 12,
+        height: 48,
+        paddingHorizontal: spacing[5],
+        borderRadius: 12, // iOS 17 style
       },
       text: {
-        fontSize: 14,
-        lineHeight: 20, // Explicit line height for consistent text rendering
+        fontSize: 15,
+        lineHeight: 20,
       },
     },
     lg: {
       button: {
-        height: 60, // Increased from 56 to prevent text cutoff
+        height: 56,
         paddingHorizontal: spacing[6],
-        paddingVertical: 2, // Add vertical padding for better text alignment
-        borderRadius: 14,
+        borderRadius: 14, // iOS 17 style
       },
       text: {
-        fontSize: 16,
-        lineHeight: 24, // Explicit line height for consistent text rendering
+        fontSize: 17,
+        lineHeight: 24,
       },
     },
   };
 
   return sizes[size];
-}
-
-// Weave pattern SVG component (simplified for now, will be enhanced)
-function WeavePatternSVG({ color }: { color: string }) {
-  return (
-    <View style={{ opacity: 0.3 }}>
-      {/* This will be replaced with actual SVG curves */}
-      <View style={[styles.weaveLineHorizontal, { backgroundColor: color }]} />
-      <View style={[styles.weaveLineVertical, { backgroundColor: color }]} />
-    </View>
-  );
 }
 
 const styles = StyleSheet.create({
@@ -417,56 +264,25 @@ const styles = StyleSheet.create({
   disabledText: {
     opacity: 0.6,
   },
-  glassLayer: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 12,
-  },
-  ripple: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 12,
-  },
-  shimmer: {
-    ...StyleSheet.absoluteFillObject,
-    width: 200,
-    height: '100%',
-  },
-  shimmerGradient: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    transform: [{ skewX: '-20deg' }],
+  buttonShadow: {
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   contentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
   },
   leftIcon: {
     marginRight: 8,
   },
   rightIcon: {
     marginLeft: 8,
-  },
-  weavePattern: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.15,
-    pointerEvents: 'none',
-  },
-  weaveLineHorizontal: {
-    position: 'absolute',
-    top: '30%',
-    left: 0,
-    right: 0,
-    height: 1,
-    transform: [{ scaleX: 1.2 }],
-  },
-  weaveLineVertical: {
-    position: 'absolute',
-    left: '40%',
-    top: 0,
-    bottom: 0,
-    width: 1,
-    transform: [{ scaleY: 1.2 }],
   },
 });

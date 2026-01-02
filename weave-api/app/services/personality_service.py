@@ -76,11 +76,13 @@ class PersonalityService:
 
             if not user_response.data:
                 logger.warning(f"User {user_id} not found, using default Weave AI")
-                return self._get_weave_ai_persona("gen_z_default")
+                # Use config file default instead of hardcoded gen_z_default
+                return self._get_weave_ai_persona(AIPersonalityConfig.PERSONALITY)
 
             user_data = user_response.data[0]
             active_personality = user_data.get("active_personality", "weave_ai")
-            weave_ai_preset = user_data.get("weave_ai_preset", "gen_z_default")
+            # Use config file default instead of hardcoded gen_z_default
+            weave_ai_preset = user_data.get("weave_ai_preset") or AIPersonalityConfig.PERSONALITY
 
             # If user prefers Weave AI, use Story 6.1 preset
             if active_personality == "weave_ai":
@@ -97,16 +99,19 @@ class PersonalityService:
                 else:
                     # Fallback: Dream Self doc missing
                     logger.warning(f"User {user_id} has active_personality='dream_self' but no identity doc, falling back to Weave AI")
-                    return self._get_weave_ai_persona(weave_ai_preset)
+                    # Use config file default if user has no weave_ai_preset set
+                    preset = weave_ai_preset or AIPersonalityConfig.PERSONALITY
+                    return self._get_weave_ai_persona(preset)
 
             # Unknown personality type - fallback to Weave AI
             logger.warning(f"Unknown active_personality '{active_personality}' for user {user_id}, using Weave AI")
-            return self._get_weave_ai_persona(weave_ai_preset)
+            preset = weave_ai_preset or AIPersonalityConfig.PERSONALITY
+            return self._get_weave_ai_persona(preset)
 
         except Exception as e:
             logger.error(f"Error getting personality for user {user_id}: {e}")
-            # Graceful fallback
-            return self._get_weave_ai_persona("gen_z_default")
+            # Graceful fallback - use config file default
+            return self._get_weave_ai_persona(AIPersonalityConfig.PERSONALITY)
 
     def _get_weave_ai_persona(self, preset: str) -> Dict:
         """

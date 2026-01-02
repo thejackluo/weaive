@@ -40,14 +40,8 @@ interface NeedleCardProps {
   onBindPress: (bind: Bind) => void;
 }
 
-// Color mapping for needle accent bars
-const COLOR_MAP = {
-  blue: '#3B82F6',
-  green: '#10B981',
-  red: '#EF4444',
-  violet: '#8B5CF6',
-  emerald: '#10B981',
-};
+// Minimal aesthetic: All needles use subtle white accent bar (no color distinction)
+const ACCENT_COLOR = '#FFFFFF';
 
 export function NeedleCard({
   needle,
@@ -80,29 +74,36 @@ export function NeedleCard({
     return null;
   }
 
-  const accentColor = COLOR_MAP[needle.color];
-
   return (
-    <View style={[styles.container, { marginBottom: spacing[3] }]}>
+    <View style={[styles.container, { marginBottom: spacing[2] }]}>
       {/* Needle Header (always visible) */}
       <Pressable
         style={[
           styles.header,
           {
             backgroundColor: colors.background.secondary,
-            borderColor: colors.border.subtle,
-            borderRadius: radius.lg,
+            borderColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: radius.xl, // iOS 17 style (24px)
             padding: spacing[4],
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 4,
           },
         ]}
         onPress={onToggle}
       >
-        {/* Left accent bar */}
+        {/* Left accent bar - minimal white line */}
         <View
           style={[
             styles.accentBar,
             {
-              backgroundColor: accentColor,
+              backgroundColor: ACCENT_COLOR,
+              opacity: 0.15, // Subtle presence
             },
           ]}
         />
@@ -111,17 +112,47 @@ export function NeedleCard({
         <View style={styles.headerContent}>
           <View style={styles.headerTop}>
             <View style={styles.titleSection}>
-              <Body weight="bold" style={{ color: colors.text.primary }}>
+              <Body
+                weight="bold"
+                style={{
+                  color: '#FFFFFF', // Pure white for needle titles
+                  fontSize: 17,
+                  letterSpacing: -0.5,
+                  fontWeight: '700',
+                  textShadowColor: 'rgba(0, 0, 0, 0.2)',
+                  textShadowOffset: { width: 0, height: 1 },
+                  textShadowRadius: 2,
+                }}
+              >
                 {needle.title}
               </Body>
-              <Caption style={{ color: colors.text.muted, marginTop: spacing[1] }}>
-                Why: {needle.why}
-              </Caption>
+              {/* Only show "Why:" when expanded - cleaner collapsed state */}
+              {isExpanded && (
+                <Caption
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    marginTop: spacing[2],
+                    fontSize: 13,
+                    fontWeight: '500',
+                  }}
+                >
+                  Why: {needle.why}
+                </Caption>
+              )}
             </View>
 
             <View style={styles.stats}>
-              <Caption style={{ color: colors.text.secondary }}>
-                {needle.completedBinds}/{needle.totalBinds} Completed
+              <Caption
+                style={{
+                  color: 'rgba(255, 255, 255, 0.7)', // Lighter gray for secondary info
+                  fontSize: 14,
+                  fontWeight: '600', // Less bold than titles
+                  textShadowColor: 'rgba(0, 0, 0, 0.2)',
+                  textShadowOffset: { width: 0, height: 1 },
+                  textShadowRadius: 1,
+                }}
+              >
+                {needle.completedBinds}/{needle.totalBinds}
               </Caption>
             </View>
           </View>

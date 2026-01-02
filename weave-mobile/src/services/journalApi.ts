@@ -27,6 +27,7 @@ export interface JournalEntryCreate {
   default_responses?: {
     today_reflection?: string;
     tomorrow_focus?: string;
+    today_focus?: string;
   };
   custom_responses?: Record<string, any>;
 }
@@ -36,6 +37,7 @@ export interface JournalEntryUpdate {
   default_responses?: {
     today_reflection?: string;
     tomorrow_focus?: string;
+    today_focus?: string;
   };
   custom_responses?: Record<string, any>;
 }
@@ -48,6 +50,7 @@ export interface JournalEntryResponse {
   default_responses?: {
     today_reflection?: string;
     tomorrow_focus?: string;
+    today_focus?: string;
   };
   custom_responses?: Record<string, any>;
   created_at: string;
@@ -79,6 +82,9 @@ async function getAuthToken(): Promise<string> {
  * GET /api/journal-entries/today
  * Fetch today's journal entry for authenticated user
  * Returns null if no entry exists (404)
+ *
+ * FIX: Passes client's local_date as query parameter to avoid timezone mismatch
+ * between client and server.
  */
 export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
   const overallStart = performance.now();
@@ -92,9 +98,16 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
     // Step 2: Get auth token
     const token = await getAuthToken();
 
+    // Step 2.5: Calculate local_date on client (user's timezone)
+    // This fixes timezone mismatch where server uses UTC but client uses local timezone
+    const localDate = new Date().toISOString().split('T')[0];
+    console.log(`[JOURNAL_API] 📅 Using client local_date: ${localDate}`);
+
     // Step 3: Make API request with timeout
     const fetchStart = performance.now();
-    console.log('[JOURNAL_API] 🚀 Sending GET request to /api/journal-entries/today');
+    console.log(
+      '[JOURNAL_API] 🚀 Sending GET request to /api/journal-entries/today?local_date=' + localDate
+    );
 
     // Create AbortController for 30-second timeout (increased for dev debugging)
     const controller = new AbortController();
@@ -104,7 +117,8 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
     }, 30000);
 
     try {
-      const response = await fetch(`${baseUrl}/api/journal-entries/today`, {
+      // Pass local_date as query parameter
+      const response = await fetch(`${baseUrl}/api/journal-entries/today?local_date=${localDate}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -321,6 +335,46 @@ export async function getJournalEntriesByDateRange(
 }
 
 /**
+ * GET /api/journal-entries/yesterday-intention
+ * Fetch yesterday's intention (tomorrow_focus from yesterday's journal)
+ * Returns null if no intention exists
+ */
+export async function getYesterdayIntention(): Promise<{
+  intention: string | null;
+  date: string;
+  has_entry: boolean;
+} | null> {
+  try {
+    const baseUrl = getApiBaseUrl();
+    const token = await getAuthToken();
+
+    const response = await fetch(`${baseUrl}/api/journal-entries/yesterday-intention`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 404) {
+      console.log('[JOURNAL_API] No yesterday journal found');
+      return { intention: null, date: '', has_entry: false };
+    }
+
+    if (!response.ok) {
+      console.error(`[JOURNAL_API] ❌ API error: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to fetch yesterday's intention: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error('getYesterdayIntention error:', error);
+    throw error;
+  }
+}
+
+/**
  * Get current authenticated user
  * Note: This is a stub for tests - actual user data comes from AuthContext
  */
@@ -336,5 +390,6 @@ export const journalApi = {
   submitJournalEntry,
   getJournalEntryForDate,
   getJournalEntriesByDateRange,
+  getYesterdayIntention,
   getCurrentUser,
 };

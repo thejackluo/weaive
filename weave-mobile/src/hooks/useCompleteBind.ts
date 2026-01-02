@@ -228,30 +228,22 @@ export function useCompleteBind() {
       }
     },
     onSuccess: async () => {
-      // Refetch today's binds query to confirm server state
+      console.log('[COMPLETE_BIND] Bind completed successfully, refetching queries...');
+
       const today = new Date().toISOString().split('T')[0];
-      await queryClient.refetchQueries({ queryKey: bindsQueryKeys.today(today) });
 
-      // Invalidate and refetch daily detail page (Epic 2 - Dashboard Detail View)
-      queryClient.invalidateQueries({ queryKey: ['daily-detail', today] });
+      // Refetch all related queries in parallel for instant updates (same pattern as goal mutations)
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: bindsQueryKeys.today(today) }),
+        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
+        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
+        queryClient.refetchQueries({ queryKey: ['userStats'] }),
+        queryClient.refetchQueries({ queryKey: historyQueryKeys.all }),
+        queryClient.refetchQueries({ queryKey: ['daily-detail', today] }),
+      ]);
 
-      // Invalidate dashboard stats (auto-refresh Dashboard after completion)
-      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
-      queryClient.invalidateQueries({ queryKey: userStatsQueryKeys.all });
-      queryClient.invalidateQueries({ queryKey: historyQueryKeys.all });
-
-      // Refetch Dashboard queries to update consistency and stats immediately (background)
-      queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() });
-      queryClient.refetchQueries({ queryKey: ['userStats'] });
-
-      // Refetch Dashboard section queries (Epic 5 - Progress Visualization) immediately (background)
-      queryClient.refetchQueries({ queryKey: ['consistency'] }); // All consistency data
-      queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }); // 7d grid view
-      queryClient.refetchQueries({ queryKey: ['history'] }); // History list
-
-      if (__DEV__) {
-        console.log('[COMPLETE_BIND] Confirmed with server refetch');
-      }
+      console.log('[COMPLETE_BIND] All queries refetched successfully');
     },
   });
 }

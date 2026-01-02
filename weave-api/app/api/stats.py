@@ -239,8 +239,8 @@ async def get_consistency_data(
                 start_date_obj = date.today() - timedelta(days=days - 1)
 
         start_date = start_date_obj.isoformat()
-        # End date: N-1 days after start (to show N total days)
-        end_date_obj = start_date_obj + timedelta(days=days - 1)
+        # End date: TODAY (rolling consistency counts from first activity up to now)
+        end_date_obj = date.today()
 
         # TASK-BASED CONSISTENCY: Count scheduled tasks vs completed tasks
         # Use subtask_completions as source of truth (append-only, never loses historical data)
@@ -272,32 +272,55 @@ async def get_consistency_data(
         print(f"📊 [CONSISTENCY] Found {len(completions)} completions in range")
 
         # Step 2: Fetch all instances in date range (these are the scheduled tasks)
-        instances_response = (
-            supabase.table("subtask_instances")
-            .select("id, scheduled_for_date")
-            .eq("user_id", user_id)
-            .gte("scheduled_for_date", start_date)
-            .lte("scheduled_for_date", end_date_obj.isoformat())
-            .execute()
-        )
+        # Apply filtering based on filter_type
+        # IMPORTANT: For 'thread' filter, skip instances entirely (thread = journals only)
+        instances = []
+        if filter_type != "thread":
+            instances_query = (
+                supabase.table("subtask_instances")
+                .select("id, scheduled_for_date, goal_id, template_id")
+                .eq("user_id", user_id)
+                .gte("scheduled_for_date", start_date)
+                .lte("scheduled_for_date", end_date_obj.isoformat())
+            )
 
-        instances = instances_response.data or []
+            # Filter by needle (goal_id)
+            if filter_type == "needle" and filter_id:
+                instances_query = instances_query.eq("goal_id", filter_id)
+                print(f"📊 [CONSISTENCY] Filtering instances by goal_id: {filter_id}")
+            # Filter by bind (template_id)
+            elif filter_type == "bind" and filter_id:
+                instances_query = instances_query.eq("template_id", filter_id)
+                print(f"📊 [CONSISTENCY] Filtering instances by template_id: {filter_id}")
 
-        print(f"📊 [CONSISTENCY] Found {len(instances)} scheduled instances")
+            instances_response = instances_query.execute()
+            instances = instances_response.data or []
+        else:
+            print(f"📊 [CONSISTENCY] Skipping bind instances for thread filter (journals only)")
 
-        # Step 3: Fetch journal entries in date range (daily reflection counts as a bind)
-        journal_response = (
-            supabase.table("journal_entries")
-            .select("id, local_date")
-            .eq("user_id", user_id)
-            .gte("local_date", start_date)
-            .lte("local_date", end_date_obj.isoformat())
-            .execute()
-        )
+        print(f"📊 [CONSISTENCY] Found {len(instances)} scheduled instances (after filter)")
 
-        journal_entries = journal_response.data or []
+        # Create a set of filtered instance IDs for completion filtering
+        filtered_instance_ids = {inst["id"] for inst in instances}
+        print(f"📊 [CONSISTENCY] Filtered instance IDs count: {len(filtered_instance_ids)}")
 
-        print(f"📊 [CONSISTENCY] Found {len(journal_entries)} journal reflections")
+        # Step 3: Fetch journal entries in date range (daily reflection counts toward consistency)
+        # Only include journals for 'overall' and 'thread' filters
+        # (Needle and Bind filters should only show bind-specific consistency)
+        journal_entries = []
+        if filter_type in ["overall", "thread"]:
+            journal_response = (
+                supabase.table("journal_entries")
+                .select("id, local_date")
+                .eq("user_id", user_id)
+                .gte("local_date", start_date)
+                .lte("local_date", end_date_obj.isoformat())
+                .execute()
+            )
+            journal_entries = journal_response.data or []
+            print(f"📊 [CONSISTENCY] Found {len(journal_entries)} journal reflections")
+        else:
+            print(f"📊 [CONSISTENCY] Skipping journals for filter_type={filter_type}")
 
         # Group scheduled and completed tasks by date
         from collections import defaultdict
@@ -313,28 +336,48 @@ async def get_consistency_data(
         print(f"📊 [CONSISTENCY] Scheduled binds by date (past only): {dict(scheduled_by_date)}")
 
         # Count completed tasks (using scheduled_for_date from the instance, not completed_at)
+        # Apply filtering based on filter_type
         for completion in completions:
             instance = completion.get("subtask_instances")
             if instance and instance.get("scheduled_for_date"):
                 scheduled_date = instance["scheduled_for_date"]
-                completed_by_date[scheduled_date] += 1
-                # Also ensure this date is counted as scheduled (in case instance was deleted)
-                if scheduled_date not in scheduled_by_date:
-                    scheduled_by_date[scheduled_date] = 0
-                if scheduled_by_date[scheduled_date] == 0:
-                    scheduled_by_date[scheduled_date] = completed_by_date[scheduled_date]
+                instance_id = completion.get("subtask_instance_id")
+
+                # Apply filtering logic
+                if filter_type == "overall":
+                    # Overall: Count ALL completions (original working logic)
+                    completed_by_date[scheduled_date] += 1
+                    # Also ensure this date is counted as scheduled (in case instance was deleted)
+                    if scheduled_date not in scheduled_by_date:
+                        scheduled_by_date[scheduled_date] = 0
+                    if scheduled_by_date[scheduled_date] == 0:
+                        scheduled_by_date[scheduled_date] = completed_by_date[scheduled_date]
+                elif filter_type in ["needle", "bind"] and instance_id in filtered_instance_ids:
+                    # Needle/Bind: Only count if instance matches filter
+                    completed_by_date[scheduled_date] += 1
+                    if scheduled_date not in scheduled_by_date:
+                        scheduled_by_date[scheduled_date] = 0
+                    if scheduled_by_date[scheduled_date] == 0:
+                        scheduled_by_date[scheduled_date] = completed_by_date[scheduled_date]
+                # thread: Skip all bind completions (don't count)
+
+        print(f"📊 [CONSISTENCY] Completed by date: {dict(completed_by_date)} for filter_type={filter_type}")
 
         # Step 4: Add journal reflections to consistency calculation
         # IMPORTANT: Only schedule reflections for days UP TO TODAY (not future days)
         # Each day that has occurred has 1 scheduled "daily reflection" task
         # Each day with a journal entry counts as 1 completed task
-        current_date = start_date_obj
-        today = date.today()
-        while current_date <= min(end_date_obj, today):  # Only up to today
-            date_str = current_date.isoformat()
-            # Add 1 scheduled reflection for each day that has occurred
-            scheduled_by_date[date_str] += 1
-            current_date += timedelta(days=1)
+        # ONLY add reflections for overall/thread filters (not needle/bind specific)
+        if filter_type in ["overall", "thread"]:
+            current_date = start_date_obj
+            today = date.today()
+            while current_date <= min(end_date_obj, today):  # Only up to today
+                date_str = current_date.isoformat()
+                # Add 1 scheduled reflection for each day that has occurred
+                scheduled_by_date[date_str] += 1
+                current_date += timedelta(days=1)
+        else:
+            print(f"📊 [CONSISTENCY] Skipping daily reflection scheduling for filter_type={filter_type}")
 
         # Add journal entries as completions
         for journal_entry in journal_entries:

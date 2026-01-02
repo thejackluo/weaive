@@ -2,30 +2,64 @@
  * Thread Home Screen (US-3.1: View Today's Binds)
  *
  * Main daily action loop screen showing:
- * - Header with streak + greeting + profile
- * - Week calendar widget (current week view)
- * - AI insight card (tappable to open chat)
- * - Needles with collapsible binds (hide-others behavior)
+ * - Large greeting with progress percentage (prominent)
+ * - Collapsible needle cards (hide-others behavior)
  * - Daily Check-In card with countdown timer
+ *
+ * Minimal aesthetic improvements:
+ * - Dramatic typography hierarchy (48px greeting, 60px percentage)
+ * - Increased spacing (32px between sections)
+ * - Simplified needle cards (no "Why:" when collapsed)
+ * - Prominent reflection button
  */
 
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { useTheme, Card, Heading, Body, Caption, Button } from '@/design-system';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTheme, Card, Heading, Body, Caption, Button, Text } from '@/design-system';
 import { NeedleCard } from '@/components/thread/NeedleCard';
-import CountdownTimer from '@/components/features/journal/CountdownTimer';
+import { YesterdayIntentionCard } from '@/components/thread/YesterdayIntentionCard';
+import { CircularProgress } from '@/components/CircularProgress';
 import { useTodayBinds } from '@/hooks/useTodayBinds';
-import { useGetTodayJournal } from '@/hooks/useJournal';
+import { useGetTodayJournal, useUpdateJournal, useSubmitJournal } from '@/hooks/useJournal';
 import { useActiveGoals } from '@/hooks/useActiveGoals';
 import type { Bind } from '@/types/binds';
-import { mockUser, getGreeting, getRandomInsight } from '@/data/mockThreadData';
+import { mockUser, getGreeting } from '@/data/mockThreadData';
 
 export function ThreadHomeScreen() {
   const { colors, spacing } = useTheme();
   const router = useRouter();
-  const [expandedNeedleId, setExpandedNeedleId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  // Store expanded needles as a Set (all open by default)
+  const [expandedNeedleIds, setExpandedNeedleIds] = useState<Set<string>>(new Set());
+
+  // Countdown timer state
+  const [timeRemaining, setTimeRemaining] = React.useState('');
+
+  // Update countdown every minute
+  React.useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      const ms = tomorrow.getTime() - now.getTime();
+      const totalMinutes = Math.floor(ms / (1000 * 60));
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+
+      setTimeRemaining(`${hours}h ${minutes}m`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch today's binds
   const { data, isLoading, isError, error, refetch } = useTodayBinds();
@@ -35,6 +69,10 @@ export function ThreadHomeScreen() {
 
   // Check if today's journal entry exists (for completion status)
   const { data: todayJournal, refetch: refetchJournal } = useGetTodayJournal();
+
+  // Journal mutations for saving intentions
+  const updateJournalMutation = useUpdateJournal();
+  const submitJournalMutation = useSubmitJournal();
 
   // 🐛 FIX: Refetch goals when screen comes into focus
   // This ensures new/deleted goals appear immediately when navigating back from create/delete actions
@@ -67,9 +105,8 @@ export function ThreadHomeScreen() {
   // Mock user data (will be replaced with real user data in future)
   const user = mockUser;
   const greeting = getGreeting();
-  const aiInsight = getRandomInsight();
 
-  // Get today's date formatted as "Monday, December 28"
+  // Get today's date formatted as "Thursday, January 1"
   const getTodayDate = () => {
     const today = new Date();
     const options: Intl.DateTimeFormatOptions = {
@@ -80,7 +117,19 @@ export function ThreadHomeScreen() {
     return today.toLocaleDateString('en-US', options);
   };
 
+  // Get abbreviated date for top right corner (e.g., "Thu, Jan 1")
+  const getAbbreviatedDate = () => {
+    const today = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    };
+    return today.toLocaleDateString('en-US', options);
+  };
+
   const todayDate = getTodayDate();
+  const abbreviatedDate = getAbbreviatedDate();
 
   // Determine if reflection is complete (has today's journal entry)
   const hasCompletedReflection = !!todayJournal;
@@ -90,9 +139,17 @@ export function ThreadHomeScreen() {
     hasCompletedReflection,
   });
 
-  // Handle needle toggle
+  // Handle needle toggle (independent toggles)
   const handleNeedleToggle = (needleId: string) => {
-    setExpandedNeedleId((prev) => (prev === needleId ? null : needleId));
+    setExpandedNeedleIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(needleId)) {
+        newSet.delete(needleId);
+      } else {
+        newSet.add(needleId);
+      }
+      return newSet;
+    });
   };
 
   // Group binds by needle + include active needles without binds
@@ -129,7 +186,7 @@ export function ThreadHomeScreen() {
     }
 
     // Then, add active goals that don't have binds today
-    if (goalsData?.data) {
+    if (goalsData?.data && Array.isArray(goalsData.data)) {
       goalsData.data.forEach((goal) => {
         if (!needleMap.has(goal.id)) {
           needleMap.set(goal.id, {
@@ -153,17 +210,13 @@ export function ThreadHomeScreen() {
 
   const needleGroups = groupBindsByNeedle();
 
-  // 🐛 FIX: Reset expandedNeedleId if the expanded needle was archived/deleted
-  // This prevents all needles from becoming invisible when archiving the expanded needle
+  // Initialize all needles as expanded on first load
   React.useEffect(() => {
-    if (expandedNeedleId) {
-      const needleStillExists = needleGroups.some((group) => group.needle.id === expandedNeedleId);
-      if (!needleStillExists) {
-        console.log('[ThreadHome] Expanded needle no longer exists - resetting expandedNeedleId');
-        setExpandedNeedleId(null);
-      }
+    if (needleGroups.length > 0 && expandedNeedleIds.size === 0) {
+      const allNeedleIds = new Set(needleGroups.map((group) => group.needle.id));
+      setExpandedNeedleIds(allNeedleIds);
     }
-  }, [expandedNeedleId, needleGroups]);
+  }, [needleGroups]);
 
   // Handle bind press
   const handleBindPress = (bind: Bind) => {
@@ -171,10 +224,54 @@ export function ThreadHomeScreen() {
     router.push(`/(tabs)/binds/${bind.id}`);
   };
 
-  // Handle AI insight tap
-  const handleAIInsightPress = () => {
-    console.log('AI Insight tapped - open Weave AI modal');
-    // TODO: Open Weave AI modal with this insight as context
+  // Handle saving intention (either update existing journal or create placeholder)
+  const handleSaveIntention = async (intention: string) => {
+    const startTime = performance.now();
+    console.log('[ThreadHome] 💾 handleSaveIntention called', {
+      hasExistingJournal: !!todayJournal?.id,
+      intention: intention.substring(0, 50) + '...',
+    });
+
+    try {
+      if (todayJournal?.id) {
+        // Update existing journal entry
+        console.log('[ThreadHome] 🔄 Updating existing journal:', todayJournal.id);
+        await updateJournalMutation.mutateAsync({
+          journalId: todayJournal.id,
+          data: {
+            default_responses: {
+              ...todayJournal.default_responses,
+              today_focus: intention,
+            },
+          },
+        });
+      } else {
+        // Create a new journal entry with just the intention
+        // Note: This requires a fulfillment_score, so we'll use a default of 5
+        console.log('[ThreadHome] ✨ Creating new journal entry');
+        await submitJournalMutation.mutateAsync({
+          fulfillment_score: 5,
+          default_responses: {
+            today_focus: intention,
+          },
+        });
+      }
+
+      const duration = (performance.now() - startTime).toFixed(0);
+      console.log(`[ThreadHome] ✅ Save successful in ${duration}ms`);
+
+      // Refetch both today's journal AND yesterday's intention cache
+      // This ensures the YesterdayIntentionCard sees the updated data
+      refetchJournal();
+
+      // Force invalidate the yesterday-intention query to show the updated today's focus
+      // Note: After editing, we want to show today's focus (not yesterday's anymore)
+      queryClient.invalidateQueries({ queryKey: ['journal-entries', 'yesterday-intention'] });
+    } catch (error) {
+      const duration = (performance.now() - startTime).toFixed(0);
+      console.error(`[ThreadHome] ❌ Save failed after ${duration}ms:`, error);
+      throw error; // Re-throw so the component can handle it
+    }
   };
 
   // Loading state
@@ -185,7 +282,7 @@ export function ThreadHomeScreen() {
         edges={['top']}
       >
         <View style={[styles.centerContent, { padding: spacing[4] }]}>
-          <ActivityIndicator size="large" color={colors.accent[500]} />
+          <ActivityIndicator size="large" color={colors.neutral[0]} />
           <Body style={{ color: colors.text.secondary, marginTop: spacing[4] }}>
             Loading your needles...
           </Body>
@@ -221,83 +318,125 @@ export function ThreadHomeScreen() {
     );
   }
 
+  // Calculate progress
+  const totalBinds = data?.data?.length || 0;
+  const completedBinds = data?.data?.filter((bind) => bind.completed).length || 0;
+  const totalTasks = totalBinds + 1; // +1 for daily reflection
+  const completedTasks = completedBinds + (hasCompletedReflection ? 1 : 0);
+  const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background.primary }]}
-      edges={['top']}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]} edges={['top']}>
+      {/* Subtle gradient background for depth */}
+      <LinearGradient
+        colors={[colors.background.primary, 'rgba(0, 0, 0, 0.95)', colors.background.primary]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+      />
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { padding: spacing[4], gap: spacing[4] }]}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: spacing[5],
+            paddingTop: spacing[4],
+            gap: spacing[4],
+            paddingBottom: 70, // Extra padding for smaller absolute positioned tab bar
+          },
+        ]} // Balanced spacing
         showsVerticalScrollIndicator={false}
       >
-        {/* Combined Header with Progress */}
-        {(() => {
-          const totalBinds = data?.data?.length || 0;
-          const completedBinds = data?.data?.filter((bind) => bind.completed).length || 0;
-          const totalTasks = totalBinds + 1; // +1 for daily reflection
-          const completedTasks = completedBinds + (hasCompletedReflection ? 1 : 0);
-          const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        {/* Greeting & Progress Card - Enhanced */}
+        <Card variant="default" style={[styles.greetingCard, styles.enhancedCard]}>
+          {/* Date Badge - Top Right Corner */}
+          <View style={styles.dateBadge}>
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: '600',
+                color: 'rgba(255, 255, 255, 0.45)',
+                letterSpacing: 0.3,
+                textTransform: 'uppercase',
+              }}
+            >
+              {abbreviatedDate}
+            </Text>
+          </View>
 
-          const badgeColor =
-            percentage === 100
-              ? colors.emerald[700]
-              : percentage >= 50
-                ? colors.emerald[500]
-                : colors.background.secondary;
+          {/* Greeting Text - First Line */}
+          <Text
+            style={{
+              fontSize: 22,
+              fontWeight: '600',
+              color: 'rgba(255, 255, 255, 0.7)',
+              letterSpacing: -0.3,
+              marginBottom: spacing[1],
+            }}
+          >
+            {greeting},
+          </Text>
 
-          return (
-            <Card variant="default" style={{ padding: spacing[4] }}>
-              <View style={styles.combinedHeader}>
-                {/* Left side: Greeting, date, and progress */}
-                <View style={styles.headerLeft}>
-                  <Body style={{ color: colors.text.secondary, marginBottom: spacing[1] }}>
-                    {greeting}, {user.name}
-                  </Body>
-                  <Heading
-                    variant="displayXl"
-                    style={{ color: colors.text.primary, marginBottom: spacing[2] }}
-                  >
-                    {todayDate}
-                  </Heading>
-                  <View style={styles.progressInfo}>
-                    <Caption style={{ color: colors.text.muted }}>Today's Progress</Caption>
-                    <Body
-                      weight="semibold"
-                      style={{ color: colors.text.primary, marginTop: spacing[1] }}
-                    >
-                      {completedTasks}/{totalTasks}
-                    </Body>
-                  </View>
-                </View>
+          {/* Name - Second Line, More Prominent */}
+          <Text
+            style={{
+              fontSize: 32,
+              fontWeight: '500',
+              color: '#FFFFFF',
+              letterSpacing: -0.8,
+              marginBottom: spacing[4],
+              textShadowColor: 'rgba(0, 0, 0, 0.3)',
+              textShadowOffset: { width: 0, height: 2 },
+              textShadowRadius: 4,
+            }}
+          >
+            {user.name}
+          </Text>
 
-                {/* Right side: Progress badge */}
-                <View style={[styles.progressBadgeLarge, { backgroundColor: badgeColor }]}>
-                  <Heading variant="displayXl" style={{ color: 'white' }}>
-                    {percentage}%
-                  </Heading>
-                </View>
-              </View>
-            </Card>
-          );
-        })()}
-
-        {/* AI Insight Card */}
-        <Card variant="ai" pressable onPress={handleAIInsightPress}>
-          <View style={styles.aiInsightContent}>
-            <Body style={{ fontSize: 24, marginRight: spacing[2] }}>🧶</Body>
-            <Body style={{ flex: 1, color: colors.violet[200] }}>{aiInsight}</Body>
+          {/* Circular Progress Ring with Context Header */}
+          <View style={styles.progressSection}>
+            {/* Today's Tasks Header */}
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: 'rgba(255, 255, 255, 0.6)',
+                letterSpacing: 0.5,
+                textTransform: 'uppercase',
+                marginBottom: spacing[3],
+                textAlign: 'center',
+              }}
+            >
+              Today's Tasks
+            </Text>
+            <CircularProgress
+              percentage={percentage}
+              size={160}
+              strokeWidth={8}
+              label={`${percentage}%`}
+              sublabel={`${completedTasks}/${totalTasks} tasks`}
+            />
           </View>
         </Card>
 
+        {/* Yesterday's Intention Card */}
+        <YesterdayIntentionCard onQuickIntention={handleSaveIntention} />
+
         {/* Your Needles Section */}
-        <View>
-          <Heading
-            variant="displayLg"
-            style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+        <View style={{ gap: spacing[2] }}>
+          {/* Section Header - Medium weight, softer white */}
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: '600',
+              color: 'rgba(255, 255, 255, 0.9)', // Slightly softer than pure white
+              letterSpacing: -0.5,
+              textShadowColor: 'rgba(0, 0, 0, 0.2)',
+              textShadowOffset: { width: 0, height: 1 },
+              textShadowRadius: 2,
+            }}
           >
             Your Needles
-          </Heading>
+          </Text>
 
           {needleGroups.length === 0 ? (
             <Card variant="default" style={{ padding: spacing[5], alignItems: 'center' }}>
@@ -321,80 +460,69 @@ export function ThreadHomeScreen() {
               </Button>
             </Card>
           ) : (
-            needleGroups.map((group) => {
-              const isExpanded = expandedNeedleId === group.needle.id;
-              const isVisible = expandedNeedleId === null || expandedNeedleId === group.needle.id;
+            <View style={{ gap: spacing[2] }}>
+              {needleGroups.map((group) => {
+                const isExpanded = expandedNeedleIds.has(group.needle.id);
 
-              return (
-                <NeedleCard
-                  key={group.needle.id}
-                  needle={group.needle}
-                  binds={group.binds}
-                  isExpanded={isExpanded}
-                  isVisible={isVisible}
-                  onToggle={() => handleNeedleToggle(group.needle.id)}
-                  onBindPress={handleBindPress}
-                />
-              );
-            })
+                return (
+                  <NeedleCard
+                    key={group.needle.id}
+                    needle={group.needle}
+                    binds={group.binds}
+                    isExpanded={isExpanded}
+                    isVisible={true}
+                    onToggle={() => handleNeedleToggle(group.needle.id)}
+                    onBindPress={handleBindPress}
+                  />
+                );
+              })}
+            </View>
           )}
         </View>
 
         {/* Your Thread Section */}
-        <View>
-          <Heading
-            variant="displayLg"
-            style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+        <View style={{ gap: spacing[2] }}>
+          {/* Section Header - Medium weight, softer white */}
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: '600',
+              color: 'rgba(255, 255, 255, 0.9)', // Slightly softer than pure white
+              letterSpacing: -0.5,
+              textShadowColor: 'rgba(0, 0, 0, 0.2)',
+              textShadowOffset: { width: 0, height: 1 },
+              textShadowRadius: 2,
+            }}
           >
             Your Thread
-          </Heading>
+          </Text>
 
           {/* Daily Check-In Card */}
           <Card variant="default" style={styles.checkInCard}>
-            {/* Status Header - Timer + Badges */}
-            <View style={styles.statusHeader}>
-              {/* Red dot indicator - only show if not completed */}
-              {!hasCompletedReflection && (
-                <View style={[styles.statusBadge, { backgroundColor: colors.semantic.error.base }]}>
-                  <Body weight="semibold" style={{ color: 'white', fontSize: 11 }}>
-                    Pending
-                  </Body>
-                </View>
-              )}
-
-              {/* Completion badge - only show if completed */}
-              {hasCompletedReflection && (
-                <View style={[styles.statusBadge, { backgroundColor: colors.accent[500] }]}>
-                  <Body weight="semibold" style={{ color: 'white', fontSize: 11 }}>
-                    ✓ Completed
-                  </Body>
-                </View>
-              )}
-            </View>
-
-            {/* Countdown Timer */}
-            <CountdownTimer style={{ marginBottom: spacing[5] }} />
-
-            {/* Title */}
-            <Heading
-              variant="displayLg"
-              style={{
-                color: colors.text.primary,
-                textAlign: 'center',
-                marginBottom: spacing[4],
-              }}
-            >
-              Daily Check-In
-            </Heading>
-
-            {/* Begin/Edit Button */}
+            {/* Daily Check-in Button - Shows completion via variant and checkmark */}
             <Button
-              variant={hasCompletedReflection ? 'secondary' : 'primary'}
+              variant={hasCompletedReflection ? 'success' : 'primary'}
               size="lg"
               onPress={() => router.push('/(tabs)/settings/reflection')}
+              fullWidth
             >
-              {hasCompletedReflection ? 'Edit Reflection' : 'Begin'}
+              {hasCompletedReflection ? '✓ Daily Check-in' : 'Daily Check-in'}
             </Button>
+
+            {/* Compact Countdown - Below Button */}
+            <View style={styles.countdownBelow}>
+              <Text
+                style={{
+                  color: colors.text.muted,
+                  fontSize: 11,
+                  fontWeight: '600',
+                  letterSpacing: -0.3,
+                }}
+              >
+                ⏰ {timeRemaining}{' '}
+                {hasCompletedReflection ? 'until next check-in' : 'left to complete'}
+              </Text>
+            </View>
           </Card>
         </View>
       </ScrollView>
@@ -410,48 +538,63 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
   centerContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  combinedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  greetingCard: {
+    padding: 20, // Comfortable padding
+    position: 'relative',
   },
-  headerLeft: {
-    flex: 1,
+  enhancedCard: {
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
-  progressInfo: {
-    marginTop: 2,
+  dateBadge: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
-  progressBadgeLarge: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  progressSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 16,
-  },
-  aiInsightContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingVertical: 4,
   },
   checkInCard: {
     position: 'relative',
     alignItems: 'center',
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
-  statusHeader: {
-    width: '100%',
+  countdownBelow: {
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    justifyContent: 'center',
+    marginTop: 8,
   },
 });

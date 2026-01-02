@@ -91,6 +91,7 @@ export { WeaveCharacter } from './components/WeaveCharacter/WeaveCharacter';
 // Utility Components
 // ============================================================================
 export { GlassView } from './components/Glass/GlassView';
+export { Skeleton } from './components/Skeleton/Skeleton';
 // TODO: Implement AnimatedPressable
 // export { AnimatedPressable } from './components/Animated/AnimatedPressable';
 

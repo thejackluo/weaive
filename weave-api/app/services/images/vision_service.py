@@ -70,16 +70,27 @@ class VisionAnalysisResult:
         }
 
     def to_ai_run_log(self, user_id: UUID, local_date: str) -> dict:
-        """Convert to ai_runs table format for cost tracking"""
+        """Convert to ai_runs table format for cost tracking
+
+        Note: Uses 'chat' module temporarily until 'vision' is added to ai_module enum.
+        Column names match ai_runs schema (cost_estimate, tokens_input, execution_time_ms).
+        """
+        import hashlib
+
+        # Generate input_hash from provider + timestamp (simple hash for vision)
+        input_data = f"{self.provider}:{self.timestamp}"
+        input_hash = hashlib.sha256(input_data.encode()).hexdigest()
+
         return {
             "user_id": str(user_id),
-            "operation_type": "image_analysis",
+            "module": "chat",  # Temporary: using 'chat' until 'vision' added to ai_module enum
+            "input_hash": input_hash,
+            "prompt_version": "vision-v1.0",
             "model": self.provider,
-            "input_tokens": self.input_tokens,
-            "output_tokens": self.output_tokens,
-            "cost_usd": self.cost_usd,
-            "duration_ms": self.duration_ms,
-            "local_date": local_date,
+            "tokens_input": self.input_tokens,
+            "tokens_output": self.output_tokens,
+            "cost_estimate": self.cost_usd,
+            "execution_time_ms": self.duration_ms,
             "status": "success",
         }
 

@@ -1,11 +1,9 @@
 /**
- * CreateNeedleScreen (US-2.3: Create New Goal - AI-Assisted)
+ * CreateNeedleScreen (US-2.3: Create New Goal - Manual Entry)
  *
- * AI-assisted goal creation flow:
- * 1. User enters goal title and why it matters
- * 2. AI generates Q-goals (milestones) and suggested binds
- * 3. User can edit AI suggestions
- * 4. Create goal with all associated data
+ * Multi-step manual needle creation flow:
+ * Step 1: Needle Details (title, why, color)
+ * Step 2: Add Binds (habits, 1-3 required)
  *
  * Wireframe: docs/pages/dashboard-page.md (US-2.3 section)
  */
@@ -19,6 +17,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -26,35 +25,68 @@ import { Text, Card, Button } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { Ionicons } from '@expo/vector-icons';
 import { useCreateGoal } from '@/hooks/useActiveGoals';
-import type { BindCreate, QGoalCreate } from '@/types/goals';
+import type { BindCreate } from '@/types/goals';
 
-type CreationStep = 'input' | 'ai-generating' | 'review';
+type CreationStep = 'details' | 'binds';
+
+// Minimal aesthetic: No color distinction for needles
+const DEFAULT_NEEDLE_COLOR = '#FFFFFF'; // White (neutral)
+
+/**
+ * Convert times_per_week to backend format (frequency_type + frequency_value)
+ */
+function convertTimesPerWeekToFrequency(timesPerWeek: number): {
+  frequency_type: 'daily' | 'weekly' | 'custom';
+  frequency_value: number;
+} {
+  if (timesPerWeek === 7) {
+    return { frequency_type: 'daily', frequency_value: 1 };
+  }
+  return { frequency_type: 'weekly', frequency_value: timesPerWeek };
+}
+
+/**
+ * Convert backend format back to times_per_week for display
+ */
+function convertFrequencyToTimesPerWeek(bind: BindCreate): number {
+  if (bind.frequency_type === 'daily') {
+    return 7;
+  }
+  return bind.frequency_value;
+}
 
 export function CreateNeedleScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const createGoalMutation = useCreateGoal();
 
-  const [currentStep, setCurrentStep] = useState<CreationStep>('input');
+  // Step management
+  const [currentStep, setCurrentStep] = useState<CreationStep>('details');
+
+  // Step 1: Needle details
   const [goalTitle, setGoalTitle] = useState('');
   const [whyItMatters, setWhyItMatters] = useState('');
 
-  // AI-generated suggestions (will be populated by AI API)
-  const [suggestedQGoals, setSuggestedQGoals] = useState<Array<QGoalCreate>>([]);
-  const [suggestedBinds, setSuggestedBinds] = useState<Array<BindCreate>>([]);
-  const [editingQGoalIndex, setEditingQGoalIndex] = useState<number | null>(null);
+  // Step 2: Binds
+  const [binds, setBinds] = useState<Array<BindCreate>>([]);
   const [editingBindIndex, setEditingBindIndex] = useState<number | null>(null);
   const [editingBindTitle, setEditingBindTitle] = useState('');
   const [editingBindTimesPerWeek, setEditingBindTimesPerWeek] = useState(3);
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.back();
+    if (currentStep === 'binds') {
+      // Go back to Step 1
+      setCurrentStep('details');
+    } else {
+      // Exit screen
+      router.back();
+    }
   };
 
-  const handleAskAI = async () => {
+  const handleNextToBinds = () => {
     if (!goalTitle.trim()) {
-      Alert.alert('Missing Information', 'Please enter a goal title first.');
+      Alert.alert('Missing Information', 'Please enter a goal title.');
       return;
     }
 
@@ -64,55 +96,31 @@ export function CreateNeedleScreen() {
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setCurrentStep('ai-generating');
-
-    try {
-      // TODO: Call AI API to generate Q-goals and binds
-      // For now, using mock data
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
-
-      // Mock AI suggestions
-      setSuggestedQGoals([
-        {
-          title: 'Reach target weight',
-          target_value: 180,
-          current_value: 165,
-          unit: 'lbs',
-        },
-        {
-          title: 'Strength milestone',
-          target_value: 225,
-          current_value: 185,
-          unit: 'lbs',
-        },
-      ]);
-
-      setSuggestedBinds([
-        { title: 'Workout', times_per_week: 5 },
-        { title: 'Meal Prep', times_per_week: 7 },
-        { title: 'Track Calories', times_per_week: 7 },
-      ]);
-
-      setCurrentStep('review');
-    } catch {
-      Alert.alert('Error', 'Failed to generate suggestions. Please try again.');
-      setCurrentStep('input');
-    }
+    setCurrentStep('binds');
   };
 
   const handleCreateGoal = async () => {
+    if (binds.length === 0) {
+      Alert.alert(
+        'No Binds Added',
+        'Please add at least one bind to track your progress toward this goal.'
+      );
+      return;
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     createGoalMutation.mutate(
       {
         title: goalTitle,
         description: whyItMatters,
-        qgoals: suggestedQGoals,
-        binds: suggestedBinds,
+        color: DEFAULT_NEEDLE_COLOR, // Minimal aesthetic: no color distinction
+        qgoals: [], // No milestones for manual creation
+        binds: binds,
       },
       {
         onSuccess: () => {
-          Alert.alert('Success', 'Goal created successfully!', [
+          Alert.alert('Success', 'Needle created successfully!', [
             {
               text: 'OK',
               onPress: () => router.back(),
@@ -120,23 +128,30 @@ export function CreateNeedleScreen() {
           ]);
         },
         onError: (error) => {
-          Alert.alert('Error', error.message || 'Failed to create goal. Please try again.');
+          Alert.alert('Error', error.message || 'Failed to create needle. Please try again.');
         },
       }
     );
   };
 
-  // Step 1: Input
-  if (currentStep === 'input') {
+  // Step 1: Needle Details
+  if (currentStep === 'details') {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.background.primary }]}>
           <Pressable onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
           </Pressable>
-          <Text variant="textLg" weight="semibold" style={styles.headerTitle}>
-            New Needle
+          <Text
+            variant="textLg"
+            weight="semibold"
+            style={[
+              styles.headerTitle,
+              { color: colors.text.primary, fontSize: 20, fontWeight: '600' },
+            ]}
+          >
+            Create Your Needle
           </Text>
           <View style={styles.headerSpacer} />
         </View>
@@ -147,10 +162,44 @@ export function CreateNeedleScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Hero Section in Card */}
+          <Card variant="default" style={styles.heroCard}>
+            <View style={styles.heroSectionCompact}>
+              <View style={styles.iconContainerSmall}>
+                <Ionicons name="compass" size={36} color={colors.accent[500]} />
+              </View>
+              <Text
+                variant="textBase"
+                style={[
+                  styles.heroDescriptionCompact,
+                  { color: colors.text.secondary, fontSize: 14, lineHeight: 20 },
+                ]}
+              >
+                A needle is your North Star - a meaningful goal that guides your daily actions and
+                builds your future identity.
+              </Text>
+            </View>
+          </Card>
+
           {/* Goal Title Input */}
-          <View style={styles.section}>
-            <Text variant="textSm" color="secondary" style={styles.label}>
+          <View style={styles.inputSection}>
+            <Text
+              variant="textSm"
+              style={[
+                styles.label,
+                { color: colors.text.primary, fontSize: 16, fontWeight: '600', marginBottom: 6 },
+              ]}
+            >
               What's your goal?
+            </Text>
+            <Text
+              variant="textXs"
+              style={[
+                styles.fieldHelper,
+                { color: colors.text.muted, fontSize: 13, marginBottom: 12 },
+              ]}
+            >
+              Be specific and measurable
             </Text>
             <TextInput
               value={goalTitle}
@@ -163,16 +212,32 @@ export function CreateNeedleScreen() {
                   backgroundColor: colors.background.secondary,
                 },
               ]}
-              placeholder="e.g., Get Ripped, Build a Startup, Learn Guitar"
+              placeholder="e.g., Hit 225lb bench, Get 4.0 this semester"
               placeholderTextColor={colors.text.muted}
               autoFocus
+              maxLength={100}
             />
           </View>
 
           {/* Why It Matters */}
           <View style={styles.section}>
-            <Text variant="textSm" color="secondary" style={styles.label}>
-              Why is this goal important to you?
+            <Text
+              variant="textSm"
+              style={[
+                styles.label,
+                { color: colors.text.primary, fontSize: 16, fontWeight: '600', marginBottom: 6 },
+              ]}
+            >
+              Why does this matter to you?
+            </Text>
+            <Text
+              variant="textXs"
+              style={[
+                styles.fieldDescription,
+                { color: colors.text.secondary, fontSize: 14, lineHeight: 20, marginBottom: 12 },
+              ]}
+            >
+              This keeps you motivated when things get tough. Be honest and specific.
             </Text>
             <TextInput
               value={whyItMatters}
@@ -186,70 +251,47 @@ export function CreateNeedleScreen() {
                   backgroundColor: colors.background.secondary,
                 },
               ]}
-              placeholder="Share your motivation... This helps the AI understand what success means to you."
+              placeholder="e.g., To prove to myself I can commit to hard things and build the discipline I need to succeed"
               placeholderTextColor={colors.text.muted}
+              maxLength={500}
             />
           </View>
-
-          {/* Info Card */}
-          <Card variant="glass" style={styles.infoCard}>
-            <View style={styles.infoContent}>
-              <Ionicons name="sparkles" size={20} color={colors.violet[400]} />
-              <Text variant="textSm" style={[styles.infoText, { color: colors.text.secondary }]}>
-                Tap "Generate Plan" and Weave AI will create milestones and daily habits for you.
-                You can edit everything before saving.
-              </Text>
-            </View>
-          </Card>
         </ScrollView>
 
-        {/* Generate Button */}
+        {/* Next Button */}
         <View style={styles.bottomButtonContainer}>
           <Button
             variant="primary"
             size="lg"
-            onPress={handleAskAI}
+            onPress={handleNextToBinds}
             disabled={!goalTitle.trim() || !whyItMatters.trim()}
           >
-            <View style={styles.buttonContent}>
-              <Ionicons name="sparkles" size={20} color="white" />
-              <Text variant="textBase" weight="semibold" style={{ color: 'white' }}>
-                Generate Plan
-              </Text>
-            </View>
+            <Text variant="textBase" weight="semibold" style={{ color: colors.text.inverse }}>
+              Next
+            </Text>
           </Button>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
-  // Step 2: AI Generating
-  if (currentStep === 'ai-generating') {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent[500]} />
-          <Text variant="textLg" weight="semibold" style={styles.loadingText}>
-            Weave AI is creating your plan...
-          </Text>
-          <Text variant="textBase" color="secondary" style={styles.loadingSubtext}>
-            Analyzing your goal and generating milestones
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  // Step 3: Review AI Suggestions
+  // Step 2: Add Binds
   return (
-    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <Pressable onPress={() => setCurrentStep('input')} style={styles.backButton}>
+      <View style={[styles.header, { backgroundColor: colors.background.primary }]}>
+        <Pressable onPress={handleBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
         </Pressable>
-        <Text variant="textLg" weight="semibold" style={styles.headerTitle}>
-          Review Your Plan
+        <Text
+          variant="textLg"
+          weight="semibold"
+          style={[
+            styles.headerTitle,
+            { color: colors.text.primary, fontSize: 20, fontWeight: '600' },
+          ]}
+        >
+          Add Binds
         </Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -259,111 +301,74 @@ export function CreateNeedleScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Goal Title (Editable) */}
-        <View style={styles.section}>
-          <Text variant="textSm" color="secondary" style={styles.label}>
-            Goal
-          </Text>
-          <TextInput
-            value={goalTitle}
-            onChangeText={setGoalTitle}
-            style={[
-              styles.input,
-              {
-                color: colors.text.primary,
-                borderColor: colors.border.muted,
-                backgroundColor: colors.background.secondary,
-              },
-            ]}
-          />
-        </View>
-
-        {/* Why (Editable) */}
-        <View style={styles.section}>
-          <Text variant="textSm" color="secondary" style={styles.label}>
-            Why this matters
-          </Text>
-          <TextInput
-            value={whyItMatters}
-            onChangeText={setWhyItMatters}
-            multiline
-            style={[
-              styles.textAreaInput,
-              {
-                color: colors.text.primary,
-                borderColor: colors.border.muted,
-                backgroundColor: colors.background.secondary,
-              },
-            ]}
-          />
-        </View>
-
-        {/* Milestones (Q-Goals) */}
-        <View style={styles.section}>
-          <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
-            Milestones
-          </Text>
-          <Text variant="textSm" color="secondary" style={styles.sectionSubtitle}>
-            Measurable targets to track your progress
-          </Text>
-          {suggestedQGoals.map((qgoal, index) => (
-            <Pressable
-              key={index}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setEditingQGoalIndex(index);
-              }}
-            >
-              <Card variant="glass" style={styles.listItemCard}>
-                <View style={styles.listItemContent}>
-                  <View style={styles.listItemInfo}>
-                    {editingQGoalIndex === index ? (
-                      <TextInput
-                        value={qgoal.title}
-                        onChangeText={(text) => {
-                          const updated = [...suggestedQGoals];
-                          updated[index].title = text;
-                          setSuggestedQGoals(updated);
-                        }}
-                        onBlur={() => setEditingQGoalIndex(null)}
-                        autoFocus
-                        style={[
-                          styles.inlineInput,
-                          { color: colors.text.primary, borderColor: colors.border.focus },
-                        ]}
-                      />
-                    ) : (
-                      <Text variant="textBase" weight="medium">
-                        {qgoal.title}
-                      </Text>
-                    )}
-                    <Text variant="textSm" color="secondary">
-                      Target: {qgoal.target_value} {qgoal.unit}
-                    </Text>
-                  </View>
-                  <Ionicons name="pencil" size={20} color={colors.text.secondary} />
-                </View>
-              </Card>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Daily Habits (Binds) */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
-                Daily Habits
-              </Text>
-              <Text variant="textSm" color="secondary" style={styles.sectionSubtitle}>
-                Consistent actions that will get you there (max 3)
-              </Text>
+        {/* Hero Section in Card */}
+        <Card variant="default" style={styles.heroCard}>
+          <View style={styles.heroSectionCompact}>
+            <View style={styles.iconContainerSmall}>
+              <Ionicons name="flash" size={36} color={colors.accent[500]} />
             </View>
-            <Text variant="textSm" color="secondary">
-              {suggestedBinds.length}/3
+            <Text
+              variant="textBase"
+              style={[
+                styles.heroDescriptionCompact,
+                { color: colors.text.secondary, fontSize: 14, lineHeight: 20 },
+              ]}
+            >
+              Binds are the consistent actions that move you toward your needle. Add 1-3 binds
+              you'll do regularly to build momentum.
             </Text>
           </View>
-          {suggestedBinds.map((bind, index) => {
+        </Card>
+
+        {/* Example Card */}
+        <Card variant="glass" style={styles.exampleCardCompact}>
+          <View style={styles.exampleHeader}>
+            <Ionicons name="bulb" size={20} color={colors.violet[400]} />
+            <Text variant="textSm" weight="semibold" style={{ color: colors.violet[400] }}>
+              Examples
+            </Text>
+          </View>
+          <View style={styles.exampleList}>
+            <View style={styles.exampleItem}>
+              <Ionicons name="checkmark-circle" size={16} color={colors.emerald[500]} />
+              <Text variant="textSm" color="secondary">
+                "Morning Workout" - 5x per week
+              </Text>
+            </View>
+            <View style={styles.exampleItem}>
+              <Ionicons name="checkmark-circle" size={16} color={colors.emerald[500]} />
+              <Text variant="textSm" color="secondary">
+                "Read for 30 min" - Daily
+              </Text>
+            </View>
+            <View style={styles.exampleItem}>
+              <Ionicons name="checkmark-circle" size={16} color={colors.emerald[500]} />
+              <Text variant="textSm" color="secondary">
+                "Code for 2 hours" - 4x per week
+              </Text>
+            </View>
+          </View>
+        </Card>
+
+        {/* Binds Section */}
+        <View style={styles.bindsSection}>
+          <View style={styles.sectionHeader}>
+            <Text
+              variant="textBase"
+              weight="semibold"
+              style={[
+                styles.sectionTitle,
+                { color: colors.text.primary, fontSize: 16, fontWeight: '600' },
+              ]}
+            >
+              Your Binds
+            </Text>
+            <Text variant="textSm" style={{ color: colors.text.muted, fontSize: 14 }}>
+              {binds.length}/3
+            </Text>
+          </View>
+
+          {binds.map((bind, index) => {
             const isEditing = editingBindIndex === index;
             return (
               <Card key={index} variant="glass" style={styles.listItemCard}>
@@ -385,7 +390,7 @@ export function CreateNeedleScreen() {
                             borderColor: colors.border.muted,
                           },
                         ]}
-                        placeholder="Bind name"
+                        placeholder="e.g., Morning Workout, Read 30 min"
                         placeholderTextColor={colors.text.muted}
                         maxLength={200}
                         autoFocus
@@ -454,16 +459,19 @@ export function CreateNeedleScreen() {
                         onPress={() => {
                           const trimmedTitle = editingBindTitle.trim();
                           if (!trimmedTitle) {
-                            Alert.alert('Validation Error', 'Bind title cannot be empty.');
+                            Alert.alert('Missing Information', 'Please enter a name for this bind.');
                             return;
                           }
-                          const updated = [...suggestedBinds];
+                          const updated = [...binds];
+                          const { frequency_type, frequency_value } =
+                            convertTimesPerWeekToFrequency(editingBindTimesPerWeek);
                           const newBind: BindCreate = {
                             title: trimmedTitle,
-                            times_per_week: editingBindTimesPerWeek,
+                            frequency_type,
+                            frequency_value,
                           };
                           updated[index] = newBind;
-                          setSuggestedBinds(updated);
+                          setBinds(updated);
                           setEditingBindIndex(null);
                           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         }}
@@ -482,18 +490,18 @@ export function CreateNeedleScreen() {
                         Haptics.selectionAsync();
                         setEditingBindIndex(index);
                         setEditingBindTitle(bind.title);
-                        setEditingBindTimesPerWeek(bind.times_per_week);
+                        setEditingBindTimesPerWeek(convertFrequencyToTimesPerWeek(bind));
                       }}
                     >
                       <Text variant="textBase" weight="medium">
                         {bind.title}
                       </Text>
                       <Text variant="textSm" color="secondary">
-                        {bind.times_per_week === 7
+                        {convertFrequencyToTimesPerWeek(bind) === 7
                           ? 'Daily'
-                          : bind.times_per_week === 1
+                          : convertFrequencyToTimesPerWeek(bind) === 1
                             ? 'Once a week'
-                            : `${bind.times_per_week}x per week`}
+                            : `${convertFrequencyToTimesPerWeek(bind)}x per week`}
                       </Text>
                     </Pressable>
                     <View style={styles.listItemActions}>
@@ -502,7 +510,7 @@ export function CreateNeedleScreen() {
                           Haptics.selectionAsync();
                           setEditingBindIndex(index);
                           setEditingBindTitle(bind.title);
-                          setEditingBindTimesPerWeek(bind.times_per_week);
+                          setEditingBindTimesPerWeek(convertFrequencyToTimesPerWeek(bind));
                         }}
                         style={styles.iconButton}
                       >
@@ -511,8 +519,8 @@ export function CreateNeedleScreen() {
                       <Pressable
                         onPress={() => {
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          const updated = suggestedBinds.filter((_, i) => i !== index);
-                          setSuggestedBinds(updated);
+                          const updated = binds.filter((_, i) => i !== index);
+                          setBinds(updated);
                         }}
                         style={styles.iconButton}
                       >
@@ -524,17 +532,20 @@ export function CreateNeedleScreen() {
               </Card>
             );
           })}
+
           {/* Add Bind Button */}
-          {suggestedBinds.length < 3 && (
+          {binds.length < 3 && (
             <Pressable
               onPress={() => {
                 Haptics.selectionAsync();
+                const { frequency_type, frequency_value } = convertTimesPerWeekToFrequency(3);
                 const newBind: BindCreate = {
                   title: '',
-                  times_per_week: 3,
+                  frequency_type,
+                  frequency_value,
                 };
-                setSuggestedBinds([...suggestedBinds, newBind]);
-                setEditingBindIndex(suggestedBinds.length);
+                setBinds([...binds, newBind]);
+                setEditingBindIndex(binds.length);
                 setEditingBindTitle('');
                 setEditingBindTimesPerWeek(3);
               }}
@@ -548,28 +559,29 @@ export function CreateNeedleScreen() {
               >
                 <View style={styles.addBindContent}>
                   <Ionicons name="add-circle-outline" size={24} color={colors.accent[500]} />
-                  <Text variant="textBase" weight="medium" style={{ color: colors.accent[500] }}>
+                  <Text
+                    variant="textBase"
+                    weight="medium"
+                    style={{ color: colors.accent[500], fontSize: 15 }}
+                  >
                     Add Bind
                   </Text>
                 </View>
               </Card>
             </Pressable>
           )}
-          {suggestedBinds.length === 0 && (
-            <Card variant="glass" style={styles.emptyCard}>
-              <Text variant="textSm" color="secondary" style={{ textAlign: 'center' }}>
-                No habits yet. Add at least one to create your goal.
-              </Text>
-            </Card>
-          )}
+
         </View>
 
         {/* Info Card */}
         <Card variant="glass" style={styles.infoCard}>
           <View style={styles.infoContent}>
             <Ionicons name="information-circle" size={20} color={colors.violet[400]} />
-            <Text variant="textSm" style={[styles.infoText, { color: colors.text.secondary }]}>
-              You can edit these later. Tap "Create Needle" to get started!
+            <Text
+              variant="textSm"
+              style={[styles.infoText, { color: colors.text.secondary, fontSize: 14 }]}
+            >
+              You can edit these binds later. Tap "Create Needle" when ready!
             </Text>
           </View>
         </Card>
@@ -581,18 +593,18 @@ export function CreateNeedleScreen() {
           variant="primary"
           size="lg"
           onPress={handleCreateGoal}
-          disabled={createGoalMutation.isPending || suggestedBinds.length === 0}
+          disabled={createGoalMutation.isPending || binds.length === 0}
         >
           {createGoalMutation.isPending ? (
-            <ActivityIndicator size="small" color="white" />
+            <ActivityIndicator size="small" color={colors.text.inverse} />
           ) : (
-            <Text variant="textBase" weight="semibold" style={{ color: 'white' }}>
+            <Text variant="textBase" weight="semibold" style={{ color: colors.text.inverse }}>
               Create Needle
             </Text>
           )}
         </Button>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -604,8 +616,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
     gap: 12,
+    zIndex: 10,
   },
   backButton: {
     width: 36,
@@ -626,13 +640,62 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingTop: 12,
+    paddingBottom: 24,
+  },
+  heroCard: {
+    marginBottom: 20,
+  },
+  heroSectionCompact: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconContainerSmall: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(91, 141, 239, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroDescriptionCompact: {
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  inputSection: {
+    marginTop: 0,
+  },
+  fieldHelper: {
+    lineHeight: 16,
+  },
+  fieldDescription: {
+    lineHeight: 18,
+  },
+  exampleCardCompact: {
+    padding: 14,
+    marginBottom: 24,
+  },
+  bindsSection: {
+    marginTop: 0,
+  },
+  exampleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  exampleList: {
+    gap: 10,
+  },
+  exampleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   section: {
-    marginTop: 24,
+    marginTop: 40,
   },
   label: {
-    marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -655,7 +718,7 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     padding: 16,
-    marginTop: 24,
+    marginTop: 16,
   },
   infoContent: {
     flexDirection: 'row',
@@ -672,29 +735,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#27272A',
   },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    gap: 16,
-  },
-  loadingText: {
-    textAlign: 'center',
-  },
-  loadingSubtext: {
-    textAlign: 'center',
-  },
   sectionTitle: {
     marginBottom: 4,
-  },
-  sectionSubtitle: {
-    marginBottom: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -727,17 +769,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
-  },
-  inlineInput: {
-    fontSize: 16,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderRadius: 4,
-    marginBottom: 4,
-  },
-  emptyCard: {
-    padding: 24,
   },
   bindEditContainer: {
     gap: 16,

@@ -1,18 +1,19 @@
 /**
  * Border Radius Design Tokens
  *
- * Consistent rounded corners across components
+ * iOS 17-inspired rounded corners for minimal aesthetic
+ * Default card radius: 24-28px for soft, modern feel
  */
 
 export const radius = {
   none: 0,
-  xs: 4,
-  sm: 6,
-  md: 8,
-  lg: 12,
-  xl: 16,
-  '2xl': 20,
-  '3xl': 24,
+  xs: 6, // Small elements
+  sm: 10, // Buttons, inputs
+  md: 16, // Medium components
+  lg: 20, // Large cards
+  xl: 24, // Primary card radius (iOS 17 style)
+  '2xl': 28, // Extra large cards
+  '3xl': 32, // Maximum rounded for special cards
   full: 9999, // Perfect circles and pills
 } as const;
 

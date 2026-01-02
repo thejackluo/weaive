@@ -134,7 +134,7 @@ export const mockBinds: MockBind[] = [
 
 // Mock user state
 export const mockUser: MockUserState = {
-  name: 'eddie',
+  name: 'Eddie',
   streak: 2,
   level: 2,
   levelProgress: 35, // 35% to level 3
@@ -158,9 +158,9 @@ export function getBindsForNeedle(needleId: string): MockBind[] {
 export function getGreeting(): string {
   const hour = new Date().getHours();
 
-  if (hour < 12) return 'good morning';
-  if (hour < 17) return 'good afternoon';
-  return 'good evening';
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 // Helper function to get random AI insight

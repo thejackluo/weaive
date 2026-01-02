@@ -1,7 +1,8 @@
 /**
- * Card Component - Weave Design System
+ * Card Component - Minimal Black/White Design
  *
- * Glass-effect cards with animated borders and depth layers
+ * iOS 17-inspired cards with generous rounded corners
+ * Stoic aesthetic: clean, purposeful, no decoration
  */
 
 import React from 'react';
@@ -62,80 +63,65 @@ export function Card({
       style={[
         styles.card,
         variantStyles,
-        { padding: paddingValue, borderRadius: radius.xl },
+        { padding: paddingValue, borderRadius: radius.xl }, // iOS 17 style (24px)
         pressable && animatedStyle,
         style,
       ]}
       {...componentProps}
     >
-      {/* Glass blur layer */}
-      {variant === 'glass' && <View style={[StyleSheet.absoluteFill, styles.glassLayer]} />}
-
-      {/* Content */}
-      <View style={styles.content}>{children}</View>
-
-      {/* Subtle weave pattern overlay */}
-      <View style={styles.weaveOverlay} pointerEvents="none">
-        <View style={[styles.weaveLine, { backgroundColor: variantStyles.weaveColor }]} />
-        <View
-          style={[
-            styles.weaveLine,
-            styles.weaveLineVertical,
-            { backgroundColor: variantStyles.weaveColor },
-          ]}
-        />
-      </View>
+      {/* Content - no decorative overlays for minimal aesthetic */}
+      {children}
     </Component>
   );
 }
 
 function getVariantStyles(variant: CardVariant, colors: any) {
   const variants = {
+    // Default: Dark gray card on black background
     default: {
-      backgroundColor: colors.background.secondary,
+      backgroundColor: colors.background.secondary, // #1A1A1A
       borderWidth: 1,
-      borderColor: colors.border.subtle,
-      weaveColor: `${colors.text.primary}05`,
+      borderColor: colors.border.subtle, // Very subtle border
     },
-    glass: {
-      backgroundColor: colors.background.glass,
-      borderWidth: 1,
-      borderColor: colors.border.glass,
-      weaveColor: `${colors.accent[500]}10`,
-    },
+    // Elevated: Slightly lighter with shadow
     elevated: {
-      backgroundColor: colors.background.elevated,
+      backgroundColor: colors.background.elevated, // #2A2A2A
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 12,
-      elevation: 4,
+      shadowOpacity: 0.3,
+      shadowRadius: 16,
+      elevation: 6,
       borderWidth: 0,
-      weaveColor: `${colors.text.primary}05`,
     },
+    // Outlined: Transparent with visible border
     outlined: {
       backgroundColor: 'transparent',
       borderWidth: 1.5,
       borderColor: colors.border.muted,
-      weaveColor: `${colors.text.primary}03`,
     },
-    ai: {
-      backgroundColor: colors.semantic.ai.bg,
+    // Subtle: Very slight variation from background
+    subtle: {
+      backgroundColor: colors.background.subtle, // #0F0F0F
       borderWidth: 1,
-      borderColor: colors.semantic.ai.border,
-      weaveColor: `${colors.violet[500]}15`,
+      borderColor: colors.border.subtle,
     },
+    // Glass: Kept for backwards compatibility (maps to default)
+    glass: {
+      backgroundColor: colors.background.secondary,
+      borderWidth: 1,
+      borderColor: colors.border.muted,
+    },
+    // Success: Green tint for positive states
     success: {
       backgroundColor: colors.semantic.success.bg,
       borderWidth: 1,
       borderColor: colors.semantic.success.border,
-      weaveColor: `${colors.emerald[500]}15`,
     },
-    subtle: {
-      backgroundColor: colors.background.primary,
+    // AI: Maps to default (no violet in minimal design)
+    ai: {
+      backgroundColor: colors.background.secondary,
       borderWidth: 1,
-      borderColor: colors.border.subtle,
-      weaveColor: `${colors.text.primary}03`,
+      borderColor: colors.border.muted,
     },
   };
 
@@ -157,30 +143,5 @@ const styles = StyleSheet.create({
   card: {
     position: 'relative',
     overflow: 'hidden',
-  },
-  glassLayer: {
-    opacity: 0.7,
-  },
-  content: {
-    zIndex: 1,
-  },
-  weaveOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.1,
-    pointerEvents: 'none',
-  },
-  weaveLine: {
-    position: 'absolute',
-    top: '35%',
-    left: 0,
-    right: 0,
-    height: 1,
-  },
-  weaveLineVertical: {
-    top: 0,
-    bottom: 0,
-    left: '45%',
-    width: 1,
-    height: undefined,
   },
 });

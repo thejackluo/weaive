@@ -1,168 +1,106 @@
 /**
- * Color Design Tokens - Dark-First, Opal-Inspired
+ * Color Design Tokens - Minimal Black/White/Gray
  *
- * Based on the Weave brand color palette with semantic color system
- * Optimized for dark mode with light mode support
+ * MVP aesthetic: Stoic-inspired minimalism
+ * - Black, white, and shades of gray for all UI elements
+ * - Green: positive indicators (completion, increases)
+ * - Red: negative indicators (incomplete, decreases, action required)
  */
 
 export const colors = {
   // ============================================================================
-  // Background Colors (Dark-First) - LIGHTER for better text contrast
+  // Background Colors (Black/White/Gray)
   // ============================================================================
   background: {
-    primary: '#09090B', // Main app background - Deep black
-    secondary: '#18181B', // Card backgrounds - Much lighter for text visibility
-    elevated: '#27272A', // Floating elements, modals - Lighter
-    glass: 'rgba(39, 39, 42, 0.85)', // Glass effect - Lighter with more opacity
-    overlay: 'rgba(9, 9, 11, 0.8)', // Modal overlays
+    primary: '#000000', // Pure black background
+    secondary: '#1A1A1A', // Card backgrounds (dark gray)
+    elevated: '#2A2A2A', // Elevated cards, modals
+    subtle: '#0F0F0F', // Very subtle variation
+    white: '#FFFFFF', // White backgrounds (for inverse cards)
   },
 
   // ============================================================================
-  // Text Colors - MAXIMUM BRIGHTNESS for readability
+  // Text Colors (White/Gray)
   // ============================================================================
   text: {
-    primary: '#FFFFFF', // High emphasis - Pure white for maximum contrast
-    secondary: '#F5F5F5', // Normal body text - Near white, very bright
-    muted: '#D4D4D4', // De-emphasized text - Bright gray, still very readable
-    disabled: '#737373', // Disabled state - Medium gray
-    ai: '#C4B5FD', // AI-generated content - Much brighter violet
-    success: '#6EE7B7', // Success messages - Much brighter emerald
-    error: '#FDA4AF', // Error messages - Much brighter rose
-    warning: '#FCD34D', // Warning messages - Much brighter amber
-    inverse: '#09090B', // Text on light backgrounds
+    primary: '#FFFFFF', // High emphasis - Pure white
+    secondary: '#E5E5E5', // Normal body text - Light gray
+    muted: '#A3A3A3', // De-emphasized text - Medium gray
+    disabled: '#525252', // Disabled state - Dark gray
+    inverse: '#000000', // Text on white backgrounds
   },
 
   // ============================================================================
   // Border Colors
   // ============================================================================
   border: {
-    subtle: 'rgba(255, 255, 255, 0.05)', // Very subtle borders
+    subtle: 'rgba(255, 255, 255, 0.06)', // Very subtle borders
     muted: 'rgba(255, 255, 255, 0.1)', // Default borders
-    focus: 'rgba(91, 141, 239, 0.4)', // Focus states
-    glass: 'rgba(255, 255, 255, 0.15)', // Glass effect borders
-    error: 'rgba(232, 90, 126, 0.5)', // Error state borders
+    strong: 'rgba(255, 255, 255, 0.2)', // Prominent borders
   },
 
   // ============================================================================
-  // Accent Colors (Full Palettes)
-  // ============================================================================
-  // Primary Blue (Action, Interactive Elements)
-  accent: {
-    50: '#EEF4FF',
-    100: '#D9E5FF',
-    200: '#BCD4FF',
-    300: '#8EBAFF',
-    400: '#5994FF',
-    500: '#5B8DEF', // Base - Primary action color
-    600: '#2858E8',
-    700: '#1E44D5',
-    800: '#1F38AC',
-    900: '#1E3388',
-    950: '#172154',
-  },
-
-  // Soft Violet (AI, Dream Self, Magic)
-  violet: {
-    50: '#F5F3FF',
-    100: '#EDE9FE',
-    200: '#DDD6FE',
-    300: '#C4B5FD',
-    400: '#A78BFA',
-    500: '#9D71E8', // Base - AI theme color
-    600: '#7C3AED',
-    700: '#6D28D9',
-    800: '#5B21B6',
-    900: '#4C1D95',
-  },
-
-  // Warm Amber (Celebration, Progress, Warmth)
-  amber: {
-    50: '#FFFBEB',
-    100: '#FEF3C7',
-    200: '#FDE68A',
-    300: '#FCD34D',
-    400: '#FBBF24',
-    500: '#F5A623', // Base - Celebration color
-    600: '#D97706',
-    700: '#B45309',
-    800: '#92400E',
-    900: '#78350F',
-  },
-
-  // Emerald (Success, Growth, Achievement)
-  emerald: {
-    50: '#ECFDF5',
-    100: '#D1FAE5',
-    200: '#A7F3D0',
-    300: '#6EE7B7',
-    400: '#34D399',
-    500: '#10D87E', // Base - Success color
-    600: '#059669',
-    700: '#047857',
-    800: '#065F46',
-    900: '#064E3B',
-  },
-
-  // Rose (Errors, Destructive Actions)
-  rose: {
-    50: '#FFF1F2',
-    100: '#FFE4E6',
-    200: '#FECDD3',
-    300: '#FDA4AF',
-    400: '#FB7185',
-    500: '#E85A7E', // Base - Error color
-    600: '#E11D48',
-    700: '#BE123C',
-    800: '#9F1239',
-    900: '#881337',
-  },
-
-  // ============================================================================
-  // Semantic Colors (For Quick Access)
+  // Semantic Colors - Green (Positive) & Red (Negative) ONLY
   // ============================================================================
   semantic: {
+    // Green - Positive indicators (vibrant emerald-forest green)
     success: {
-      base: '#10D87E',
-      light: '#34D399',
-      dark: '#059669',
-      bg: 'rgba(16, 216, 126, 0.1)',
-      border: 'rgba(16, 216, 126, 0.3)',
+      base: '#059669', // Vibrant emerald-forest green (completion, increase)
+      light: '#10B981', // Lighter vibrant emerald
+      dark: '#047857', // Darker emerald-forest
+      bg: 'rgba(5, 150, 105, 0.15)', // Emerald background tint
+      border: 'rgba(5, 150, 105, 0.4)', // Emerald border
+      // Gradient stops for visual interest
+      gradientStart: '#10B981', // Lighter emerald (top/start)
+      gradientEnd: '#047857', // Darker emerald (bottom/end)
     },
-    warning: {
-      base: '#F5A623',
-      light: '#FBBF24',
-      dark: '#D97706',
-      bg: 'rgba(245, 166, 35, 0.1)',
-      border: 'rgba(245, 166, 35, 0.3)',
-    },
+    // Red - Negative indicators
     error: {
-      base: '#E85A7E',
-      light: '#FB7185',
-      dark: '#BE123C',
-      bg: 'rgba(232, 90, 126, 0.1)',
-      border: 'rgba(232, 90, 126, 0.3)',
-    },
-    info: {
-      base: '#5B8DEF',
-      light: '#8EBAFF',
-      dark: '#2858E8',
-      bg: 'rgba(91, 141, 239, 0.1)',
-      border: 'rgba(91, 141, 239, 0.3)',
-    },
-    ai: {
-      base: '#9D71E8',
-      light: '#A78BFA',
-      dark: '#6D28D9',
-      bg: 'rgba(157, 113, 232, 0.1)',
-      border: 'rgba(157, 113, 232, 0.3)',
+      base: '#EF4444', // Standard red (incomplete, decrease, action required)
+      light: '#F87171', // Lighter red
+      dark: '#DC2626', // Darker red
+      bg: 'rgba(239, 68, 68, 0.1)', // Red background tint
+      border: 'rgba(239, 68, 68, 0.3)', // Red border
     },
   },
 
   // ============================================================================
-  // Neutral Grays (For Subtle UI Elements)
+  // Green Palette - For Consistency Graph (vibrant emerald-forest shades)
+  // ============================================================================
+  green: {
+    50: '#ECFDF5', // Lightest emerald tint
+    100: '#D1FAE5', // Very light emerald
+    200: '#A7F3D0', // Light emerald
+    300: '#6EE7B7', // Medium-light emerald
+    400: '#34D399', // Medium vibrant emerald
+    500: '#059669', // Base vibrant emerald-forest
+    600: '#047857', // Dark emerald-forest
+    700: '#065F46', // Darker emerald-forest
+    800: '#064E3B', // Very dark emerald-forest
+    900: '#022C22', // Darkest emerald-forest
+  },
+
+  // ============================================================================
+  // Red Palette - For Negative Indicators
+  // ============================================================================
+  red: {
+    50: '#FEF2F2', // Lightest red
+    100: '#FEE2E2',
+    200: '#FECACA',
+    300: '#FCA5A5',
+    400: '#F87171',
+    500: '#EF4444', // Base red
+    600: '#DC2626',
+    700: '#B91C1C',
+    800: '#991B1B',
+    900: '#7F1D1D', // Darkest red
+  },
+
+  // ============================================================================
+  // Neutral Grays (Full spectrum)
   // ============================================================================
   neutral: {
-    0: '#FFFFFF',
+    0: '#FFFFFF', // Pure white
     50: '#FAFAFA',
     100: '#F5F5F5',
     200: '#E5E5E5',
@@ -174,37 +112,104 @@ export const colors = {
     800: '#262626',
     900: '#171717',
     950: '#0A0A0A',
+    1000: '#000000', // Pure black
   },
 
   // ============================================================================
-  // Dark Theme Palette (Reference - maps to above)
+  // Legacy/Deprecated (kept for backwards compatibility, map to gray)
   // ============================================================================
+  // These are kept to prevent breaking existing code, but should map to grayscale
+  accent: {
+    50: '#F5F5F5',
+    100: '#E5E5E5',
+    200: '#D4D4D4',
+    300: '#A3A3A3',
+    400: '#737373',
+    500: '#FFFFFF', // Map accent[500] to white (for buttons)
+    600: '#E5E5E5',
+    700: '#D4D4D4',
+    800: '#A3A3A3',
+    900: '#737373',
+    950: '#525252',
+  },
+
+  // Map violet/amber/emerald/rose to grayscale for backwards compatibility
+  violet: {
+    50: '#F5F5F5',
+    100: '#E5E5E5',
+    200: '#D4D4D4',
+    300: '#A3A3A3',
+    400: '#737373',
+    500: '#525252',
+    600: '#404040',
+    700: '#262626',
+    800: '#171717',
+    900: '#0A0A0A',
+  },
+
+  emerald: {
+    50: '#ECFDF5',
+    100: '#D1FAE5',
+    200: '#A7F3D0',
+    300: '#6EE7B7',
+    400: '#34D399',
+    500: '#059669', // Vibrant emerald-forest for semantic usage
+    600: '#047857',
+    700: '#065F46',
+    800: '#064E3B',
+    900: '#022C22',
+  },
+
+  rose: {
+    50: '#FEF2F2',
+    100: '#FEE2E2',
+    200: '#FECACA',
+    300: '#FCA5A5',
+    400: '#F87171',
+    500: '#EF4444', // Keep red for semantic usage
+    600: '#DC2626',
+    700: '#B91C1C',
+    800: '#991B1B',
+    900: '#7F1D1D',
+  },
+
+  amber: {
+    50: '#F5F5F5',
+    100: '#E5E5E5',
+    200: '#D4D4D4',
+    300: '#A3A3A3',
+    400: '#737373',
+    500: '#525252',
+    600: '#404040',
+    700: '#262626',
+    800: '#171717',
+    900: '#0A0A0A',
+  },
+
+  // Keep dark/light palettes for theme switching
   dark: {
-    100: '#FFFFFF', // → text.primary
-    200: '#F5F5F5', // → text.secondary
-    300: '#D4D4D4', // → text.muted
+    100: '#FFFFFF',
+    200: '#F5F5F5',
+    300: '#D4D4D4',
     400: '#A3A3A3',
-    500: '#737373', // → text.disabled
+    500: '#737373',
     600: '#525252',
-    700: '#27272A', // → background.elevated
-    800: '#18181B', // → background.secondary
-    850: '#0F0F12',
-    900: '#09090B', // → background.primary
+    700: '#2A2A2A',
+    800: '#1A1A1A',
+    850: '#0F0F0F',
+    900: '#000000',
   },
 
-  // ============================================================================
-  // Light Theme Palette (For Future Light Mode)
-  // ============================================================================
   light: {
-    100: '#09090B', // → text on light bg
-    200: '#27272A',
-    300: '#3F3F46',
-    400: '#71717F',
-    500: '#A1A1AA',
-    600: '#D4D4DC',
-    700: '#ECECF1',
-    800: '#F5F5F7',
-    850: '#FAFAFA',
+    100: '#000000',
+    200: '#171717',
+    300: '#262626',
+    400: '#404040',
+    500: '#737373',
+    600: '#A3A3A3',
+    700: '#D4D4D4',
+    800: '#E5E5E5',
+    850: '#F5F5F5',
     900: '#FFFFFF',
   },
 } as const;

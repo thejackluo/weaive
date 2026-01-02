@@ -29,7 +29,7 @@ export function NeedlesListScreen() {
   const { colors } = useTheme();
   const { data, isLoading, isError, error, refetch, isFetching } = useActiveGoals();
 
-  const goals = data?.data || [];
+  const goals = Array.isArray(data?.data) ? data.data : [];
   const total = data?.meta.total || 0;
   const activeGoalLimit = data?.meta.active_goal_limit || 3;
 

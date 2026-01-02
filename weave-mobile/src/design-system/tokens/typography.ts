@@ -1,11 +1,33 @@
 /**
  * Typography Design Tokens
  *
- * Pre-composed typography styles for consistent text rendering
- * Based on iOS San Francisco and Android Roboto system fonts
+ * Minimal aesthetic with SF Pro Display/Text (iOS) and Roboto (Android)
+ * System fonts provide premium feel with zero bundle size
  */
 
-import { TextStyle } from 'react-native';
+import { TextStyle, Platform } from 'react-native';
+
+// ============================================================================
+// Font Families (System Fonts)
+// ============================================================================
+// iOS: SF Pro Display (headings), SF Pro Text (body)
+// Android: Roboto
+// Web: System font stack
+
+export const fontFamilies = {
+  // System defaults to SF Pro on iOS, Roboto on Android
+  system: Platform.select({
+    ios: 'System',
+    android: 'Roboto',
+    default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  }),
+  // Monospace for code/technical content
+  mono: Platform.select({
+    ios: 'Menlo',
+    android: 'monospace',
+    default: 'Menlo, Monaco, "Courier New", monospace',
+  }),
+} as const;
 
 // ============================================================================
 // Base Typography Settings
@@ -31,18 +53,19 @@ export const fontWeights = {
 
 export const lineHeights = {
   none: 1,
-  tight: 1.25,
+  tight: 1.2,
+  snug: 1.3,
   normal: 1.5,
   relaxed: 1.75,
   loose: 2,
 } as const;
 
 export const letterSpacing = {
-  tighter: -0.05,
-  tight: -0.025,
-  normal: 0,
-  wide: 0.025,
-  wider: 0.05,
+  tighter: -0.5, // Tight, modern spacing for headings (like greeting)
+  tight: -0.3, // Moderately tight for subheadings
+  normal: -0.2, // Slightly tight for body text (premium feel)
+  wide: 0, // Standard spacing (neutral)
+  wider: 0.025,
   widest: 0.1,
 } as const;
 
@@ -50,101 +73,112 @@ export const letterSpacing = {
 // Pre-composed Typography Styles
 // ============================================================================
 export const typography = {
-  // Display Styles (Large Headlines)
+  // Display Styles (Large Headlines) - SF Pro Display on iOS
   display2xl: {
-    fontSize: fontSizes['4xl'],
+    fontFamily: fontFamilies.system,
+    fontSize: fontSizes['5xl'],
     fontWeight: fontWeights.bold,
-    lineHeight: fontSizes['4xl'] * lineHeights.tight,
-    letterSpacing: letterSpacing.tight,
+    lineHeight: fontSizes['5xl'] * lineHeights.tight,
+    letterSpacing: letterSpacing.tighter,
   } as TextStyle,
 
   displayXl: {
-    fontSize: fontSizes['3xl'],
+    fontFamily: fontFamilies.system,
+    fontSize: fontSizes['4xl'],
     fontWeight: fontWeights.bold,
-    lineHeight: fontSizes['3xl'] * lineHeights.tight,
-    letterSpacing: letterSpacing.tight,
+    lineHeight: fontSizes['4xl'] * lineHeights.tight,
+    letterSpacing: letterSpacing.tighter,
   } as TextStyle,
 
   displayLg: {
+    fontFamily: fontFamilies.system,
     fontSize: fontSizes['2xl'],
-    fontWeight: fontWeights.semibold,
-    lineHeight: fontSizes['2xl'] * lineHeights.normal,
-    letterSpacing: letterSpacing.tight,
+    fontWeight: fontWeights.bold,
+    lineHeight: fontSizes['2xl'] * lineHeights.snug,
+    letterSpacing: letterSpacing.tighter,
   } as TextStyle,
 
   displayMd: {
+    fontFamily: fontFamilies.system,
     fontSize: fontSizes.xl,
-    fontWeight: fontWeights.semibold,
-    lineHeight: fontSizes.xl * lineHeights.normal,
-    letterSpacing: letterSpacing.normal,
+    fontWeight: fontWeights.bold,
+    lineHeight: fontSizes.xl * lineHeights.snug,
+    letterSpacing: letterSpacing.tighter,
   } as TextStyle,
 
-  // Text Styles (Body Copy)
+  // Text Styles (Body Copy) - SF Pro Text on iOS
   textLg: {
+    fontFamily: fontFamilies.system,
     fontSize: fontSizes.lg,
-    fontWeight: fontWeights.regular,
+    fontWeight: fontWeights.semibold, // Semibold for all text
     lineHeight: fontSizes.lg * lineHeights.normal,
-    letterSpacing: letterSpacing.normal,
+    letterSpacing: letterSpacing.tight, // Tighter spacing
   } as TextStyle,
 
   textBase: {
+    fontFamily: fontFamilies.system,
     fontSize: fontSizes.base,
-    fontWeight: fontWeights.regular,
+    fontWeight: fontWeights.semibold, // Semibold for all text
     lineHeight: fontSizes.base * lineHeights.normal,
-    letterSpacing: letterSpacing.normal,
+    letterSpacing: letterSpacing.tight, // Tighter spacing
   } as TextStyle,
 
   textSm: {
+    fontFamily: fontFamilies.system,
     fontSize: fontSizes.sm,
-    fontWeight: fontWeights.regular,
+    fontWeight: fontWeights.semibold, // Semibold for all text
     lineHeight: fontSizes.sm * lineHeights.normal,
-    letterSpacing: letterSpacing.normal,
+    letterSpacing: letterSpacing.tight, // Tighter spacing
   } as TextStyle,
 
   textXs: {
+    fontFamily: fontFamilies.system,
     fontSize: fontSizes.xs,
-    fontWeight: fontWeights.regular,
+    fontWeight: fontWeights.semibold, // Semibold for all text
     lineHeight: fontSizes.xs * lineHeights.normal,
-    letterSpacing: letterSpacing.wide,
+    letterSpacing: letterSpacing.tight, // Tighter spacing
   } as TextStyle,
 
   // Label Styles (UI Labels, Buttons)
   labelLg: {
+    fontFamily: fontFamilies.system,
     fontSize: fontSizes.base,
-    fontWeight: fontWeights.medium,
+    fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.base * lineHeights.none,
-    letterSpacing: letterSpacing.wide,
+    letterSpacing: letterSpacing.tight,
   } as TextStyle,
 
   labelBase: {
+    fontFamily: fontFamilies.system,
     fontSize: fontSizes.sm,
-    fontWeight: fontWeights.medium,
+    fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.sm * lineHeights.none,
-    letterSpacing: letterSpacing.wide,
+    letterSpacing: letterSpacing.tight,
   } as TextStyle,
 
   labelSm: {
+    fontFamily: fontFamilies.system,
     fontSize: fontSizes.xs,
-    fontWeight: fontWeights.medium,
+    fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.xs * lineHeights.none,
-    letterSpacing: letterSpacing.wider,
+    letterSpacing: letterSpacing.tight,
   } as TextStyle,
 
   // Monospace (Code, Technical)
   monoBase: {
+    fontFamily: fontFamilies.mono,
     fontSize: fontSizes.sm,
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.sm * lineHeights.normal,
     letterSpacing: letterSpacing.normal,
-    fontFamily: 'monospace',
   } as TextStyle,
 
   monoSm: {
+    fontFamily: fontFamilies.mono,
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.xs * lineHeights.normal,
     letterSpacing: letterSpacing.normal,
-    fontFamily: 'monospace',
   } as TextStyle,
 
   // Raw token access
@@ -152,6 +186,7 @@ export const typography = {
   fontWeights,
   lineHeights,
   letterSpacing,
+  fontFamilies,
 } as const;
 
 // ============================================================================

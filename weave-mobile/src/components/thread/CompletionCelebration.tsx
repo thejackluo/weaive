@@ -22,6 +22,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { useTheme, Heading, Body, Caption, Button } from '@/design-system';
+import { WeaveLogoIcon } from '@/components/WeaveLogoIcon';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import Animated, {
   useSharedValue,
@@ -40,10 +41,6 @@ interface ProgressUpdate {
   xp_gained: number;
   total_xp: number;
   xp_to_next_level: number;
-  streak_before: number;
-  streak_after: number;
-  streak_status: 'active' | 'at_risk' | 'broken';
-  streak_milestone_reached: { day: number; message: string } | null;
   grace_period_saved: boolean;
 }
 
@@ -78,10 +75,7 @@ export function CompletionCelebration({
   const xpGained = progressUpdate?.xp_gained ?? 1;
   const totalXP = progressUpdate?.total_xp ?? 0;
   const xpToNext = progressUpdate?.xp_to_next_level ?? 4;
-  const streakAfter = progressUpdate?.streak_after;
-  const streakMilestone = progressUpdate?.streak_milestone_reached;
   const graceSaved = progressUpdate?.grace_period_saved;
-  const streakStatus = progressUpdate?.streak_status;
 
   // Calculate level progress percentage using the correct utility function
   const calculatedProgress = progressUpdate
@@ -216,36 +210,6 @@ export function CompletionCelebration({
                   </View>
                 )}
 
-                {/* Streak Milestone Celebration */}
-                {streakMilestone && (
-                  <View
-                    style={{
-                      backgroundColor: '#f97316',
-                      padding: spacing[4],
-                      borderRadius: radius.md,
-                      marginBottom: spacing[4],
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Heading
-                      variant="displayLg"
-                      style={{ color: colors.text.inverse, textAlign: 'center' }}
-                    >
-                      🔥 {streakMilestone.message}
-                    </Heading>
-                    <Caption
-                      style={{
-                        color: colors.text.inverse,
-                        textAlign: 'center',
-                        marginTop: spacing[1],
-                        fontSize: 14,
-                      }}
-                    >
-                      {streakMilestone.day} day streak!
-                    </Caption>
-                  </View>
-                )}
-
                 {/* Grace Period Warning */}
                 {graceSaved && (
                   <View
@@ -310,7 +274,7 @@ export function CompletionCelebration({
                 <View style={[styles.levelSection, { marginBottom: spacing[5] }]}>
                   {/* Level Progress */}
                   <View style={styles.levelHeader}>
-                    <Body style={{ fontSize: 32 }}>🧵</Body>
+                    <WeaveLogoIcon size={48} color={colors.accent[500]} />
                     <View style={{ flex: 1, marginLeft: spacing[3] }}>
                       <Body
                         weight="semibold"
@@ -343,44 +307,6 @@ export function CompletionCelebration({
                       </Caption>
                     </View>
                   </View>
-
-                  {/* Streak Display */}
-                  {streakAfter !== undefined && (
-                    <View
-                      style={[
-                        styles.levelHeader,
-                        {
-                          marginTop: spacing[4],
-                          paddingTop: spacing[4],
-                          borderTopWidth: 1,
-                          borderTopColor: colors.border.subtle,
-                        },
-                      ]}
-                    >
-                      <Body style={{ fontSize: 32 }}>
-                        {streakStatus === 'active'
-                          ? '🔥'
-                          : streakStatus === 'at_risk'
-                            ? '⚠️'
-                            : '💔'}
-                      </Body>
-                      <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                        <Body
-                          weight="semibold"
-                          style={{ color: colors.text.primary, marginBottom: spacing[1] }}
-                        >
-                          {streakAfter} Day Streak
-                        </Body>
-                        <Caption style={{ color: colors.text.secondary }}>
-                          {streakStatus === 'active'
-                            ? 'Keep it going!'
-                            : streakStatus === 'at_risk'
-                              ? 'At risk - complete tomorrow!'
-                              : 'Start a new streak today'}
-                        </Caption>
-                      </View>
-                    </View>
-                  )}
                 </View>
 
                 {/* Action Buttons */}

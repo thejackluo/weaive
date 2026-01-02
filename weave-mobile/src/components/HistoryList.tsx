@@ -58,7 +58,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
     );
   }
 
-  const historyItems = data?.data || [];
+  const historyItems = Array.isArray(data?.data) ? data.data : [];
 
   // Filter out goal lifecycle events (only show threads, binds, weave_chats)
   const filteredItems = historyItems.filter(

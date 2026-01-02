@@ -220,7 +220,7 @@ async def get_goal_by_id(
             logger.error(f"❌ Error fetching qgoals for goal {goal_id}: {str(e)}")
             enriched_goal["qgoals"] = []
 
-        # Fetch subtask_templates (binds) for this goal
+        # Fetch subtask_templates (binds) for this goal with weekly completion counts
         try:
             binds_response = (
                 supabase.table("subtask_templates")
@@ -230,8 +230,60 @@ async def get_goal_by_id(
                 .order("created_at", desc=False)
                 .execute()
             )
-            enriched_goal["binds"] = binds_response.data or []
-            logger.debug(f"📊 Goal {goal_id}: Found {len(enriched_goal['binds'])} active binds")
+            binds = binds_response.data or []
+
+            # Enrich each bind with weekly completion count
+            for bind in binds:
+                template_id = bind["id"]
+                times_per_week = bind.get("times_per_week", 7)
+                template_created_at_str = bind.get("created_at")
+
+                # Parse template created_at timestamp
+                if template_created_at_str:
+                    if isinstance(template_created_at_str, str):
+                        template_created_at = datetime.fromisoformat(template_created_at_str.replace('Z', '+00:00'))
+                    else:
+                        template_created_at = template_created_at_str
+                else:
+                    template_created_at = datetime.combine(date.today(), datetime.min.time())
+
+                # Calculate rolling week boundaries (same logic as /api/binds/today)
+                from app.api.binds.router import calculate_rolling_week_boundaries
+                today_date = date.today()
+                week_start, week_end = calculate_rolling_week_boundaries(template_created_at, today_date)
+
+                # Fetch instances for this template within the rolling week
+                instances_response = (
+                    supabase.table("subtask_instances")
+                    .select("id")
+                    .eq("user_id", user_id)
+                    .eq("template_id", template_id)
+                    .gte("scheduled_for_date", week_start.isoformat())
+                    .lte("scheduled_for_date", week_end.isoformat())
+                    .execute()
+                )
+
+                instance_ids = [inst["id"] for inst in instances_response.data] if instances_response.data else []
+
+                # Count completions for these instances
+                completions_this_week = 0
+                if instance_ids:
+                    completions_response = (
+                        supabase.table("subtask_completions")
+                        .select("subtask_instance_id")
+                        .eq("user_id", user_id)
+                        .in_("subtask_instance_id", instance_ids)
+                        .execute()
+                    )
+                    completions_this_week = len(completions_response.data) if completions_response.data else 0
+
+                # Add weekly completion data to bind
+                bind["completions_this_week"] = completions_this_week
+                bind["week_start"] = week_start.isoformat()
+                bind["week_end"] = week_end.isoformat()
+
+            enriched_goal["binds"] = binds
+            logger.debug(f"📊 Goal {goal_id}: Found {len(enriched_goal['binds'])} active binds with completion stats")
         except Exception as e:
             logger.error(f"❌ Error fetching binds for goal {goal_id}: {str(e)}")
             enriched_goal["binds"] = []
@@ -375,13 +427,13 @@ async def create_goal(
         if goal_data.binds:
             binds_inserts = []
             for bind in goal_data.binds:
-                # Convert frequency_type/frequency_value to recurrence_rule (iCal RRULE format)
-                if bind.frequency_type == "daily":
+                # Convert times_per_week (1-7) to recurrence_rule (iCal RRULE format)
+                if bind.times_per_week == 7:
+                    # Daily (every day)
                     recurrence_rule = "FREQ=DAILY;INTERVAL=1"
-                elif bind.frequency_type == "weekly":
-                    recurrence_rule = f"FREQ=WEEKLY;INTERVAL=1;COUNT={bind.frequency_value}"
-                else:  # custom
-                    recurrence_rule = f"FREQ=DAILY;INTERVAL={bind.frequency_value}"
+                else:
+                    # Weekly (1-6 times per week)
+                    recurrence_rule = f"FREQ=WEEKLY;INTERVAL=1;COUNT={bind.times_per_week}"
 
                 binds_inserts.append(
                     {

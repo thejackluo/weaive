@@ -1,12 +1,18 @@
 /**
  * BindItem Component
  * Individual bind/task card with completion checkbox
+ *
+ * Minimal aesthetic:
+ * - Large, rounded cards (iOS 17 style)
+ * - Green checkmark for completed
+ * - Clean typography
  */
 
 import React from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme, Body, Caption } from '@/design-system';
+import { useTheme, Body } from '@/design-system';
 import type { Bind } from '@/types/binds';
+import { Ionicons } from '@expo/vector-icons';
 
 interface BindItemProps {
   bind: Bind;
@@ -25,37 +31,44 @@ export function BindItem({ bind, onPress }: BindItemProps) {
           borderColor: colors.border.subtle,
           padding: spacing[4],
           marginBottom: spacing[2],
+          borderRadius: 20, // iOS 17 style (generous rounding)
         },
       ]}
       onPress={onPress}
     >
       <View style={styles.content}>
-        {/* Checkbox */}
+        {/* Checkbox - Green when completed */}
         <View
           style={[
             styles.checkbox,
             {
-              borderColor: bind.completed ? colors.semantic.success.base : colors.border.muted,
-              backgroundColor: bind.completed ? colors.semantic.success.base : 'transparent',
+              borderColor: bind.completed ? colors.green[500] : colors.border.muted,
+              backgroundColor: bind.completed ? colors.green[500] : 'transparent',
             },
           ]}
         >
-          {bind.completed && <View style={styles.checkmark} />}
+          {bind.completed && (
+            <Ionicons name="checkmark" size={18} color="#000000" /> // Black checkmark on green
+          )}
         </View>
 
-        {/* Bind Details */}
+        {/* Bind Title */}
         <View style={styles.details}>
           <Body
             weight="semibold"
             style={{
               color: colors.text.primary,
-              opacity: bind.completed ? 0.5 : 1,
-              fontSize: 18,
+              opacity: bind.completed ? 0.5 : 1, // Dim when completed
+              fontSize: 16,
+              letterSpacing: -0.2,
             }}
           >
             {bind.title}
           </Body>
         </View>
+
+        {/* Chevron */}
+        <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
       </View>
     </Pressable>
   );
@@ -63,7 +76,6 @@ export function BindItem({ bind, onPress }: BindItemProps) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
     borderWidth: 1,
   },
   content: {
@@ -72,18 +84,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14, // Perfect circle
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  checkmark: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: 'white',
   },
   details: {
     flex: 1,

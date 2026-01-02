@@ -48,8 +48,12 @@ class BindCreate(BaseCreateModel):
 
     title: str = Field(..., min_length=1, max_length=200, description="Bind title")
     description: Optional[str] = Field(None, max_length=1000, description="Bind description")
-    frequency_type: str = Field(..., pattern="^(daily|weekly|custom)$", description="Frequency type")
-    frequency_value: int = Field(..., ge=1, le=7, description="Frequency value (days per week or interval)")
+    times_per_week: int = Field(
+        3,
+        ge=1,
+        le=7,
+        description="Number of times per week this bind should be completed (1-7). Default: 3"
+    )
 
     class Config:
         json_schema_extra = {
@@ -57,8 +61,7 @@ class BindCreate(BaseCreateModel):
                 {
                     "title": "Morning run",
                     "description": "30 minute jog around the park",
-                    "frequency_type": "daily",
-                    "frequency_value": 1
+                    "times_per_week": 7
                 }
             ]
         }

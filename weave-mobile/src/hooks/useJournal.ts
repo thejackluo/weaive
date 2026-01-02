@@ -24,6 +24,7 @@ export const journalKeys = {
   all: ['journal-entries'] as const,
   today: () => [...journalKeys.all, 'today'] as const,
   byDate: (date: string) => [...journalKeys.all, date] as const,
+  yesterdayIntention: () => [...journalKeys.all, 'yesterday-intention'] as const,
 };
 
 /**
@@ -64,6 +65,20 @@ export function useGetTodayJournal() {
       );
       return shouldThrow;
     },
+  });
+}
+
+/**
+ * Fetch yesterday's intention (tomorrow_focus from yesterday's journal)
+ * Returns null if no intention exists
+ */
+export function useYesterdayIntention() {
+  return useQuery({
+    queryKey: journalKeys.yesterdayIntention(),
+    queryFn: journalApi.getYesterdayIntention,
+    staleTime: 5 * 60 * 1000, // 5 minutes (intentions don't change often)
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
+    retry: 0,
   });
 }
 

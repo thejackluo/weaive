@@ -89,6 +89,7 @@ class DefaultResponses(BaseModel):
 
     today_reflection: Optional[str] = Field(None, max_length=500)
     tomorrow_focus: Optional[str] = Field(None, max_length=100)
+    today_focus: Optional[str] = Field(None, max_length=100, description="Override for today's focus (when edited manually)")
 
 
 class JournalEntryCreate(BaseModel):
@@ -358,10 +359,15 @@ async def create_journal_entry(
 
 @router.get("/today", response_model=ApiResponse)
 async def get_today_journal_entry(
+    local_date: Optional[str] = Query(None, description="Local date in YYYY-MM-DD format (client timezone)"),
     user: dict = Depends(get_current_user),
 ):
     """
     Retrieve today's journal entry for authenticated user
+
+    Query Parameters:
+    - local_date: Optional. If provided, fetches entry for this date (client timezone).
+                  If not provided, calculates using server's date (backward compatibility).
 
     AC #17: Support edit mode by fetching existing journal
     - Returns 404 if no entry exists for today
@@ -377,9 +383,15 @@ async def get_today_journal_entry(
     profile_id = await get_or_create_user_profile(supabase, user_id)
     logger.info(f"[GET /today] ✅ Got profile ID: {profile_id}")
 
-    # Calculate today's local_date (use user's timezone)
-    # For now, use server's date - TODO: Use user's timezone from profile
-    today_date = date.today().isoformat()
+    # Use client-provided date if available, otherwise calculate from server timezone
+    # This fixes timezone mismatch bug where client and server dates differ
+    if local_date:
+        today_date = local_date
+        logger.info(f"[GET /today] 📅 Using client-provided local_date: {today_date}")
+    else:
+        # Backward compatibility: use server's date
+        today_date = date.today().isoformat()
+        logger.info(f"[GET /today] 📅 Using server-calculated date: {today_date} (no local_date provided)")
 
     # Query journal entry for today
     logger.info(f"[GET /today] 🔍 Querying with user_id={profile_id}, local_date={today_date}")
@@ -469,6 +481,110 @@ async def get_journal_entries(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch journal entries: {str(e)}"
+        )
+
+
+@router.get("/yesterday-intention")
+async def get_yesterday_intention(user: dict = Depends(get_current_user)):
+    """
+    Get today's focus intention
+
+    Priority:
+    1. If today's journal has today_focus set (user manually edited today's focus), return that
+    2. Otherwise, return yesterday's tomorrow_focus (what they planned yesterday for today)
+
+    Returns:
+    - intention: Focus text (or null if doesn't exist)
+    - date: Source date (today or yesterday)
+    - has_entry: Whether journal entry exists
+    - source: "today" or "yesterday" (indicates which journal the intention came from)
+    """
+    user_id = user["sub"]
+    supabase = get_supabase_client()
+
+    if not supabase:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database connection not configured",
+        )
+
+    # Get user's profile ID
+    profile_id = await get_or_create_user_profile(supabase, user_id)
+
+    # Calculate dates
+    from datetime import timedelta
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    today_str = today.isoformat()
+    yesterday_str = yesterday.isoformat()
+
+    try:
+        # FIRST: Check if today's journal has a today_focus (user manually edited today's focus)
+        today_response = (
+            supabase.table("journal_entries")
+            .select("default_responses")
+            .eq("user_id", profile_id)
+            .eq("local_date", today_str)
+            .execute()
+        )
+
+        if today_response.data and len(today_response.data) > 0:
+            journal = today_response.data[0]
+            default_responses = journal.get("default_responses", {})
+            today_focus = default_responses.get("today_focus") if default_responses else None
+
+            # If today's journal has today_focus set, return that (prioritize manual edits)
+            if today_focus:
+                return {
+                    "data": {
+                        "intention": today_focus,
+                        "date": today_str,
+                        "has_entry": True,
+                        "source": "today",
+                    },
+                    "meta": {"timestamp": datetime.utcnow().isoformat()},
+                }
+
+        # SECOND: Fall back to yesterday's tomorrow_focus (what they planned yesterday)
+        yesterday_response = (
+            supabase.table("journal_entries")
+            .select("default_responses")
+            .eq("user_id", profile_id)
+            .eq("local_date", yesterday_str)
+            .execute()
+        )
+
+        if not yesterday_response.data or len(yesterday_response.data) == 0:
+            # No journal entry for yesterday or today
+            return {
+                "data": {
+                    "intention": None,
+                    "date": yesterday_str,
+                    "has_entry": False,
+                    "source": "yesterday",
+                },
+                "meta": {"timestamp": datetime.utcnow().isoformat()},
+            }
+
+        journal = yesterday_response.data[0]
+        default_responses = journal.get("default_responses", {})
+        tomorrow_focus = default_responses.get("tomorrow_focus") if default_responses else None
+
+        return {
+            "data": {
+                "intention": tomorrow_focus,
+                "date": yesterday_str,
+                "has_entry": True,
+                "source": "yesterday",
+            },
+            "meta": {"timestamp": datetime.utcnow().isoformat()},
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Error fetching yesterday's intention: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch yesterday's intention: {str(e)}",
         )
 
 

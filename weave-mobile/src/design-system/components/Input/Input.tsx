@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   },
   label: {
     marginBottom: 8,
-    fontWeight: '500',
+    fontWeight: '700',
   },
   inputContainer: {
     flexDirection: 'row',

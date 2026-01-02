@@ -67,6 +67,7 @@ class ContextBuilderService:
                 self._fetch_journal_entries(user_id),
                 self._fetch_identity(user_id),
                 self._calculate_metrics(user_id),
+                self._fetch_recent_images(user_id),
                 return_exceptions=True
             )
 
@@ -76,6 +77,7 @@ class ContextBuilderService:
             journal = results[2] if not isinstance(results[2], Exception) else []
             identity = results[3] if not isinstance(results[3], Exception) else {"dream_self_name": "Weave", "archetype": "Coach", "personality_traits": [], "speaking_style": "Supportive"}
             metrics = results[4] if not isinstance(results[4], Exception) else {"current_streak": 0, "longest_streak": 0, "overall_completion_rate": 0.0, "goals_completed": 0, "days_active": 0}
+            recent_images = results[5] if not isinstance(results[5], Exception) else []
 
             # Assemble context
             context = {
@@ -86,6 +88,7 @@ class ContextBuilderService:
                 "journal": journal,
                 "identity": identity,
                 "metrics": metrics,
+                "recent_images": recent_images,
                 "recent_wins": self._extract_recent_wins(goals, recent_activity, metrics),
             }
 
@@ -430,6 +433,67 @@ class ContextBuilderService:
                 "goals_completed": 0,
                 "days_active": 0,
             }
+
+    async def _fetch_recent_images(self, user_id: str) -> List[Dict]:
+        """
+        Fetch recent photo captures with vision analysis (last 7 days).
+
+        Returns:
+            List of image dicts with date, bind_title, vision_summary, storage_key
+        """
+        try:
+            seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+
+            # Fetch photo captures from last 7 days
+            response = (
+                self.db.table("captures")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("type", "photo")
+                .gte("created_at", seven_days_ago)
+                .order("created_at", desc=True)
+                .limit(10)  # Max 10 recent images
+                .execute()
+            )
+
+            if not response.data:
+                return []
+
+            images = []
+            for capture in response.data:
+                capture_id = capture["id"]
+                storage_key = capture.get("storage_key")
+
+                # Vision summary - simplified for now (no database lookup)
+                # TODO: Add vision analysis lookup once schema is confirmed
+                vision_summary = "Image proof uploaded"
+
+                # Get bind title if linked to subtask
+                bind_title = "General proof"
+                if capture.get("subtask_instance_id"):
+                    # Fetch bind title from subtask_instances
+                    instance_response = (
+                        self.db.table("subtask_instances")
+                        .select("title")
+                        .eq("id", capture["subtask_instance_id"])
+                        .execute()
+                    )
+                    if instance_response.data:
+                        bind_title = instance_response.data[0].get("title", "Bind completion")
+
+                images.append({
+                    "date": capture.get("local_date"),
+                    "bind_title": bind_title,
+                    "vision_summary": vision_summary or "Image proof (analysis pending)",
+                    "storage_key": storage_key,
+                    "created_at": capture.get("created_at"),
+                })
+
+            return images
+
+        except Exception as e:
+            logger.error(f"Failed to fetch recent images for user {user_id}: {e}")
+            return []
 
     def _extract_recent_wins(self, goals: List[Dict], recent_activity: Dict, metrics: Dict) -> List[str]:
         """

@@ -124,7 +124,9 @@ export interface QGoalCreate {
 export interface BindCreate {
   title: string;
   description?: string;
-  times_per_week: number; // Number of times per week (1-7), default: 3
+  times_per_week?: number; // DEPRECATED: Use frequency_type + frequency_value
+  frequency_type: 'daily' | 'weekly' | 'custom';
+  frequency_value: number; // Number of times (1-7 for weekly, interval for custom)
 }
 
 /**

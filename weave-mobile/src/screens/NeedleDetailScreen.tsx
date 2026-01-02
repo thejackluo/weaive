@@ -1,12 +1,12 @@
 /**
  * NeedleDetailScreen (US-2.2: View Goal Details + US-2.4: Edit Needle)
  *
- * RESTRUCTURED LAYOUT (top to bottom):
- * 1. Needle name (editable on tap, auto-save)
- * 2. Motivation text box ("Why this matters" - editable on tap, auto-save)
- * 3. Plan of Binds (tap bind to navigate to detail)
- * 4. Memories section (image gallery, max 10 images)
- * 5. Archive Needle button (bottom)
+ * REDESIGNED LAYOUT WITH ENHANCED VISUAL HIERARCHY:
+ * 1. Hero header with display2xl title and colored accent bar
+ * 2. Collapsible motivation section with elegant design
+ * 3. Enhanced bind cards with progress indicators and frequency badges
+ * 4. Strategic use of color and animations
+ * 5. Improved empty states with icons
  */
 
 import React, { useState, useRef } from 'react';
@@ -20,8 +20,10 @@ import {
   ActivityIndicator,
   Image,
   FlatList,
+  Animated,
+  Modal,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { Text, Card, Button } from '@/design-system';
@@ -39,11 +41,17 @@ export function NeedleDetailScreen() {
   const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
 
+  // Animation values
+  const motivationAnimation = useRef(new Animated.Value(0)).current;
+  const bindCardAnimations = useRef<{ [key: string]: Animated.Value }>({});
+
   // State for editable fields
   const [titleValue, setTitleValue] = useState('');
   const [motivationValue, setMotivationValue] = useState('');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
   const [isMotivationEditing, setIsMotivationEditing] = useState(false);
+  const [isMotivationExpanded, setIsMotivationExpanded] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   // State for editing binds
   const [editingBindId, setEditingBindId] = useState<string | null>(null);
@@ -60,8 +68,8 @@ export function NeedleDetailScreen() {
   const originalMotivationRef = useRef('');
 
   // Queries and mutations
-  const { data, isLoading, isError, error } = useGoalById(id || '');
-  const { data: memoriesData, isLoading: isLoadingMemories } = useGoalMemories(id || '');
+  const { data, isLoading, isError, error, refetch } = useGoalById(id || '');
+  const { data: memoriesData, isLoading: isLoadingMemories, refetch: refetchMemories } = useGoalMemories(id || '');
   const updateGoalMutation = useUpdateGoal();
   const archiveGoalMutation = useArchiveGoal();
   const uploadMemoryMutation = useUploadMemory();
@@ -71,9 +79,29 @@ export function NeedleDetailScreen() {
   const deleteBindMutation = useDeleteBind();
 
   const goal = data?.data || null;
-  const memories = memoriesData?.data || [];
+  const memories = Array.isArray(memoriesData?.data) ? memoriesData.data : [];
   const memoriesCount = memories.length;
   const maxMemories = 10;
+
+  // Track first mount to avoid double-fetching
+  const isFirstMount = useRef(true);
+
+  // Refetch goal data when screen comes into focus
+  // This ensures changes from other screens (bind completions, bind CRUD, etc.) are reflected
+  useFocusEffect(
+    React.useCallback(() => {
+      // Skip refetch on first mount (initial query already handles it)
+      if (isFirstMount.current) {
+        isFirstMount.current = false;
+        console.log('[NeedleDetail] First mount - skipping refetch (initial query handles it)');
+        return;
+      }
+
+      console.log('[NeedleDetail] Screen refocused - refetching goal and memories');
+      refetch();
+      refetchMemories();
+    }, [refetch, refetchMemories])
+  );
 
   // Initialize editable fields when data loads
   React.useEffect(() => {
@@ -84,6 +112,31 @@ export function NeedleDetailScreen() {
       originalMotivationRef.current = goal.description || '';
     }
   }, [goal]);
+
+  // Toggle motivation section
+  const toggleMotivation = () => {
+    const toValue = isMotivationExpanded ? 0 : 1;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    Animated.spring(motivationAnimation, {
+      toValue,
+      useNativeDriver: false,
+      tension: 50,
+      friction: 7,
+    }).start();
+
+    setIsMotivationExpanded(!isMotivationExpanded);
+  };
+
+  const motivationHeight = motivationAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 200], // Adjust based on content
+  });
+
+  const motivationOpacity = motivationAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -182,6 +235,7 @@ export function NeedleDetailScreen() {
       {
         onSuccess: () => {
           setEditingBindId(null);
+          refetch(); // Immediately refresh goal data to show updated bind
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         },
         onError: (error) => {
@@ -214,6 +268,12 @@ export function NeedleDetailScreen() {
       return;
     }
 
+    // Close form immediately (don't wait for API)
+    setIsCreatingBind(false);
+    setNewBindTitle('');
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    // Fire mutation in background
     createBindMutation.mutate(
       {
         goal_id: id || '',
@@ -222,9 +282,7 @@ export function NeedleDetailScreen() {
       },
       {
         onSuccess: () => {
-          setIsCreatingBind(false);
-          setNewBindTitle('');
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          refetch(); // Refresh goal data to replace temp bind with real bind
         },
         onError: (error) => {
           Alert.alert('Error', error.message || 'Failed to create bind.');
@@ -253,6 +311,7 @@ export function NeedleDetailScreen() {
             { bindId, goalId: id || '' },
             {
               onSuccess: () => {
+                refetch(); // Immediately refresh goal data to remove deleted bind
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               },
               onError: (error) => {
@@ -265,25 +324,75 @@ export function NeedleDetailScreen() {
     ]);
   };
 
-  const handleArchive = () => {
+  const handleDeleteGoal = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert('Archive Needle', 'Are you sure? You can reactivate later.', [
+    Alert.alert('Delete Needle', 'Are you sure? This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Archive',
+        text: 'Delete',
         style: 'destructive',
         onPress: () => {
+          // Keep modal open during deletion (loading state will show)
           archiveGoalMutation.mutate(id || '', {
             onSuccess: () => {
+              setIsEditModalVisible(false);
               router.back();
             },
             onError: (error) => {
-              Alert.alert('Error', error.message || 'Failed to archive goal.');
+              Alert.alert('Error', error.message || 'Failed to delete goal.');
             },
           });
         },
       },
     ]);
+  };
+
+  const handleOpenEditModal = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsEditModalVisible(true);
+    setTitleValue(originalTitleRef.current);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalVisible(false);
+    setTitleValue(originalTitleRef.current);
+  };
+
+  const handleSaveNeedleName = () => {
+    const trimmedTitle = titleValue.trim();
+
+    // Validation
+    if (!trimmedTitle) {
+      Alert.alert('Validation Error', 'Goal title cannot be empty.');
+      return;
+    }
+
+    if (trimmedTitle.length > 200) {
+      Alert.alert('Validation Error', 'Goal title must be 200 characters or less.');
+      return;
+    }
+
+    // Only save if changed
+    if (trimmedTitle !== originalTitleRef.current) {
+      updateGoalMutation.mutate(
+        {
+          goalId: id || '',
+          data: { title: trimmedTitle },
+        },
+        {
+          onSuccess: () => {
+            originalTitleRef.current = trimmedTitle;
+            setIsEditModalVisible(false);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          },
+          onError: (error) => {
+            Alert.alert('Error', error.message || 'Failed to update title.');
+          },
+        }
+      );
+    } else {
+      setIsEditModalVisible(false);
+    }
   };
 
   const handleAddMemory = async () => {
@@ -358,6 +467,24 @@ export function NeedleDetailScreen() {
     ]);
   };
 
+  // Get frequency badge details
+  const getFrequencyBadge = (timesPerWeek: number) => {
+    if (timesPerWeek === 7) {
+      return { icon: 'calendar', label: 'Daily', color: colors.accent[500] };
+    } else {
+      return { icon: 'calendar', label: `${timesPerWeek}x/week`, color: colors.accent[500] };
+    }
+  };
+
+  // Calculate completion progress for binds
+  const getBindProgress = (bind: any) => {
+    const completed = bind.completions_this_week || 0;
+    const total = bind.times_per_week || 7;
+    // Cap percentage at 100% (don't show over 100%)
+    const percentage = Math.min((completed / total) * 100, 100);
+    return { completed, total, percentage };
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -366,8 +493,11 @@ export function NeedleDetailScreen() {
           <Pressable onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
           </Pressable>
-          <Text variant="textLg" weight="semibold" style={styles.headerTitle}>
-            Loading...
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.accent[500]} />
+          <Text variant="textLg" color="secondary" style={{ marginTop: 16 }}>
+            Loading your needle...
           </Text>
         </View>
       </View>
@@ -382,15 +512,16 @@ export function NeedleDetailScreen() {
           <Pressable onPress={handleBack} style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
           </Pressable>
-          <Text variant="textLg" weight="semibold" style={styles.headerTitle}>
-            Error
-          </Text>
         </View>
         <View style={styles.errorContainer}>
-          <Text variant="textBase" color="error">
+          <Ionicons name="alert-circle" size={64} color={colors.rose[500]} />
+          <Text variant="textLg" weight="semibold" style={{ marginTop: 16 }}>
+            Oops!
+          </Text>
+          <Text variant="textBase" color="secondary" style={{ marginTop: 8, textAlign: 'center' }}>
             {error?.message || 'Goal not found'}
           </Text>
-          <Button variant="primary" size="sm" onPress={handleBack} style={styles.backToListButton}>
+          <Button variant="primary" size="md" onPress={handleBack} style={{ marginTop: 24 }}>
             Back to Dashboard
           </Button>
         </View>
@@ -402,10 +533,23 @@ export function NeedleDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      {/* Header with Back Button */}
+      {/* Header with Back Button, Title, and Edit Icon */}
       <View style={styles.header}>
         <Pressable onPress={handleBack} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
+          <Ionicons name="chevron-back" size={28} color={colors.text.secondary} />
+        </Pressable>
+        <View style={styles.headerTitleContainer}>
+          <Text
+            style={[styles.headerTitle, { color: colors.text.secondary }]}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            {titleValue}
+          </Text>
+        </View>
+        <Pressable onPress={handleOpenEditModal} style={styles.editButton}>
+          <Ionicons name="create-outline" size={24} color={colors.text.secondary} />
         </Pressable>
       </View>
 
@@ -414,82 +558,56 @@ export function NeedleDetailScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* 1. Needle Name (editable on tap) */}
+        {/* 2. MOTIVATION SECTION (Direct Display) */}
         <View style={styles.section}>
-          <Pressable onPress={() => setIsTitleEditing(true)} disabled={isTitleEditing}>
-            {isTitleEditing ? (
-              <TextInput
-                value={titleValue}
-                onChangeText={setTitleValue}
-                onBlur={handleTitleBlur}
-                autoFocus
-                multiline
-                style={[
-                  styles.titleInput,
-                  {
-                    color: colors.text.primary,
-                    borderColor: colors.border.focus,
-                  },
-                ]}
-                placeholder="Needle title"
-                placeholderTextColor={colors.text.muted}
-                maxLength={200}
-              />
-            ) : (
-              <>
-                <Text
-                  variant="displayLg"
-                  weight="bold"
-                  style={[styles.title, { color: colors.text.primary }]}
-                >
-                  {titleValue}
-                </Text>
-                <Text variant="textSm" color="muted" style={styles.tapToEditHint}>
-                  Tap to edit
-                </Text>
-              </>
-            )}
-          </Pressable>
-        </View>
-
-        {/* 2. Motivation Box ("Why this matters") */}
-        <View style={styles.section}>
-          <Text variant="textSm" color="secondary" style={styles.sectionLabel}>
-            Why this matters
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: '600',
+              color: 'rgba(255, 255, 255, 0.9)',
+              letterSpacing: -0.5,
+              marginBottom: 12,
+              textShadowColor: 'rgba(0, 0, 0, 0.2)',
+              textShadowOffset: { width: 0, height: 1 },
+              textShadowRadius: 2,
+            }}
+          >
+            Why This Matters
           </Text>
           <Pressable onPress={() => setIsMotivationEditing(true)} disabled={isMotivationEditing}>
             {isMotivationEditing ? (
-              <TextInput
-                value={motivationValue}
-                onChangeText={setMotivationValue}
-                onBlur={handleMotivationBlur}
-                autoFocus
-                multiline
-                style={[
-                  styles.motivationInput,
-                  {
-                    color: colors.text.primary,
-                    borderColor: colors.border.focus,
-                    backgroundColor: colors.background.secondary,
-                  },
-                ]}
-                placeholder="Your motivation for this goal..."
-                placeholderTextColor={colors.text.muted}
-              />
+              <View>
+                <TextInput
+                  value={motivationValue}
+                  onChangeText={setMotivationValue}
+                  autoFocus
+                  multiline
+                  style={[
+                    styles.motivationInput,
+                    {
+                      color: colors.text.primary,
+                      borderColor: colors.border.strong,
+                      backgroundColor: colors.background.secondary,
+                    },
+                  ]}
+                  placeholder="Your motivation for this goal..."
+                  placeholderTextColor={colors.text.muted}
+                />
+                <Pressable
+                  onPress={handleMotivationBlur}
+                  style={[styles.doneButton, { backgroundColor: colors.accent[500] }]}
+                >
+                  <Text variant="textBase" weight="semibold" style={{ color: colors.text.inverse }}>
+                    Done
+                  </Text>
+                </Pressable>
+              </View>
             ) : (
-              <View
-                style={[
-                  styles.motivationBox,
-                  {
-                    backgroundColor: colors.background.secondary,
-                    borderColor: colors.border.muted,
-                  },
-                ]}
-              >
-                <Text variant="textBase" style={{ color: colors.text.secondary }}>
+              <Card variant="glass" style={styles.motivationCard}>
+                <Text variant="textBase" style={{ color: colors.text.secondary, lineHeight: 24 }}>
                   {motivationValue || 'Tap to add your motivation...'}
                 </Text>
-              </View>
+              </Card>
             )}
           </Pressable>
         </View>
@@ -497,20 +615,31 @@ export function NeedleDetailScreen() {
         {/* 3. Milestones (Q-Goals) */}
         {goal.qgoals && goal.qgoals.length > 0 && (
           <View style={styles.section}>
-            <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: '600',
+                color: 'rgba(255, 255, 255, 0.9)',
+                letterSpacing: -0.5,
+                marginBottom: 16,
+                textShadowColor: 'rgba(0, 0, 0, 0.2)',
+                textShadowOffset: { width: 0, height: 1 },
+                textShadowRadius: 2,
+              }}
+            >
               Milestones
             </Text>
             {goal.qgoals.map((qgoal: any) => (
               <Card key={qgoal.id} variant="glass" style={styles.milestoneCard}>
                 <View style={styles.milestoneContent}>
-                  <Text variant="textBase" weight="medium">
+                  <Text variant="textLg" weight="semibold" style={{ color: colors.text.primary }}>
                     {qgoal.title}
                   </Text>
                   <View style={styles.milestoneProgress}>
-                    <Text variant="textLg" weight="semibold" style={{ color: colors.accent[500] }}>
+                    <Text variant="displayMd" weight="bold" style={{ color: colors.accent[500] }}>
                       {qgoal.current_value || 0}
                     </Text>
-                    <Text variant="textSm" color="secondary" style={{ marginHorizontal: 8 }}>
+                    <Text variant="textBase" color="muted" style={{ marginHorizontal: 8 }}>
                       /
                     </Text>
                     <Text variant="textLg" color="secondary">
@@ -518,7 +647,7 @@ export function NeedleDetailScreen() {
                     </Text>
                   </View>
                   {qgoal.metric_name && (
-                    <Text variant="textSm" color="muted" style={{ marginTop: 4 }}>
+                    <Text variant="textSm" color="muted" style={{ marginTop: 8 }}>
                       {qgoal.metric_name}
                     </Text>
                   )}
@@ -528,22 +657,44 @@ export function NeedleDetailScreen() {
           </View>
         )}
 
-        {/* 4. Plan of Binds */}
+        {/* 4. ENHANCED BIND CARDS */}
         <View style={styles.section}>
-          <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: '600',
+              color: 'rgba(255, 255, 255, 0.9)',
+              letterSpacing: -0.5,
+              marginBottom: 16,
+              textShadowColor: 'rgba(0, 0, 0, 0.2)',
+              textShadowOffset: { width: 0, height: 1 },
+              textShadowRadius: 2,
+            }}
+          >
             Your Binds
           </Text>
           {binds.length === 0 && !isCreatingBind ? (
             <Card variant="glass" style={styles.emptyCard}>
-              <Text variant="textBase" color="secondary" style={styles.emptyText}>
-                No binds yet. Add consistent actions to work toward this goal.
+              <Ionicons name="fitness-outline" size={48} color={colors.text.muted} />
+              <Text
+                variant="textLg"
+                weight="semibold"
+                style={{ color: colors.text.secondary, marginTop: 16 }}
+              >
+                No binds yet
+              </Text>
+              <Text variant="textBase" color="muted" style={{ marginTop: 8, textAlign: 'center' }}>
+                Add consistent actions to work toward this goal
               </Text>
             </Card>
           ) : (
             binds.map((bind) => {
               const isEditing = editingBindId === bind.id;
+              const progress = getBindProgress(bind);
+              const frequencyBadge = getFrequencyBadge(bind.times_per_week);
+
               return (
-                <Card key={bind.id} variant="glass" style={styles.bindCard}>
+                <Card key={bind.id} variant="glass" style={styles.enhancedBindCard}>
                   {isEditing ? (
                     // Edit mode
                     <View style={styles.bindEditContainer}>
@@ -597,7 +748,7 @@ export function NeedleDetailScreen() {
                                 style={{
                                   color:
                                     editingBindTimesPerWeek === num
-                                      ? colors.background.primary
+                                      ? colors.text.inverse
                                       : colors.text.secondary,
                                 }}
                               >
@@ -634,37 +785,81 @@ export function NeedleDetailScreen() {
                           {updateBindMutation.isPending ? 'Saving...' : 'Save'}
                         </Button>
                       </View>
-                    </View>
-                  ) : (
-                    // View mode
-                    <View style={styles.bindContent}>
-                      <Pressable style={styles.bindInfo} onPress={() => handleBindPress(bind)}>
-                        <Text variant="textBase" weight="medium">
-                          {bind.title}
-                        </Text>
-                        <Text variant="textSm" color="muted" style={styles.bindFrequency}>
-                          {bind.times_per_week === 7
-                            ? 'Daily'
-                            : bind.times_per_week === 1
-                              ? 'Once a week'
-                              : `${bind.times_per_week}x per week`}
+                      {/* Delete Button in Edit Mode */}
+                      <Pressable
+                        onPress={() => handleDeleteBind(editingBindId || '')}
+                        style={styles.deleteBindButton}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={colors.rose[500]} />
+                        <Text
+                          variant="textSm"
+                          weight="semibold"
+                          style={{ color: colors.rose[500], marginLeft: 8 }}
+                        >
+                          Delete Bind
                         </Text>
                       </Pressable>
-                      <View style={styles.bindActions}>
-                        <Pressable
-                          onPress={() => handleBindPress(bind)}
-                          style={styles.bindActionButton}
-                        >
-                          <Ionicons name="pencil" size={20} color={colors.text.muted} />
-                        </Pressable>
-                        <Pressable
-                          onPress={() => handleDeleteBind(bind.id)}
-                          style={styles.bindActionButton}
-                        >
-                          <Ionicons name="trash-outline" size={20} color={colors.rose[500]} />
-                        </Pressable>
-                      </View>
                     </View>
+                  ) : (
+                    // Enhanced View mode (No delete button - only in edit)
+                    <Pressable onPress={() => handleBindPress(bind)}>
+                      <View style={styles.enhancedBindContent}>
+                        {/* Bind Info */}
+                        <View style={styles.bindInfoSection}>
+                          {/* Bind name and frequency on same row */}
+                          <View style={styles.bindTitleRow}>
+                            <Text
+                              variant="textLg"
+                              weight="semibold"
+                              style={{ color: colors.text.primary, flex: 1 }}
+                            >
+                              {bind.title}
+                            </Text>
+                            {/* Frequency Badge */}
+                            <View
+                              style={[
+                                styles.frequencyBadge,
+                                { backgroundColor: `${frequencyBadge.color}20` },
+                              ]}
+                            >
+                              <Ionicons
+                                name={frequencyBadge.icon as any}
+                                size={14}
+                                color={frequencyBadge.color}
+                              />
+                              <Text
+                                variant="textXs"
+                                weight="semibold"
+                                style={{ color: frequencyBadge.color, marginLeft: 4 }}
+                              >
+                                {frequencyBadge.label}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Progress Indicator */}
+                          <View style={styles.progressSection}>
+                            <View style={styles.progressBar}>
+                              <View
+                                style={[
+                                  styles.progressFill,
+                                  {
+                                    width: `${progress.percentage}%`,
+                                    backgroundColor: colors.green[500],
+                                  },
+                                ]}
+                              />
+                            </View>
+                            <Text
+                              variant="textXs"
+                              style={{ color: colors.text.primary, marginTop: 4 }}
+                            >
+                              {progress.completed} / {progress.total} this week
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </Pressable>
                   )}
                 </Card>
               );
@@ -673,7 +868,7 @@ export function NeedleDetailScreen() {
 
           {/* Create New Bind Form */}
           {isCreatingBind && (
-            <Card variant="glass" style={styles.bindCard}>
+            <Card variant="glass" style={styles.enhancedBindCard}>
               <View style={styles.bindEditContainer}>
                 <View style={styles.bindEditField}>
                   <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
@@ -726,7 +921,7 @@ export function NeedleDetailScreen() {
                           style={{
                             color:
                               newBindTimesPerWeek === num
-                                ? colors.background.primary
+                                ? colors.text.inverse
                                 : colors.text.secondary,
                           }}
                         >
@@ -769,11 +964,15 @@ export function NeedleDetailScreen() {
 
           {/* Add Bind Button (only show when less than 3 binds and not creating) */}
           {binds.length < 3 && !isCreatingBind && (
-            <Pressable onPress={handleStartCreateBind} style={styles.addBindButton}>
+            <Pressable onPress={handleStartCreateBind}>
               <Card variant="glass" style={styles.addBindCard}>
                 <View style={styles.addBindContent}>
-                  <Ionicons name="add-circle-outline" size={20} color={colors.accent[500]} />
-                  <Text variant="textBase" weight="medium" style={{ color: colors.accent[500] }}>
+                  <Ionicons name="add-circle" size={24} color={colors.accent[500]} />
+                  <Text
+                    variant="textLg"
+                    weight="semibold"
+                    style={{ color: colors.text.primary, marginLeft: 8 }}
+                  >
                     Add Bind
                   </Text>
                 </View>
@@ -782,15 +981,37 @@ export function NeedleDetailScreen() {
           )}
         </View>
 
-        {/* 4. Memories Section */}
+        {/* 5. ENHANCED MEMORIES SECTION */}
         <View style={styles.section}>
           <View style={styles.memoriesHeader}>
-            <Text variant="textBase" weight="semibold" style={styles.sectionTitle}>
-              Memories
-            </Text>
-            <Text variant="textSm" color="muted">
-              {memoriesCount} / {maxMemories}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons
+                name="images"
+                size={20}
+                color={colors.violet[500]}
+                style={{ marginRight: 8 }}
+              />
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: '600',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  letterSpacing: -0.5,
+                  textShadowColor: 'rgba(0, 0, 0, 0.2)',
+                  textShadowOffset: { width: 0, height: 1 },
+                  textShadowRadius: 2,
+                }}
+              >
+                Memories
+              </Text>
+            </View>
+            <View
+              style={[styles.memoryCountBadge, { backgroundColor: colors.background.secondary }]}
+            >
+              <Text variant="textSm" weight="semibold" style={{ color: colors.text.secondary }}>
+                {memoriesCount} / {maxMemories}
+              </Text>
+            </View>
           </View>
 
           {isLoadingMemories ? (
@@ -798,10 +1019,25 @@ export function NeedleDetailScreen() {
               <ActivityIndicator size="small" color={colors.accent[500]} />
             </View>
           ) : memories.length === 0 ? (
-            <Card variant="glass" style={styles.emptyCard}>
-              <Text variant="textBase" color="secondary" style={styles.emptyText}>
-                No memories yet. Add photos that remind you why this goal matters.
-              </Text>
+            <Card variant="glass" style={styles.emptyMemoriesCard}>
+              <View style={styles.emptyMemoriesContent}>
+                <Ionicons name="image-outline" size={40} color={colors.text.muted} />
+                <Text
+                  variant="textBase"
+                  weight="medium"
+                  style={{
+                    color: colors.text.secondary,
+                    marginTop: 12,
+                    textAlign: 'center',
+                    lineHeight: 22,
+                  }}
+                >
+                  Add moments during your{'\n'}journey to remember
+                </Text>
+              </View>
+              <Pressable onPress={handleAddMemory} style={styles.addMemoryIconButton}>
+                <Ionicons name="add-circle" size={40} color={colors.accent[500]} />
+              </Pressable>
             </Card>
           ) : (
             <FlatList
@@ -813,55 +1049,150 @@ export function NeedleDetailScreen() {
               renderItem={({ item }) => (
                 <Pressable onLongPress={() => handleDeleteMemory(item)} style={styles.memoryItem}>
                   <Image source={{ uri: item.image_url }} style={styles.memoryImage} />
+                  <View style={styles.memoryOverlay}>
+                    <Ionicons name="trash" size={16} color="#FFFFFF" />
+                  </View>
                 </Pressable>
               )}
             />
           )}
 
-          {/* Add Memory Button */}
-          <Button
-            variant="secondary"
-            size="md"
-            onPress={handleAddMemory}
-            disabled={memoriesCount >= maxMemories || uploadMemoryMutation.isPending}
-            style={styles.addMemoryButton}
-          >
-            {uploadMemoryMutation.isPending ? (
-              <ActivityIndicator size="small" color={colors.accent[500]} />
-            ) : (
-              <>
-                <Ionicons name="add-circle-outline" size={20} color={colors.accent[500]} />
-                <Text
-                  variant="textBase"
-                  weight="medium"
-                  style={[styles.addMemoryText, { color: colors.accent[500] }]}
-                >
-                  Add Memory
-                </Text>
-              </>
-            )}
-          </Button>
-        </View>
-
-        {/* 5. Archive Button */}
-        <View style={styles.section}>
-          <Button
-            variant="secondary"
-            size="md"
-            onPress={handleArchive}
-            style={[styles.archiveButton, { borderColor: colors.rose[500] }]}
-            disabled={archiveGoalMutation.isPending}
-          >
-            {archiveGoalMutation.isPending ? (
-              <ActivityIndicator size="small" color={colors.rose[500]} />
-            ) : (
-              <Text variant="textBase" weight="medium" style={{ color: colors.rose[500] }}>
-                Archive Needle
-              </Text>
-            )}
-          </Button>
+          {/* Add Memory Button (only show when memories exist) */}
+          {memories.length > 0 && (
+            <Button
+              variant="secondary"
+              size="md"
+              onPress={handleAddMemory}
+              disabled={memoriesCount >= maxMemories || uploadMemoryMutation.isPending}
+              style={styles.addMemoryButton}
+            >
+              {uploadMemoryMutation.isPending ? (
+                <ActivityIndicator size="small" color={colors.text.primary} />
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="add-circle-outline" size={20} color={colors.text.primary} />
+                  <Text
+                    variant="textBase"
+                    weight="semibold"
+                    style={[styles.addMemoryText, { color: colors.text.primary }]}
+                  >
+                    Add Memory
+                  </Text>
+                </View>
+              )}
+            </Button>
+          )}
         </View>
       </ScrollView>
+
+      {/* Edit Needle Modal */}
+      <Modal
+        visible={isEditModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={handleCloseEditModal}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={handleCloseEditModal}
+            disabled={archiveGoalMutation.isPending}
+          />
+          <View style={[styles.modalContent, { backgroundColor: colors.background.secondary }]}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text variant="textLg" weight="bold" style={{ color: colors.text.primary }}>
+                Edit Needle
+              </Text>
+            </View>
+
+            {/* Name Field */}
+            <View style={styles.modalField}>
+              <Text
+                variant="textSm"
+                weight="semibold"
+                style={[styles.modalLabel, { color: colors.text.secondary }]}
+              >
+                NAME
+              </Text>
+              <TextInput
+                value={titleValue}
+                onChangeText={setTitleValue}
+                autoFocus
+                style={[
+                  styles.modalInput,
+                  {
+                    color: colors.text.primary,
+                    backgroundColor: colors.background.primary,
+                    borderColor: colors.border.muted,
+                  },
+                ]}
+                placeholder="Needle name"
+                placeholderTextColor={colors.text.muted}
+                maxLength={200}
+              />
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.modalActions}>
+              <Button
+                variant="secondary"
+                size="md"
+                onPress={handleCloseEditModal}
+                style={styles.modalButton}
+                disabled={updateGoalMutation.isPending || archiveGoalMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onPress={handleSaveNeedleName}
+                disabled={updateGoalMutation.isPending || archiveGoalMutation.isPending}
+                style={styles.modalButton}
+              >
+                {updateGoalMutation.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </View>
+
+            {/* Delete Button */}
+            <View
+              style={[styles.divider, { backgroundColor: colors.border.muted, marginVertical: 24 }]}
+            />
+            <Button
+              variant="secondary"
+              size="md"
+              onPress={handleDeleteGoal}
+              style={[styles.deleteGoalButton, { borderColor: colors.rose[500] }]}
+              disabled={archiveGoalMutation.isPending}
+            >
+              {archiveGoalMutation.isPending ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <ActivityIndicator size="small" color={colors.rose[500]} />
+                  <Text
+                    variant="textBase"
+                    weight="semibold"
+                    style={{ color: colors.rose[500], marginLeft: 12 }}
+                  >
+                    Deleting...
+                  </Text>
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="trash-outline" size={20} color={colors.rose[500]} />
+                  <Text
+                    variant="textBase"
+                    weight="semibold"
+                    style={{ color: colors.rose[500], marginLeft: 8 }}
+                  >
+                    Delete Needle
+                  </Text>
+                </View>
+              )}
+            </Button>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -875,27 +1206,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
+    gap: 12,
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitle: {
+  editButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitleContainer: {
     flex: 1,
-    marginLeft: 12,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    lineHeight: 34,
+    letterSpacing: -0.6,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   errorContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
-    gap: 16,
-  },
-  backToListButton: {
-    marginTop: 8,
   },
   scrollView: {
     flex: 1,
@@ -905,10 +1250,24 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   section: {
-    marginTop: 24,
+    marginTop: 32,
   },
-  title: {
-    marginBottom: 4,
+
+  // Hero Section
+  heroSection: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  accentBar: {
+    width: 6,
+    borderRadius: 3,
+    marginRight: 16,
+  },
+  heroContent: {
+    flex: 1,
+  },
+  heroTitle: {
+    marginBottom: 8,
   },
   tapToEditHint: {
     marginTop: 4,
@@ -916,119 +1275,163 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   titleInput: {
-    fontSize: 28,
+    fontSize: 48,
     fontWeight: '700',
-    lineHeight: 36,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderRadius: 8,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  sectionLabel: {
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  motivationBox: {
+    lineHeight: 58,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderWidth: 1,
+    borderWidth: 2,
+    borderRadius: 12,
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  doneButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 8,
-    minHeight: 100,
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+  },
+  heroStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    paddingVertical: 16,
+  },
+  heroStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  heroStatLabel: {
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  heroStatHelper: {
+    marginTop: 4,
+    opacity: 0.7,
+  },
+  heroStatDivider: {
+    width: 1,
+    height: 48,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 4,
+  },
+
+  // Collapsible Motivation
+  motivationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  motivationHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  motivationContent: {
+    overflow: 'hidden',
+  },
+  motivationCard: {
+    padding: 16,
   },
   motivationInput: {
     fontSize: 15,
-    lineHeight: 22,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    lineHeight: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderWidth: 1,
-    borderRadius: 8,
-    minHeight: 100,
+    borderRadius: 12,
+    minHeight: 120,
     textAlignVertical: 'top',
   },
+
+  // Section Titles
   sectionTitle: {
+    marginBottom: 16,
+  },
+  sectionLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: 12,
   },
+
+  // Milestones
   milestoneCard: {
-    padding: 16,
-    marginBottom: 12,
+    padding: 20,
+    marginBottom: 16,
   },
   milestoneContent: {
-    gap: 8,
+    gap: 12,
   },
   milestoneProgress: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
-  bindCard: {
-    padding: 16,
-    marginBottom: 12,
+
+  // Enhanced Bind Cards
+  enhancedBindCard: {
+    padding: 20,
+    marginBottom: 16,
   },
-  bindContent: {
+  enhancedBindContent: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
   },
-  bindInfo: {
+  bindInfoSection: {
     flex: 1,
-    gap: 4,
-  },
-  bindDescription: {
-    marginTop: 4,
-  },
-  bindFrequency: {
-    marginTop: 2,
-    fontSize: 12,
-  },
-  emptyCard: {
-    padding: 16,
-  },
-  emptyText: {
-    textAlign: 'center',
-  },
-  memoriesHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  memoriesLoading: {
-    padding: 32,
-    alignItems: 'center',
-  },
-  memoriesGrid: {
-    paddingVertical: 8,
     gap: 12,
   },
-  memoryItem: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginRight: 12,
-  },
-  memoryImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  addMemoryButton: {
-    marginTop: 12,
+  bindTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 12,
+  },
+  frequencyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  progressSection: {
+    marginTop: 4,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  bindActionsVertical: {
     gap: 8,
+    marginLeft: 12,
   },
-  addMemoryText: {
-    marginLeft: 4,
+  bindActionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  archiveButton: {
-    marginTop: 8,
-  },
+
+  // Bind Edit
   bindEditContainer: {
-    padding: 16,
     gap: 16,
   },
   bindEditField: {
@@ -1037,12 +1440,13 @@ const styles = StyleSheet.create({
   bindEditLabel: {
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    color: '#9CA3AF', // Gray color for better visibility
   },
   bindEditInput: {
     fontSize: 15,
     lineHeight: 22,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderWidth: 1,
     borderRadius: 8,
   },
@@ -1061,6 +1465,7 @@ const styles = StyleSheet.create({
   helperText: {
     marginTop: 8,
     textAlign: 'center',
+    color: '#9CA3AF', // Gray color for better visibility
   },
   bindEditActions: {
     flexDirection: 'row',
@@ -1070,31 +1475,147 @@ const styles = StyleSheet.create({
   bindEditButton: {
     flex: 1,
   },
-  bindActions: {
+  deleteBindButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  bindActionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
-  addBindButton: {
-    width: '100%',
-    marginTop: 12,
-  },
+
+  // Add Bind Card
   addBindCard: {
-    padding: 0,
-    overflow: 'hidden',
+    padding: 20,
+    marginTop: 16,
   },
   addBindContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    gap: 8,
+  },
+
+  // Empty States
+  emptyCard: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyMemoriesCard: {
+    padding: 24,
+    alignItems: 'center',
+    gap: 16,
+  },
+  emptyMemoriesContent: {
+    alignItems: 'center',
+  },
+  addMemoryIconButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Memories
+  memoriesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  memoryCountBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  memoriesLoading: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  memoriesGrid: {
+    paddingVertical: 8,
+    gap: 12,
+  },
+  memoryItem: {
+    width: 140,
+    height: 140,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginRight: 12,
+    position: 'relative',
+  },
+  memoryImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  memoryOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0,
+  },
+  addMemoryButton: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addMemoryText: {
+    marginLeft: 8,
+  },
+
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    marginBottom: 24,
+  },
+  modalField: {
+    marginBottom: 24,
+  },
+  modalLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  modalInput: {
+    fontSize: 16,
+    lineHeight: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+  },
+  divider: {
+    height: 1,
+  },
+  deleteGoalButton: {
+    borderWidth: 1,
   },
 });

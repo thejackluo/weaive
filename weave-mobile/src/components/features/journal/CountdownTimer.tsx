@@ -2,16 +2,10 @@
  * Story 4.1c: 24-Hour Countdown Timer
  * AC #18: Display countdown until day resets (midnight in user's local timezone)
  *
- * This component:
- * - Shows time remaining until midnight
- * - Updates every minute (battery efficient)
- * - Turns urgent/red when < 1 hour remaining
- * - Display-only (not tappable) - use "Begin" button to start reflection
- * - Uses device timezone with fallback to stored preference
- *
- * Usage:
- * - Story 4.1: Standalone testing (can render anywhere)
- * - Story 3.1+: Embed in Thread Home header (future integration)
+ * Minimal black/white aesthetic:
+ * - Dark gray card with white text (normal state)
+ * - Red text for urgency (<2 hours remaining)
+ * - High contrast for readability
  */
 
 import React, { useState, useEffect } from 'react';
@@ -37,7 +31,6 @@ interface CountdownTimerProps {
 
 /**
  * Calculate milliseconds until midnight in given timezone
- * Uses date-fns-tz for timezone handling
  */
 function calculateMsUntilMidnight(_timezone?: string): number {
   const now = new Date();
@@ -73,10 +66,10 @@ function formatCountdown(ms: number): {
   }
 
   if (hours < 2) {
-    return { text: `${hours}h ${minutes}m until day resets`, isUrgent: true };
+    return { text: `${hours}h ${minutes}m`, isUrgent: true };
   }
 
-  return { text: `${hours}h ${minutes}m until day resets`, isUrgent: false };
+  return { text: `${hours}h ${minutes}m`, isUrgent: false };
 }
 
 /**
@@ -114,10 +107,10 @@ export default function CountdownTimer({ timezone, style, debug = false }: Count
   const { text, isUrgent } = formatCountdown(msRemaining);
 
   return (
-    <View style={[styles.container, isUrgent && styles.containerUrgent, style]}>
+    <View style={[styles.container, style]}>
       <View style={styles.content}>
         {/* Timer Icon */}
-        <Text style={[styles.icon, isUrgent && styles.iconUrgent]}>⏰</Text>
+        <Text style={styles.icon}>⏰</Text>
 
         {/* Countdown Text */}
         <Text style={[styles.text, isUrgent && styles.textUrgent]}>{text}</Text>
@@ -135,12 +128,12 @@ export default function CountdownTimer({ timezone, style, debug = false }: Count
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(59, 130, 246, 0.05)', // Very subtle blue background
-    borderRadius: 8,
-    padding: 12,
-  },
-  containerUrgent: {
-    backgroundColor: 'rgba(239, 68, 68, 0.05)', // Very subtle red background when urgent
+    backgroundColor: '#1A1A1A', // Dark gray card (matches design system)
+    borderRadius: 16, // Rounded corners
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)', // Subtle border
   },
   content: {
     flexDirection: 'row',
@@ -148,24 +141,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   icon: {
-    fontSize: 18,
+    fontSize: 16,
     marginRight: 8,
-  },
-  iconUrgent: {
-    // Icon stays same color
   },
   text: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)', // Muted text since it's not interactive
+    color: '#FFFFFF', // White text (high contrast)
+    letterSpacing: 0.2,
   },
   textUrgent: {
-    color: 'rgba(239, 68, 68, 0.9)', // Red text when urgent
+    color: '#EF4444', // Red text when urgent (high contrast)
   },
   debugText: {
     marginTop: 8,
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: '#A3A3A3', // Medium gray
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });

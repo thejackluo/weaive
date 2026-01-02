@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { captureAndUploadProofPhoto, getUploadUsage } from '../services/imageCapture';
@@ -26,7 +26,6 @@ export function ProofCaptureSheet({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [uploadPercentage, setUploadPercentage] = useState<number>(0);
-  const [description, setDescription] = useState<string>('');
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Fetch current upload usage
@@ -55,10 +54,7 @@ export function ProofCaptureSheet({
       setUploadPercentage(10);
 
       const result = await captureAndUploadProofPhoto(
-        {
-          ...context,
-          note: description.trim() || undefined, // Add description if provided
-        },
+        context,
         source,
         abortControllerRef.current.signal,
         (progress) => {
@@ -114,7 +110,7 @@ export function ProofCaptureSheet({
       <View className="mb-8">
         <Text className="text-2xl font-bold text-white mb-2">Capture Proof</Text>
         <Text className="text-neutral-400">
-          Show your progress with a photo. AI will verify your work.
+          Show your progress with a photo.
         </Text>
       </View>
 
@@ -143,23 +139,6 @@ export function ProofCaptureSheet({
         </View>
       ) : (
         <View className="gap-4">
-          {/* Optional Description Input */}
-          <View className="gap-2">
-            <Text className="text-neutral-400 text-sm">Optional Description</Text>
-            <TextInput
-              className="bg-neutral-800 text-white rounded-lg p-3 min-h-[80px]"
-              placeholder="Add details about your progress..."
-              placeholderTextColor="#6b7280"
-              multiline
-              numberOfLines={3}
-              maxLength={500}
-              value={description}
-              onChangeText={setDescription}
-              textAlignVertical="top"
-            />
-            <Text className="text-neutral-500 text-xs text-right">{description.length}/500</Text>
-          </View>
-
           {/* Camera Button */}
           <TouchableOpacity
             onPress={() => handleCapture(PhotoSource.CAMERA)}

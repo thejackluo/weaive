@@ -151,6 +151,8 @@ export function useCreateGoal() {
       return createGoal(goalData, session.access_token);
     },
     onSuccess: async () => {
+      console.log('[CREATE_GOAL] Goal created successfully, refetching queries...');
+
       // Refetch all related queries immediately to show new data
       await Promise.all([
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
@@ -158,6 +160,8 @@ export function useCreateGoal() {
         queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
       ]);
+
+      console.log('[CREATE_GOAL] All queries refetched successfully');
     },
   });
 }

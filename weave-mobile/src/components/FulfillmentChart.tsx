@@ -121,7 +121,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
     );
   }
 
-  const fulfillmentData = data?.data || [];
+  const fulfillmentData = Array.isArray(data?.data) ? data.data : [];
   const averageFulfillment = data?.meta?.average_fulfillment || 0;
 
   // Calculate expected days based on timeframe
@@ -247,7 +247,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
         {/* Header Section */}
         <View style={styles.headerSection}>
           <View style={styles.titleAndDropdownRow}>
-            <Text variant="textLg" weight="semibold">
+            <Text variant="textLg" weight="semibold" style={{ color: colors.text.secondary }}>
               Average Fulfillment
             </Text>
 
@@ -284,7 +284,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                         key={option}
                         style={[
                           styles.dropdownItem,
-                          timeframe === option && { backgroundColor: colors.accent[500] },
+                          timeframe === option && { backgroundColor: '#FFFFFF' },
                         ]}
                         onPress={() => {
                           Haptics.selectionAsync();
@@ -296,8 +296,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                           variant="textSm"
                           weight={timeframe === option ? 'semibold' : 'regular'}
                           style={{
-                            color:
-                              timeframe === option ? colors.text.primary : colors.text.secondary,
+                            color: timeframe === option ? '#000000' : colors.text.secondary,
                           }}
                         >
                           {option}
@@ -329,7 +328,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                   variant="textSm"
                   weight="semibold"
                   style={{
-                    color: trendPercentage >= 0 ? colors.emerald[500] : colors.rose[500],
+                    color: trendPercentage >= 0 ? colors.green[500] : colors.red[500],
                   }}
                 >
                   {trendPercentage >= 0 ? '+' : ''}
@@ -361,6 +360,11 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
 
             {/* Bars container */}
             <View style={styles.chartArea}>
+              {/* Y-axis grid lines */}
+              <View style={[styles.gridLine, { bottom: 0, borderBottomColor: colors.text.muted, borderBottomWidth: 1, opacity: 0.2 }]} />
+              <View style={[styles.gridLine, { bottom: '50%', borderBottomColor: colors.text.muted, borderBottomWidth: 1, opacity: 0.2 }]} />
+              <View style={[styles.gridLine, { bottom: '100%', borderBottomColor: colors.text.muted, borderBottomWidth: 1, opacity: 0.2 }]} />
+
               <View
                 ref={barsContainerRef}
                 style={styles.barsContainer}
@@ -429,7 +433,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
                             styles.bar,
                             {
                               height: `${scoreHeight}%`,
-                              backgroundColor: isSelected ? colors.violet[300] : colors.violet[400],
+                              backgroundColor: isSelected ? '#FFFFFF' : '#A3A3A3',
                             },
                           ]}
                         />
@@ -497,16 +501,6 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
             )}
           </View>
         </View>
-
-        {/* AI Insight */}
-        <View style={[styles.insightBanner, { backgroundColor: colors.background.elevated }]}>
-          <View style={styles.insightContent}>
-            <Ionicons name="sparkles" size={20} color={colors.violet[400]} />
-            <Text variant="textSm" style={{ flex: 1, marginLeft: 8, color: colors.text.secondary }}>
-              AI insights coming soon
-            </Text>
-          </View>
-        </View>
       </Card>
     </Pressable>
   );
@@ -561,6 +555,7 @@ const styles = StyleSheet.create({
     fontSize: 64,
     lineHeight: 72,
     letterSpacing: -2,
+    color: '#FFFFFF', // White for visibility on dark background
   },
   trendBadge: {
     paddingHorizontal: 10,
@@ -594,6 +589,13 @@ const styles = StyleSheet.create({
   },
   chartArea: {
     flex: 1,
+    position: 'relative',
+  },
+  gridLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 0,
   },
   barsContainer: {
     height: 160,
@@ -675,19 +677,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingTop: 4,
     overflow: 'visible',
-  },
-  insightBanner: {
-    marginTop: 20,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  insightContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-    borderRadius: 12,
   },
   emptyState: {
     alignItems: 'center',

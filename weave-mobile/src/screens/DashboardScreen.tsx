@@ -2,7 +2,7 @@
  * DashboardScreen (Epic 2 + 5: Goal Management + Progress Visualization)
  *
  * Main dashboard showing:
- * - Header with Level, Weave character, streak, profile
+ * - Header with Level, Weave character, profile
  * - Your Needles section (up to 3 cards)
  * - Overall Consistency section with filters
  * - Average Fulfillment chart
@@ -22,14 +22,17 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Text, Card } from '@/design-system';
+import { useQueryClient } from '@tanstack/react-query';
+import { Text, Card, Skeleton } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useActiveGoals } from '@/hooks/useActiveGoals';
 import { useUserStats } from '@/hooks/useUserStats';
+import { useGetTodayJournal } from '@/hooks/useJournal';
+import { consistencyQueryKeys } from '@/hooks/useConsistencyData';
+import { bindsQueryKeys } from '@/hooks/useTodayBinds';
 import { Ionicons } from '@expo/vector-icons';
 import { ConsistencyHeatmap } from '@/components/ConsistencyHeatmap';
 import { FulfillmentChart } from '@/components/FulfillmentChart';
-import { WeaveCharacter } from '@/components/WeaveCharacter';
 import { HistoryList } from '@/components/HistoryList';
 import { getLevelProgress } from '@/utils/levelProgression';
 
@@ -39,41 +42,62 @@ type TimeframeOption = '7d' | '2w' | '1m';
 export function DashboardScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const queryClient = useQueryClient();
   const { data: goalsData, isLoading, refetch: refetchGoals } = useActiveGoals();
   const { data: userStatsData, isLoading: isStatsLoading } = useUserStats();
+  const { data: todayJournal } = useGetTodayJournal();
 
-  // 🐛 FIX: Refetch goals when screen comes into focus
-  // This ensures new/deleted/archived goals appear immediately when navigating back
+  // 🐛 FIX: Force refetch all data when screen comes into focus
+  // This ensures new/deleted/archived goals, bind completions, and consistency grid updates appear immediately
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[Dashboard] Screen focused - refetching goals');
-      refetchGoals();
-    }, [refetchGoals])
+      const refetchAllData = async () => {
+        console.log('[Dashboard] Screen focused - force refetching all data');
+        // Force immediate refetch (not just invalidate) for all queries
+        await Promise.all([
+          refetchGoals(),
+          queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
+          queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
+          queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
+          queryClient.refetchQueries({ queryKey: ['userStats'] }),
+        ]);
+        console.log('[Dashboard] All data refetched successfully');
+      };
+
+      refetchAllData();
+    }, [refetchGoals, queryClient])
   );
 
   const [consistencyFilter, setConsistencyFilter] = useState<ConsistencyFilter>('Overall');
   const [consistencyTimeframe, setConsistencyTimeframe] = useState<TimeframeOption>('7d');
   const [fulfillmentTimeframe, setFulfillmentTimeframe] = useState<TimeframeOption>('7d');
   const [selectedNeedleId, setSelectedNeedleId] = useState<string | undefined>(undefined);
+  const [selectedBindId, setSelectedBindId] = useState<string | undefined>(undefined);
 
   // History filters
   const [historyTimeframe, setHistoryTimeframe] = useState<'days' | 'weeks' | 'months'>('days');
-  const [historyType, setHistoryType] = useState<'all' | 'threads' | 'binds' | 'weave_chats'>(
-    'all'
-  );
+  const [historyType, setHistoryType] = useState<'all' | 'threads' | 'binds'>('all');
   const [historySearch, setHistorySearch] = useState('');
 
-  const goals = goalsData?.data || [];
+  const goals = Array.isArray(goalsData?.data) ? goalsData.data : [];
+
+  // Auto-select first needle when needle filter is active but no needle is selected
+  React.useEffect(() => {
+    if (consistencyFilter === 'Needle' && !selectedNeedleId && goals.length > 0) {
+      setSelectedNeedleId(goals[0].id);
+    }
+  }, [consistencyFilter, selectedNeedleId, goals]);
 
   // User stats from API (with fallback to defaults)
   const userLevel = userStatsData?.data?.level || 1;
-  const userStreak = userStatsData?.data?.current_streak || 0;
   const totalXP = userStatsData?.data?.total_xp || 0;
   const xpToNext = userStatsData?.data?.xp_to_next_level || 4;
-  const characterState = userStatsData?.data?.weave_character_state || 'strand';
 
   // Calculate level progress percentage (0-100) within current level
   const levelProgressPercent = getLevelProgress(totalXP, userLevel);
+
+  // Journal completion status
+  const hasCompletedJournal = !!todayJournal;
 
   const handleNeedlePress = (goalId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -98,103 +122,69 @@ export function DashboardScreen() {
     >
       {/* Header Section */}
       <View style={styles.header}>
-        {/* Left: Level + Progress Bar + Streak */}
+        {/* Left: Level + Progress Bar */}
         <View style={styles.headerLeft}>
-          {/* Level text */}
-          <Text variant="textSm" style={{ color: colors.text.secondary }}>
-            Level {userLevel}
-          </Text>
-          {/* Level progress bar */}
-          <View style={styles.levelBarBackground}>
-            <View
-              style={[
-                styles.levelBarFill,
-                {
-                  backgroundColor: colors.accent[500],
-                  width: `${Math.max(5, levelProgressPercent)}%`,
-                },
-              ]}
-            />
-          </View>
-          {/* XP to next level */}
-          <Text variant="textXs" style={{ color: colors.text.muted, fontSize: 10 }}>
-            {xpToNext} XP to Level {userLevel + 1}
-          </Text>
-          {/* Streak badge */}
-          <View style={styles.streakBadge}>
-            <Text variant="textSm" weight="semibold">
-              {userStreak} 🔥
-            </Text>
-          </View>
-        </View>
-
-        {/* Center: Weave Character Visualization */}
-        <View style={styles.weaveCharacterContainer}>
           {isStatsLoading ? (
-            <ActivityIndicator size="small" color={colors.accent[500]} />
+            <>
+              {/* Skeleton level text */}
+              <Skeleton width={60} height={14} borderRadius={4} />
+              {/* Skeleton progress bar */}
+              <Skeleton width={80} height={4} borderRadius={2} />
+              {/* Skeleton XP text */}
+              <Skeleton width={80} height={10} borderRadius={4} />
+            </>
           ) : (
-            <WeaveCharacter characterState={characterState} size={64} />
+            <>
+              {/* Level text */}
+              <Text variant="textSm" style={{ color: colors.text.secondary }}>
+                Level {userLevel}
+              </Text>
+              {/* Level progress bar */}
+              <View style={styles.levelBarBackground}>
+                <View
+                  style={[
+                    styles.levelBarFill,
+                    {
+                      backgroundColor: colors.accent[500],
+                      width: `${Math.max(5, levelProgressPercent)}%`,
+                    },
+                  ]}
+                />
+              </View>
+              {/* XP to next level */}
+              <Text variant="textXs" style={{ color: colors.text.muted, fontSize: 10 }}>
+                {xpToNext} XP to Level {userLevel + 1}
+              </Text>
+            </>
           )}
         </View>
 
         {/* Right: Profile */}
         <View style={styles.headerRight}>
-          <Pressable
-            onPress={handleProfilePress}
-            style={[styles.profileButton, { backgroundColor: colors.accent[500] }]}
-          >
-            <Ionicons name="person-outline" size={20} color="white" />
+          <Pressable onPress={handleProfilePress} style={styles.profileButton}>
+            <Ionicons name="person-outline" size={20} color="#000000" />
           </Pressable>
         </View>
       </View>
 
       {/* Your Needles Section */}
-      <View style={styles.section}>
-        <Text variant="textLg" weight="semibold" style={styles.sectionTitle}>
-          Your Needles
-        </Text>
-
+      <View style={styles.needlesSection}>
         {isLoading ? (
           <View style={styles.needlesContainer}>
             {[1, 2, 3].map((i) => (
               <Card key={i} variant="glass" style={styles.needleCardInner}>
                 <View style={styles.needleContent}>
                   {/* Skeleton color bar */}
-                  <View
-                    style={[
-                      styles.needleColorBar,
-                      { backgroundColor: colors.border.muted, opacity: 0.5 },
-                    ]}
-                  />
+                  <Skeleton width={4} height={40} borderRadius={2} />
 
                   {/* Skeleton content */}
                   <View style={styles.needleInfo}>
-                    <View
-                      style={[
-                        styles.skeletonLine,
-                        { backgroundColor: colors.border.muted, width: '70%', height: 16 },
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.skeletonLine,
-                        {
-                          backgroundColor: colors.border.muted,
-                          width: '90%',
-                          height: 12,
-                          marginTop: 8,
-                        },
-                      ]}
-                    />
+                    <Skeleton width="70%" height={16} borderRadius={4} />
+                    <Skeleton width="90%" height={12} borderRadius={4} style={{ marginTop: 8 }} />
                   </View>
 
                   {/* Skeleton arrow */}
-                  <View
-                    style={[
-                      styles.skeletonLine,
-                      { backgroundColor: colors.border.muted, width: 20, height: 20 },
-                    ]}
-                  />
+                  <Skeleton width={20} height={20} borderRadius={4} />
                 </View>
               </Card>
             ))}
@@ -234,14 +224,13 @@ export function DashboardScreen() {
 
                     {/* Needle info */}
                     <View style={styles.needleInfo}>
-                      <Text variant="textBase" weight="semibold">
+                      <Text
+                        variant="displaySm"
+                        weight="bold"
+                        style={{ fontSize: 20, color: '#FFFFFF', fontWeight: '800' }}
+                      >
                         {goal.title}
                       </Text>
-                      {goal.description && (
-                        <Text variant="textSm" color="secondary" style={styles.needleWhy}>
-                          {goal.description}
-                        </Text>
-                      )}
                     </View>
 
                     {/* Arrow */}
@@ -274,15 +263,30 @@ export function DashboardScreen() {
         <ConsistencyHeatmap
           timeframe={consistencyTimeframe}
           filterType={consistencyFilter.toLowerCase() as 'overall' | 'needle' | 'bind' | 'thread'}
-          filterId={consistencyFilter === 'Needle' ? selectedNeedleId : undefined}
+          filterId={
+            consistencyFilter === 'Needle'
+              ? selectedNeedleId
+              : consistencyFilter === 'Bind'
+                ? selectedBindId
+                : undefined
+          }
           onFilterChange={(filter) => {
             Haptics.selectionAsync();
             setConsistencyFilter(
               (filter.charAt(0).toUpperCase() + filter.slice(1)) as ConsistencyFilter
             );
-            // Reset needle selection when changing filters
-            if (filter !== 'needle') {
+            // When switching to needle filter, auto-select first needle for consistency percentage
+            if (filter === 'needle' && goals.length > 0) {
+              setSelectedNeedleId(goals[0].id);
+              setSelectedBindId(undefined);
+            } else if (filter === 'bind') {
+              // Reset needle selection, bind will be selected by ConsistencyHeatmap component
               setSelectedNeedleId(undefined);
+              // selectedBindId will be set by onBindChange callback
+            } else {
+              // Reset both selections when changing to overall or thread
+              setSelectedNeedleId(undefined);
+              setSelectedBindId(undefined);
             }
           }}
           onTimeframeChange={(timeframe) => {
@@ -291,6 +295,9 @@ export function DashboardScreen() {
           }}
           onNeedleChange={(needleId) => {
             setSelectedNeedleId(needleId);
+          }}
+          onBindChange={(bindId) => {
+            setSelectedBindId(bindId);
           }}
         />
       </View>
@@ -352,13 +359,12 @@ export function DashboardScreen() {
               { value: 'all', label: 'All' },
               { value: 'threads', label: 'Threads' },
               { value: 'binds', label: 'Binds' },
-              { value: 'weave_chats', label: 'Weave Chats' },
             ].map((type) => (
               <Pressable
                 key={type.value}
                 onPress={() => {
                   Haptics.selectionAsync();
-                  setHistoryType(type.value as 'all' | 'threads' | 'binds' | 'weave_chats');
+                  setHistoryType(type.value as 'all' | 'threads' | 'binds');
                 }}
                 style={[styles.filterPill, historyType === type.value && styles.filterPillActive]}
               >
@@ -421,7 +427,7 @@ const styles = StyleSheet.create({
   },
   levelBarBackground: {
     height: 4,
-    backgroundColor: '#27272A',
+    backgroundColor: '#2A2A2A', // Dark gray (design system)
     borderRadius: 2,
     overflow: 'hidden',
     width: 80,
@@ -431,31 +437,32 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     minWidth: 4,
   },
-  weaveCharacterContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   headerRight: {
     flex: 1,
-    alignItems: 'flex-end',
-    justifyContent: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
+    gap: 8,
   },
-  streakBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: '#27272A',
-    alignSelf: 'flex-start',
-  },
-  profileButton: {
+  journalBadge: {
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.2)', // Green with 20% opacity
+  },
+  profileButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18, // Perfect circle
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF', // White circle for profile
+  },
+  needlesSection: {
+    paddingHorizontal: 20,
+    marginTop: 12,
   },
   section: {
     paddingHorizontal: 20,
@@ -465,7 +472,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   sectionTitle: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -480,7 +487,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#27272A',
+    backgroundColor: '#2A2A2A', // Dark gray (design system)
   },
   dropdownMenu: {
     position: 'absolute',
@@ -557,10 +564,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#27272A',
+    backgroundColor: '#2A2A2A', // Dark gray (design system)
   },
   filterTabActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#FFFFFF', // White for active (minimal aesthetic)
   },
   filterTabActiveText: {
     color: '#FFFFFF',
@@ -592,11 +599,12 @@ const styles = StyleSheet.create({
   filterPill: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#27272A',
+    borderRadius: 20, // iOS 17 style rounded pills
+    backgroundColor: '#2A2A2A', // Dark gray (design system)
   },
   filterPillActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF', // White background for active state
+    // Text color handled inline: black (#000000) for high contrast
   },
   searchBar: {
     flexDirection: 'row',
@@ -614,12 +622,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter',
   },
-  skeletonLine: {
-    borderRadius: 4,
-  },
   addGoalButton: {
     width: '100%',
-    marginTop: 12,
   },
   addGoalCard: {
     padding: 0,

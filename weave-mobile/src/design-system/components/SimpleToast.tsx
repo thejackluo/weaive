@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   message: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '700',
     color: '#FFFFFF',
   },
 });
