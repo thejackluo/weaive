@@ -29,6 +29,7 @@ import {
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text, Card, Skeleton } from '@/design-system';
@@ -161,6 +162,7 @@ export function ConsistencyHeatmap({
     date: string;
     completionRate: number;
   } | null>(null);
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   // State for needle/bind filtering
   const [selectedNeedleIndex, setSelectedNeedleIndex] = useState(0);
@@ -604,9 +606,27 @@ export function ConsistencyHeatmap({
   const renderHeader = () => (
     <View style={styles.headerSection}>
       <View style={styles.titleAndDropdownRow}>
-        <Text variant="textLg" weight="semibold" style={{ color: colors.text.secondary }}>
-          {getHeaderTitle()}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text variant="textLg" weight="semibold" style={{ color: colors.text.secondary }}>
+            {getHeaderTitle()}
+          </Text>
+          {/* Info icon - only show for Overall Consistency */}
+          {filterType === 'overall' && (
+            <Pressable
+              onPress={() => {
+                Haptics.selectionAsync();
+                setShowInfoModal(true);
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={20}
+                color={colors.text.muted}
+              />
+            </Pressable>
+          )}
+        </View>
         {/* Timeframe Dropdown */}
         <View>
           <Pressable
@@ -884,11 +904,84 @@ export function ConsistencyHeatmap({
     </View>
   );
 
+  // Info modal explaining consistency tracking
+  const renderInfoModal = () => (
+    <Modal
+      visible={showInfoModal}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setShowInfoModal(false)}
+    >
+      <Pressable
+        style={styles.modalOverlay}
+        onPress={() => setShowInfoModal(false)}
+      >
+        <Pressable
+          style={[styles.modalContent, { backgroundColor: colors.background.elevated }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View style={styles.modalHeader}>
+            <Text variant="textLg" weight="semibold" style={{ color: colors.text.primary }}>
+              How Consistency Works
+            </Text>
+            <Pressable
+              onPress={() => {
+                Haptics.selectionAsync();
+                setShowInfoModal(false);
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="close" size={24} color={colors.text.secondary} />
+            </Pressable>
+          </View>
+
+          <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+            <Text variant="textBase" style={{ color: colors.text.secondary, marginBottom: 16 }}>
+              Your consistency percentage shows how well you're keeping up with your scheduled binds.
+            </Text>
+
+            <Text variant="textSm" weight="semibold" style={{ color: colors.text.primary, marginBottom: 8 }}>
+              Rolling consistency calculation:
+            </Text>
+            <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: 16 }}>
+              We use "Count Today If You've Started" logic:{'\n\n'}
+              • All past days are always included{'\n'}
+              • Today is included ONLY if you've completed at least one bind today{'\n'}
+              • If you haven't started today yet, today is excluded (no early-day penalty){'\n'}
+              • Percentage = Total completed ÷ Total scheduled (across included days)
+            </Text>
+
+            <Text variant="textSm" weight="semibold" style={{ color: colors.text.primary, marginBottom: 8 }}>
+              Example:
+            </Text>
+            <Text variant="textSm" style={{ color: colors.text.secondary, marginBottom: 16 }}>
+              6 days ago → today (7 days){'\n'}
+              • 5 binds scheduled per day{'\n'}
+              • Past 6 days: 30 scheduled, 25 completed{'\n'}
+              • Today (not started): Excluded from calculation{'\n'}
+              • Consistency: 83% (25 ÷ 30){'\n\n'}
+              Once you complete your first bind today, today gets added to the calculation.
+            </Text>
+
+            <Text variant="textSm" weight="semibold" style={{ color: colors.text.primary, marginBottom: 8 }}>
+              Trend indicator:
+            </Text>
+            <Text variant="textSm" style={{ color: colors.text.secondary }}>
+              The +/- shows your consistency change comparing the first half vs. second half of the timeframe. Green = improving, red = declining.
+            </Text>
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+
   // 7d: Show grid view with bind completion data
   if (timeframe === '7d') {
     return (
-      <Card variant="glass" style={styles.sevenDayCard}>
-        {renderHeader()}
+      <>
+        {renderInfoModal()}
+        <Card variant="glass" style={styles.sevenDayCard}>
+          {renderHeader()}
 
         {/* Separator line */}
         <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
@@ -981,7 +1074,8 @@ export function ConsistencyHeatmap({
             ))}
           </>
         )}
-      </Card>
+        </Card>
+      </>
     );
   }
 
@@ -992,8 +1086,10 @@ export function ConsistencyHeatmap({
   const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   return (
-    <Card variant="glass" style={styles.sevenDayCard}>
-      {renderHeader()}
+    <>
+      {renderInfoModal()}
+      <Card variant="glass" style={styles.sevenDayCard}>
+        {renderHeader()}
 
       {/* Separator line */}
       <View style={[styles.separator, { backgroundColor: colors.border.muted }]} />
@@ -1101,7 +1197,8 @@ export function ConsistencyHeatmap({
           </>
         )}
       </View>
-    </Card>
+      </Card>
+    </>
   );
 }
 
@@ -1315,5 +1412,34 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Info modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '80%',
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalBody: {
+    maxHeight: 400,
   },
 });
