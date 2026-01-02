@@ -112,21 +112,42 @@ export function ConsistencyHeatmap({
   } = useBindsGrid(currentStartDate);
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
 
-  // Fetch journal entries for Thread consistency view (7d timeframe)
-  // CRITICAL: Use the SAME date range as binds-grid API to ensure alignment
-  // bindsGridData.meta contains start_date and end_date calculated by the API
-  const journalStartDate = bindsGridData?.meta?.start_date || '';
-  const journalEndDate = bindsGridData?.meta?.end_date || '';
+  // Calculate date range directly (same logic as backend) so journal query starts immediately
+  // Backend logic: start_date = today - 6 days, end_date = start_date + 6 days (7 total days)
+  const calculateDateRange = React.useMemo(() => {
+    if (currentStartDate) {
+      // User navigated to specific date
+      const start = new Date(currentStartDate);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      return {
+        startDate: currentStartDate,
+        endDate: end.toISOString().split('T')[0],
+      };
+    } else {
+      // Default: last 7 days (today - 6 → today)
+      const today = new Date();
+      const start = new Date(today);
+      start.setDate(start.getDate() - 6);
+      return {
+        startDate: start.toISOString().split('T')[0],
+        endDate: today.toISOString().split('T')[0],
+      };
+    }
+  }, [currentStartDate]);
 
+  // Fetch journal entries for Thread consistency view (7d timeframe)
+  // CRITICAL: Use the SAME date range calculation as backend to ensure alignment
+  // Now fetches immediately (doesn't wait for bindsGridData to load first)
   const { data: journalData, isLoading: journalLoading } = useGetJournalsByDateRange(
-    journalStartDate,
-    journalEndDate
+    calculateDateRange.startDate,
+    calculateDateRange.endDate
   );
 
   // Debug journal data
   console.log('[CONSISTENCY_HEATMAP] Journal data debug:', {
-    journalStartDate,
-    journalEndDate,
+    journalStartDate: calculateDateRange.startDate,
+    journalEndDate: calculateDateRange.endDate,
     journalLoading,
     journalDataLength: journalData?.length || 0,
     journalData: journalData?.map((j) => ({ date: j.local_date, score: j.fulfillment_score })),
@@ -247,17 +268,23 @@ export function ConsistencyHeatmap({
   );
 
   // For 7d grid view, we need binds grid data (not daily aggregates)
-  // Show skeleton only when REFETCHING (switching filters), not on initial load
   if (timeframe === '7d') {
-    // Show skeleton when refetching (has data, loading new)
-    if (isBindsGridLoading && bindsGridData) {
+    // Show skeleton during initial load OR when refetching
+    // For 'overall' and 'thread' filters: wait for BOTH bindsGridData AND journalData
+    const isInitialLoad = isBindsGridLoading && !bindsGridData;
+    const isRefetching = isBindsGridLoading && bindsGridData;
+    const needsJournalData = filterType === 'overall' || filterType === 'thread';
+    const isJournalInitialLoad = journalLoading && !journalData;
+    const isJournalRefetching = journalLoading && journalData;
+
+    if (isInitialLoad || isRefetching || (needsJournalData && (isJournalInitialLoad || isJournalRefetching))) {
       return renderSkeleton();
     }
 
     if (isBindsGridError) {
       return (
         <Card variant="glass" style={styles.card}>
-          <Text variant="textSm" style={{ color: colors.text.error }}>
+          <Text variant="textSm" style={{ color: colors.red[500] }}>
             Error loading bind data
           </Text>
         </Card>
@@ -273,7 +300,7 @@ export function ConsistencyHeatmap({
     if (isError) {
       return (
         <Card variant="glass" style={styles.card}>
-          <Text variant="textSm" style={{ color: colors.text.error }}>
+          <Text variant="textSm" style={{ color: colors.red[500] }}>
             Error loading consistency data: {error?.message}
           </Text>
         </Card>
@@ -284,7 +311,13 @@ export function ConsistencyHeatmap({
   const consistencyData = Array.isArray(data?.data) ? data.data : [];
 
   // Show skeleton during initial load (no data yet, still loading)
-  if (consistencyData.length === 0 && (isLoading || isBindsGridLoading)) {
+  // For 'overall' and 'thread' filters, also wait for journal data to avoid showing blank daily check-in row
+  const shouldShowInitialSkeleton =
+    consistencyData.length === 0 &&
+    (isLoading || isBindsGridLoading ||
+     ((filterType === 'overall' || filterType === 'thread') && journalLoading && !journalData));
+
+  if (shouldShowInitialSkeleton) {
     return renderSkeleton();
   }
 
@@ -354,23 +387,12 @@ export function ConsistencyHeatmap({
   // Process journal data for thread consistency view
   // Convert journal entries to completion boolean array matching the binds grid date range
   const getJournalCompletionData = (): BindCompletionData[] => {
-    // If no date range from binds grid yet, return empty
-    if (!journalStartDate || !journalEndDate) {
-      return [
-        {
-          id: 'thread',
-          bindName: 'Daily Check-in',
-          completions: [], // Empty until we have date range
-        },
-      ];
-    }
-
     if (!journalData || journalData.length === 0) {
       console.log('[CONSISTENCY_HEATMAP] No journal data - returning empty completions');
       // Return array with false for each day in range
       const numDays =
         Math.ceil(
-          (new Date(journalEndDate).getTime() - new Date(journalStartDate).getTime()) /
+          (new Date(calculateDateRange.endDate).getTime() - new Date(calculateDateRange.startDate).getTime()) /
             (1000 * 60 * 60 * 24)
         ) + 1;
       return [
@@ -386,12 +408,12 @@ export function ConsistencyHeatmap({
     const journalMap = new Map(journalData.map((j) => [j.local_date, j]));
     console.log('[CONSISTENCY_HEATMAP] Journal map:', Array.from(journalMap.keys()));
 
-    // Generate completion array matching binds grid date range
+    // Generate completion array matching calculated date range
     const completions: boolean[] = [];
     const dateChecks: { date: string; hasEntry: boolean }[] = [];
 
-    const startDate = new Date(journalStartDate);
-    const endDate = new Date(journalEndDate);
+    const startDate = new Date(calculateDateRange.startDate);
+    const endDate = new Date(calculateDateRange.endDate);
     let currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
@@ -416,18 +438,6 @@ export function ConsistencyHeatmap({
 
   // All binds combined (for bind and overall views)
   const allBinds: BindCompletionData[] = needles.flatMap((needle) => needle.binds);
-
-  // Real daily reflection data (for thread view)
-  const _dailyReflections: BindCompletionData =
-    timeframe === '7d' && bindsGridData?.data.daily_reflection
-      ? {
-          bindName: 'Daily Reflection',
-          completions: bindsGridData.data.daily_reflection.completions,
-        }
-      : {
-          bindName: 'Daily Reflection',
-          completions: [false, false, false, false, false, false, false],
-        };
 
   const dailyCheckInData: BindCompletionData[] = getJournalCompletionData();
 
@@ -455,23 +465,21 @@ export function ConsistencyHeatmap({
 
   const displayBinds = getDisplayBinds();
 
-  // Generate day headers from API's date range (needed for consistency calculations)
-  // Moved here from later in the file so it's available for percentage calculations
+  // Generate day headers from calculated date range (no longer waits for bindsGridData)
+  // Uses same calculateDateRange as journal query for consistency
   const getDayHeaders = (): DayHeader[] => {
     const dayHeaders: DayHeader[] = [];
-    if (bindsGridData?.meta?.start_date && bindsGridData?.meta?.end_date) {
-      const startDate = new Date(bindsGridData.meta.start_date);
-      const endDate = new Date(bindsGridData.meta.end_date);
-      let currentDate = new Date(startDate);
+    const startDate = new Date(calculateDateRange.startDate);
+    const endDate = new Date(calculateDateRange.endDate);
+    let currentDate = new Date(startDate);
 
-      while (currentDate <= endDate) {
-        dayHeaders.push({
-          dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
-          dayOfMonth: currentDate.getDate(),
-          fullDate: currentDate.toISOString().split('T')[0],
-        });
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
+    while (currentDate <= endDate) {
+      dayHeaders.push({
+        dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
+        dayOfMonth: currentDate.getDate(),
+        fullDate: currentDate.toISOString().split('T')[0],
+      });
+      currentDate.setDate(currentDate.getDate() + 1);
     }
     return dayHeaders;
   };
@@ -878,14 +886,6 @@ export function ConsistencyHeatmap({
 
   // 7d: Show grid view with bind completion data
   if (timeframe === '7d') {
-    // Show skeleton only when refetching journal data (has data, loading new)
-    const showLoadingState =
-      (filterType === 'thread' || filterType === 'overall') && journalLoading && journalData;
-
-    if (showLoadingState) {
-      return renderSkeleton();
-    }
-
     return (
       <Card variant="glass" style={styles.sevenDayCard}>
         {renderHeader()}

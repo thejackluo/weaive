@@ -84,7 +84,7 @@ async def get_thread_insights(
     - Uses parallel queries in ContextBuilderService
     """
     try:
-        user_id = current_user["id"]
+        user_id = current_user["sub"]  # JWT token uses "sub" field for user ID
         logger.info(f"Fetching thread insights for user {user_id}")
 
         # Build user context (parallel queries)
@@ -104,7 +104,7 @@ async def get_thread_insights(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get thread insights for user {current_user['id']}: {e}")
+        logger.error(f"Failed to get thread insights for user {current_user['sub']}: {e}")
         raise HTTPException(
             status_code=500,
             detail={
@@ -127,22 +127,31 @@ async def get_dashboard_insights(
     """
     Get weekly summary insights for dashboard.
 
-    **Coming Soon:**
+    **Status:** 🚧 NOT IMPLEMENTED - Planned for post-MVP
+
+    **Planned Features:**
     - Weekly completion rate trend (up/down from last week)
     - Pattern detection (time-of-day, day-of-week preferences)
     - Biggest win this week (highest streak, most completions)
     - AI-generated encouragement based on personality
 
-    **Caching:**
+    **Caching Strategy (when implemented):**
     - Cache for 24 hours (weekly summary, updated daily)
 
-    **Personality:**
+    **Personality (when implemented):**
     - Uses mvp_coach (sarcastic but supportive)
+
+    **Returns:**
+    - 501 Not Implemented with clear message
+
+    **Note:** Frontend should handle 501 gracefully and show placeholder UI
     """
+    logger.info(f"Dashboard insights requested by user {current_user['sub']} but not yet implemented")
+
     raise HTTPException(
         status_code=501,
         detail={
             "error": "NOT_IMPLEMENTED",
-            "message": "Dashboard insights coming soon. Focus on thread insights first."
+            "message": "Dashboard insights are planned for post-MVP. Check back soon!"
         }
     )

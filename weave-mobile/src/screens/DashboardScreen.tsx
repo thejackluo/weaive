@@ -60,6 +60,7 @@ export function DashboardScreen() {
           queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
           queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
           queryClient.refetchQueries({ queryKey: ['userStats'] }),
+          queryClient.refetchQueries({ queryKey: ['journal'], exact: false }), // Include journal data
         ]);
         console.log('[Dashboard] All data refetched successfully');
       };
