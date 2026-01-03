@@ -341,7 +341,7 @@ async def get_today_binds(
                 notes,
                 sort_order,
                 created_at,
-                goals!subtask_instances_goal_id_fkey(id, title, description, status),
+                goals!subtask_instances_goal_id_fkey(id, title, status),
                 subtask_templates!subtask_instances_template_id_fkey(title, times_per_week, recurrence_rule, is_archived, created_at)
                 """
             )
@@ -349,6 +349,9 @@ async def get_today_binds(
             # Filter by user_id and today's date (RLS enforced)
             query = query.eq("user_id", user_id)
             query = query.eq("scheduled_for_date", today)
+
+            # Filter out instances with NULL goal_id (from corrupted data)
+            query = query.not_.is_("goal_id", "null")
 
             # Order by sort_order, then by creation
             query = query.order("sort_order", desc=False)
@@ -499,7 +502,6 @@ async def get_today_binds(
             # Get needle info
             goal_id = goal.get("id") if goal else None
             goal_title = goal.get("title", "Untitled Goal") if goal else "Untitled Goal"
-            goal_description = goal.get("description") if goal else None
 
             # Use pre-fetched weekly data (O(1) lookup, no queries!)
             template_id = instance["template_id"]
@@ -543,7 +545,6 @@ async def get_today_binds(
                 "subtitle": subtitle,
                 "needle_id": goal_id,
                 "needle_title": goal_title,
-                "needle_description": goal_description,  # "Why" text for the goal
                 "needle_color": "blue",  # TODO: Add color to goals table
                 "estimated_minutes": instance["estimated_minutes"],
                 "completed": completed,
