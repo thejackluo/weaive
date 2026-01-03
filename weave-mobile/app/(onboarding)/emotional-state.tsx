@@ -8,13 +8,14 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { PainpointCard, Painpoint } from '@/components/onboarding/PainpointCard';
 import { useOnboardingStore } from '@/stores/onboardingStore';
+import { useTheme, Heading, Body, Button } from '@/design-system';
 
 // =============================================================================
 // DATA - From PRD US-1.2
@@ -52,6 +53,8 @@ const PAINPOINTS: Painpoint[] = [
 // =============================================================================
 
 export default function EmotionalStateScreen() {
+  const { colors, spacing } = useTheme();
+
   // Get selection from zustand store
   // Note: PRD specifies storing in user_profiles.json - will be handled by backend
   const { selectedPainpoints, setSelectedPainpoints } = useOnboardingStore();
@@ -108,20 +111,35 @@ export default function EmotionalStateScreen() {
   }, [selectedPainpoints]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="py-6 px-4 pb-10" showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background.primary }}>
+      <ScrollView
+        contentContainerStyle={{ paddingVertical: spacing[6], paddingHorizontal: spacing[4] }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <View className="items-center mb-6">
-          <Text className="text-center text-[28px] font-semibold text-neutral-800 mb-2 tracking-tight">
+        <View style={{ alignItems: 'center', marginBottom: spacing[6] }}>
+          <Heading
+            variant="displayLg"
+            style={{
+              color: colors.text.primary,
+              textAlign: 'center',
+              marginBottom: spacing[2],
+            }}
+          >
             What's holding you back?
-          </Text>
-          <Text className="text-center text-base text-neutral-600">
+          </Heading>
+          <Body
+            style={{
+              color: colors.text.secondary,
+              textAlign: 'center',
+            }}
+          >
             Pick 1-2 that you're struggling with most right now
-          </Text>
+          </Body>
         </View>
 
         {/* Painpoint Grid */}
-        <View className="flex-row flex-wrap justify-between gap-3">
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: spacing[3] }}>
           {PAINPOINTS.map((painpoint) => (
             <PainpointCard
               key={painpoint.id}
@@ -134,33 +152,28 @@ export default function EmotionalStateScreen() {
 
         {/* Confirmation Message */}
         {showConfirmation && selectedPainpoints.length === 1 && (
-          <View className="items-center mt-6">
-            <Text className="text-center text-sm text-neutral-600 mb-3">
+          <View style={{ alignItems: 'center', marginTop: spacing[6] }}>
+            <Body
+              style={{
+                color: colors.text.muted,
+                textAlign: 'center',
+                marginBottom: spacing[3],
+              }}
+            >
               You can optionally add one more
-            </Text>
+            </Body>
           </View>
         )}
 
         {/* Continue Button */}
-        <View className="w-full mt-6">
-          <Pressable
-            className={`h-12 rounded-lg w-full justify-center items-center ${
-              selectedPainpoints.length >= 1 ? 'bg-blue-500' : 'bg-gray-300'
-            }`}
+        <View style={{ width: '100%', marginTop: spacing[6] }}>
+          <Button
+            variant="primary"
             onPress={handleContinue}
             disabled={selectedPainpoints.length === 0}
-            accessibilityLabel="Continue to next step"
-            accessibilityRole="button"
-            accessibilityState={{ disabled: selectedPainpoints.length === 0 }}
           >
-            <Text
-              className={`text-base font-semibold ${
-                selectedPainpoints.length >= 1 ? 'text-white' : 'text-gray-500'
-              }`}
-            >
-              Continue
-            </Text>
-          </Pressable>
+            Continue
+          </Button>
         </View>
       </ScrollView>
     </SafeAreaView>

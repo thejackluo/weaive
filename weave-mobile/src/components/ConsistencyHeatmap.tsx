@@ -708,8 +708,9 @@ export function ConsistencyHeatmap({
   // Handle needle scroll to update selected index
   const handleNeedleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
-    const cardWidth = SCREEN_WIDTH - 48 + 16; // Card width + spacing
-    const index = Math.round(offsetX / cardWidth);
+    const CARD_WIDTH = SCREEN_WIDTH - 48; // Match _renderNeedleCard calculation
+    const CARD_SPACING = 16;
+    const index = Math.round(offsetX / (CARD_WIDTH + CARD_SPACING));
     if (index !== selectedNeedleIndex && index >= 0 && index < needles.length) {
       setSelectedNeedleIndex(index);
       Haptics.selectionAsync();
@@ -724,8 +725,9 @@ export function ConsistencyHeatmap({
   const _renderNeedleCard = () => {
     if (filterType !== 'needle') return null;
 
-    const CARD_WIDTH = SCREEN_WIDTH - 80; // Width of each card (with margins)
+    const CARD_WIDTH = SCREEN_WIDTH - 48; // Full width minus side padding
     const CARD_SPACING = 16; // Space between cards
+    const SIDE_PADDING = 24; // Padding on each side
 
     return (
       <View style={styles.needleSwipeContainer}>
@@ -738,8 +740,8 @@ export function ConsistencyHeatmap({
           onMomentumScrollEnd={handleNeedleScroll}
           snapToInterval={CARD_WIDTH + CARD_SPACING}
           decelerationRate="fast"
-          snapToAlignment="start"
-          contentContainerStyle={{ paddingHorizontal: 24 }}
+          snapToAlignment="center"
+          contentContainerStyle={{ paddingHorizontal: SIDE_PADDING }}
           keyExtractor={(item) => item.id}
           ItemSeparatorComponent={() => <View style={{ width: CARD_SPACING }} />}
           renderItem={({ item: needle }) => (
@@ -780,6 +782,7 @@ export function ConsistencyHeatmap({
                         needleFlatListRef.current?.scrollToIndex({
                           index,
                           animated: true,
+                          viewPosition: 0.5, // Center the item (0 = left, 0.5 = center, 1 = right)
                         });
                         setSelectedNeedleIndex(index);
                         // Notify parent of needle change (for 2w/1m to re-fetch data)

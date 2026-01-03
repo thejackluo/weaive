@@ -1,8 +1,9 @@
-import { View, Text, Pressable, Image } from 'react-native';
+import { View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { trackOnboardingStarted } from '@/services/analytics';
+import { useTheme, Heading, Body, Button } from '@/design-system';
 
 /**
  * Welcome Screen - Story 1.1
@@ -27,6 +28,7 @@ import { trackOnboardingStarted } from '@/services/analytics';
  */
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { colors, spacing } = useTheme();
 
   /**
    * Handles the "Get Started" button press
@@ -87,181 +89,73 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: colors.background.primary }}
+      edges={['top', 'bottom']}
+    >
       <View
-        className="flex-1 justify-center items-center px-4"
-        style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 }}
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: spacing[6],
+        }}
       >
-        {/* Weave Logo - AC1 */}
+        {/* Weave Logo */}
         <Image
           source={require('../../assets/icon.png')}
-          className="w-16 h-16 mb-8"
           accessibilityLabel="Weave"
           resizeMode="contain"
-          style={{ width: 64, height: 64, marginBottom: 32 }}
+          style={{ width: 80, height: 80, marginBottom: spacing[8] }}
         />
 
-        {/* Tagline - AC1 */}
-        <Text
-          className="text-2xl font-semibold text-center text-neutral-800 mb-4"
+        {/* Tagline */}
+        <Heading
+          variant="display2xl"
           style={{
-            fontSize: 24,
-            fontWeight: '600',
+            color: colors.text.primary,
             textAlign: 'center',
-            color: '#000000',
-            marginBottom: 16,
+            marginBottom: spacing[4],
           }}
         >
           Weave
-        </Text>
+        </Heading>
 
-        {/* Value Proposition - AC1 */}
-        <Text
-          className="text-base text-center text-neutral-600 px-8 mb-12 leading-6"
+        {/* Value Proposition */}
+        <Body
           style={{
-            fontSize: 16,
+            color: colors.text.secondary,
             textAlign: 'center',
-            color: '#000000',
-            paddingHorizontal: 32,
-            marginBottom: 48,
-            lineHeight: 24,
+            marginBottom: spacing[12],
+            maxWidth: 320,
           }}
         >
           See your transformation as you create it
-        </Text>
+        </Body>
 
-        {/* CTA Button - AC1, AC3, AC5 */}
-        <Pressable
-          className={({ pressed }) =>
-            `bg-primary-500 h-11 rounded-lg w-full justify-center items-center ${
-              pressed ? 'bg-primary-600 scale-[0.98]' : ''
-            }`
-          }
-          onPress={handleGetStarted}
-          accessibilityRole="button"
-          accessible={true}
-          style={{
-            backgroundColor: '#3b72f6',
-            height: 44,
-            borderRadius: 8,
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 12,
-          }}
-        >
-          <Text
-            className="text-white text-sm font-medium tracking-wider"
-            style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
-          >
-            Get Started
-          </Text>
-        </Pressable>
+        {/* CTA Button */}
+        <Button variant="primary" onPress={handleGetStarted} style={{ width: '100%' }}>
+          Get Started
+        </Button>
 
         {/* Dev Preview Buttons */}
-        <Pressable
-          className={({ pressed }) =>
-            `h-11 rounded-lg w-full justify-center items-center ${pressed ? 'scale-[0.98]' : ''}`
-          }
-          onPress={handleGoToMainApp}
-          accessibilityRole="button"
-          accessible={true}
-          style={{
-            backgroundColor: '#10B981',
-            height: 44,
-            borderRadius: 8,
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 8,
-          }}
-        >
-          <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600', letterSpacing: 1 }}>
+        <View style={{ width: '100%', gap: spacing[2], marginTop: spacing[3] }}>
+          <Button variant="secondary" onPress={handleGoToMainApp}>
             Go to Main App
-          </Text>
-        </Pressable>
+          </Button>
 
-        <Pressable
-          className={({ pressed }) =>
-            `bg-neutral-200 h-11 rounded-lg w-full justify-center items-center ${
-              pressed ? 'bg-neutral-300 scale-[0.98]' : ''
-            }`
-          }
-          onPress={handleViewDesignSystem}
-          accessibilityRole="button"
-          accessible={true}
-          style={{
-            backgroundColor: '#e5e5e5',
-            height: 44,
-            borderRadius: 8,
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 8,
-          }}
-        >
-          <Text
-            className="text-neutral-800 text-sm font-medium tracking-wider"
-            style={{ color: '#262626', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
-          >
+          <Button variant="ghost" onPress={handleViewDesignSystem}>
             🎨 View Design System
-          </Text>
-        </Pressable>
+          </Button>
 
-        {/* Voice Demo Button - Dev Testing Tool (Story 0.11) */}
-        <Pressable
-          className={({ pressed }) =>
-            `bg-purple-500 h-11 rounded-lg w-full justify-center items-center ${
-              pressed ? 'bg-purple-600 scale-[0.98]' : ''
-            }`
-          }
-          onPress={handleVoiceDemo}
-          accessibilityRole="button"
-          accessible={true}
-          style={{
-            backgroundColor: '#a855f7',
-            height: 44,
-            borderRadius: 8,
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 12,
-          }}
-        >
-          <Text
-            className="text-white text-sm font-medium tracking-wider"
-            style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
-          >
-            🎤 Voice Demo (Story 0.11)
-          </Text>
-        </Pressable>
+          <Button variant="ghost" onPress={handleVoiceDemo}>
+            🎤 Voice Demo
+          </Button>
 
-        {/* Skip to Main App Button - Dev Testing Tool (Story 4.1) */}
-        <Pressable
-          className={({ pressed }) =>
-            `bg-green-600 h-11 rounded-lg w-full justify-center items-center ${
-              pressed ? 'bg-green-700 scale-[0.98]' : ''
-            }`
-          }
-          onPress={handleSkipToMainApp}
-          accessibilityRole="button"
-          accessible={true}
-          style={{
-            backgroundColor: '#10b981',
-            height: 44,
-            borderRadius: 8,
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Text
-            className="text-white text-sm font-medium tracking-wider"
-            style={{ color: '#ffffff', fontSize: 14, fontWeight: '500', letterSpacing: 1 }}
-          >
+          <Button variant="ghost" onPress={handleSkipToMainApp}>
             Skip to Main App (Dev)
-          </Text>
-        </Pressable>
+          </Button>
+        </View>
       </View>
     </SafeAreaView>
   );

@@ -28,6 +28,7 @@ export interface Bind {
   subtitle: string; // Progress context (e.g., "3x per week • 2/3 this week")
   needle_id: string | null; // Goal ID
   needle_title: string;
+  needle_description: string | null; // "Why" text for the goal (from goals.description)
   needle_color: 'blue' | 'green' | 'red' | 'violet' | 'emerald';
   estimated_minutes: number;
   completed: boolean;

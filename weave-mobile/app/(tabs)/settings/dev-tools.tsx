@@ -415,7 +415,11 @@ export default function DevToolsScreen() {
           </Heading>
 
           <View style={{ gap: spacing[3] }}>
-            <Button variant="primary" onPress={() => router.push('/(tabs)/sitemap')}>
+            <Button variant="primary" onPress={() => router.push('/(onboarding)/welcome')}>
+              🎯 Onboarding Flow
+            </Button>
+
+            <Button variant="secondary" onPress={() => router.push('/(tabs)/sitemap')}>
               🗺️ Site Map (All Screens)
             </Button>
 
@@ -428,8 +432,8 @@ export default function DevToolsScreen() {
           </View>
 
           <Body style={{ color: colors.text.muted, marginTop: spacing[3], fontSize: 12 }}>
-            Access all screens including Tool Testing (test AI tool execution with visual feedback)
-            and Site Map (all Story 6.2 screens).
+            Jump to Onboarding flow to review/test the complete user signup experience (Epic 1:
+            Welcome → Emotional State → Identity Bootup → Origin Story → First Needle).
           </Body>
         </Card>
 

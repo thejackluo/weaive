@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, Card, Heading, Body, Caption, Button, Text } from '@/design-system';
 import { NeedleCard } from '@/components/thread/NeedleCard';
 import { YesterdayIntentionCard } from '@/components/thread/YesterdayIntentionCard';
@@ -166,7 +167,7 @@ export function ThreadHomeScreen() {
             needle: {
               id: needleId,
               title: bind.needle_title,
-              why: 'Focus on your goals',
+              why: bind.needle_description || 'Focus on your goals',
               color: bind.needle_color,
               completedBinds: 0,
               totalBinds: 0,
@@ -193,7 +194,7 @@ export function ThreadHomeScreen() {
             needle: {
               id: goal.id,
               title: goal.title,
-              why: goal.why || 'Focus on your goals',
+              why: goal.description || 'Focus on your goals',
               color: goal.color || '#6366f1', // Default accent color
               completedBinds: 0,
               totalBinds: 0,
@@ -224,7 +225,7 @@ export function ThreadHomeScreen() {
     router.push(`/(tabs)/binds/${bind.id}`);
   };
 
-  // Handle saving intention (either update existing journal or create placeholder)
+  // Handle saving intention (either update existing journal or store locally until journal is completed)
   const handleSaveIntention = async (intention: string) => {
     const startTime = performance.now();
     console.log('[ThreadHome] 💾 handleSaveIntention called', {
@@ -245,28 +246,27 @@ export function ThreadHomeScreen() {
             },
           },
         });
+
+        const duration = (performance.now() - startTime).toFixed(0);
+        console.log(`[ThreadHome] ✅ Save successful in ${duration}ms`);
+
+        // Refetch both today's journal AND yesterday's intention cache
+        refetchJournal();
+        queryClient.invalidateQueries({ queryKey: ['journal-entries', 'yesterday-intention'] });
       } else {
-        // Create a new journal entry with just the intention
-        // Note: This requires a fulfillment_score, so we'll use a default of 5
-        console.log('[ThreadHome] ✨ Creating new journal entry');
-        await submitJournalMutation.mutateAsync({
-          fulfillment_score: 5,
-          default_responses: {
-            today_focus: intention,
-          },
-        });
+        // 🐛 FIX: Don't create a journal entry just for intention
+        // Store it in AsyncStorage with today's date as key (auto-expires on new day)
+        // This is purely for display on Thread Home screen - NOT part of journal system
+        console.log('[ThreadHome] 💾 Storing intention locally (display-only, no journal entry)');
+        const today = new Date().toISOString().split('T')[0];
+        await AsyncStorage.setItem(`@weave_today_focus_${today}`, intention);
+
+        const duration = (performance.now() - startTime).toFixed(0);
+        console.log(`[ThreadHome] ✅ Intention saved locally in ${duration}ms`);
+
+        // Invalidate cache to trigger refetch (YesterdayIntentionCard will check AsyncStorage)
+        queryClient.invalidateQueries({ queryKey: ['journal-entries', 'yesterday-intention'] });
       }
-
-      const duration = (performance.now() - startTime).toFixed(0);
-      console.log(`[ThreadHome] ✅ Save successful in ${duration}ms`);
-
-      // Refetch both today's journal AND yesterday's intention cache
-      // This ensures the YesterdayIntentionCard sees the updated data
-      refetchJournal();
-
-      // Force invalidate the yesterday-intention query to show the updated today's focus
-      // Note: After editing, we want to show today's focus (not yesterday's anymore)
-      queryClient.invalidateQueries({ queryKey: ['journal-entries', 'yesterday-intention'] });
     } catch (error) {
       const duration = (performance.now() - startTime).toFixed(0);
       console.error(`[ThreadHome] ❌ Save failed after ${duration}ms:`, error);

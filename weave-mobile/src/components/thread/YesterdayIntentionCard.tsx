@@ -9,6 +9,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, Pressable, Keyboard, TouchableWithoutFeedback, TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme, Card, Text, Input, Button } from '@/design-system';
 import { useYesterdayIntention } from '@/hooks/useJournal';
@@ -27,6 +28,19 @@ export function YesterdayIntentionCard({ onQuickIntention }: YesterdayIntentionC
   const editInputRef = useRef<TextInput>(null);
   const quickInputRef = useRef<TextInput>(null);
 
+  // 🐛 FIX: Check AsyncStorage for edited intention (display-only, not from journal)
+  const [localIntention, setLocalIntention] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadLocalIntention = async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const stored = await AsyncStorage.getItem(`@weave_today_focus_${today}`);
+      console.log('[YesterdayIntention] Loaded from AsyncStorage:', stored ? 'Found' : 'None');
+      setLocalIntention(stored);
+    };
+    loadLocalIntention();
+  }, [data]); // Re-check when API data changes
+
   const handleSubmitQuickIntention = async () => {
     console.log('[YesterdayIntention] handleSubmitQuickIntention called', { quickIntention });
     if (!quickIntention.trim() || !onQuickIntention) {
@@ -37,8 +51,13 @@ export function YesterdayIntentionCard({ onQuickIntention }: YesterdayIntentionC
     console.log('[YesterdayIntention] Submitting quick intention...');
     setIsSubmitting(true);
     try {
-      await onQuickIntention(quickIntention.trim());
+      const trimmed = quickIntention.trim();
+      await onQuickIntention(trimmed);
       console.log('[YesterdayIntention] Quick intention saved successfully');
+
+      // Update local state immediately
+      setLocalIntention(trimmed);
+
       setQuickIntention(''); // Clear input after successful submit
       // Refetch to update UI
       await refetch();
@@ -52,7 +71,9 @@ export function YesterdayIntentionCard({ onQuickIntention }: YesterdayIntentionC
 
   const handleEditClick = () => {
     console.log('[YesterdayIntention] Edit clicked, entering edit mode');
-    setEditedIntention(data?.intention || '');
+    // Start with local intention if it exists, otherwise API intention
+    const currentIntention = localIntention || data?.intention || '';
+    setEditedIntention(currentIntention);
     setIsEditing(true);
   };
 
@@ -60,21 +81,28 @@ export function YesterdayIntentionCard({ onQuickIntention }: YesterdayIntentionC
   const handleSaveEdit = async () => {
     console.log('[YesterdayIntention] Save button clicked', {
       editedIntention,
-      originalIntention: data?.intention,
-      hasChanged: editedIntention.trim() !== data?.intention,
+      localIntention,
+      apiIntention: data?.intention,
     });
 
     // Only save if text changed and not empty
     const trimmed = editedIntention.trim();
-    if (trimmed && trimmed !== data?.intention && onQuickIntention) {
+    const currentIntention = localIntention || data?.intention || '';
+
+    if (trimmed && trimmed !== currentIntention && onQuickIntention) {
       console.log('[YesterdayIntention] Saving edited intention...');
       setIsSubmitting(true);
       try {
         await onQuickIntention(trimmed);
-        console.log('[YesterdayIntention] Save successful, refetching...');
-        // Refetch to update UI
+        console.log('[YesterdayIntention] Save successful');
+
+        // Update local state immediately
+        setLocalIntention(trimmed);
+
+        // Refetch API data (may or may not have updated, depending on if journal exists)
         await refetch();
         console.log('[YesterdayIntention] Refetch complete - exiting edit mode');
+
         // Exit edit mode on success
         setIsEditing(false);
         setEditedIntention('');
@@ -135,7 +163,9 @@ export function YesterdayIntentionCard({ onQuickIntention }: YesterdayIntentionC
     return null;
   }
 
-  const hasIntention = data?.intention && data.intention.trim().length > 0;
+  // 🐛 FIX: Prefer local intention (edited today) over API intention (from yesterday's journal)
+  const displayIntention = localIntention || data?.intention || '';
+  const hasIntention = displayIntention.trim().length > 0;
 
   // Wrap entire card in TouchableWithoutFeedback to dismiss keyboard when tapping outside
   const cardContent = (
@@ -180,7 +210,7 @@ export function YesterdayIntentionCard({ onQuickIntention }: YesterdayIntentionC
             lineHeight: 22,
           }}
         >
-          {data.intention}
+          {displayIntention}
         </Text>
       )}
 
