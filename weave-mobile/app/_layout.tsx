@@ -14,27 +14,27 @@ import {
   setupNotificationListeners,
 } from '../src/services/notificationService';
 import '../global.css';
-// TODO: Add Sentry error tracking at 500+ users (per CLAUDE.md)
-// import * as Sentry from '@sentry/react-native';
+// Sentry error tracking enabled for TestFlight crash debugging
+import * as Sentry from '@sentry/react-native';
 
-// Sentry.init({
-//   dsn: 'https://6376c2a36a9e23ca22646f5d5024e6ac@o4507389087580160.ingest.us.sentry.io/4510585166888960',
-//
-//   // Adds more context data to events (IP address, cookies, user, etc.)
-//   // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
-//   sendDefaultPii: true,
-//
-//   // Enable Logs
-//   enableLogs: true,
-//
-//   // Configure Session Replay
-//   replaysSessionSampleRate: 0.1,
-//   replaysOnErrorSampleRate: 1,
-//   integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
-//
-//   // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-//   // spotlight: __DEV__,
-// });
+Sentry.init({
+  dsn: 'https://6376c2a36a9e23ca22646f5d5024e6ac@o4507389087580160.ingest.us.sentry.io/4510585166888960',
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: true,
+
+  // Configure Session Replay
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1,
+  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 // Create QueryClient instance (singleton)
 // Story 4.1: Added for journal and user preferences queries
@@ -190,9 +190,11 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
  * - ApiInitializer for connecting auth to API services
  * - SimpleToastContainer for global toast notifications (Story 0.3)
  * - DevEnvironmentBanner for showing API endpoint in dev mode (multi-worktree setup)
+ * - Sentry error boundary for crash tracking (TestFlight debugging)
  *
  * Provider Hierarchy:
- * - ThemeProvider (outermost) - Design system theme
+ * - Sentry.wrap (outermost) - Error boundary for crash tracking
+ * - ThemeProvider - Design system theme
  * - QueryClientProvider - TanStack Query for server state (Story 2.1)
  * - AuthProvider - Authentication state and methods
  * - InAppOnboardingProvider - In-app tutorial state management
@@ -204,7 +206,7 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
  *
  * @returns Stack navigation component wrapped with providers
  */
-export default function RootLayout() {
+function RootLayout() {
   return (
     <ThemeProvider initialMode="dark">
       <AuthProvider>
@@ -225,3 +227,6 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+// Wrap with Sentry error boundary to catch and report all crashes
+export default Sentry.wrap(RootLayout);
