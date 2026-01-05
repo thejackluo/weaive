@@ -2,7 +2,7 @@ require('dotenv').config();
 
 module.exports = {
   expo: {
-    name: 'weave-mobile',
+    name: 'Weeve',
     slug: 'weave-mobile',
     version: '0.0.1',
     scheme: 'weavelight',
