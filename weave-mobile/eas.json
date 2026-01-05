@@ -44,9 +44,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "YOUR_APPLE_ID_HERE",
+        "appleId": "magician.eddie52@gmail.com",
         "ascAppId": "YOUR_ASC_APP_ID_HERE",
-        "appleTeamId": "YOUR_TEAM_ID_HERE"
+        "appleTeamId": "UR5VDB68NV"
       }
     }
   }
