@@ -12,6 +12,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
+import Constants from 'expo-constants';
 import apiClient from './apiClient';
 
 // Configure how notifications are handled when app is in foreground
@@ -52,8 +53,14 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     }
 
     // Get Expo push token
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    if (!projectId) {
+      console.error('[NOTIFICATIONS] ❌ Missing Expo project ID in config');
+      return null;
+    }
+
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: '958e77af-47be-49ec-a7e6-bbfa14552734', // From app.json extra.eas.projectId
+      projectId,
     });
 
     const pushToken = tokenData.data;
