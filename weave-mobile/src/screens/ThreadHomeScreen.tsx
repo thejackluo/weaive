@@ -13,8 +13,8 @@
  * - Prominent reflection button
  */
 
-import React, { useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, ScrollView, Pressable, StyleSheet, ActivityIndicator, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -24,6 +24,8 @@ import { useTheme, Card, Heading, Body, Caption, Button, Text } from '@/design-s
 import { NeedleCard } from '@/components/thread/NeedleCard';
 import { YesterdayIntentionCard } from '@/components/thread/YesterdayIntentionCard';
 import { CircularProgress } from '@/components/CircularProgress';
+import { HomePageOnboardingOverlay } from '@/components/onboarding/HomePageOnboardingOverlay';
+import { useInAppOnboarding } from '@/contexts/InAppOnboardingContext';
 import { useTodayBinds } from '@/hooks/useTodayBinds';
 import { useGetTodayJournal, useUpdateJournal, useSubmitJournal } from '@/hooks/useJournal';
 import { useActiveGoals } from '@/hooks/useActiveGoals';
@@ -36,6 +38,101 @@ export function ThreadHomeScreen() {
   const queryClient = useQueryClient();
   // Store expanded needles as a Set (all open by default)
   const [expandedNeedleIds, setExpandedNeedleIds] = useState<Set<string>>(new Set());
+
+  // User's name from onboarding
+  const [userName, setUserName] = useState<string>('');
+
+  // In-app onboarding
+  const { currentStep, completeCurrentStep } = useInAppOnboarding();
+  const showHomePageTour = currentStep === 'home_page_tour';
+
+  // Tour step state
+  type TourStep = 'intro' | 'highlight_bind' | 'bind_completed' | 'highlight_checkin';
+  const [tourStep, setTourStep] = useState<TourStep>('intro');
+  const hasNavigatedAwayRef = useRef(false);
+
+  // Refs for onboarding element positions
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [firstBindPosition, setFirstBindPosition] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [checkinPosition, setCheckinPosition] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  // Shimmer animation for check-in highlight (same as bind highlighting)
+  const checkinShimmerAnim = useRef(new Animated.Value(0.3)).current;
+
+  // Reset tour step when entering home page tour
+  React.useEffect(() => {
+    if (showHomePageTour) {
+      setTourStep('intro');
+      hasNavigatedAwayRef.current = false;
+
+      // Auto-expand first needle to show binds for spotlight
+      if (needleGroups.length > 0) {
+        const firstNeedleId = needleGroups[0].needle.id;
+        setExpandedNeedleIds(new Set([firstNeedleId]));
+      }
+    }
+  }, [showHomePageTour]);
+
+  // When user returns to home screen after clicking bind, go to checkin highlight
+  useFocusEffect(
+    React.useCallback(() => {
+      if (showHomePageTour && tourStep === 'highlight_bind' && hasNavigatedAwayRef.current) {
+        // User is returning from bind screen, go directly to highlight checkin
+        setTourStep('highlight_checkin');
+        hasNavigatedAwayRef.current = false; // Reset flag
+      }
+    }, [showHomePageTour, tourStep])
+  );
+
+  // Shimmer animation for check-in highlight
+  useEffect(() => {
+    if (showHomePageTour && tourStep === 'highlight_checkin') {
+      const shimmer = Animated.loop(
+        Animated.sequence([
+          Animated.timing(checkinShimmerAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: false,
+          }),
+          Animated.timing(checkinShimmerAnim, {
+            toValue: 0.3,
+            duration: 1000,
+            useNativeDriver: false,
+          }),
+        ])
+      );
+      shimmer.start();
+      return () => shimmer.stop();
+    }
+  }, [showHomePageTour, tourStep]);
+
+  // Load user's name from AsyncStorage
+  React.useEffect(() => {
+    const loadUserName = async () => {
+      try {
+        const onboardingDataStr = await AsyncStorage.getItem('onboarding_data');
+        if (onboardingDataStr) {
+          const data = JSON.parse(onboardingDataStr);
+          if (data.preferred_name) {
+            setUserName(data.preferred_name);
+          }
+        }
+      } catch (error) {
+        console.error('[ThreadHome] Failed to load user name:', error);
+      }
+    };
+    loadUserName();
+  }, []);
 
   // Countdown timer state
   const [timeRemaining, setTimeRemaining] = React.useState('');
@@ -222,7 +319,17 @@ export function ThreadHomeScreen() {
   // Handle bind press
   const handleBindPress = (bind: Bind) => {
     console.log('[ThreadHome] Navigate to bind:', bind.id);
-    router.push(`/(tabs)/binds/${bind.id}`);
+
+    // If in onboarding tour, pass flag to bind screen and mark navigation
+    if (showHomePageTour && tourStep === 'highlight_bind') {
+      hasNavigatedAwayRef.current = true;
+      router.push({
+        pathname: `/(tabs)/binds/${bind.id}`,
+        params: { fromOnboarding: 'true' },
+      });
+    } else {
+      router.push(`/(tabs)/binds/${bind.id}`);
+    }
   };
 
   // Handle saving intention (either update existing journal or store locally until journal is completed)
@@ -325,8 +432,34 @@ export function ThreadHomeScreen() {
   const completedTasks = completedBinds + (hasCompletedReflection ? 1 : 0);
   const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
+  // Onboarding handlers
+  const handleTourNext = () => {
+    if (tourStep === 'intro') {
+      setTourStep('highlight_bind');
+    }
+    // bind_completed step removed - popup shows on bind screen instead
+  };
+
+  const handleCheckinClick = () => {
+    // User clicked the highlighted check-in button, navigate to reflection
+    // The tooltip will show on the reflection screen
+    router.push({
+      pathname: '/(tabs)/settings/reflection',
+      params: { fromOnboarding: 'true' },
+    });
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]} edges={['top']}>
+      {/* Home Page Onboarding Overlay */}
+      <HomePageOnboardingOverlay
+        visible={showHomePageTour}
+        currentStep={tourStep}
+        checkinPosition={checkinPosition || undefined}
+        onNext={handleTourNext}
+        onCheckinClick={handleCheckinClick}
+      />
+
       {/* Subtle gradient background for depth */}
       <LinearGradient
         colors={[colors.background.primary, 'rgba(0, 0, 0, 0.95)', colors.background.primary]}
@@ -334,6 +467,7 @@ export function ThreadHomeScreen() {
         style={StyleSheet.absoluteFill}
       />
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
@@ -347,7 +481,16 @@ export function ThreadHomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Greeting & Progress Card - Enhanced */}
-        <Card variant="default" style={[styles.greetingCard, styles.enhancedCard]}>
+        <Card
+          variant="default"
+          style={[
+            styles.greetingCard,
+            styles.enhancedCard,
+            {
+              opacity: showHomePageTour && tourStep === 'highlight_checkin' ? 0.3 : 1,
+            },
+          ]}
+        >
           {/* Date Badge - Top Right Corner */}
           <View style={styles.dateBadge}>
             <Text
@@ -389,7 +532,7 @@ export function ThreadHomeScreen() {
               textShadowRadius: 4,
             }}
           >
-            {user.name}
+            {userName || user.name}
           </Text>
 
           {/* Circular Progress Ring with Context Header */}
@@ -419,7 +562,14 @@ export function ThreadHomeScreen() {
         </Card>
 
         {/* Yesterday's Intention Card */}
-        <YesterdayIntentionCard onQuickIntention={handleSaveIntention} />
+        <View
+          style={{
+            opacity: showHomePageTour && (tourStep === 'highlight_bind' || tourStep === 'highlight_checkin') ? 0.3 : 1
+          }}
+          pointerEvents={showHomePageTour && (tourStep === 'highlight_bind' || tourStep === 'highlight_checkin') ? 'none' : 'auto'}
+        >
+          <YesterdayIntentionCard onQuickIntention={handleSaveIntention} />
+        </View>
 
         {/* Your Needles Section */}
         <View style={{ gap: spacing[2] }}>
@@ -461,7 +611,7 @@ export function ThreadHomeScreen() {
             </Card>
           ) : (
             <View style={{ gap: spacing[2] }}>
-              {needleGroups.map((group) => {
+              {needleGroups.map((group, index) => {
                 const isExpanded = expandedNeedleIds.has(group.needle.id);
 
                 return (
@@ -473,6 +623,23 @@ export function ThreadHomeScreen() {
                     isVisible={true}
                     onToggle={() => handleNeedleToggle(group.needle.id)}
                     onBindPress={handleBindPress}
+                    firstBindRef={
+                      index === 0 && showHomePageTour
+                        ? (ref) => {
+                            if (ref) {
+                              setTimeout(() => {
+                                ref.measureInWindow((x, y, width, height) => {
+                                  setFirstBindPosition({ x, y, width, height });
+                                });
+                              }, 100);
+                            }
+                          }
+                        : undefined
+                    }
+                    isHighlightedFirstBind={
+                      index === 0 && showHomePageTour && tourStep === 'highlight_bind'
+                    }
+                    isTourActive={showHomePageTour && (tourStep === 'highlight_bind' || tourStep === 'highlight_checkin')}
                   />
                 );
               })}
@@ -498,13 +665,55 @@ export function ThreadHomeScreen() {
           </Text>
 
           {/* Daily Check-In Card */}
-          <Card variant="default" style={styles.checkInCard}>
+          <Animated.View
+            ref={(ref) => {
+              // Capture position of check-in card for onboarding
+              if (ref && showHomePageTour) {
+                setTimeout(() => {
+                  ref.measureInWindow((x, y, width, height) => {
+                    setCheckinPosition({ x, y, width, height });
+                  });
+                }, 100);
+              }
+            }}
+            style={{
+              opacity: showHomePageTour && tourStep === 'highlight_bind' ? 0.3 : 1,
+            }}
+          >
+            <Card
+              variant="default"
+              style={[
+                styles.checkInCard,
+                (showHomePageTour && tourStep === 'highlight_checkin') && {
+                  borderColor: checkinShimmerAnim.interpolate({
+                    inputRange: [0.3, 1],
+                    outputRange: ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 1)'],
+                  }),
+                  borderWidth: 4,
+                  shadowColor: '#FFFFFF',
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: checkinShimmerAnim.interpolate({
+                    inputRange: [0.3, 1],
+                    outputRange: [0.6, 1],
+                  }),
+                  shadowRadius: 24,
+                  elevation: 16,
+                },
+              ]}
+            >
             {/* Daily Check-in Button - Shows completion via variant and checkmark */}
             <Button
               variant={hasCompletedReflection ? 'success' : 'primary'}
               size="lg"
-              onPress={() => router.push('/(tabs)/settings/reflection')}
+              onPress={() => {
+                if (showHomePageTour && tourStep === 'highlight_checkin') {
+                  handleCheckinClick();
+                } else {
+                  router.push('/(tabs)/settings/reflection');
+                }
+              }}
               fullWidth
+              disabled={showHomePageTour && tourStep === 'highlight_bind'}
             >
               {hasCompletedReflection ? '✓ Daily Check-in' : 'Daily Check-in'}
             </Button>
@@ -524,6 +733,7 @@ export function ThreadHomeScreen() {
               </Text>
             </View>
           </Card>
+          </Animated.View>
         </View>
       </ScrollView>
     </SafeAreaView>

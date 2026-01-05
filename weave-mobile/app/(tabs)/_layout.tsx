@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Tabs, Redirect } from 'expo-router';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, Pressable, Animated } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInAppOnboarding } from '@/contexts/InAppOnboardingContext';
 
 /**
  * Tab Layout Component
@@ -16,6 +17,38 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function TabLayout() {
   const { user, isLoading } = useAuth();
   const insets = useSafeAreaInsets();
+  const { currentStep } = useInAppOnboarding();
+
+  // Shimmer animation for dashboard button
+  const shimmerAnim = useRef(new Animated.Value(0.3)).current;
+
+  // Start shimmer animation when dashboard_tour is active
+  useEffect(() => {
+    if (currentStep === 'dashboard_tour') {
+      const shimmer = Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmerAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: false,
+          }),
+          Animated.timing(shimmerAnim, {
+            toValue: 0.3,
+            duration: 1000,
+            useNativeDriver: false,
+          }),
+        ])
+      );
+      shimmer.start();
+      return () => shimmer.stop();
+    }
+  }, [currentStep]);
+
+  // Disable dashboard tab during home page tour (but enable during dashboard_tour)
+  const isDashboardDisabled = currentStep === 'home_page_tour';
+  const isDashboardHighlighted = currentStep === 'dashboard_tour';
+  // Disable home tab during dashboard tour
+  const isHomeDisabled = currentStep === 'dashboard_tour';
 
   // Auth guard: redirect to login if not authenticated
   if (!isLoading && !user) {
@@ -74,9 +107,25 @@ export default function TabLayout() {
               <Ionicons
                 name={focused ? 'home' : 'home-outline'}
                 size={28}
-                color={color}
+                color={isHomeDisabled ? 'rgba(255, 255, 255, 0.2)' : color}
               />
             ),
+            // Block navigation during dashboard tour
+            tabBarButton: (props) => {
+              if (isHomeDisabled) {
+                return (
+                  <Pressable
+                    {...props}
+                    onPress={(e) => {
+                      e.preventDefault();
+                      // Do nothing - tab is disabled during dashboard tour
+                    }}
+                    style={[props.style, { opacity: 0.5 }]}
+                  />
+                );
+              }
+              return <Pressable {...props} />;
+            },
           }}
         />
         <Tabs.Screen
@@ -87,9 +136,51 @@ export default function TabLayout() {
               <Ionicons
                 name={focused ? 'stats-chart' : 'stats-chart-outline'}
                 size={28}
-                color={color}
+                color={isDashboardDisabled ? 'rgba(255, 255, 255, 0.2)' : color}
               />
             ),
+            // Block navigation during home page tour, enable with shimmer during dashboard_tour
+            tabBarButton: (props) => {
+              if (isDashboardDisabled) {
+                // Return disabled version that doesn't navigate
+                return (
+                  <Pressable
+                    {...props}
+                    onPress={(e) => {
+                      e.preventDefault();
+                      // Do nothing - tab is disabled during tour
+                    }}
+                    style={[props.style, { opacity: 0.5 }]}
+                  />
+                );
+              }
+
+              if (isDashboardHighlighted) {
+                // Return animated version with shimmer effect
+                return (
+                  <Animated.View
+                    style={[
+                      props.style,
+                      {
+                        backgroundColor: shimmerAnim.interpolate({
+                          inputRange: [0.3, 1],
+                          outputRange: ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.3)'],
+                        }),
+                        borderRadius: 12,
+                        shadowColor: '#FFFFFF',
+                        shadowOffset: { width: 0, height: 0 },
+                        shadowOpacity: shimmerAnim,
+                        shadowRadius: 12,
+                      },
+                    ]}
+                  >
+                    <Pressable {...props} />
+                  </Animated.View>
+                );
+              }
+
+              return <Pressable {...props} />;
+            },
           }}
         />
 

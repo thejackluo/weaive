@@ -8,9 +8,11 @@ import { View, ScrollView, StyleSheet, Alert, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, Card, Heading, Body, Button } from '@/design-system';
 import { clearAllCaches, logActiveQueries } from '@/utils/devTools';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInAppOnboarding } from '@/contexts/InAppOnboardingContext';
 import apiClient from '@/services/apiClient';
 
 export default function DevToolsScreen() {
@@ -18,6 +20,14 @@ export default function DevToolsScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const {
+    currentStep,
+    isOnboardingComplete,
+    isSkipped,
+    resetOnboarding,
+    skipTutorial,
+    setStep,
+  } = useInAppOnboarding();
   const [isSendingNotification, setIsSendingNotification] = useState(false);
   const [adminModeEnabled, setAdminModeEnabled] = useState(apiClient.getAdminKey() !== null);
 
@@ -355,6 +365,150 @@ export default function DevToolsScreen() {
     }
   }, [user]);
 
+  // Handle reset in-app onboarding
+  const handleResetOnboarding = async () => {
+    try {
+      console.log('[DEV_TOOLS] 🔄 Resetting in-app onboarding...');
+
+      // Step 1: Archive all active goals
+      if (user) {
+        console.log('[DEV_TOOLS] 📦 Archiving all active goals...');
+        const { supabase } = await import('@lib/supabase');
+
+        // Get user_profiles.id from auth_user_id
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('auth_user_id', user.id)
+          .single();
+
+        if (profileError || !profileData) {
+          throw new Error('User profile not found');
+        }
+
+        const userId = profileData.id;
+
+        // Archive all active goals
+        const { data: goals, error: goalsError } = await supabase
+          .from('goals')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('status', 'active');
+
+        if (goalsError) {
+          console.error('[DEV_TOOLS] ❌ Error fetching goals:', goalsError);
+        } else if (goals && goals.length > 0) {
+          const { error: updateError } = await supabase
+            .from('goals')
+            .update({ status: 'archived' })
+            .eq('user_id', userId)
+            .eq('status', 'active');
+
+          if (updateError) {
+            console.error('[DEV_TOOLS] ❌ Error archiving goals:', updateError);
+          } else {
+            console.log(`[DEV_TOOLS] ✅ Archived ${goals.length} goals`);
+          }
+        }
+
+        // Clear query cache for goals and binds
+        queryClient.invalidateQueries({ queryKey: ['goals'] });
+        queryClient.invalidateQueries({ queryKey: ['binds'] });
+      }
+
+      // Step 2: Reset onboarding state
+      await resetOnboarding();
+      console.log('[DEV_TOOLS] ✅ In-app onboarding reset complete');
+
+      Alert.alert(
+        '✅ Onboarding Reset!',
+        'In-app onboarding has been reset and all needles have been archived.\n\nYou can now start fresh with the tutorial.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Force navigate to index to trigger redirect
+              router.replace('/');
+            },
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('[DEV_TOOLS] ❌ Reset onboarding error:', error);
+      Alert.alert('Error', error.message || 'Failed to reset onboarding');
+    }
+  };
+
+  // Handle skip tutorial
+  const handleSkipTutorial = async () => {
+    try {
+      await skipTutorial();
+      Alert.alert(
+        '✅ Tutorial Skipped!',
+        'In-app tutorial marked as complete. You can now navigate freely.',
+        [{ text: 'OK' }]
+      );
+    } catch (error: any) {
+      console.error('[DEV_TOOLS] Skip tutorial error:', error);
+      Alert.alert('Error', error.message || 'Failed to skip tutorial');
+    }
+  };
+
+  // Debug: Show raw AsyncStorage value
+  const handleShowStorageValue = async () => {
+    try {
+      const STORAGE_KEY = '@weave:in_app_onboarding_state';
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+
+      Alert.alert(
+        '📂 AsyncStorage Value',
+        stored
+          ? `Stored state:\n\n${JSON.stringify(JSON.parse(stored), null, 2)}`
+          : 'No stored state found (will use defaults)',
+        [{ text: 'OK' }]
+      );
+    } catch (error: any) {
+      console.error('[DEV_TOOLS] Show storage error:', error);
+      Alert.alert('Error', error.message || 'Failed to read storage');
+    }
+  };
+
+  // Debug: Manually clear AsyncStorage
+  const handleClearStorage = async () => {
+    try {
+      const STORAGE_KEY = '@weave:in_app_onboarding_state';
+      await AsyncStorage.removeItem(STORAGE_KEY);
+
+      Alert.alert(
+        '🗑️ Storage Cleared!',
+        'AsyncStorage value deleted. App will use defaults on next load.\n\nClose and reopen the app to test.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Force navigate to index to trigger redirect
+              router.replace('/');
+            },
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('[DEV_TOOLS] Clear storage error:', error);
+      Alert.alert('Error', error.message || 'Failed to clear storage');
+    }
+  };
+
+  // Manually set onboarding step (for testing)
+  const handleSetStep = async (step: string) => {
+    try {
+      await setStep(step as any);
+      Alert.alert('✅ Step Changed', `Current step is now: ${step}`, [{ text: 'OK' }]);
+    } catch (error: any) {
+      console.error('[DEV_TOOLS] Set step error:', error);
+      Alert.alert('Error', error.message || 'Failed to set step');
+    }
+  };
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background.primary }]}
@@ -434,6 +588,143 @@ export default function DevToolsScreen() {
           <Body style={{ color: colors.text.muted, marginTop: spacing[3], fontSize: 12 }}>
             Jump to Onboarding flow to review/test the complete user signup experience (Epic 1:
             Welcome → Emotional State → Identity Bootup → Origin Story → First Needle).
+          </Body>
+        </Card>
+
+        {/* In-App Onboarding */}
+        <Card variant="default" style={{ marginBottom: spacing[4] }}>
+          <Heading
+            variant="displayLg"
+            style={{ color: colors.text.primary, marginBottom: spacing[3] }}
+          >
+            📚 In-App Tutorial
+          </Heading>
+
+          {/* Current Status */}
+          <View
+            style={{
+              padding: spacing[3],
+              backgroundColor: isOnboardingComplete
+                ? colors.emerald[500] + '20'
+                : colors.accent[500] + '20',
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: isOnboardingComplete ? colors.emerald[500] : colors.accent[500],
+              marginBottom: spacing[3],
+            }}
+          >
+            <Body
+              style={{
+                color: isOnboardingComplete ? colors.emerald[500] : colors.accent[500],
+                fontWeight: '600',
+              }}
+            >
+              {isOnboardingComplete ? '✅ Tutorial Complete' : '📍 Current Step'}
+            </Body>
+            <Body
+              style={{
+                color: colors.text.secondary,
+                fontSize: 12,
+                marginTop: spacing[1],
+              }}
+            >
+              {isSkipped && 'Tutorial was skipped'}
+              {!isSkipped && !isOnboardingComplete && `Step: ${currentStep}`}
+              {!isSkipped && isOnboardingComplete && 'All tutorial steps completed!'}
+            </Body>
+          </View>
+
+          <View style={{ gap: spacing[3] }}>
+            <Button variant="primary" onPress={handleResetOnboarding}>
+              🔄 Reset Tutorial
+            </Button>
+
+            {!isOnboardingComplete && (
+              <Button variant="secondary" onPress={handleSkipTutorial}>
+                ⏭️ Skip Tutorial
+              </Button>
+            )}
+
+            <Button variant="secondary" onPress={() => router.push('/needles/create')}>
+              ➕ Go to Create Needle
+            </Button>
+
+            {/* Debug buttons */}
+            <View style={{ marginTop: spacing[2], gap: spacing[2] }}>
+              <Button variant="ghost" onPress={handleShowStorageValue}>
+                🔍 Show Raw Storage Value
+              </Button>
+              <Button variant="ghost" onPress={handleClearStorage}>
+                🗑️ Clear Storage (Force Reset)
+              </Button>
+            </View>
+
+            {/* Manual Step Control (Advanced Testing) */}
+            <View style={{ marginTop: spacing[4] }}>
+              <Body
+                style={{
+                  color: colors.text.secondary,
+                  marginBottom: spacing[2],
+                  fontWeight: '600',
+                }}
+              >
+                🎯 Jump to Step (Testing Only)
+              </Body>
+              <View style={{ gap: spacing[2] }}>
+                <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                  <View style={{ flex: 1 }}>
+                    <Button
+                      variant="ghost"
+                      onPress={() => handleSetStep('create_first_needle')}
+                      style={{ paddingVertical: 8 }}
+                    >
+                      1. Create Needle
+                    </Button>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Button
+                      variant="ghost"
+                      onPress={() => handleSetStep('home_page_tour')}
+                      style={{ paddingVertical: 8 }}
+                    >
+                      2. Home Tour
+                    </Button>
+                  </View>
+                </View>
+                <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+                  <View style={{ flex: 1 }}>
+                    <Button
+                      variant="ghost"
+                      onPress={() => handleSetStep('dashboard_tour')}
+                      style={{ paddingVertical: 8 }}
+                    >
+                      3. Dashboard
+                    </Button>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Button
+                      variant="ghost"
+                      onPress={() => handleSetStep('completed')}
+                      style={{ paddingVertical: 8 }}
+                    >
+                      4. Completed
+                    </Button>
+                  </View>
+                </View>
+              </View>
+              <Body style={{ color: colors.text.muted, marginTop: spacing[2], fontSize: 11 }}>
+                Manually jump to any onboarding step for quick testing. After setting step, navigate
+                to the relevant screen to see tooltips.
+              </Body>
+            </View>
+          </View>
+
+          <Body style={{ color: colors.text.muted, marginTop: spacing[3], fontSize: 12 }}>
+            Reset to test the in-app tutorial flow from the beginning. After reset, the app will
+            redirect you to create your first needle with an onboarding tooltip.
+            {'\n\n'}
+            Tutorial Steps: Create First Needle → Home Tour → Dashboard Tour → Complete First Bind →
+            View Progress → Write First Journal
           </Body>
         </Card>
 

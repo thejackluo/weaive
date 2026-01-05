@@ -169,17 +169,26 @@ export default function IdentityBootupScreen() {
     [formData.preferred_name]
   );
 
-  const handleStep1Continue = () => {
+  const handleStep1Continue = async () => {
     try {
       if (!nameValidation.valid) {
         setNameError(nameValidation.error);
         return;
       }
 
+      // Save name to AsyncStorage before navigating
+      await AsyncStorage.setItem(
+        'onboarding_data',
+        JSON.stringify({
+          preferred_name: formData.preferred_name,
+        })
+      );
+
       // TODO (Story 0-4): Track analytics event
       // trackEvent('name_entered', { user_id: anonymized });
 
-      setCurrentStep(2);
+      // Navigate to emotional state screen (What's holding you back?)
+      router.push('/(onboarding)/emotional-state');
     } catch (error) {
       if (__DEV__) {
         console.error('[ONBOARDING] Step 1 error:', error);
@@ -494,7 +503,7 @@ export default function IdentityBootupScreen() {
         style={{
           fontSize: 28,
           fontWeight: '600',
-          color: '#1A1A1A',
+          color: '#FFFFFF',
           textAlign: 'center',
           marginBottom: 40,
         }}
@@ -504,7 +513,7 @@ export default function IdentityBootupScreen() {
 
       {/* Input Field */}
       <View style={{ marginBottom: 24 }}>
-        <Text style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
+        <Text style={{ fontSize: 16, color: '#9ca3af', marginBottom: 8 }}>
           What should we call you?
         </Text>
         <TextInput
@@ -512,14 +521,15 @@ export default function IdentityBootupScreen() {
           value={formData.preferred_name}
           onChangeText={handleNameChange}
           placeholder="Your first name or nickname"
-          placeholderTextColor="#999"
+          placeholderTextColor="#6b7280"
           style={{
             borderWidth: 2,
-            borderColor: nameError ? '#EF4444' : '#E0E0E0',
+            borderColor: nameError ? '#EF4444' : '#374151',
             borderRadius: 12,
             padding: 16,
             fontSize: 18,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: '#1a1a1a',
+            color: '#FFFFFF',
             minHeight: 56,
           }}
           maxLength={50}
@@ -538,7 +548,7 @@ export default function IdentityBootupScreen() {
         onPress={handleStep1Continue}
         disabled={!nameValidation.valid}
         style={{
-          backgroundColor: nameValidation.valid ? '#4CAF50' : '#CCCCCC',
+          backgroundColor: nameValidation.valid ? '#FFFFFF' : '#374151',
           borderRadius: 12,
           padding: 16,
           minHeight: MIN_TOUCH_TARGET,
@@ -551,7 +561,7 @@ export default function IdentityBootupScreen() {
         accessibilityHint="Proceeds to step 2 where you'll choose your Weave's interaction style"
         accessibilityState={{ disabled: !nameValidation.valid }}
       >
-        <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Continue</Text>
+        <Text style={{ color: '#000000', fontSize: 18, fontWeight: '600' }}>Continue</Text>
       </TouchableOpacity>
 
       {/* Back Button */}
@@ -567,7 +577,7 @@ export default function IdentityBootupScreen() {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to the previous step"
         >
-          <Text style={{ color: '#666', fontSize: 16 }}>Back</Text>
+          <Text style={{ color: '#9ca3af', fontSize: 16 }}>Back</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -961,30 +971,7 @@ export default function IdentityBootupScreen() {
   //=============
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-      {/* Progress Indicator (Optional) */}
-      <View
-        style={{
-          flexDirection: 'row',
-          paddingHorizontal: 24,
-          paddingVertical: 16,
-          justifyContent: 'center',
-        }}
-      >
-        {[1, 2, 3].map((step) => (
-          <View
-            key={step}
-            style={{
-              flex: 1,
-              height: 4,
-              backgroundColor: currentStep >= step ? '#4CAF50' : '#E0E0E0',
-              marginHorizontal: 4,
-              borderRadius: 2,
-            }}
-          />
-        ))}
-      </View>
-
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
       {/* Render Current Step */}
       {currentStep === 1 && renderStep1()}
       {currentStep === 2 && renderStep2()}

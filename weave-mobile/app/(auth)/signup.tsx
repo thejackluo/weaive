@@ -418,10 +418,25 @@ export default function SignupScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text variant="displayLg" color="primary">
-              {user ? 'Already Signed In' : 'Create Account'}
+              Get Started
             </Text>
             <Text variant="textLg" color="secondary" className="mt-2">
-              {user ? 'You are currently signed in' : 'Start your journey with Weave'}
+              Create your account to begin your transformation journey
+            </Text>
+          </View>
+
+          {/* Free Trial Banner */}
+          <View
+            style={{
+              backgroundColor: `${colors.emerald[500]}15`,
+              borderRadius: 8,
+              padding: 16,
+              marginBottom: 24,
+              alignItems: 'center',
+            }}
+          >
+            <Text variant="textBase" weight="semibold" style={{ color: colors.emerald[600] }}>
+              ✨ 7-day free trial. No commitment.
             </Text>
           </View>
 
@@ -430,23 +445,23 @@ export default function SignupScreen() {
             <View style={{ marginBottom: 24 }}>
               <View
                 style={{
-                  backgroundColor: `${colors.accent[500]}15`,
+                  backgroundColor: `${colors.emerald[500]}15`,
                   borderLeftWidth: 4,
-                  borderLeftColor: colors.accent[500],
+                  borderLeftColor: colors.emerald[500],
                   borderRadius: 8,
                   padding: 20,
                   gap: 16,
                 }}
               >
                 <View style={{ gap: 8 }}>
-                  <Text variant="textLg" weight="bold" style={{ color: colors.accent[500] }}>
+                  <Text variant="textLg" weight="bold" style={{ color: colors.emerald[600] }}>
                     ✅ You're Already Signed In
                   </Text>
                   <Text variant="textBase" color="secondary">
                     Signed in as <Text weight="semibold">{user.email}</Text>
                   </Text>
                   <Text variant="textSm" color="muted" style={{ marginTop: 4 }}>
-                    You can continue to your account or sign out to use a different account.
+                    You can continue to the next step or sign out to use a different account.
                   </Text>
                 </View>
 
@@ -459,11 +474,11 @@ export default function SignupScreen() {
                     disabled={isContinuing || isSigningOut}
                     fullWidth
                   >
-                    {isContinuing ? 'Loading...' : 'Continue to App'}
+                    {isContinuing ? 'Loading...' : 'Continue to Next Step'}
                   </Button>
 
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="lg"
                     onPress={handleSignOutAction}
                     loading={isSigningOut}
@@ -776,6 +791,20 @@ export default function SignupScreen() {
               </View>
             </>
           )}
+
+          {/* Back Button - shown when signed in */}
+          {user && (
+            <Pressable
+              onPress={() => router.back()}
+              style={styles.backButton}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+            >
+              <Text variant="textBase" color="muted" style={{ textAlign: 'center' }}>
+                Back
+              </Text>
+            </Pressable>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -859,5 +888,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
+  },
+  backButton: {
+    marginTop: 24,
+    paddingVertical: 12,
   },
 });

@@ -7,7 +7,7 @@
  * TODO: Add error boundary wrapper (global error handling story)
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -40,12 +40,6 @@ const PAINPOINTS: Painpoint[] = [
     description: 'I start strong but fall off',
     icon: 'arrow.triangle.2.circlepath',
   },
-  {
-    id: 'alignment',
-    title: 'Alignment',
-    description: 'I feel ambitious but isolated',
-    icon: 'person.badge.key.fill',
-  },
 ];
 
 // =============================================================================
@@ -55,16 +49,32 @@ const PAINPOINTS: Painpoint[] = [
 export default function EmotionalStateScreen() {
   const { colors, spacing } = useTheme();
 
+  // State for user's name
+  const [userName, setUserName] = useState<string>('');
+
+  // Load user's name from AsyncStorage
+  useEffect(() => {
+    const loadUserName = async () => {
+      try {
+        const onboardingDataStr = await AsyncStorage.getItem('onboarding_data');
+        if (onboardingDataStr) {
+          const data = JSON.parse(onboardingDataStr);
+          if (data.preferred_name) {
+            setUserName(data.preferred_name);
+          }
+        }
+      } catch (error) {
+        console.error('[EMOTIONAL_STATE] Failed to load user name:', error);
+      }
+    };
+    loadUserName();
+  }, []);
+
   // Get selection from zustand store
   // Note: PRD specifies storing in user_profiles.json - will be handled by backend
   const { selectedPainpoints, setSelectedPainpoints } = useOnboardingStore();
 
-  // Local state for confirmation flow
-  const [showConfirmation, setShowConfirmation] = useState(false);
-
-  // Handle card press with PRD logic:
-  // - User selects 1, sees confirmation
-  // - Can optionally add second after confirmation
+  // Handle card press - allow all three selections
   const handleCardPress = useCallback(
     (id: string) => {
       const isCurrentlySelected = selectedPainpoints.includes(id);
@@ -72,20 +82,11 @@ export default function EmotionalStateScreen() {
       if (isCurrentlySelected) {
         // Deselect
         setSelectedPainpoints(selectedPainpoints.filter((p) => p !== id));
-        if (selectedPainpoints.length === 1) {
-          setShowConfirmation(false);
-        }
       } else {
-        // Select
-        if (selectedPainpoints.length === 0) {
-          // First selection - show confirmation
-          setSelectedPainpoints([id]);
-          setShowConfirmation(true);
-        } else if (selectedPainpoints.length === 1) {
-          // Second selection - allow it
+        // Select - allow up to 3 selections
+        if (selectedPainpoints.length < 3) {
           setSelectedPainpoints([...selectedPainpoints, id]);
         }
-        // Max 2 selections
       }
     },
     [selectedPainpoints, setSelectedPainpoints]
@@ -94,10 +95,15 @@ export default function EmotionalStateScreen() {
   // Handle continue button
   const handleContinue = useCallback(async () => {
     // Save selected painpoints to AsyncStorage for Story 1.7
+    // Merge with existing data (preserve user's name)
     try {
+      const existingDataStr = await AsyncStorage.getItem('onboarding_data');
+      const existingData = existingDataStr ? JSON.parse(existingDataStr) : {};
+
       await AsyncStorage.setItem(
         'onboarding_data',
         JSON.stringify({
+          ...existingData,
           selected_painpoints: selectedPainpoints,
         })
       );
@@ -117,53 +123,33 @@ export default function EmotionalStateScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={{ alignItems: 'center', marginBottom: spacing[6] }}>
+        <View style={{ alignItems: 'center', marginBottom: spacing[8], marginTop: spacing[4] }}>
           <Heading
-            variant="displayLg"
+            variant="display2xl"
             style={{
               color: colors.text.primary,
               textAlign: 'center',
-              marginBottom: spacing[2],
+              fontSize: 28,
+              fontWeight: '700',
             }}
           >
-            What's holding you back?
+            {userName ? `What's holding you back, ${userName}?` : "What's holding you back?"}
           </Heading>
-          <Body
-            style={{
-              color: colors.text.secondary,
-              textAlign: 'center',
-            }}
-          >
-            Pick 1-2 that you're struggling with most right now
-          </Body>
         </View>
 
-        {/* Painpoint Grid */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: spacing[3] }}>
-          {PAINPOINTS.map((painpoint) => (
-            <PainpointCard
-              key={painpoint.id}
-              painpoint={painpoint}
-              isSelected={selectedPainpoints.includes(painpoint.id)}
-              onPress={handleCardPress}
-            />
+        {/* Painpoint Stack */}
+        <View style={{ width: '100%' }}>
+          {PAINPOINTS.map((painpoint, index) => (
+            <View key={painpoint.id} style={{ marginBottom: index < PAINPOINTS.length - 1 ? spacing[3] : 0 }}>
+              <PainpointCard
+                painpoint={painpoint}
+                isSelected={selectedPainpoints.includes(painpoint.id)}
+                onPress={handleCardPress}
+                style={{ width: '100%' }}
+              />
+            </View>
           ))}
         </View>
-
-        {/* Confirmation Message */}
-        {showConfirmation && selectedPainpoints.length === 1 && (
-          <View style={{ alignItems: 'center', marginTop: spacing[6] }}>
-            <Body
-              style={{
-                color: colors.text.muted,
-                textAlign: 'center',
-                marginBottom: spacing[3],
-              }}
-            >
-              You can optionally add one more
-            </Body>
-          </View>
-        )}
 
         {/* Continue Button */}
         <View style={{ width: '100%', marginTop: spacing[6] }}>

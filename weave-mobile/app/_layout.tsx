@@ -4,6 +4,7 @@ import { LogBox } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, SimpleToastContainer } from '../src/design-system';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
+import { InAppOnboardingProvider } from '../src/contexts/InAppOnboardingContext';
 import { DevEnvironmentBanner } from '../src/components/DevEnvironmentBanner';
 import { initJournalApi } from '../src/services/journalApi';
 import apiClient from '../src/services/apiClient';
@@ -175,6 +176,7 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
  * - ThemeProvider (outermost) - Design system theme
  * - QueryClientProvider - TanStack Query for server state (Story 2.1)
  * - AuthProvider - Authentication state and methods
+ * - InAppOnboardingProvider - In-app tutorial state management
  * - QueryClientProvider - TanStack Query for server state management (Story 4.1)
  * - ApiInitializer - Connects AuthContext to API services
  * - Stack - Navigation structure
@@ -187,17 +189,19 @@ export default function RootLayout() {
   return (
     <ThemeProvider initialMode="dark">
       <AuthProvider>
-        <QueryClientProvider client={queryClient}>
-          <ApiInitializer>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            />
-            <SimpleToastContainer />
-            <DevEnvironmentBanner />
-          </ApiInitializer>
-        </QueryClientProvider>
+        <InAppOnboardingProvider>
+          <QueryClientProvider client={queryClient}>
+            <ApiInitializer>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+              />
+              <SimpleToastContainer />
+              <DevEnvironmentBanner />
+            </ApiInitializer>
+          </QueryClientProvider>
+        </InAppOnboardingProvider>
       </AuthProvider>
     </ThemeProvider>
   );

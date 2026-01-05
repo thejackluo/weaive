@@ -40,18 +40,26 @@ export default function AuthenticationScreen() {
       setActiveProvider('google');
       setError(null);
 
+      console.log('[ONBOARDING_AUTH] Starting Google sign in...');
       const result = await signInWithGoogle();
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to sign in with Google');
       }
 
+      console.log('[ONBOARDING_AUTH] Google sign in successful, navigating to identity-bootup...');
+
       // Show success toast
       showSimpleToast('Signed in successfully! 🎉', 'success');
 
-      // Success - navigate to next onboarding step
-      router.push('/(onboarding)/identity-bootup' as any);
+      // Give a brief moment for the session to fully establish
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Success - navigate to next onboarding step using replace to avoid back navigation issues
+      console.log('[ONBOARDING_AUTH] Navigating to identity-bootup...');
+      router.replace('/(onboarding)/identity-bootup' as any);
     } catch (err: any) {
+      console.error('[ONBOARDING_AUTH] Google sign in failed:', err);
       const errorMessage = err.message || 'Unable to sign in with Google. Please try again.';
       setError(errorMessage);
       showSimpleToast(errorMessage, 'error');
@@ -68,18 +76,26 @@ export default function AuthenticationScreen() {
       setActiveProvider('apple');
       setError(null);
 
+      console.log('[ONBOARDING_AUTH] Starting Apple sign in...');
       const result = await signInWithApple();
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to sign in with Apple');
       }
 
+      console.log('[ONBOARDING_AUTH] Apple sign in successful, navigating to identity-bootup...');
+
       // Show success toast
       showSimpleToast('Signed in successfully! 🎉', 'success');
 
-      // Success - navigate to next onboarding step
-      router.push('/(onboarding)/identity-bootup' as any);
+      // Give a brief moment for the session to fully establish
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Success - navigate to next onboarding step using replace to avoid back navigation issues
+      console.log('[ONBOARDING_AUTH] Navigating to identity-bootup...');
+      router.replace('/(onboarding)/identity-bootup' as any);
     } catch (err: any) {
+      console.error('[ONBOARDING_AUTH] Apple sign in failed:', err);
       const errorMessage = err.message || 'Unable to sign in with Apple. Please try again.';
       setError(errorMessage);
       showSimpleToast(errorMessage, 'error');
@@ -105,7 +121,6 @@ export default function AuthenticationScreen() {
 
   const handleContinueOnboarding = () => {
     // User is already signed in, continue to next onboarding step
-    showSimpleToast('Continuing to next step...', 'success');
     router.push('/(onboarding)/identity-bootup' as any);
   };
 
@@ -124,7 +139,7 @@ export default function AuthenticationScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <SafeAreaView className="flex-1 bg-neutral-900" style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
       <ScrollView
         className="flex-1"
         contentContainerClassName="flex-grow justify-center px-6 py-6"
@@ -140,12 +155,12 @@ export default function AuthenticationScreen() {
         {/* Header */}
         <View className="mb-8 mt-10" style={{ marginBottom: 32, marginTop: 40 }}>
           <Text
-            className="text-3xl font-bold text-center text-neutral-900 mb-3"
+            className="text-3xl font-bold text-center text-white mb-3"
             style={{
               fontSize: 32,
               fontWeight: '700',
               textAlign: 'center',
-              color: '#1a1a1a',
+              color: '#ffffff',
               marginBottom: 12,
             }}
           >
@@ -153,36 +168,17 @@ export default function AuthenticationScreen() {
           </Text>
 
           <Text
-            className="text-base text-center text-neutral-600 mb-6"
+            className="text-base text-center text-neutral-400 mb-6"
             style={{
               fontSize: 16,
               textAlign: 'center',
-              color: '#6b7280',
+              color: '#9ca3af',
               marginBottom: 24,
               lineHeight: 24,
             }}
           >
             Create your account to begin your transformation journey
           </Text>
-
-          <View className="items-center" style={{ alignItems: 'center' }}>
-            <View
-              className="bg-emerald-50 px-6 py-3 rounded-xl"
-              style={{
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                paddingHorizontal: 24,
-                paddingVertical: 12,
-                borderRadius: 12,
-              }}
-            >
-              <Text
-                className="text-emerald-600 font-semibold text-sm"
-                style={{ color: '#10b981', fontWeight: '600', fontSize: 15 }}
-              >
-                ✨ 7-day free trial. No commitment.
-              </Text>
-            </View>
-          </View>
         </View>
 
         {/* Already Signed In Card */}
@@ -361,9 +357,8 @@ export default function AuthenticationScreen() {
                     );
 
                     if (success) {
-                      showSimpleToast('🔧 Dev bypass: Continuing to onboarding', 'success');
                       // For onboarding flow, continue to identity-bootup
-                      router.push('/(onboarding)/identity-bootup' as any);
+                      router.replace('/(onboarding)/identity-bootup' as any);
                     }
                   } catch (err) {
                     console.error('[ONBOARDING_AUTH] Dev bypass failed:', err);

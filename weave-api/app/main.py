@@ -111,6 +111,35 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+# Custom handler for application exceptions (ValidationException, NotFoundException, etc.)
+@app.exception_handler(Exception)
+async def app_exception_handler(request: Request, exc: Exception):
+    """
+    Convert custom AppException subclasses to standard error response format.
+
+    Handles: ValidationException, NotFoundException, UnauthorizedException, etc.
+    Standard format: {"error": {"code": "ERROR_CODE", "message": "...", "retryable": bool}}
+    """
+    # Import AppException here to avoid circular imports
+    from app.core.errors import AppException
+
+    # Only handle AppException subclasses, re-raise others
+    if not isinstance(exc, AppException):
+        # Let FastAPI's default handler deal with it
+        raise exc
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "code": exc.code,
+                "message": exc.message,
+                "retryable": exc.retryable,
+            }
+        },
+    )
+
+
 # CORS - Environment-based configuration
 # ⚠️ SECURITY WARNING: NEVER use ALLOWED_ORIGINS="*" in production!
 # Set ALLOWED_ORIGINS in .env to specific domains in production

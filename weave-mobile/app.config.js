@@ -56,7 +56,7 @@ module.exports = {
     extra: {
       router: {},
       eas: {
-        projectId: '958e77af-47be-49ec-a7e6-bbfa14552734'
+        projectId: '9acc0e9e-3bb5-4d2d-b719-e885e869de09'
       },
       // API Configuration from .env
       apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:8000',

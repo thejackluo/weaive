@@ -38,6 +38,9 @@ interface NeedleCardProps {
   isVisible: boolean; // Controls whether the card shows at all (for hide-others behavior)
   onToggle: () => void;
   onBindPress: (bind: Bind) => void;
+  firstBindRef?: (ref: View | null) => void; // For onboarding position tracking
+  isHighlightedFirstBind?: boolean; // For onboarding shimmer on first bind
+  isTourActive?: boolean; // Disable interactions during tour (except first bind)
 }
 
 // Minimal aesthetic: All needles use subtle white accent bar (no color distinction)
@@ -50,6 +53,9 @@ export function NeedleCard({
   isVisible,
   onToggle,
   onBindPress,
+  firstBindRef,
+  isHighlightedFirstBind,
+  isTourActive,
 }: NeedleCardProps) {
   const { colors, spacing, radius } = useTheme();
   const rotation = useSharedValue(0);
@@ -93,9 +99,11 @@ export function NeedleCard({
             shadowOpacity: 0.2,
             shadowRadius: 4,
             elevation: 4,
+            opacity: isTourActive ? 0.5 : 1,
           },
         ]}
-        onPress={onToggle}
+        onPress={isTourActive ? undefined : onToggle}
+        disabled={isTourActive}
       >
         {/* Left accent bar - minimal white line */}
         <View
@@ -176,9 +184,35 @@ export function NeedleCard({
             animatedBindsStyle,
           ]}
         >
-          {binds.map((bind) => (
-            <BindItem key={bind.id} bind={bind} onPress={() => onBindPress(bind)} />
-          ))}
+          {binds.map((bind, index) => {
+            if (index === 0 && firstBindRef) {
+              // First bind with ref for position tracking
+              return (
+                <View
+                  key={bind.id}
+                  ref={firstBindRef}
+                  collapsable={false}
+                >
+                  <BindItem
+                    bind={bind}
+                    onPress={() => onBindPress(bind)}
+                    isHighlighted={isHighlightedFirstBind}
+                    disabled={!isHighlightedFirstBind && isTourActive} // Only enabled when highlighted
+                  />
+                </View>
+              );
+            }
+            // Other binds without ref
+            return (
+              <BindItem
+                key={bind.id}
+                bind={bind}
+                onPress={() => onBindPress(bind)}
+                isHighlighted={false}
+                disabled={isTourActive} // Disable during tour
+              />
+            );
+          })}
         </Animated.View>
       )}
     </View>

@@ -9,8 +9,10 @@
  * 5. "Complete" button → Trigger completion flow
  */
 
-import React, { useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, Alert, Modal, Image } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, ScrollView, Pressable, StyleSheet, Alert, Modal, Image, Animated, Dimensions } from 'react-native';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -31,7 +33,35 @@ import { supabase } from '@lib/supabase';
 export function BindScreen() {
   const { colors, spacing, radius } = useTheme();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, fromOnboarding } = useLocalSearchParams<{ id: string; fromOnboarding?: string }>();
+
+  // Onboarding popup state
+  const [showOnboardingPopup, setShowOnboardingPopup] = useState(fromOnboarding === 'true');
+  const [onboardingPopupDismissed, setOnboardingPopupDismissed] = useState(false);
+
+  // Shimmer animation for back button during onboarding
+  const backButtonShimmer = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    if (onboardingPopupDismissed) {
+      const shimmer = Animated.loop(
+        Animated.sequence([
+          Animated.timing(backButtonShimmer, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: false,
+          }),
+          Animated.timing(backButtonShimmer, {
+            toValue: 0.3,
+            duration: 1000,
+            useNativeDriver: false,
+          }),
+        ])
+      );
+      shimmer.start();
+      return () => shimmer.stop();
+    }
+  }, [onboardingPopupDismissed]);
 
   // Fetch bind details (using existing useTodayBinds hook)
   const { data, isLoading: isLoadingBinds, refetch } = useTodayBinds();
@@ -361,13 +391,35 @@ export function BindScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header with back button */}
-        <Pressable
-          onPress={() => router.back()}
-          style={[styles.backButton, { marginBottom: spacing[5] }]}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        <Animated.View
+          style={[
+            styles.backButton,
+            {
+              marginBottom: spacing[5],
+              borderWidth: onboardingPopupDismissed ? 2 : 0,
+              borderColor: onboardingPopupDismissed
+                ? backButtonShimmer.interpolate({
+                    inputRange: [0.3, 1],
+                    outputRange: ['rgba(255, 255, 255, 0.3)', 'rgba(255, 255, 255, 1)'],
+                  })
+                : 'transparent',
+              borderRadius: 12,
+              padding: onboardingPopupDismissed ? 12 : 0,
+              shadowColor: onboardingPopupDismissed ? '#FFFFFF' : 'transparent',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: onboardingPopupDismissed ? backButtonShimmer : 0,
+              shadowRadius: onboardingPopupDismissed ? 8 : 0,
+              elevation: onboardingPopupDismissed ? 8 : 0,
+            },
+          ]}
         >
-          <Body style={{ color: colors.text.primary }}>← Back</Body>
-        </Pressable>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Body style={{ color: colors.text.primary }}>← Back</Body>
+          </Pressable>
+        </Animated.View>
 
         {/* Bind Title */}
         <Heading
@@ -441,11 +493,11 @@ export function BindScreen() {
                         : colors.neutral[600],
                   borderRadius: radius.lg,
                   padding: spacing[4],
-                  opacity: bind.completed && !bind.completion_details?.duration_minutes ? 0.5 : 1,
+                  opacity: bind.completed && !bind.completion_details?.duration_minutes ? 0.5 : onboardingPopupDismissed ? 0.3 : 1,
                 },
               ]}
-              onPress={bind.completed ? undefined : handleTimerSetup}
-              disabled={bind.completed}
+              onPress={bind.completed || onboardingPopupDismissed ? undefined : handleTimerSetup}
+              disabled={bind.completed || onboardingPopupDismissed}
             >
               <View style={styles.iconContainer}>
                 <MaterialIcons
@@ -499,11 +551,11 @@ export function BindScreen() {
                         : colors.neutral[600],
                   borderRadius: radius.lg,
                   padding: spacing[4],
-                  opacity: bind.completed && !bind.has_proof ? 0.5 : 1,
+                  opacity: bind.completed && !bind.has_proof ? 0.5 : onboardingPopupDismissed ? 0.3 : 1,
                 },
               ]}
-              onPress={bind.completed ? undefined : photoUri ? handleViewPhoto : handleOpenCamera}
-              disabled={bind.completed}
+              onPress={bind.completed || onboardingPopupDismissed ? undefined : photoUri ? handleViewPhoto : handleOpenCamera}
+              disabled={bind.completed || onboardingPopupDismissed}
             >
               {photoUri ? (
                 // Show photo preview with trash icon
@@ -519,22 +571,24 @@ export function BindScreen() {
                     ]}
                     resizeMode="cover"
                   />
-                  <Pressable
-                    style={[
-                      styles.trashIcon,
-                      {
-                        backgroundColor: colors.semantic.error.base,
-                        borderRadius: radius.sm,
-                      },
-                    ]}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleRemovePhoto();
-                    }}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <MaterialIcons name="delete" size={16} color="white" />
-                  </Pressable>
+                  {!onboardingPopupDismissed && (
+                    <Pressable
+                      style={[
+                        styles.trashIcon,
+                        {
+                          backgroundColor: colors.semantic.error.base,
+                          borderRadius: radius.sm,
+                        },
+                      ]}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleRemovePhoto();
+                      }}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <MaterialIcons name="delete" size={16} color="white" />
+                    </Pressable>
+                  )}
                 </View>
               ) : (
                 // Show camera icon
@@ -652,27 +706,27 @@ export function BindScreen() {
             <>
               {isTimerRunning ? (
                 // Timer is running - show Complete Bind button
-                <Button variant="primary" size="lg" onPress={handleComplete}>
+                <Button variant="primary" size="lg" onPress={handleComplete} disabled={onboardingPopupDismissed}>
                   Complete Bind
                 </Button>
               ) : timerDuration && !photoUri ? (
                 // Only timer selected - show Start Bind
-                <Button variant="primary" size="lg" onPress={handleStartBind}>
+                <Button variant="primary" size="lg" onPress={handleStartBind} disabled={onboardingPopupDismissed}>
                   Start Bind
                 </Button>
               ) : photoUri && !timerDuration ? (
                 // Only photo selected - show Complete Bind
-                <Button variant="primary" size="lg" onPress={handleStartBind}>
+                <Button variant="primary" size="lg" onPress={handleStartBind} disabled={onboardingPopupDismissed}>
                   Complete Bind
                 </Button>
               ) : timerDuration && photoUri ? (
                 // Both selected - show Start Bind (will start timer)
-                <Button variant="primary" size="lg" onPress={handleStartBind}>
+                <Button variant="primary" size="lg" onPress={handleStartBind} disabled={onboardingPopupDismissed}>
                   Start Bind
                 </Button>
               ) : (
                 // Neither selected - show Complete Bind (can complete without proof)
-                <Button variant="primary" size="lg" onPress={handleStartBind}>
+                <Button variant="primary" size="lg" onPress={handleStartBind} disabled={onboardingPopupDismissed}>
                   Complete Bind
                 </Button>
               )}
@@ -736,6 +790,54 @@ export function BindScreen() {
           onClose={() => setShowPhotoLightbox(false)}
         />
       )}
+
+      {/* Onboarding Popup */}
+      <Modal
+        visible={showOnboardingPopup}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setShowOnboardingPopup(false);
+          setOnboardingPopupDismissed(true);
+        }}
+      >
+        <View style={styles.onboardingOverlay}>
+          {/* Dark backdrop */}
+          <View style={styles.onboardingBackdrop} />
+
+          {/* Top-positioned popup */}
+          <View style={styles.onboardingPopup}>
+            <View style={[styles.onboardingContent, { backgroundColor: colors.background.secondary, borderColor: colors.border.muted }]}>
+              {/* Message */}
+              <Heading
+                variant="displayMd"
+                style={{ color: colors.text.primary, textAlign: 'center', marginBottom: spacing[2] }}
+              >
+                Stay accountable
+              </Heading>
+
+              {/* Description */}
+              <Body
+                style={{ color: colors.text.secondary, textAlign: 'center', lineHeight: 22, marginBottom: spacing[5] }}
+              >
+                Stay accountable through a lock-down timer and/or photo proof
+              </Body>
+
+              {/* Got it button */}
+              <Button
+                variant="primary"
+                onPress={() => {
+                  setShowOnboardingPopup(false);
+                  setOnboardingPopupDismissed(true);
+                }}
+                fullWidth
+              >
+                Got it
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -824,5 +926,29 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: 'top',
     borderWidth: 1,
+  },
+  onboardingOverlay: {
+    flex: 1,
+  },
+  onboardingBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+  },
+  onboardingPopup: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    top: SCREEN_HEIGHT * 0.25, // Position at top like other tour popups
+  },
+  onboardingContent: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
   },
 });

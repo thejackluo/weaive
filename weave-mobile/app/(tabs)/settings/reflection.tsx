@@ -11,6 +11,8 @@
  * - Answer custom tracking questions (text, numeric, yes/no)
  * - Manage custom questions (add/edit/delete)
  * - Edit existing journal entries
+ *
+ * During onboarding, all form interactions are blocked via an absolutely positioned overlay
  */
 
 import React, { useState, useEffect } from 'react';
@@ -23,20 +25,31 @@ import {
   ActivityIndicator,
   StyleSheet,
   SafeAreaView,
+  Animated,
+  Pressable,
+  Modal,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useSubmitJournal, useUpdateJournal, useGetTodayJournal } from '@/hooks/useJournal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
+import { useInAppOnboarding } from '@/contexts/InAppOnboardingContext';
 
 const DRAFT_KEY = '@weave_reflection_draft';
 
 export default function ReflectionScreen() {
-  console.log('[REFLECTION_SCREEN] 🎬 Component mounting...');
+  console.log('[REFLECTION_SCREEN] 🎬 Component mounting (v3)...');
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const { currentStep, completeCurrentStep } = useInAppOnboarding();
+
+  // Onboarding state
+  const [showOnboardingTooltip, setShowOnboardingTooltip] = useState(false);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const slideAnim = React.useRef(new Animated.Value(-20)).current;
 
   // Form state
   const [todayReflection, setTodayReflection] = useState('');
@@ -94,6 +107,52 @@ export default function ReflectionScreen() {
       loadDraft();
     }
   }, [todayJournal]);
+
+  // Show onboarding tooltip if coming from onboarding OR currently in home_page_tour step
+  // Use ref to prevent re-showing after dismissal
+  const hasShownTooltipRef = React.useRef(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const shouldShowTooltip =
+      (params.fromOnboarding === 'true' || currentStep === 'home_page_tour') &&
+      !hasShownTooltipRef.current;
+
+    if (shouldShowTooltip) {
+      console.log('[REFLECTION_SCREEN] 🎓 In onboarding flow - showing tooltip');
+      hasShownTooltipRef.current = true; // Mark as shown to prevent re-trigger
+
+      // Small delay to ensure screen is rendered
+      timeoutId = setTimeout(() => {
+        if (isMounted) {
+          setShowOnboardingTooltip(true);
+          // Animate in
+          Animated.parallel([
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+              toValue: 0,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+          ]).start();
+        }
+      }, 500);
+    }
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      // Stop any ongoing animations
+      fadeAnim.stopAnimation();
+      slideAnim.stopAnimation();
+    };
+  }, [params.fromOnboarding, currentStep]);
 
   // Set timeout after 10 seconds of loading
   useEffect(() => {
@@ -205,7 +264,11 @@ export default function ReflectionScreen() {
     }
   };
 
-  const isSubmitEnabled = fulfillmentScore >= 1 && fulfillmentScore <= 10;
+  const isSubmitEnabled =
+    fulfillmentScore >= 1 &&
+    fulfillmentScore <= 10 &&
+    todayReflection.length >= 50 &&
+    tomorrowFocus.trim().length > 0;
   const isLoading = submitMutation.isPending || updateMutation.isPending;
 
   if (isLoadingJournal) {
@@ -262,88 +325,91 @@ export default function ReflectionScreen() {
           <Text style={styles.headerTitle}>Daily Check-in</Text>
         </View>
 
-        {/* Question 1: Today's Reflection */}
-        <View style={styles.questionContainer}>
-          <Text style={styles.questionLabel}>
-            How do you feel about today? What worked well and what didn't?
-          </Text>
-          <TextInput
-            style={styles.multilineInput}
-            multiline
-            numberOfLines={5}
-            maxLength={500}
-            value={todayReflection}
-            onChangeText={setTodayReflection}
-            placeholder="Today I felt... The highlight was... I struggled with..."
-            placeholderTextColor="#999"
-          />
-          <Text style={styles.characterCount}>{reflectionCount} / 500</Text>
-          {reflectionCount < 50 && reflectionCount > 0 && (
-            <Text style={styles.hint}>Keep going! Aim for at least 50 characters.</Text>
-          )}
-        </View>
+        {/* Form Content */}
+        <View>
+          {/* Question 1: Today's Reflection */}
+          <View style={styles.questionContainer}>
+            <Text style={styles.questionLabel}>
+              How do you feel about today? What worked well and what didn't?
+            </Text>
+            <TextInput
+              style={styles.multilineInput}
+              multiline
+              numberOfLines={5}
+              maxLength={500}
+              value={todayReflection}
+              onChangeText={setTodayReflection}
+              placeholder="Today I felt... The highlight was... I struggled with..."
+              placeholderTextColor="#999"
+            />
+            <Text style={styles.characterCount}>{reflectionCount} / 500</Text>
+            {reflectionCount < 50 && reflectionCount > 0 && (
+              <Text style={styles.hint}>Keep going! Aim for at least 50 characters.</Text>
+            )}
+          </View>
 
-        {/* Question 2: Tomorrow's Focus */}
-        <View style={styles.questionContainer}>
-          <Text style={styles.questionLabel}>
-            What is the one thing you want to accomplish tomorrow?
-          </Text>
-          <TextInput
-            style={styles.singleLineInput}
-            maxLength={100}
-            value={tomorrowFocus}
-            onChangeText={setTomorrowFocus}
-            placeholder="Tomorrow I will..."
-            placeholderTextColor="#999"
-          />
-          <Text style={styles.characterCount}>{focusCount} / 100</Text>
-        </View>
+          {/* Question 2: Tomorrow's Focus */}
+          <View style={styles.questionContainer}>
+            <Text style={styles.questionLabel}>
+              What is the one thing you want to accomplish tomorrow?
+            </Text>
+            <TextInput
+              style={styles.singleLineInput}
+              maxLength={100}
+              value={tomorrowFocus}
+              onChangeText={setTomorrowFocus}
+              placeholder="Tomorrow I will..."
+              placeholderTextColor="#999"
+            />
+            <Text style={styles.characterCount}>{focusCount} / 100</Text>
+          </View>
 
-        {/* Fulfillment Score Slider */}
-        <View style={styles.questionContainer}>
-          <Text style={styles.questionLabel}>Overall, how fulfilled do you feel about today?</Text>
-          <View style={styles.sliderContainer}>
-            <Text style={styles.scoreDisplay}>{fulfillmentScore}</Text>
-            <View style={styles.sliderWrapper}>
-              <Slider
-                style={styles.slider}
-                value={fulfillmentScore}
-                onValueChange={(value) => {
-                  const rounded = Math.round(value);
-                  if (rounded !== fulfillmentScore) {
-                    setFulfillmentScore(rounded);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }
-                }}
-                minimumValue={1}
-                maximumValue={10}
-                step={1}
-                minimumTrackTintColor="#3b82f6"
-                maximumTrackTintColor="#2a2a2a"
-                thumbTintColor="#3b82f6"
-              />
-            </View>
-            <View style={styles.sliderLabels}>
-              <Text style={styles.sliderLabel}>1 - Low</Text>
-              <Text style={styles.sliderLabel}>10 - High</Text>
+          {/* Fulfillment Score Slider */}
+          <View style={styles.questionContainer}>
+            <Text style={styles.questionLabel}>Overall, how fulfilled do you feel about today?</Text>
+            <View style={styles.sliderContainer}>
+              <Text style={styles.scoreDisplay}>{fulfillmentScore}</Text>
+              <View style={styles.sliderWrapper}>
+                <Slider
+                  style={styles.slider}
+                  value={fulfillmentScore}
+                  onValueChange={(value) => {
+                    const rounded = Math.round(value);
+                    if (rounded !== fulfillmentScore) {
+                      setFulfillmentScore(rounded);
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                  }}
+                  minimumValue={1}
+                  maximumValue={10}
+                  step={1}
+                  minimumTrackTintColor="#FFFFFF"
+                  maximumTrackTintColor="#2a2a2a"
+                  thumbTintColor="#FFFFFF"
+                />
+              </View>
+              <View style={styles.sliderLabels}>
+                <Text style={styles.sliderLabel}>1 - Low</Text>
+                <Text style={styles.sliderLabel}>10 - High</Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={[styles.submitButton, !isSubmitEnabled && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={!isSubmitEnabled || isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitButtonText}>
-              {isEditMode ? 'Update Reflection' : 'Submit'}
-            </Text>
-          )}
-        </TouchableOpacity>
+          {/* Submit Button */}
+          <TouchableOpacity
+            style={[styles.submitButton, !isSubmitEnabled && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={!isSubmitEnabled || isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.submitButtonText}>
+                {isEditMode ? 'Update Reflection' : 'Submit'}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
         {isLoading && (
           <Text style={styles.loadingText}>
             {isEditMode ? 'Updating your reflection...' : 'Submitting your reflection...'}
@@ -364,6 +430,65 @@ export default function ReflectionScreen() {
           }}
         />
       )}
+
+      {/* Onboarding Tooltip Modal */}
+      <Modal visible={showOnboardingTooltip} transparent animationType="fade">
+        <View style={styles.onboardingOverlay}>
+          {/* Semi-transparent backdrop */}
+          <View style={styles.onboardingBackdrop} />
+
+          {/* Centered Tooltip */}
+          <Animated.View
+            style={[
+              styles.onboardingTooltipContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.onboardingTooltip}>
+              {/* Icon */}
+              <View style={styles.onboardingIconContainer}>
+                <Ionicons name="calendar" size={32} color="#FFFFFF" />
+              </View>
+
+              {/* Message */}
+              <Text style={styles.onboardingMessage}>Daily reflection</Text>
+
+              {/* Description */}
+              <Text style={styles.onboardingDescription}>
+                Reflect at the end of your day to stay mindful of the process
+              </Text>
+
+              {/* Got It Button */}
+              <Pressable
+                onPress={async () => {
+                  try {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    console.log('[REFLECTION] 🎯 Starting step completion...');
+
+                    // CRITICAL: Complete step FIRST (save to AsyncStorage)
+                    await completeCurrentStep();
+                    console.log('[REFLECTION] ✅ Step completed and saved');
+
+                    // THEN dismiss modal (prevents race condition)
+                    setShowOnboardingTooltip(false);
+                    console.log('[REFLECTION] ✅ Modal dismissed');
+                  } catch (error) {
+                    console.error('[REFLECTION] ❌ Error completing onboarding:', error);
+                    // Still close modal even if save fails
+                    setShowOnboardingTooltip(false);
+                  }
+                }}
+                style={styles.onboardingButton}
+              >
+                <Text style={styles.onboardingButtonText}>Got it</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -522,18 +647,82 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
   },
   submitButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     marginTop: 16,
   },
   submitButtonDisabled: {
-    backgroundColor: '#2a2a2a',
-    opacity: 0.5,
+    opacity: 0.4,
   },
   submitButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Onboarding styles
+  onboardingOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  onboardingBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+  },
+  onboardingTooltipContainer: {
+    width: '100%',
+    maxWidth: 400,
+  },
+  onboardingTooltip: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  onboardingIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  onboardingMessage: {
+    fontSize: 22,
+    fontWeight: '600',
     color: '#fff',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  onboardingDescription: {
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  onboardingButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  onboardingButtonText: {
+    color: '#000',
     fontSize: 16,
     fontWeight: '600',
   },

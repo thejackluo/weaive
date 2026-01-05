@@ -19,6 +19,8 @@ import {
   Pressable,
   ActivityIndicator,
   TextInput,
+  Animated,
+  Modal,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -35,6 +37,7 @@ import { ConsistencyHeatmap } from '@/components/ConsistencyHeatmap';
 import { FulfillmentChart } from '@/components/FulfillmentChart';
 import { HistoryList } from '@/components/HistoryList';
 import { getLevelProgress } from '@/utils/levelProgression';
+import { useInAppOnboarding } from '@/contexts/InAppOnboardingContext';
 
 type ConsistencyFilter = 'Overall' | 'Needle' | 'Bind' | 'Thread';
 type TimeframeOption = '7d' | '2w' | '1m';
@@ -46,6 +49,24 @@ export function DashboardScreen() {
   const { data: goalsData, isLoading, refetch: refetchGoals } = useActiveGoals();
   const { data: userStatsData, isLoading: isStatsLoading } = useUserStats();
   const { data: todayJournal } = useGetTodayJournal();
+  const { currentStep, completeCurrentStep } = useInAppOnboarding();
+
+  // Onboarding state
+  const [showOnboardingTooltip, setShowOnboardingTooltip] = useState(false);
+  const [showTutorialCompleteModal, setShowTutorialCompleteModal] = useState(false);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const slideAnim = React.useRef(new Animated.Value(-20)).current;
+  const completeFadeAnim = React.useRef(new Animated.Value(0)).current;
+  const completeSlideAnim = React.useRef(new Animated.Value(-20)).current;
+  const isMountedRef = React.useRef(true);
+  const hasShownCompletionRef = React.useRef(false);
+
+  // Track mounted state
+  React.useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // 🐛 FIX: Force refetch all data when screen comes into focus
   // This ensures new/deleted/archived goals, bind completions, and consistency grid updates appear immediately
@@ -88,6 +109,83 @@ export function DashboardScreen() {
       setSelectedNeedleId(goals[0].id);
     }
   }, [consistencyFilter, selectedNeedleId, goals]);
+
+  // Show onboarding tooltip when user arrives during dashboard_tour
+  React.useEffect(() => {
+    let isMounted = true;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    if (currentStep === 'dashboard_tour') {
+      console.log('[DASHBOARD_SCREEN] 🎓 Dashboard tour active - showing tooltip');
+      // Small delay to ensure screen is rendered
+      timeoutId = setTimeout(() => {
+        if (isMounted) {
+          setShowOnboardingTooltip(true);
+          // Animate in
+          Animated.parallel([
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+              toValue: 0,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+          ]).start();
+        }
+      }, 500);
+    }
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      // Stop any ongoing animations
+      fadeAnim.stopAnimation();
+      slideAnim.stopAnimation();
+    };
+  }, [currentStep]);
+
+  // Show "Tutorial Complete" modal after dashboard_tour is completed
+  React.useEffect(() => {
+    let isMounted = true;
+    let delayTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    // Show completion modal when user advances FROM dashboard_tour (currentStep will be 'complete_first_bind')
+    if (currentStep === 'complete_first_bind' && !hasShownCompletionRef.current) {
+      console.log('[DASHBOARD_SCREEN] 🎉 Dashboard tour completed - showing tutorial complete modal after delay');
+      hasShownCompletionRef.current = true;
+
+      // Wait 3 seconds before showing the completion modal
+      delayTimeout = setTimeout(() => {
+        if (isMounted) {
+          setShowTutorialCompleteModal(true);
+          // Animate in
+          Animated.parallel([
+            Animated.timing(completeFadeAnim, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            Animated.timing(completeSlideAnim, {
+              toValue: 0,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+          ]).start();
+        }
+      }, 3000);
+    }
+
+    return () => {
+      isMounted = false;
+      if (delayTimeout) clearTimeout(delayTimeout);
+      // Stop any ongoing animations
+      completeFadeAnim.stopAnimation();
+      completeSlideAnim.stopAnimation();
+    };
+  }, [currentStep]);
 
   // User stats from API (with fallback to defaults)
   const userLevel = userStatsData?.data?.level || 1;
@@ -226,7 +324,7 @@ export function DashboardScreen() {
                     {/* Needle info */}
                     <View style={styles.needleInfo}>
                       <Text
-                        variant="displaySm"
+                        variant="displayMd"
                         weight="bold"
                         style={{ fontSize: 20, color: '#FFFFFF', fontWeight: '800' }}
                       >
@@ -403,6 +501,114 @@ export function DashboardScreen() {
           <HistoryList limit={10} timeframe={historyTimeframe} type={historyType} />
         </Card>
       </View>
+
+      {/* Onboarding Tooltip */}
+      {showOnboardingTooltip && (
+        <View style={styles.onboardingOverlay} pointerEvents="box-none">
+          {/* Semi-transparent backdrop - blocks ALL touch events */}
+          <View style={styles.onboardingBackdrop} pointerEvents="auto" />
+
+          {/* Centered Tooltip */}
+          <Animated.View
+            style={[
+              styles.onboardingTooltipContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.onboardingTooltip}>
+              {/* Icon */}
+              <View style={styles.onboardingIconContainer}>
+                <Ionicons name="stats-chart" size={32} color="#FFFFFF" />
+              </View>
+
+              {/* Message */}
+              <Text style={styles.onboardingMessage}>View your progress overtime</Text>
+
+              {/* Description */}
+              <Text style={styles.onboardingDescription}>
+                Track your consistency, fulfillment, and growth
+              </Text>
+
+              {/* Got It Button */}
+              <Pressable
+                onPress={async () => {
+                  try {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (isMountedRef.current) {
+                      setShowOnboardingTooltip(false);
+                    }
+                    await completeCurrentStep();
+                    if (isMountedRef.current) {
+                      console.log('[DASHBOARD] ✅ Dashboard tour completed successfully');
+                    }
+                  } catch (error) {
+                    if (isMountedRef.current) {
+                      console.error('[DASHBOARD] ❌ Error completing dashboard tour:', error);
+                    }
+                  }
+                }}
+                style={styles.onboardingButton}
+              >
+                <Text style={styles.onboardingButtonText}>Got it</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </View>
+      )}
+
+      {/* Tutorial Complete Modal */}
+      <Modal visible={showTutorialCompleteModal} transparent animationType="fade">
+        <View style={styles.onboardingOverlay}>
+          {/* Semi-transparent backdrop */}
+          <View style={styles.onboardingBackdrop} />
+
+          {/* Centered Modal */}
+          <Animated.View
+            style={[
+              styles.onboardingTooltipContainer,
+              {
+                opacity: completeFadeAnim,
+                transform: [{ translateY: completeSlideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.onboardingTooltip}>
+              {/* Icon */}
+              <View style={styles.onboardingIconContainer}>
+                <Ionicons name="checkmark-circle" size={32} color="#10b981" />
+              </View>
+
+              {/* Message */}
+              <Text style={styles.onboardingMessage}>Tutorial complete!</Text>
+
+              {/* Description */}
+              <Text style={styles.onboardingDescription}>
+                • Complete the binds for the day{'\n'}• Complete your daily reflection{'\n'}• Watch
+                your progress over time{'\n'}• Adjust along the way
+              </Text>
+
+              {/* Got It Button */}
+              <Pressable
+                onPress={() => {
+                  try {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowTutorialCompleteModal(false);
+                    console.log('[DASHBOARD] ✅ Tutorial complete modal dismissed');
+                  } catch (error) {
+                    console.error('[DASHBOARD] ❌ Error dismissing tutorial modal:', error);
+                  }
+                }}
+                style={styles.onboardingButton}
+              >
+                <Text style={styles.onboardingButtonText}>Got it</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -636,5 +842,70 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     gap: 8,
+  },
+  // Onboarding styles
+  onboardingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+  },
+  onboardingBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+  },
+  onboardingTooltipContainer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    top: 100,
+  },
+  onboardingTooltip: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  onboardingIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  onboardingMessage: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  onboardingDescription: {
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  onboardingButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  onboardingButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

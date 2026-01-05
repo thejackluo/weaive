@@ -36,56 +36,29 @@ export default function WelcomeScreen() {
    * Triggers haptic feedback, tracks analytics event, and navigates to the next onboarding screen.
    * Analytics tracking implemented in Story 1.1 (AC3 requirement).
    */
-  const handleGetStarted = async () => {
+  const handleGetStarted = () => {
     // Haptic feedback for UX
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Track onboarding_started event (Story 1.1 - AC3)
-    await trackOnboardingStarted();
+    // Track onboarding_started event (Story 1.1 - AC3) - fire and forget for instant navigation
+    trackOnboardingStarted();
 
-    // Navigate to emotional state selection (Story 1.2)
-    router.push('/(onboarding)/emotional-state');
+    // Navigate immediately to authentication screen
+    router.push('/(onboarding)/authentication');
   };
 
   /**
-   * Handles the "View Design System" button press
+   * Handles the "Skip to App" button press
    *
-   * Navigates to the design system showcase screen for previewing components
+   * Allows users to bypass onboarding and navigate directly to the main app.
+   * Useful for testing and returning users who want to skip the intro.
    */
-  const handleViewDesignSystem = async () => {
+  const handleSkipToApp = () => {
+    // Haptic feedback for UX
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/(tabs)/design-system-showcase');
-  };
 
-  /**
-   * Handles the "Go to Main App" button press
-   *
-   * Navigates to the main app tabs (home screen)
-   */
-  const handleGoToMainApp = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Navigate directly to main app
     router.push('/(tabs)');
-  };
-
-  /**
-   * Handles the "Voice Demo" button press
-   *
-   * Navigates to the voice/STT demo screen for testing Story 0.11 components
-   */
-  const handleVoiceDemo = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/(tabs)/voice-demo');
-  };
-
-  /**
-   * Handles the "Skip to Main App" button press (DEV TESTING ONLY)
-   *
-   * Bypasses onboarding and goes directly to the main app tabs
-   * Useful for testing Story 4.1 reflection screen without completing onboarding
-   */
-  const handleSkipToMainApp = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.replace('/(tabs)');
   };
 
   return (
@@ -101,61 +74,27 @@ export default function WelcomeScreen() {
           paddingHorizontal: spacing[6],
         }}
       >
-        {/* Weave Logo */}
+        {/* Weave Screenshot */}
         <Image
-          source={require('../../assets/icon.png')}
+          source={require('../../assets/images/welcome-screenshot.png')}
           accessibilityLabel="Weave"
           resizeMode="contain"
-          style={{ width: 80, height: 80, marginBottom: spacing[8] }}
+          style={{ width: 340, height: 340, marginBottom: spacing[8] }}
         />
 
-        {/* Tagline */}
-        <Heading
-          variant="display2xl"
-          style={{
-            color: colors.text.primary,
-            textAlign: 'center',
-            marginBottom: spacing[4],
-          }}
-        >
-          Weave
-        </Heading>
-
-        {/* Value Proposition */}
-        <Body
-          style={{
-            color: colors.text.secondary,
-            textAlign: 'center',
-            marginBottom: spacing[12],
-            maxWidth: 320,
-          }}
-        >
-          See your transformation as you create it
-        </Body>
-
         {/* CTA Button */}
-        <Button variant="primary" onPress={handleGetStarted} style={{ width: '100%' }}>
-          Get Started
+        <Button variant="primary" onPress={handleGetStarted} style={{ width: '85%' }}>
+          Begin my transformation
         </Button>
 
-        {/* Dev Preview Buttons */}
-        <View style={{ width: '100%', gap: spacing[2], marginTop: spacing[3] }}>
-          <Button variant="secondary" onPress={handleGoToMainApp}>
-            Go to Main App
-          </Button>
-
-          <Button variant="ghost" onPress={handleViewDesignSystem}>
-            🎨 View Design System
-          </Button>
-
-          <Button variant="ghost" onPress={handleVoiceDemo}>
-            🎤 Voice Demo
-          </Button>
-
-          <Button variant="ghost" onPress={handleSkipToMainApp}>
-            Skip to Main App (Dev)
-          </Button>
-        </View>
+        {/* Skip to App Button (Ghost variant for subtle presence) */}
+        <Button
+          variant="ghost"
+          onPress={handleSkipToApp}
+          style={{ width: '85%', marginTop: spacing[3] }}
+        >
+          Skip to app
+        </Button>
       </View>
     </SafeAreaView>
   );

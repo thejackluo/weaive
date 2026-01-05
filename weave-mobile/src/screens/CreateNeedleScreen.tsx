@@ -25,6 +25,8 @@ import { Text, Card, Button } from '@/design-system';
 import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { Ionicons } from '@expo/vector-icons';
 import { useCreateGoal } from '@/hooks/useActiveGoals';
+import { useInAppOnboarding } from '@/contexts/InAppOnboardingContext';
+import { OnboardingTooltip } from '@/components/onboarding/OnboardingTooltip';
 import type { BindCreate } from '@/types/goals';
 
 type CreationStep = 'details' | 'binds';
@@ -59,9 +61,14 @@ export function CreateNeedleScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const createGoalMutation = useCreateGoal();
+  const {
+    currentStep: onboardingStep,
+    completeCurrentStep,
+    skipTutorial,
+  } = useInAppOnboarding();
 
-  // Step management
-  const [currentStep, setCurrentStep] = useState<CreationStep>('details');
+  // Step management (for the 2-step creation flow)
+  const [creationStep, setCreationStep] = useState<CreationStep>('details');
 
   // Step 1: Needle details
   const [goalTitle, setGoalTitle] = useState('');
@@ -70,14 +77,41 @@ export function CreateNeedleScreen() {
   // Step 2: Binds
   const [binds, setBinds] = useState<Array<BindCreate>>([]);
   const [editingBindIndex, setEditingBindIndex] = useState<number | null>(null);
+  const [isCreatingNewBind, setIsCreatingNewBind] = useState(false);
   const [editingBindTitle, setEditingBindTitle] = useState('');
   const [editingBindTimesPerWeek, setEditingBindTimesPerWeek] = useState(3);
 
+  // In-app onboarding: Show tooltip on first visit
+  const [showOnboardingTooltip, setShowOnboardingTooltip] = useState(false);
+  const [showBindsTooltip, setShowBindsTooltip] = useState(false);
+
+  React.useEffect(() => {
+    // Show tooltip if this is the first step of in-app onboarding
+    if (onboardingStep === 'create_first_needle') {
+      // Delay slightly to let screen mount
+      const timer = setTimeout(() => {
+        setShowOnboardingTooltip(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [onboardingStep]);
+
+  // Show binds tooltip when user advances to binds step during tutorial
+  React.useEffect(() => {
+    if (onboardingStep === 'create_first_needle' && creationStep === 'binds') {
+      // Delay slightly to let screen transition
+      const timer = setTimeout(() => {
+        setShowBindsTooltip(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [onboardingStep, creationStep]);
+
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (currentStep === 'binds') {
+    if (creationStep === 'binds') {
       // Go back to Step 1
-      setCurrentStep('details');
+      setCreationStep('details');
     } else {
       // Exit screen
       router.back();
@@ -96,7 +130,7 @@ export function CreateNeedleScreen() {
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setCurrentStep('binds');
+    setCreationStep('binds');
   };
 
   const handleCreateGoal = async () => {
@@ -119,7 +153,17 @@ export function CreateNeedleScreen() {
         binds: binds,
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          // Complete the in-app onboarding step and navigate to home page for tour
+          if (onboardingStep === 'create_first_needle') {
+            await completeCurrentStep();
+
+            // Navigate to home page (will show home_page_tour overlay)
+            router.replace('/(tabs)');
+            return;
+          }
+
+          // For non-onboarding needle creation, show success alert
           Alert.alert('Success', 'Needle created successfully!', [
             {
               text: 'OK',
@@ -134,10 +178,34 @@ export function CreateNeedleScreen() {
     );
   };
 
+  const handleDismissTooltip = () => {
+    setShowOnboardingTooltip(false);
+  };
+
+  const handleDismissBindsTooltip = () => {
+    setShowBindsTooltip(false);
+  };
+
+  const handleSkipTutorial = async () => {
+    await skipTutorial();
+    setShowOnboardingTooltip(false);
+    setShowBindsTooltip(false);
+  };
+
   // Step 1: Needle Details
-  if (currentStep === 'details') {
+  if (creationStep === 'details') {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+        {/* Onboarding Tooltip */}
+        <OnboardingTooltip
+          visible={showOnboardingTooltip}
+          message="First, we need to set a goal"
+          description="A needle is your North Star - a meaningful goal that guides your daily actions. Let's create your first one!"
+          icon="compass"
+          onDismiss={handleDismissTooltip}
+          showSkipButton={false}
+        />
+
         {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.background.primary }]}>
           <Pressable onPress={handleBack} style={styles.backButton}>
@@ -278,6 +346,16 @@ export function CreateNeedleScreen() {
   // Step 2: Add Binds
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      {/* Onboarding Tooltip for Binds */}
+      <OnboardingTooltip
+        visible={showBindsTooltip}
+        message="Now, create a bind"
+        description="Binds are the consistent actions that move you toward your needle. Add 1-3 binds you'll do regularly to build momentum."
+        icon="flash"
+        onDismiss={handleDismissBindsTooltip}
+        showSkipButton={false}
+      />
+
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.background.primary }]}>
         <Pressable onPress={handleBack} style={styles.backButton}>
@@ -368,6 +446,115 @@ export function CreateNeedleScreen() {
             </Text>
           </View>
 
+          {/* Creating new bind (not yet in binds array) */}
+          {isCreatingNewBind && (
+            <Card variant="glass" style={styles.listItemCard}>
+              <View style={styles.bindEditContainer}>
+                <View style={styles.bindEditField}>
+                  <TextInput
+                    value={editingBindTitle}
+                    onChangeText={setEditingBindTitle}
+                    style={[
+                      styles.bindEditInput,
+                      {
+                        color: colors.text.primary,
+                        backgroundColor: colors.background.primary,
+                        borderColor: colors.border.muted,
+                      },
+                    ]}
+                    placeholder="e.g., Morning Workout, Read 30 min"
+                    placeholderTextColor={colors.text.muted}
+                    maxLength={200}
+                    autoFocus
+                  />
+                </View>
+
+                <View style={styles.bindEditField}>
+                  <Text
+                    variant="textSm"
+                    style={[styles.bindEditLabel, { color: colors.text.secondary }]}
+                  >
+                    Times Per Week
+                  </Text>
+                  <View style={styles.timesPerWeekSlider}>
+                    {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                      <Pressable
+                        key={num}
+                        style={[
+                          styles.sliderSegment,
+                          {
+                            backgroundColor:
+                              editingBindTimesPerWeek === num
+                                ? colors.accent[500]
+                                : colors.background.secondary,
+                            borderColor: colors.border.muted,
+                          },
+                        ]}
+                        onPress={() => {
+                          Haptics.selectionAsync();
+                          setEditingBindTimesPerWeek(num);
+                        }}
+                      >
+                        <Text
+                          variant="textSm"
+                          weight="semibold"
+                          style={{
+                            color:
+                              editingBindTimesPerWeek === num
+                                ? colors.background.primary
+                                : colors.text.secondary,
+                          }}
+                        >
+                          {num}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.bindEditActions}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onPress={() => {
+                      setIsCreatingNewBind(false);
+                      setEditingBindIndex(null);
+                    }}
+                    style={styles.bindEditButton}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onPress={() => {
+                      const trimmedTitle = editingBindTitle.trim();
+                      if (!trimmedTitle) {
+                        Alert.alert('Missing Information', 'Please enter a name for this bind.');
+                        return;
+                      }
+                      const { frequency_type, frequency_value } =
+                        convertTimesPerWeekToFrequency(editingBindTimesPerWeek);
+                      const newBind: BindCreate = {
+                        title: trimmedTitle,
+                        frequency_type,
+                        frequency_value,
+                      };
+                      setBinds([...binds, newBind]);
+                      setIsCreatingNewBind(false);
+                      setEditingBindIndex(null);
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    }}
+                    style={styles.bindEditButton}
+                  >
+                    Save
+                  </Button>
+                </View>
+              </View>
+            </Card>
+          )}
+
+          {/* Existing binds */}
           {binds.map((bind, index) => {
             const isEditing = editingBindIndex === index;
             return (
@@ -376,9 +563,6 @@ export function CreateNeedleScreen() {
                   // Edit mode - expanded view with title and frequency
                   <View style={styles.bindEditContainer}>
                     <View style={styles.bindEditField}>
-                      <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
-                        Name
-                      </Text>
                       <TextInput
                         value={editingBindTitle}
                         onChangeText={setEditingBindTitle}
@@ -398,7 +582,10 @@ export function CreateNeedleScreen() {
                     </View>
 
                     <View style={styles.bindEditField}>
-                      <Text variant="textSm" color="secondary" style={styles.bindEditLabel}>
+                      <Text
+                        variant="textSm"
+                        style={[styles.bindEditLabel, { color: colors.text.secondary }]}
+                      >
                         Times Per Week
                       </Text>
                       <View style={styles.timesPerWeekSlider}>
@@ -435,13 +622,6 @@ export function CreateNeedleScreen() {
                           </Pressable>
                         ))}
                       </View>
-                      <Text variant="textXs" color="secondary" style={styles.helperText}>
-                        {editingBindTimesPerWeek === 7
-                          ? 'Daily (every day)'
-                          : editingBindTimesPerWeek === 1
-                            ? 'Once a week'
-                            : `${editingBindTimesPerWeek} times per week`}
-                      </Text>
                     </View>
 
                     <View style={styles.bindEditActions}>
@@ -534,18 +714,11 @@ export function CreateNeedleScreen() {
           })}
 
           {/* Add Bind Button */}
-          {binds.length < 3 && (
+          {binds.length < 3 && !isCreatingNewBind && (
             <Pressable
               onPress={() => {
                 Haptics.selectionAsync();
-                const { frequency_type, frequency_value } = convertTimesPerWeekToFrequency(3);
-                const newBind: BindCreate = {
-                  title: '',
-                  frequency_type,
-                  frequency_value,
-                };
-                setBinds([...binds, newBind]);
-                setEditingBindIndex(binds.length);
+                setIsCreatingNewBind(true);
                 setEditingBindTitle('');
                 setEditingBindTimesPerWeek(3);
               }}
@@ -594,11 +767,25 @@ export function CreateNeedleScreen() {
           size="lg"
           onPress={handleCreateGoal}
           disabled={createGoalMutation.isPending || binds.length === 0}
+          style={
+            binds.length === 0
+              ? {
+                  backgroundColor: colors.neutral[700],
+                  opacity: 1,
+                }
+              : undefined
+          }
         >
           {createGoalMutation.isPending ? (
             <ActivityIndicator size="small" color={colors.text.inverse} />
           ) : (
-            <Text variant="textBase" weight="semibold" style={{ color: colors.text.inverse }}>
+            <Text
+              variant="textBase"
+              weight="semibold"
+              style={{
+                color: binds.length === 0 ? colors.text.muted : colors.text.inverse,
+              }}
+            >
               Create Needle
             </Text>
           )}

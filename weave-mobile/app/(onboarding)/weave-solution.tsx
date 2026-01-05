@@ -5,17 +5,17 @@
  * PRD US-1.4: Weave Solution Screen
  *
  * Features:
- * - Display 1-2 solution cards based on selection from Story 1.2
- * - Glass-paneled cards with subtle animations
- * - Fade-in for first card, slide-up for second (150-200ms delay)
- * - Reduced motion accessibility support
+ * - Display 1-3 solution cards in swipeable carousel
+ * - One card at a time with pagination dots
+ * - Icons representing each solution
+ * - Next button appears after viewing all cards
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Pressable, AccessibilityInfo } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, FlatList, Pressable, Dimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import Animated, { FadeIn, SlideInUp, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import {
@@ -24,108 +24,173 @@ import {
   type SolutionContent,
 } from '@/constants/solutionContent';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 // =============================================================================
 // COMPONENTS
 // =============================================================================
 
 interface SolutionCardProps {
   content: SolutionContent;
-  index: number;
-  reduceMotion: boolean;
+  showButton: boolean;
 }
 
 /**
- * Glass-paneled solution card with animations
- * Implements AC #3: Glass effect with shadows
- * Implements AC #4: Animations (fade-in, slide-up with 150-200ms delay)
+ * Individual solution card with screenshot and text
  */
-function SolutionCard({ content, index, reduceMotion }: SolutionCardProps) {
-  // Animation configuration based on index
-  const entering = reduceMotion
-    ? undefined
-    : index === 0
-      ? FadeIn.duration(400)
-      : SlideInUp.duration(400).delay(200);
+function SolutionCard({ content, showButton }: SolutionCardProps) {
+  // Map screenshot filenames to require statements
+  const screenshotMap: Record<string, any> = {
+    'solution-screenshot-1.png': require('../../assets/images/solution-screenshot-1.png'),
+    'solution-screenshot-4.png': require('../../assets/images/solution-screenshot-4.png'),
+    'solution-screenshot-5.png': require('../../assets/images/solution-screenshot-5.png'),
+    'solution-screenshot-6.png': require('../../assets/images/solution-screenshot-6.png'),
+    'solution-screenshot-7.png': require('../../assets/images/solution-screenshot-7.png'),
+    'solution-screenshot-8.png': require('../../assets/images/solution-screenshot-8.png'),
+    'IMG_2656.jpg': require('../../assets/images/IMG_2656.jpg'),
+    'IMG_2657.png': require('../../assets/images/IMG_2657.png'),
+    'IMG_2658.png': require('../../assets/images/IMG_2658.png'),
+  };
+
+  // Check if dual screenshots (side by side)
+  const isDualScreenshot = Array.isArray(content.screenshot);
+  const screenshots: string[] = isDualScreenshot ? content.screenshot : [content.screenshot];
 
   return (
-    <Animated.View
-      entering={entering}
+    <View
       style={{
-        // All styling in style prop to avoid NativeWind issues on iOS
-        marginBottom: 16,
-        borderRadius: 16,
-        padding: 24,
-        backgroundColor: '#ffffff',
-        borderWidth: 2,
-        borderColor: '#10b981',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 5,
-        minHeight: 150,
+        width: SCREEN_WIDTH,
+        paddingHorizontal: 32,
+        alignItems: 'center',
+        paddingTop: showButton ? 20 : 0,
       }}
     >
-      {/* Content */}
-      <View style={{ position: 'relative', zIndex: 10 }}>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: '600',
-            color: '#171717',
-            marginBottom: 12,
-          }}
-          accessibilityRole="header"
-          accessibilityHint="Solution describing how Weave addresses your challenge"
-        >
-          {content.title}
-        </Text>
-        <Text
-          style={{
-            fontSize: 16,
-            lineHeight: 24,
-            color: '#404040',
-            opacity: 0.9,
-          }}
-        >
-          {content.text}
-        </Text>
+      {/* App Screenshot(s) */}
+      <View
+        style={{
+          flexDirection: isDualScreenshot ? 'row' : 'column',
+          gap: isDualScreenshot ? 12 : 0,
+          width: isDualScreenshot ? '95%' : (showButton ? '60%' : '65%'),
+          marginBottom: showButton ? 24 : 32,
+        }}
+      >
+        {screenshots.map((screenshot, index) => (
+          <View
+            key={screenshot}
+            style={{
+              flex: isDualScreenshot ? 1 : undefined,
+              width: isDualScreenshot ? undefined : '100%',
+              aspectRatio: 0.46,
+              borderRadius: 20,
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+            }}
+          >
+            <Image
+              source={screenshotMap[screenshot]}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+            />
+          </View>
+        ))}
       </View>
-    </Animated.View>
+
+      {/* Title */}
+      <Text
+        style={{
+          fontSize: 28,
+          fontWeight: '700',
+          color: '#FFFFFF',
+          marginBottom: 12,
+          textAlign: 'center',
+          letterSpacing: -0.5,
+        }}
+        accessibilityRole="header"
+      >
+        {content.title}
+      </Text>
+
+      {/* Description */}
+      <Text
+        style={{
+          fontSize: 16,
+          lineHeight: 24,
+          color: '#A3A3A3',
+          textAlign: 'center',
+          fontWeight: '400',
+          maxWidth: 300,
+        }}
+      >
+        {content.text}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * Pagination dots
+ */
+interface PaginationDotsProps {
+  total: number;
+  activeIndex: number;
+}
+
+function PaginationDots({ total, activeIndex }: PaginationDotsProps) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
+        paddingVertical: 24,
+      }}
+    >
+      {Array.from({ length: total }).map((_, index) => (
+        <View
+          key={index}
+          style={{
+            width: index === activeIndex ? 24 : 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: index === activeIndex ? '#FFFFFF' : 'rgba(255, 255, 255, 0.3)',
+          }}
+        />
+      ))}
+    </View>
   );
 }
 
 /**
  * Continue CTA Button
- * Implements AC #5: CTA "Show me →"
- * Implements AC #4: Appears after cards are visible
  */
 interface CTAButtonProps {
   onPress: () => void;
-  reduceMotion: boolean;
-  delayMs: number;
+  disabled: boolean;
 }
 
-function CTAButton({ onPress, reduceMotion, delayMs }: CTAButtonProps) {
-  const entering = reduceMotion ? undefined : FadeInDown.duration(300).delay(delayMs);
-
+function CTAButton({ onPress, disabled }: CTAButtonProps) {
   return (
-    <Animated.View entering={entering} style={{ paddingHorizontal: 16, paddingBottom: 24 }}>
+    <View style={{ paddingHorizontal: 24, paddingBottom: 24 }}>
       <Pressable
         style={{
-          backgroundColor: '#10b981',
+          backgroundColor: disabled ? 'rgba(255, 255, 255, 0.3)' : '#FFFFFF',
           height: 56,
           borderRadius: 12,
           justifyContent: 'center',
           alignItems: 'center',
         }}
-        onPress={onPress}
+        onPress={disabled ? undefined : onPress}
+        disabled={disabled}
         accessibilityLabel="Show me the app"
         accessibilityRole="button"
       >
-        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>Show me →</Text>
+        <Text style={{ color: disabled ? 'rgba(0, 0, 0, 0.4)' : '#000000', fontSize: 16, fontWeight: '600' }}>
+          Show me →
+        </Text>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -137,71 +202,53 @@ export default function WeaveSolutionScreen() {
   // Get selected painpoints from store (from Story 1.2)
   const { selectedPainpoints } = useOnboardingStore();
 
-  // Accessibility: Check if user has reduced motion enabled
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      setReduceMotion(enabled ?? false);
-    });
-  }, []);
+  // State for carousel
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [viewedIndices, setViewedIndices] = useState<Set<number>>(new Set([0]));
+  const flatListRef = useRef<FlatList>(null);
 
   // Get solution content based on selected painpoints
-  // Implements AC #1: Dynamic copy mapping
-  // Implements AC #7: Edge case handling (fallback for missing selection)
   let solutionContents: SolutionContent[];
   try {
     solutionContents =
       selectedPainpoints.length > 0 ? getSolutionContent(selectedPainpoints) : [FALLBACK_SOLUTION];
   } catch (error) {
     console.error('Error getting solution content:', error);
-    // Fallback to default solution if error occurs
     solutionContents = [FALLBACK_SOLUTION];
   }
 
-  // Track analytics event when screen is shown (AC #6)
-  useEffect(() => {
-    // TODO: Implement analytics tracking when backend is ready
-    // trackEvent('solution_screen_shown', {
-    //   painpoints: selectedPainpoints,
-    //   solution_count: solutionContents.length,
-    //   timestamp: new Date().toISOString()
-    // });
-  }, []);
+  // Handle scroll to track viewed cards
+  const handleScroll = (event: any) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(contentOffsetX / SCREEN_WIDTH);
+    setCurrentIndex(index);
+    setViewedIndices((prev) => new Set(prev).add(index));
+  };
 
-  // Calculate CTA delay based on number of cards
-  // CTA appears after both cards are visible
-  // Card 1: 0ms, Card 2: 200ms delay, CTA: +300ms after last card
-  const ctaDelay = solutionContents.length === 2 ? 500 : 400;
+  // Check if all cards have been viewed
+  const allCardsViewed = viewedIndices.size === solutionContents.length;
 
   // Handle continue button
   const handleContinue = () => {
     try {
-      // Store initial solution categories for future personalization (PRD line 650)
-      // TODO: Implement when backend is ready
-      // storeSolutionCategories(selectedPainpoints);
-
-      // Navigate to Story 1.5: Authentication
-      // TODO: Create authentication screen or update to existing screen
-      router.push('/(onboarding)/authentication');
+      // Navigate to main app - user is already authenticated from authentication screen
+      router.push('/(tabs)');
     } catch (error) {
       console.error('Error navigating from solution screen:', error);
-      // Fallback: Stay on current screen, show error to user
-      // TODO: Add error toast/modal when UI components ready
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f0fdf4' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
       <View style={{ flex: 1 }}>
-        {/* Header - Implements AC #1: Title "How Weave helps" */}
-        <View style={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 16 }}>
+        {/* Header */}
+        <View style={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 32 }}>
           <Text
             style={{
               textAlign: 'center',
               fontSize: 28,
-              fontWeight: '600',
-              color: '#171717',
+              fontWeight: '700',
+              color: '#FFFFFF',
               letterSpacing: -0.5,
             }}
             accessibilityRole="header"
@@ -210,29 +257,29 @@ export default function WeaveSolutionScreen() {
           </Text>
         </View>
 
-        {/* Solution Cards */}
-        <ScrollView
-          style={{ flex: 1, paddingHorizontal: 16 }}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingVertical: 16 }}
-        >
-          {/* Implements AC #1: Display 1-2 solution cards */}
-          {/* Implements AC #7: Handle 1 or 2 painpoints */}
-          {solutionContents.map((content, index) => (
-            <SolutionCard
-              key={content.id}
-              content={content}
-              index={index}
-              reduceMotion={reduceMotion}
-            />
-          ))}
+        {/* Swipeable Cards */}
+        <View style={{ flex: 1 }}>
+          <FlatList
+            ref={flatListRef}
+            data={solutionContents}
+            renderItem={({ item }) => <SolutionCard content={item} showButton={allCardsViewed} />}
+            keyExtractor={(item) => item.id}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            decelerationRate="fast"
+            snapToAlignment="start"
+            extraData={allCardsViewed}
+          />
+        </View>
 
-          {/* Spacer for bottom CTA */}
-          <View style={{ height: 16 }} />
-        </ScrollView>
+        {/* Pagination Dots */}
+        <PaginationDots total={solutionContents.length} activeIndex={currentIndex} />
 
-        {/* Continue Button */}
-        <CTAButton onPress={handleContinue} reduceMotion={reduceMotion} delayMs={ctaDelay} />
+        {/* Continue Button - Always visible, disabled until all cards viewed */}
+        <CTAButton onPress={handleContinue} disabled={!allCardsViewed} />
       </View>
     </SafeAreaView>
   );

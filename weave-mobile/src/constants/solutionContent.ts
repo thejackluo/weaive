@@ -12,6 +12,8 @@ export interface SolutionContent {
   id: PainpointId;
   title: string;
   text: string;
+  icon: string;
+  screenshot: string | string[]; // Support single or dual screenshots
 }
 
 /**
@@ -29,33 +31,51 @@ export const SOLUTION_TEXT: Record<PainpointId, SolutionContent> = {
   clarity: {
     id: 'clarity',
     title: 'Clarity',
-    text: 'We turn vague feelings into clear direction. Through small daily reflections and pattern insights, Weave reveals where your motivation naturally points — and turns that into a path you can follow.',
+    text: 'Find purpose from reflection on the actions you do.',
+    icon: 'map.fill',
+    screenshot: ['IMG_2656.jpg', 'IMG_2658.png'], // Dual screenshots: binds/memories + daily check-in
   },
   action: {
     id: 'action',
     title: 'Action',
-    text: 'We make starting easy. We break your goal into simple, doable steps and nudge you into motion — so action replaces hesitation, and momentum replaces overthinking.',
+    text: "Break your goals into steps and prove you're doing the work.",
+    icon: 'bolt.fill',
+    screenshot: ['solution-screenshot-6.png', 'IMG_2657.png'], // Dual screenshots: add binds + accountability/proof
   },
   consistency: {
     id: 'consistency',
     title: 'Consistency',
-    text: "We make consistency feel meaningful. Every time you follow through, Weave turns that action into visible proof of who you're becoming — making discipline feel natural instead of forced.",
+    text: 'See visible proof of your progress through daily tracking and insights.',
+    icon: 'checkmark.seal.fill',
+    screenshot: ['solution-screenshot-7.png', 'solution-screenshot-4.png'], // Dual screenshots: consistency grid views
   },
   alignment: {
     id: 'alignment',
     title: 'Alignment',
-    text: 'We become the environment that supports your ambition. The more you use the app, the better it understands how you grow — and eventually, Weave will connect you with others moving in the same direction.',
+    text: 'Build an environment that supports your growth and connects you with others.',
+    icon: 'person.2.fill',
+    screenshot: 'solution-screenshot-7.png',
   },
 };
 
 /**
+ * Fixed order for displaying solutions (regardless of selection order)
+ */
+const SOLUTION_DISPLAY_ORDER: PainpointId[] = ['clarity', 'action', 'consistency', 'alignment'];
+
+/**
  * Get solution content for selected painpoints
+ * Returns solutions in fixed order: clarity → action → consistency → alignment
  * @param painpointIds Array of selected painpoint IDs (1-2 items)
- * @returns Array of solution content
+ * @returns Array of solution content in fixed order
  */
 export function getSolutionContent(painpointIds: string[]): SolutionContent[] {
-  return painpointIds
-    .filter((id): id is PainpointId => id in SOLUTION_TEXT)
+  // Filter valid painpoint IDs
+  const validPainpoints = painpointIds.filter((id): id is PainpointId => id in SOLUTION_TEXT);
+
+  // Return in fixed display order (not selection order)
+  return SOLUTION_DISPLAY_ORDER
+    .filter((id) => validPainpoints.includes(id))
     .map((id) => SOLUTION_TEXT[id]);
 }
 
@@ -65,5 +85,7 @@ export function getSolutionContent(painpointIds: string[]): SolutionContent[] {
 export const FALLBACK_SOLUTION: SolutionContent = {
   id: 'clarity',
   title: 'How Weave helps',
-  text: 'We help you turn vague goals into consistent action and visible progress.',
+  text: 'Turn vague goals into consistent action and visible progress.',
+  icon: 'map.fill',
+  screenshot: 'solution-screenshot-7.png',
 };

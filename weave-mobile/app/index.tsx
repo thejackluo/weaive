@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInAppOnboarding } from '@/contexts/InAppOnboardingContext';
 import { Text, Card } from '@/design-system';
 
 /**
@@ -15,7 +16,8 @@ import { Text, Card } from '@/design-system';
  * - Testing mode enabled → Skip to /(tabs) (bypasses all checks)
  * - Not authenticated → /(auth)/login
  * - Authenticated but onboarding incomplete → /(onboarding)/welcome
- * - Authenticated + onboarding complete → /(tabs) (main app)
+ * - Authenticated + onboarding complete but in-app tutorial not started → /needles/create (first needle)
+ * - Authenticated + onboarding complete + in-app tutorial started → /(tabs) (main app)
  *
  * Epic 1.5: App Navigation Scaffolding
  *
@@ -23,6 +25,16 @@ import { Text, Card } from '@/design-system';
  */
 export default function Index() {
   const { user, isLoading } = useAuth();
+  const { currentStep, isLoading: isOnboardingLoading } = useInAppOnboarding();
+
+  // 🐛 DEBUG: Log routing state
+  console.log('[INDEX_ROUTE] 🔍 Routing check:', {
+    isLoading,
+    isOnboardingLoading,
+    hasUser: !!user,
+    currentStep,
+    userMetadata: user?.user_metadata,
+  });
 
   // Testing Mode: Bypass auth guards during development
   // Set EXPO_PUBLIC_DEV_SKIP_AUTH=true in .env to enable
@@ -31,7 +43,7 @@ export default function Index() {
   if (devSkipAuth) {
     return (
       <>
-        <Redirect href="/(tabs)" />
+        <Redirect href="/(onboarding)/welcome" />
         {/* Dev Banner (invisible but helps debugging) */}
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }}>
           <View style={{ backgroundColor: '#FF6B00', padding: 8 }}>
@@ -39,7 +51,7 @@ export default function Index() {
               variant="textSm"
               style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}
             >
-              🧪 DEV MODE: Auth Bypassed
+              🧪 DEV MODE: Auth Bypassed (Onboarding)
             </Text>
           </View>
         </View>
@@ -47,8 +59,8 @@ export default function Index() {
     );
   }
 
-  // Loading Screen: Show while checking auth state
-  if (isLoading) {
+  // Loading Screen: Show while checking auth state and onboarding state
+  if (isLoading || isOnboardingLoading) {
     return (
       <View className="flex-1 bg-background items-center justify-center p-4">
         <Card variant="glass" padding="default">
@@ -71,9 +83,18 @@ export default function Index() {
   // For now, check if user has user_metadata.onboarding_completed
   const onboardingComplete = user.user_metadata?.onboarding_completed === true;
   if (!onboardingComplete) {
+    console.log('[INDEX_ROUTE] ➡️ Redirecting to onboarding (incomplete)');
     return <Redirect href="/(onboarding)/welcome" />;
   }
 
+  // In-App Tutorial: First-time users → Create first needle
+  // This redirects users who completed initial onboarding to the tutorial
+  if (currentStep === 'create_first_needle') {
+    console.log('[INDEX_ROUTE] ➡️ Redirecting to create first needle (tutorial)');
+    return <Redirect href="/needles/create" />;
+  }
+
   // All checks passed → Main app
+  console.log('[INDEX_ROUTE] ➡️ Redirecting to main app (all complete)');
   return <Redirect href="/(tabs)" />;
 }

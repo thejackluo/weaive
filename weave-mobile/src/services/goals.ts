@@ -143,12 +143,22 @@ export async function createGoal(
   });
 
   if (!response.ok) {
-    const errorData: ApiErrorResponse = await response.json();
-    throw new Error(
-      errorData.error?.message ||
-        errorData.detail ||
-        `Failed to create goal: ${response.status} ${response.statusText}`
-    );
+    // Try to get response text first (can be parsed as JSON or logged as-is)
+    const responseText = await response.text();
+    console.error('[GOALS_API] Error response:', responseText);
+
+    try {
+      const errorData: ApiErrorResponse = JSON.parse(responseText);
+      throw new Error(
+        errorData.error?.message ||
+          errorData.detail ||
+          `Failed to create goal: ${response.status} ${response.statusText}`
+      );
+    } catch (parseError) {
+      // If response isn't JSON, show the raw text
+      console.error('[GOALS_API] Non-JSON error response (first 200 chars):', responseText.substring(0, 200));
+      throw new Error(`Failed to create goal: ${response.status} ${response.statusText}. Response: ${responseText.substring(0, 100)}`);
+    }
   }
 
   const data: GoalDetailResponse = await response.json();

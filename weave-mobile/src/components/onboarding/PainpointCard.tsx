@@ -5,16 +5,14 @@
  * NativeWind v5 styling
  */
 
-import React, { useEffect, useCallback } from 'react';
-import { View, Text, Pressable, Dimensions, ViewStyle } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, Pressable, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
   withSpring,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
 import { SymbolView } from 'expo-symbols';
 
 // =============================================================================
@@ -42,24 +40,11 @@ export interface PainpointCardProps {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 function PainpointCardComponent({ painpoint, isSelected, onPress, style }: PainpointCardProps) {
-  const screenWidth = Dimensions.get('window').width;
-
   // Press animation
   const scale = useSharedValue(1);
 
-  // Check icon fade animation
-  const checkOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    checkOpacity.value = withTiming(isSelected ? 1 : 0, { duration: 200 });
-  }, [isSelected]);
-
   const scaleAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-  }));
-
-  const checkAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: checkOpacity.value,
   }));
 
   const handlePressIn = useCallback(() => {
@@ -81,20 +66,18 @@ function PainpointCardComponent({ painpoint, isSelected, onPress, style }: Painp
     onPress(painpoint.id);
   }, [isSelected, onPress, painpoint.id]);
 
-  // Dynamic width for responsive layout
-  const cardWidth = screenWidth < 375 ? '100%' : '48%';
-
   return (
     <AnimatedPressable
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      className="min-h-[160px] mb-3 rounded-2xl overflow-hidden"
       style={[
         {
-          width: cardWidth,
+          minHeight: 160,
+          borderRadius: 16,
+          overflow: 'hidden',
           borderWidth: isSelected ? 2 : 1,
-          borderColor: isSelected ? '#3B72F6' : 'rgba(255, 255, 255, 0.1)',
+          borderColor: isSelected ? '#FFFFFF' : 'rgba(255, 255, 255, 0.1)',
           backgroundColor: 'rgba(255, 255, 255, 0.05)',
         },
         scaleAnimatedStyle,
@@ -107,21 +90,23 @@ function PainpointCardComponent({ painpoint, isSelected, onPress, style }: Painp
       accessibilityState={{ selected: isSelected }}
     >
       {/* Content Container */}
-      <View className="flex-1 items-center justify-center py-4 px-3">
+      <View className="flex-1 items-center justify-center py-6 px-4">
         {/* Icon */}
-        <View className="mb-3">
+        <View className="mb-4">
           <SymbolView
             name={painpoint.icon as any}
-            size={32}
-            tintColor={isSelected ? '#3B72F6' : '#A3A3A3'}
+            size={40}
+            tintColor={isSelected ? '#FFFFFF' : '#A3A3A3'}
           />
         </View>
 
         {/* Title */}
         <Text
-          className="text-center mb-2 text-lg font-semibold"
+          className="text-center mb-4"
           style={{
-            color: isSelected ? '#262626' : '#171717',
+            fontSize: 20,
+            fontWeight: '700',
+            color: isSelected ? '#FFFFFF' : '#A3A3A3',
           }}
         >
           {painpoint.title}
@@ -129,20 +114,16 @@ function PainpointCardComponent({ painpoint, isSelected, onPress, style }: Painp
 
         {/* Description */}
         <Text
-          className="text-center text-sm leading-5"
+          className="text-center"
           style={{
-            color: isSelected ? '#525252' : '#737373',
+            fontSize: 14,
+            lineHeight: 20,
+            fontWeight: '400',
+            color: isSelected ? '#E5E5E5' : '#737373',
           }}
         >
           {painpoint.description}
         </Text>
-
-        {/* Check Icon Overlay */}
-        {isSelected && (
-          <Animated.View className="absolute top-2 right-2" style={checkAnimatedStyle}>
-            <Ionicons name="checkmark-circle" size={24} color="#3B72F6" />
-          </Animated.View>
-        )}
       </View>
     </AnimatedPressable>
   );
