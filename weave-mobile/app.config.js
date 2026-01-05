@@ -49,10 +49,6 @@ module.exports = {
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false
     },
-    web: {
-      favicon: './assets/favicon.png',
-      bundler: 'metro'
-    },
     plugins: ['expo-router', 'expo-web-browser', 'expo-font'],
     updates: {
       url: 'https://u.expo.dev/9acc0e9e-3bb5-4d2d-b719-e885e869de09'

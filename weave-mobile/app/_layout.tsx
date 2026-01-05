@@ -84,9 +84,23 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
 
   // 📬 Initialize push notifications (Story 6.1)
   // Separate useEffect to run ONCE on mount (not every getAuthToken change)
+  // CRITICAL: Fully wrapped in try-catch to prevent app crashes
   useEffect(() => {
+    let cleanupListeners: (() => void) | null = null;
+
     (async () => {
       try {
+        console.log('[ROOT_LAYOUT] 🚀 Initializing push notifications...');
+
+        // Setup notification listeners first (no async, less likely to fail)
+        try {
+          cleanupListeners = setupNotificationListeners();
+          console.log('[ROOT_LAYOUT] ✅ Notification listeners setup');
+        } catch (listenerError) {
+          console.error('[ROOT_LAYOUT] ⚠️ Failed to setup notification listeners:', listenerError);
+          // Continue anyway - this shouldn't block app startup
+        }
+
         // Register for push notifications and get token
         const pushToken = await registerForPushNotificationsAsync();
 
@@ -101,15 +115,20 @@ function ApiInitializer({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('[ROOT_LAYOUT] ❌ Error initializing push notifications:', error);
+        console.error('[ROOT_LAYOUT] 🔍 Error details:', error);
+        // App will continue to work without push notifications
       }
     })();
 
-    // Setup notification listeners
-    const cleanupListeners = setupNotificationListeners();
-
     // Cleanup on unmount
     return () => {
-      cleanupListeners();
+      try {
+        if (cleanupListeners) {
+          cleanupListeners();
+        }
+      } catch (cleanupError) {
+        console.error('[ROOT_LAYOUT] ⚠️ Error cleaning up notification listeners:', cleanupError);
+      }
     };
   }, []); // Empty array = run once on mount
 

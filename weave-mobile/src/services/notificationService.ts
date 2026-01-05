@@ -16,15 +16,20 @@ import Constants from 'expo-constants';
 import apiClient from './apiClient';
 
 // Configure how notifications are handled when app is in foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Wrapped in try-catch to prevent startup crashes
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch (error) {
+  console.error('[NOTIFICATIONS] ❌ Failed to set notification handler:', error);
+}
 
 /**
  * Register for push notifications and get Expo push token
@@ -32,19 +37,26 @@ Notifications.setNotificationHandler({
  */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   try {
+    console.log('[NOTIFICATIONS] 🚀 Starting push notification registration...');
+
     // Check if running on physical device (push notifications don't work on simulators)
     if (!Device.isDevice) {
       console.log('[NOTIFICATIONS] 📱 Not a physical device - push notifications unavailable');
       return null;
     }
 
+    console.log('[NOTIFICATIONS] 📱 Physical device detected, checking permissions...');
+
     // Request notification permissions
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
+    console.log('[NOTIFICATIONS] 🔐 Existing permission status:', existingStatus);
+
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
+      console.log('[NOTIFICATIONS] 🔐 New permission status:', status);
     }
 
     if (finalStatus !== 'granted') {
@@ -53,21 +65,31 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     }
 
     // Get Expo push token
+    console.log('[NOTIFICATIONS] 🔑 Fetching Expo project ID from config...');
+    console.log('[NOTIFICATIONS] 🔍 Constants.expoConfig:', Constants.expoConfig ? 'exists' : 'null');
+    console.log('[NOTIFICATIONS] 🔍 Constants.expoConfig?.extra:', Constants.expoConfig?.extra ? 'exists' : 'null');
+    console.log('[NOTIFICATIONS] 🔍 Constants.expoConfig?.extra?.eas:', Constants.expoConfig?.extra?.eas ? 'exists' : 'null');
+
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    console.log('[NOTIFICATIONS] 🔑 Project ID:', projectId);
+
     if (!projectId) {
       console.error('[NOTIFICATIONS] ❌ Missing Expo project ID in config');
+      console.error('[NOTIFICATIONS] 🔍 Constants.expoConfig structure:', JSON.stringify(Constants.expoConfig, null, 2));
       return null;
     }
 
+    console.log('[NOTIFICATIONS] 📝 Requesting Expo push token...');
     const tokenData = await Notifications.getExpoPushTokenAsync({
       projectId,
     });
 
     const pushToken = tokenData.data;
-    console.log('[NOTIFICATIONS] ✅ Expo push token:', pushToken);
+    console.log('[NOTIFICATIONS] ✅ Expo push token obtained:', pushToken);
 
     // Android-specific: Set notification channel
     if (Platform.OS === 'android') {
+      console.log('[NOTIFICATIONS] 🤖 Setting up Android notification channel...');
       await Notifications.setNotificationChannelAsync('default', {
         name: 'default',
         importance: Notifications.AndroidImportance.MAX,
@@ -79,6 +101,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     return pushToken;
   } catch (error) {
     console.error('[NOTIFICATIONS] ❌ Error registering for push notifications:', error);
+    console.error('[NOTIFICATIONS] 🔍 Error details:', JSON.stringify(error, null, 2));
     return null;
   }
 }
