@@ -29,6 +29,7 @@
     "production": {
       "autoIncrement": true,
       "distribution": "store",
+      "channel": "production",
       "node": "20.18.0",
       "ios": {
         "simulator": false,
