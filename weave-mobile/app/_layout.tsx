@@ -15,25 +15,24 @@ import {
 } from '../src/services/notificationService';
 import '../global.css';
 // Sentry error tracking enabled for TestFlight crash debugging
+// CRITICAL FIX: Minimal config - mobileReplayIntegration() and feedbackIntegration()
+// were causing SIGABRT crashes on iOS (expo.controller.errorRecoveryQueue)
+// These experimental features can be re-enabled after iOS stability is confirmed
 import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
   dsn: 'https://92deadd24c8287d69d0fff180ab8291b@o4510658763227136.ingest.us.sentry.io/4510658778234880',
 
-  // Adds more context data to events (IP address, cookies, user, etc.)
-  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  // Basic crash tracking only - no experimental features
+  enabled: !__DEV__, // Disable in dev (reduces noise)
+  debug: false, // Disable debug logs
+
+  // Adds more context data to events (IP address, user, etc.)
   sendDefaultPii: true,
 
-  // Enable Logs
-  enableLogs: true,
-
-  // Configure Session Replay
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1,
-  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
-
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: __DEV__,
+  // REMOVED: Session Replay - causes iOS crashes
+  // REMOVED: Feedback integration - causes iOS crashes
+  // These can be re-enabled later once stable on iOS TestFlight
 });
 
 // Create QueryClient instance (singleton)
