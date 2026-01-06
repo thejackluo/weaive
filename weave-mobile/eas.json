@@ -37,7 +37,7 @@
       },
       "env": {
         "APP_ENV": "production",
-        "API_BASE_URL": "https://weave-api-production.railway.app",
+        "API_BASE_URL": "https://weavelight-production-e380.up.railway.app",
         "SENTRY_ORG": "jackluo",
         "SENTRY_PROJECT": "weavelight"
       }

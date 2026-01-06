@@ -62,7 +62,7 @@ module.exports = {
         projectId: '9acc0e9e-3bb5-4d2d-b719-e885e869de09'
       },
       // API Configuration - defaults to production Railway backend
-      apiBaseUrl: process.env.API_BASE_URL || 'https://weave-api-production.railway.app',
+      apiBaseUrl: process.env.API_BASE_URL || 'https://weavelight-production-e380.up.railway.app',
     }
   }
 };

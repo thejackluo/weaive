@@ -15,7 +15,7 @@ export function getApiBaseUrl(): string {
   const configUrl = Constants.expoConfig?.extra?.apiBaseUrl;
 
   // Default to production Railway backend for TestFlight builds
-  const PRODUCTION_URL = 'https://weave-api-production.railway.app';
+  const PRODUCTION_URL = 'https://weavelight-production-e380.up.railway.app';
 
   // If no config URL or it's localhost, use production (for TestFlight builds)
   if (!configUrl || configUrl.includes('localhost')) {
