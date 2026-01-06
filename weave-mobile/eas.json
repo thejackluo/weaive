@@ -29,7 +29,6 @@
     "production": {
       "autoIncrement": true,
       "distribution": "store",
-      "channel": "production",
       "node": "20.18.0",
       "ios": {
         "simulator": false,
@@ -38,8 +37,7 @@
       "env": {
         "APP_ENV": "production",
         "SENTRY_ORG": "jackluo",
-        "SENTRY_PROJECT": "weavelight",
-        "EXPO_NO_UPDATES": "1"
+        "SENTRY_PROJECT": "weavelight"
       }
     }
   },
