@@ -38,7 +38,8 @@
       "env": {
         "APP_ENV": "production",
         "SENTRY_ORG": "jackluo",
-        "SENTRY_PROJECT": "weavelight"
+        "SENTRY_PROJECT": "weavelight",
+        "EXPO_NO_UPDATES": "1"
       }
     }
   },
