@@ -66,6 +66,10 @@
       ],
       "expo-in-app-purchases"
     ],
+    "updates": {
+      "enabled": false,
+      "checkAutomatically": "NEVER"
+    },
     "extra": {
       "router": {},
       "eas": {
