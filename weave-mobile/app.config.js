@@ -61,8 +61,8 @@ module.exports = {
       eas: {
         projectId: '9acc0e9e-3bb5-4d2d-b719-e885e869de09'
       },
-      // API Configuration from .env
-      apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:8000',
+      // API Configuration - defaults to production Railway backend
+      apiBaseUrl: process.env.API_BASE_URL || 'https://weave-api-production.railway.app',
     }
   }
 };
