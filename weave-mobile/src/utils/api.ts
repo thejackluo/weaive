@@ -4,27 +4,28 @@
 import Constants from 'expo-constants';
 
 /**
- * Get API base URL from app configuration (loaded from .env)
+ * Get API base URL from app configuration
  *
- * @returns API base URL (e.g., "http://localhost:8000")
- * @throws Error if API_BASE_URL is not configured
+ * @returns API base URL
+ *
+ * Production builds default to Railway backend.
+ * Local dev can override with .env: API_BASE_URL=http://localhost:8000
  */
 export function getApiBaseUrl(): string {
-  const apiBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl;
+  const configUrl = Constants.expoConfig?.extra?.apiBaseUrl;
 
-  if (!apiBaseUrl) {
-    throw new Error(
-      '❌ API_BASE_URL is not configured.\n' +
-        '   1. Create .env file in weave-mobile/\n' +
-        '   2. Add: API_BASE_URL=http://localhost:8000\n' +
-        '   3. Restart Expo with: npm run start:clean'
-    );
+  // Default to production Railway backend for TestFlight builds
+  const PRODUCTION_URL = 'https://weave-api-production.railway.app';
+
+  // If no config URL or it's localhost, use production (for TestFlight builds)
+  if (!configUrl || configUrl.includes('localhost')) {
+    return PRODUCTION_URL;
   }
 
   // Log in dev mode (helps debugging different ports)
   if (__DEV__) {
-    console.log(`[API] Using base URL: ${apiBaseUrl}`);
+    console.log(`[API] Using base URL: ${configUrl}`);
   }
 
-  return apiBaseUrl;
+  return configUrl;
 }
