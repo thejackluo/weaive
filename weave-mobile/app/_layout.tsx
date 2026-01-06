@@ -14,26 +14,11 @@ import {
   setupNotificationListeners,
 } from '../src/services/notificationService';
 import '../global.css';
-// Sentry error tracking enabled for TestFlight crash debugging
-// CRITICAL FIX: Minimal config - mobileReplayIntegration() and feedbackIntegration()
-// were causing SIGABRT crashes on iOS (expo.controller.errorRecoveryQueue)
-// These experimental features can be re-enabled after iOS stability is confirmed
-import * as Sentry from '@sentry/react-native';
-
-Sentry.init({
-  dsn: 'https://92deadd24c8287d69d0fff180ab8291b@o4510658763227136.ingest.us.sentry.io/4510658778234880',
-
-  // Basic crash tracking only - no experimental features
-  enabled: !__DEV__, // Disable in dev (reduces noise)
-  debug: false, // Disable debug logs
-
-  // Adds more context data to events (IP address, user, etc.)
-  sendDefaultPii: true,
-
-  // REMOVED: Session Replay - causes iOS crashes
-  // REMOVED: Feedback integration - causes iOS crashes
-  // These can be re-enabled later once stable on iOS TestFlight
-});
+// SENTRY COMPLETELY REMOVED FOR BUILD 14
+// Root cause: @sentry/react-native/expo plugin in app.json was compiling
+// native Sentry SDK into iOS binary, causing crashes during native initialization.
+// This is NOT a Sentry bug - likely incompatibility with iOS 26.1 or Expo SDK 53.
+// Can re-add once app stability is confirmed and Sentry compatibility verified.
 
 // Create QueryClient instance (singleton)
 // Story 4.1: Added for journal and user preferences queries
@@ -227,5 +212,5 @@ function RootLayout() {
   );
 }
 
-// Wrap with Sentry error boundary to catch and report all crashes
-export default Sentry.wrap(RootLayout);
+// Sentry error boundary removed (Build 14 - testing without Sentry)
+export default RootLayout;

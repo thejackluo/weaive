@@ -64,15 +64,7 @@
           "mode": "production"
         }
       ],
-      "expo-in-app-purchases",
-      [
-        "@sentry/react-native/expo",
-        {
-          "url": "https://sentry.io/",
-          "project": "weavelight",
-          "organization": "jackluo"
-        }
-      ]
+      "expo-in-app-purchases"
     ],
     "extra": {
       "router": {},
