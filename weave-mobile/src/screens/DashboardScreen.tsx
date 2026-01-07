@@ -38,6 +38,7 @@ import { FulfillmentChart } from '@/components/FulfillmentChart';
 import { HistoryList } from '@/components/HistoryList';
 import { getLevelProgress } from '@/utils/levelProgression';
 import { useInAppOnboarding } from '@/contexts/InAppOnboardingContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 type ConsistencyFilter = 'Overall' | 'Needle' | 'Bind' | 'Thread';
 type TimeframeOption = '7d' | '2w' | '1m';
@@ -49,7 +50,8 @@ export function DashboardScreen() {
   const { data: goalsData, isLoading, refetch: refetchGoals } = useActiveGoals();
   const { data: userStatsData, isLoading: isStatsLoading } = useUserStats();
   const { data: todayJournal } = useGetTodayJournal();
-  const { currentStep, completeCurrentStep, isStepComplete } = useInAppOnboarding();
+  const { currentStep, completeCurrentStep } = useInAppOnboarding();
+  const { user } = useAuth();
 
   // Onboarding state
   const [showOnboardingTooltip, setShowOnboardingTooltip] = useState(false);
@@ -153,8 +155,10 @@ export function DashboardScreen() {
     let delayTimeout: ReturnType<typeof setTimeout> | undefined;
 
     // Show completion modal when user advances FROM dashboard_tour (currentStep will be 'complete_first_bind')
-    // BUT only if dashboard_tour hasn't been completed yet (prevents showing modal on every app open)
-    if (currentStep === 'complete_first_bind' && !isStepComplete('dashboard_tour') && !hasShownCompletionRef.current) {
+    // BUT only if user hasn't completed FULL onboarding yet (prevents showing modal after onboarding is done)
+    const hasCompletedOnboarding = user?.user_metadata?.onboarding_completed === true;
+
+    if (currentStep === 'complete_first_bind' && !hasCompletedOnboarding && !hasShownCompletionRef.current) {
       console.log('[DASHBOARD_SCREEN] 🎉 Dashboard tour completed - showing tutorial complete modal after delay');
       hasShownCompletionRef.current = true;
 
@@ -186,7 +190,7 @@ export function DashboardScreen() {
       completeFadeAnim.stopAnimation();
       completeSlideAnim.stopAnimation();
     };
-  }, [currentStep, isStepComplete]);
+  }, [currentStep, user]);
 
   // User stats from API (with fallback to defaults)
   const userLevel = userStatsData?.data?.level || 1;
