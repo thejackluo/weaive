@@ -30,7 +30,11 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from '@react-native-community/blur';
+// Conditional import for BlurView (not available on web)
+let BlurView: any;
+if (Platform.OS !== 'web') {
+  BlurView = require('@react-native-community/blur').BlurView;
+}
 import { Text } from './Text/Text';
 import { useTheme } from '../theme/ThemeProvider';
 
