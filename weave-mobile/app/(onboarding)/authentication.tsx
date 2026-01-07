@@ -164,20 +164,7 @@ export default function AuthenticationScreen() {
               marginBottom: 12,
             }}
           >
-            Get Started
-          </Text>
-
-          <Text
-            className="text-base text-center text-neutral-400 mb-6"
-            style={{
-              fontSize: 16,
-              textAlign: 'center',
-              color: '#9ca3af',
-              marginBottom: 24,
-              lineHeight: 24,
-            }}
-          >
-            Create your account to begin your transformation journey
+            Start My Transformation
           </Text>
         </View>
 
@@ -272,20 +259,6 @@ export default function AuthenticationScreen() {
               </Button>
             </View>
 
-            <View className="mb-4" style={{ marginBottom: 16 }}>
-              <Button
-                variant="secondary"
-                size="lg"
-                fullWidth
-                onPress={handleAppleSignIn}
-                disabled={loading}
-                loading={loading && activeProvider === 'apple'}
-                leftIcon={<Text style={{ fontSize: 20 }}></Text>}
-              >
-                Sign in with Apple
-              </Button>
-            </View>
-
             <View
               className="flex-row items-center my-6"
               style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 24 }}
@@ -315,7 +288,7 @@ export default function AuthenticationScreen() {
                 disabled={loading}
                 leftIcon={<Text style={{ fontSize: 20 }}>✉️</Text>}
               >
-                Sign in with Email
+                Continue with Email
               </Button>
             </View>
           </View>
