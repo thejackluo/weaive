@@ -47,7 +47,7 @@ import { supabase } from '@lib/supabase';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Login Screen Component
+ * Login Screen Component - Handles both Sign In and Sign Up
  */
 export default function LoginScreen() {
   const router = useRouter();
@@ -56,6 +56,9 @@ export default function LoginScreen() {
   const { colors } = useTheme();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isContinuing, setIsContinuing] = useState(false);
+
+  // Mode toggle: 'signin' or 'signup'
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
 
   // Debug: Log auth error state
   React.useEffect(() => {
@@ -74,13 +77,16 @@ export default function LoginScreen() {
   // Form state - pre-fill email from params if provided (e.g., from signup screen)
   const [email, setEmail] = useState((params.email as string) || '');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState<'apple' | 'google' | null>(null);
 
   // Form validation state
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   /**
    * Validate email format
@@ -101,12 +107,32 @@ export default function LoginScreen() {
   /**
    * Validate password
    */
-  const validatePassword = useCallback((value: string): boolean => {
+  const validatePassword = useCallback((value: string, isSignup: boolean = false): boolean => {
     if (!value) {
       setPasswordError('Password is required');
       return false;
     }
+    if (isSignup && value.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return false;
+    }
     setPasswordError('');
+    return true;
+  }, []);
+
+  /**
+   * Validate confirm password
+   */
+  const validateConfirmPassword = useCallback((value: string, passwordValue: string): boolean => {
+    if (!value) {
+      setConfirmPasswordError('Please confirm your password');
+      return false;
+    }
+    if (value !== passwordValue) {
+      setConfirmPasswordError('Passwords do not match');
+      return false;
+    }
+    setConfirmPasswordError('');
     return true;
   }, []);
 
@@ -133,11 +159,30 @@ export default function LoginScreen() {
       setPassword(value);
       if (passwordError) {
         // Re-validate if there was an error
-        validatePassword(value);
+        validatePassword(value, mode === 'signup');
+      }
+      // Re-validate confirm password if it has a value
+      if (mode === 'signup' && confirmPassword) {
+        validateConfirmPassword(confirmPassword, value);
       }
       clearError();
     },
-    [passwordError, validatePassword, clearError]
+    [passwordError, validatePassword, clearError, mode, confirmPassword, validateConfirmPassword]
+  );
+
+  /**
+   * Handle confirm password change
+   */
+  const handleConfirmPasswordChange = useCallback(
+    (value: string) => {
+      setConfirmPassword(value);
+      if (confirmPasswordError) {
+        // Re-validate if there was an error
+        validateConfirmPassword(value, password);
+      }
+      clearError();
+    },
+    [confirmPasswordError, validateConfirmPassword, password, clearError]
   );
 
   /**
@@ -146,7 +191,7 @@ export default function LoginScreen() {
   const handleSignIn = useCallback(async () => {
     // Validate form
     const isEmailValid = validateEmail(email);
-    const isPasswordValid = validatePassword(password);
+    const isPasswordValid = validatePassword(password, false);
 
     if (!isEmailValid || !isPasswordValid) {
       return;
@@ -176,6 +221,46 @@ export default function LoginScreen() {
       setIsLoading(false);
     }
   }, [email, password, signIn, validateEmail, validatePassword]);
+
+  /**
+   * Handle sign up
+   */
+  const handleSignUp = useCallback(async () => {
+    // Validate form
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password, true);
+    const isConfirmPasswordValid = validateConfirmPassword(confirmPassword, password);
+
+    if (!isEmailValid || !isPasswordValid || !isConfirmPasswordValid) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Use Supabase signUp directly
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Show success toast
+        console.log('[LOGIN] Sign up successful');
+        showSimpleToast('Account created! Welcome! 🎉', 'success');
+
+        // Navigate to onboarding
+        router.replace('/(onboarding)/identity-bootup' as any);
+      }
+    } catch (error: any) {
+      console.error('[LOGIN] Sign up error:', error);
+      showSimpleToast(getAuthErrorMessage(error), 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email, password, confirmPassword, validateEmail, validatePassword, validateConfirmPassword, router]);
 
   /**
    * Handle OAuth sign in
@@ -286,11 +371,13 @@ export default function LoginScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text variant="displayLg" color="primary">
-              {user ? 'Already Signed In' : 'Welcome Back'}
+              {user ? 'Already Signed In' : 'Continue with Email'}
             </Text>
-            <Text variant="textLg" color="secondary" className="mt-2">
-              {user ? 'You are currently signed in' : 'Sign in to continue your journey'}
-            </Text>
+            {user && (
+              <Text variant="textLg" color="secondary" className="mt-2">
+                You are currently signed in
+              </Text>
+            )}
           </View>
 
           {/* Already Signed In Card */}
@@ -373,6 +460,61 @@ export default function LoginScreen() {
           {/* Login Form - Only show if not signed in */}
           {!user && (
             <>
+              {/* Mode Toggle */}
+              <View style={styles.modeToggle}>
+                <Pressable
+                  onPress={() => {
+                    setMode('signin');
+                    setConfirmPassword('');
+                    setConfirmPasswordError('');
+                    clearError();
+                  }}
+                  disabled={isLoading || isOAuthLoading !== null}
+                  style={[
+                    styles.modeButton,
+                    mode === 'signin' && styles.modeButtonActive,
+                    { borderColor: colors.border.muted },
+                  ]}
+                  accessibilityLabel="Switch to sign in mode"
+                  accessibilityRole="button"
+                >
+                  <Text
+                    variant="textBase"
+                    weight="semibold"
+                    style={{
+                      color: mode === 'signin' ? colors.accent[500] : colors.text.secondary,
+                    }}
+                  >
+                    Sign In
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    setMode('signup');
+                    clearError();
+                  }}
+                  disabled={isLoading || isOAuthLoading !== null}
+                  style={[
+                    styles.modeButton,
+                    mode === 'signup' && styles.modeButtonActive,
+                    { borderColor: colors.border.muted },
+                  ]}
+                  accessibilityLabel="Switch to sign up mode"
+                  accessibilityRole="button"
+                >
+                  <Text
+                    variant="textBase"
+                    weight="semibold"
+                    style={{
+                      color: mode === 'signup' ? colors.accent[500] : colors.text.secondary,
+                    }}
+                  >
+                    Sign Up
+                  </Text>
+                </Pressable>
+              </View>
+
               <View style={styles.form}>
                 {/* Email Input */}
                 <Input
@@ -395,19 +537,19 @@ export default function LoginScreen() {
                 {/* Password Input */}
                 <Input
                   label="Password"
-                  placeholder="Enter your password"
+                  placeholder={mode === 'signup' ? 'Create a password (min 6 characters)' : 'Enter your password'}
                   value={password}
                   onChangeText={handlePasswordChange}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
-                  autoComplete="password"
+                  autoComplete={mode === 'signup' ? 'password-new' : 'password'}
                   autoCorrect={false}
                   errorText={passwordError}
                   variant={passwordError ? 'error' : 'default'}
                   size="lg"
                   disabled={isLoading || isOAuthLoading !== null}
                   accessibilityLabel="Password"
-                  accessibilityHint="Enter your password"
+                  accessibilityHint={mode === 'signup' ? 'Create your password' : 'Enter your password'}
                   rightIcon={
                     <Pressable
                       onPress={() => setShowPassword(!showPassword)}
@@ -421,19 +563,53 @@ export default function LoginScreen() {
                   }
                 />
 
-                {/* Sign In Button */}
+                {/* Confirm Password Input - Only for Sign Up */}
+                {mode === 'signup' && (
+                  <Input
+                    label="Confirm Password"
+                    placeholder="Re-enter your password"
+                    value={confirmPassword}
+                    onChangeText={handleConfirmPasswordChange}
+                    secureTextEntry={!showConfirmPassword}
+                    autoCapitalize="none"
+                    autoComplete="password-new"
+                    autoCorrect={false}
+                    errorText={confirmPasswordError}
+                    variant={confirmPasswordError ? 'error' : 'default'}
+                    size="lg"
+                    disabled={isLoading || isOAuthLoading !== null}
+                    accessibilityLabel="Confirm Password"
+                    accessibilityHint="Re-enter your password to confirm"
+                    rightIcon={
+                      <Pressable
+                        onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                        accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}
+                        accessibilityRole="button"
+                      >
+                        <Text variant="textXs" color="muted">
+                          {showConfirmPassword ? 'Hide' : 'Show'}
+                        </Text>
+                      </Pressable>
+                    }
+                  />
+                )}
+
+                {/* Submit Button */}
                 <Button
                   variant="primary"
                   size="lg"
-                  onPress={handleSignIn}
+                  onPress={mode === 'signup' ? handleSignUp : handleSignIn}
                   disabled={isLoading || isOAuthLoading !== null}
                   loading={isLoading}
                   fullWidth
                   style={styles.signInButton}
-                  accessibilityLabel="Sign in"
-                  accessibilityHint="Sign in with your email and password"
+                  accessibilityLabel={mode === 'signup' ? 'Sign up' : 'Sign in'}
+                  accessibilityHint={mode === 'signup' ? 'Create your account' : 'Sign in with your email and password'}
                 >
-                  {isLoading ? 'Signing In...' : 'Sign In'}
+                  {isLoading
+                    ? (mode === 'signup' ? 'Creating Account...' : 'Signing In...')
+                    : (mode === 'signup' ? 'Create Account' : 'Sign In')
+                  }
                 </Button>
               </View>
 
@@ -492,24 +668,6 @@ export default function LoginScreen() {
                 )}
               </View>
 
-              {/* Sign Up Link */}
-              <View style={styles.footer}>
-                <Text variant="textBase" color="secondary">
-                  Don't have an account?{' '}
-                </Text>
-                <Pressable
-                  onPress={handleNavigateToSignup}
-                  disabled={isLoading || isOAuthLoading !== null}
-                  accessibilityLabel="Navigate to sign up"
-                  accessibilityRole="button"
-                  style={{ opacity: isLoading || isOAuthLoading !== null ? 0.5 : 1 }}
-                >
-                  <Text variant="textBase" weight="semibold" className="text-accent-500">
-                    Sign Up
-                  </Text>
-                </Pressable>
-              </View>
-
               {/* Development Bypass Button - Only in DEV mode */}
               {__DEV__ && (
                 <View style={styles.devBypass}>
@@ -564,6 +722,24 @@ const styles = StyleSheet.create({
   errorCard: {
     marginBottom: 24,
   },
+  modeToggle: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  modeButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeButtonActive: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderColor: '#3B82F6',
+  },
   form: {
     gap: 20,
   },
@@ -585,12 +761,6 @@ const styles = StyleSheet.create({
   },
   oauthButton: {
     // Additional styles if needed
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 32,
   },
   devBypass: {
     marginTop: 24,
