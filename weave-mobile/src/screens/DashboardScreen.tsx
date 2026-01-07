@@ -49,7 +49,7 @@ export function DashboardScreen() {
   const { data: goalsData, isLoading, refetch: refetchGoals } = useActiveGoals();
   const { data: userStatsData, isLoading: isStatsLoading } = useUserStats();
   const { data: todayJournal } = useGetTodayJournal();
-  const { currentStep, completeCurrentStep } = useInAppOnboarding();
+  const { currentStep, completeCurrentStep, isStepComplete } = useInAppOnboarding();
 
   // Onboarding state
   const [showOnboardingTooltip, setShowOnboardingTooltip] = useState(false);
@@ -153,7 +153,8 @@ export function DashboardScreen() {
     let delayTimeout: ReturnType<typeof setTimeout> | undefined;
 
     // Show completion modal when user advances FROM dashboard_tour (currentStep will be 'complete_first_bind')
-    if (currentStep === 'complete_first_bind' && !hasShownCompletionRef.current) {
+    // BUT only if dashboard_tour hasn't been completed yet (prevents showing modal on every app open)
+    if (currentStep === 'complete_first_bind' && !isStepComplete('dashboard_tour') && !hasShownCompletionRef.current) {
       console.log('[DASHBOARD_SCREEN] 🎉 Dashboard tour completed - showing tutorial complete modal after delay');
       hasShownCompletionRef.current = true;
 
@@ -185,7 +186,7 @@ export function DashboardScreen() {
       completeFadeAnim.stopAnimation();
       completeSlideAnim.stopAnimation();
     };
-  }, [currentStep]);
+  }, [currentStep, isStepComplete]);
 
   // User stats from API (with fallback to defaults)
   const userLevel = userStatsData?.data?.level || 1;

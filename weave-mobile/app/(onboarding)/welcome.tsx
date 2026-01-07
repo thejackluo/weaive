@@ -47,20 +47,6 @@ export default function WelcomeScreen() {
     router.push('/(onboarding)/authentication');
   };
 
-  /**
-   * Handles the "Skip to App" button press
-   *
-   * Allows users to bypass onboarding and navigate directly to the main app.
-   * Useful for testing and returning users who want to skip the intro.
-   */
-  const handleSkipToApp = () => {
-    // Haptic feedback for UX
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    // Navigate directly to main app
-    router.push('/(tabs)');
-  };
-
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.background.primary }}
@@ -85,15 +71,6 @@ export default function WelcomeScreen() {
         {/* CTA Button */}
         <Button variant="primary" onPress={handleGetStarted} style={{ width: '85%' }}>
           Begin my transformation
-        </Button>
-
-        {/* Skip to App Button (Ghost variant for subtle presence) */}
-        <Button
-          variant="ghost"
-          onPress={handleSkipToApp}
-          style={{ width: '85%', marginTop: spacing[3] }}
-        >
-          Skip to app
         </Button>
       </View>
     </SafeAreaView>

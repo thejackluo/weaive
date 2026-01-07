@@ -22,6 +22,8 @@ import {
   FlatList,
   Animated,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -1092,7 +1094,10 @@ export function NeedleDetailScreen() {
         animationType="slide"
         onRequestClose={handleCloseEditModal}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
           <Pressable
             style={styles.modalBackdrop}
             onPress={handleCloseEditModal}
@@ -1191,7 +1196,7 @@ export function NeedleDetailScreen() {
               )}
             </Button>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

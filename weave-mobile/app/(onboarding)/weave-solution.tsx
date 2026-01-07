@@ -23,6 +23,8 @@ import {
   FALLBACK_SOLUTION,
   type SolutionContent,
 } from '@/constants/solutionContent';
+import { supabase } from '@lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -201,6 +203,7 @@ function CTAButton({ onPress, disabled }: CTAButtonProps) {
 export default function WeaveSolutionScreen() {
   // Get selected painpoints from store (from Story 1.2)
   const { selectedPainpoints } = useOnboardingStore();
+  const { user } = useAuth();
 
   // State for carousel
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -229,12 +232,42 @@ export default function WeaveSolutionScreen() {
   const allCardsViewed = viewedIndices.size === solutionContents.length;
 
   // Handle continue button
-  const handleContinue = () => {
+  const handleContinue = async () => {
     try {
+      // Mark onboarding as complete in BOTH places
+      if (user?.id) {
+        console.log('[WEAVE_SOLUTION] Marking onboarding as complete for user:', user.id);
+
+        // 1. Update user_profiles table
+        const { error: dbError } = await supabase
+          .from('user_profiles')
+          .update({ onboarding_completed: true })
+          .eq('auth_user_id', user.id);
+
+        if (dbError) {
+          console.error('[WEAVE_SOLUTION] Error updating user_profiles:', dbError);
+        } else {
+          console.log('[WEAVE_SOLUTION] ✅ Database updated');
+        }
+
+        // 2. Update auth metadata (this is what app/index.tsx checks!)
+        const { error: authError } = await supabase.auth.updateUser({
+          data: { onboarding_completed: true }
+        });
+
+        if (authError) {
+          console.error('[WEAVE_SOLUTION] Error updating auth metadata:', authError);
+        } else {
+          console.log('[WEAVE_SOLUTION] ✅ Auth metadata updated');
+        }
+      }
+
       // Navigate to main app - user is already authenticated from authentication screen
       router.push('/(tabs)');
     } catch (error) {
-      console.error('Error navigating from solution screen:', error);
+      console.error('Error in handleContinue:', error);
+      // Navigate anyway to avoid blocking the user
+      router.push('/(tabs)');
     }
   };
 
