@@ -14,7 +14,7 @@ import { Text, Card } from '@/design-system';
  *
  * Routing Logic:
  * - Testing mode enabled → Skip to /(tabs) (bypasses all checks)
- * - Not authenticated → /(auth)/login
+ * - Not authenticated → /(onboarding)/welcome (first-time users see welcome screen)
  * - Authenticated but onboarding incomplete → /(onboarding)/welcome
  * - Authenticated + onboarding complete but in-app tutorial not started → /needles/create (first needle)
  * - Authenticated + onboarding complete + in-app tutorial started → /(tabs) (main app)
@@ -73,9 +73,10 @@ export default function Index() {
     );
   }
 
-  // Auth Guard 1: Not authenticated → Login
+  // Auth Guard 1: Not authenticated → Welcome Screen (Start Onboarding)
+  // First-time users see the welcome screen that leads to signup/login
   if (!user) {
-    return <Redirect href="/(auth)/login" />;
+    return <Redirect href="/(onboarding)/welcome" />;
   }
 
   // Auth Guard 2: Onboarding incomplete → Onboarding flow
