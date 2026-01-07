@@ -493,11 +493,11 @@ export function BindScreen() {
                         : colors.neutral[600],
                   borderRadius: radius.lg,
                   padding: spacing[4],
-                  opacity: bind.completed && !bind.completion_details?.duration_minutes ? 0.5 : onboardingPopupDismissed ? 0.3 : 1,
+                  opacity: bind.completed && !bind.completion_details?.duration_minutes ? 0.5 : 1,
                 },
               ]}
-              onPress={bind.completed || onboardingPopupDismissed ? undefined : handleTimerSetup}
-              disabled={bind.completed || onboardingPopupDismissed}
+              onPress={bind.completed ? undefined : handleTimerSetup}
+              disabled={bind.completed}
             >
               <View style={styles.iconContainer}>
                 <MaterialIcons
@@ -551,11 +551,11 @@ export function BindScreen() {
                         : colors.neutral[600],
                   borderRadius: radius.lg,
                   padding: spacing[4],
-                  opacity: bind.completed && !bind.has_proof ? 0.5 : onboardingPopupDismissed ? 0.3 : 1,
+                  opacity: bind.completed && !bind.has_proof ? 0.5 : 1,
                 },
               ]}
-              onPress={bind.completed || onboardingPopupDismissed ? undefined : photoUri ? handleViewPhoto : handleOpenCamera}
-              disabled={bind.completed || onboardingPopupDismissed}
+              onPress={bind.completed ? undefined : photoUri ? handleViewPhoto : handleOpenCamera}
+              disabled={bind.completed}
             >
               {photoUri ? (
                 // Show photo preview with trash icon
@@ -571,24 +571,22 @@ export function BindScreen() {
                     ]}
                     resizeMode="cover"
                   />
-                  {!onboardingPopupDismissed && (
-                    <Pressable
-                      style={[
-                        styles.trashIcon,
-                        {
-                          backgroundColor: colors.semantic.error.base,
-                          borderRadius: radius.sm,
-                        },
-                      ]}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        handleRemovePhoto();
-                      }}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                      <MaterialIcons name="delete" size={16} color="white" />
-                    </Pressable>
-                  )}
+                  <Pressable
+                    style={[
+                      styles.trashIcon,
+                      {
+                        backgroundColor: colors.semantic.error.base,
+                        borderRadius: radius.sm,
+                      },
+                    ]}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleRemovePhoto();
+                    }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <MaterialIcons name="delete" size={16} color="white" />
+                  </Pressable>
                 </View>
               ) : (
                 // Show camera icon
@@ -706,27 +704,27 @@ export function BindScreen() {
             <>
               {isTimerRunning ? (
                 // Timer is running - show Complete Bind button
-                <Button variant="primary" size="lg" onPress={handleComplete} disabled={onboardingPopupDismissed}>
+                <Button variant="primary" size="lg" onPress={handleComplete}>
                   Complete Bind
                 </Button>
               ) : timerDuration && !photoUri ? (
                 // Only timer selected - show Start Bind
-                <Button variant="primary" size="lg" onPress={handleStartBind} disabled={onboardingPopupDismissed}>
+                <Button variant="primary" size="lg" onPress={handleStartBind}>
                   Start Bind
                 </Button>
               ) : photoUri && !timerDuration ? (
                 // Only photo selected - show Complete Bind
-                <Button variant="primary" size="lg" onPress={handleStartBind} disabled={onboardingPopupDismissed}>
+                <Button variant="primary" size="lg" onPress={handleStartBind}>
                   Complete Bind
                 </Button>
               ) : timerDuration && photoUri ? (
                 // Both selected - show Start Bind (will start timer)
-                <Button variant="primary" size="lg" onPress={handleStartBind} disabled={onboardingPopupDismissed}>
+                <Button variant="primary" size="lg" onPress={handleStartBind}>
                   Start Bind
                 </Button>
               ) : (
                 // Neither selected - show Complete Bind (can complete without proof)
-                <Button variant="primary" size="lg" onPress={handleStartBind} disabled={onboardingPopupDismissed}>
+                <Button variant="primary" size="lg" onPress={handleStartBind}>
                   Complete Bind
                 </Button>
               )}

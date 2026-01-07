@@ -50,7 +50,7 @@ export function DashboardScreen() {
   const { data: goalsData, isLoading, refetch: refetchGoals } = useActiveGoals();
   const { data: userStatsData, isLoading: isStatsLoading } = useUserStats();
   const { data: todayJournal } = useGetTodayJournal();
-  const { currentStep, completeCurrentStep } = useInAppOnboarding();
+  const { currentStep, completeCurrentStep, isOnboardingComplete } = useInAppOnboarding();
   const { user } = useAuth();
 
   // Onboarding state
@@ -155,10 +155,8 @@ export function DashboardScreen() {
     let delayTimeout: ReturnType<typeof setTimeout> | undefined;
 
     // Show completion modal when user advances FROM dashboard_tour (currentStep will be 'complete_first_bind')
-    // BUT only if user hasn't completed FULL onboarding yet (prevents showing modal after onboarding is done)
-    const hasCompletedOnboarding = user?.user_metadata?.onboarding_completed === true;
-
-    if (currentStep === 'complete_first_bind' && !hasCompletedOnboarding && !hasShownCompletionRef.current) {
+    // BUT only if in-app tutorial isn't fully complete yet (prevents showing modal after tutorial is done)
+    if (currentStep === 'complete_first_bind' && !isOnboardingComplete && !hasShownCompletionRef.current) {
       console.log('[DASHBOARD_SCREEN] 🎉 Dashboard tour completed - showing tutorial complete modal after delay');
       hasShownCompletionRef.current = true;
 
@@ -190,7 +188,7 @@ export function DashboardScreen() {
       completeFadeAnim.stopAnimation();
       completeSlideAnim.stopAnimation();
     };
-  }, [currentStep, user]);
+  }, [currentStep, isOnboardingComplete]);
 
   // User stats from API (with fallback to defaults)
   const userLevel = userStatsData?.data?.level || 1;
