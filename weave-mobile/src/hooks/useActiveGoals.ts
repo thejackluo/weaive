@@ -153,11 +153,18 @@ export function useCreateGoal() {
     onSuccess: async () => {
       console.log('[CREATE_GOAL] Goal created successfully, refetching queries...');
 
+      // CRITICAL: Reset consistency queries (clears cache AND triggers refetch for active queries)
+      await queryClient.resetQueries({ queryKey: ['consistency'] });
+
+      // Invalidate other queries to mark as stale
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
+
       // Refetch all related queries immediately to show new data
       await Promise.all([
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
         queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
       ]);
 
@@ -197,12 +204,19 @@ export function useUpdateGoal() {
       return updateGoal(goalId, data, session.access_token);
     },
     onSuccess: async (data, variables) => {
+      // CRITICAL: Reset consistency queries (clears cache AND triggers refetch for active queries)
+      await queryClient.resetQueries({ queryKey: ['consistency'] });
+
+      // Invalidate other queries to mark as stale
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
+
       // Refetch all related queries immediately to show updated data
       await Promise.all([
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) }),
         queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
       ]);
     },
@@ -237,16 +251,27 @@ export function useArchiveGoal() {
       return archiveGoal(goalId, session.access_token);
     },
     onSuccess: async (data, goalId) => {
+      // Invalidate other queries to mark as stale
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
+
       // Refetch all related queries immediately to show updated data
       await Promise.all([
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
         queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
       ]);
 
       // Invalidate the specific goal (no longer needed in active queries)
       queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(goalId) });
+
+      // CRITICAL: Wait 300ms for database transaction to propagate before resetting consistency
+      // This prevents race condition where consistency recalculates before deletion commits
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Now reset consistency queries (clears cache AND triggers refetch with updated data)
+      await queryClient.resetQueries({ queryKey: ['consistency'] });
     },
   });
 }

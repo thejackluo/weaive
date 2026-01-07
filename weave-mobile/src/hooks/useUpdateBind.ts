@@ -236,12 +236,19 @@ export function useUpdateBind() {
     onSuccess: async () => {
       console.log('[UPDATE_BIND] Server confirmed, refetching for consistency...');
 
+      // CRITICAL: Reset consistency queries (clears cache AND triggers refetch for active queries)
+      await queryClient.resetQueries({ queryKey: ['consistency'] });
+
+      // Invalidate other queries to mark as stale
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
+
       // Refetch to confirm server state (background, won't block UI)
       await Promise.all([
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
       ]);
 

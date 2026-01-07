@@ -186,12 +186,19 @@ export function useCreateBind() {
     onSuccess: async (data) => {
       console.log('[CREATE_BIND] Server confirmed, refetching for real data...');
 
+      // CRITICAL: Reset consistency queries (clears cache AND triggers refetch for active queries)
+      await queryClient.resetQueries({ queryKey: ['consistency'] });
+
+      // Invalidate other queries to mark as stale
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
+
       // Refetch to replace temp bind with real data from server
       await Promise.all([
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.byId(data.data.goal_id) }),
         queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
       ]);
 

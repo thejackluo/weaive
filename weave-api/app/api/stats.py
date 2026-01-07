@@ -274,11 +274,12 @@ async def get_consistency_data(
         # Step 2: Fetch all instances in date range (these are the scheduled tasks)
         # Apply filtering based on filter_type
         # IMPORTANT: For 'thread' filter, skip instances entirely (thread = journals only)
+        # BUG FIX: Exclude instances where template is archived (deleted binds)
         instances = []
         if filter_type != "thread":
             instances_query = (
                 supabase.table("subtask_instances")
-                .select("id, scheduled_for_date, goal_id, template_id")
+                .select("id, scheduled_for_date, goal_id, template_id, subtask_templates!subtask_instances_template_id_fkey(is_archived)")
                 .eq("user_id", user_id)
                 .gte("scheduled_for_date", start_date)
                 .lte("scheduled_for_date", end_date_obj.isoformat())
@@ -294,11 +295,21 @@ async def get_consistency_data(
                 print(f"📊 [CONSISTENCY] Filtering instances by template_id: {filter_id}")
 
             instances_response = instances_query.execute()
-            instances = instances_response.data or []
+            all_instances = instances_response.data or []
+
+            # Filter out instances from archived (deleted) templates
+            instances = [
+                inst for inst in all_instances
+                if not inst.get("subtask_templates", {}).get("is_archived", False)
+            ]
+
+            archived_count = len(all_instances) - len(instances)
+            if archived_count > 0:
+                print(f"📊 [CONSISTENCY] Excluded {archived_count} instances from archived templates")
         else:
             print(f"📊 [CONSISTENCY] Skipping bind instances for thread filter (journals only)")
 
-        print(f"📊 [CONSISTENCY] Found {len(instances)} scheduled instances (after filter)")
+        print(f"📊 [CONSISTENCY] Found {len(instances)} scheduled instances (after filter + excluding archived)")
 
         # Create a set of filtered instance IDs for completion filtering
         filtered_instance_ids = {inst["id"] for inst in instances}

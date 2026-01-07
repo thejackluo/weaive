@@ -153,16 +153,27 @@ export function useDeleteBind() {
     onSuccess: async (data, variables) => {
       console.log('[DELETE_BIND] Server confirmed, refetching for consistency...');
 
+      // Invalidate other queries to mark as stale
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
+
       // Refetch to confirm server state (background, won't block UI)
       await Promise.all([
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
         queryClient.refetchQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) }),
         queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
         queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
       ]);
 
-      console.log('[DELETE_BIND] Server refetch complete');
+      // CRITICAL: Wait 300ms for database transaction to propagate before resetting consistency
+      // This prevents race condition where consistency recalculates before deletion commits
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Now reset consistency queries (clears cache AND triggers refetch with updated data)
+      await queryClient.resetQueries({ queryKey: ['consistency'] });
+
+      console.log('[DELETE_BIND] Server refetch complete with delayed consistency update');
     },
   });
 }
