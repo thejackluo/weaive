@@ -370,7 +370,7 @@ export default function LoginScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text variant="displayLg" color="primary">
+            <Text variant="displayMd" color="primary">
               {user ? 'Already Signed In' : 'Continue with Email'}
             </Text>
             {user && (
@@ -624,7 +624,7 @@ export default function LoginScreen() {
 
               {/* OAuth Buttons */}
               <View style={styles.oauthButtons}>
-                {/* Sign in with Google - Fully Functional */}
+                {/* Sign in with Google */}
                 <Button
                   variant="secondary"
                   size="lg"
@@ -641,55 +641,7 @@ export default function LoginScreen() {
                     'Sign in with Google'
                   )}
                 </Button>
-
-                {/* Sign in with Apple - Disabled (requires Apple Developer Program) */}
-                {Platform.OS === 'ios' && (
-                  <View>
-                    <Button
-                      variant="secondary"
-                      size="lg"
-                      onPress={() => {}}
-                      disabled={true}
-                      fullWidth
-                      style={[styles.oauthButton, { opacity: 0.5 }]}
-                      accessibilityLabel="Sign in with Apple (currently disabled)"
-                      accessibilityHint="Apple Sign-In requires Apple Developer Program membership"
-                    >
-                      Sign in with Apple (Coming Soon)
-                    </Button>
-                    <Text
-                      variant="textXs"
-                      color="muted"
-                      style={{ textAlign: 'center', marginTop: 4 }}
-                    >
-                      Requires Apple Developer Program
-                    </Text>
-                  </View>
-                )}
               </View>
-
-              {/* Development Bypass Button - Only in DEV mode */}
-              {__DEV__ && (
-                <View style={styles.devBypass}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onPress={() => bypassAuthForDev()}
-                    disabled={isLoading || isOAuthLoading !== null}
-                    accessibilityLabel="Development bypass"
-                    style={{ opacity: 0.6 }}
-                  >
-                    🔧 Skip Auth (Dev Only)
-                  </Button>
-                  <Text
-                    variant="textXs"
-                    color="muted"
-                    style={{ textAlign: 'center', marginTop: 4 }}
-                  >
-                    Development mode only - bypasses authentication
-                  </Text>
-                </View>
-              )}
             </>
           )}
         </ScrollView>
@@ -761,12 +713,5 @@ const styles = StyleSheet.create({
   },
   oauthButton: {
     // Additional styles if needed
-  },
-  devBypass: {
-    marginTop: 24,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
   },
 });
