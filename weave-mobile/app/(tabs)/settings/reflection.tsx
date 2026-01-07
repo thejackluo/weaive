@@ -313,6 +313,8 @@ export default function ReflectionScreen() {
   }
 
   console.log('[REFLECTION_SCREEN] ✅ Rendering main form');
+  const isInOnboarding = params.fromOnboarding === 'true' || currentStep === 'home_page_tour';
+  console.log('[REFLECTION_SCREEN] Onboarding overlay active:', isInOnboarding);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
@@ -341,6 +343,7 @@ export default function ReflectionScreen() {
               onChangeText={setTodayReflection}
               placeholder="Today I felt... The highlight was... I struggled with..."
               placeholderTextColor="#999"
+              editable={!isInOnboarding}
             />
             <Text style={styles.characterCount}>{reflectionCount} / 500</Text>
             {reflectionCount < 50 && reflectionCount > 0 && (
@@ -360,6 +363,7 @@ export default function ReflectionScreen() {
               onChangeText={setTomorrowFocus}
               placeholder="Tomorrow I will..."
               placeholderTextColor="#999"
+              editable={!isInOnboarding}
             />
             <Text style={styles.characterCount}>{focusCount} / 100</Text>
           </View>
@@ -386,6 +390,7 @@ export default function ReflectionScreen() {
                   minimumTrackTintColor="#FFFFFF"
                   maximumTrackTintColor="#2a2a2a"
                   thumbTintColor="#FFFFFF"
+                  disabled={isInOnboarding}
                 />
               </View>
               <View style={styles.sliderLabels}>
@@ -416,6 +421,14 @@ export default function ReflectionScreen() {
           </Text>
         )}
       </ScrollView>
+
+      {/* Onboarding Overlay - Blocks all form interactions during tutorial */}
+      {isInOnboarding && (
+        <View
+          style={styles.onboardingFormOverlay}
+          pointerEvents="box-only"
+        />
+      )}
 
       {/* Celebration Modal */}
       {celebrationData && (
@@ -725,5 +738,14 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 16,
     fontWeight: '600',
+  },
+  onboardingFormOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    zIndex: 999,
   },
 });

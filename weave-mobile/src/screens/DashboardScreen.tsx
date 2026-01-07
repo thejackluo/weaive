@@ -22,6 +22,7 @@ import {
   Animated,
   Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useQueryClient } from '@tanstack/react-query';
@@ -56,12 +57,29 @@ export function DashboardScreen() {
   // Onboarding state
   const [showOnboardingTooltip, setShowOnboardingTooltip] = useState(false);
   const [showTutorialCompleteModal, setShowTutorialCompleteModal] = useState(false);
+  const [hasShownCompletion, setHasShownCompletion] = useState(false);
+  const [hasLoadedCompletionFlag, setHasLoadedCompletionFlag] = useState(false);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const slideAnim = React.useRef(new Animated.Value(-20)).current;
   const completeFadeAnim = React.useRef(new Animated.Value(0)).current;
   const completeSlideAnim = React.useRef(new Animated.Value(-20)).current;
   const isMountedRef = React.useRef(true);
-  const hasShownCompletionRef = React.useRef(false);
+
+  // Load "has shown tutorial complete modal" flag from AsyncStorage on mount
+  React.useEffect(() => {
+    const loadCompletionFlag = async () => {
+      try {
+        const flag = await AsyncStorage.getItem('@weave:tutorial_complete_shown');
+        setHasShownCompletion(flag === 'true');
+        setHasLoadedCompletionFlag(true);
+        console.log('[DASHBOARD] Loaded tutorial completion flag:', flag);
+      } catch (error) {
+        console.error('[DASHBOARD] Failed to load tutorial completion flag:', error);
+        setHasLoadedCompletionFlag(true);
+      }
+    };
+    loadCompletionFlag();
+  }, []);
 
   // Track mounted state
   React.useEffect(() => {
@@ -154,16 +172,47 @@ export function DashboardScreen() {
     let isMounted = true;
     let delayTimeout: ReturnType<typeof setTimeout> | undefined;
 
+    // Debug: Log all conditions
+    console.log('[DASHBOARD] Tutorial complete modal check:', {
+      currentStep,
+      isOnboardingComplete,
+      hasLoadedCompletionFlag,
+      hasShownCompletion,
+      shouldShow:
+        currentStep === 'complete_first_bind' &&
+        !isOnboardingComplete &&
+        hasLoadedCompletionFlag &&
+        !hasShownCompletion,
+    });
+
     // Show completion modal when user advances FROM dashboard_tour (currentStep will be 'complete_first_bind')
-    // BUT only if in-app tutorial isn't fully complete yet (prevents showing modal after tutorial is done)
-    if (currentStep === 'complete_first_bind' && !isOnboardingComplete && !hasShownCompletionRef.current) {
+    // BUT only if:
+    // 1. In-app tutorial isn't fully complete yet (prevents showing modal after tutorial is done)
+    // 2. We've loaded the persisted flag from AsyncStorage
+    // 3. We haven't shown the modal before (checked via persisted flag)
+    if (
+      currentStep === 'complete_first_bind' &&
+      !isOnboardingComplete &&
+      hasLoadedCompletionFlag &&
+      !hasShownCompletion
+    ) {
       console.log('[DASHBOARD_SCREEN] 🎉 Dashboard tour completed - showing tutorial complete modal after delay');
-      hasShownCompletionRef.current = true;
+
+      // Save flag to AsyncStorage IMMEDIATELY so it doesn't show on next app restart
+      AsyncStorage.setItem('@weave:tutorial_complete_shown', 'true').then(() => {
+        console.log('[DASHBOARD] Saved tutorial completion flag to AsyncStorage');
+      }).catch((error) => {
+        console.error('[DASHBOARD] Failed to save tutorial completion flag:', error);
+      });
+
+      // CRITICAL: Set state flag AFTER modal appears (inside timeout)
+      // This prevents re-render from cancelling the timeout
 
       // Wait 3 seconds before showing the completion modal
       delayTimeout = setTimeout(() => {
         if (isMounted) {
           setShowTutorialCompleteModal(true);
+
           // Animate in
           Animated.parallel([
             Animated.timing(completeFadeAnim, {
@@ -176,7 +225,13 @@ export function DashboardScreen() {
               duration: 300,
               useNativeDriver: true,
             }),
-          ]).start();
+          ]).start(() => {
+            // Set state flag AFTER animation completes
+            // This prevents re-render from interrupting animation
+            if (isMounted) {
+              setHasShownCompletion(true);
+            }
+          });
         }
       }, 3000);
     }
@@ -188,7 +243,7 @@ export function DashboardScreen() {
       completeFadeAnim.stopAnimation();
       completeSlideAnim.stopAnimation();
     };
-  }, [currentStep, isOnboardingComplete]);
+  }, [currentStep, isOnboardingComplete, hasLoadedCompletionFlag, hasShownCompletion]);
 
   // User stats from API (with fallback to defaults)
   const userLevel = userStatsData?.data?.level || 1;
@@ -540,16 +595,22 @@ export function DashboardScreen() {
                 onPress={async () => {
                   try {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    console.log('[DASHBOARD] 🎯 Starting step completion...');
+
+                    // CRITICAL: Complete step FIRST (save to AsyncStorage)
+                    await completeCurrentStep();
+                    console.log('[DASHBOARD] ✅ Step completed and saved');
+
+                    // THEN dismiss tooltip (prevents race condition)
                     if (isMountedRef.current) {
                       setShowOnboardingTooltip(false);
-                    }
-                    await completeCurrentStep();
-                    if (isMountedRef.current) {
-                      console.log('[DASHBOARD] ✅ Dashboard tour completed successfully');
+                      console.log('[DASHBOARD] ✅ Tooltip dismissed');
                     }
                   } catch (error) {
+                    console.error('[DASHBOARD] ❌ Error completing dashboard tour:', error);
+                    // Still dismiss tooltip even if step completion fails
                     if (isMountedRef.current) {
-                      console.error('[DASHBOARD] ❌ Error completing dashboard tour:', error);
+                      setShowOnboardingTooltip(false);
                     }
                   }
                 }}
@@ -853,7 +914,7 @@ const styles = StyleSheet.create({
   },
   onboardingBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   onboardingTooltipContainer: {
     position: 'absolute',

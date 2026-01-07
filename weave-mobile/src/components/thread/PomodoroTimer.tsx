@@ -455,6 +455,7 @@ const styles = StyleSheet.create({
   pickerItem: {
     fontSize: 24,
     height: 180,
+    color: '#FFFFFF', // White text for visibility on dark background
   },
   pickerLabel: {
     marginTop: -20,

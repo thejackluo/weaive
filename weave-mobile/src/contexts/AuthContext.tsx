@@ -36,6 +36,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
@@ -347,6 +348,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (error) {
         setError(error);
         throw error;
+      }
+
+      // Clear tutorial state on sign out (so new users get fresh tutorial)
+      try {
+        await AsyncStorage.removeItem('@weave:in_app_onboarding_state');
+        await AsyncStorage.removeItem('@weave:tutorial_complete_shown');
+        console.log('[AUTH] Tutorial state and completion flag cleared on sign out');
+      } catch (storageError) {
+        console.warn('[AUTH] Failed to clear tutorial state:', storageError);
+        // Don't throw - tutorial state cleanup shouldn't block sign out
       }
 
       // State will be updated automatically via onAuthStateChange
