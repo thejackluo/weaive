@@ -39,6 +39,9 @@ export function ThreadHomeScreen() {
   // Store expanded needles as a Set (all open by default)
   const [expandedNeedleIds, setExpandedNeedleIds] = useState<Set<string>>(new Set());
 
+  // Track if we've done initial expansion (so we don't re-expand when user closes all)
+  const hasInitializedExpansion = useRef(false);
+
   // User's name from onboarding
   const [userName, setUserName] = useState<string>('');
 
@@ -308,11 +311,12 @@ export function ThreadHomeScreen() {
 
   const needleGroups = groupBindsByNeedle();
 
-  // Initialize all needles as expanded on first load
+  // Initialize all needles as expanded on first load (only once)
   React.useEffect(() => {
-    if (needleGroups.length > 0 && expandedNeedleIds.size === 0) {
+    if (needleGroups.length > 0 && !hasInitializedExpansion.current) {
       const allNeedleIds = new Set(needleGroups.map((group) => group.needle.id));
       setExpandedNeedleIds(allNeedleIds);
+      hasInitializedExpansion.current = true;
     }
   }, [needleGroups]);
 
@@ -535,22 +539,22 @@ export function ThreadHomeScreen() {
             {userName || user.name}
           </Text>
 
-          {/* Circular Progress Ring with Context Header */}
+          {/* Circular Progress Ring with Timer */}
           <View style={styles.progressSection}>
-            {/* Today's Tasks Header */}
+            {/* Countdown Timer - Shows time left to complete today's tasks */}
             <Text
               style={{
-                fontSize: 14,
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: 15,
                 fontWeight: '600',
-                color: 'rgba(255, 255, 255, 0.6)',
-                letterSpacing: 0.5,
-                textTransform: 'uppercase',
-                marginBottom: spacing[3],
+                letterSpacing: -0.3,
                 textAlign: 'center',
+                marginBottom: spacing[3],
               }}
             >
-              Today's Tasks
+              ⏰ {timeRemaining} left to complete
             </Text>
+
             <CircularProgress
               percentage={percentage}
               size={160}
@@ -680,59 +684,86 @@ export function ThreadHomeScreen() {
               opacity: showHomePageTour && tourStep === 'highlight_bind' ? 0.3 : 1,
             }}
           >
-            <Card
-              variant="default"
+            <Animated.View
               style={[
                 styles.checkInCard,
-                (showHomePageTour && tourStep === 'highlight_checkin') && {
-                  borderColor: checkinShimmerAnim.interpolate({
-                    inputRange: [0.3, 1],
-                    outputRange: ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 1)'],
-                  }),
-                  borderWidth: 4,
-                  shadowColor: '#FFFFFF',
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: checkinShimmerAnim.interpolate({
-                    inputRange: [0.3, 1],
-                    outputRange: [0.6, 1],
-                  }),
-                  shadowRadius: 24,
-                  elevation: 16,
+                {
+                  backgroundColor: colors.background.secondary,
+                  borderColor: (showHomePageTour && tourStep === 'highlight_checkin')
+                    ? checkinShimmerAnim.interpolate({
+                        inputRange: [0.3, 1],
+                        outputRange: ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 1)'],
+                      })
+                    : colors.border.subtle,
+                  shadowColor: (showHomePageTour && tourStep === 'highlight_checkin') ? '#FFFFFF' : '#000',
+                  shadowOpacity: (showHomePageTour && tourStep === 'highlight_checkin')
+                    ? checkinShimmerAnim.interpolate({
+                        inputRange: [0.3, 1],
+                        outputRange: [0.6, 1],
+                      })
+                    : 0.2,
+                  shadowRadius: (showHomePageTour && tourStep === 'highlight_checkin') ? 24 : 4,
+                  elevation: (showHomePageTour && tourStep === 'highlight_checkin') ? 16 : 4,
                 },
               ]}
             >
-            {/* Daily Check-in Button - Shows completion via variant and checkmark */}
-            <Button
-              variant={hasCompletedReflection ? 'success' : 'primary'}
-              size="lg"
-              onPress={() => {
-                if (showHomePageTour && tourStep === 'highlight_checkin') {
-                  handleCheckinClick();
-                } else {
-                  router.push('/(tabs)/settings/reflection');
-                }
-              }}
-              fullWidth
-              disabled={showHomePageTour && tourStep === 'highlight_bind'}
-            >
-              {hasCompletedReflection ? '✓ Daily Check-in' : 'Daily Check-in'}
-            </Button>
-
-            {/* Compact Countdown - Below Button */}
-            <View style={styles.countdownBelow}>
-              <Text
-                style={{
-                  color: colors.text.muted,
-                  fontSize: 11,
-                  fontWeight: '600',
-                  letterSpacing: -0.3,
+              <Pressable
+                style={styles.checkInPressable}
+                onPress={() => {
+                  if (showHomePageTour && tourStep === 'highlight_checkin') {
+                    handleCheckinClick();
+                  } else {
+                    router.push('/(tabs)/settings/reflection');
+                  }
                 }}
+                disabled={showHomePageTour && tourStep === 'highlight_bind'}
               >
-                ⏰ {timeRemaining}{' '}
-                {hasCompletedReflection ? 'until next check-in' : 'left to complete'}
-              </Text>
-            </View>
-          </Card>
+                <View style={styles.checkInContent}>
+                  {/* Checkbox Circle - Empty when incomplete, filled with checkmark when complete */}
+                  <View
+                    style={[
+                      styles.checkInCheckbox,
+                      {
+                        borderColor: hasCompletedReflection ? colors.green[500] : colors.border.muted,
+                        backgroundColor: hasCompletedReflection ? colors.green[500] : 'transparent',
+                      },
+                    ]}
+                  >
+                    {hasCompletedReflection && (
+                      <Text style={{ fontSize: 18, color: '#000000' }}>✓</Text>
+                    )}
+                  </View>
+
+                  {/* Daily Check-in Title */}
+                  <View style={styles.checkInDetails}>
+                    <Body
+                      weight="semibold"
+                      style={{
+                        color: colors.text.primary,
+                        opacity: hasCompletedReflection ? 0.5 : 1,
+                        fontSize: 16,
+                        letterSpacing: -0.2,
+                        textAlign: 'center',
+                      }}
+                    >
+                      Daily Check-in
+                    </Body>
+                  </View>
+
+                  {/* Completion Count */}
+                  <Caption
+                    style={{
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      fontSize: 14,
+                      fontWeight: '600',
+                      marginRight: spacing[2],
+                    }}
+                  >
+                    {hasCompletedReflection ? '1' : '0'}/1
+                  </Caption>
+                </View>
+              </Pressable>
+            </Animated.View>
           </Animated.View>
         </View>
       </ScrollView>
@@ -789,22 +820,32 @@ const styles = StyleSheet.create({
   },
   checkInCard: {
     position: 'relative',
-    alignItems: 'center',
     padding: 16,
-    shadowColor: '#000',
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 8,
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 0,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
-  countdownBelow: {
+  checkInPressable: {
+    width: '100%',
+  },
+  checkInContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  checkInCheckbox: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
+  },
+  checkInDetails: {
+    flex: 1,
   },
 });
