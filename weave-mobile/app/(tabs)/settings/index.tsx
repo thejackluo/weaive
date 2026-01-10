@@ -247,6 +247,69 @@ export default function SettingsScreen() {
             <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
           </Pressable>
         </View>
+
+        {/* Developer Tools Section (Development Only) */}
+        {__DEV__ && (
+          <View
+            style={{
+              backgroundColor: '#1F1F23',
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: '#27272A',
+              overflow: 'hidden',
+            }}
+          >
+            <View
+              style={{
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: '#27272A',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: '#FAFAFA',
+                }}
+              >
+                Developer Tools
+              </Text>
+            </View>
+
+            {/* Dev Tools Link */}
+            <Pressable
+              onPress={() => router.push('/(tabs)/settings/dev-tools')}
+              style={{
+                padding: 16,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    color: '#FAFAFA',
+                    marginBottom: 4,
+                  }}
+                >
+                  🛠️ Dev Tools
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: '#71717A',
+                  }}
+                >
+                  Testing utilities and cache management
+                </Text>
+              </View>
+              <Text style={{ color: '#71717A', fontSize: 18 }}>›</Text>
+            </Pressable>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

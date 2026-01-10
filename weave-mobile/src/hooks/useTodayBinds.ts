@@ -37,6 +37,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchTodayBinds } from '@/services/binds';
 import type { BindsResponse } from '@/types/binds';
+import { useCurrentDate } from './useCurrentDate';
 
 /**
  * Query key factory for binds
@@ -63,7 +64,8 @@ export function useTodayBinds() {
   const { session } = useAuth();
 
   // Get today's date for query key (ensures fresh fetch on date change)
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  // Uses reactive hook that updates at midnight
+  const today = useCurrentDate(); // YYYY-MM-DD
 
   return useQuery<BindsResponse, Error>({
     queryKey: bindsQueryKeys.today(today),

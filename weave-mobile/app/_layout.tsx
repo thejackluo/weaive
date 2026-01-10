@@ -8,6 +8,7 @@ import { InAppOnboardingProvider } from '../src/contexts/InAppOnboardingContext'
 import { DevEnvironmentBanner } from '../src/components/DevEnvironmentBanner';
 import { initJournalApi } from '../src/services/journalApi';
 import apiClient from '../src/services/apiClient';
+import { useAppStateRefresh } from '../src/hooks/useAppStateRefresh';
 import {
   registerForPushNotificationsAsync,
   savePushTokenToBackend,
@@ -49,6 +50,9 @@ LogBox.ignoreLogs([
  */
 function ApiInitializer({ children }: { children: React.ReactNode }) {
   const { getAuthToken, user } = useAuth();
+
+  // 🔄 Invalidate queries when app comes to foreground (handles overnight sessions)
+  useAppStateRefresh();
 
   useEffect(() => {
     // Initialize journalApi with shared auth token getter

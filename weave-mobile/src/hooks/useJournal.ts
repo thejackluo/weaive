@@ -16,15 +16,16 @@ import { fulfillmentQueryKeys } from './useFulfillmentData';
 import { userStatsQueryKeys } from './useUserStats';
 import { historyQueryKeys } from './useHistory';
 import { consistencyQueryKeys } from './useConsistencyData';
+import { useCurrentDate } from './useCurrentDate';
 
 const OFFLINE_QUEUE_KEY = '@weave_journal_offline_queue';
 
 // Query keys
 export const journalKeys = {
   all: ['journal-entries'] as const,
-  today: () => [...journalKeys.all, 'today'] as const,
+  today: (date: string) => [...journalKeys.all, 'today', date] as const,
   byDate: (date: string) => [...journalKeys.all, date] as const,
-  yesterdayIntention: () => [...journalKeys.all, 'yesterday-intention'] as const,
+  yesterdayIntention: (date: string) => [...journalKeys.all, 'yesterday-intention', date] as const,
 };
 
 /**
@@ -32,10 +33,11 @@ export const journalKeys = {
  * Returns null if no entry exists for today
  */
 export function useGetTodayJournal() {
-  console.log('[JOURNAL_HOOK] 🎣 useGetTodayJournal initialized');
+  const today = useCurrentDate(); // Reactive date - updates at midnight
+  console.log('[JOURNAL_HOOK] 🎣 useGetTodayJournal initialized for date:', today);
 
   return useQuery({
-    queryKey: journalKeys.today(),
+    queryKey: journalKeys.today(today),
     queryFn: async () => {
       console.log('[JOURNAL_HOOK] 🔄 Query function executing...');
       const start = performance.now();
@@ -73,8 +75,9 @@ export function useGetTodayJournal() {
  * Returns null if no intention exists
  */
 export function useYesterdayIntention() {
+  const today = useCurrentDate(); // Reactive date - ensures yesterday changes too
   return useQuery({
-    queryKey: journalKeys.yesterdayIntention(),
+    queryKey: journalKeys.yesterdayIntention(today),
     queryFn: journalApi.getYesterdayIntention,
     staleTime: 5 * 60 * 1000, // 5 minutes (intentions don't change often)
     gcTime: 10 * 60 * 1000, // 10 minutes cache

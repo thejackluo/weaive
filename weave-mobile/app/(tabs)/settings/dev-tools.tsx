@@ -57,6 +57,35 @@ export default function DevToolsScreen() {
     Alert.alert('Success', "Today's binds cache invalidated. Will refetch on next screen load.");
   };
 
+  const handleTestDateChange = () => {
+    Alert.alert(
+      '🧪 Test Date Change Fix',
+      'This simulates what happens when the date changes (e.g., midnight rollover).\n\n' +
+      'Steps:\n' +
+      '1. Complete a bind\n' +
+      '2. Press this button to invalidate queries\n' +
+      '3. Return to Thread screen\n' +
+      '4. Verify bind shows as incomplete\n\n' +
+      'In production, this happens automatically at midnight and when app returns to foreground.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: '🔄 Simulate Date Change',
+          onPress: () => {
+            // Invalidate all date-dependent queries (simulates midnight rollover)
+            queryClient.invalidateQueries({ queryKey: ['binds'] });
+            queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+            queryClient.invalidateQueries({ queryKey: ['userStats'] });
+            queryClient.invalidateQueries({ queryKey: ['consistency'] });
+            queryClient.invalidateQueries({ queryKey: ['daily-aggregates'] });
+
+            Alert.alert('✅ Date Change Simulated', 'All queries invalidated. Return to Thread screen to see fresh data.');
+          },
+        },
+      ]
+    );
+  };
+
   const handleToggleAdminMode = () => {
     const ADMIN_KEY = 'dev-admin-key-12345-change-in-production';
     if (adminModeEnabled) {
@@ -744,6 +773,10 @@ export default function DevToolsScreen() {
 
             <Button variant="secondary" onPress={handleInvalidateBinds}>
               Invalidate Today's Binds
+            </Button>
+
+            <Button variant="secondary" onPress={handleTestDateChange}>
+              🧪 Test Date Change Fix
             </Button>
 
             <Button variant="secondary" onPress={handleLogQueries}>
