@@ -37,6 +37,12 @@ export function useCurrentDate(): string {
     return () => clearInterval(interval);
   }, []);
 
-  // Always return current date (no caching)
-  return new Date().toISOString().split('T')[0];
+  // Always return current LOCAL date (no caching)
+  // CRITICAL: Must use local date, NOT UTC date
+  // This ensures query keys match the user's timezone
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
