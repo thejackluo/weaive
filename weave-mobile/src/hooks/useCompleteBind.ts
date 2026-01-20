@@ -5,7 +5,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { getApiBaseUrl } from '@/utils/api';
+import { completeBind as completeBindAPI } from '@/services/binds';
 import { bindsQueryKeys } from './useTodayBinds';
 import { consistencyQueryKeys } from './useConsistencyData';
 import { userStatsQueryKeys } from './useUserStats';
@@ -46,53 +46,6 @@ interface CompleteBindResponse {
 
 export type { ProgressUpdate, CompleteBindResponse };
 
-async function completeBind(
-  accessToken: string,
-  request: CompleteBindRequest
-): Promise<CompleteBindResponse> {
-  const baseUrl = getApiBaseUrl();
-  const url = `${baseUrl}/api/binds/${request.bindId}/complete`;
-
-  // Build request body, omitting undefined values (not valid JSON)
-  const body: { timer_duration?: number; photo_used?: boolean; notes?: string } = {};
-  if (request.timerDuration !== undefined) {
-    body.timer_duration = request.timerDuration;
-  }
-  if (request.photoUsed !== undefined) {
-    body.photo_used = request.photoUsed;
-  }
-  if (request.notes !== undefined) {
-    body.notes = request.notes;
-  }
-
-  if (__DEV__) {
-    console.log('[COMPLETE_BIND] Request:', { url, bindId: request.bindId, body });
-  }
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    if (__DEV__) {
-      console.error('[COMPLETE_BIND] API error:', response.status, error);
-    }
-    throw new Error(error.detail || error.message || 'Failed to complete bind');
-  }
-
-  const result = await response.json();
-  if (__DEV__) {
-    console.log('[COMPLETE_BIND] API success:', result);
-  }
-  return result;
-}
-
 export function useCompleteBind() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
@@ -103,7 +56,18 @@ export function useCompleteBind() {
         throw new Error('No active session');
       }
 
-      return completeBind(session.access_token, request);
+      // Get user's local date to pass to backend (ensures timezone-accurate completion)
+      const localDate = new Date().toISOString().split('T')[0];
+
+      // Call API service with local_date parameter
+      return completeBindAPI(
+        request.bindId,
+        session.access_token,
+        localDate,
+        request.timerDuration,
+        request.photoUsed,
+        request.notes
+      );
     },
     // Optimistic update: Mark bind as completed IMMEDIATELY (before API call finishes)
     onMutate: async (request: CompleteBindRequest) => {

@@ -17,18 +17,23 @@ import type {
  * Fetch today's binds with needle context and completion status
  *
  * @param accessToken - JWT access token for authentication
+ * @param localDate - User's local date in YYYY-MM-DD format (ensures timezone-accurate fetch)
  * @returns Promise with binds data and metadata
  * @throws Error if API call fails or returns error
  *
  * @example
  * ```ts
- * const response = await fetchTodayBinds(accessToken);
+ * const today = new Date().toISOString().split('T')[0]; // "2026-01-20"
+ * const response = await fetchTodayBinds(accessToken, today);
  * // Returns: {data: Bind[], meta: {local_date, total_binds, completed_count}}
  * ```
  */
-export async function fetchTodayBinds(accessToken: string): Promise<BindsResponse> {
+export async function fetchTodayBinds(
+  accessToken: string,
+  localDate: string
+): Promise<BindsResponse> {
   const baseUrl = getApiBaseUrl();
-  const url = `${baseUrl}/api/binds/today`;
+  const url = `${baseUrl}/api/binds/today?local_date=${localDate}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -95,6 +100,77 @@ export async function createBind(
   }
 
   const data: BindResponse = await response.json();
+  return data;
+}
+
+/**
+ * Complete a bind (mark as done with optional timer/proof/notes)
+ *
+ * @param bindId - Bind instance ID
+ * @param accessToken - JWT access token for authentication
+ * @param localDate - User's local date in YYYY-MM-DD format (ensures timezone-accurate completion)
+ * @param timerDuration - Optional timer duration in minutes
+ * @param photoUsed - Whether photo accountability was used
+ * @param notes - Optional completion notes (500 char max)
+ * @returns Promise with completion data
+ * @throws Error if API call fails or returns error
+ *
+ * @example
+ * ```ts
+ * const today = new Date().toISOString().split('T')[0];
+ * const result = await completeBind('bind-123', accessToken, today, 25, true, 'Felt great!');
+ * ```
+ */
+export async function completeBind(
+  bindId: string,
+  accessToken: string,
+  localDate: string,
+  timerDuration?: number,
+  photoUsed?: boolean,
+  notes?: string
+): Promise<any> {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/binds/${bindId}/complete`;
+
+  const body: {
+    timer_duration?: number;
+    photo_used?: boolean;
+    notes?: string;
+    local_date: string;
+  } = {
+    local_date: localDate,
+  };
+
+  if (timerDuration !== undefined) {
+    body.timer_duration = timerDuration;
+  }
+  if (photoUsed !== undefined) {
+    body.photo_used = photoUsed;
+  }
+  if (notes !== undefined) {
+    body.notes = notes;
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorData: ApiErrorResponse = await response.json();
+    console.error('[BINDS_SERVICE] Complete error:', response.status, errorData);
+    throw new Error(
+      errorData.error?.message ||
+        errorData.detail ||
+        `Failed to complete bind: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const data = await response.json();
   return data;
 }
 

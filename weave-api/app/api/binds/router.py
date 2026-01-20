@@ -10,7 +10,7 @@ Implements Thread Home Screen data requirements
 import logging
 from datetime import date, datetime, timedelta
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from supabase import Client
 
 from app.core.deps import get_current_user, get_supabase_client
@@ -229,6 +229,7 @@ async def generate_missing_bind_instances(
 
 @router.get("/today")
 async def get_today_binds(
+    local_date: str = Query(None, description="User's local date in YYYY-MM-DD format"),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
@@ -317,8 +318,14 @@ async def get_today_binds(
                 )
 
         # Get today's date (user's local date)
-        # TODO: In future, get user's timezone from user_profiles and use that
-        today = date.today().isoformat()
+        # Accept local_date from frontend to eliminate timezone mismatches
+        if local_date:
+            today = local_date
+            logger.info(f"[BINDS_API] Using provided local_date: {today}")
+        else:
+            # Fallback to server date for backwards compatibility
+            today = date.today().isoformat()
+            logger.warning(f"[BINDS_API] No local_date provided, using server date: {today}")
 
         # Generate missing bind instances for today (ensures daily binds appear)
         # This runs on every GET /api/binds/today to keep instances in sync
@@ -756,7 +763,7 @@ async def complete_bind(
             "user_id": user_id,
             "subtask_instance_id": bind_id,
             "completed_at": datetime.utcnow().isoformat(),  # UTC timestamp (required by schema)
-            "local_date": date.today().isoformat(),  # User's local date (required by schema)
+            "local_date": request.local_date,  # User's local date from frontend (timezone-accurate)
             "duration_minutes": request.timer_duration,
             "notes": request.notes[:500] if request.notes else None,  # Enforce 500 char limit
         }
@@ -782,7 +789,7 @@ async def complete_bind(
 
         # Update daily_aggregates (CRITICAL: Dashboard data source)
         try:
-            local_date = date.today().isoformat()
+            local_date = request.local_date  # Use frontend's local date (same as completion)
 
             # Fetch current daily_aggregates for this date
             current_agg_response = (
@@ -822,7 +829,7 @@ async def complete_bind(
         # Update user progress (level, XP, streak)
         # Pass local_date for timezone-accurate streak calculation
         try:
-            local_date_str = date.today().isoformat()  # Use completion date
+            local_date_str = request.local_date  # Use frontend's local date
             progress_update = update_user_progress(supabase, user_id, xp_gained=1, local_date=local_date_str)
             logger.info(
                 f"[BINDS_API] Progress update: Level {progress_update['level_after']}, "

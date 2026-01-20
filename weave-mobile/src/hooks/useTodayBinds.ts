@@ -74,7 +74,8 @@ export function useTodayBinds() {
         throw new Error('No active session - user must be authenticated');
       }
 
-      return fetchTodayBinds(session.access_token);
+      // Pass user's local date to backend to eliminate timezone mismatches
+      return fetchTodayBinds(session.access_token, today);
     },
     enabled: !!session?.access_token, // Only run if authenticated
     staleTime: 1 * 60 * 1000, // 1 minute (binds update frequently)

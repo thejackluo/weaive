@@ -32,6 +32,10 @@ class CompleteBindRequest(BaseCreateModel):
         max_length=500,
         description="Optional completion notes (e.g., 'Ran 5k in 30min')"
     )
+    local_date: str = Field(
+        ...,
+        description="User's local date in YYYY-MM-DD format (ensures timezone-accurate completion)"
+    )
 
     class Config:
         json_schema_extra = {
@@ -39,7 +43,8 @@ class CompleteBindRequest(BaseCreateModel):
                 {
                     "timer_duration": 25,
                     "photo_used": True,
-                    "notes": "Felt great! Ran 5k in 30 minutes"
+                    "notes": "Felt great! Ran 5k in 30 minutes",
+                    "local_date": "2026-01-20"
                 }
             ]
         }
