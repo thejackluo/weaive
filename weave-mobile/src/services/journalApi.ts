@@ -10,6 +10,7 @@
  */
 
 import { getApiBaseUrl } from '@/utils/api';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 // Auth token getter (set by initJournalApi)
 let getAuthTokenFn: (() => Promise<string>) | null = null;
@@ -100,7 +101,7 @@ export async function getTodayJournal(): Promise<JournalEntryResponse | null> {
 
     // Step 2.5: Calculate local_date on client (user's timezone)
     // This fixes timezone mismatch where server uses UTC but client uses local timezone
-    const localDate = new Date().toISOString().split('T')[0];
+    const localDate = getCurrentLocalDate();
     console.log(`[JOURNAL_API] 📅 Using client local_date: ${localDate}`);
 
     // Step 3: Make API request with timeout
@@ -202,7 +203,7 @@ export async function createJournalEntry(entry: JournalEntryCreate): Promise<any
     const token = await getAuthToken();
 
     // Calculate local_date on client (user's timezone)
-    const localDate = new Date().toISOString().split('T')[0];
+    const localDate = getCurrentLocalDate();
 
     const response = await fetch(`${baseUrl}/api/journal-entries`, {
       method: 'POST',
@@ -338,6 +339,9 @@ export async function getJournalEntriesByDateRange(
  * GET /api/journal-entries/yesterday-intention
  * Fetch yesterday's intention (tomorrow_focus from yesterday's journal)
  * Returns null if no intention exists
+ *
+ * FIX: Passes client's local_date as query parameter to avoid timezone mismatch
+ * between client and server.
  */
 export async function getYesterdayIntention(): Promise<{
   intention: string | null;
@@ -348,7 +352,11 @@ export async function getYesterdayIntention(): Promise<{
     const baseUrl = getApiBaseUrl();
     const token = await getAuthToken();
 
-    const response = await fetch(`${baseUrl}/api/journal-entries/yesterday-intention`, {
+    // Calculate local_date on client (user's timezone) for accurate "yesterday" calculation
+    const localDate = getCurrentLocalDate();
+    console.log(`[JOURNAL_API] 📅 Using client local_date for yesterday-intention: ${localDate}`);
+
+    const response = await fetch(`${baseUrl}/api/journal-entries/yesterday-intention?local_date=${localDate}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

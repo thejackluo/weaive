@@ -19,6 +19,7 @@ import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useDayDetails } from '@/hooks/useDayDetails';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { parseLocalDate } from '@/utils/dateUtils';
 
 interface DayDetailsModalProps {
   visible: boolean;
@@ -31,8 +32,9 @@ export function DayDetailsModal({ visible, date, onClose }: DayDetailsModalProps
   const { data, isLoading, isError, error } = useDayDetails(date, visible);
 
   // Format date for display (e.g., "Monday, Dec 20")
+  // CRITICAL: Use parseLocalDate to avoid UTC parsing bug
   const formatDate = (dateString: string) => {
-    const dateObj = new Date(dateString + 'T00:00:00'); // Force local timezone
+    const dateObj = parseLocalDate(dateString);
     return dateObj.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'short',

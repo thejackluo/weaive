@@ -39,6 +39,7 @@ import { useGetJournalsByDateRange } from '@/hooks/useJournal';
 import { useBindsGrid } from '@/hooks/useBindsGrid';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { getCurrentLocalDate, formatLocalDate, parseLocalDate } from '@/utils/dateUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -85,11 +86,26 @@ export function ConsistencyHeatmap({
   // State for date navigation (7d view)
   const [currentStartDate, setCurrentStartDate] = useState<string | undefined>(undefined);
 
+  // Calculate default start date using LOCAL timezone (not server UTC)
+  // This ensures backend gets the correct date range for user's timezone
+  const effectiveStartDate = React.useMemo(() => {
+    if (currentStartDate) {
+      return currentStartDate;
+    }
+    // Default: 7 days back from today (LOCAL date)
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 6);
+    const result = formatLocalDate(start);
+    console.log('[CONSISTENCY_HEATMAP] 🗓️ Calculated local start date:', result, '(today is', formatLocalDate(today), ')');
+    return result;
+  }, [currentStartDate]);
+
   const { data, isLoading, isError, error } = useConsistencyData(
     timeframe,
     filterType,
     filterId,
-    currentStartDate
+    effectiveStartDate  // ALWAYS pass local start date (never undefined)
   );
 
   // Debug: Log consistency data
@@ -110,20 +126,21 @@ export function ConsistencyHeatmap({
     data: bindsGridData,
     isPending: isBindsGridLoading,
     isError: isBindsGridError,
-  } = useBindsGrid(currentStartDate);
+  } = useBindsGrid(effectiveStartDate);  // ALWAYS pass local start date (never undefined)
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
 
-  // Calculate date range directly (same logic as backend) so journal query starts immediately
-  // Backend logic: start_date = today - 6 days, end_date = start_date + 6 days (7 total days)
+  // Calculate date range for journal query (uses LOCAL timezone, matches effectiveStartDate)
+  // CRITICAL: Must use same LOCAL date calculation to ensure frontend/backend alignment
   const calculateDateRange = React.useMemo(() => {
     if (currentStartDate) {
       // User navigated to specific date
-      const start = new Date(currentStartDate);
+      // CRITICAL: Use parseLocalDate to avoid UTC parsing bug
+      const start = parseLocalDate(currentStartDate);
       const end = new Date(start);
       end.setDate(end.getDate() + 6);
       return {
         startDate: currentStartDate,
-        endDate: end.toISOString().split('T')[0],
+        endDate: formatLocalDate(end),
       };
     } else {
       // Default: last 7 days (today - 6 → today)
@@ -131,8 +148,8 @@ export function ConsistencyHeatmap({
       const start = new Date(today);
       start.setDate(start.getDate() - 6);
       return {
-        startDate: start.toISOString().split('T')[0],
-        endDate: today.toISOString().split('T')[0],
+        startDate: formatLocalDate(start),
+        endDate: formatLocalDate(today),
       };
     }
   }, [currentStartDate]);
@@ -392,9 +409,10 @@ export function ConsistencyHeatmap({
     if (!journalData || journalData.length === 0) {
       console.log('[CONSISTENCY_HEATMAP] No journal data - returning empty completions');
       // Return array with false for each day in range
+      // CRITICAL: Use parseLocalDate to avoid UTC parsing bug
       const numDays =
         Math.ceil(
-          (new Date(calculateDateRange.endDate).getTime() - new Date(calculateDateRange.startDate).getTime()) /
+          (parseLocalDate(calculateDateRange.endDate).getTime() - parseLocalDate(calculateDateRange.startDate).getTime()) /
             (1000 * 60 * 60 * 24)
         ) + 1;
       return [
@@ -414,12 +432,13 @@ export function ConsistencyHeatmap({
     const completions: boolean[] = [];
     const dateChecks: { date: string; hasEntry: boolean }[] = [];
 
-    const startDate = new Date(calculateDateRange.startDate);
-    const endDate = new Date(calculateDateRange.endDate);
+    // CRITICAL: Use parseLocalDate to avoid UTC parsing bug
+    const startDate = parseLocalDate(calculateDateRange.startDate);
+    const endDate = parseLocalDate(calculateDateRange.endDate);
     let currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
-      const dateStr = currentDate.toISOString().split('T')[0];
+      const dateStr = formatLocalDate(currentDate);
       const hasEntry = journalMap.has(dateStr);
       completions.push(hasEntry);
       dateChecks.push({ date: dateStr, hasEntry });
@@ -471,15 +490,16 @@ export function ConsistencyHeatmap({
   // Uses same calculateDateRange as journal query for consistency
   const getDayHeaders = (): DayHeader[] => {
     const dayHeaders: DayHeader[] = [];
-    const startDate = new Date(calculateDateRange.startDate);
-    const endDate = new Date(calculateDateRange.endDate);
+    // CRITICAL: Use parseLocalDate to avoid UTC parsing bug
+    const startDate = parseLocalDate(calculateDateRange.startDate);
+    const endDate = parseLocalDate(calculateDateRange.endDate);
     let currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
       dayHeaders.push({
         dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
         dayOfMonth: currentDate.getDate(),
-        fullDate: currentDate.toISOString().split('T')[0],
+        fullDate: formatLocalDate(currentDate),
       });
       currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -502,7 +522,7 @@ export function ConsistencyHeatmap({
       // For 2w/1m heatmap view: Calculate from consistencyData with rolling consistency logic
       if (consistencyData.length === 0) return 0;
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
 
       // Check if today has any completions
       const todayData = consistencyData.find((day) => day.date === today);
@@ -541,7 +561,7 @@ export function ConsistencyHeatmap({
       // For 2w/1m view: Compare first half vs second half using task-based consistency
       if (consistencyData.length < 2) return 0;
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
       const todayData = consistencyData.find((day) => day.date === today);
       const todayHasCompletions = todayData && todayData.completed_count > 0;
 
@@ -1084,7 +1104,8 @@ export function ConsistencyHeatmap({
 
   // 2w/1m/90d: Show heat map grid
   // Calculate day-of-week headers and layout
-  const firstDate = consistencyData.length > 0 ? new Date(consistencyData[0].date) : new Date();
+  // CRITICAL: Use parseLocalDate to avoid UTC parsing bug
+  const firstDate = consistencyData.length > 0 ? parseLocalDate(consistencyData[0].date) : new Date();
   const startDayOfWeek = firstDate.getDay(); // 0 = Sunday, 6 = Saturday
   const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -1125,7 +1146,8 @@ export function ConsistencyHeatmap({
         {/* Render actual data cells */}
         {consistencyData.map((day) => {
           const cellColor = getColorForPercentage(day.completion_percentage, filterType);
-          const dayOfMonth = new Date(day.date).getDate();
+          // CRITICAL: Use parseLocalDate to avoid UTC parsing bug
+          const dayOfMonth = parseLocalDate(day.date).getDate();
 
           return (
             <Pressable

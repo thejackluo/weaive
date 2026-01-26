@@ -5,6 +5,8 @@
  * without needing real API calls.
  */
 
+import { getCurrentLocalDate } from '@/utils/dateUtils';
+
 export interface MockUser {
   id: string;
   email: string;
@@ -121,7 +123,7 @@ export function generateMockJournalEntry(overrides?: Partial<MockJournalEntry>):
   return {
     id: 'mock-journal-123',
     user_id: 'mock-user-123',
-    local_date: new Date().toISOString().split('T')[0],
+    local_date: getCurrentLocalDate(),
     fulfillment_score: 7,
     default_responses: {
       today_reflection:
@@ -140,7 +142,7 @@ export function generateMockJournalEntryWithCustomQuestions(
   return {
     id: 'mock-journal-456',
     user_id: 'mock-user-123',
-    local_date: new Date().toISOString().split('T')[0],
+    local_date: getCurrentLocalDate(),
     fulfillment_score: 8,
     default_responses: {
       today_reflection: 'Great day overall!',

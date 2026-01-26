@@ -13,6 +13,7 @@ Implements AC1 and AC4 from Story 2.1, US-2.2 detail view, US-2.3 goal creation
 
 import logging
 from datetime import date, datetime, timedelta
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, status
 from supabase import Client
@@ -30,6 +31,7 @@ router = APIRouter(prefix="/api/goals")
 async def list_goals(
     status_filter: str = Query("active", alias="status", description="Filter by goal status"),
     include_stats: bool = Query(False, description="Include consistency and bind stats"),
+    local_date: Optional[str] = Query(None, description="User's local date in YYYY-MM-DD format. Required for accurate timezone handling."),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
@@ -107,7 +109,7 @@ async def list_goals(
 
         # If include_stats is true, fetch consistency and bind data for each goal
         if include_stats:
-            goals = await _enrich_goals_with_stats(supabase, goals, user_id)
+            goals = await _enrich_goals_with_stats(supabase, goals, user_id, local_date)
 
         # Return standard response format
         return {
@@ -134,6 +136,7 @@ async def list_goals(
 @router.get("/{goal_id}")
 async def get_goal_by_id(
     goal_id: str,
+    local_date: Optional[str] = Query(None, description="User's local date in YYYY-MM-DD format. Required for accurate timezone handling."),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
@@ -180,6 +183,18 @@ async def get_goal_by_id(
         user_id = user_profile_response.data["id"]
         logger.debug(f"✅ Resolved user_id: {user_id} for auth_user_id: {auth_user_id}")
 
+        # Parse local_date for timezone-accurate calculations
+        if local_date:
+            try:
+                today_date_obj = date.fromisoformat(local_date)
+                logger.debug(f"[GOALS_API] get_goal_by_id using provided local_date: {local_date}")
+            except ValueError:
+                logger.warning(f"[GOALS_API] Invalid local_date format '{local_date}', falling back to server date")
+                today_date_obj = date.today()
+        else:
+            today_date_obj = date.today()
+            logger.debug(f"[GOALS_API] get_goal_by_id - No local_date provided, using server date: {today_date_obj.isoformat()}")
+
         # Fetch the goal (RLS enforced - user can only see their own goals)
         goal_response = (
             supabase.table("goals")
@@ -200,7 +215,7 @@ async def get_goal_by_id(
         logger.info(f"✅ Found goal {goal_id}: {goal.get('title')}")
 
         # Enrich with stats (consistency_7d, active_binds_count)
-        goals_with_stats = await _enrich_goals_with_stats(supabase, [goal], user_id)
+        goals_with_stats = await _enrich_goals_with_stats(supabase, [goal], user_id, local_date)
         enriched_goal = goals_with_stats[0]
 
         # Fetch qgoals (milestones) for this goal
@@ -245,12 +260,13 @@ async def get_goal_by_id(
                     else:
                         template_created_at = template_created_at_str
                 else:
-                    template_created_at = datetime.combine(date.today(), datetime.min.time())
+                    # Use today_date_obj (user's local date) for timezone accuracy
+                    template_created_at = datetime.combine(today_date_obj, datetime.min.time())
 
                 # Calculate rolling week boundaries (same logic as /api/binds/today)
+                # Uses today_date_obj (user's local date) for timezone accuracy
                 from app.api.binds.router import calculate_rolling_week_boundaries
-                today_date = date.today()
-                week_start, week_end = calculate_rolling_week_boundaries(template_created_at, today_date)
+                week_start, week_end = calculate_rolling_week_boundaries(template_created_at, today_date_obj)
 
                 # Fetch instances for this template within the rolling week
                 instances_response = (
@@ -311,6 +327,7 @@ async def get_goal_by_id(
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_goal(
     goal_data: GoalCreate,
+    local_date: Optional[str] = Query(None, description="User's local date in YYYY-MM-DD format. Required for accurate timezone handling."),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
@@ -361,6 +378,21 @@ async def create_goal(
 
         user_id = user_profile_response.data["id"]
         logger.info(f"[CREATE_GOAL] Resolved user_id: {user_id}")
+
+        # Parse local_date for timezone-accurate instance creation
+        if local_date:
+            try:
+                today_date_obj = date.fromisoformat(local_date)
+                today_date_str = local_date
+                logger.debug(f"[CREATE_GOAL] Using provided local_date: {local_date}")
+            except ValueError:
+                logger.warning(f"[CREATE_GOAL] Invalid local_date format '{local_date}', falling back to server date")
+                today_date_obj = date.today()
+                today_date_str = today_date_obj.isoformat()
+        else:
+            today_date_obj = date.today()
+            today_date_str = today_date_obj.isoformat()
+            logger.debug(f"[CREATE_GOAL] No local_date provided, using server date: {today_date_str}")
 
         # Check active goal count (AC5: max 3 active goals)
         active_goals_response = (
@@ -451,7 +483,7 @@ async def create_goal(
 
             # Auto-create subtask instances for TODAY
             # This makes binds immediately visible in Thread home screen
-            today_date = date.today().isoformat()
+            # Uses today_date_str (user's local date) for timezone accuracy
             instances_inserts = []
 
             for bind_template in binds_response.data:
@@ -459,14 +491,14 @@ async def create_goal(
                     "user_id": user_id,
                     "goal_id": goal_id,
                     "template_id": bind_template["id"],
-                    "scheduled_for_date": today_date,
+                    "scheduled_for_date": today_date_str,
                     "status": "planned",  # subtask_status enum: 'planned', 'done', 'skipped', 'snoozed'
                     "estimated_minutes": bind_template.get("default_estimated_minutes", 30),
                 })
 
             try:
                 instances_response = supabase.table("subtask_instances").insert(instances_inserts).execute()
-                logger.info(f"✅ Created {len(instances_response.data)} instances for {today_date}")
+                logger.info(f"✅ Created {len(instances_response.data)} instances for {today_date_str}")
             except Exception as instance_error:
                 logger.error(f"❌ Error creating instances: {str(instance_error)}")
                 # Don't fail goal creation if instance generation fails
@@ -674,7 +706,7 @@ async def archive_goal(
         )
 
 
-async def _enrich_goals_with_stats(supabase: Client, goals: list[dict], user_id: str) -> list[dict]:
+async def _enrich_goals_with_stats(supabase: Client, goals: list[dict], user_id: str, local_date: Optional[str] = None) -> list[dict]:
     """
     Enrich goals with consistency_7d and active_binds_count.
 
@@ -687,14 +719,27 @@ async def _enrich_goals_with_stats(supabase: Client, goals: list[dict], user_id:
         supabase: Supabase client
         goals: List of goal dictionaries
         user_id: User ID for RLS enforcement
+        local_date: User's local date in YYYY-MM-DD format (for timezone accuracy)
 
     Returns:
         List of goals with additional fields:
         - consistency_7d: float | null (7-day average consistency score)
         - active_binds_count: int (count of active subtask templates)
     """
+    # Parse local_date or fall back to server date
+    if local_date:
+        try:
+            today_obj = date.fromisoformat(local_date)
+            logger.debug(f"[GOALS_API] Using provided local_date: {local_date}")
+        except ValueError:
+            logger.warning(f"[GOALS_API] Invalid local_date format '{local_date}', falling back to server date")
+            today_obj = date.today()
+    else:
+        today_obj = date.today()
+        logger.debug(f"[GOALS_API] No local_date provided, using server date: {today_obj.isoformat()}")
+
     # Calculate date 7 days ago for consistency calculation
-    seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
+    seven_days_ago = (today_obj - timedelta(days=7)).isoformat()
 
     for goal in goals:
         goal_id = goal["id"]

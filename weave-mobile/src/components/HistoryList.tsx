@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import type { HistoryItem, HistoryFilters } from '@/services/history';
 import { Ionicons } from '@expo/vector-icons';
+import { formatLocalDate, parseLocalDate } from '@/utils/dateUtils';
 
 interface HistoryListProps {
   limit?: number;
@@ -140,7 +141,7 @@ export function HistoryList({ limit = 10, timeframe = 'days', type = 'all' }: Hi
 
       // Navigate to day detail page for the item's date
       const date = new Date(item.timestamp);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = formatLocalDate(date);
       router.push(`/(tabs)/dashboard/daily/${dateStr}` as any);
     };
 

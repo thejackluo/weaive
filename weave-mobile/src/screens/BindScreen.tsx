@@ -29,6 +29,7 @@ import { ProofCaptureContext } from '@/types/captures';
 import { getLevelProgress } from '@/utils/levelProgression';
 import { launchCamera } from '@/services/imageCapture';
 import { supabase } from '@lib/supabase';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 export function BindScreen() {
   const { colors, spacing, radius } = useTheme();
@@ -357,7 +358,7 @@ export function BindScreen() {
           subtask_instance_id: id,
           type: 'text',
           content_text: notes.trim(),
-          local_date: new Date().toISOString().split('T')[0],
+          local_date: getCurrentLocalDate(),
           goal_id: bind?.needle_id || null,
         });
 
@@ -772,7 +773,7 @@ export function BindScreen() {
           context={{
             subtask_instance_id: id || null,
             goal_id: bind?.needle_id || null,
-            local_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+            local_date: getCurrentLocalDate(), // YYYY-MM-DD
             bind_description: bind?.title,
           }}
           onSuccess={handleCaptureSuccess}

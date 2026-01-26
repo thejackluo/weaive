@@ -10,6 +10,7 @@ import type { BindResponse } from '@/types/binds';
 import { goalsQueryKeys } from './useActiveGoals';
 import { bindsQueryKeys } from './useTodayBinds';
 import { consistencyQueryKeys } from './useConsistencyData';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 interface DeleteBindRequest {
   bindId: string;
@@ -32,7 +33,7 @@ export function useDeleteBind() {
     onMutate: async (request: DeleteBindRequest) => {
       console.log('[DELETE_BIND] Starting optimistic update for bind:', request.bindId);
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
 
       // Cancel outgoing queries to prevent overwriting our optimistic update
       await queryClient.cancelQueries({ queryKey: goalsQueryKeys.active() });
@@ -125,7 +126,7 @@ export function useDeleteBind() {
     onError: (error, variables, context) => {
       console.error('[DELETE_BIND] Error, rolling back optimistic update:', error);
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
 
       if (context?.previousActiveGoals) {
         queryClient.setQueryData(goalsQueryKeys.active(), context.previousActiveGoals);

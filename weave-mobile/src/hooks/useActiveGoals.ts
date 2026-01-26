@@ -49,6 +49,7 @@ import type {
 } from '@/types/goals';
 import { consistencyQueryKeys } from './useConsistencyData';
 import { bindsQueryKeys } from './useTodayBinds';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 /**
  * Query key factory for goals
@@ -74,6 +75,7 @@ export const goalsQueryKeys = {
  */
 export function useActiveGoals() {
   const { session } = useAuth();
+  const localDate = getCurrentLocalDate();
 
   return useQuery<GoalsResponse, Error>({
     queryKey: goalsQueryKeys.active(),
@@ -82,7 +84,7 @@ export function useActiveGoals() {
         throw new Error('No active session - user must be authenticated');
       }
 
-      return fetchActiveGoals(session.access_token);
+      return fetchActiveGoals(session.access_token, localDate);
     },
     enabled: !!session?.access_token, // Only run if authenticated
     staleTime: 5 * 60 * 1000, // 5 minutes (per architecture)
@@ -101,6 +103,7 @@ export function useActiveGoals() {
  */
 export function useGoalById(goalId: string) {
   const { session } = useAuth();
+  const localDate = getCurrentLocalDate();
 
   return useQuery<GoalDetailResponse, Error>({
     queryKey: goalsQueryKeys.byId(goalId),
@@ -109,7 +112,7 @@ export function useGoalById(goalId: string) {
         throw new Error('No active session - user must be authenticated');
       }
 
-      return fetchGoalById(goalId, session.access_token);
+      return fetchGoalById(goalId, session.access_token, localDate);
     },
     enabled: !!session?.access_token && !!goalId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -141,6 +144,7 @@ export function useGoalById(goalId: string) {
 export function useCreateGoal() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
+  const localDate = getCurrentLocalDate();
 
   return useMutation({
     mutationFn: async (goalData: CreateGoalRequest) => {
@@ -148,7 +152,7 @@ export function useCreateGoal() {
         throw new Error('No active session - user must be authenticated');
       }
 
-      return createGoal(goalData, session.access_token);
+      return createGoal(goalData, session.access_token, localDate);
     },
     onSuccess: async () => {
       console.log('[CREATE_GOAL] Goal created successfully, refetching queries...');

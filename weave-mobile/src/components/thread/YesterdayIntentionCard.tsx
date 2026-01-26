@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme, Card, Text, Input, Button } from '@/design-system';
 import { useYesterdayIntention } from '@/hooks/useJournal';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 interface YesterdayIntentionCardProps {
   onQuickIntention?: (intention: string) => void;
@@ -33,7 +34,7 @@ export function YesterdayIntentionCard({ onQuickIntention }: YesterdayIntentionC
 
   useEffect(() => {
     const loadLocalIntention = async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
       const stored = await AsyncStorage.getItem(`@weave_today_focus_${today}`);
       console.log('[YesterdayIntention] Loaded from AsyncStorage:', stored ? 'Found' : 'None');
       setLocalIntention(stored);

@@ -47,6 +47,7 @@ export interface ApiErrorResponse {
  * Fetch consistency data for heat map visualization
  *
  * @param accessToken - JWT access token for authentication
+ * @param localDate - User's local date in YYYY-MM-DD format (required for timezone handling)
  * @param timeframe - Time range: 7d, 2w, 1m, 90d (default: 7d)
  * @param filterType - Filter type: overall, needle, bind, thread (default: overall)
  * @param filterId - Optional goal/bind ID if filtering by needle or bind
@@ -56,12 +57,14 @@ export interface ApiErrorResponse {
  *
  * @example
  * ```ts
- * const response = await fetchConsistencyData(accessToken, '7d', 'overall');
+ * const today = getCurrentLocalDate(); // "2025-01-25"
+ * const response = await fetchConsistencyData(accessToken, today, '7d', 'overall');
  * // Returns: {data: [{date: '2025-12-20', completion_percentage: 75, ...}], meta: {...}}
  * ```
  */
 export async function fetchConsistencyData(
   accessToken: string,
+  localDate: string,
   timeframe: '7d' | '2w' | '1m' | '90d' = '7d',
   filterType: 'overall' | 'needle' | 'bind' | 'thread' = 'overall',
   filterId?: string,
@@ -70,7 +73,8 @@ export async function fetchConsistencyData(
   const baseUrl = getApiBaseUrl();
 
   // Build query params manually
-  let queryParams = `timeframe=${timeframe}&filter_type=${filterType}`;
+  // CRITICAL: Always pass local_date for accurate timezone handling
+  let queryParams = `timeframe=${timeframe}&filter_type=${filterType}&local_date=${localDate}`;
   if (filterId) {
     queryParams += `&filter_id=${filterId}`;
   }

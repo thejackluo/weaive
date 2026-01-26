@@ -11,6 +11,7 @@ import { consistencyQueryKeys } from './useConsistencyData';
 import { userStatsQueryKeys } from './useUserStats';
 import { historyQueryKeys } from './useHistory';
 import { goalsQueryKeys } from './useActiveGoals';
+import { getCurrentLocalDate, parseLocalDate } from '@/utils/dateUtils';
 
 interface CompleteBindRequest {
   bindId: string;
@@ -57,7 +58,7 @@ export function useCompleteBind() {
       }
 
       // Get user's local date to pass to backend (ensures timezone-accurate completion)
-      const localDate = new Date().toISOString().split('T')[0];
+      const localDate = getCurrentLocalDate();
 
       // Call API service with local_date parameter
       return completeBindAPI(
@@ -71,7 +72,7 @@ export function useCompleteBind() {
     },
     // Optimistic update: Mark bind as completed IMMEDIATELY (before API call finishes)
     onMutate: async (request: CompleteBindRequest) => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
       const queryKey = bindsQueryKeys.today(today);
 
       // Cancel outgoing refetches (so they don't overwrite our optimistic update)
@@ -125,8 +126,9 @@ export function useCompleteBind() {
           if (!data?.data?.needles || !data?.meta?.start_date) return;
 
           // Calculate which day index today is in the 7-day grid
-          const startDate = new Date(data.meta.start_date);
-          const todayDate = new Date(today);
+          // CRITICAL: Use parseLocalDate to avoid UTC parsing bug
+          const startDate = parseLocalDate(data.meta.start_date);
+          const todayDate = parseLocalDate(today);
           const dayIndex = Math.floor(
             (todayDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
           );
@@ -173,7 +175,7 @@ export function useCompleteBind() {
     },
     // Rollback on error
     onError: (err, request, context: any) => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
 
       // Rollback Thread screen
       if (context?.previousData) {
@@ -194,7 +196,7 @@ export function useCompleteBind() {
     onSuccess: async () => {
       console.log('[COMPLETE_BIND] Bind completed successfully, refetching queries...');
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
 
       // Refetch all related queries in parallel for instant updates (same pattern as goal mutations)
       await Promise.all([

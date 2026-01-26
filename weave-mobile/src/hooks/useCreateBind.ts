@@ -10,6 +10,7 @@ import type { CreateBindRequest, BindResponse } from '@/types/binds';
 import { goalsQueryKeys } from './useActiveGoals';
 import { bindsQueryKeys } from './useTodayBinds';
 import { consistencyQueryKeys } from './useConsistencyData';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 export function useCreateBind() {
   const { session } = useAuth();
@@ -27,7 +28,7 @@ export function useCreateBind() {
     onMutate: async (request: CreateBindRequest) => {
       console.log('[CREATE_BIND] Starting optimistic update for new bind:', request.title);
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
 
       // Cancel outgoing queries to prevent overwriting our optimistic update
       await queryClient.cancelQueries({ queryKey: goalsQueryKeys.active() });
@@ -158,7 +159,7 @@ export function useCreateBind() {
     onError: (error, variables, context) => {
       console.error('[CREATE_BIND] Error, rolling back optimistic update:', error);
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
 
       if (context?.previousActiveGoals) {
         queryClient.setQueryData(goalsQueryKeys.active(), context.previousActiveGoals);

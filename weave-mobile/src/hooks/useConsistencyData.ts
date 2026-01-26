@@ -30,14 +30,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchConsistencyData, type ConsistencyResponse } from '@/services/consistency';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 /**
  * Query key factory for consistency data
  */
 export const consistencyQueryKeys = {
   all: ['consistency'] as const,
-  byTimeframe: (timeframe: string, filterType: string, filterId?: string, startDate?: string) =>
-    [...consistencyQueryKeys.all, timeframe, filterType, filterId, startDate] as const,
+  byTimeframe: (timeframe: string, filterType: string, localDate: string, filterId?: string, startDate?: string) =>
+    [...consistencyQueryKeys.all, timeframe, filterType, localDate, filterId, startDate] as const,
 };
 
 /**
@@ -64,14 +65,19 @@ export function useConsistencyData(
 ) {
   const { session } = useAuth();
 
+  // Get user's local date for timezone-accurate fetching
+  // CRITICAL: Must pass local_date to backend to prevent UTC date mismatch
+  const today = getCurrentLocalDate(); // YYYY-MM-DD
+
   return useQuery<ConsistencyResponse, Error>({
-    queryKey: consistencyQueryKeys.byTimeframe(timeframe, filterType, filterId, startDate),
+    queryKey: consistencyQueryKeys.byTimeframe(timeframe, filterType, today, filterId, startDate),
     queryFn: async () => {
       if (!session?.access_token) {
         throw new Error('No active session - user must be authenticated');
       }
 
-      return fetchConsistencyData(session.access_token, timeframe, filterType, filterId, startDate);
+      // Pass user's local date to backend for accurate timezone handling
+      return fetchConsistencyData(session.access_token, today, timeframe, filterType, filterId, startDate);
     },
     enabled: !!session?.access_token, // Only run if authenticated
     staleTime: 2 * 60 * 1000, // 2 minutes (stats data updates frequently)

@@ -35,6 +35,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchHistory, type HistoryResponse, type HistoryFilters } from '@/services/history';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 /**
  * Query key factory for history data
@@ -61,15 +62,22 @@ export const historyQueryKeys = {
  */
 export function useHistory(limit: number = 20, filters?: HistoryFilters) {
   const { session } = useAuth();
+  const localDate = getCurrentLocalDate();
+
+  // Merge localDate into filters for timezone accuracy
+  const filtersWithDate: HistoryFilters = {
+    ...filters,
+    localDate,
+  };
 
   return useQuery<HistoryResponse, Error>({
-    queryKey: historyQueryKeys.byParams(limit, filters),
+    queryKey: historyQueryKeys.byParams(limit, filtersWithDate),
     queryFn: async () => {
       if (!session?.access_token) {
         throw new Error('No active session - user must be authenticated');
       }
 
-      return fetchHistory(session.access_token, limit, filters);
+      return fetchHistory(session.access_token, limit, filtersWithDate);
     },
     enabled: !!session?.access_token, // Only run if authenticated
     staleTime: 3 * 60 * 1000, // 3 minutes (history updates frequently)

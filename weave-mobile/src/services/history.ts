@@ -45,6 +45,7 @@ export interface ApiErrorResponse {
 export interface HistoryFilters {
   timeframe?: 'days' | 'weeks' | 'months';
   type?: 'all' | 'threads' | 'binds' | 'weave_chats';
+  localDate?: string; // User's local date in YYYY-MM-DD format
 }
 
 /**
@@ -80,6 +81,11 @@ export async function fetchHistory(
   // Add type filter
   if (filters?.type && filters.type !== 'all') {
     queryParams.push(`type=${filters.type}`);
+  }
+
+  // Add local_date for timezone accuracy
+  if (filters?.localDate) {
+    queryParams.push(`local_date=${filters.localDate}`);
   }
 
   const url = `${baseUrl}/api/stats/history?${queryParams.join('&')}`;

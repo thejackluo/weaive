@@ -117,6 +117,7 @@ async def get_consistency_data(
     ),
     filter_id: Optional[str] = Query(None, description="Specific needle/bind ID if filtered"),
     start_date: Optional[str] = Query(None, description="Optional start date (YYYY-MM-DD) for dynamic navigation"),
+    local_date: Optional[str] = Query(None, description="User's local date in YYYY-MM-DD format. Required for accurate timezone handling."),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
@@ -182,6 +183,22 @@ async def get_consistency_data(
         timeframe_days = {"7d": 7, "2w": 14, "1m": 30, "90d": 90}
         days = timeframe_days.get(timeframe, 7)
 
+        # Determine "today" using user's local date for accurate timezone handling
+        # CRITICAL: Must use local_date from frontend, NOT server's date.today() which is UTC
+        if local_date:
+            try:
+                today_obj = date.fromisoformat(local_date)
+                logger.info(f"[STATS_API] Using provided local_date: {local_date}")
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid local_date format. Use YYYY-MM-DD.",
+                )
+        else:
+            # Fallback to server date for backwards compatibility (but warn in logs)
+            today_obj = date.today()
+            logger.warning(f"[STATS_API] No local_date provided, using server date: {today_obj.isoformat()}")
+
         # Find user's first completion date (using scheduled_for_date, not completed_at)
         # This ensures consistency between date range and completions grouping
         first_completion_response = (
@@ -236,11 +253,12 @@ async def get_consistency_data(
                 start_date_obj = first_journal_date
             else:
                 # No activity yet - use default timeframe (today - N days)
-                start_date_obj = date.today() - timedelta(days=days - 1)
+                start_date_obj = today_obj - timedelta(days=days - 1)
 
         start_date = start_date_obj.isoformat()
         # End date: TODAY (rolling consistency counts from first activity up to now)
-        end_date_obj = date.today()
+        # Uses user's local date for accurate timezone handling
+        end_date_obj = today_obj
 
         # TASK-BASED CONSISTENCY: Count scheduled tasks vs completed tasks
         # Use subtask_completions as source of truth (append-only, never loses historical data)
@@ -381,8 +399,7 @@ async def get_consistency_data(
         # ONLY add reflections for overall/thread filters (not needle/bind specific)
         if filter_type in ["overall", "thread"]:
             current_date = start_date_obj
-            today = date.today()
-            while current_date <= min(end_date_obj, today):  # Only up to today
+            while current_date <= min(end_date_obj, today_obj):  # Only up to today
                 date_str = current_date.isoformat()
                 # Add 1 scheduled reflection for each day that has occurred
                 scheduled_by_date[date_str] += 1
@@ -404,7 +421,7 @@ async def get_consistency_data(
         consistency_data = []
         current_date = start_date_obj
         end_date = end_date_obj
-        today_str = date.today().isoformat()
+        today_str = today_obj.isoformat()
 
         # Check if user has completed ANY tasks today (binds OR reflection)
         today_has_completions = completed_by_date.get(today_str, 0) > 0
@@ -595,7 +612,8 @@ async def get_consistency_data(
 
 @router.get("/binds-grid")
 async def get_binds_grid_data(
-    start_date: Optional[str] = Query(None, description="Start date in YYYY-MM-DD format. If not provided, uses first instance date."),
+    start_date: Optional[str] = Query(None, description="Start date in YYYY-MM-DD format. If not provided, uses rolling 7-day window ending at local_date."),
+    local_date: Optional[str] = Query(None, description="User's local date in YYYY-MM-DD format. Required for accurate timezone handling."),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
@@ -669,6 +687,22 @@ async def get_binds_grid_data(
 
         user_id = user_profile_response.data["id"]
 
+        # Determine "today" using user's local date for accurate timezone handling
+        # CRITICAL: Must use local_date from frontend, NOT server's date.today() which is UTC
+        if local_date:
+            try:
+                today_obj = date.fromisoformat(local_date)
+                logger.info(f"[BINDS_GRID_API] Using provided local_date: {local_date}")
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid local_date format. Use YYYY-MM-DD.",
+                )
+        else:
+            # Fallback to server date for backwards compatibility (but warn in logs)
+            today_obj = date.today()
+            logger.warning(f"[BINDS_GRID_API] No local_date provided, using server date: {today_obj.isoformat()}")
+
         # Determine start date: use provided start_date, or default to last 7 days (rolling window)
         if start_date:
             # Use provided start date
@@ -680,9 +714,9 @@ async def get_binds_grid_data(
                     detail="Invalid start_date format. Use YYYY-MM-DD.",
                 )
         else:
-            # 🐛 FIX: Default to rolling 7-day window (today - 6 days → today)
-            # This ensures the grid always shows the most recent 7 days, including today
-            start_date_obj = date.today() - timedelta(days=6)
+            # Default to rolling 7-day window (today - 6 days → today)
+            # Uses local_date for accurate timezone handling
+            start_date_obj = today_obj - timedelta(days=6)
 
         # End date: 6 days after start (to show 7 total days)
         end_date = start_date_obj + timedelta(days=6)
@@ -857,6 +891,7 @@ async def get_binds_grid_data(
 @router.get("/fulfillment")
 async def get_fulfillment_data(
     timeframe: Literal["7d", "2w", "1m", "90d"] = Query("7d", description="Timeframe for data"),
+    local_date: Optional[str] = Query(None, description="User's local date in YYYY-MM-DD format. Required for accurate timezone handling."),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
@@ -914,10 +949,26 @@ async def get_fulfillment_data(
 
         user_id = user_profile_response.data["id"]
 
+        # Determine "today" using user's local date for accurate timezone handling
+        # CRITICAL: Must use local_date from frontend, NOT server's date.today() which is UTC
+        if local_date:
+            try:
+                today_obj = date.fromisoformat(local_date)
+                logger.info(f"[STATS_API] Fulfillment using provided local_date: {local_date}")
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid local_date format. Use YYYY-MM-DD.",
+                )
+        else:
+            # Fallback to server date for backwards compatibility (but warn in logs)
+            today_obj = date.today()
+            logger.warning(f"[STATS_API] Fulfillment - No local_date provided, using server date: {today_obj.isoformat()}")
+
         # Calculate date range
         timeframe_days = {"7d": 7, "2w": 14, "1m": 30, "90d": 90}
         days = timeframe_days.get(timeframe, 7)
-        start_date = (date.today() - timedelta(days=days - 1)).isoformat()
+        start_date = (today_obj - timedelta(days=days - 1)).isoformat()
 
         # Fetch journal_entries for the timeframe
         journal_response = (
@@ -976,6 +1027,7 @@ async def get_fulfillment_data(
 
 @router.get("/streaks")
 async def get_streak_data(
+    local_date: Optional[str] = Query(None, description="User's local date in YYYY-MM-DD format. Required for accurate timezone handling."),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
@@ -1030,6 +1082,22 @@ async def get_streak_data(
 
         user_id = user_profile_response.data["id"]
 
+        # Determine "today" using user's local date for accurate timezone handling
+        # CRITICAL: Must use local_date from frontend, NOT server's date.today() which is UTC
+        if local_date:
+            try:
+                today_obj = date.fromisoformat(local_date)
+                logger.info(f"[STATS_API] Streaks using provided local_date: {local_date}")
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid local_date format. Use YYYY-MM-DD.",
+                )
+        else:
+            # Fallback to server date for backwards compatibility (but warn in logs)
+            today_obj = date.today()
+            logger.warning(f"[STATS_API] Streaks - No local_date provided, using server date: {today_obj.isoformat()}")
+
         # Fetch all daily_aggregates to calculate streaks
         aggregates_response = (
             supabase.table("daily_aggregates")
@@ -1050,8 +1118,9 @@ async def get_streak_data(
         # Reverse to start from most recent
         for agg in reversed(aggregates):
             if agg.get("active_day_with_proof"):
+                # Use today_obj (user's local date) for accurate timezone handling
                 if temp_streak == 0 or agg["local_date"] == str(
-                    date.today() - timedelta(days=current_streak)
+                    today_obj - timedelta(days=current_streak)
                 ):
                     current_streak += 1
                 temp_streak += 1
@@ -1075,7 +1144,7 @@ async def get_streak_data(
                 "streak_resilience": streak_resilience,
             },
             "meta": {
-                "timestamp": date.today().isoformat(),
+                "timestamp": today_obj.isoformat(),
             },
         }
 
@@ -1099,6 +1168,7 @@ async def get_history(
         None,
         description="Filter by type: threads (journals/goals), binds (completions), weave_chats",
     ),
+    local_date: Optional[str] = Query(None, description="User's local date in YYYY-MM-DD format. Required for accurate timezone handling."),
     user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase_client),
 ):
@@ -1161,12 +1231,28 @@ async def get_history(
 
         user_id = user_profile_response.data["id"]
 
+        # Determine "today" using user's local date for accurate timezone handling
+        # CRITICAL: Must use local_date from frontend, NOT server's date.today() which is UTC
+        if local_date:
+            try:
+                today_obj = date.fromisoformat(local_date)
+                logger.info(f"[HISTORY_API] Using provided local_date: {local_date}")
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid local_date format. Use YYYY-MM-DD.",
+                )
+        else:
+            # Fallback to server date for backwards compatibility (but warn in logs)
+            today_obj = date.today()
+            logger.warning(f"[HISTORY_API] No local_date provided, using server date: {today_obj.isoformat()}")
+
         # Calculate date range based on timeframe
         start_date = None
         if timeframe:
             timeframe_days = {"days": 7, "weeks": 28, "months": 90}  # 7 days, 4 weeks, ~3 months
             days = timeframe_days.get(timeframe, 7)
-            start_date = (date.today() - timedelta(days=days)).isoformat()
+            start_date = (today_obj - timedelta(days=days)).isoformat()
 
         history_items = []
 
@@ -1300,8 +1386,9 @@ async def get_history(
 
         for goal in goals:
             # If goal was recently created (within last 30 days)
+            # Use today_obj (user's local date) for accurate timezone handling
             created_date = date.fromisoformat(goal["created_at"].split("T")[0])
-            if (date.today() - created_date).days <= 30:
+            if (today_obj - created_date).days <= 30:
                 history_items.append(
                     {
                         "id": goal["id"],

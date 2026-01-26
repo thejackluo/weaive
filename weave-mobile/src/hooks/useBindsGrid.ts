@@ -8,6 +8,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { getApiBaseUrl } from '@/utils/api';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 export interface BindCompletion {
   id: string;
@@ -37,13 +38,15 @@ export interface BindsGridResponse {
   };
 }
 
-async function fetchBindsGrid(accessToken: string, startDate?: string): Promise<BindsGridResponse> {
+async function fetchBindsGrid(accessToken: string, localDate: string, startDate?: string): Promise<BindsGridResponse> {
   const baseUrl = getApiBaseUrl();
   const params = new URLSearchParams();
+  // CRITICAL: Always pass local_date for accurate timezone handling
+  params.append('local_date', localDate);
   if (startDate) {
     params.append('start_date', startDate);
   }
-  const url = `${baseUrl}/api/stats/binds-grid${params.toString() ? `?${params.toString()}` : ''}`;
+  const url = `${baseUrl}/api/stats/binds-grid?${params.toString()}`;
 
   console.log('[BINDS_GRID] Fetching:', url);
 
@@ -69,9 +72,9 @@ async function fetchBindsGrid(accessToken: string, startDate?: string): Promise<
 export function useBindsGrid(startDate?: string) {
   const { session } = useAuth();
 
-  // 🐛 FIX: Include today's date in query key when startDate is undefined
-  // This ensures the query refetches automatically when the date changes
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  // Get user's local date for timezone-accurate fetching
+  // CRITICAL: Must pass local_date to backend to prevent UTC date mismatch
+  const today = getCurrentLocalDate(); // YYYY-MM-DD
   const effectiveQueryKey = startDate || today;
 
   return useQuery<BindsGridResponse, Error>({
@@ -81,7 +84,8 @@ export function useBindsGrid(startDate?: string) {
         throw new Error('No active session');
       }
 
-      return fetchBindsGrid(session.access_token, startDate);
+      // Pass user's local date to backend for accurate timezone handling
+      return fetchBindsGrid(session.access_token, today, startDate);
     },
     enabled: !!session?.access_token,
     staleTime: 2 * 60 * 1000, // 2 minutes

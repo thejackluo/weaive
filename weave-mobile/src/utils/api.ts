@@ -17,14 +17,15 @@ export function getApiBaseUrl(): string {
   // Default to production Railway backend for TestFlight builds
   const PRODUCTION_URL = 'https://weavelight-production-e380.up.railway.app';
 
-  // If no config URL or it's localhost, use production (for TestFlight builds)
-  if (!configUrl || configUrl.includes('localhost')) {
-    return PRODUCTION_URL;
+  // In dev mode, allow localhost for local testing
+  if (__DEV__ && configUrl) {
+    console.log(`[API] Using base URL: ${configUrl}`);
+    return configUrl;
   }
 
-  // Log in dev mode (helps debugging different ports)
-  if (__DEV__) {
-    console.log(`[API] Using base URL: ${configUrl}`);
+  // For production builds: if no config URL or it's localhost, use production
+  if (!configUrl || configUrl.includes('localhost')) {
+    return PRODUCTION_URL;
   }
 
   return configUrl;

@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mock API client
 import * as journalApi from '../../../../services/journalApi';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 // Test utilities
 import {
@@ -601,7 +602,7 @@ describe.skip('Daily Reflection Flow - E2E Integration Tests', () => {
 
       // GIVEN: Existing journal entry for today
       const existingEntry = generateMockJournalEntry({
-        local_date: new Date().toISOString().split('T')[0],
+        local_date: getCurrentLocalDate(),
         fulfillment_score: 8,
         default_responses: {
           today_reflection: 'Great day with lots of progress!',

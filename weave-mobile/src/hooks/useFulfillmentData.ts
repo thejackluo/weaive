@@ -30,13 +30,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchFulfillmentData, type FulfillmentResponse } from '@/services/fulfillment';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 /**
  * Query key factory for fulfillment data
  */
 export const fulfillmentQueryKeys = {
   all: ['fulfillment'] as const,
-  byTimeframe: (timeframe: string) => [...fulfillmentQueryKeys.all, timeframe] as const,
+  byTimeframe: (timeframe: string, localDate?: string) => [...fulfillmentQueryKeys.all, timeframe, localDate] as const,
 };
 
 /**
@@ -54,15 +55,16 @@ export const fulfillmentQueryKeys = {
  */
 export function useFulfillmentData(timeframe: '7d' | '2w' | '1m' | '90d' = '7d') {
   const { session } = useAuth();
+  const localDate = getCurrentLocalDate();
 
   return useQuery<FulfillmentResponse, Error>({
-    queryKey: fulfillmentQueryKeys.byTimeframe(timeframe),
+    queryKey: fulfillmentQueryKeys.byTimeframe(timeframe, localDate),
     queryFn: async () => {
       if (!session?.access_token) {
         throw new Error('No active session - user must be authenticated');
       }
 
-      return fetchFulfillmentData(session.access_token, timeframe);
+      return fetchFulfillmentData(session.access_token, timeframe, localDate);
     },
     enabled: !!session?.access_token, // Only run if authenticated
     staleTime: 2 * 60 * 1000, // 2 minutes (stats data updates frequently)

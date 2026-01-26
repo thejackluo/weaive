@@ -14,6 +14,7 @@ import { clearAllCaches, logActiveQueries } from '@/utils/devTools';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInAppOnboarding } from '@/contexts/InAppOnboardingContext';
 import apiClient from '@/services/apiClient';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 export default function DevToolsScreen() {
   const { colors, spacing } = useTheme();
@@ -52,7 +53,7 @@ export default function DevToolsScreen() {
   };
 
   const handleInvalidateBinds = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getCurrentLocalDate();
     queryClient.invalidateQueries({ queryKey: ['binds', 'today', today] });
     Alert.alert('Success', "Today's binds cache invalidated. Will refetch on next screen load.");
   };

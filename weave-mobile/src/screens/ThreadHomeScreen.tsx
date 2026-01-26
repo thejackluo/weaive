@@ -31,6 +31,7 @@ import { useGetTodayJournal, useUpdateJournal, useSubmitJournal } from '@/hooks/
 import { useActiveGoals } from '@/hooks/useActiveGoals';
 import type { Bind } from '@/types/binds';
 import { mockUser, getGreeting } from '@/data/mockThreadData';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 export function ThreadHomeScreen() {
   const { colors, spacing } = useTheme();
@@ -369,7 +370,7 @@ export function ThreadHomeScreen() {
         // Store it in AsyncStorage with today's date as key (auto-expires on new day)
         // This is purely for display on Thread Home screen - NOT part of journal system
         console.log('[ThreadHome] 💾 Storing intention locally (display-only, no journal entry)');
-        const today = new Date().toISOString().split('T')[0];
+        const today = getCurrentLocalDate();
         await AsyncStorage.setItem(`@weave_today_focus_${today}`, intention);
 
         const duration = (performance.now() - startTime).toFixed(0);

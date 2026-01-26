@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Heading } from '@/design-system';
+import { parseLocalDate } from '@/utils/dateUtils';
 import { deleteImage } from '../services/imageCapture';
 import { Capture, AIVisionCategory } from '../types/captures';
 import { supabase } from '@lib/supabase';
@@ -253,7 +254,7 @@ export function ImageDetailView({
         {/* Center: Date */}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ color: 'white', fontWeight: '500', fontSize: 16 }}>
-            {new Date(capture.local_date).toLocaleDateString()}
+            {parseLocalDate(capture.local_date).toLocaleDateString()}
           </Text>
         </View>
 

@@ -17,6 +17,7 @@ import { userStatsQueryKeys } from './useUserStats';
 import { historyQueryKeys } from './useHistory';
 import { consistencyQueryKeys } from './useConsistencyData';
 import { useCurrentDate } from './useCurrentDate';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 const OFFLINE_QUEUE_KEY = '@weave_journal_offline_queue';
 
@@ -120,7 +121,7 @@ export function useSubmitJournal() {
       // Optimistically update
       queryClient.setQueryData(journalKeys.today(), {
         id: 'temp-id',
-        local_date: new Date().toISOString().split('T')[0],
+        local_date: getCurrentLocalDate(),
         fulfillment_score: newJournal.fulfillment_score,
         default_responses: newJournal.default_responses,
         custom_responses: newJournal.custom_responses,

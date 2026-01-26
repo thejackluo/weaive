@@ -485,7 +485,10 @@ async def get_journal_entries(
 
 
 @router.get("/yesterday-intention")
-async def get_yesterday_intention(user: dict = Depends(get_current_user)):
+async def get_yesterday_intention(
+    local_date: Optional[str] = Query(None, description="User's local date in YYYY-MM-DD format. Required for accurate timezone handling."),
+    user: dict = Depends(get_current_user)
+):
     """
     Get today's focus intention
 
@@ -511,9 +514,22 @@ async def get_yesterday_intention(user: dict = Depends(get_current_user)):
     # Get user's profile ID
     profile_id = await get_or_create_user_profile(supabase, user_id)
 
-    # Calculate dates
+    # Calculate dates using user's local date for accurate timezone handling
+    # CRITICAL: Must use local_date from frontend, NOT server's date.today() which is UTC
     from datetime import timedelta
-    today = date.today()
+    if local_date:
+        try:
+            today = date.fromisoformat(local_date)
+            logger.info(f"[JOURNAL_API] yesterday-intention using provided local_date: {local_date}")
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid local_date format. Use YYYY-MM-DD.",
+            )
+    else:
+        # Fallback to server date for backwards compatibility (but warn in logs)
+        today = date.today()
+        logger.warning(f"[JOURNAL_API] yesterday-intention - No local_date provided, using server date: {today.isoformat()}")
     yesterday = today - timedelta(days=1)
     today_str = today.isoformat()
     yesterday_str = yesterday.isoformat()

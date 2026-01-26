@@ -9,6 +9,7 @@ import { getApiBaseUrl } from '@/utils/api';
 import { goalsQueryKeys } from './useActiveGoals';
 import { bindsQueryKeys } from './useTodayBinds';
 import { consistencyQueryKeys } from './useConsistencyData';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 interface UpdateBindRequest {
   bindId: string;
@@ -95,7 +96,7 @@ export function useUpdateBind() {
     onMutate: async (request: UpdateBindRequest) => {
       console.log('[UPDATE_BIND] Starting optimistic update for bind:', request.bindId);
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
 
       // Cancel outgoing queries to prevent overwriting our optimistic update
       await queryClient.cancelQueries({ queryKey: goalsQueryKeys.all });
@@ -206,7 +207,7 @@ export function useUpdateBind() {
     onError: (error, variables, context) => {
       console.error('[UPDATE_BIND] Error, rolling back optimistic update:', error);
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getCurrentLocalDate();
 
       if (context?.previousActiveGoals) {
         queryClient.setQueryData(goalsQueryKeys.active(), context.previousActiveGoals);

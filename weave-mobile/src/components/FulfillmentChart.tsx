@@ -16,6 +16,7 @@ import { useTheme } from '@/design-system/theme/ThemeProvider';
 import { useFulfillmentData } from '@/hooks/useFulfillmentData';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
+import { formatLocalDate, parseLocalDate } from '@/utils/dateUtils';
 
 interface FulfillmentChartProps {
   timeframe: '7d' | '2w' | '1m';
@@ -193,7 +194,7 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
     for (let i = 0; i < expectedDays; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = formatLocalDate(date);
 
       // Find data for this date
       const dayData = fulfillmentData.find((d) => d.date === dateStr);
@@ -217,8 +218,9 @@ export function FulfillmentChart({ timeframe, onTimeframeChange }: FulfillmentCh
   // Note: dateLabelIndices logic removed - now showing all dates on X-axis
 
   // Format date label - numeric format MM/DD
+  // CRITICAL: Use parseLocalDate to avoid UTC parsing bug
   const formatDateLabel = (dateStr: string) => {
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     const month = date.getMonth() + 1; // getMonth() is 0-indexed
     const day = date.getDate();
     return `${month}/${day}`;

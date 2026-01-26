@@ -17,18 +17,22 @@ import type {
  * Fetch active goals with stats
  *
  * @param accessToken - JWT access token for authentication
+ * @param localDate - User's local date in YYYY-MM-DD format (for timezone accuracy)
  * @returns Promise with goals data and metadata
  * @throws Error if API call fails or returns error
  *
  * @example
  * ```ts
- * const response = await fetchActiveGoals(accessToken);
+ * const response = await fetchActiveGoals(accessToken, '2025-12-20');
  * // Returns: {data: Goal[], meta: {total: 2, active_goal_limit: 3}}
  * ```
  */
-export async function fetchActiveGoals(accessToken: string): Promise<GoalsResponse> {
+export async function fetchActiveGoals(accessToken: string, localDate?: string): Promise<GoalsResponse> {
   const baseUrl = getApiBaseUrl();
-  const url = `${baseUrl}/api/goals?status=active&include_stats=true`;
+  let url = `${baseUrl}/api/goals?status=active&include_stats=true`;
+  if (localDate) {
+    url += `&local_date=${localDate}`;
+  }
 
   const response = await fetch(url, {
     method: 'GET',
@@ -55,21 +59,26 @@ export async function fetchActiveGoals(accessToken: string): Promise<GoalsRespon
  *
  * @param goalId - Goal ID
  * @param accessToken - JWT access token for authentication
+ * @param localDate - User's local date in YYYY-MM-DD format (for timezone accuracy)
  * @returns Promise with goal detail data
  * @throws Error if API call fails or returns error
  *
  * @example
  * ```ts
- * const goalDetail = await fetchGoalById('goal-123', accessToken);
+ * const goalDetail = await fetchGoalById('goal-123', accessToken, '2025-12-20');
  * // Returns: {data: {id, title, description, stats, milestones, binds}}
  * ```
  */
 export async function fetchGoalById(
   goalId: string,
-  accessToken: string
+  accessToken: string,
+  localDate?: string
 ): Promise<GoalDetailResponse> {
   const baseUrl = getApiBaseUrl();
-  const url = `${baseUrl}/api/goals/${goalId}`;
+  let url = `${baseUrl}/api/goals/${goalId}`;
+  if (localDate) {
+    url += `?local_date=${localDate}`;
+  }
 
   const response = await fetch(url, {
     method: 'GET',
@@ -110,10 +119,14 @@ export async function fetchGoalById(
  */
 export async function createGoal(
   goalData: CreateGoalRequest,
-  accessToken: string
+  accessToken: string,
+  localDate?: string
 ): Promise<GoalDetailResponse> {
   const baseUrl = getApiBaseUrl();
-  const url = `${baseUrl}/api/goals`;
+  let url = `${baseUrl}/api/goals`;
+  if (localDate) {
+    url += `?local_date=${localDate}`;
+  }
 
   // Transform binds: convert times_per_week to frequency_type + frequency_value
   const transformedBinds = goalData.binds?.map((bind) => {

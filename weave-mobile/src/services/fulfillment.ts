@@ -42,21 +42,26 @@ export interface ApiErrorResponse {
  *
  * @param accessToken - JWT access token for authentication
  * @param timeframe - Time range: 7d, 2w, 1m, 90d (default: 7d)
+ * @param localDate - User's local date in YYYY-MM-DD format (for timezone accuracy)
  * @returns Promise with fulfillment trend data
  * @throws Error if API call fails or returns error
  *
  * @example
  * ```ts
- * const response = await fetchFulfillmentData(accessToken, '7d');
+ * const response = await fetchFulfillmentData(accessToken, '7d', '2025-12-20');
  * // Returns: {data: [{date: '2025-12-20', fulfillment_score: 8, rolling_average_7d: 7.5}], meta: {...}}
  * ```
  */
 export async function fetchFulfillmentData(
   accessToken: string,
-  timeframe: '7d' | '2w' | '1m' | '90d' = '7d'
+  timeframe: '7d' | '2w' | '1m' | '90d' = '7d',
+  localDate?: string
 ): Promise<FulfillmentResponse> {
   const baseUrl = getApiBaseUrl();
-  const queryParams = `timeframe=${timeframe}`;
+  let queryParams = `timeframe=${timeframe}`;
+  if (localDate) {
+    queryParams += `&local_date=${localDate}`;
+  }
 
   const url = `${baseUrl}/api/stats/fulfillment?${queryParams}`;
 
