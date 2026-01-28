@@ -28,6 +28,7 @@ import {
   Animated,
   Pressable,
   Modal,
+  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
@@ -260,7 +261,7 @@ export default function ReflectionScreen() {
       }
     } catch (error) {
       console.error('Failed to submit journal:', error);
-      // Error handling will be improved in Task 2
+      Alert.alert('Submission Failed', 'Please check your connection and try again.');
     }
   };
 
@@ -439,7 +440,11 @@ export default function ReflectionScreen() {
           showNotes={false}
           onComplete={() => {
             setShowCelebration(false);
-            router.back();
+            // Delay navigation to prevent RNSScreenContainerView recycling crash
+            // (native view needs time to finish unmounting the modal before screen navigates)
+            setTimeout(() => {
+              router.back();
+            }, 100);
           }}
         />
       )}

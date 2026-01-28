@@ -193,23 +193,23 @@ export function useCompleteBind() {
         console.log('[COMPLETE_BIND] Rolled back optimistic updates (Thread + Grid) due to error');
       }
     },
-    onSuccess: async () => {
-      console.log('[COMPLETE_BIND] Bind completed successfully, refetching queries...');
+    onSuccess: () => {
+      console.log('[COMPLETE_BIND] Bind completed successfully, invalidating queries...');
 
       const today = getCurrentLocalDate();
 
-      // Refetch all related queries in parallel for instant updates (same pattern as goal mutations)
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: bindsQueryKeys.today(today) }),
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
-        queryClient.refetchQueries({ queryKey: consistencyQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
-        queryClient.refetchQueries({ queryKey: ['userStats'] }),
-        queryClient.refetchQueries({ queryKey: historyQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['daily-detail', today] }),
-      ]);
+      // Invalidate (not refetch) to avoid Hermes GC pressure crash on low-memory devices.
+      // Invalidation marks queries as stale — they refetch lazily when their
+      // components next render, spreading memory allocation over time.
+      queryClient.invalidateQueries({ queryKey: bindsQueryKeys.today(today) });
+      queryClient.invalidateQueries({ queryKey: goalsQueryKeys.active() });
+      queryClient.invalidateQueries({ queryKey: consistencyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['bindsGrid'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['userStats'] });
+      queryClient.invalidateQueries({ queryKey: historyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['daily-detail', today] });
 
-      console.log('[COMPLETE_BIND] All queries refetched successfully');
+      console.log('[COMPLETE_BIND] All queries invalidated');
     },
   });
 }

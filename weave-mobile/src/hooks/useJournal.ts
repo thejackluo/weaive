@@ -24,7 +24,10 @@ const OFFLINE_QUEUE_KEY = '@weave_journal_offline_queue';
 // Query keys
 export const journalKeys = {
   all: ['journal-entries'] as const,
-  today: (date: string) => [...journalKeys.all, 'today', date] as const,
+  today: (date: string) => {
+    if (__DEV__ && !date) console.error('[journalKeys] today() called without date param!');
+    return [...journalKeys.all, 'today', date] as const;
+  },
   byDate: (date: string) => [...journalKeys.all, date] as const,
   yesterdayIntention: (date: string) => [...journalKeys.all, 'yesterday-intention', date] as const,
 };
@@ -112,16 +115,17 @@ export function useSubmitJournal() {
 
     // Optimistic update
     onMutate: async (newJournal: JournalEntryCreate) => {
+      const todayDate = getCurrentLocalDate();
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: journalKeys.today() });
+      await queryClient.cancelQueries({ queryKey: journalKeys.today(todayDate) });
 
       // Snapshot previous value
-      const previousJournal = queryClient.getQueryData(journalKeys.today());
+      const previousJournal = queryClient.getQueryData(journalKeys.today(todayDate));
 
       // Optimistically update
-      queryClient.setQueryData(journalKeys.today(), {
+      queryClient.setQueryData(journalKeys.today(todayDate), {
         id: 'temp-id',
-        local_date: getCurrentLocalDate(),
+        local_date: todayDate,
         fulfillment_score: newJournal.fulfillment_score,
         default_responses: newJournal.default_responses,
         custom_responses: newJournal.custom_responses,
@@ -129,12 +133,13 @@ export function useSubmitJournal() {
         updated_at: new Date().toISOString(),
       });
 
-      return { previousJournal };
+      return { previousJournal, todayDate };
     },
 
     // Rollback on error
     onError: (err, newJournal, context) => {
       console.error('[JOURNAL_HOOK] ❌ Submit mutation failed:', err);
+      const todayDate = context?.todayDate || getCurrentLocalDate();
 
       // Handle 409 Conflict: Entry already exists, fetch it instead
       if (err.message.includes('409') || err.message.includes('already exists')) {
@@ -142,14 +147,14 @@ export function useSubmitJournal() {
           '[JOURNAL_HOOK] 🔄 409 Conflict - entry exists, invalidating cache to fetch real data'
         );
         // Clear the temp-id cache and refetch
-        queryClient.removeQueries({ queryKey: journalKeys.today() });
-        queryClient.invalidateQueries({ queryKey: journalKeys.today() });
+        queryClient.removeQueries({ queryKey: journalKeys.today(todayDate) });
+        queryClient.invalidateQueries({ queryKey: journalKeys.today(todayDate) });
         return; // Don't rollback, just refetch
       }
 
       // For other errors, rollback optimistic update
       if (context?.previousJournal) {
-        queryClient.setQueryData(journalKeys.today(), context.previousJournal);
+        queryClient.setQueryData(journalKeys.today(todayDate), context.previousJournal);
       }
 
       // Queue for offline sync if network error
@@ -160,10 +165,11 @@ export function useSubmitJournal() {
 
     // Refetch on success
     onSuccess: (response) => {
+      const todayDate = getCurrentLocalDate();
       // CRITICAL: Replace the temp-id optimistic cache with real server response
       // This fixes the bug where the screen tries to PATCH /api/journal-entries/temp-id
       // Extract data from response (API now returns { data, meta })
-      queryClient.setQueryData(journalKeys.today(), response.data);
+      queryClient.setQueryData(journalKeys.today(todayDate), response.data);
 
       queryClient.invalidateQueries({ queryKey: journalKeys.all });
       queryClient.invalidateQueries({ queryKey: ['daily-aggregates'] });
@@ -196,13 +202,14 @@ export function useUpdateJournal() {
 
     // Optimistic update
     onMutate: async ({ journalId: _journalId, data }) => {
-      await queryClient.cancelQueries({ queryKey: journalKeys.today() });
+      const todayDate = getCurrentLocalDate();
+      await queryClient.cancelQueries({ queryKey: journalKeys.today(todayDate) });
 
-      const previousJournal = queryClient.getQueryData(journalKeys.today());
+      const previousJournal = queryClient.getQueryData(journalKeys.today(todayDate));
 
       // Optimistically update (only if old data exists)
       if (previousJournal) {
-        queryClient.setQueryData(journalKeys.today(), (old: any) => ({
+        queryClient.setQueryData(journalKeys.today(todayDate), (old: any) => ({
           ...old,
           fulfillment_score: data.fulfillment_score ?? old.fulfillment_score,
           default_responses: data.default_responses ?? old.default_responses,
@@ -211,13 +218,14 @@ export function useUpdateJournal() {
         }));
       }
 
-      return { previousJournal };
+      return { previousJournal, todayDate };
     },
 
     // Rollback on error
     onError: (err, variables, context) => {
+      const todayDate = context?.todayDate || getCurrentLocalDate();
       if (context?.previousJournal) {
-        queryClient.setQueryData(journalKeys.today(), context.previousJournal);
+        queryClient.setQueryData(journalKeys.today(todayDate), context.previousJournal);
       }
 
       // Queue for offline sync if network error
@@ -228,8 +236,9 @@ export function useUpdateJournal() {
 
     // Refetch on success
     onSuccess: (response) => {
+      const todayDate = getCurrentLocalDate();
       // Update cache with real data from server
-      queryClient.setQueryData(journalKeys.today(), response.data);
+      queryClient.setQueryData(journalKeys.today(todayDate), response.data);
 
       queryClient.invalidateQueries({ queryKey: journalKeys.all });
       queryClient.invalidateQueries({ queryKey: ['daily-aggregates'] });
