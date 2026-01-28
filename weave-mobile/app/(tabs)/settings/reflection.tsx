@@ -38,6 +38,7 @@ import { useSubmitJournal, useUpdateJournal, useGetTodayJournal } from '@/hooks/
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CompletionCelebration } from '@/components/thread/CompletionCelebration';
 import { useInAppOnboarding } from '@/contexts/InAppOnboardingContext';
+import { getCurrentLocalDate } from '@/utils/dateUtils';
 
 const DRAFT_KEY = '@weave_reflection_draft';
 
@@ -200,9 +201,18 @@ export default function ReflectionScreen() {
       const draft = await AsyncStorage.getItem(DRAFT_KEY);
       if (draft) {
         const parsed = JSON.parse(draft);
-        setTodayReflection(parsed.todayReflection || '');
-        setTomorrowFocus(parsed.tomorrowFocus || '');
-        setFulfillmentScore(parsed.fulfillmentScore || 5);
+        const today = getCurrentLocalDate();
+        // Only load draft if it's from today (prevents yesterday's draft from appearing)
+        if (parsed.date === today) {
+          setTodayReflection(parsed.todayReflection || '');
+          setTomorrowFocus(parsed.tomorrowFocus || '');
+          setFulfillmentScore(parsed.fulfillmentScore || 5);
+          console.log('[REFLECTION_SCREEN] 📝 Loaded draft from today');
+        } else {
+          // Stale draft from a previous day - clear it
+          console.log(`[REFLECTION_SCREEN] 🗑️ Clearing stale draft from ${parsed.date} (today is ${today})`);
+          await AsyncStorage.removeItem(DRAFT_KEY);
+        }
       }
     } catch (error) {
       console.error('Failed to load draft:', error);
@@ -211,9 +221,10 @@ export default function ReflectionScreen() {
 
   const saveDraft = async () => {
     try {
+      const today = getCurrentLocalDate();
       await AsyncStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ todayReflection, tomorrowFocus, fulfillmentScore })
+        JSON.stringify({ date: today, todayReflection, tomorrowFocus, fulfillmentScore })
       );
     } catch (error) {
       console.error('Failed to save draft:', error);
