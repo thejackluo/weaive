@@ -19,6 +19,7 @@ import { ImageLightbox } from '@/components/ImageLightbox';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { TimerBadge } from '@/components/TimerBadge';
 import { useDailyDetail, type BindData, type CaptureData } from '@/hooks/useDailyDetail';
+import { parseLocalDate } from '@/utils/dateUtils';
 
 export default function DailyDetailScreen() {
   const { colors, spacing } = useTheme();
@@ -114,7 +115,9 @@ export default function DailyDetailScreen() {
   const aggregates = summary.aggregates;
 
   // Format date for display
-  const displayDate = new Date(date).toLocaleDateString('en-US', {
+  // CRITICAL: Use parseLocalDate to avoid UTC parsing bug
+  // new Date("2026-01-27") parses as UTC midnight, which is Jan 26 4pm in PST
+  const displayDate = parseLocalDate(date).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
