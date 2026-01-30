@@ -159,13 +159,8 @@ export function useDeleteBind() {
       queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
 
-      // Refetch to confirm server state (background, won't block UI)
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) }),
-        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
-      ]);
+      // Invalidation above marks queries as stale — they refetch lazily when components render.
+      // Removed Promise.all(refetchQueries) to avoid Hermes GC pressure crash on low-memory devices.
 
       // CRITICAL: Wait 300ms for database transaction to propagate before resetting consistency
       // This prevents race condition where consistency recalculates before deletion commits

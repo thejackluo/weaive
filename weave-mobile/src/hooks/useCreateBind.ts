@@ -195,15 +195,10 @@ export function useCreateBind() {
       queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
 
-      // Refetch to replace temp bind with real data from server
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.byId(data.data.goal_id) }),
-        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
-      ]);
+      // Invalidation above marks queries as stale — they refetch lazily when components render.
+      // Removed Promise.all(refetchQueries) to avoid Hermes GC pressure crash on low-memory devices.
 
-      console.log('[CREATE_BIND] Server refetch complete');
+      console.log('[CREATE_BIND] Queries invalidated, will refetch on next render');
     },
   });
 }

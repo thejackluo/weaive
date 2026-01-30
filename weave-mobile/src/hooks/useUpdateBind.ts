@@ -245,15 +245,10 @@ export function useUpdateBind() {
       queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
 
-      // Refetch to confirm server state (background, won't block UI)
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
-      ]);
+      // Invalidation above marks queries as stale — they refetch lazily when components render.
+      // Removed Promise.all(refetchQueries) to avoid Hermes GC pressure crash on low-memory devices.
 
-      console.log('[UPDATE_BIND] Server refetch complete');
+      console.log('[UPDATE_BIND] Queries invalidated, will refetch on next render');
     },
   });
 }

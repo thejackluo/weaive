@@ -165,14 +165,10 @@ export function useCreateGoal() {
       queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
 
-      // Refetch all related queries immediately to show new data
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
-        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
-      ]);
+      // Invalidation above marks queries as stale — they refetch lazily when components render.
+      // Removed Promise.all(refetchQueries) to avoid Hermes GC pressure crash on low-memory devices.
 
-      console.log('[CREATE_GOAL] All queries refetched successfully');
+      console.log('[CREATE_GOAL] Queries invalidated, will refetch on next render');
     },
   });
 }
@@ -216,13 +212,8 @@ export function useUpdateGoal() {
       queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
 
-      // Refetch all related queries immediately to show updated data
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.byId(variables.goalId) }),
-        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
-      ]);
+      // Invalidation above marks queries as stale — they refetch lazily when components render.
+      // Removed Promise.all(refetchQueries) to avoid Hermes GC pressure crash on low-memory devices.
     },
   });
 }
@@ -260,12 +251,8 @@ export function useArchiveGoal() {
       queryClient.invalidateQueries({ queryKey: bindsQueryKeys.all });
       queryClient.invalidateQueries({ queryKey: ['bindsGrid'] });
 
-      // Refetch all related queries immediately to show updated data
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: goalsQueryKeys.active() }),
-        queryClient.refetchQueries({ queryKey: bindsQueryKeys.all }),
-        queryClient.refetchQueries({ queryKey: ['bindsGrid'], exact: false }),
-      ]);
+      // Invalidation above marks queries as stale — they refetch lazily when components render.
+      // Removed Promise.all(refetchQueries) to avoid Hermes GC pressure crash on low-memory devices.
 
       // Invalidate the specific goal (no longer needed in active queries)
       queryClient.invalidateQueries({ queryKey: goalsQueryKeys.byId(goalId) });
