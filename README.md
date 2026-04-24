@@ -4,11 +4,11 @@
 
 An AI-powered mobile app that transforms abstract goals into actionable habits (binds) through personalized coaching from your Dream Self. Built for ambitious but chaotic students and builders who struggle with consistent execution.
 
-**Current Stage:** 🚀 **Active Implementation** - Story-based development, MVP in progress
+**Current Stage:** **Beta Testing**
 
 ---
 
-## 📱 What is Weave?
+##  What is Weave?
 
 Weave is a React Native mobile app that helps users:
 
